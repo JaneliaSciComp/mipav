@@ -374,7 +374,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 
@@ -551,7 +551,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 
@@ -935,7 +935,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 
@@ -1141,7 +1141,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 

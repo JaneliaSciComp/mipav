@@ -113,7 +113,7 @@ public class AlgorithmInverseOrder extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
 

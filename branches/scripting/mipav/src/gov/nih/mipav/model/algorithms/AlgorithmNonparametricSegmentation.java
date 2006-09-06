@@ -200,7 +200,7 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
             constructLog();
 
             buildProgressBar(srcImage.getImageName(), "Performing Nonparametric segmentation...", 0, 100);
-            initProgressBar();
+            
 
             if (useRed) {
                 c1Min = srcImage.getMinR();
@@ -676,7 +676,7 @@ loop1:
             constructLog();
 
             buildProgressBar(srcImage.getImageName(), "Performing Nonparametric segmentation...", 0, 100);
-            initProgressBar();
+            
 
             redMin = srcImage.getMinR();
             greenMin = srcImage.getMinG();
@@ -1186,7 +1186,7 @@ loop1:
             constructLog();
 
             buildProgressBar(srcImage.getImageName(), "Performing Nonparametric segmentation...", 0, 100);
-            initProgressBar();
+            
 
             imin = (float) srcImage.getMin();
             imax = (float) srcImage.getMax();
@@ -1236,7 +1236,7 @@ loop1:
             // The Laplacian of the buffer will be placed in buffer2
             image2.importData(0, buffer, true);
 
-            lapAlgo = new AlgorithmLaplacian(image2, lapSigmas, wholeImage, image25D, ampFactor);
+            lapAlgo = new AlgorithmLaplacian(image2, lapSigmas, wholeImage, image25D, ampFactor, 0, 100);
             lapAlgo.setProgressBarVisible(false);
             lapAlgo.run();
             lapAlgo.finalize();

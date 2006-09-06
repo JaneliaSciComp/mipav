@@ -167,7 +167,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         int curPosition, closestPosition;
 
         buildProgressBar(srcImage.getImageName(), "Anonymize face ...", 0, 100);
-        initProgressBar();
+        
 
         // See if the image orientation is known
         int betOrientation;

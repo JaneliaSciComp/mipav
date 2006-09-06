@@ -117,7 +117,7 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 

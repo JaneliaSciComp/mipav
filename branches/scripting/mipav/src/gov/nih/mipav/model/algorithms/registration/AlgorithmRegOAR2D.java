@@ -1357,7 +1357,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         } // if (DOF >= 3)
 
         buildProgressBar("Registering images", "Beginning registration", 0, 100);
-        initProgressBar();
+        
 
         long time = System.currentTimeMillis();
 

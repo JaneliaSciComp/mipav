@@ -146,7 +146,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage.getImageName(), "Calculating image ...", 0, 100);
-        initProgressBar();
+        
 
         constructLog();
 

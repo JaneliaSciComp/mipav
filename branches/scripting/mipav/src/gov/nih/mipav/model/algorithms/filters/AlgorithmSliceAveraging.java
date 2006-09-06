@@ -99,7 +99,7 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
 
         constructLog();
         buildProgressBar(srcImage.getImageName(), "Slice averaging ...", 0, 100);
-        initProgressBar();
+        
 
         sAveraging();
 

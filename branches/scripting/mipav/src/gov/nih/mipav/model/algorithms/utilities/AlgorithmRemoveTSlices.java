@@ -99,7 +99,7 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         T = 0; // start counting the slices of the destination image at the first slice.
 

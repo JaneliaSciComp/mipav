@@ -181,7 +181,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-        initProgressBar();
+        
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -282,7 +282,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-        initProgressBar();
+        
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -388,7 +388,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-        initProgressBar();
+        
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -490,7 +490,7 @@ public class AlgorithmThresholdDual extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-        initProgressBar();
+        
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 

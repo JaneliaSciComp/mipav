@@ -286,7 +286,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return null;
         }
 
-        initProgressBar();
+        
 
         try {
 
@@ -359,7 +359,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -441,7 +441,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return null;
         }
 
-        initProgressBar();
+        
 
         try {
 
@@ -519,7 +519,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         try {
             srcImage.exportData(0, length, buffer); // locks and releases lock
@@ -607,7 +607,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 

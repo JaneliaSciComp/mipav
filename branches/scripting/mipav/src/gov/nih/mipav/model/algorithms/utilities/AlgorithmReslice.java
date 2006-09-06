@@ -284,7 +284,7 @@ public class AlgorithmReslice extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         // makeTables();
 
@@ -490,7 +490,7 @@ public class AlgorithmReslice extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         d = 0;
         pct = 0;

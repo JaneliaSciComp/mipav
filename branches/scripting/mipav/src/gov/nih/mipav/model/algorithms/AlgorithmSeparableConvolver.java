@@ -77,17 +77,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    /**
-     * Sets destination, source, and kernel images. Call run() to convolve image.
-     *
-     * @param  destImg  destination image
-     * @param  srcImg   source image
-     * @param  kern     kernel image (kernel must be symmetric)
-     */
-    public AlgorithmSeparableConvolver(ModelImage destImg, ModelImage srcImg, ModelImage kern) {
-        this(destImg, srcImg, kern, 0, 100);
-    }
-
+  
     /**
      * Sets destination, source, and kernel images. Call run() to convolve image.
      *
@@ -115,21 +105,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         } else if (srcImg.getNDims() == 3) {
             convolverSetup3D();
         }
-    }
-
-    /**
-     * Sets destination, source, and kernel buffers. Call run() to convolve image.
-     *
-     * @param  destBuffer  destination image data buffer
-     * @param  srcBuffer   source image data buffer
-     * @param  iExtents    source and destination image dimensions
-     * @param  kernBuffer  kernel image data buffer (kernel must be symmetric)
-     * @param  kExtents    kernel dimensions
-     * @param  color       whether the image is color
-     */
-    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernBuffer,
-                                       int[] kExtents, boolean color) {
-        this(destBuffer, srcBuffer, iExtents, kernBuffer, kExtents, color, 0, 100);
     }
 
     /**
@@ -218,21 +193,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
      * @param  kernXBuffer  kernel image data buffer in X dimension (kernel must be symmetric)
      * @param  kernYBuffer  kernel image data buffer in Y dimension (kernel must be symmetric)
      * @param  color        whether the image is color
-     */
-    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernXBuffer,
-                                       float[] kernYBuffer, boolean color) {
-        this(destBuffer, srcBuffer, iExtents, kernXBuffer, kernYBuffer, color, 0, 100);
-    }
-
-    /**
-     * Sets destination, source, and kernel buffers. Call run() to convolve image.
-     *
-     * @param  destBuffer   destination image data buffer
-     * @param  srcBuffer    source image data buffer
-     * @param  iExtents     source and destination image dimensions
-     * @param  kernXBuffer  kernel image data buffer in X dimension (kernel must be symmetric)
-     * @param  kernYBuffer  kernel image data buffer in Y dimension (kernel must be symmetric)
-     * @param  color        whether the image is color
      * @param  minProgressValue the minimum progress value.
      * @param  maxProgressValue the maximum progress value.
      */
@@ -262,22 +222,6 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         this.kernelYBuffer = kernYBuffer;
 
         kernelExtents = new int[] { kernelXBuffer.length, kernelYBuffer.length };
-    }
-
-    /**
-     * Sets destination, source, and kernel buffers. Call run() to convolve image.
-     *
-     * @param  destBuffer   destination image data buffer
-     * @param  srcBuffer    source image data buffer
-     * @param  iExtents     source and destination image dimensions
-     * @param  kernXBuffer  kernel image data buffer in X dimension (kernel must be symmetric)
-     * @param  kernYBuffer  kernel image data buffer in Y dimension (kernel must be symmetric)
-     * @param  kernZBuffer  kernel image data buffer in Z dimension (kernel must be symmetric)
-     * @param  color        whether the image is color
-     */
-    public AlgorithmSeparableConvolver(float[] destBuffer, float[] srcBuffer, int[] iExtents, float[] kernXBuffer,
-                                       float[] kernYBuffer, float[] kernZBuffer, boolean color) {
-        this(destBuffer, srcBuffer, iExtents, kernXBuffer, kernYBuffer, kernZBuffer, color, 0, 100);
     }
 
     /**
@@ -801,28 +745,7 @@ public class AlgorithmSeparableConvolver extends AlgorithmBase {
         mask = newMask;
         entireImage = false;
     }
-
-    /**
-     * Gives the convolver a progress bar to update.
-     *
-     * @param  bar              progress bar to update
-     * @param  start            initial percentage of the bar
-     * @param  end              final percentage of the bar
-     * @param  keepProgressBar  if true do not dispose of progress bar in finalize
-     */
-    public void setProgressBar(ViewJProgressBar bar, int start, int end, boolean keepProgressBar) {
-        progressBar = bar;
-        curPercent = start;
-        super.setKeepProgressBar(keepProgressBar);
-
-        // multiply size of the image by the number of times we pass over the data
-        if (imgExtents.length == 2) {
-            incIndex = (imgExtents[0] * imgExtents[1] * cFactor * 2) / (end - start + 1);
-        } else if (imgExtents.length == 3) {
-            incIndex = (imgExtents[0] * imgExtents[1] * imgExtents[2] * cFactor * 3) / (end - start + 1);
-        }
-    }
-
+ 
     /**
      * Convolves kernel with a 2D image - The convolution occurs if the kernel is completely or partially contained in
      * the image.

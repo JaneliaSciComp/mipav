@@ -430,7 +430,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
         constructLog();
 
         buildProgressBar(srcImage.getImageName(), "Performing 3D skeletonization...", 0, 100);
-        initProgressBar();
+        
 
 
         everyOther = true;

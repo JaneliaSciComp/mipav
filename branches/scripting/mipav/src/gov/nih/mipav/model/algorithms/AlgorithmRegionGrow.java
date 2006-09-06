@@ -1942,7 +1942,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                 // black and white image
 
                 buildProgressBar("Region Grow", "Growing round 1...", 0, 100);
-                initProgressBar();
+                
                 fuzzyScene = new int[length];
 
                 for (i = 0; i < length; i++) {

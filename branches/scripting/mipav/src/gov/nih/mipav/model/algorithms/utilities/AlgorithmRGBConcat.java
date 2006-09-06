@@ -175,7 +175,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         if (srcImageR.getNDims() == 3) {
             nImages = srcImageR.getExtents()[2];
@@ -422,7 +422,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         float diffR = maxR - minR;
         float diffG = maxG - minG;

@@ -876,7 +876,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         Preferences.debug(getConstructionInfo());
 
         buildProgressBar("Registering images", "Beginning registration", 0, 100);
-        initProgressBar();
+        
 
         if (doGraph) {
             rot = new float[3][inputImage.getExtents()[3]];

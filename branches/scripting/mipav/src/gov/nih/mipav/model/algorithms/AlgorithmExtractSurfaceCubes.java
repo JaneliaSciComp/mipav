@@ -188,7 +188,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         // Therefore blur flat surface to produce a small intensity gradient and then extract
         // a surface.
         buildProgressBar(srcImage.getImageName(), "Extracting surface ...", 0, 100);
-        initProgressBar();
+        
         progressBar.updateValue(0, runningInSeparateThread);
 
         if (threadStopped) {

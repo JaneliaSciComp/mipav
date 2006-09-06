@@ -167,7 +167,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
             try {
                 energyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gm",
                                              srcImage.getUserInterface());
-                gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false);
+                gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false, 0, 100);
                 gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 gradMagAlgo.run();
 
@@ -314,7 +314,7 @@ Found:
 
         try {
             buildProgressBar(srcImage.getImageName(), "Watershed: Filling regions ...", 0, 100);
-            initProgressBar();
+            
         } catch (OutOfMemoryError error) {
 
             if (energyImage != null) {
@@ -713,7 +713,7 @@ Found:
                 energyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gm",
                                              srcImage.getUserInterface());
 
-                gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false);
+                gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false, 0, 100);
                 gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
                 gradMagAlgo.run();
 
@@ -864,7 +864,7 @@ Found:
             return;
         }
 
-        initProgressBar();
+        
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 

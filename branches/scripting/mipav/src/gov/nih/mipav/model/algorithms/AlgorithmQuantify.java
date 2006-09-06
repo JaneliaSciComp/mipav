@@ -103,7 +103,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
 
         int mod = length / 25; // mod is 4 percent of length
 
-        initProgressBar();
+        
 
         objs = new MaskObject[(int) maskImage.getMax() + 1];
 
@@ -171,7 +171,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
         objs = new MaskObject[(int) maskImage.getMax() + 1];
 
         for (i = 0; i < objs.length; i++) {

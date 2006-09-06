@@ -196,7 +196,7 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
      */
     public void anonymizeFace() {
         buildProgressBar(m_kHeadOriginal.getImageName(), "Anonymize face ...", 0, 100);
-        initProgressBar();
+        
 
         if (m_iState == FIND) {
             findFace();

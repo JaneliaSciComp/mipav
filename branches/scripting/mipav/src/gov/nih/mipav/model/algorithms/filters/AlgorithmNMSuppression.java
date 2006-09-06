@@ -451,7 +451,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -589,7 +589,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -696,7 +696,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -837,7 +837,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 

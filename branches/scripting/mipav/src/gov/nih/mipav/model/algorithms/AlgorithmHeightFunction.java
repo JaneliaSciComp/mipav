@@ -150,7 +150,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         try {
             srcImage.exportSliceXY(slice, buffer);
@@ -285,7 +285,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         try {
             srcImage.exportData(slice, length, buffer); // locks and releases lock

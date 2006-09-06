@@ -245,7 +245,7 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            initProgressBar();
+            
 
             if (srcImage1.getNDims() > srcImage2.getNDims()) {
                 nImages = srcImage1.getExtents()[2];
@@ -441,7 +441,7 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            initProgressBar();
+            
             nImages = srcImage1.getExtents()[2] + srcImage2.getExtents()[2];
 
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
@@ -601,7 +601,7 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            initProgressBar();
+            
             nImages = srcImage1.getExtents()[2] + srcImage2.getExtents()[2];
 
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
@@ -773,7 +773,7 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            initProgressBar();
+            
 
             if (srcImage1.getNDims() > srcImage2.getNDims()) {
                 nImages = (srcImage1.getExtents()[2] * srcImage1.getExtents()[3]) + srcImage2.getExtents()[2];
@@ -1029,7 +1029,7 @@ public class AlgorithmConcat extends AlgorithmBase {
 
             int nImages;
 
-            initProgressBar();
+            
 
             nImages = (srcImage1.getExtents()[2] * srcImage1.getExtents()[3]) +
                       (srcImage2.getExtents()[2] * srcImage2.getExtents()[3]);

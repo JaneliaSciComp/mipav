@@ -142,7 +142,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         
         
         buildProgressBar("Finding density cluster in " + srcImage.getImageName(), "DENCLUE..", 0, 100);
-        initProgressBar();
+        
         
         buffer = new float[length];
         density = new float[length];
@@ -319,7 +319,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         
         
         buildProgressBar("Finding density cluster in " + srcImage.getImageName(), "DENCLUE..", 0, 100);
-        initProgressBar();
+        
         
         buffer = new float[length];
         density = new float[length];

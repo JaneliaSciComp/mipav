@@ -1299,7 +1299,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         constructLog();
 
         buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -1809,7 +1809,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         constructLog();
 
         buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -2259,7 +2259,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         constructLog();
 
         buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -2759,7 +2759,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         constructLog();
 
         buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -3405,7 +3405,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         constructLog();
 
         buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -3948,7 +3948,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
         constructLog();
 
         buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();

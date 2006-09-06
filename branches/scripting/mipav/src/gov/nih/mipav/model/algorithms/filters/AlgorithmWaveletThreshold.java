@@ -303,7 +303,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
         buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
 
-        initProgressBar();
+        
 
         constructLog();
 

@@ -602,7 +602,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
         int mod;
         int n;
 
-        initProgressBar();
+        
 
         // MAIN ALGORITHM             //
 

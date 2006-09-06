@@ -1516,7 +1516,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         constructLog();
 

@@ -275,7 +275,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
             }
             progressBar.updateValue(0, runningInSeparateThread);
-            initProgressBar();
+            
 
             int length = resultImage.getExtents()[2];
 
@@ -483,7 +483,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
             }
             progressBar.updateValue(0, runningInSeparateThread);
-            initProgressBar();
+            
 
             int sliceArea = extents[0] * extents[1];
             float[] imageBuffer = null, imageBuffer2 = null;

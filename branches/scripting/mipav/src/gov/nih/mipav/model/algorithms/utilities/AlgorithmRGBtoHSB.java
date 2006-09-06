@@ -119,7 +119,7 @@ public class AlgorithmRGBtoHSB extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 

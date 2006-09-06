@@ -195,7 +195,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
             imgBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
             buildProgressBar(srcImage.getImageName(), "Bspline snake: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            
         } catch (IOException error) {
             displayError("Algorithm Bsnake: Image(s) locked");
             setCompleted(false);
@@ -272,7 +272,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
             imgBuffer = new float[length];
 
             buildProgressBar(srcImage.getImageName(), "Bspline snake: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Bsnake: Out of memory");
             setCompleted(false);

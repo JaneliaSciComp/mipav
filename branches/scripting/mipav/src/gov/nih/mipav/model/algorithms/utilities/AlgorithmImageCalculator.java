@@ -531,7 +531,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             }
 
             buildProgressBar("Image Calculator", "Calculating image ...", 0, 100);
-            initProgressBar();
+            
         } catch (OutOfMemoryError e) {
             bufferA = null;
             bufferB = null;
@@ -1448,7 +1448,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 

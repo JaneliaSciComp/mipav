@@ -421,7 +421,7 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
         }
 
         buildProgressBar("Extracting VOI", "VOIExtraction ...", 0, 100);
-        initProgressBar();
+        
 
         boolean regVOI = true;
 

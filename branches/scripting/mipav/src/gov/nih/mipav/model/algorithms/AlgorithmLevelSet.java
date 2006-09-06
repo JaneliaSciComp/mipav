@@ -295,7 +295,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
         contourVOI = VOIs.VOIAt(i);
 
-        initProgressBar();
+        
 
         int[] imageExtents = srcImage.getExtents();
 
@@ -846,7 +846,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
         contourVOI = VOIs.VOIAt(i);
 
-        initProgressBar();
+        
 
         int[] imageExtents = srcImage.getExtents();
 

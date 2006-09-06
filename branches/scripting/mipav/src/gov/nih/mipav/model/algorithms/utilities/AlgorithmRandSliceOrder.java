@@ -126,7 +126,7 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         for (s = 0; (s < sliceNumber) && !threadStopped; s++) {
 

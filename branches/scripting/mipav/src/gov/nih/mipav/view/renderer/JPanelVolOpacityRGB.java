@@ -790,7 +790,7 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
                 AlgorithmGradientMagnitudeSep gradMagAlgo_B = new AlgorithmGradientMagnitudeSep(gradMag_B, imageB,
-                                                                                                sigma, true, false);
+                                                                                                sigma, true, false, 0, 100);
 
                 gradMagAlgo_B.setRed(true);
                 gradMagAlgo_B.setBlue(true);

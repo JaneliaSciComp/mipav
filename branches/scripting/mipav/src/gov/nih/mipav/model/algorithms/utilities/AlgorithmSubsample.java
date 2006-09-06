@@ -110,7 +110,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
      */
     public void runAlgorithm() {
         buildProgressBar("Subsamping image " + srcImage.getImageName(), "Subsampling image..", 0, 100);
-        initProgressBar();
+        
 
         ModelSimpleImage temp = null;
 

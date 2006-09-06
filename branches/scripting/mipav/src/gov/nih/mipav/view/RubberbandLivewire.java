@@ -200,7 +200,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
             // true, false);
             AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(null,
                                                                                         new float[] { 1.75f, 1.75f },
-                                                                                        true, false);
+                                                                                        true, false, 0, 100);
             progressBar.updateValueImmed(10);
 
             if (((ViewJComponentEditImage) component).getActiveImage().isColorImage()) {
@@ -676,7 +676,7 @@ public class RubberbandLivewire extends Rubberband implements ActionListener, Wi
         yDirections = new float[xDim * yDim];
 
         // AlgorithmGradientMagnitude magnitude = new AlgorithmGradientMagnitude(null, grad_sigmas, true, false);
-        AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(null, grad_sigmas, true, false);
+        AlgorithmGradientMagnitudeSep magnitude = new AlgorithmGradientMagnitudeSep(null, grad_sigmas, true, false, 0, 100);
         progressBar.updateValueImmed(30);
 
         // calculates gradient magnitude and stores in localCosts; stores normalized xDirections

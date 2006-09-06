@@ -200,7 +200,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         newExtents = new int[srcImage.getExtents().length - 1];
 

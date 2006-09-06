@@ -158,7 +158,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         // No DICOM 4D images
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {

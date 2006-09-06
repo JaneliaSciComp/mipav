@@ -189,6 +189,8 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
         constructLog();
 
+        fireProgressStateChanged(minProgressValue, null, "Calculating gradient magnitude ...");
+        
         if (destImage != null) {
 
             if (srcImage.getNDims() == 2) {

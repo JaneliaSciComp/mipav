@@ -151,7 +151,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
         }
 
         int mod = length / 100; // mod is 1 percent of length
-        initProgressBar();
+        
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
 

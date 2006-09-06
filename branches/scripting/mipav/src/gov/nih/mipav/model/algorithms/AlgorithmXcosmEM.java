@@ -2302,7 +2302,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
                 int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
 
                 // progressBar.setLocation( xScreen / 2, yScreen / 2 );
-                initProgressBar();
+                
                 progressBar.setVisible(true);
             }
         } catch (NullPointerException npe) {

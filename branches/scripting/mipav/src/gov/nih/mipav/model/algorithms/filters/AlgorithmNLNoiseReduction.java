@@ -279,7 +279,7 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage.getImageName(), "Performing the nonlinear noise reduction ...", 0, 100);
-        initProgressBar();
+        
         progressValue = 0;
 
         constructLog();

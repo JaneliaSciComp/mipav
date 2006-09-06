@@ -423,7 +423,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
      */
     public void runAlgorithm() {
         buildProgressBar(sourceImage.getImageName(), "Registering source image...", 0, 100);
-        initProgressBar();
+        
 
         constructLog();
 

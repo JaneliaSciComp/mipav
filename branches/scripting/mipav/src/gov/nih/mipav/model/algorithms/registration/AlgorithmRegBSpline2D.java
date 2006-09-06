@@ -186,7 +186,7 @@ public class AlgorithmRegBSpline2D extends AlgorithmRegBSpline {
         try {
 
             // Setup to use the progress bar.
-            initProgressBar();
+            
 
             // The control points along the edge do not move.
             int iNumIterationControlPoints = (kOptions.iBSplineNumControlPoints - 2) *

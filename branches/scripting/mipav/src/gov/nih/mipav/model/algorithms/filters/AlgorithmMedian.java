@@ -159,8 +159,9 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, boolean maskFlag) {
-        super(null, srcImg);
+    public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, boolean maskFlag,
+            int minProgressValue, int maxProgressValue) {
+        super(null, srcImg, minProgressValue, maxProgressValue);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -208,9 +209,10 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                   true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean maskFlag) {
+                           boolean maskFlag,
+                           int minProgressValue, int maxProgressValue) {
 
-        super(destImg, srcImg);
+        super(destImg, srcImg, minProgressValue, maxProgressValue);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -257,8 +259,9 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, boolean sliceBySlice,
-                           boolean maskFlag) {
-        super(null, srcImg);
+                           boolean maskFlag,
+                           int minProgressValue, int maxProgressValue) {
+        super(null, srcImg, minProgressValue, maxProgressValue);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -315,9 +318,10 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean sliceBySlice, boolean maskFlag) {
+                           boolean sliceBySlice, boolean maskFlag,
+                           int minProgressValue, int maxProgressValue) {
 
-        super(destImg, srcImg);
+        super(destImg, srcImg, minProgressValue, maxProgressValue);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -385,6 +389,8 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         constructLog();
 
+        fireProgressStateChanged(minProgressValue, null, "Filtering ...");
+        
         if (destImage != null) { // if there exists a destination image
 
             if (srcImage.getNDims() == 2) {
@@ -461,8 +467,6 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Filtering image ...", 0, 100); // let user know what is going on
-        initProgressBar();
         if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
             this.sliceVectorMagnitudeFilter(buffer, resultBuffer, 0, "image");    
         }
@@ -472,8 +476,6 @@ public class AlgorithmMedian extends AlgorithmBase {
         else {
             this.sliceFilter(buffer, resultBuffer, 0, "image"); // filter this slice
         }
-        disposeProgressBar(); // filtering work should be done.
-
         if (threadStopped) {
             finalize();
 
@@ -519,8 +521,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            this.buildProgressBar(srcImage.getImageName(), "Filtering image ...", 0, 100);
-            initProgressBar();
+            
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -583,7 +584,6 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -645,33 +645,16 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "", 0, 100); // let user know what is going on
-        initProgressBar();
-
-        // progressBar stuff here is a bit of overkill, unless we have a really
-        // larger 2D image
-        if (progressBar != null) {
-            progressBar.setMessage("Buffering ...");
-            progressBar.updateValue(0, runningInSeparateThread);
-        }
-
+        fireProgressStateChanged(-1, null, "Buffering ...");
+        
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        if (progressBar != null) {
-            progressBar.updateValue(100, runningInSeparateThread);
-
-            progressBar.setMessage("Filtering...");
-            progressBar.updateValue(0, runningInSeparateThread);
-        }
-
+        fireProgressStateChanged(getProgressFromFloat(.33f), null, "Filtering ...");
+        
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
 
-        if (progressBar != null) {
-            progressBar.updateValue(100, runningInSeparateThread);
-        }
-
-        disposeProgressBar(); // filtering work should be done.
+        fireProgressStateChanged(getProgressFromFloat(.9f), null, "Importing result ...");
 
         if (threadStopped) {
             finalize();
@@ -689,6 +672,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             return;
         }
+        fireProgressStateChanged(maxProgressValue, null, "Importing result ...");
 
         setCompleted(true);
     }
@@ -743,8 +727,8 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        this.buildProgressBar(srcImage.getImageName(), "Buffering ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(-1, null, "Buffering ...");
+
 
         // copy image data from srcBuffer into bdrBuffer
         copy3DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer);
@@ -752,18 +736,13 @@ public class AlgorithmMedian extends AlgorithmBase {
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int bdrSliceLength = bdrBufferWidth * bdrBufferHeight;
 
-        if (progressBar != null) {
-            progressBar.setMessage("Filtering...");
-        }
+        fireProgressStateChanged(-1, null, "Filtering ...");
 
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-
-                if (progressBar != null) {
-                    progressBar.updateValue(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)),
-                                            runningInSeparateThread);
-                }
+                fireProgressStateChanged( getProgressFromFloat((float) (currentSlice) / (srcBufferDepth - 1)), null, null);
+               
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
                                   currentSlice * srcSliceLength);
@@ -789,7 +768,6 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -841,8 +819,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        this.buildProgressBar(srcImage.getImageName(), "Filtering image ...", 0, 100);
-        initProgressBar();
+
         if (isColorImage && (filterType == VECTOR_MAGNITUDE_FILTER)) {
             sliceVectorMagnitudeFilter(buffer, resultBuffer, 0, "image");    
         }
@@ -853,8 +830,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             sliceFilter(buffer, resultBuffer, 0, "image"); // filter image based on provided info.
         }
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
-        progressBar.dispose();
-
+       
         if (threadStopped) {
             finalize();
 
@@ -908,8 +884,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            this.buildProgressBar(srcImage.getImageName(), "Filtering image ...", 0, 100);
-            initProgressBar();
+            
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -984,7 +959,6 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1051,35 +1025,20 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "", 0, 100); // let user know what is going on
-        initProgressBar();
 
-        // progressBar stuff here is a bit of overkill, unless we have a really
-        // larger 2D image
-        if (progressBar != null) {
-            progressBar.setMessage("Buffering ...");
-            progressBar.updateValue(0, runningInSeparateThread);
-        }
+        fireProgressStateChanged(-1, null, "Buffering ...");
+
 
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        if (progressBar != null) {
-            progressBar.updateValue(100, runningInSeparateThread);
-
-            progressBar.setMessage("Filtering...");
-            progressBar.updateValue(0, runningInSeparateThread);
-        }
+        fireProgressStateChanged(getProgressFromFloat(.33f), null, "Filtering ...");
 
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
 
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
 
-        if (progressBar != null) {
-            progressBar.updateValue(100, runningInSeparateThread);
-        }
-
-        disposeProgressBar(); // filtering work should be done.
+        fireProgressStateChanged(getProgressFromFloat(.9f), null, "Importing result ...");
 
         if (threadStopped) {
             finalize();
@@ -1097,6 +1056,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             return;
         }
+        fireProgressStateChanged(maxProgressValue, null, null);
 
         setCompleted(true);
     }
@@ -1159,8 +1119,8 @@ public class AlgorithmMedian extends AlgorithmBase {
             return;
         }
 
-        this.buildProgressBar(srcImage.getImageName(), "Buffering ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(-1, null, "Buffering ...");
+
 
         // copy image data from srcBuffer into bdrBuffer
         copy3DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer);
@@ -1168,19 +1128,13 @@ public class AlgorithmMedian extends AlgorithmBase {
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int bdrSliceLength = bdrBufferWidth * bdrBufferHeight;
 
-        if (progressBar != null) {
-            progressBar.setMessage("Filtering...");
-        }
+        fireProgressStateChanged(-1, null, "Filtering ...");
 
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-
-                if (progressBar != null) {
-                    progressBar.updateValue(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)),
-                                            runningInSeparateThread);
-                }
-
+                fireProgressStateChanged( getProgressFromFloat((float) (currentSlice) / (srcBufferDepth - 1)), null, null);
+              
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
                                   currentSlice * srcSliceLength);
             }
@@ -1189,8 +1143,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         }
 
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
-        disposeProgressBar(); // filtering work should be done.
-
+     
         if (threadStopped) {
             finalize();
 
@@ -1355,10 +1308,9 @@ public class AlgorithmMedian extends AlgorithmBase {
         int sliceIndex;
 
         for (sliceIndex = 0; sliceIndex < srcBufferDepth; sliceIndex++) {
-
-            if (progressBar != null) {
-                progressBar.updateValue(Math.round((((float) (sliceIndex) / (srcBufferDepth - 1)) * 100)), runningInSeparateThread);
-            }
+            
+            fireProgressStateChanged( getProgressFromFloat((float) (sliceIndex) / (srcBufferDepth - 1)), null, null);
+          
 
             copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, sliceIndex * srcBufferSliceLength,
                                        (sliceIndex * bdrBufferSliceLength) + bdrBufferSliceOffset);
@@ -1843,18 +1795,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  colorText  The color to use. Eg., "red" or "blue".
      */
     private void setCopyColorText(String colorText) {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar.setMessage("Copying all " + colorText + " values ... ");
-            }
-        } catch (NullPointerException npe) {
-
-            if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
-                Preferences.debug("AlgrithmMedian: NullPointerException found while setting progress bar text.");
-            }
-        }
+        fireProgressStateChanged(-1, null, "Copying all " + colorText + " values ...");
     }
 
     /**
@@ -2119,10 +2060,9 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                     if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
 
-                        // do a progress bar update
-                        progressBar.updateValue(Math.round((((float) (currentSlice + (pass * numberOfSlices)) /
-                                                                 (iterations * numberOfSlices)) * 100)), runningInSeparateThread);
-                    }
+                        fireProgressStateChanged( getProgressFromFloat((float) (currentSlice + (pass * numberOfSlices)) /
+                                (iterations * numberOfSlices)), null, null);
+                       }
 
                     if (!rChannel && (initialIndex == 1)) {
 
@@ -2152,11 +2092,8 @@ public class AlgorithmMedian extends AlgorithmBase {
                             destBuffer[a] = srcBuffer[a];
                         }
                     } else {
-
-                        if (pBarVisible == true) {
-                            progressBar.setMessage("Filtering " + msgString + " (pass " + String.valueOf(pass + 1) +
-                                                   " of " + iterations + ") ...");
-                        }
+                        fireProgressStateChanged(-1, null, "Filtering " + msgString + " (pass " + String.valueOf(pass + 1) +
+                                " of " + iterations + ") ...");
 
                         // if we needed to filter the image, we dropped through the selection to filter the
                         // color given by int initialIndex
@@ -2164,12 +2101,12 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                             if (numberOfSlices == 1) { // 2D image     update progressBar
 
-                                if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
-                                    progressBar.updateValue(Math.round((float) ((3 * (pass * sliceLength)) +
-                                                                                ((initialIndex - 1) * sliceLength) +
-                                                                                (i / 4)) /
-                                                                           (3 * iterations * sliceLength) * 100),
-                                                            runningInSeparateThread);
+                                if ((((i - initialIndex) % mod) == 0)) {
+                                    
+                                    fireProgressStateChanged( getProgressFromFloat((float) ((3 * (pass * sliceLength)) +
+                                            ((initialIndex - 1) * sliceLength) +
+                                            (i / 4)) /
+                                       (3 * iterations * sliceLength)), null, null);
                                 }
                             }
 
@@ -2211,26 +2148,23 @@ public class AlgorithmMedian extends AlgorithmBase {
                 }
             } else { // monochrome image
 
-                if (pBarVisible) {
-                    progressBar.setMessage("Filtering " + msgString + " (pass " + String.valueOf(pass + 1) + " of " +
-                                           iterations + ") ...");
+                fireProgressStateChanged(-1, null, "Filtering " + msgString + " (pass " + String.valueOf(pass + 1) + " of " +
+                        iterations + ") ...");
 
-                    if (numberOfSlices > 1) { // 3D image     update progressBar
-
-                        // do a progress bar update
-                        progressBar.updateValue(Math.round((((float) (currentSlice + (pass * numberOfSlices)) /
-                                                                 (iterations * numberOfSlices)) * 100)), runningInSeparateThread);
-                    }
-                }
+                if (numberOfSlices > 1) { // 3D image     update progressBar
+                    fireProgressStateChanged( getProgressFromFloat(((float) (currentSlice + (pass * numberOfSlices)) /
+                            (iterations * numberOfSlices))), null, null);
+               }
+               
 
                 for (i = 0; (i < imageSliceLength) && !threadStopped; i++) {
 
                     if (numberOfSlices == 1) { // 2D image     update progressBar
 
-                        if (((i % mod) == 0) && (pBarVisible == true)) {
-                            progressBar.updateValue(Math.round(((float) ((pass * imageSliceLength) + i) /
-                                                                    (iterations * imageSliceLength) * 100)),
-                                                    runningInSeparateThread);
+                        if (((i % mod) == 0)) {
+                            fireProgressStateChanged( getProgressFromFloat((float) ((pass * imageSliceLength) + i) /
+                                    (iterations * imageSliceLength)), null, null);
+                            
                         }
                     }
 
@@ -2339,21 +2273,18 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
             
-            if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
+            if ((numberOfSlices > 1)) { // 3D image     update progressBar
 
-                // do a progress bar update
-                progressBar.updateValue(Math.round((((float) (currentSlice + (pass * numberOfSlices)) /
-                                                         (iterations * numberOfSlices)) * 100)), runningInSeparateThread);
+                fireProgressStateChanged( getProgressFromFloat(((float) (currentSlice + (pass * numberOfSlices)) /
+                        (iterations * numberOfSlices))), null, null);
+             
             }
             a = buffStart; // set/reset a to address pixels from the beginning of this buffer.
 
 
                 
-
-                        if (pBarVisible == true) {
-                            progressBar.setMessage("Filtering " + msgString + " (pass " + String.valueOf(pass + 1) +
-                                                   " of " + iterations + ") ...");
-                        }
+            fireProgressStateChanged(-1, null, "Filtering " + msgString + " (pass " + String.valueOf(pass + 1) +
+                    " of " + iterations + ") ...");
 
                         // if we needed to filter the image, we dropped through the selection to filter the
                         // color given by int initialIndex
@@ -2361,11 +2292,11 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                             if (numberOfSlices == 1) { // 2D image     update progressBar
 
-                                if (((i % mod) == 0) && (pBarVisible == true)) {
-                                    progressBar.updateValue(Math.round((float) ((pass * sliceLength) +
-                                                                                (i / 4)) /
-                                                                           (iterations * sliceLength) * 100),
-                                                            runningInSeparateThread);
+                                if (((i % mod) == 0)) {
+                                    fireProgressStateChanged( getProgressFromFloat((float) ((pass * sliceLength) +
+                                            (i / 4)) /
+                                            (iterations * sliceLength)), null, null);
+                                    
                                 }
                             }
 
@@ -2465,21 +2396,16 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
             
-            if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
-
-                // do a progress bar update
-                progressBar.updateValue(Math.round((((float) (currentSlice + (pass * numberOfSlices)) /
-                                                         (iterations * numberOfSlices)) * 100)), isRunningInSeparateThread());
+            if ((numberOfSlices > 1)) { // 3D image     update progressBar
+                fireProgressStateChanged( getProgressFromFloat(((float) (currentSlice + (pass * numberOfSlices)) /
+                        (iterations * numberOfSlices))), null, null);
             }
             a = buffStart; // set/reset a to address pixels from the beginning of this buffer.
 
 
                 
-
-                        if (pBarVisible == true) {
-                            progressBar.setMessage("Filtering " + msgString + " (pass " + String.valueOf(pass + 1) +
-                                                   " of " + iterations + ") ...");
-                        }
+            fireProgressStateChanged(-1, null, "Filtering " + msgString + " (pass " + String.valueOf(pass + 1) +
+                    " of " + iterations + ") ...");
 
                         // if we needed to filter the image, we dropped through the selection to filter the
                         // color given by int initialIndex
@@ -2487,11 +2413,10 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                             if (numberOfSlices == 1) { // 2D image     update progressBar
 
-                                if (((i % mod) == 0) && (pBarVisible == true)) {
-                                    progressBar.updateValue(Math.round((float) ((pass * sliceLength) +
-                                                                                (i / 4)) /
-                                                                           (iterations * sliceLength) * 100),
-                                                            isRunningInSeparateThread());
+                                if (((i % mod) == 0)) {
+                                    fireProgressStateChanged( getProgressFromFloat((float) ((pass * sliceLength) +
+                                            (i / 4)) /
+                                            (iterations * sliceLength)), null, null);
                                 }
                             }
 
@@ -2701,14 +2626,15 @@ public class AlgorithmMedian extends AlgorithmBase {
                     if (pBarVisible == true) {
 
                         if (initialIndex == 1) {
-                            progressBar.setMessage("Filtering red channel (pass " + String.valueOf(pass + 1) + " of " +
-                                                   iterations + ") ...");
+                            fireProgressStateChanged(-1, null, "Filtering red channel (pass " + String.valueOf(pass + 1) + " of " +
+                                    iterations + ") ...");
+
                         } else if (initialIndex == 2) {
-                            progressBar.setMessage("Filtering green channel (pass " + String.valueOf(pass + 1) +
-                                                   " of " + iterations + ") ...");
+                            fireProgressStateChanged(-1, null, "Filtering green channel (pass " + String.valueOf(pass + 1) + " of " +
+                                    iterations + ") ...");
                         } else if (initialIndex == 3) {
-                            progressBar.setMessage("Filtering blue channel (pass " + String.valueOf(pass + 1) + " of " +
-                                                   iterations + ") ...");
+                            fireProgressStateChanged(-1, null, "Filtering blue channel (pass " + String.valueOf(pass + 1) + " of " +
+                                    iterations + ") ...");
                         }
                     }
 
@@ -2716,10 +2642,10 @@ public class AlgorithmMedian extends AlgorithmBase {
                     // color given by int initialIndex
                     for (i = initialIndex; (i < imageLength) && !threadStopped; i += 4) {
 
-                        if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
-                            progressBar.updateValue(Math.round(((float) ((iterations * (initialIndex - 1) * imageSize) +
-                                                                         (imageSize * pass) + (i / 4)) /
-                                                                    (3 * iterations * imageSize) * 100)), runningInSeparateThread);
+                        if ((((i - initialIndex) % mod) == 0)) {
+                            fireProgressStateChanged( getProgressFromFloat((float) ((iterations * (initialIndex - 1) * imageSize) +
+                                    (imageSize * pass) + (i / 4)) /
+                                    (3 * iterations * imageSize)), null, null);
                         }
 
                         if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -2846,18 +2772,16 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                 for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
 
-                    if (pBarVisible == true) {
-                            progressBar.setMessage("Filtering pass " + String.valueOf(pass + 1) + " of " +
-                                                   iterations + ") ...");
-                    }
+                    fireProgressStateChanged(-1, null, "Filtering pass " + String.valueOf(pass + 1) + " of " +
+                            iterations + ") ...");
 
                     // if we needed to filter the image, we dropped through the selection to filter the
                     // color given by int initialIndex
                     for (i = 0; (i < imageLength) && !threadStopped; i += 4) {
 
-                        if (((i % mod) == 0) && (pBarVisible == true)) {
-                            progressBar.updateValue(Math.round(((float) ((imageSize * pass) + (i / 4)) /
-                                                                    (iterations * imageSize) * 100)), runningInSeparateThread);
+                        if (((i % mod) == 0)) {
+                            fireProgressStateChanged( getProgressFromFloat((float) ((imageSize * pass) + (i / 4)) /
+                                    (iterations * imageSize)), null, null);
                         }
 
                         if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -2977,19 +2901,17 @@ public class AlgorithmMedian extends AlgorithmBase {
         // copy only needed RGB values   
 
                 for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
-
-                    if (pBarVisible == true) {
-                            progressBar.setMessage("Filtering pass " + String.valueOf(pass + 1) + " of " +
-                                                   iterations + ") ...");
-                    }
+                  
+                    fireProgressStateChanged(-1, null, "Filtering pass " + String.valueOf(pass + 1) + " of " +
+                            iterations + ") ...");
 
                     // if we needed to filter the image, we dropped through the selection to filter the
                     // color given by int initialIndex
                     for (i = 0; (i < imageLength) && !threadStopped; i += 4) {
 
-                        if (((i % mod) == 0) && (pBarVisible == true)) {
-                            progressBar.updateValue(Math.round(((float) ((imageSize * pass) + (i / 4)) /
-                                                                    (iterations * imageSize) * 100)), isRunningInSeparateThread());
+                        if (((i % mod) == 0)) {
+                            fireProgressStateChanged( getProgressFromFloat((float) ((imageSize * pass) + (i / 4)) /
+                                    (iterations * imageSize)), null, null);
                         }
 
                         if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -3101,16 +3023,14 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
 
-            if (pBarVisible == true) {
-                progressBar.setMessage("Filtering image (pass " + String.valueOf(pass + 1) + " of " + iterations +
-                                       ") ...");
-            }
+            fireProgressStateChanged(-1, null, "Filtering image (pass " + String.valueOf(pass + 1) + " of " + iterations +
+                    ") ...");
 
             for (i = 0; (i < imageLength) && !threadStopped; i++) {
 
-                if (((i % mod) == 0) && (pBarVisible == true)) {
-                    progressBar.updateValue(Math.round(((float) ((pass * imageLength) + i) /
-                                                            (iterations * imageLength) * 100)), runningInSeparateThread);
+                if (((i % mod) == 0)) {
+                    fireProgressStateChanged( getProgressFromFloat((float) ((pass * imageLength) + i) /
+                            (iterations * imageLength)), null, null);
                 }
 
                 if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -3182,9 +3102,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         for (destSlice = 0; (destSlice < srcBufferDepth) && !threadStopped; destSlice++) {
 
-            if (progressBar != null) {
-                progressBar.updateValue(Math.round((((float) (destSlice) / (srcBufferDepth - 1)) * 100)), runningInSeparateThread);
-            }
+            fireProgressStateChanged( getProgressFromFloat((float) (destSlice) / (srcBufferDepth - 1)), null, null);
 
             srcBdrBufferSliceOffset = (destSlice * srcBdrBufferSliceLength) + srcBrdBufferKernelOffset;
 

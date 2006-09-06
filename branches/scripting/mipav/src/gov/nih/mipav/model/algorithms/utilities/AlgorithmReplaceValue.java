@@ -126,7 +126,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
         int start;
 
         buildProgressBar(srcImage.getImageName(), "Replacing values...", 0, 100);
-        initProgressBar();
+        
 
 
         int len = inputRanges.size();
@@ -224,7 +224,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
         int start;
 
         buildProgressBar(srcImage.getImageName(), "Replacing values...", 0, 100);
-        initProgressBar();
+        
 
         int mod = (length * t * z) / 10; // mod is 10 percent of total length
 

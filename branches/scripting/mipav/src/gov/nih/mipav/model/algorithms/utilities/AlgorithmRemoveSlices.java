@@ -172,7 +172,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         srcImage.releaseLock();
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         // get the axis of change
         try {
@@ -396,7 +396,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         // get the axis of change
         try { // axisOfChange = getAxisOfChange();

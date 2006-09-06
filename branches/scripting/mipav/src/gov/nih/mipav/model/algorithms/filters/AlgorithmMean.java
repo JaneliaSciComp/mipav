@@ -146,8 +146,9 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the mean filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmMean(ModelImage srcImg, int kSize, boolean maskFlag) {
-        super(null, srcImg);
+    public AlgorithmMean(ModelImage srcImg, int kSize, boolean maskFlag,
+            int minProgressValue, int maxProgressValue) {
+        super(null, srcImg, minProgressValue, maxProgressValue);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -175,9 +176,10 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the mean filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmMean(ModelImage destImg, ModelImage srcImg, int kSize, boolean maskFlag) {
+    public AlgorithmMean(ModelImage destImg, ModelImage srcImg, int kSize, boolean maskFlag,
+            int minProgressValue, int maxProgressValue) {
 
-        super(destImg, srcImg);
+        super(destImg, srcImg, minProgressValue, maxProgressValue);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -206,8 +208,9 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  maskFlag      Flag that indicates that the mean filtering will be performed for the whole image if equal
      *                       to true.
      */
-    public AlgorithmMean(ModelImage srcImg, int kSize, boolean sliceBySlice, boolean maskFlag) {
-        super(null, srcImg);
+    public AlgorithmMean(ModelImage srcImg, int kSize, boolean sliceBySlice, boolean maskFlag,
+            int minProgressValue, int maxProgressValue) {
+        super(null, srcImg, minProgressValue, maxProgressValue);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -237,9 +240,10 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  maskFlag      Flag that indicates that the mean filtering will be performed for the whole image if equal
      *                       to true.
      */
-    public AlgorithmMean(ModelImage destImg, ModelImage srcImg, int kSize, boolean sliceBySlice, boolean maskFlag) {
+    public AlgorithmMean(ModelImage destImg, ModelImage srcImg, int kSize, boolean sliceBySlice, boolean maskFlag,
+            int minProgressValue, int maxProgressValue) {
 
-        super(destImg, srcImg);
+        super(destImg, srcImg, minProgressValue, maxProgressValue);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -280,6 +284,8 @@ public class AlgorithmMean extends AlgorithmBase {
             return;
         }
 
+        fireProgressStateChanged(minProgressValue, null, "Filtering image ...");
+        
         constructLog();
 
         if (destImage != null) { // if there exists a destination image
@@ -342,31 +348,6 @@ public class AlgorithmMean extends AlgorithmBase {
         }
     }
 
-
-    /**
-     * Creates the standard progressBar. Stores in the class-global, progressBar.
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Filtering image ...", 0, 100, true, this,
-                                                   this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-
-            if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
-                Preferences.debug("AlgrithmMean: NullPointerException found while building progress bar.");
-            }
-        }
-    }
-
     /**
      * Mean filters the source image. Replaces the original image with the filtered image.
      */
@@ -406,7 +387,6 @@ public class AlgorithmMean extends AlgorithmBase {
             return;
         }
 
-        this.buildProgressBar(); // let user know what is going on
         
         if (isColorImage && (filterType == ADAPTIVE_VECTOR)) {
             this.sliceAdaptiveVectorFilter(buffer, resultBuffer, 0, "image"); // filter this slice    
@@ -417,7 +397,6 @@ public class AlgorithmMean extends AlgorithmBase {
         else {
             this.sliceFilter(buffer, resultBuffer, 0, "image"); // filter this slice
         }
-        disposeProgressBar(); // filtering work should be done.
 
         if (threadStopped) {
             finalize();
@@ -464,7 +443,6 @@ public class AlgorithmMean extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            this.buildProgressBar();
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -527,7 +505,6 @@ public class AlgorithmMean extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
         setCompleted(true);
     }
 
@@ -579,7 +556,6 @@ public class AlgorithmMean extends AlgorithmBase {
             return;
         }
 
-        this.buildProgressBar();
         if (isColorImage && (filterType == ADAPTIVE_VECTOR)) {
             sliceAdaptiveVectorFilter(buffer, resultBuffer, 0, "image");    
         }
@@ -590,8 +566,7 @@ public class AlgorithmMean extends AlgorithmBase {
             sliceFilter(buffer, resultBuffer, 0, "image"); // filter image based on provided info.
         }
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
-        progressBar.dispose();
-
+     
         if (threadStopped) {
             finalize();
 
@@ -645,7 +620,6 @@ public class AlgorithmMean extends AlgorithmBase {
 
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            this.buildProgressBar();
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -718,7 +692,6 @@ public class AlgorithmMean extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
         setCompleted(true);
     }
 
@@ -997,33 +970,6 @@ public class AlgorithmMean extends AlgorithmBase {
         return (mean);
     }
 
-    /**
-     * If the progress bar is visible, sets the text to:<br>
-     * <tt>Copying all <i>color</i> values ...</tt>
-     *
-     * @param  colorText  The color to use. Eg., "red" or "blue".
-     * @param  process    DOCUMENT ME!
-     */
-    private void setCopyColorText(String colorText, boolean process) {
-
-        try {
-
-            if (pBarVisible == true) {
-
-                if (process) {
-                    progressBar.setMessage("Averaging " + colorText + " values ... ");
-                } else {
-                    progressBar.setMessage("Copying all " + colorText + " values ... ");
-                }
-            }
-        } catch (NullPointerException npe) {
-
-            if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
-                Preferences.debug("AlgrithmMean: NullPointerException found while setting progress bar text.");
-            }
-        }
-    }
-
 
     /**
      * Allows a single slice to be filtered. Note that a progressBar must be created first.
@@ -1051,7 +997,7 @@ public class AlgorithmMean extends AlgorithmBase {
                                                                          // !!!
 
             // copy all alpha values in this slice
-            setCopyColorText("alpha", false);
+            fireProgressStateChanged(-1, null, "Copying alpha values ... ");
 
             for (a = buffStart, i = 0; i < imageSliceLength; a += 4, i += 4) {
                 destBuffer[a] = srcBuffer[a]; // copy alpha;
@@ -1073,17 +1019,16 @@ public class AlgorithmMean extends AlgorithmBase {
                 ++initialIndex; // next initial index
                 a += initialIndex; // keep the pixel location up with color indexed to
 
-                if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
-
-                    // do a progress bar update
-                    progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), runningInSeparateThread);
+                if ((numberOfSlices > 1)) { // 3D image  
+                    fireProgressStateChanged(getProgressFromFloat((float) (currentSlice) / numberOfSlices), null, null);
                 }
 
                 if ((initialIndex == 1) && (!rChannel)) {
 
                     // when looking at the image reds but we're not filtering the red channel
                     // copy all red values
-                    setCopyColorText("red", false);
+                    fireProgressStateChanged(-1, null, "Copying red values ... ");
+                    
 
                     for (i = initialIndex; i < imageSliceLength; a += 4, i += 4) {
                         destBuffer[a] = srcBuffer[a];
@@ -1092,7 +1037,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                     // when looking at the image greens but we're not filtering the greens channel
                     // copy all greens values
-                    setCopyColorText("green", false);
+                    fireProgressStateChanged(-1, null, "Copying green values ... ");
 
                     for (i = initialIndex; i < imageSliceLength; a += 4, i += 4) {
                         destBuffer[a] = srcBuffer[a];
@@ -1101,7 +1046,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                     // when looking at the image blues but we're  not filtering the blues channel
                     // copy all blue values
-                    setCopyColorText("blue", false);
+                    fireProgressStateChanged(-1, null, "Copying blue values ... ");
 
                     for (i = initialIndex; i < imageSliceLength; a += 4, i += 4) {
                         destBuffer[a] = srcBuffer[a];
@@ -1113,25 +1058,24 @@ public class AlgorithmMean extends AlgorithmBase {
                     if (numberOfSlices == 1) {
 
                         if (initialIndex == 1) {
-                            setCopyColorText("red", true);
+                            fireProgressStateChanged(-1, null, "Averaging red values ... ");
                         } else if (initialIndex == 2) {
-                            setCopyColorText("green", true);
+                            fireProgressStateChanged(-1, null, "Averaging green values ... ");
                         } else if (initialIndex == 3) {
-                            setCopyColorText("blue", true);
+                            fireProgressStateChanged(-1, null, "Averaging blue values ... ");
                         }
                     } // if (numberOfSlices == 1)
                     else {
-                        progressBar.setMessage("Averaging values ...");
+                        fireProgressStateChanged(-1, null, "Averaging values ...");
                     }
 
                     for (i = initialIndex; (i < imageSliceLength) && !threadStopped; a += 4, i += 4) {
 
-                        if (numberOfSlices == 1) { // 2D image     update progressBar
+                        if (numberOfSlices == 1) { // 2D image  
 
-                            if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
-                                progressBar.updateValue(Math.round((float) (((initialIndex - 1) * sliceLength) +
-                                                                            (i / 4)) / (3 * sliceLength) * 100),
-                                                        runningInSeparateThread);
+                            if ((((i - initialIndex) % mod) == 0)) {
+                                fireProgressStateChanged(getProgressFromFloat((float) (((initialIndex - 1) * sliceLength) +
+                                                                            (i / 4)) / (3 * sliceLength)), null, null);
                             }
                         }
 
@@ -1149,22 +1093,18 @@ public class AlgorithmMean extends AlgorithmBase {
             }
         } else { // monochrome image
 
-            if (pBarVisible) {
+                if (numberOfSlices > 1) { // 3D image 
 
-                if (numberOfSlices > 1) { // 3D image     update progressBar
-
-                    // do a progress bar update
-                    progressBar.updateValue(Math.round((((float) (currentSlice) / (numberOfSlices)) * 100)),
-                                            runningInSeparateThread);
+                    fireProgressStateChanged(getProgressFromFloat(((float) (currentSlice) / (numberOfSlices))), null, null);
+                   
                 }
-            }
-
+          
             for (i = 0; (i < imageSliceLength) && !threadStopped; i++) {
 
-                if (numberOfSlices == 1) { // 2D image     update progressBar
+                if (numberOfSlices == 1) { // 2D image  
 
-                    if (((i % mod) == 0) && (pBarVisible == true)) {
-                        progressBar.updateValue(Math.round((float) i / (imageSliceLength) * 100), runningInSeparateThread);
+                    if (((i % mod) == 0)) {
+                        fireProgressStateChanged(getProgressFromFloat((float) i / (imageSliceLength)), null, null);
                     }
                 }
 
@@ -1182,7 +1122,7 @@ public class AlgorithmMean extends AlgorithmBase {
     }
     
     /**
-     * Allows a single slice to be filtered. Note that a progressBar must be created first.
+     * Allows a single slice to be filtered.
      * Used only for color images when filterType == PARALLEL_VECTOR.
      *
      * @param  srcBuffer            Source buffer.
@@ -1255,10 +1195,8 @@ public class AlgorithmMean extends AlgorithmBase {
             ++initialIndex; // next initial index
             a += initialIndex; // keep the pixel location up with color indexed to
 
-            if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
-
-                // do a progress bar update
-                progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), runningInSeparateThread);
+            if ((numberOfSlices > 1)) { // 3D image     update progressBar
+                fireProgressStateChanged( getProgressFromFloat((float) (currentSlice) / numberOfSlices), null, null);
             }
 
             
@@ -1268,26 +1206,25 @@ public class AlgorithmMean extends AlgorithmBase {
             if (numberOfSlices == 1) {
 
                 if (initialIndex == 1) {
-                    setCopyColorText("red", true);
+                    fireProgressStateChanged(-1, null, "Averaging red values ... ");
                 } else if (initialIndex == 2) {
-                    setCopyColorText("green", true);
+                    fireProgressStateChanged(-1, null, "Averaging green values ... ");
                 } else if (initialIndex == 3) {
-                    setCopyColorText("blue", true);
+                    fireProgressStateChanged(-1, null, "Averaging blue values ... ");
                 }
             } // if (numberOfSlices == 1)
             else {
-                progressBar.setMessage("Averaging values ...");
+                fireProgressStateChanged(-1, null, "Averaging values ...");
             }
 
             for (i = initialIndex, index = 0; (i < imageSliceLength) && !threadStopped;
                                            a += 4, i += 4, index += 3) {
 
-                if (numberOfSlices == 1) { // 2D image     update progressBar
+                if (numberOfSlices == 1) { // 2D image   
 
-                    if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
-                        progressBar.updateValue(Math.round((float) (((initialIndex - 1) * sliceLength) +
-                                                                    (i / 4)) / (3 * sliceLength) * 100),
-                                                runningInSeparateThread);
+                    if ((((i - initialIndex) % mod) == 0)) {
+                        fireProgressStateChanged(getProgressFromFloat((float) (((initialIndex - 1) * sliceLength) +
+                                (i / 4)) / (3 * sliceLength)), null, null);
                     }
                 }
 
@@ -1314,7 +1251,7 @@ public class AlgorithmMean extends AlgorithmBase {
     }
     
     /**
-     * Allows a single slice to be filtered. Note that a progressBar must be created first.
+     * Allows a single slice to be filtered. 
      * Used only for color images when filterType == ADAPTIVE_VECTOR.
      *
      * @param  srcBuffer            Source buffer.
@@ -1336,17 +1273,15 @@ public class AlgorithmMean extends AlgorithmBase {
         // data element at the buffer (a = i+bufferStartingPoint) must start on an alpha value
         buffStart = bufferStartingPoint - (bufferStartingPoint % 4); // & no effect if bufferStartingPoint%4 == 0
                                                                      // !!!
-        if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressB
-            // do a progress bar update
-            progressBar.updateValue(Math.round((((float) (currentSlice) / numberOfSlices) * 100)), runningInSeparateThread);
+        if ((numberOfSlices > 1)) { // 3D image   
+            fireProgressStateChanged( getProgressFromFloat((float) (currentSlice) / numberOfSlices), null, null);
         }
         mod = imageSliceLength / 100; // mod is 1 percent of length of slice * the number of slices.
         for (a = buffStart, i = 0; i < imageSliceLength; a += 4, i += 4) {
-            if (numberOfSlices == 1) { // 2D image     update progressBar
+            if (numberOfSlices == 1) { // 2D image  
 
-                if (((i % mod) == 0) && (pBarVisible == true)) {
-                    progressBar.updateValue(i * 100/imageSliceLength,
-                            runningInSeparateThread);
+                if (((i % mod) == 0)) {
+                    fireProgressStateChanged( getProgressFromInt(i * 100/imageSliceLength), null, null);
                 }
             }
             destBuffer[a] = srcBuffer[a]; // copy alpha;
@@ -1391,7 +1326,7 @@ public class AlgorithmMean extends AlgorithmBase {
         int mod = (imageSize) / 100; // mod is 1 percent of length of slice * the number of slices.
 
         // copy all alpha values in the image
-        setCopyColorText("alpha", false);
+        fireProgressStateChanged(-1, null, "Copying alpha values ... ");
 
         for (i = 0; i < imageLength; i += 4) {
             destBuffer[i] = srcBuffer[i]; // copy alpha;
@@ -1409,7 +1344,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                 // when looking at the image reds but we're not filtering the red channel
                 // copy all red values
-                setCopyColorText("red", false);
+                fireProgressStateChanged(-1, null, "Copying red values ... ");
 
                 for (i = initialIndex; i < imageLength; i += 4) {
                     destBuffer[i] = srcBuffer[i];
@@ -1418,7 +1353,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                 // when looking at the image greens but we're not filtering the greens channel
                 // copy all greens values
-                setCopyColorText("green", false);
+                fireProgressStateChanged(-1, null, "Copying green values ... ");
 
                 for (i = initialIndex; i < imageLength; i += 4) {
                     destBuffer[i] = srcBuffer[i];
@@ -1427,7 +1362,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                 // when looking at the image blues but we're  not filtering the blues channel
                 // copy all blue values
-                setCopyColorText("blue", false);
+                fireProgressStateChanged(-1, null, "Copying blue values ... ");
 
                 for (i = initialIndex; i < imageLength; i += 4) {
                     destBuffer[i] = srcBuffer[i];
@@ -1435,20 +1370,20 @@ public class AlgorithmMean extends AlgorithmBase {
             } else {
 
                 if (initialIndex == 1) {
-                    setCopyColorText("red", true);
+                    fireProgressStateChanged(-1, null, "Averaging red values ... ");
                 } else if (initialIndex == 2) {
-                    setCopyColorText("green", true);
+                    fireProgressStateChanged(-1, null, "Averaging green values ... ");
                 } else if (initialIndex == 3) {
-                    setCopyColorText("blue", true);
+                    fireProgressStateChanged(-1, null, "Averaging blue values ... ");
                 }
 
                 // if we needed to filter the image, we dropped through the selection to filter the
                 // color given by int initialIndex
                 for (i = initialIndex; (i < imageLength) && !threadStopped; i += 4) {
 
-                    if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
-                        progressBar.updateValue(Math.round(((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
-                                                                (3 * imageSize) * 100)), runningInSeparateThread);
+                    if ((((i - initialIndex) % mod) == 0)) {
+                        fireProgressStateChanged( getProgressFromFloat((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
+                                (3 * imageSize)), null, null);
                     }
 
                     if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -1536,11 +1471,11 @@ public class AlgorithmMean extends AlgorithmBase {
             
 
             if (initialIndex == 1) {
-                setCopyColorText("red", true);
+                fireProgressStateChanged(-1, null, "Averaging red values ... ");
             } else if (initialIndex == 2) {
-                setCopyColorText("green", true);
+                fireProgressStateChanged(-1, null, "Averaging green values ... ");
             } else if (initialIndex == 3) {
-                setCopyColorText("blue", true);
+                fireProgressStateChanged(-1, null, "Averaging blue values ... ");
             }
 
             // if we needed to filter the image, we dropped through the selection to filter the
@@ -1548,9 +1483,9 @@ public class AlgorithmMean extends AlgorithmBase {
             for (i = initialIndex, index = 0; (i < imageLength) && !threadStopped; i += 4,
                                                 index += 3) {
 
-                if ((((i - initialIndex) % mod) == 0) && (pBarVisible == true)) {
-                    progressBar.updateValue(Math.round(((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
-                                                            (3 * imageSize) * 100)), runningInSeparateThread);
+                if ((((i - initialIndex) % mod) == 0)) {
+                    fireProgressStateChanged( getProgressFromFloat((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
+                            (3 * imageSize)), null, null);
                 }
 
                 if ((entireImage == true) || mask.get(i / valuesPerPixel)) {
@@ -1593,8 +1528,8 @@ public class AlgorithmMean extends AlgorithmBase {
                                                                      // !
         mod = imageSize / 100; // mod is 1 percent of length of slice * the number of slices.
         for (i = 0; i < imageLength; i += 4) {
-            if (((i % mod) == 0) && (pBarVisible == true)) {
-                progressBar.updateValue(i * 100/imageLength, runningInSeparateThread);
+            if (((i % mod) == 0)) {
+                fireProgressStateChanged( getProgressFromInt(i * 100/imageLength), null, null);
             }
             destBuffer[i] = srcBuffer[i]; // copy alpha;
             if ((entireImage == true) || mask.get(i / 4)) { 
@@ -1643,8 +1578,8 @@ public class AlgorithmMean extends AlgorithmBase {
 
         for (i = 0; (i < imageLength) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && (pBarVisible == true)) {
-                progressBar.updateValue(Math.round((((float) (i) / (imageLength - 1)) * 100)), runningInSeparateThread);
+            if (((i % mod) == 0)) {
+                fireProgressStateChanged( getProgressFromFloat((float) (i) / (imageLength - 1)), null, null);
             }
 
             if ((entireImage == true) || mask.get(i / valuesPerPixel)) {

@@ -162,7 +162,7 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
         try {
             buildProgressBar(srcImage.getImageName(), "Matching Histogram ...", 0, 100);
-            initProgressBar();
+            
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock
@@ -291,7 +291,7 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
         try {
             buildProgressBar(srcImage.getImageName(), "Matching Histogram ...", 0, 100);
-            initProgressBar();
+            
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock

@@ -274,7 +274,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         c3Factor = 0.05f; // --> 0  more stiff  c3
 
         buildProgressBar(image.getImageName(), "Extracting object ...", 0, 100);
-        initProgressBar();
+        
 
         if (onlyInit == true) {
             iMaxUpdate = 1;

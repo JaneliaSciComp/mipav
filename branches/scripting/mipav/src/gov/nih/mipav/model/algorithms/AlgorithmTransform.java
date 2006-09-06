@@ -3849,7 +3849,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             }
 
             buildProgressBar(srcImage.getImageName(), "Transforming image ...", 0, 100);
-            initProgressBar();
+            
         } catch (IOException error) {
             displayError("Algorithm Transform: IOException on srcImage.exportData");
             setCompleted(false);

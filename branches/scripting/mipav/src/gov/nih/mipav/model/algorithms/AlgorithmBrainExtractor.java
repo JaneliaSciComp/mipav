@@ -374,7 +374,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_fStiffness = 0.2f;
 
         buildProgressBar(image.getImageName(), "Extracting brain ...", 0, 100);
-        initProgressBar();
+        
 
         if (onlyEllipse == true) {
             iMaxUpdate = 0;

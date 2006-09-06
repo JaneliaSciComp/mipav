@@ -192,7 +192,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-        initProgressBar();
+        
 
         for (deltaY = 0; deltaY < yDim; deltaY++) {
             newValue = deltaY * 100 / yDim;
@@ -387,7 +387,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
 
             buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-            initProgressBar();
+            
 
             for (deltaY = 0; deltaY < yDim; deltaY++) {
                 newValue = deltaY * 100 / (yDim * colorsPresent);
@@ -645,7 +645,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
             newValue = deltaZ * 100 / zDim;
@@ -880,7 +880,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
 
             buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-            initProgressBar();
+            
 
             for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
                 newValue = deltaZ * 100 / (zDim * colorsPresent);
@@ -1185,7 +1185,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
             buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-            initProgressBar();
+            
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -1358,7 +1358,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
 
             buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-            initProgressBar();
+            
 
             for (deltaT = 0; deltaT < tDim; deltaT++) {
                 newValue = deltaT * 100 / (tDim * colorsPresent);

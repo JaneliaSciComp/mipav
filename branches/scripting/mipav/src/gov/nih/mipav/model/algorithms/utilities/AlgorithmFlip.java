@@ -143,7 +143,7 @@ public class AlgorithmFlip extends AlgorithmBase {
         }
 
         int mod = totalLength / 10; // mod is 10 percent of length
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;

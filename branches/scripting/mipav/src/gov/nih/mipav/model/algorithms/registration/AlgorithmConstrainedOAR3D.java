@@ -1496,7 +1496,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         }
 
         buildProgressBar("Registering images", "Beginning registration", 0, 100);
-        initProgressBar();
+        
 
         if (weighted) {
 

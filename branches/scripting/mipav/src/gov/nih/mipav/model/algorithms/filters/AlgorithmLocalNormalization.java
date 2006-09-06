@@ -92,8 +92,9 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
                                                                                          * in each dimension */
                                        float weight, /* weighting factor for gaussian */
                                        int kernSize, /* width of gaussian kernel */
-                                       float freq /* bounding frequency for FFT-filter */) {
-        super(dest, src);
+                                       float freq, /* bounding frequency for FFT-filter */
+                                       int minProgressValue, int maxProgressValue) {
+        super(dest, src, minProgressValue, maxProgressValue);
         tempImage = new ModelImage[2];
         norm = new float[src.getExtents()[0] * src.getExtents()[1]];
 

@@ -187,7 +187,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
         maximum = srcImage.getMax();
 
         buildProgressBar(srcImage.getFileInfo()[0].getFileName(), "Reordering image to dicom order ...", 0, 100);
-        initProgressBar();
+        
         progressBar.updateValue(0, runningInSeparateThread);
         xyzSize = xDim * yDim * zDim;
 

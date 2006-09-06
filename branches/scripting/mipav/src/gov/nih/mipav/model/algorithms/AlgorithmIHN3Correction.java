@@ -1726,7 +1726,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         sliceSize = orgDim[0] * orgDim[1];
 
         buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
-        initProgressBar();
+        
 
 
         try {
@@ -2427,7 +2427,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
 
         buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
-        initProgressBar();
+        
 
         try {
             buffer = new float[volSize];

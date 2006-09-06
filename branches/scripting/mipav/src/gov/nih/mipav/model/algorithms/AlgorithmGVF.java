@@ -335,7 +335,7 @@ public class AlgorithmGVF extends AlgorithmBase {
             gVal = new float[(xDim + 2) * (yDim + 2)];
 
             buildProgressBar(srcImage.getImageName(), "GVF: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            
         } catch (OutOfMemoryError e) {
             cleanup();
             progressBar.dispose();
@@ -628,7 +628,7 @@ public class AlgorithmGVF extends AlgorithmBase {
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
 
             buildProgressBar(srcImage.getImageName(), "GVF: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            
         } catch (IOException error) {
             cleanup();
             progressBar.dispose();
@@ -741,7 +741,7 @@ public class AlgorithmGVF extends AlgorithmBase {
             gVal = new float[(xDim + 2) * (yDim + 2) * (zDim + 2)];
 
             buildProgressBar(srcImage.getImageName(), "GVF: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            
         } catch (OutOfMemoryError e) {
             cleanup();
             progressBar.dispose();

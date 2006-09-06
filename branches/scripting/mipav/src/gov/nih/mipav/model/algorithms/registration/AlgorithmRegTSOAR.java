@@ -365,7 +365,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         ModelImage transformed = null;
 
         buildProgressBar("Registration", "Getting registered image", 0, 100);
-        initProgressBar();
+        
 
         float[] transformBuffer = new float[imageInput.getSize()];
 
@@ -467,7 +467,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
      */
     public void runAlgorithm() {
         buildProgressBar("Registering images", "Beginning registration", 0, 100);
-        initProgressBar();
+        
 
         float minSample = 1.0f;
 

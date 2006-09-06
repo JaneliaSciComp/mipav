@@ -193,7 +193,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         constructLog();
         buildProgressBar(srcImage.getImageName(), "Principal component ...", 0, 100);
-        initProgressBar();
+        
 
         pComponent();
 

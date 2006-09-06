@@ -348,8 +348,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
             return;
         }
 
-        this.initProgressBar();
-
         contours = srcVOI.getCurves();
         progressBar.updateValue(30, runningInSeparateThread);
 
@@ -649,8 +647,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
             return;
         }
 
-        this.initProgressBar();
-
         // progressBar.setLocation(xScreen/2, yScreen/2);
         // progressBar.setVisible(true);
         progressBar.updateValue(25, runningInSeparateThread);
@@ -777,7 +773,6 @@ public class AlgorithmAGVF extends AlgorithmBase {
             return;
         }
 
-        this.initProgressBar();
         progressBar.updateValue(0, runningInSeparateThread);
 
         try {

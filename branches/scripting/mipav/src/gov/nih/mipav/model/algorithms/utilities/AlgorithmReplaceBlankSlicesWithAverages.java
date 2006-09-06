@@ -66,7 +66,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
         
         buildProgressBar(srcImage.getImageName(), "Replacing blanks with averages...", 0, 100);
         progressBar.updateValue(0, runningInSeparateThread);
-        initProgressBar();
+        
 
         for (z = 0; z < zDim; z++) {
             progressBar.updateValue(100 * z/zDim);

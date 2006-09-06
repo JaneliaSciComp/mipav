@@ -403,7 +403,7 @@ public class AlgorithmMode extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage.getImageName(), "", 0, 100); // let user know what is going on
-        initProgressBar();
+        
 
         // progressBar stuff here is a bit of overkill, unless we have a really
         // larger 2D image
@@ -488,7 +488,7 @@ public class AlgorithmMode extends AlgorithmBase {
         }
 
         this.buildProgressBar(srcImage.getImageName(), "Buffering ...", 0, 100);
-        initProgressBar();
+        
 
         // copy image data from srcBuffer into bdrBuffer
         copy3DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer);
@@ -584,7 +584,7 @@ public class AlgorithmMode extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage.getImageName(), "Filtering image ...", 0, 100); // let user know what is going on
-        initProgressBar();
+        
 
         // progressBar stuff here is a bit of overkill, unless we have a really
         // larger 2D image
@@ -677,7 +677,7 @@ public class AlgorithmMode extends AlgorithmBase {
         }
 
         this.buildProgressBar(srcImage.getImageName(), "Buffering ...", 0, 100);
-        initProgressBar();
+        
 
         // copy image data from srcBuffer into bdrBuffer
         copy3DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer);

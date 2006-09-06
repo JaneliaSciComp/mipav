@@ -12,7 +12,7 @@ import java.text.*;
 
 import java.util.*;
 import javax.swing.event.EventListenerList;
-
+import gov.nih.mipav.MipavMath;
 
 /**
  * Base abstract class for algorithms.
@@ -508,11 +508,11 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     protected int getProgressFromFloat(float percentage) {
-        return (int)(minProgressValue + (percentage * (maxProgressValue - minProgressValue)));
+        return MipavMath.round(minProgressValue + (percentage * (maxProgressValue - minProgressValue)));
     }
     
     protected int getProgressFromInt(int percentage) {
-        return (int)(minProgressValue + ((percentage / 100.0) * (maxProgressValue - minProgressValue)));
+        return MipavMath.round(minProgressValue + ((percentage / 100.0) * (maxProgressValue - minProgressValue)));
     }
     
     protected void linkProgressToAlgorithm(AlgorithmBase baseAlgo) {
@@ -679,23 +679,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
         if (progressBar != null) {
             progressBar.dispose();
-        }
-    }
-
-    /**
-     * Initializes progress bar.
-     */
-    protected void initProgressBar() {
-
-        if ((pBarVisible == true) && (progressBar != null)) {
-
-            if (progressBarLocation == null) {
-                MipavUtil.centerOnScreen(progressBar);
-            } else {
-                progressBar.setLocation(progressBarLocation);
-            }
-
-            progressBar.setVisible(true);
         }
     }
 

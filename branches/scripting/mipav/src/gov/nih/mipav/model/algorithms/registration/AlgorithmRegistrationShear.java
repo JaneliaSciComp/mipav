@@ -488,7 +488,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
      */
     public void runAlgorithm() {
         buildProgressBar(imageA.getFileInfo()[0].getFileName(), "Registering to base ...", 0, 100);
-        initProgressBar();
+        
 
         xdel = imageA.getFileInfo(0).getResolutions()[0];
         ydel = imageA.getFileInfo(0).getResolutions()[1];

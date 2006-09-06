@@ -190,7 +190,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
             }
         }
 
-        initProgressBar();
+        
 
         int[] imageExtents = srcImage.getExtents();
         float min = Float.MAX_VALUE;
@@ -389,7 +389,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
             }
         }
 
-        initProgressBar();
+        
 
         int[] imageExtents = srcImage.getExtents();
         float min = Float.MAX_VALUE;

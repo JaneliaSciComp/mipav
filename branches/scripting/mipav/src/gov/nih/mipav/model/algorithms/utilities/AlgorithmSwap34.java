@@ -132,7 +132,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         }
 
         int mod = length / 100; // mod is 1 percent of length
-        initProgressBar();
+        
 
         try {
             srcImage.exportData(0, length, buffer);

@@ -451,7 +451,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             constructLog();
 
             buildProgressBar(srcImage.getImageName(), "Performing graph based segmentation...", 0, 100);
-            initProgressBar();
+            
 
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
@@ -807,7 +807,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             constructLog();
 
             buildProgressBar(srcImage.getImageName(), "Performing graph based segmentation...", 0, 100);
-            initProgressBar();
+            
 
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];
@@ -1160,7 +1160,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             constructLog();
 
             buildProgressBar(srcImage.getImageName(), "Performing graph based segmentation...", 0, 100);
-            initProgressBar();
+            
 
             xDim = srcImage.getExtents()[0];
             yDim = srcImage.getExtents()[1];

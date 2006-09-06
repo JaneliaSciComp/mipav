@@ -532,7 +532,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         orgSlice = sliceSize;
 
         buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
-        initProgressBar();
+        
 
         try {
             buffer = new float[sliceSize];
@@ -1006,7 +1006,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         int classType;
 
         buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
-        initProgressBar();
+        
 
         try {
             buffer = new float[volSize];

@@ -344,7 +344,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             mask = image.generateVOIMask();
         }
 
-        initProgressBar();
+        
 
         try {
             image.setLock(ModelStorageBase.W_LOCKED);
@@ -490,7 +490,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         }
 
         buildProgressBar("Histogram", "Calculating histogram data...", 0, 100);
-        initProgressBar();
+        
 
         UI = ViewUserInterface.getReference();
 

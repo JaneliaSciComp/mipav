@@ -1364,7 +1364,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
         // make a location & view the progressbar; make length & increment of progressbar.
         buildProgressBar(srcImage.getImageName(), "Adding image borders...", 0, 100);
-        initProgressBar();
+        
 
         Number[] headerFooterMargins;
         Number[] leftMargins;
@@ -1784,7 +1784,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
         // make a location & view the progressbar; make length & increment of progressbar.
         buildProgressBar(srcImage.getImageName(), "Adding image borders...", 0, 100);
-        initProgressBar();
+        
 
         useLocalBufferForSource(colorFactor * srcWidth, srcHeight, colorFactor * destWidth, destHeight);
 

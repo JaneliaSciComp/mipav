@@ -154,7 +154,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100;
 
@@ -227,7 +227,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -310,7 +310,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -386,7 +386,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 

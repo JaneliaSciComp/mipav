@@ -207,7 +207,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = lengthIn / 20;
 
@@ -459,7 +459,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         float averageG = 0.0f;
         float averageB = 0.0f;
 
-        initProgressBar();
+        
 
         extents = srcImage.getExtents();
         sliceSize = srcImage.getSliceSize();

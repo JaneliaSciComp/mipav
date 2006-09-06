@@ -176,7 +176,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             total = 0.0;
@@ -389,7 +389,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
         total = 0.0;
         count = 0;
         newTotal = 0.0;
@@ -593,7 +593,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             total = 0.0;
@@ -818,7 +818,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
         total = 0.0;
         count = 0;
         newTotal = 0.0;

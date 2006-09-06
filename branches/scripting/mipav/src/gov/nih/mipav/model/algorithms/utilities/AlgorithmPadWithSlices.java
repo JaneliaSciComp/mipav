@@ -192,7 +192,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             tOldOffset = Xdim * Ydim * oldZdim * colorFactor * t;

@@ -289,7 +289,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                     new int[] {
                         srcImage.getExtents()[0],
                         srcImage.getExtents()[1]
-                    }, GxDataRound, GyDataRound, color);
+                    }, GxDataRound, GyDataRound, color, 0, 100);
             }else{
                 convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer,
                         new int[] {
@@ -522,7 +522,8 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
 
             AlgorithmSeparableConvolver convolver = null;
             if (stepProgressValuePerImage < 2) {
-                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer, new int[] { srcImage.getExtents()[0], srcImage.getExtents()[1] }, GxDataRound, GyDataRound, color);
+                convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer, new int[] { srcImage.getExtents()[0], srcImage.getExtents()[1] }, 
+                        GxDataRound, GyDataRound, color, 0, 100);
             } else {
                 convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer, new int[] { srcImage.getExtents()[0], srcImage.getExtents()[1] }, GxDataRound, GyDataRound, color, minProgressValue + Math.round(stepProgressValuePerImage * s), minProgressValue + Math.round(stepProgressValuePerImage * (s + 1)));
                 ProgressChangeListener[] listeners = this.getProgressChangeListeners();
@@ -629,7 +630,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                         buffer, new int[] { srcImage.getExtents()[0],
                                 srcImage.getExtents()[1],
                                 srcImage.getExtents()[2] }, GxDataRound,
-                        GyDataRound, GzDataRound, color);
+                        GyDataRound, GzDataRound, color, 0, 100);
             } else {
                 convolver = new AlgorithmSeparableConvolver(resultBuffer,
                         buffer, new int[] { srcImage.getExtents()[0],

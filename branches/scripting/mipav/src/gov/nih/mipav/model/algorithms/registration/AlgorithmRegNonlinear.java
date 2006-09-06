@@ -622,7 +622,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
         int i;
 
         buildProgressBar(sourceImage.getImageName(), "Reslicing source image", 0, 100);
-        initProgressBar();
+        
 
         if (sourceImage.getNDims() == 2) {
             inPlane = true;
@@ -888,7 +888,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
         }
 
         buildProgressBar(sourceImage.getImageName(), "Registering source image", 0, 100);
-        initProgressBar();
+        
 
         if ((sourceImage.getNDims() == 2) || (series2D)) {
             inPlane = true;

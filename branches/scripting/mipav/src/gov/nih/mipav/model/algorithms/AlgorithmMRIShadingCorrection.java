@@ -197,7 +197,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
         constructLog();
 
         buildProgressBar(srcImage.getImageName(), "Performing MRI shading correction...", 0, 100);
-        initProgressBar();
+        
 
         srcImage.calcMinMax();
         xDim = srcImage.getExtents()[0];
@@ -365,9 +365,9 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
                     image2.importData(0, buffer, true);
 
                     if (backgroundPresent) {
-                        lapAlgo = new AlgorithmLaplacian(image2, lapSigmas, objectBuffer, image25D, ampFactor);
+                        lapAlgo = new AlgorithmLaplacian(image2, lapSigmas, objectBuffer, image25D, ampFactor, 0, 100);
                     } else {
-                        lapAlgo = new AlgorithmLaplacian(image2, lapSigmas, wholeImage, image25D, ampFactor);
+                        lapAlgo = new AlgorithmLaplacian(image2, lapSigmas, wholeImage, image25D, ampFactor, 0, 100);
                     }
 
                     lapAlgo.setProgressBarVisible(false);

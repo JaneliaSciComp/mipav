@@ -325,7 +325,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
         try {
             buildProgressBar(matchImage.getImageName(), "Calculating spline coefficients ...", 0, 100);
-            initProgressBar();
+            
 
             if (z == null) {
                 setupTPSpline2D();
@@ -1350,7 +1350,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         int mod;
 
         buildProgressBar("Thin plate spline", "Performing base to match grid transformation...", 0, 100);
-        initProgressBar();
+        
 
         if (xWarp.length != yWarp.length) {
             MipavUtil.displayError("tpSpline2D: xWarp array length does not equal yWarp array length");

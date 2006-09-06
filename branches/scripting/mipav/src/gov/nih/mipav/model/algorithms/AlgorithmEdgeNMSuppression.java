@@ -617,7 +617,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
 
         int mod = totalLength / 100; // mod is 1 percent of length
 
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -767,7 +767,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = totalLength / 100; // mod is 1 percent of length
 

@@ -192,7 +192,7 @@ public class AlgorithmFastMarching extends AlgorithmBase {
             }
         }
 
-        initProgressBar();
+        
 
         int[] imageExtents = srcImage.getExtents();
         float min = Float.MAX_VALUE;
@@ -389,7 +389,7 @@ public class AlgorithmFastMarching extends AlgorithmBase {
             }
         }
 
-        initProgressBar();
+        
 
         int[] imageExtents = srcImage.getExtents();
         float min = Float.MAX_VALUE;

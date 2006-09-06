@@ -332,7 +332,7 @@ public class FFTUtility extends AlgorithmBase {
 
         buildProgressBar("FFT", "Performing FFT...", 0, 100);
 
-        initProgressBar();
+        
 
         // DETERMINE THE FACTORS OF n
         m = 0;
@@ -1512,7 +1512,7 @@ outer8:
 
         buildProgressBar("FFT", "Performing FFT REALS...", 0, 100);
 
-        initProgressBar();
+        
 
 
         inc = Math.abs(isn);
@@ -1670,7 +1670,7 @@ outer8:
 
         buildProgressBar("FFT", "Performing FFT REALT...", 0, 100);
 
-        initProgressBar();
+        
 
 
         inc = Math.abs(isn);

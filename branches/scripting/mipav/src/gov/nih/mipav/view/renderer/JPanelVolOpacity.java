@@ -558,7 +558,7 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
                 AlgorithmGradientMagnitudeSep gradMagAlgo_B = new AlgorithmGradientMagnitudeSep(gradMag_B, imageB,
-                                                                                                sigma, true, false);
+                                                                                                sigma, true, false, 0, 100);
 
                 gradMagAlgo_B.setRunningInSeparateThread(isActiveImage); // progress bar junk.
                 gradMagAlgo_B.setProgressBarVisible(false);

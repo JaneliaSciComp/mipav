@@ -197,7 +197,7 @@ public class AlgorithmRotate extends AlgorithmBase {
         }
 
         int mod = length / 10; // mod is 10 percent of length
-        initProgressBar();
+        
 
         if (cf == 1) {
 
@@ -673,7 +673,7 @@ public class AlgorithmRotate extends AlgorithmBase {
         }
 
         int mod = totalLength / 10; // mod is 10 percent of length
-        initProgressBar();
+        
 
         int tStop;
 

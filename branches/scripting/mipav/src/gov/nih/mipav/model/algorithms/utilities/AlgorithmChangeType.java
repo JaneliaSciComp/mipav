@@ -172,7 +172,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         imDiff = imMax - imMin;
         newDiff = endRange2 - stRange2;
 
-        initProgressBar();
+        
 
         int mod = length / 100;
 
@@ -268,7 +268,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -409,7 +409,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -487,7 +487,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         buildProgressBar(srcImage.getImageName(), "Changing new type image", 0, 100);
 
         int mod = length * numSlices / 100;
-        initProgressBar();
+        
 
         for (i = 0; i < numSlices; i++) {
 

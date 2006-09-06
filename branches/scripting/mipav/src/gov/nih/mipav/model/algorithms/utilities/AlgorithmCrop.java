@@ -212,7 +212,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         int mod = length / 100; // mod is 1 percent of length
 
-        initProgressBar();
+        
 
         int j = 0;
         int k;
@@ -338,7 +338,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
-        initProgressBar();
+        
 
         for (slice = z[0], i = 0; slice <= z[1]; slice++) {
 
@@ -482,7 +482,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
-        initProgressBar();
+        
 
         for (t = 0, i = 0; t < tDim; t++) {
 
@@ -665,7 +665,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int j = 0;
         int k;
@@ -855,7 +855,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
-        initProgressBar();
+        
 
         for (slice = z[0]; slice <= z[1]; slice++) {
 
@@ -1165,7 +1165,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
-        initProgressBar();
+        
 
         for (t = 0; t < tDim; t++) {
 

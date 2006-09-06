@@ -370,7 +370,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         constructLog();
 
         buildProgressBar(srcImage.getImageName(), "Performing 3D skeletonization...", 0, 100);
-        initProgressBar();
+        
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];

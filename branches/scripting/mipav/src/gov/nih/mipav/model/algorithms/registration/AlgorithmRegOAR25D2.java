@@ -866,7 +866,7 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         Preferences.debug(getConstructionInfo());
 
         buildProgressBar("Registering images", "Beginning registration", 0, 100);
-        initProgressBar();
+        
 
         if (doGraph) {
 

@@ -192,7 +192,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
                 // Setup to use the progress bar.
                 buildProgressBar(m_kImageSource.getImageName(), "Transforming ...", 0, 100);
-                initProgressBar();
+                
 
                 // Create result image.
                 try {
@@ -275,7 +275,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
 
                 // Setup to use the progress bar.
                 buildProgressBar(m_kImageSource.getImageName(), "Transforming ...", 0, 100);
-                initProgressBar();
+                
 
                 // Create result image.
                 try {

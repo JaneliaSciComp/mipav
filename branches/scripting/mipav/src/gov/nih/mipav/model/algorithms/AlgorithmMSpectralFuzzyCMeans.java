@@ -597,7 +597,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage[0].getImageName(), "Importing source image...", 0, 100);
-        initProgressBar();
+        
 
         for (i = 0, k = 0; i < imageNumber; i++) {
 
@@ -1094,7 +1094,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         }
 
         buildProgressBar(srcImage[0].getImageName(), "Importing source image...", 0, 100);
-        initProgressBar();
+        
 
         for (i = 0, k = 0; i < imageNumber; i++) {
 
