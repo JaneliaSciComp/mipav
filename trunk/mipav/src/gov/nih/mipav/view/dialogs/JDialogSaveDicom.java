@@ -304,11 +304,9 @@ public class JDialogSaveDicom extends JDialogBase {
                 // handle chooser fields differently
                 if (tag.equals("(0008,0060)") || tag.equals("(0010,0040)") || tag.equals("(0018,0015)") ||
                         tag.equals("(0018,5100)")) {
-
                     // don't blindly import tags which are in the GUI
                     tagsImportedFromNonDicomImage.remove(tag);
                 } else if (tagsList.get(tag) != null) {
-
                     // don't blindly import tags which are in the GUI
                     tagsImportedFromNonDicomImage.remove(tag);
                 }
@@ -1778,71 +1776,71 @@ public class JDialogSaveDicom extends JDialogBase {
         if (tag.equals("(0008,0060)")) {
 
             // set modality combo box
-            if (value.toLowerCase().equals("biomagnetic_imaging")) {
+            if (value.toLowerCase().equals("biomagnetic_imaging") || value.trim().equals("BI")) {
                 seriesMod.setSelectedIndex(0);
-            } else if (value.toLowerCase().equals("color_flow_doppler")) {
+            } else if (value.toLowerCase().equals("color_flow_doppler") || value.trim().equals("CD")) {
                 seriesMod.setSelectedIndex(1);
-            } else if (value.toLowerCase().equals("computed_radiography")) {
+            } else if (value.toLowerCase().equals("computed_radiography") || value.trim().equals("CR")) {
                 seriesMod.setSelectedIndex(2);
-            } else if (value.toLowerCase().equals("computed_tomography")) {
+            } else if (value.toLowerCase().equals("computed_tomography") || value.trim().equals("CT")) {
                 seriesMod.setSelectedIndex(3);
-            } else if (value.toLowerCase().equals("duplex_doppler")) {
+            } else if (value.toLowerCase().equals("duplex_doppler") || value.trim().equals("DD")) {
                 seriesMod.setSelectedIndex(4);
-            } else if (value.toLowerCase().equals("diaphanography")) {
+            } else if (value.toLowerCase().equals("diaphanography") || value.trim().equals("DG")) {
                 seriesMod.setSelectedIndex(5);
-            } else if (value.toLowerCase().equals("digital_radiography")) {
+            } else if (value.toLowerCase().equals("digital_radiography") || value.trim().equals("DX")) {
                 seriesMod.setSelectedIndex(6);
-            } else if (value.toLowerCase().equals("endoscopy")) {
+            } else if (value.toLowerCase().equals("endoscopy") || value.trim().equals("ES")) {
                 seriesMod.setSelectedIndex(7);
-            } else if (value.toLowerCase().equals("general_microscopy")) {
+            } else if (value.toLowerCase().equals("general_microscopy") || value.trim().equals("GM")) {
                 seriesMod.setSelectedIndex(8);
-            } else if (value.toLowerCase().equals("hardcody")) {
+            } else if (value.toLowerCase().equals("hardcody") || value.trim().equals("HC")) {
                 seriesMod.setSelectedIndex(9);
-            } else if (value.toLowerCase().equals("intraoral_radiography")) {
+            } else if (value.toLowerCase().equals("intraoral_radiography") || value.trim().equals("IO")) {
                 seriesMod.setSelectedIndex(10);
-            } else if (value.toLowerCase().equals("laser_surface_scan")) {
+            } else if (value.toLowerCase().equals("laser_surface_scan") || value.trim().equals("LS")) {
                 seriesMod.setSelectedIndex(11);
-            } else if (value.toLowerCase().equals("mr_angiography")) {
+            } else if (value.toLowerCase().equals("mr_angiography") || value.trim().equals("MA")) {
                 seriesMod.setSelectedIndex(12);
-            } else if (value.toLowerCase().equals("mammography")) {
+            } else if (value.toLowerCase().equals("mammography") || value.trim().equals("MG")) {
                 seriesMod.setSelectedIndex(13);
-            } else if (value.toLowerCase().equals("magnetic_resonance")) {
+            } else if (value.toLowerCase().equals("magnetic_resonance") || value.trim().equals("MR")) {
                 seriesMod.setSelectedIndex(14);
-            } else if (value.toLowerCase().equals("mr_spectroscopy")) {
+            } else if (value.toLowerCase().equals("mr_spectroscopy") || value.trim().equals("NS")) {
                 seriesMod.setSelectedIndex(15);
-            } else if (value.toLowerCase().equals("nuclear_medicine")) {
+            } else if (value.toLowerCase().equals("nuclear_medicine") || value.trim().equals("NM")) {
                 seriesMod.setSelectedIndex(16);
-            } else if (value.toLowerCase().equals("other")) {
+            } else if (value.toLowerCase().equals("other") || value.trim().equals("OT")) {
                 seriesMod.setSelectedIndex(17);
-            } else if (value.toLowerCase().equals("pet")) {
+            } else if (value.toLowerCase().equals("pet") || value.trim().equals("PT")) {
                 seriesMod.setSelectedIndex(18);
-            } else if (value.toLowerCase().equals("panoramic_xray")) {
+            } else if (value.toLowerCase().equals("panoramic_xray") || value.trim().equals("PX")) {
                 seriesMod.setSelectedIndex(19);
-            } else if (value.toLowerCase().equals("radio_fluoroscopy")) {
+            } else if (value.toLowerCase().equals("radio_fluoroscopy") || value.trim().equals("RF")) {
                 seriesMod.setSelectedIndex(20);
-            } else if (value.toLowerCase().equals("radiographic_imaging")) {
+            } else if (value.toLowerCase().equals("radiographic_imaging") || value.trim().equals("RG")) {
                 seriesMod.setSelectedIndex(21);
-            } else if (value.toLowerCase().equals("radiotherapy_dose")) {
+            } else if (value.toLowerCase().equals("radiotherapy_dose") || value.trim().equals("RTDOSE")) {
                 seriesMod.setSelectedIndex(22);
-            } else if (value.toLowerCase().equals("radiotherapy_image")) {
+            } else if (value.toLowerCase().equals("radiotherapy_image") || value.trim().equals("RTIMAGE")) {
                 seriesMod.setSelectedIndex(23);
-            } else if (value.toLowerCase().equals("radiotherapy_plan")) {
+            } else if (value.toLowerCase().equals("radiotherapy_plan") || value.trim().equals("RTPLAN")) {
                 seriesMod.setSelectedIndex(24);
-            } else if (value.toLowerCase().equals("radiotherapy_record")) {
+            } else if (value.toLowerCase().equals("radiotherapy_record") || value.trim().equals("RTSTRUCT")) {
                 seriesMod.setSelectedIndex(25);
-            } else if (value.toLowerCase().equals("radiotherapy_structure")) {
+            } else if (value.toLowerCase().equals("radiotherapy_structure") || value.trim().equals("RTRECORD")) {
                 seriesMod.setSelectedIndex(26);
-            } else if (value.toLowerCase().equals("slide_microscopy")) {
+            } else if (value.toLowerCase().equals("slide_microscopy") || value.trim().equals("SM")) {
                 seriesMod.setSelectedIndex(27);
-            } else if (value.toLowerCase().equals("spect")) {
+            } else if (value.toLowerCase().equals("spect") || value.trim().equals("ST")) {
                 seriesMod.setSelectedIndex(28);
-            } else if (value.toLowerCase().equals("thermography")) {
+            } else if (value.toLowerCase().equals("thermography") || value.trim().equals("TG")) {
                 seriesMod.setSelectedIndex(29);
-            } else if (value.toLowerCase().equals("ultrasound")) {
+            } else if (value.toLowerCase().equals("ultrasound") || value.trim().equals("US")) {
                 seriesMod.setSelectedIndex(30);
-            } else if (value.toLowerCase().equals("xray_angiography")) {
+            } else if (value.toLowerCase().equals("xray_angiography") || value.trim().equals("XA")) {
                 seriesMod.setSelectedIndex(31);
-            } else if (value.toLowerCase().equals("external_photography")) {
+            } else if (value.toLowerCase().equals("external_photography") || value.trim().equals("XC")) {
                 seriesMod.setSelectedIndex(32);
             } else {
                 seriesMod.setSelectedIndex(17);
@@ -1850,11 +1848,11 @@ public class JDialogSaveDicom extends JDialogBase {
         } else if (tag.equals("(0010,0040)")) {
 
             // set patient sex combo box
-            if (value.equals("Other")) {
+            if (value.equals("Other") || value.trim().equals("O")) {
                 patientSex.setSelectedIndex(3);
-            } else if (value.equals("Male")) {
+            } else if (value.equals("Male") || value.trim().equals("M")) {
                 patientSex.setSelectedIndex(1);
-            } else if (value.equals("Female")) {
+            } else if (value.equals("Female") || value.trim().equals("F")) {
                 patientSex.setSelectedIndex(2);
             } else {
                 patientSex.setSelectedIndex(0); // Unknown
@@ -1862,55 +1860,55 @@ public class JDialogSaveDicom extends JDialogBase {
         } else if (tag.equals("(0018,0015)")) {
 
             // set area examined combo box
-            if (value.equals("Skull")) {
+            if (value.equals("Skull") || value.trim().equals("SKULL")) {
                 seriesBody.setSelectedIndex(1);
-            } else if (value.equals("CSpine")) {
+            } else if (value.equals("CSpine") || value.trim().equals("CSPINE")) {
                 seriesBody.setSelectedIndex(2);
-            } else if (value.equals("TSpine")) {
+            } else if (value.equals("TSpine") || value.trim().equals("TSPINE")) {
                 seriesBody.setSelectedIndex(3);
-            } else if (value.equals("LSpine")) {
+            } else if (value.equals("LSpine") || value.trim().equals("LSPINE")) {
                 seriesBody.setSelectedIndex(4);
-            } else if (value.equals("SSpine")) {
+            } else if (value.equals("SSpine") || value.trim().equals("SSPINE")) {
                 seriesBody.setSelectedIndex(5);
-            } else if (value.equals("Coccyx")) {
+            } else if (value.equals("Coccyx") || value.trim().equals("COCCYX")) {
                 seriesBody.setSelectedIndex(6);
-            } else if (value.equals("Chest")) {
+            } else if (value.equals("Chest") || value.trim().equals("CHEST")) {
                 seriesBody.setSelectedIndex(7);
-            } else if (value.equals("Clavicle")) {
+            } else if (value.equals("Clavicle") || value.trim().equals("CLAVICLE")) {
                 seriesBody.setSelectedIndex(8);
-            } else if (value.equals("Breast")) {
+            } else if (value.equals("Breast") || value.trim().equals("BREAST")) {
                 seriesBody.setSelectedIndex(9);
-            } else if (value.equals("Abdomen")) {
+            } else if (value.equals("Abdomen") || value.trim().equals("ABDOMEN")) {
                 seriesBody.setSelectedIndex(10);
-            } else if (value.equals("Pelvis")) {
+            } else if (value.equals("Pelvis") || value.trim().equals("PELVIS")) {
                 seriesBody.setSelectedIndex(11);
-            } else if (value.equals("Hip")) {
+            } else if (value.equals("Hip") || value.trim().equals("HIP")) {
                 seriesBody.setSelectedIndex(12);
-            } else if (value.equals("Shoulder")) {
+            } else if (value.equals("Shoulder") || value.trim().equals("SHOULDER")) {
                 seriesBody.setSelectedIndex(13);
-            } else if (value.equals("Elbow")) {
+            } else if (value.equals("Elbow") || value.trim().equals("ELBOW")) {
                 seriesBody.setSelectedIndex(14);
-            } else if (value.equals("Knee")) {
+            } else if (value.equals("Knee") || value.trim().equals("KNEE")) {
                 seriesBody.setSelectedIndex(15);
-            } else if (value.equals("Ankle")) {
+            } else if (value.equals("Ankle") || value.trim().equals("ANKLE")) {
                 seriesBody.setSelectedIndex(16);
-            } else if (value.equals("Hand")) {
+            } else if (value.equals("Hand") || value.trim().equals("HAND")) {
                 seriesBody.setSelectedIndex(17);
-            } else if (value.equals("Foot")) {
+            } else if (value.equals("Foot") || value.trim().trim().equals("FOOT")) {
                 seriesBody.setSelectedIndex(18);
-            } else if (value.equals("Extremity")) {
+            } else if (value.equals("Extremity") || value.trim().equals("EXTREMITY")) {
                 seriesBody.setSelectedIndex(19);
-            } else if (value.equals("Head")) {
+            } else if (value.equals("Head") || value.trim().equals("HEAD")) {
                 seriesBody.setSelectedIndex(20);
-            } else if (value.equals("Heart")) {
+            } else if (value.equals("Heart") || value.trim().equals("HEART")) {
                 seriesBody.setSelectedIndex(21);
-            } else if (value.equals("Neck")) {
+            } else if (value.equals("Neck") || value.trim().equals("NECK")) {
                 seriesBody.setSelectedIndex(22);
-            } else if (value.equals("Leg")) {
+            } else if (value.equals("Leg") || value.trim().equals("LEG")) {
                 seriesBody.setSelectedIndex(23);
-            } else if (value.equals("Arm")) {
+            } else if (value.equals("Arm") || value.trim().equals("ARM")) {
                 seriesBody.setSelectedIndex(24);
-            } else if (value.equals("Jaw")) {
+            } else if (value.equals("Jaw") || value.trim().equals("JAW")) {
                 seriesBody.setSelectedIndex(25);
             } else {
                 seriesBody.setSelectedIndex(0);
@@ -1918,21 +1916,21 @@ public class JDialogSaveDicom extends JDialogBase {
         } else if (tag.equals("(0018,5100)")) {
 
             // set patient position combo box
-            if (value.equals("Head First-Prone")) {
+            if (value.equals("Head First-Prone") || value.equals("HFP")) {
                 seriesPos.setSelectedIndex(1);
-            } else if (value.equals("Head First-Supine")) {
+            } else if (value.equals("Head First-Supine") || value.trim().equals("HFS")) {
                 seriesPos.setSelectedIndex(2);
-            } else if (value.equals("Feet First-Prone")) {
+            } else if (value.equals("Feet First-Prone") || value.trim().equals("FFP")) {
                 seriesPos.setSelectedIndex(3);
-            } else if (value.equals("Feet First-Supine")) {
+            } else if (value.equals("Feet First-Supine") || value.trim().equals("FFS")) {
                 seriesPos.setSelectedIndex(4);
-            } else if (value.equals("HF-Decubitus Right")) {
+            } else if (value.equals("HF-Decubitus Right") || value.trim().equals("HFDR")) {
                 seriesPos.setSelectedIndex(5);
-            } else if (value.equals("HF-Decubitus Left")) {
+            } else if (value.equals("HF-Decubitus Left") || value.trim().equals("HFDL")) {
                 seriesPos.setSelectedIndex(6);
-            } else if (value.equals("FF-Decubitus Right")) {
+            } else if (value.equals("FF-Decubitus Right") || value.trim().equals("FFDR")) {
                 seriesPos.setSelectedIndex(7);
-            } else if (value.equals("FF-Decubitus Left")) {
+            } else if (value.equals("FF-Decubitus Left") || value.trim().equals("FFDL")) {
                 seriesPos.setSelectedIndex(8);
             } else {
                 seriesPos.setSelectedIndex(0); // Unknown
