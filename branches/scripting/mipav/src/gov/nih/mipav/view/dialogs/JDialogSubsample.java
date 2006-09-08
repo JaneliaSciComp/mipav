@@ -163,19 +163,6 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, processIndep));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("subsample_factor", denom));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_transform_vois", doVOI));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_not_change_zdim", lockZ));
-    }
 
     /**
      * Respond to checkbox item events.
@@ -202,7 +189,62 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             }
         }
     }
-    
+
+    /**
+     * Accessor that tells whether VOIs are transformed.
+     *
+     * @param  doVOI  boolean
+     */
+    public void setDoVOI(boolean doVOI) {
+        this.doVOI = doVOI;
+    }
+
+    /**
+     * Accessor that sets whether slices are processed independently.
+     *
+     * @param  processIndep  DOCUMENT ME!
+     */
+    public void setProcessIndep(boolean processIndep) {
+        this.processIndep = processIndep;
+    }
+
+    /**
+     * Method for calling the Subsample algorithm.
+     */
+    protected void callAlgorithm() {
+        setVisible(false);
+
+        // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
+        resultImage = new ModelImage(image.getType(), newExtents, image.getImageName() + "_subsample_" + denom,
+                                     userInterface);
+
+        algoSub = new AlgorithmSubsample(image, resultImage, newExtents, sigmas, processIndep, doVOI, xfrm);
+
+        algoSub.addListener(this);
+
+        if (isRunInSeparateThread()) {
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (algoSub.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            if (!userInterface.isAppFrameVisible()) {
+                algoSub.setProgressBarVisible(false);
+            }
+
+            algoSub.run();
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -210,8 +252,8 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
-        
-        setProcessIndep(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+
+        setProcessIndep(scriptParameters.doProcess3DAs25D());
         denom = scriptParameters.getParams().getInt("subsample_factor");
         setDoVOI(scriptParameters.getParams().getBoolean("do_transform_vois"));
         lockZ = scriptParameters.getParams().getBoolean("do_not_change_zdim");
@@ -281,59 +323,18 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
             }
         } // if (doVOI)
     }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
 
     /**
-     * Accessor that tells whether VOIs are transformed.
-     *
-     * @param  doVOI  boolean
+     * {@inheritDoc}
      */
-    public void setDoVOI(boolean doVOI) {
-        this.doVOI = doVOI;
-    }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
 
-    /**
-     * Accessor that sets whether slices are processed independently.
-     *
-     * @param  processIndep  DOCUMENT ME!
-     */
-    public void setProcessIndep(boolean processIndep) {
-        this.processIndep = processIndep;
-    }
-
-    /**
-     * Method for calling the Subsample algorithm.
-     */
-    protected void callAlgorithm() {
-        setVisible(false);
-
-        // Make result image of same image-type (eg., BOOLEAN, FLOAT, INT)
-        resultImage = new ModelImage(image.getType(), newExtents, image.getImageName() + "_subsample_" + denom,
-                                     userInterface);
-
-        algoSub = new AlgorithmSubsample(image, resultImage, newExtents, sigmas, processIndep, doVOI, xfrm);
-
-        algoSub.addListener(this);
-
-        if (isRunInSeparateThread()) {
-
-            // Start the thread as a low priority because we wish to still have user interface work fast.
-            if (algoSub.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
-            if (!userInterface.isAppFrameVisible()) {
-                algoSub.setProgressBarVisible(false);
-            }
-
-            algoSub.run();
-        }
+        scriptParameters.storeProcess3DAs25D(processIndep);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("subsample_factor", denom));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_transform_vois", doVOI));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_not_change_zdim", lockZ));
     }
 
     /**

@@ -2,8 +2,9 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -264,9 +265,9 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
             }
         }
 
-            if (algorithm.isCompleted()) {
-                insertScriptLine();
-            }
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -292,39 +293,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
         return resultImage;
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, regionFlag));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("dist", dist));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        regionFlag = scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE);
-        dist = scriptParameters.getParams().getFloat("dist");
-    }
-    
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(resultImage);
-        }
-    }
-    
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
      */
@@ -399,6 +367,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo2D.setProgressBarVisible(false);
                         }
@@ -461,6 +430,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo2D.setProgressBarVisible(false);
                         }
@@ -508,6 +478,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo3D.setProgressBarVisible(false);
                         }
@@ -568,6 +539,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             erodeAlgo3D.setProgressBarVisible(false);
                         }
@@ -583,6 +555,44 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                 }
             }
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        regionFlag = scriptParameters.doProcessWholeImage();
+        dist = scriptParameters.getParams().getFloat("dist");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
+
+        scriptParameters.storeProcessWholeImage(regionFlag);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("dist", dist));
     }
 
     /**

@@ -296,7 +296,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-        
+
         fcmAlgo.finalize();
         fcmAlgo = null;
         dispose();
@@ -309,58 +309,6 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
      */
     public ModelImage[] getResultImage() {
         return resultImage;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_result_images", resultNumber));
-        for (int i = 0; i < resultNumber; i++) {
-            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
-        }
-        
-        scriptParameters.storeProcessWholeImage(regionFlag);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_classes", nClasses));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("exponent_q", q));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_crop_background", cropBackground));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("segmentation_type", segmentation));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("centroids", centroids));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
-        
-        setRegionFlag(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
-        setNClasses(scriptParameters.getParams().getInt("number_of_classes"));
-        setQ(scriptParameters.getParams().getFloat("exponent_q"));
-        setCrop(scriptParameters.getParams().getBoolean("do_crop_background"));
-        setThreshold(scriptParameters.getParams().getFloat("threshold"));
-        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
-        setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
-        setSegmentationType(scriptParameters.getParams().getInt("segmentation_type"));
-        setCentroids(scriptParameters.getParams().getList("centroids").getAsFloatArray());
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        for (int i = 0; i < resultNumber; i++) {
-            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
-        }
     }
 
     /**
@@ -535,6 +483,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     fcmAlgo.setProgressBarVisible(false);
                 }
@@ -562,6 +511,60 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
             return;
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
+
+        setRegionFlag(scriptParameters.doProcessWholeImage());
+        setNClasses(scriptParameters.getParams().getInt("number_of_classes"));
+        setQ(scriptParameters.getParams().getFloat("exponent_q"));
+        setCrop(scriptParameters.getParams().getBoolean("do_crop_background"));
+        setThreshold(scriptParameters.getParams().getFloat("threshold"));
+        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
+        setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
+        setSegmentationType(scriptParameters.getParams().getInt("segmentation_type"));
+        setCentroids(scriptParameters.getParams().getList("centroids").getAsFloatArray());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_result_images", resultNumber));
+
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
+        }
+
+        scriptParameters.storeProcessWholeImage(regionFlag);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_classes", nClasses));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("exponent_q", q));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_crop_background", cropBackground));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("segmentation_type", segmentation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("centroids", centroids));
     }
 
     /**

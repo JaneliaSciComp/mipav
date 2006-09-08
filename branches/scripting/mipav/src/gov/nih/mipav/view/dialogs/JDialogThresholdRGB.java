@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -248,7 +248,7 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-        
+
         thresholdAlgoRGB.finalize();
         thresholdAlgoRGB = null;
         dispose();
@@ -287,10 +287,10 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
          * field.removeFocusListener(this);
          *
          * if (testParameter(text, mins[panelNum], maxs[panelNum])) { tempStr = new String("Upper limit: ( " +
-         *          makeString(Float.parseFloat(text),3) + " - " +                      makeString(maxs[panelNum],3) + "
-         * )."); thresholdLabels2[panelNum].setText(tempStr); thres1 = stringConv.valueOf(text).floatValue(); text =
+         * makeString(Float.parseFloat(text),3) + " - " +                      makeString(maxs[panelNum],3) + " ).");
+         * thresholdLabels2[panelNum].setText(tempStr); thres1 = stringConv.valueOf(text).floatValue(); text =
          * textThreshold2[panelNum].getText(); thres2 = stringConv.valueOf(text).floatValue(); if (thres2 < thres1) {
-         *  thres2 = (thres1 + maxs[panelNum]) / 2;     textThreshold2[panelNum].setText(String.valueOf(thres2)); } }
+         * thres2 = (thres1 + maxs[panelNum]) / 2;     textThreshold2[panelNum].setText(String.valueOf(thres2)); } }
          * else { field.requestFocus(); field.selectAll(); field.addFocusListener(this); return; }
          *
          * field.addFocusListener(this);
@@ -304,80 +304,6 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
-        
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, regionFlag));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("useChannel", useChannel));
-        
-        if (useChannel[0]) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdR",thresholdR));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("fillValues[0]", fillValues[0]));
-        }
-
-        if (useChannel[1]) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdG",thresholdG));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("fillValues[1]", fillValues[1]));
-        }
-        
-        if (useChannel[1]) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdB",thresholdB));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("fillValues[2]", fillValues[2]));
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("isInverse", isInverse));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            displayLoc = NEW;
-        } else {
-            displayLoc = REPLACE;
-        }
-        
-        regionFlag = scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE);
-        useChannel = scriptParameters.getParams().getList("useChannel").getAsBooleanArray();
-        
-        fillValues = new float[3];
-        if (useChannel[0]) {
-            thresholdR = scriptParameters.getParams().getList("thresholdR").getAsFloatArray();
-            fillValues[0] = scriptParameters.getParams().getFloat("fillValues[0]");
-        }
-
-        if (useChannel[1]) {
-            thresholdG = scriptParameters.getParams().getList("thresholdG").getAsFloatArray();
-            fillValues[1] = scriptParameters.getParams().getFloat("fillValues[1]");
-        }
-        
-        if (useChannel[1]) {
-            thresholdB = scriptParameters.getParams().getList("thresholdB").getAsFloatArray();
-            fillValues[2] = scriptParameters.getParams().getFloat("fillValues[2]");
-        }
-        
-        isInverse = scriptParameters.getParams().getBoolean("isInverse");
-    }
-   
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(resultImage);
-        }
     }
 
     /**
@@ -557,6 +483,218 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
     }
 
     /**
+     * Once all the necessary variables are set, call the threshold rgb algorithm based on what type of image this is
+     * and whether or not there is a separate destination image.
+     */
+    protected void callAlgorithm() {
+
+        String name = makeImageName(image.getImageName(), "_threshold");
+        int[] destExtents = null;
+
+        int end;
+
+        if (image.getNDims() == 2) { // source image is 2D
+            destExtents = new int[2];
+            destExtents[0] = image.getExtents()[0]; // X dim
+            destExtents[1] = image.getExtents()[1]; // Y dim
+            end = 1;
+        } else if (image.getNDims() == 3) {
+            destExtents = new int[3];
+            destExtents[0] = image.getExtents()[0];
+            destExtents[1] = image.getExtents()[1];
+            destExtents[2] = image.getExtents()[2];
+            end = destExtents[2];
+        } else { // Dims = 4
+            destExtents = new int[4];
+            destExtents[0] = image.getExtents()[0];
+            destExtents[1] = image.getExtents()[1];
+            destExtents[2] = image.getExtents()[2];
+            destExtents[3] = image.getExtents()[3];
+            end = destExtents[2] * destExtents[3];
+        }
+
+        if (displayLoc == NEW) {
+
+            try {
+
+                // resultImage      = new ModelImage(image.getType(), destExtents, " Threshold", userInterface);
+                resultImage = (ModelImage) image.clone();
+                resultImage.setImageName(name);
+
+                if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+
+                    for (int i = 0; i < end; i++) {
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
+                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
+                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
+                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                    }
+                }
+
+                // Make algorithm
+                thresholdAlgoRGB = new AlgorithmThresholdDualRGB(resultImage, image, thresholdR, thresholdG, thresholdB,
+                                                                 fillValues, useChannel, regionFlag, isInverse);
+                thresholdAlgoRGB.addListener(this);
+
+                // Hide dialog
+                setVisible(false);
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (thresholdAlgoRGB.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    if (!userInterface.isAppFrameVisible()) {
+                        thresholdAlgoRGB.setProgressBarVisible(false);
+                    }
+
+                    thresholdAlgoRGB.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog threshold: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                return;
+            }
+        } else {
+
+            try {
+
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+                thresholdAlgoRGB = new AlgorithmThresholdDualRGB(image, thresholdR, thresholdG, thresholdB, fillValues,
+                                                                 useChannel, regionFlag, isInverse);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                thresholdAlgoRGB.addListener(this);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                Vector imageFrames = image.getImageFrameVector();
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                }
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (thresholdAlgoRGB.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    if (!userInterface.isAppFrameVisible()) {
+                        thresholdAlgoRGB.setProgressBarVisible(false);
+                    }
+
+                    thresholdAlgoRGB.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog threshold: unable to allocate enough memory");
+
+                return;
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+
+        regionFlag = scriptParameters.doProcessWholeImage();
+        useChannel = scriptParameters.getParams().getList("useChannel").getAsBooleanArray();
+
+        fillValues = new float[3];
+
+        if (useChannel[0]) {
+            thresholdR = scriptParameters.getParams().getList("thresholdR").getAsFloatArray();
+            fillValues[0] = scriptParameters.getParams().getFloat("fillValues[0]");
+        }
+
+        if (useChannel[1]) {
+            thresholdG = scriptParameters.getParams().getList("thresholdG").getAsFloatArray();
+            fillValues[1] = scriptParameters.getParams().getFloat("fillValues[1]");
+        }
+
+        if (useChannel[1]) {
+            thresholdB = scriptParameters.getParams().getList("thresholdB").getAsFloatArray();
+            fillValues[2] = scriptParameters.getParams().getFloat("fillValues[2]");
+        }
+
+        isInverse = scriptParameters.getParams().getBoolean("isInverse");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
+
+
+        scriptParameters.storeProcessWholeImage(regionFlag);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("useChannel", useChannel));
+
+        if (useChannel[0]) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdR", thresholdR));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("fillValues[0]", fillValues[0]));
+        }
+
+        if (useChannel[1]) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdG", thresholdG));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("fillValues[1]", fillValues[1]));
+        }
+
+        if (useChannel[1]) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdB", thresholdB));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("fillValues[2]", fillValues[2]));
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("isInverse", isInverse));
+    }
+
+    /**
      * Builds each threshold panel (red, green, and blue).
      *
      * @param   panelNum  int 0-2
@@ -647,140 +785,6 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
         panel.add(textFills[panelNum], gbc);
 
         return panel;
-    }
-
-    /**
-     * Once all the necessary variables are set, call the threshold rgb algorithm based on what type of image this is
-     * and whether or not there is a separate destination image.
-     */
-    protected void callAlgorithm() {
-
-        String name = makeImageName(image.getImageName(), "_threshold");
-        int[] destExtents = null;
-
-        int end;
-
-        if (image.getNDims() == 2) { // source image is 2D
-            destExtents = new int[2];
-            destExtents[0] = image.getExtents()[0]; // X dim
-            destExtents[1] = image.getExtents()[1]; // Y dim
-            end = 1;
-        } else if (image.getNDims() == 3) {
-            destExtents = new int[3];
-            destExtents[0] = image.getExtents()[0];
-            destExtents[1] = image.getExtents()[1];
-            destExtents[2] = image.getExtents()[2];
-            end = destExtents[2];
-        } else { // Dims = 4
-            destExtents = new int[4];
-            destExtents[0] = image.getExtents()[0];
-            destExtents[1] = image.getExtents()[1];
-            destExtents[2] = image.getExtents()[2];
-            destExtents[3] = image.getExtents()[3];
-            end = destExtents[2] * destExtents[3];
-        }
-
-        if (displayLoc == NEW) {
-
-            try {
-
-                // resultImage      = new ModelImage(image.getType(), destExtents, " Threshold", userInterface);
-                resultImage = (ModelImage) image.clone();
-                resultImage.setImageName(name);
-
-                if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
-
-                    for (int i = 0; i < end; i++) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                        ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                    }
-                }
-
-                // Make algorithm
-                thresholdAlgoRGB = new AlgorithmThresholdDualRGB(resultImage, image, thresholdR, thresholdG, thresholdB,
-                                                                 fillValues, useChannel, regionFlag, isInverse);
-                thresholdAlgoRGB.addListener(this);
-
-                // Hide dialog
-                setVisible(false);
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (thresholdAlgoRGB.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        thresholdAlgoRGB.setProgressBarVisible(false);
-                    }
-
-                    thresholdAlgoRGB.run();
-                }
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog threshold: unable to allocate enough memory");
-
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up memory of result image
-                    resultImage = null;
-                }
-
-                return;
-            }
-        } else {
-
-            try {
-
-                // No need to make new image space because the user has choosen to replace the source image
-                // Make the algorithm class
-                thresholdAlgoRGB = new AlgorithmThresholdDualRGB(image, thresholdR, thresholdG, thresholdB, fillValues,
-                                                                 useChannel, regionFlag, isInverse);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                thresholdAlgoRGB.addListener(this);
-
-                // Hide the dialog since the algorithm is about to run.
-                setVisible(false);
-
-                // These next lines set the titles in all frames where the source image is displayed to
-                // "locked - " image name so as to indicate that the image is now read/write locked!
-                // The image frames are disabled and then unregisted from the userinterface until the
-                // algorithm has completed.
-                Vector imageFrames = image.getImageFrameVector();
-                titles = new String[imageFrames.size()];
-
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                }
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (thresholdAlgoRGB.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        thresholdAlgoRGB.setProgressBarVisible(false);
-                    }
-
-                    thresholdAlgoRGB.run();
-                }
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog threshold: unable to allocate enough memory");
-
-                return;
-            }
-        }
     }
 
     /**

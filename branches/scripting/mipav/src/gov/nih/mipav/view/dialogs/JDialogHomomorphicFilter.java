@@ -190,6 +190,7 @@ public class JDialogHomomorphicFilter extends JDialogScriptableBase implements A
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmFrequencyFilter) {
 
             if ((algorithm.isCompleted() == true) && (resultImage != null)) {
@@ -218,7 +219,8 @@ public class JDialogHomomorphicFilter extends JDialogScriptableBase implements A
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame)
+                                                                                        (imageFrames.elementAt(i)));
                     }
                 }
 
@@ -252,54 +254,6 @@ public class JDialogHomomorphicFilter extends JDialogScriptableBase implements A
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, image25D));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cutoff_freq", freq1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("low_freq_gain", lowGain));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("high_freq_gain", highGain));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("low_percentage_truncated", lowTruncated));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("high_percentage_truncated", highTruncated));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        setFreq1(scriptParameters.getParams().getFloat("cutoff_freq"));
-        setButterworthOrder(scriptParameters.getParams().getInt("butterworth_order"));
-        setLowGain(scriptParameters.getParams().getFloat("low_freq_gain"));
-        setHighGain(scriptParameters.getParams().getFloat("high_freq_gain"));
-        setLowTruncated(scriptParameters.getParams().getFloat("low_percentage_truncated"));
-        setHighTruncated(scriptParameters.getParams().getFloat("high_percentage_truncated"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 
     /**
@@ -406,7 +360,7 @@ public class JDialogHomomorphicFilter extends JDialogScriptableBase implements A
                 FrequencyFilterAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), FrequencyFilterAlgo);
-                
+
                 // Hide dialog since the algorithm is about to run
                 setVisible(false);
 
@@ -444,7 +398,7 @@ public class JDialogHomomorphicFilter extends JDialogScriptableBase implements A
                 FrequencyFilterAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), FrequencyFilterAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -477,6 +431,55 @@ public class JDialogHomomorphicFilter extends JDialogScriptableBase implements A
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setImage25D(scriptParameters.doProcessWholeImage());
+        setFreq1(scriptParameters.getParams().getFloat("cutoff_freq"));
+        setButterworthOrder(scriptParameters.getParams().getInt("butterworth_order"));
+        setLowGain(scriptParameters.getParams().getFloat("low_freq_gain"));
+        setHighGain(scriptParameters.getParams().getFloat("high_freq_gain"));
+        setLowTruncated(scriptParameters.getParams().getFloat("low_percentage_truncated"));
+        setHighTruncated(scriptParameters.getParams().getFloat("high_percentage_truncated"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.storeProcess3DAs25D(image25D);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cutoff_freq", freq1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("low_freq_gain", lowGain));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("high_freq_gain", highGain));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("low_percentage_truncated", lowTruncated));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("high_percentage_truncated", highTruncated));
     }
 
     /**

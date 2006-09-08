@@ -4,8 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -262,12 +262,12 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                 resultImage.disposeLocal(); // clean up memory
                 resultImage = null;
             }
-            
+
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
         }
-       
+
         saveDefaults();
 
         unsharpMaskAlgo.finalize();
@@ -302,49 +302,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX", scaleX));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY", scaleY));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleZ", scaleZ));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("weight", weight));
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, image25D));
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, regionFlag));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        scaleX = scriptParameters.getParams().getFloat("scaleX");
-        scaleY = scriptParameters.getParams().getFloat("scaleY");
-        scaleZ = scriptParameters.getParams().getFloat("scaleZ");
-        weight = scriptParameters.getParams().getFloat("weight");
-        image25D = scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D);
-        regionFlag = scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE);
-    }
-    
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(resultImage);
-        }
     }
 
     // *******************************************************************
@@ -563,6 +520,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -616,6 +574,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -680,6 +639,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -732,6 +692,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -745,6 +706,53 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                 }
             }
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        scaleX = scriptParameters.getParams().getFloat("scaleX");
+        scaleY = scriptParameters.getParams().getFloat("scaleY");
+        scaleZ = scriptParameters.getParams().getFloat("scaleZ");
+        weight = scriptParameters.getParams().getFloat("weight");
+        image25D = scriptParameters.doProcess3DAs25D();
+        regionFlag = scriptParameters.doProcessWholeImage();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX", scaleX));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY", scaleY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleZ", scaleZ));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("weight", weight));
+        scriptParameters.storeProcess3DAs25D(image25D);
+        scriptParameters.storeProcessWholeImage(regionFlag);
     }
 
     /**

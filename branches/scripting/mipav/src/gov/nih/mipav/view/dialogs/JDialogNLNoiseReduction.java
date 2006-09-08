@@ -3,7 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
@@ -171,6 +171,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmNLNoiseReduction) {
             image.clearMask();
 
@@ -230,50 +231,6 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("brightness_threshold", bt));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("mask_gaussian_std_dev", maskSD));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_median", useMedian));
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, image25D));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        setDefaults();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-
-        setBt(scriptParameters.getParams().getDouble("brightness_threshold"));
-        setMaskSD(scriptParameters.getParams().getFloat("mask_gaussian_std_dev"));
-        setUseMedian(scriptParameters.getParams().getBoolean("do_use_median"));
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 
     /**
@@ -393,6 +350,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             nlnrAlgo.setProgressBarVisible(false);
                         }
@@ -447,6 +405,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             nlnrAlgo.setProgressBarVisible(false);
                         }
@@ -502,6 +461,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             nlnrAlgo.setProgressBarVisible(false);
                         }
@@ -555,6 +515,7 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             nlnrAlgo.setProgressBarVisible(false);
                         }
@@ -570,6 +531,51 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
             }
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        setDefaults();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setBt(scriptParameters.getParams().getDouble("brightness_threshold"));
+        setMaskSD(scriptParameters.getParams().getFloat("mask_gaussian_std_dev"));
+        setUseMedian(scriptParameters.getParams().getBoolean("do_use_median"));
+        setImage25D(scriptParameters.doProcess3DAs25D());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("brightness_threshold", bt));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("mask_gaussian_std_dev", maskSD));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_median", useMedian));
+        scriptParameters.storeProcess3DAs25D(image25D);
     }
 
     /**

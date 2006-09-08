@@ -25,8 +25,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmFrequencyFilter
  */
-public class JDialogFrequencyFilter extends JDialogScriptableBase
-        implements AlgorithmInterface, ItemListener {
+public class JDialogFrequencyFilter extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -274,6 +273,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmFrequencyFilter) {
 
             if ((algorithm.isCompleted() == true) && (resultImage != null)) {
@@ -302,7 +302,8 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame)
+                                                                                        (imageFrames.elementAt(i)));
                     }
                 }
 
@@ -337,56 +338,6 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, image25D));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_crop_image", imageCrop));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_diameter", kernelDiameter));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", freq1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("freq2", freq2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        setImageCrop(scriptParameters.getParams().getBoolean("do_crop_image"));
-        setDiameter(scriptParameters.getParams().getInt("kernel_diameter"));
-        setFilterType(scriptParameters.getParams().getInt("filter_type"));
-        setFreq1(scriptParameters.getParams().getFloat("freq1"));
-        setFreq2(scriptParameters.getParams().getFloat("freq2"));
-        setMethod(scriptParameters.getParams().getInt("construction_method"));
-        setButterworthOrder(scriptParameters.getParams().getInt("butterworth_order"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 
     /**
@@ -502,7 +453,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FrequencyFilterAlgo.addListener(this);
                 createProgressBar(image.getImageName(), FrequencyFilterAlgo);
-                
+
                 // Hide dialog since the algorithm is about to run
                 setVisible(false);
 
@@ -513,7 +464,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                
+
                     FrequencyFilterAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -542,7 +493,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase
                 FrequencyFilterAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), FrequencyFilterAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -567,7 +518,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                  
+
 
                     FrequencyFilterAlgo.run();
                 }
@@ -577,6 +528,57 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setImageCrop(scriptParameters.getParams().getBoolean("do_crop_image"));
+        setDiameter(scriptParameters.getParams().getInt("kernel_diameter"));
+        setFilterType(scriptParameters.getParams().getInt("filter_type"));
+        setFreq1(scriptParameters.getParams().getFloat("freq1"));
+        setFreq2(scriptParameters.getParams().getFloat("freq2"));
+        setMethod(scriptParameters.getParams().getInt("construction_method"));
+        setButterworthOrder(scriptParameters.getParams().getInt("butterworth_order"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.storeProcess3DAs25D(image25D);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_crop_image", imageCrop));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_diameter", kernelDiameter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", freq1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq2", freq2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
     }
 
     /**

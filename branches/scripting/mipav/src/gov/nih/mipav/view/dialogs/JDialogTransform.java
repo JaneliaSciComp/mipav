@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
@@ -114,9 +114,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     private JLabel labelTx, labelTy, labelTz, labelRx, labelRy, labelRz, labelSx, labelSy, labelSz, labelSKx, labelSKy,
                    labelSKz;
 
-    /** DOCUMENT ME! */
-    private JLabel maximum, minimum, current;
-
     /** If true change matrix to the left-hand coordinate system. */
     private boolean leftHandSystem = false;
 
@@ -134,6 +131,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private int max, min;
+
+    /** DOCUMENT ME! */
+    private JLabel maximum, minimum, current;
 
     /** DOCUMENT ME! */
     private int oXdim, oYdim, oZdim, cXdim, cYdim, cZdim;
@@ -478,200 +478,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("interp", interp));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("doVOI", doVOI));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("doClip", doClip));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("doTalairach", doTalairach));
-        
-        if (doTalairach) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("transformType", transformType));
-            
-            Point3Df acpcPC = tInfo.getAcpcPC();
-            scriptParameters.getParams().put(ParameterFactory.newParameter("acpcPC", new float[] {acpcPC.x, acpcPC.y, acpcPC.z}));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("acpcRes", tInfo.getAcpcRes()));
-            
-            Point3Df origAC = tInfo.getOrigAC();
-            scriptParameters.getParams().put(ParameterFactory.newParameter("origAC", new float[] {origAC.x, origAC.y, origAC.z}));
-            
-            Point3Df origPC = tInfo.getOrigPC();
-            scriptParameters.getParams().put(ParameterFactory.newParameter("origPC", new float[] {origPC.x, origPC.y, origPC.z}));
-            
-            scriptParameters.getParams().put(ParameterFactory.newParameter("origRes", tInfo.getOrigRes()));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("origDim", tInfo.getOrigDim()));
-
-            float[][] origOrient = tInfo.getOrigOrient();
-            
-            for (int i = 0; i < 3; i++) {
-                scriptParameters.getParams().put(ParameterFactory.newParameter("origOrient" + i, origOrient[i]));
-            }
-
-            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) ||
-                    (transformType == TLRC_TO_ORIG) || (transformType == TLRC_TO_ACPC)) {
-                Point3Df acpcMin = tInfo.getAcpcMin();
-                
-                scriptParameters.getParams().put(ParameterFactory.newParameter("acpcMin", new float[] {acpcMin.x, acpcMin.y, acpcMin.z}));
-                
-                Point3Df acpcMax = tInfo.getAcpcMax();
-                scriptParameters.getParams().put(ParameterFactory.newParameter("acpcMax", new float[] {acpcMax.x, acpcMax.y, acpcMax.z}));
-
-                scriptParameters.getParams().put(ParameterFactory.newParameter("tlrcRes", tInfo.getTlrcRes()));
-                
-            } // do Talairach Transformation
-        } //if doTalairach
-        else { // not Talairach
-            
-            scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_3D_AS_25D, do25D));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("doUpdateOrigin", doUpdateOrigin));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("doPad", doPad));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("padValue", padValue));
-
-            scriptParameters.getParams().put(ParameterFactory.newParameter("oXres", oXres));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("oYres", oYres));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("oXdim", oXdim));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("oYdim", oYdim));
-            
-            double[][] xMat;
-            xMat = xfrm.getMatrix();
-
-            if ((DIM == 2) || do25D) {
-                
-                for (int i = 0; i < 3; i++) {
-                    scriptParameters.getParams().put(ParameterFactory.newParameter("xMat" + i, xMat[i]));
-                }
-                
-            } else {
-                scriptParameters.getParams().put(ParameterFactory.newParameter("oZres", oZres));
-                scriptParameters.getParams().put(ParameterFactory.newParameter("oZdim", oZdim));
-                
-                for (int i = 0; i < 4; i++) {
-                    scriptParameters.getParams().put(ParameterFactory.newParameter("xMat" + i, xMat[i]));
-                }
-            }
-        } // else not Talairach
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        UI = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (image.getNDims() == 4) {
-            DIM = 4;
-        } else if (image.getNDims() == 3) {
-            DIM = 3;
-        } else if (image.getNDims() == 2) {
-            DIM = 2;
-        }
-        
-        interp = scriptParameters.getParams().getInt("interp");
-        doVOI = scriptParameters.getParams().getBoolean("doVOI");
-        doClip  = scriptParameters.getParams().getBoolean("doClip");
-        doTalairach = scriptParameters.getParams().getBoolean("doTalairach");
-        
-        if (doTalairach) {
-            tInfo = new TalairachTransformInfo();
-            tInfo.isAcpc(true);
-            
-            transformType = scriptParameters.getParams().getInt("transformType");
-            
-            Point3Df acpcPC = new Point3Df(scriptParameters.getParams().getFloat("acpcPC.x"),
-                    scriptParameters.getParams().getFloat("acpcPC.y"),
-                    scriptParameters.getParams().getFloat("acpcPC.z"));
-            tInfo.setAcpcPC(acpcPC);
-            
-            tInfo.setAcpcRes(scriptParameters.getParams().getFloat("acpcRes"));
-            
-            Point3Df origAC = new Point3Df(scriptParameters.getParams().getFloat("origAC.x"),
-                    scriptParameters.getParams().getFloat("origAC.y"),
-                    scriptParameters.getParams().getFloat("origAC.z"));
-            tInfo.setOrigAC(origAC);
-            
-            Point3Df origPC = new Point3Df(scriptParameters.getParams().getFloat("origPC.x"),
-                    scriptParameters.getParams().getFloat("origPC.y"),
-                    scriptParameters.getParams().getFloat("origPC.z"));
-            tInfo.setOrigPC(origPC);
-            
-            tInfo.setOrigRes(scriptParameters.getParams().getList("origRes").getAsFloatArray());
-            tInfo.setOrigDim(scriptParameters.getParams().getList("origDim").getAsIntArray());
-
-            float[][] origOrient = new float[3][3];
-            
-            for (int i = 0; i < 3; i++) {
-                origOrient[i] = scriptParameters.getParams().getList("origOrient" + i).getAsFloatArray();
-            }
-            tInfo.setOrigOrient(origOrient);
-            
-
-            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) ||
-                    (transformType == TLRC_TO_ORIG) || (transformType == TLRC_TO_ACPC)) {
-                Point3Df acpcMin = new Point3Df(scriptParameters.getParams().getFloat("acpcMin.x"),
-                        scriptParameters.getParams().getFloat("acpcMin.y"),
-                        scriptParameters.getParams().getFloat("acpcMin.z"));
-                tInfo.setAcpcMin(acpcMin);
-                
-                Point3Df acpcMax = new Point3Df(scriptParameters.getParams().getFloat("acpcMax.x"),
-                        scriptParameters.getParams().getFloat("acpcMax.y"),
-                        scriptParameters.getParams().getFloat("acpcMax.z"));
-                tInfo.setAcpcMax(acpcMax);
-
-                tInfo.setTlrcRes(scriptParameters.getParams().getList("tlrcRes").getAsFloatArray());
-            } // do Talairach Transformation
-        } //if doTalairach
-        else { // not Talairach
-            TransMatrix transMat = null;
-            
-            do25D = scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D);
-            doUpdateOrigin = scriptParameters.getParams().getBoolean("doUpdateOrigin");
-            doPad = scriptParameters.getParams().getBoolean("doPad");
-            padValue = scriptParameters.getParams().getInt("padValue");
-            
-            oXres = scriptParameters.getParams().getFloat("oXres");
-            oYres = scriptParameters.getParams().getFloat("oYres");
-            oXdim = scriptParameters.getParams().getInt("oXdim");
-            oYdim = scriptParameters.getParams().getInt("oYdim");
-            
-            double[][] xMat = null;
-            xMat = xfrm.getMatrix();
-
-            if ((DIM == 2) || do25D) {
-                transMat = new TransMatrix(3);
-                xMat = new double[3][3];
-                
-                for (int i = 0; i < 3; i++) {
-                    xMat[i] = scriptParameters.getParams().getList("xMat" + i).getAsDoubleArray();
-                }
-            } else {
-                transMat = new TransMatrix(4);
-                oZres = scriptParameters.getParams().getFloat("oZres");
-                oZdim = scriptParameters.getParams().getInt("oZdim");
-                
-                xMat = new double[4][4];
-                for (int i = 0; i < 4; i++) {
-                    xMat[i] = scriptParameters.getParams().getList("xMat" + i).getAsDoubleArray();
-                }
-            }
-            transMat.setMatrix(xMat);
-            
-        } // else not Talairach
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() { 
-        AlgorithmParameters.storeImageInRunner(resultImage);
     }
 
     /**
@@ -1322,6 +1128,268 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 textDimZ.setText(String.valueOf(Math.round(factor * resampleImage.getExtents()[2])));
             }
         }
+    }
+
+    /**
+     * Calls the algorithm with the set variables.
+     */
+    protected void callAlgorithm() {
+
+        if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
+            xfrm.invert();
+        }
+
+        // Hide dialog
+        setVisible(false);
+
+        if (doTalairach) {
+            callTalAlgorithm();
+
+            return;
+        }
+
+        if ((DIM == 2) || (do25D)) {
+            Preferences.debug("oXres, oYres = " + oXres + ", " + oYres);
+            Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
+            System.out.println(xfrm);
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, doVOI, doClip, doPad);
+            algoTrans.setPadValue(padValue);
+        } else { // ((DIM >= 3) && (!do25D))
+            Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
+            Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, doVOI,
+                                               doClip, doPad);
+            algoTrans.setPadValue(padValue);
+            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+        }
+
+        // This is very important. Adding this object as a listener allows
+        // the algorithm to notify this object when it has completed of failed.
+        // See algorithm performed event. This is made possible by implementing
+        algoTrans.addListener(this);
+        // Start the thread as a low priority because we wish to still have
+        // user interface work fast
+
+        if (isRunInSeparateThread()) {
+
+            if (algoTrans.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            if (!UI.isAppFrameVisible()) {
+                algoTrans.setProgressBarVisible(false);
+            }
+
+            algoTrans.run();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        UI = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (image.getNDims() == 4) {
+            DIM = 4;
+        } else if (image.getNDims() == 3) {
+            DIM = 3;
+        } else if (image.getNDims() == 2) {
+            DIM = 2;
+        }
+
+        interp = scriptParameters.getParams().getInt("interp");
+        doVOI = scriptParameters.getParams().getBoolean("doVOI");
+        doClip = scriptParameters.getParams().getBoolean("doClip");
+        doTalairach = scriptParameters.getParams().getBoolean("doTalairach");
+
+        if (doTalairach) {
+            tInfo = new TalairachTransformInfo();
+            tInfo.isAcpc(true);
+
+            transformType = scriptParameters.getParams().getInt("transformType");
+
+            Point3Df acpcPC = new Point3Df(scriptParameters.getParams().getFloat("acpcPC.x"),
+                                           scriptParameters.getParams().getFloat("acpcPC.y"),
+                                           scriptParameters.getParams().getFloat("acpcPC.z"));
+            tInfo.setAcpcPC(acpcPC);
+
+            tInfo.setAcpcRes(scriptParameters.getParams().getFloat("acpcRes"));
+
+            Point3Df origAC = new Point3Df(scriptParameters.getParams().getFloat("origAC.x"),
+                                           scriptParameters.getParams().getFloat("origAC.y"),
+                                           scriptParameters.getParams().getFloat("origAC.z"));
+            tInfo.setOrigAC(origAC);
+
+            Point3Df origPC = new Point3Df(scriptParameters.getParams().getFloat("origPC.x"),
+                                           scriptParameters.getParams().getFloat("origPC.y"),
+                                           scriptParameters.getParams().getFloat("origPC.z"));
+            tInfo.setOrigPC(origPC);
+
+            tInfo.setOrigRes(scriptParameters.getParams().getList("origRes").getAsFloatArray());
+            tInfo.setOrigDim(scriptParameters.getParams().getList("origDim").getAsIntArray());
+
+            float[][] origOrient = new float[3][3];
+
+            for (int i = 0; i < 3; i++) {
+                origOrient[i] = scriptParameters.getParams().getList("origOrient" + i).getAsFloatArray();
+            }
+
+            tInfo.setOrigOrient(origOrient);
+
+
+            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
+                    (transformType == TLRC_TO_ACPC)) {
+                Point3Df acpcMin = new Point3Df(scriptParameters.getParams().getFloat("acpcMin.x"),
+                                                scriptParameters.getParams().getFloat("acpcMin.y"),
+                                                scriptParameters.getParams().getFloat("acpcMin.z"));
+                tInfo.setAcpcMin(acpcMin);
+
+                Point3Df acpcMax = new Point3Df(scriptParameters.getParams().getFloat("acpcMax.x"),
+                                                scriptParameters.getParams().getFloat("acpcMax.y"),
+                                                scriptParameters.getParams().getFloat("acpcMax.z"));
+                tInfo.setAcpcMax(acpcMax);
+
+                tInfo.setTlrcRes(scriptParameters.getParams().getList("tlrcRes").getAsFloatArray());
+            } // do Talairach Transformation
+        } // if doTalairach
+        else { // not Talairach
+
+            TransMatrix transMat = null;
+
+            do25D = scriptParameters.doProcess3DAs25D();
+            doUpdateOrigin = scriptParameters.getParams().getBoolean("doUpdateOrigin");
+            doPad = scriptParameters.getParams().getBoolean("doPad");
+            padValue = scriptParameters.getParams().getInt("padValue");
+
+            oXres = scriptParameters.getParams().getFloat("oXres");
+            oYres = scriptParameters.getParams().getFloat("oYres");
+            oXdim = scriptParameters.getParams().getInt("oXdim");
+            oYdim = scriptParameters.getParams().getInt("oYdim");
+
+            double[][] xMat = null;
+            xMat = xfrm.getMatrix();
+
+            if ((DIM == 2) || do25D) {
+                transMat = new TransMatrix(3);
+                xMat = new double[3][3];
+
+                for (int i = 0; i < 3; i++) {
+                    xMat[i] = scriptParameters.getParams().getList("xMat" + i).getAsDoubleArray();
+                }
+            } else {
+                transMat = new TransMatrix(4);
+                oZres = scriptParameters.getParams().getFloat("oZres");
+                oZdim = scriptParameters.getParams().getInt("oZdim");
+
+                xMat = new double[4][4];
+
+                for (int i = 0; i < 4; i++) {
+                    xMat[i] = scriptParameters.getParams().getList("xMat" + i).getAsDoubleArray();
+                }
+            }
+
+            transMat.setMatrix(xMat);
+
+        } // else not Talairach
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, true);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("interp", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doVOI", doVOI));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doClip", doClip));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doTalairach", doTalairach));
+
+        if (doTalairach) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("transformType", transformType));
+
+            Point3Df acpcPC = tInfo.getAcpcPC();
+            scriptParameters.getParams().put(ParameterFactory.newParameter("acpcPC",
+                                                                           new float[] { acpcPC.x, acpcPC.y, acpcPC.z }));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("acpcRes", tInfo.getAcpcRes()));
+
+            Point3Df origAC = tInfo.getOrigAC();
+            scriptParameters.getParams().put(ParameterFactory.newParameter("origAC",
+                                                                           new float[] { origAC.x, origAC.y, origAC.z }));
+
+            Point3Df origPC = tInfo.getOrigPC();
+            scriptParameters.getParams().put(ParameterFactory.newParameter("origPC",
+                                                                           new float[] { origPC.x, origPC.y, origPC.z }));
+
+            scriptParameters.getParams().put(ParameterFactory.newParameter("origRes", tInfo.getOrigRes()));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("origDim", tInfo.getOrigDim()));
+
+            float[][] origOrient = tInfo.getOrigOrient();
+
+            for (int i = 0; i < 3; i++) {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("origOrient" + i, origOrient[i]));
+            }
+
+            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
+                    (transformType == TLRC_TO_ACPC)) {
+                Point3Df acpcMin = tInfo.getAcpcMin();
+
+                scriptParameters.getParams().put(ParameterFactory.newParameter("acpcMin",
+                                                                               new float[] {
+                                                                                   acpcMin.x, acpcMin.y, acpcMin.z
+                                                                               }));
+
+                Point3Df acpcMax = tInfo.getAcpcMax();
+                scriptParameters.getParams().put(ParameterFactory.newParameter("acpcMax",
+                                                                               new float[] {
+                                                                                   acpcMax.x, acpcMax.y, acpcMax.z
+                                                                               }));
+
+                scriptParameters.getParams().put(ParameterFactory.newParameter("tlrcRes", tInfo.getTlrcRes()));
+
+            } // do Talairach Transformation
+        } // if doTalairach
+        else { // not Talairach
+
+            scriptParameters.storeProcess3DAs25D(do25D);
+            scriptParameters.getParams().put(ParameterFactory.newParameter("doUpdateOrigin", doUpdateOrigin));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("doPad", doPad));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("padValue", padValue));
+
+            scriptParameters.getParams().put(ParameterFactory.newParameter("oXres", oXres));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("oYres", oYres));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("oXdim", oXdim));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("oYdim", oYdim));
+
+            double[][] xMat;
+            xMat = xfrm.getMatrix();
+
+            if ((DIM == 2) || do25D) {
+
+                for (int i = 0; i < 3; i++) {
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("xMat" + i, xMat[i]));
+                }
+
+            } else {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("oZres", oZres));
+                scriptParameters.getParams().put(ParameterFactory.newParameter("oZdim", oZdim));
+
+                for (int i = 0; i < 4; i++) {
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("xMat" + i, xMat[i]));
+                }
+            }
+        } // else not Talairach
     }
 
     /**
@@ -2189,60 +2257,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * Calls the algorithm with the set variables.
-     */
-    protected void callAlgorithm() {
-
-        if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
-            xfrm.invert();
-        }
-
-        // Hide dialog
-        setVisible(false);
-
-        if (doTalairach) {
-            callTalAlgorithm();
-
-            return;
-        }
-
-        if ((DIM == 2) || (do25D)) {
-            Preferences.debug("oXres, oYres = " + oXres + ", " + oYres);
-            Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
-            System.out.println(xfrm);
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, doVOI, doClip, doPad);
-            algoTrans.setPadValue(padValue);
-        } else { // ((DIM >= 3) && (!do25D))
-            Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
-            Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, doVOI,
-                                               doClip, doPad);
-            algoTrans.setPadValue(padValue);
-            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-        }
-
-        // This is very important. Adding this object as a listener allows
-        // the algorithm to notify this object when it has completed of failed.
-        // See algorithm performed event. This is made possible by implementing
-        algoTrans.addListener(this);
-        // Start the thread as a low priority because we wish to still have
-        // user interface work fast
-
-        if (isRunInSeparateThread()) {
-
-            if (algoTrans.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
-            if (!UI.isAppFrameVisible()) {
-                algoTrans.setProgressBarVisible(false);
-            }
-
-            algoTrans.run();
-        }
-    }
-
-    /**
      * DOCUMENT ME!
      */
     private void callTalAlgorithm() {
@@ -2418,6 +2432,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!UI.isAppFrameVisible()) {
                     algoTal.setProgressBarVisible(false);
                 }
@@ -3177,15 +3192,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             factor = magSlider.getValue() / (float) 100;
             oXdim = Math.round(image.getExtents()[0] * factor);
             oYdim = Math.round(image.getExtents()[1] * factor);
-            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]) /
-                        (float) (oXdim);
-            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]) /
-                        (float) (oYdim);
+            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]) / (float) (oXdim);
+            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]) / (float) (oYdim);
 
             if ((DIM >= 3) && (!do25D)) {
                 oZdim = Math.round(image.getExtents()[2] * factor);
-                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]) /
-                            (float) (oZdim);
+                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]) / (float) (oZdim);
             } else if ((DIM >= 3) && (do25D)) { // cannot change third dimension
                 oZdim = image.getExtents()[2];
                 oZres = image.getFileInfo(0).getResolutions()[2];

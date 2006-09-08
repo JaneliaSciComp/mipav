@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -205,6 +205,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmThresholdDual) {
             image.clearMask();
 
@@ -247,6 +248,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 resultImage = null;
             }
         }
+
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
@@ -291,87 +293,6 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, regionFlag));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdType", thresholdType));
-   
-        if (thresholdType == DEFAULT) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("thres1", thres1));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("thres2", thres2));
-        } 
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("binaryFlag",binaryFlag));    
-        scriptParameters.getParams().put(ParameterFactory.newParameter("fillValue", fillValue));  
-        scriptParameters.getParams().put(ParameterFactory.newParameter("isInverse", isInverse));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        min = (float) image.getMin();
-        max = (float) image.getMax();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            displayLoc = NEW;
-        } else {
-            displayLoc = REPLACE;
-        }
-        
-        regionFlag = scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE);
-        thresholdType = scriptParameters.getParams().getInt("thresholdType");
-
-        setFillValue(scriptParameters.getParams().getFloat("fillValue"));
-        setBinaryFlag(scriptParameters.getParams().getBoolean("binaryFlag"));
-        isInverse = scriptParameters.getParams().getBoolean("isInverse");
-        
-        if (thresholdType == DEFAULT) {
-            setThres1(scriptParameters.getParams().getFloat("thres1"));
-            setThres2(scriptParameters.getParams().getFloat("thres2"));
-        } else {
-            // using otsu or max entropy threshold, so calculate histogram
-            calcHistogram();
-
-            if (isInverse) {
-
-                if (thresholdType == OTSU) {
-                    setThres1(histogram.getOtsuThreshold());
-                } else {
-                    setThres1(histogram.getMaxEntropyThreshold());
-                }
-
-                setThres2((float) image.getMax());
-            } else {
-                setThres1((float) image.getMin());
-
-                if (thresholdType == OTSU) {
-                    setThres2(histogram.getOtsuThreshold());
-                } else {
-                    setThres2(histogram.getMaxEntropyThreshold());
-                }
-            }
-        }
-    }
-   
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(resultImage);
-        }
     }
 
     // *******************************************************************
@@ -505,7 +426,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         setSeparateThread(true);
         callAlgorithm();
     }
-    
+
     /**
      * Accessor that sets the "write binary image" flag.
      *
@@ -649,6 +570,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
+
                     if (!userInterface.isAppFrameVisible()) {
                         thresholdAlgo.setProgressBarVisible(false);
                     }
@@ -703,6 +625,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
+
                     if (!userInterface.isAppFrameVisible()) {
                         thresholdAlgo.setProgressBarVisible(false);
                     }
@@ -715,6 +638,89 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 return;
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        min = (float) image.getMin();
+        max = (float) image.getMax();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+
+        regionFlag = scriptParameters.doProcessWholeImage();
+        thresholdType = scriptParameters.getParams().getInt("thresholdType");
+
+        setFillValue(scriptParameters.getParams().getFloat("fillValue"));
+        setBinaryFlag(scriptParameters.getParams().getBoolean("binaryFlag"));
+        isInverse = scriptParameters.getParams().getBoolean("isInverse");
+
+        if (thresholdType == DEFAULT) {
+            setThres1(scriptParameters.getParams().getFloat("thres1"));
+            setThres2(scriptParameters.getParams().getFloat("thres2"));
+        } else {
+
+            // using otsu or max entropy threshold, so calculate histogram
+            calcHistogram();
+
+            if (isInverse) {
+
+                if (thresholdType == OTSU) {
+                    setThres1(histogram.getOtsuThreshold());
+                } else {
+                    setThres1(histogram.getMaxEntropyThreshold());
+                }
+
+                setThres2((float) image.getMax());
+            } else {
+                setThres1((float) image.getMin());
+
+                if (thresholdType == OTSU) {
+                    setThres2(histogram.getOtsuThreshold());
+                } else {
+                    setThres2(histogram.getMaxEntropyThreshold());
+                }
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
+
+        scriptParameters.storeProcessWholeImage(regionFlag);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdType", thresholdType));
+
+        if (thresholdType == DEFAULT) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thres1", thres1));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("thres2", thres2));
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("binaryFlag", binaryFlag));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fillValue", fillValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("isInverse", isInverse));
     }
 
     /**

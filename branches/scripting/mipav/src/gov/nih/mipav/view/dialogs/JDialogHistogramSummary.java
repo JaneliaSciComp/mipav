@@ -175,7 +175,9 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmHistogram) {
+
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
@@ -194,34 +196,6 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
      */
     public String getError() {
         return error;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_bins", bins));
-        if (image.isColorImage()) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("RGB_offset", bins));
-        }
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE, radWholeImage.isSelected()));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        
-        bins = scriptParameters.getParams().getInt("number_of_bins");
-        if (image.isColorImage() && scriptParameters.getParams().containsParameter("RGB_offset")) {
-            RGBOffset = scriptParameters.getParams().getInt("RGB_offset");
-        } else if (image.isColorImage()) {
-            throw new ParameterException("RGB_offset", "This parameter (RGB_offset) is required for the processing of color images.  Please re-record this script using a color image.");
-        }
-        radWholeImage.setSelected(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
     }
 
     /**
@@ -264,6 +238,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     histAlgo.setProgressBarVisible(false);
                 }
@@ -279,6 +254,39 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
 
             return;
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+
+        bins = scriptParameters.getParams().getInt("number_of_bins");
+
+        if (image.isColorImage() && scriptParameters.getParams().containsParameter("RGB_offset")) {
+            RGBOffset = scriptParameters.getParams().getInt("RGB_offset");
+        } else if (image.isColorImage()) {
+            throw new ParameterException("RGB_offset",
+                                         "This parameter (RGB_offset) is required for the processing of color images.  Please re-record this script using a color image.");
+        }
+
+        radWholeImage.setSelected(scriptParameters.doProcessWholeImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_bins", bins));
+
+        if (image.isColorImage()) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("RGB_offset", bins));
+        }
+
+        scriptParameters.storeProcessWholeImage(radWholeImage.isSelected());
     }
 
     /**
