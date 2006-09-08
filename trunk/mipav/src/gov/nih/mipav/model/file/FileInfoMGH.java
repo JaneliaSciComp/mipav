@@ -42,6 +42,10 @@ public class FileInfoMGH extends FileInfoBase {
     
     private float fov = Float.NaN;
     
+    private String transformFileName = null;
+    
+    private String cmdlines[] = null;
+    
     private TransMatrix matrix;
 
     
@@ -71,7 +75,7 @@ public class FileInfoMGH extends FileInfoBase {
     public void displayAboutInfo(JDialogBase dlog, TransMatrix matrix) {
         JDialogFileInfo dialog = (JDialogFileInfo) dlog;
         int[] extents;
-        int i;
+        int i, j;
         int[] editorChoice = new int[1];
         editorChoice[0] = JDialogEditor.STRING;
 
@@ -152,6 +156,25 @@ public class FileInfoMGH extends FileInfoBase {
         
         if (!Float.isNaN(fov)) {
             dialog.appendSecondaryData("Field of view", String.valueOf(fov).concat(" millimeters"));
+        }
+        
+        if (transformFileName != null) {
+            dialog.appendSecondaryData("Talairach transform file name", transformFileName.trim() + "\n");
+        }
+        
+        if (cmdlines != null) {
+            i = 0;
+            while (cmdlines[i] != null) {
+                dialog.appendSecondaryData("Command line " + String.valueOf(i+1), 
+                       cmdlines[i].trim().substring(0,Math.min(80,cmdlines[i].trim().length())) + "\n");
+                j = 80;
+                while (cmdlines[i].trim().length() > j) {
+                    dialog.appendSecondaryData(" ", cmdlines[i].substring(j,
+                            Math.min(j+80, cmdlines[i].trim().length())) + "\n");
+                    j += 80;
+                }
+                i++;
+            }
         }
         
     }
@@ -235,6 +258,22 @@ public class FileInfoMGH extends FileInfoBase {
      */
     public void setFOV(float fov) {
         this.fov = fov;
+    }
+    
+    /**
+     * 
+     * @param transformFileName
+     */
+    public void setTransformFileName(String transformFileName) {
+        this.transformFileName = transformFileName;
+    }
+    
+    /**
+     * 
+     * @param cmdlines
+     */
+    public void setCmdlines(String cmdlines[]) {
+        this.cmdlines = cmdlines;
     }
     
     /**
