@@ -32,46 +32,21 @@ import java.util.zip.GZIPInputStream;
  
   Immediately after the data buffer other optional data structures may be found:
   They are:
-  Recovery time float
+  Recovery time in milliseconds float
   Flip angle in radians float
-  Echo time float
-  Inversion time float
-  Field of view float
-  Lastly, tags including the path to a talairach transform, and a list of commands used
-  to create this data(provenance info) may be present.  The reading of the Talairach
-  transformation information is not currently implemented.  I am missing the documentation
-  on TAGreadStart, TAG_OLD_MGH_XFORM, TAG_MGH_XFORM, TAG_CMDLINE, fio_dirname, 
-  input_transform_file, get_linear_transform_ptr, get_inverse_linear_transform_ptr, and
-  TAGskip.
+  Echo time in milliseconds float
+  Inversion time in millseconds float
+  Field of view in millimetersfloat
+  Lastly, tags including the Talairach transform file name and a list of commands used
+  to create this data(provenance info) may be present.
   
-  What information I have about the Talairach transformation is as follows:
-  "FreeSurfer uses some of the tools developed at the Montreal Neurological Institute (MNI)
-  (http://www.bic.mni.mcgill.ca) to align anatomical volumes (using minctracc) and to compute
-  the linear Talairach transform (using mritotal).  The mritotal documentation says that it
-  generally works well for T1 dominant images.  The transform is contained in a 3x4 matrix
-  file called talairach.xfm and is located in the <subject name>/mri/transforms directory.
-  
-  The content of one talairach.xfm file was:
-  MNI Transform File
-%Tue Feb 28 18:17:20 2006>>> /usr/local/freesurfer/stable3/mni/bin/minctracc -clobber -debug /tmp/
-mritotal_935/src_8_dxyz.mnc /usr/local/freesurfer/stable3/mni/bin/../share/mni_autoreg/
-average_305_8_dxyz.mnc transforms/talairach.auto.xfm -transformation /tmp/mritotal_935/
-src_8tmp2c.xfm -lsq9 -xcorr -model_mask /usr/local/freesurfer/stable3/mni/bin/../share/mni_autoreg/
-average_305_8_mask.mnc -center 6.976350 19.544212 -19.984585 -step 4 4 4 -tol 0.004 -simplex 2
-%(Package MNI AutoReg, version 0.98r, compiled by nicks@minerva (x86_64-unknown-linux-gnu) on
- 2005-11-15 at 20:38:24)
-
-Transform_Type = Linear;
-Linear_Transform =
- 1.15497899055481 -0.023911377415061 0.0364909172058105 -5.71282863616943
- 0.0152252428233624 0.942800223827362 0.13589183986187 -21.7210540771484
- -0.0388212203979492 -0.161248967051506 1.1230742931366 -0.750320434570312;
- 
- mritotal is in the package mni_autoreg.  mritotal uses the MNI average_305
- template volume to create the linear talairach affine transform.  The template
- volume average_305.mnc resides in $FREESURFER_HOME/lib/mni/share/mni_autoreg
- directory in the MGH environment.
-
+  I am not reading the contents of the Talairach transform file for 3 reasons:
+  1.) This information is probably not very useful.
+  2.) Every sample file that I obtained from MGH gave the same name: talairach.xfm.
+      If this name is always used, then it is impossible to tell which .mgh file it
+      corresponds to.
+  3.) The Talairach transform file is a clear ascii file, so it can be easily read
+      with any number of common programs.
  </p>
  *
  * @see  FileIO
@@ -95,6 +70,20 @@ public class FileMGH extends FileBase {
     private static final int MRI_BITMAP = 5;
     
     private static final int MRI_TENSOR = 6;
+    
+    private static final int TAG_OLD_COLORTABLE = 1;
+    
+    private static final int TAG_OLD_USEREALRAS = 2;
+    
+    private static final int TAG_CMDLINE = 3;
+    
+    private static final int TAG_OLD_SURF_GEOM = 20;
+    
+    private static final int TAG_OLD_MGH_XFORM = 30;
+    
+    private static final int TAG_MGH_XFORM = 31;
+    
+    private static final int MAX_CMDS = 1000;
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -189,8 +178,10 @@ public class FileMGH extends FileBase {
     
     /** DOCUMENT ME! */
     private boolean showProgress = true;
-
     
+    String cmdlines[] = new String[MAX_CMDS];
+
+    int ncmds = 0;
 
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
@@ -242,6 +233,14 @@ public class FileMGH extends FileBase {
         int j;
         int index;
         boolean endianess;
+        long bytesLeft;
+        int tag;
+        long pLen;
+        String transformFileName = null;
+        int i;
+        boolean okay;
+        String str;
+        byte buf[];
 
         index = fileName.lastIndexOf(".");
 
@@ -513,6 +512,99 @@ public class FileMGH extends FileBase {
             // Field of view in millimeters
             fov = getFloat(endianess);
             fileInfo.setFOV(fov);
+        }
+        
+        bytesLeft = fileLength - (optionalStructuresLocation + 20);
+        while (bytesLeft >= 4) {
+            tag = getInt(endianess);
+            switch (tag) {
+            case 0: 
+                Preferences.debug("Tag = 0 signalling end of file read\n");
+                break;
+            case TAG_OLD_COLORTABLE:
+                Preferences.debug("TAG_OLD_COLORTABLE\n");
+                break;
+            case TAG_OLD_USEREALRAS:
+                Preferences.debug("TAG_OLD_USEREALRAS\n");
+                break;
+            case TAG_CMDLINE:
+                Preferences.debug("TAG_CMDLINE\n");
+                break;
+            case TAG_OLD_SURF_GEOM:
+                Preferences.debug("TAG_OLD_SURF_GEOM\n");
+                break;
+            case TAG_OLD_MGH_XFORM:
+                Preferences.debug("TAG_OLD_MGH_XFORM\n");
+                break;
+            case TAG_MGH_XFORM:
+                Preferences.debug("TAG_MGH_XFORM\n");
+                break;
+            default:
+                Preferences.debug("Tag = " + tag + "\n");
+            }
+            bytesLeft -= 4;
+            if ((bytesLeft > 0) && (tag != 0)) {
+                 switch (tag) {
+                 case TAG_OLD_MGH_XFORM:
+                     pLen = getInt(endianess) - 1;
+                     bytesLeft -= 4;
+                     break;
+                 case TAG_OLD_SURF_GEOM:
+                 case TAG_OLD_USEREALRAS:
+                 case TAG_OLD_COLORTABLE:
+                     pLen = 0;
+                     break;
+                 default:
+                     pLen = getLong(endianess);
+                     bytesLeft -= 8;
+                 } // switch (tag)
+                 
+                 switch (tag) {
+                 case TAG_OLD_MGH_XFORM:
+                 case TAG_MGH_XFORM:
+                     okay = true;
+                     for (i = 0; i < pLen && okay; i++) {
+                         if (i == 0) {
+                             transformFileName = getString(1);
+                             bytesLeft -= 1;
+                         }
+                         else {
+                             str = getString(1);
+                             bytesLeft -= 1;
+                             if (str.charAt(0) == '\n') {
+                                 okay = false;
+                             }
+                             else {
+                                 transformFileName = transformFileName.concat(str);
+                             }
+                         }
+                     } // for (i = 0; i < pLen && okay; i++)
+                     Preferences.debug("Transform file name = " + transformFileName + "\n");
+                     fileInfo.setTransformFileName(transformFileName);
+                     break;
+                     
+                 case TAG_CMDLINE:
+                     if (ncmds < MAX_CMDS) {
+                         cmdlines[ncmds] = getString((int)pLen);
+                         bytesLeft -= pLen;
+                         Preferences.debug("cmdlines[" + ncmds + "] = " + cmdlines[ncmds] + "\n");
+                         ncmds++;
+                     }
+                     else {
+                         Preferences.debug("Number of comands exceeds 1000/n");
+                     }
+                     break;
+                 default:
+                     buf = new byte[(int)pLen];
+                     raFile.read(buf);
+                     bytesLeft -= pLen;
+                     buf = null;
+                 } // switch (tag)
+            } // if ((bytesLeft > 0) && (tag != 0))
+        } // while (bytesLeft >= 4)
+        
+        if (ncmds > 0) {
+            fileInfo.setCmdlines(cmdlines);
         }
         
         raFile.close();
