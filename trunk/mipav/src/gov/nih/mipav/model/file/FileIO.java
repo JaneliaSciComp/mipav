@@ -3076,6 +3076,13 @@ public class FileIO {
                 }
 
                 break;
+                
+            case FileBase.MGH:
+                if (!writeMGH(image, options)) {
+                    return;
+                }
+                
+                break;
 
             case FileBase.DICOM:
                 if (!writeDicom(image, options)) {
@@ -8970,6 +8977,39 @@ public class FileIO {
         }
 
         image.setFileInfo(originalFileInfos);
+
+        return true;
+    }
+    
+    /**
+     * Writes a MGH or MGZ file to store the image.
+     *
+     * @param   image    The image to write.
+     * @param   options  The options to use to write the image.
+     *
+     * @return  Flag indicating that this was a successful write.
+     */
+    private boolean writeMGH(ModelImage image, FileWriteOptions options) {
+        FileMGH mghFile;
+
+        try { // Construct a new file object
+            mghFile = new FileMGH(UI, options.getFileName(), options.getFileDirectory(), true);
+            mghFile.writeImage(image, options);
+        } catch (IOException error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        }
 
         return true;
     }
