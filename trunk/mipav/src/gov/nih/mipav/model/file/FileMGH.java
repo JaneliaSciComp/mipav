@@ -1,16 +1,13 @@
 package gov.nih.mipav.model.file;
 
-
-import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.Toolkit;
 import java.io.*;
-import java.util.zip.GZIPInputStream;
+import java.util.zip.*;
 
 
 /**
@@ -313,7 +310,7 @@ public class FileMGH extends FileBase {
         // Third dimension of the image buffer
         depth = getInt(endianess); // 12
         
-        // Foruth dimension of the image buffer
+        // Fourth dimension of the image buffer
         nFrames = getInt(endianess); // 16
         
         if (nFrames > 1) {
@@ -1302,8 +1299,310 @@ public class FileMGH extends FileBase {
      * @exception  IOException  if there is an error writing the file
      */
     public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
+        int index;
+        boolean gzip;
+        int zBegin;
+        int zEnd;
+        int tBegin;
+        int tEnd;
+        boolean endianess;
+        byte byteBuffer[];
+        int sliceSize;
+        int z;
+        int t;
+        int zDim;
+        int numberSlices;
+        int count;
+        int j;
+        short shortBuffer[];
+        int intBuffer[];
+        float floatBuffer[];
+        long longBuffer[];
+        int tmpInt;
+       
+        index = fileName.lastIndexOf(".");
+
+        if ((fileName.substring(index + 1).equalsIgnoreCase("mgz")) ||
+            (fileName.substring(index + 1).equalsIgnoreCase("gz"))) {
+            gzip = true;
+            
+        } else {
+            gzip = false;
+        }  
         
-    }
+        if (showProgress) {
+            progressBar = new ViewJProgressBar(fileName, "Writing AFNI header file...", 0, 100, true, null, null);
+
+            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        }
+
+        zBegin = options.getBeginSlice();
+        zEnd = options.getEndSlice();
+
+        if (image.getNDims() == 4) {
+            tBegin = options.getBeginTime();
+            tEnd = options.getEndTime();
+        } else {
+            tBegin = 0;
+            tEnd = 0;
+        }
+
+        if (gzip) {
+            file = new File(fileDir + fileName.substring(0,index+1) + "mgh");
+        }
+        else  {
+            file = new File(fileDir + fileName);
+        }
+        raFile = new RandomAccessFile(file, "rw");
+
+        // Necessary so that if this is an overwritten file there isn't any
+        // junk at the end
+        raFile.setLength(0);
+        
+        // MGH file are always BIG_ENDIAN
+        endianess = BIG_ENDIAN;
+        extents = image.getExtents();
+        sliceSize = extents[0] * extents[1];
+        dataType = image.getFileInfo(0).getDataType();
+        resolutions = image.getFileInfo(0).getResolutions();
+        matrix = image.getMatrix();
+        if (matrix == null) {
+            matrix = new TransMatrix(4);
+        }
+        
+        // Current value of version number is 1
+        writeInt(1, endianess); // 0
+        
+        //  First dimension of the image buffer
+        writeInt(extents[0], endianess); // 4
+        
+        // Second dimension of the image buffer
+        writeInt(extents[1], endianess); // 8
+        
+        // Third dimension of the image buffer
+        writeInt(zEnd - zBegin + 1, endianess); // 12
+        
+        // Fourth dimension of the image buffer
+        writeInt(tEnd - tBegin + 1, endianess); // 16
+        
+        // Type of data 
+        switch (dataType) {
+        case ModelStorageBase.UBYTE:
+            mghType = MRI_UCHAR;
+            break;
+        case ModelStorageBase.BYTE:
+        case ModelStorageBase.SHORT:
+            mghType = MRI_SHORT;
+            break;
+        case ModelStorageBase.USHORT:
+        case ModelStorageBase.INTEGER:
+            mghType = MRI_INT;
+            break;
+        case ModelStorageBase.UINTEGER:
+        case ModelStorageBase.LONG:
+            mghType = MRI_LONG;
+            break;
+        case ModelStorageBase.FLOAT:
+            mghType = MRI_FLOAT;
+            break;
+        default:
+            Preferences.debug("Cannot handle type = " + image.getFileInfo(0).getDataType() + "\n");
+            throw (new IOException("Cannot write MGH image with data type = " +
+                    image.getFileInfo(0).getDataType()));
+        } // switch (mghType)
+        writeInt(mghType, endianess); // 20
+        
+        // Degrees of freedom
+        writeInt(0, endianess); // 24
+        
+        // Good RAS flag
+        writeShort((short)1, endianess); // 28
+        
+        // The x, y, and z variables define the rotational part
+        // of the affine transform.
+        xr = -(float)matrix.get(0,0)/resolutions[0];
+        yr = -(float)matrix.get(0,1)/resolutions[1];
+        zr = -(float)matrix.get(0,2)/resolutions[2];
+            
+        xa = -(float)matrix.get(1,0)/resolutions[0];
+        ya = -(float)matrix.get(1,1)/resolutions[1];
+        za = -(float)matrix.get(1,2)/resolutions[2];
+        
+        xs = (float)matrix.get(2,0)/resolutions[0];
+        ys = (float)matrix.get(2,1)/resolutions[1];
+        zs = (float)matrix.get(2,2)/resolutions[2];
+        
+        writeFloat(resolutions[0], endianess); // 30
+        writeFloat(resolutions[1], endianess); // 34
+        writeFloat(resolutions[2], endianess); // 38
+        writeFloat(xr, endianess); // 42
+        writeFloat(xa, endianess); // 46
+        writeFloat(xs, endianess); // 50
+        writeFloat(yr, endianess); // 54
+        writeFloat(ya, endianess); // 58
+        writeFloat(ys, endianess); // 62
+        writeFloat(zr, endianess); // 66
+        writeFloat(za, endianess); // 70
+        writeFloat(zs, endianess); // 74
+        // Since in readMGH the origin value is such as to
+        // put the center at 0,0,0
+        // cr
+        writeFloat(0.0f, endianess); // 78
+        // ca
+        writeFloat(0.0f, endianess); // 82
+        // cs
+        writeFloat(0.0f, endianess); // 86
+        // Fill out the other 194 bytes of the 284 byte header
+        byteBuffer = new byte[194];
+        raFile.write(byteBuffer);
+        
+        zDim = image.getExtents()[2];
+        numberSlices = (tEnd - tBegin + 1) * (zEnd - zBegin + 1);
+        count = 0;
+        switch (dataType) {
+
+        case ModelStorageBase.UBYTE:
+            byteBuffer = new byte[sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = zBegin; z <= zEnd; z++) {
+                    if (showProgress) {
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                    }
+                    image.exportSliceXY((t * zDim) + z, byteBuffer);
+                    raFile.write(byteBuffer);
+                }
+            }
+
+            break;
+        case ModelStorageBase.BYTE:
+        case ModelStorageBase.SHORT:
+            shortBuffer = new short[sliceSize];
+            byteBuffer = new byte[2 * sliceSize];
+            for (t = 0; t <= tEnd; t++) {
+
+                for (z = zBegin; z <= zEnd; z++) {
+                    if (showProgress) {
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                    }
+                    image.exportSliceXY((t * zDim) + z, shortBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        byteBuffer[2 * j] = (byte) (shortBuffer[j] >>> 8);
+                        byteBuffer[(2 * j) + 1] = (byte) (shortBuffer[j]);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = zBegin; z <= zEnd; z++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+        case ModelStorageBase.USHORT:
+        case ModelStorageBase.INTEGER:
+            intBuffer = new int[sliceSize];
+            byteBuffer = new byte[4 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = zBegin; z <= zEnd; z++) {
+                    if (showProgress) {
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                    }
+                    image.exportSliceXY((t * zDim) + z, intBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        byteBuffer[4 * j] = (byte) (intBuffer[j] >>> 24);
+                        byteBuffer[(4 * j) + 1] = (byte) (intBuffer[j] >>> 16);
+                        byteBuffer[(4 * j) + 2] = (byte) (intBuffer[j] >>> 8);
+                        byteBuffer[(4 * j) + 3] = (byte) (intBuffer[j]);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = zBegin; z <= zEnd; z++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+            
+        case ModelStorageBase.UINTEGER:
+        case ModelStorageBase.LONG:
+            longBuffer = new long[sliceSize];
+            byteBuffer = new byte[8 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+
+                for (z = zBegin; z <= zEnd; z++) {
+                    if (showProgress) {
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                    }
+                    image.exportSliceXY((t * zDim) + z, longBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        byteBuffer[8 * j] = (byte) (longBuffer[j] >>> 56);
+                        byteBuffer[(8 * j) + 1] = (byte) (longBuffer[j] >>> 48);
+                        byteBuffer[(8 * j) + 2] = (byte) (longBuffer[j] >>> 40);
+                        byteBuffer[(8 * j) + 3] = (byte) (longBuffer[j] >>> 32);
+                        byteBuffer[(8 * j) + 4] = (byte) (longBuffer[j] >>> 24);
+                        byteBuffer[(8 * j) + 5] = (byte) (longBuffer[j] >>> 16);
+                        byteBuffer[(8 * j) + 6] = (byte) (longBuffer[j] >>> 8);
+                        byteBuffer[(8 * j) + 7] = (byte) (longBuffer[j]);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = zBegin; z <= zEnd; z++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+
+        case ModelStorageBase.FLOAT:
+            floatBuffer = new float[sliceSize];
+            byteBuffer = new byte[4 * sliceSize];
+            for (t = tBegin; t <= tEnd; t++) {
+                for (z = zBegin; z <= zEnd; z++) {
+                    if (showProgress) {
+                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                    }
+                    image.exportSliceXY((t * zDim) + z, floatBuffer);
+
+                    for (j = 0; j < sliceSize; j++) {
+                        tmpInt = Float.floatToIntBits(floatBuffer[j]);
+                        byteBuffer[4 * j] = (byte) (tmpInt >>> 24);
+                        byteBuffer[(4 * j) + 1] = (byte) (tmpInt >>> 16);
+                        byteBuffer[(4 * j) + 2] = (byte) (tmpInt >>> 8);
+                        byteBuffer[(4 * j) + 3] = (byte) (tmpInt);
+                    }
+
+                    raFile.write(byteBuffer);
+                } // for (z = zBegin; z <= zEnd; z++)
+            } // for (t = tBegin; t <= tEnd; t++)
+
+            break;
+
+        
+        } // switch(dataType)
+        raFile.close();
+        if (gzip) {
+            if (showProgress) {
+                progressBar.setVisible(isProgressBarVisible());
+                progressBar.setMessage("Compressing GZIP file ...");
+            }
+            GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(fileDir + fileName));
+            
+            FileInputStream in = new FileInputStream(fileDir + fileName.substring(0,index+1) + "mgh");
+            
+            byteBuffer = new byte[1024];
+            int len;
+            while ((len = in.read(byteBuffer)) > 0) {
+                out.write(byteBuffer, 0, len);
+            }
+            in.close();
+            out.finish();
+            out.close();
+        } // if (gzip)
+    
+        if (progressBar != null) {
+            progressBar.dispose();
+        }
+
+    } // writeImage
 
     
 }
