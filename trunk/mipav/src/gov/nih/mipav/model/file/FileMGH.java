@@ -36,7 +36,12 @@ import java.util.zip.GZIPInputStream;
   Flip angle in radians float
   Echo time in milliseconds float
   Inversion time in millseconds float
-  Field of view in millimetersfloat
+  Field of view in millimeters float
+  Comment about fov field from Nick Schmansky:
+  The FoV field should be ignored.  In discussing this field with Bruce Fischl, and
+  looking more closely at the code, it appears to be a field with a long and 
+  inconsistent usage history (in how it is set and where the data originates).
+  We do not rely on it in our binaries.
   Lastly, tags including the Talairach transform file name and a list of commands used
   to create this data(provenance info) may be present.
   
@@ -255,8 +260,10 @@ public class FileMGH extends FileBase {
 
         if (gunzip) {
             int totalBytesRead = 0;
-            progressBar.setVisible(isProgressBarVisible());
-            progressBar.setMessage("Uncompressing GZIP file ...");
+            if (showProgress) {
+                progressBar.setVisible(isProgressBarVisible());
+                progressBar.setMessage("Uncompressing GZIP file ...");
+            }
             fis = new FileInputStream(file);
 
             GZIPInputStream gzin = new GZIPInputStream(new BufferedInputStream(fis));
@@ -628,11 +635,13 @@ public class FileMGH extends FileBase {
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
         int offset;
         
-        progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
+        if (showProgress) {
+            progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
                 ViewUserInterface.getReference().getProgressBarPrefix() + "MGH image(s) ...",
                 0, 100, false, null, null);
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
+            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        }
         
         fileInfo = new FileInfoMGH(fileName, fileDir, FileBase.MGH);
 
@@ -1283,6 +1292,18 @@ public class FileMGH extends FileBase {
         }
 
     } // end updateUnitsOfMeasure()
+    
+    /**
+     * Writes a MGH or MGZ format type image.
+     *
+     * @param      image    Image model of data to write.
+     * @param      options  options such as starting and ending slices and times
+     *
+     * @exception  IOException  if there is an error writing the file
+     */
+    public void writeImage(ModelImage image, FileWriteOptions options) throws IOException {
+        
+    }
 
     
 }
