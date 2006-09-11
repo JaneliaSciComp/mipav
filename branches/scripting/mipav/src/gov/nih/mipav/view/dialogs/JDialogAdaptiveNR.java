@@ -3,9 +3,9 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
@@ -132,50 +132,6 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight",distWeight));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb",radiusCb));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr",radiusCr));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY",radiusY));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("reduce",reduce));
-     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams(){
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.doOutputNewImage()) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        distWeight = scriptParameters.getParams().getFloat("distWeight");
-        radiusCb = scriptParameters.getParams().getFloat("radiusCb");
-        radiusCr = scriptParameters.getParams().getFloat("radiusCr");
-        radiusY = scriptParameters.getParams().getFloat("radiusY");
-        reduce = scriptParameters.getParams().getBoolean("reduce");
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
-    /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
      *
      * @param  event  Event that triggers function.
@@ -206,6 +162,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmAdaptiveNR) {
             image.clearMask();
 
@@ -264,8 +221,6 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
         return resultImage;
     }
 
-   
-   
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
@@ -319,8 +274,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
     }
 
     /**
-     * Accessor that sets whether or not Cr and Cb are filtered at halved dimensions @ param reduc Value to set reduce
-     * to.
+     * Accessor that sets whether or not Cr and Cb are filtered at halved dimensions.
      *
      * @param  reduc  DOCUMENT ME!
      */
@@ -336,10 +290,11 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
         String name = makeImageName(image.getImageName(), "_adaptiveNR");
         int[] destExtents;
 
-        ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Converting to Y,Cr,Cb ...", 0, 100, true);
+        ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Converting to Y,Cr,Cb ...", 0, 100,
+                                                            true);
         progressBar.setSeparateThread(runInSeparateThread);
         progressBar.setVisible(userInterface.isAppFrameVisible());
-        
+
         if (image.getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
@@ -374,7 +329,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
                 adaptiveNRAlgo.addListener(this);
 
                 adaptiveNRAlgo.addProgressChangeListener(progressBar);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -403,7 +358,8 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                adaptiveNRAlgo = new AlgorithmAdaptiveNR(null, image, radiusY, radiusCr, radiusCb, distWeight, reduce, 0, 100);
+                adaptiveNRAlgo = new AlgorithmAdaptiveNR(null, image, radiusY, radiusCr, radiusCb, distWeight, reduce,
+                                                         0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -411,7 +367,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
                 adaptiveNRAlgo.addListener(this);
 
                 adaptiveNRAlgo.addProgressChangeListener(progressBar);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -444,6 +400,51 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
                 return;
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        distWeight = scriptParameters.getParams().getFloat("edge_preservation_strength");
+        radiusCb = scriptParameters.getParams().getFloat("radius_Cb");
+        radiusCr = scriptParameters.getParams().getFloat("radius_Cr");
+        radiusY = scriptParameters.getParams().getFloat("radius_Y");
+        reduce = scriptParameters.getParams().getBoolean("do_reduce_dims");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("edge_preservation_strength", distWeight));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cb", radiusCb));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cr", radiusCr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Y", radiusY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_reduce_dims", reduce));
     }
 
     /**

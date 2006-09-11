@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,7 +19,7 @@ import javax.swing.*;
  * Dialog to get user input, then call a specified diffusion algorithm. It should be noted that the algorithms are
  * executed in their own thread.
  */
-public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -42,7 +42,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
 
     /** DOCUMENT ME! */
     private boolean do25D = true;
-    
+
     /** DOCUMENT ME! */
     private boolean entireImage = true;
 
@@ -94,44 +94,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(srcImage);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.storeProcess3DAs25D(do25D);
-        scriptParameters.storeProcessWholeImage(entireImage);
-        scriptParameters.storeNumIterations(numIterations);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("gaussianScale", gaussianScale));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("derivativeScale", derivativeScale));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("diffusitivityDenom", diffusitivityDenom));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        srcImage = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = srcImage.getParentFrame();
-        
-        do25D = scriptParameters.doProcess3DAs25D();
-        entireImage = scriptParameters.doProcessWholeImage();
-        numIterations = scriptParameters.getNumIterations();
-        gaussianScale = scriptParameters.getParams().getFloat("gaussianScale");
-        derivativeScale = scriptParameters.getParams().getFloat("derivativeScale");
-        diffusitivityDenom = scriptParameters.getParams().getFloat("diffusitivityDenom");
-    }
-
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
-    /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
      * @param  event  Event that triggers function.
@@ -157,6 +119,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      * @param  algorithm  DOCUMENT ME!
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (((algorithm instanceof AlgorithmCoherenceEnhancingDiffusion) &&
                  (coherenceEnhancingDiffusionAlgo.isCompleted() == true)) && (resultImage != null)) {
 
@@ -208,8 +171,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      * Accessor that sets if slice by slice processing occurs.
      *
      * @param  do25D  DOCUMENT ME!
-     *
-     * @apram  do25D
      */
     public void setDo25D(boolean do25D) {
         this.do25D = do25D;
@@ -231,6 +192,103 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      */
     public void setNumIterations(int numIterations) {
         this.numIterations = numIterations;
+    }
+
+    /**
+     * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
+     * or not there is a separate destination image.
+     */
+    protected void callAlgorithm() {
+
+        createProgressBar(srcImage.getImageName());
+
+        String name;
+
+        name = makeImageName(srcImage.getImageName(), "_ce");
+
+        try {
+
+            if (srcImage.isColorImage()) {
+                resultImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), name, userInterface);
+            } else {
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name, userInterface);
+            }
+
+            coherenceEnhancingDiffusionAlgo = new AlgorithmCoherenceEnhancingDiffusion(resultImage, srcImage,
+                                                                                       numIterations,
+                                                                                       diffusitivityDenom,
+                                                                                       derivativeScale, gaussianScale,
+                                                                                       do25D, entireImage, 0, 100);
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed or failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            coherenceEnhancingDiffusionAlgo.addListener(this);
+
+            coherenceEnhancingDiffusionAlgo.addProgressChangeListener(progressBar);
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (coherenceEnhancingDiffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+
+                coherenceEnhancingDiffusionAlgo.run();
+            } // end if (isRunInSeparateThread())
+
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("JDialogCohEnhDiffusion: unable to allocate enough memory");
+
+            if (resultImage != null) {
+                resultImage.disposeLocal(); // Clean up memory of result image
+                resultImage = null;
+            }
+
+            return;
+        } // end try()=catch()
+
+        dispose();
+    } // end callAlgorithm()
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = srcImage.getParentFrame();
+
+        do25D = scriptParameters.doProcess3DAs25D();
+        entireImage = scriptParameters.doProcessWholeImage();
+        numIterations = scriptParameters.getNumIterations();
+        gaussianScale = scriptParameters.getParams().getFloat("gaussian_scale");
+        derivativeScale = scriptParameters.getParams().getFloat("derivative_scale");
+        diffusitivityDenom = scriptParameters.getParams().getFloat("diffusitivity_denominator");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+
+        scriptParameters.storeProcess3DAs25D(do25D);
+        scriptParameters.storeProcessWholeImage(entireImage);
+        scriptParameters.storeNumIterations(numIterations);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gaussian_scale", gaussianScale));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("derivative_scale", derivativeScale));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("diffusitivity_denominator",
+                                                                       diffusitivityDenom));
     }
 
     /**
@@ -344,64 +402,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
 
         return parameterPanel;
     } // end buildParameterPanel()
-
-    /**
-     * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
-     * or not there is a separate destination image.
-     */
-    protected void callAlgorithm() {
-
-        createProgressBar(srcImage.getImageName());
-        String name;
-
-        name = makeImageName(srcImage.getImageName(), "_ce");
-
-        try {
-
-            if (srcImage.isColorImage()) {
-                resultImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), name, userInterface);
-            } else {
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name, userInterface);
-            }
-
-            coherenceEnhancingDiffusionAlgo = new AlgorithmCoherenceEnhancingDiffusion(resultImage, srcImage,
-                                                                                       numIterations,
-                                                                                       diffusitivityDenom,
-                                                                                       derivativeScale, gaussianScale,
-                                                                                       do25D, entireImage,
-                                                                                       0, 100);
-
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed or failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            coherenceEnhancingDiffusionAlgo.addListener(this);
-            
-            coherenceEnhancingDiffusionAlgo.addProgressChangeListener(progressBar);
-            
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (coherenceEnhancingDiffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-
-                coherenceEnhancingDiffusionAlgo.run();
-            } // end if (isRunInSeparateThread())
-
-        } catch (OutOfMemoryError x) {
-            MipavUtil.displayError("JDialogCohEnhDiffusion: unable to allocate enough memory");
-
-            if (resultImage != null) {
-                resultImage.disposeLocal(); // Clean up memory of result image
-                resultImage = null;
-            }
-
-            return;
-        } // end try()=catch()
-
-        dispose();
-    } // end callAlgorithm()
 
     /**
      * DOCUMENT ME!

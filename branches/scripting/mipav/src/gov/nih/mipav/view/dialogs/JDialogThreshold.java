@@ -33,13 +33,13 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     private static final long serialVersionUID = 8143576591075984708L;
 
     /** DOCUMENT ME! */
-    private static int DEFAULT = 0;
+    private static final int DEFAULT = 0;
 
     /** DOCUMENT ME! */
-    private static int OTSU = 1;
+    private static final int OTSU = 1;
 
     /** DOCUMENT ME! */
-    private static int MAX_ENT = 2;
+    private static final int MAX_ENT = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -122,12 +122,6 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private boolean useMaxEnt = false;
-
-    /** DOCUMENT ME! */
-    private boolean useOtsu = false;
-
-    /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
@@ -156,22 +150,6 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         min = (float) im.getMin();
         max = (float) im.getMax();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogThreshold(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        min = (float) im.getMin();
-        max = (float) im.getMax();
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -405,21 +383,21 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     /**
      * Function for setting up/running the threshold algorithm from the ViewJFrameHistoLUT.
      *
-     * @param  im         ModelImage image
-     * @param  thres1     float lower threshold
-     * @param  thres2     float upper threshold
-     * @param  fillV      float fill value
-     * @param  isBinary   DOCUMENT ME!
-     * @param  isInverse  DOCUMENT ME!
+     * @param  im           ModelImage image
+     * @param  lowerThres   float lower threshold
+     * @param  upperThres   float upper threshold
+     * @param  fillV        float fill value
+     * @param  isBinary     DOCUMENT ME!
+     * @param  inverseFlag  DOCUMENT ME!
      */
-    public void runFromLUTFrame(ModelImage im, float thres1, float thres2, float fillV, boolean isBinary,
-                                boolean isInverse) {
+    public void runFromLUTFrame(ModelImage im, float lowerThres, float upperThres, float fillV, boolean isBinary,
+                                boolean inverseFlag) {
         this.image = im;
         this.userInterface = im.getUserInterface();
-        this.thres1 = thres1;
-        this.thres2 = thres2;
+        this.thres1 = lowerThres;
+        this.thres2 = upperThres;
         this.fillValue = fillV;
-        this.isInverse = isInverse;
+        this.isInverse = inverseFlag;
         binaryFlag = isBinary;
         regionFlag = true;
         setDisplayLocNew();
@@ -661,22 +639,22 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         min = (float) image.getMin();
         max = (float) image.getMax();
 
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+        if (scriptParameters.doOutputNewImage()) {
             displayLoc = NEW;
         } else {
             displayLoc = REPLACE;
         }
 
         regionFlag = scriptParameters.doProcessWholeImage();
-        thresholdType = scriptParameters.getParams().getInt("thresholdType");
+        thresholdType = scriptParameters.getParams().getInt("threshold_type");
 
-        setFillValue(scriptParameters.getParams().getFloat("fillValue"));
-        setBinaryFlag(scriptParameters.getParams().getBoolean("binaryFlag"));
-        isInverse = scriptParameters.getParams().getBoolean("isInverse");
+        setFillValue(scriptParameters.getParams().getFloat("fill_value"));
+        setBinaryFlag(scriptParameters.getParams().getBoolean("do_make_binary_image"));
+        isInverse = scriptParameters.getParams().getBoolean("is_inverse_threshold");
 
         if (thresholdType == DEFAULT) {
-            setThres1(scriptParameters.getParams().getFloat("thres1"));
-            setThres2(scriptParameters.getParams().getFloat("thres2"));
+            setThres1(scriptParameters.getParams().getFloat("min_threshold"));
+            setThres2(scriptParameters.getParams().getFloat("max_threshold"));
         } else {
 
             // using otsu or max entropy threshold, so calculate histogram
@@ -711,16 +689,16 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
 
         scriptParameters.storeProcessWholeImage(regionFlag);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdType", thresholdType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_type", thresholdType));
 
         if (thresholdType == DEFAULT) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("thres1", thres1));
-            scriptParameters.getParams().put(ParameterFactory.newParameter("thres2", thres2));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("min_threshold", thres1));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("max_threshold", thres2));
         }
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("binaryFlag", binaryFlag));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("fillValue", fillValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("isInverse", isInverse));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_make_binary_image", binaryFlag));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_inverse_threshold", isInverse));
     }
 
     /**

@@ -218,6 +218,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         if (image.getNDims() == 3) {
             opts.setBeginSlice(0);
             opts.setEndSlice(image.getExtents()[2] - 1);
+            opts.setAxisOrientation(image.getAxisOrientation());
 
             if (fileType == FileBase.TIFF) {
                 opts.setWritePackBit(false);

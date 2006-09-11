@@ -1,15 +1,19 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.view.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
-import javax.swing.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.*;
+
+import java.awt.*;
+import java.awt.event.*;
+
+import java.util.*;
+
+import javax.swing.*;
 
 
 /**
@@ -26,49 +30,49 @@ import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
  * @version  1.00
  */
 public class JDialogLoadImage extends JDialogScriptableBase implements AlgorithmInterface {
+
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-    public static int LOAD_FROM_FRAME = 0;
 
-    public static int LOAD_FROM_FILE = 1;
+    /** DOCUMENT ME! */
+    public static final int LOAD_FROM_FRAME = 0;
 
-    public static int LOAD_BLANK = 2;
+    /** DOCUMENT ME! */
+    public static final int LOAD_FROM_FILE = 1;
+
+    /** DOCUMENT ME! */
+    public static final int LOAD_BLANK = 2;
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -8455082719816268161L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
     /** DOCUMENT ME! */
     private JButton browseButton;
+
+    /** If blank image is to be loaded...need the type (for non-color images). */
+    private int dataType;
 
     /** DOCUMENT ME! */
     private boolean doOrigins = true, doOrients = true;
 
+    /** Source image. */
+    private ModelImage image;
+
     /** DOCUMENT ME! */
     private JComboBox imageChooser;
-
-    /** A ModelImage (from frame) or a file */
-    private Object importObject;
 
     /** image taken from the frame to be imported:. */
     private ModelImage importImage;
 
-    /** a cloned version of importImage that will be inserted into the source images's B slot */
-    private ModelImage resultImage;
-
-    /** Source image. */
-    private ModelImage image;
+    /** are we loading from frame, file, or blank. */
+    private int loadType;
 
     /** DOCUMENT ME! */
     private JCheckBox matchOrigins, matchOrients;
 
     /** DOCUMENT ME! */
     private JPanel picListingPanel;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** are we loading from frame, file, or blank */
-    private int loadType;
 
     /** DOCUMENT ME! */
     private JRadioButton radioBool;
@@ -100,24 +104,37 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private JRadioButton radioUShort;
 
-    /** If blank image is to be loaded...need the type (for non-color images)*/
-    private int dataType;
+    /** a cloned version of importImage that will be inserted into the source images's B slot. */
+    private ModelImage resultImage;
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Empty Constructor for script.
+     */
+    public JDialogLoadImage() { }
+
     /**
      * Creates a new JDialogLoadImage object.
      *
-     * @param  component  DOCUMENT ME!
+     * @param  parentFrame  DOCUMENT ME!
+     * @param  srcImage     DOCUMENT ME!
+     * @param  type         DOCUMENT ME!
      */
     public JDialogLoadImage(Frame parentFrame, ModelImage srcImage, int type) {
         super(parentFrame, true);
         image = srcImage;
         this.loadType = type;
+
         if (loadType == LOAD_FROM_FRAME) {
             init();
         } else if (loadType == LOAD_BLANK) {
             doOrigins = false;
             doOrients = false;
+
             if (image.isColorImage()) {
                 dataType = image.getType();
                 callAlgorithm();
@@ -127,18 +144,153 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
         }
     }
 
-    /** 
-     * Empty Constructor for script
-     *
-     */
-    public JDialogLoadImage() {}
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
+    /**
+     * when a button is clicked.
+     *
+     * @param  ae  DOCUMENT ME!
+     */
+    public void actionPerformed(ActionEvent ae) {
+        String command = ae.getActionCommand();
+
+        if (command.equalsIgnoreCase("ok")) {
+
+            if (setVariables()) {
+                callAlgorithm();
+            }
+        } else if (command.equalsIgnoreCase("browse")) {
+            dispose();
+            MipavUtil.displayError("Browse files...  Not Yet Supported.");
+        } else if (command.equalsIgnoreCase("cancel")) {
+            dispose();
+        }
+    }
+
+    /**
+     * adds the "Browse Files ...." button to the right of the panel.
+     */
+    public void addBrowseFilesButton() {
+        browseButton = new JButton("Browse...");
+        browseButton.setActionCommand("browse");
+        browseButton.addActionListener(this);
+        browseButton.setPreferredSize(MipavUtil.defaultButtonSize);
+        browseButton.setFont(serif12B);
+        picListingPanel.add(browseButton);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  algo  DOCUMENT ME!
+     */
+    public void algorithmPerformed(AlgorithmBase algo) {
+
+        if (algo.isCompleted()) {
+            insertScriptLine();
+        } else {
+
+            // remove the cloned image if there was a failure
+            if (resultImage != null) {
+                resultImage.disposeLocal();
+                resultImage = null;
+            }
+        }
+
+        dispose();
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void callAlgorithm() {
+        AlgorithmLoadB algoLoad = new AlgorithmLoadB();
+        algoLoad.addListener(this);
+        algoLoad.run();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean getMatchOrients() {
+        return doOrients;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean getMatchOrigins() {
+        return doOrigins;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        loadType = scriptParameters.getParams().getInt("load_type");
+
+        if (loadType == LOAD_FROM_FRAME) {
+            importImage = scriptParameters.retrieveImage("image_to_import");
+        } else if (loadType == LOAD_BLANK) {
+            dataType = scriptParameters.getParams().getInt("data_type");
+
+            // check to see if there is a mismatch between color/non color datatypes
+            if ((image.isColorImage() && !ModelImage.isColorImage(dataType)) ||
+                    (!image.isColorImage() && ModelImage.isColorImage(dataType))) {
+                dataType = image.getType();
+            }
+
+        }
+
+        doOrigins = scriptParameters.getParams().getBoolean("do_match_origins");
+        doOrients = scriptParameters.getParams().getBoolean("do_match_orients");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        if (loadType == LOAD_FROM_FRAME) {
+            scriptParameters.storeImage(importImage, "image_to_import");
+        } else if (loadType == LOAD_BLANK) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("data_type", dataType));
+        }
+
+        scriptParameters.storeOutputImageParams(resultImage, true);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("load_type", loadType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doOrigins));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_orients", doOrients));
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
     private void init() {
+
         if (loadType == LOAD_FROM_FRAME) {
             setTitle("Load ImageB onto " + image.getImageName());
-            userInterface = ((ViewJFrameImage) parentFrame).getUserInterface();
+            userInterface = ViewUserInterface.getReference();
             picListingPanel = new JPanel();
             picListingPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
             JLabel loading = new JLabel("Set as ImageB: ");
             loading.setFont(MipavUtil.font12);
             loading.setForeground(Color.black);
@@ -156,23 +308,28 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             matchOrigins.setEnabled(true);
             matchOrigins.setSelected(true);
             doOrigins = matchOrigins.isSelected();
+
             Box mainBox = new Box(BoxLayout.Y_AXIS);
             mainBox.setAlignmentX(Component.LEFT_ALIGNMENT);
             mainBox.add(picListingPanel);
             mainBox.add(matchOrients);
             mainBox.add(matchOrigins);
             this.getContentPane().add(mainBox, BorderLayout.NORTH);
+
             JPanel okCancelPanel = new JPanel();
             buildOKButton();
             okCancelPanel.add(OKButton);
+
             if (imageChooser.getItemCount() == 0) {
                 OKButton.setEnabled(false);
             }
+
             buildCancelButton();
             okCancelPanel.add(cancelButton);
             this.getContentPane().add(okCancelPanel, BorderLayout.SOUTH);
         } else if (loadType == LOAD_BLANK) {
             setTitle("Load blank image");
+
             ButtonGroup group1 = new ButtonGroup();
             radioBool = new JRadioButton("Boolean", false);
             radioBool.setFont(serif12);
@@ -204,8 +361,10 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             radioDouble = new JRadioButton("Double", false);
             radioDouble.setFont(serif12);
             group1.add(radioDouble);
+
             JPanel panelImageType = new JPanel(new GridBagLayout());
             panelImageType.setBorder(buildTitledBorder("Image Type"));
+
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridwidth = 1;
             gbc.gridheight = 1;
@@ -232,6 +391,7 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             panelImageType.add(radioFloat, gbc);
             gbc.gridy = 4;
             panelImageType.add(radioDouble, gbc);
+
             JPanel buttonPanel = new JPanel();
             buildOKButton();
             buttonPanel.add(OKButton);
@@ -241,129 +401,58 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
             getContentPane().add(mainDialogPanel);
         }
+
         pack();
-        setLocation( (Toolkit.getDefaultToolkit().getScreenSize().width / 2) - this.getSize().width, (Toolkit
-                .getDefaultToolkit().getScreenSize().height / 2)
-                - this.getSize().height);
+        setLocation((Toolkit.getDefaultToolkit().getScreenSize().width / 2) - this.getSize().width,
+                    (Toolkit.getDefaultToolkit().getScreenSize().height / 2) - this.getSize().height);
         setVisible(true);
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
     /**
-     * when a button is clicked.
+     * DOCUMENT ME!
      *
-     * @param  ae  DOCUMENT ME!
+     * @return  DOCUMENT ME!
      */
-    public void actionPerformed(ActionEvent ae) {
-        String command = ae.getActionCommand();
-        if (command.equalsIgnoreCase("ok")) {
-            if (setVariables()) {
-                callAlgorithm();
-            }
-        } else if (command.equalsIgnoreCase("browse")) {
-            dispose();
-            MipavUtil.displayError("Browse files...  Not Yet Supported.");
-        } else if (command.equalsIgnoreCase("cancel")) {
-            dispose();
-        }
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage( ((ViewJFrameImage) parentFrame).getImageA());
-        if (loadType == LOAD_FROM_FRAME) {
-            scriptParameters.storeImage(importImage, "importImage");
-        } else if (loadType == LOAD_BLANK){
-            scriptParameters.getParams().put(ParameterFactory.newParameter("dataType", dataType));
-        }
-        scriptParameters.storeOutputImageParams(resultImage, true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("loadType", loadType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("doOrigins", doOrigins));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("doOrients", doOrients));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-        loadType = scriptParameters.getParams().getInt("loadType");
-        
-        if (loadType == LOAD_FROM_FRAME) {
-            importImage = scriptParameters.retrieveImage("importImage");
-        } else if (loadType == LOAD_BLANK) {
-            dataType = scriptParameters.getParams().getInt("dataType");
-            
-            //check to see if there is a mismatch between color/non color datatypes
-            if ((image.isColorImage() && !ModelImage.isColorImage(dataType)) ||
-                    (!image.isColorImage() && ModelImage.isColorImage(dataType))  ) {
-                dataType = image.getType();
-            }
-            
-        }
-        doOrigins = scriptParameters.getParams().getBoolean("doOrigins");
-        doOrients = scriptParameters.getParams().getBoolean("doOrients");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(resultImage);
-    }
-
-    /**
-     * adds the "Browse Files ...." button to the right of the panel.
-     */
-    public void addBrowseFilesButton() {
-        browseButton = new JButton("Browse...");
-        browseButton.setActionCommand("browse");
-        browseButton.addActionListener(this);
-        browseButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        browseButton.setFont(serif12B);
-        picListingPanel.add(browseButton);
-    }
-
-    public void callAlgorithm() {
-        AlgorithmLoadB algoLoad = new AlgorithmLoadB();
-        algoLoad.addListener(this);
-        algoLoad.run();
-    }
-
     private boolean setVariables() {
+
         if (loadType == LOAD_FROM_FRAME) {
             Vector uiV = userInterface.getImageFrameVector();
             int elem = -1;
-            for (int i = uiV.size() - 1; i >= 0; i-- ) { // get the first image-index which has this title
+
+            for (int i = uiV.size() - 1; i >= 0; i--) { // get the first image-index which has this title
+
                 try {
-                    if ( ((ViewJFrameImage) uiV.elementAt(i)).getComponentImage().getActiveImage().getImageName()
-                            .equals(imageChooser.getSelectedItem())) {
+
+                    if (((ViewJFrameImage) uiV.elementAt(i)).getComponentImage().getActiveImage().getImageName().equals(imageChooser.getSelectedItem())) {
                         elem = i;
+
                         break;
                     }
-                } catch (ClassCastException cce) {}
+                } catch (ClassCastException cce) {
+                    // if cast fails, move on..
+                }
             }
+
             if (elem != -1) {
                 ViewJFrameImage imageFrame = (ViewJFrameImage) uiV.elementAt(elem);
                 importImage = imageFrame.getImageA();
+
                 if (matchOrigins.isSelected()) {
                     doOrigins = true;
                 } else {
                     doOrigins = false;
                 }
+
                 if (matchOrients.isSelected()) {
                     doOrients = true;
                 } else {
                     doOrients = false;
                 }
             }
+
             return true;
         } else if (loadType == LOAD_BLANK) {
+
             if (radioBool.isSelected()) {
                 dataType = ModelStorageBase.BOOLEAN;
             } else if (radioByte.isSelected()) {
@@ -388,53 +477,33 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
                 dataType = ModelStorageBase.BYTE;
             }
         }
+
         return true;
     }
 
-    public void algorithmPerformed(AlgorithmBase algo) {
-        if (algo.isCompleted()) {
-            insertScriptLine();
-        } else {
-            //remove the cloned image if there was a failure
-            if (resultImage != null) {
-                resultImage.disposeLocal();
-                resultImage = null;
-            }
-        }
-        dispose();
-    }
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
      */
-    public boolean getMatchOrients() {
-        return doOrients;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public boolean getMatchOrigins() {
-        return doOrigins;
-    }
-
     private class AlgorithmLoadB extends AlgorithmBase {
+
+        /**
+         * DOCUMENT ME!
+         */
         public void runAlgorithm() {
+
             if (loadType == LOAD_BLANK) {
                 resultImage = new ModelImage(dataType, image.getExtents(), " Blank");
-                ((ViewJFrameImage)parentFrame).setImageB(resultImage);
-                ((ViewJFrameImage)parentFrame).setControls();
-                ((ViewJFrameImage)parentFrame).setTitle();
+                ((ViewJFrameImage) parentFrame).setImageB(resultImage);
+                ((ViewJFrameImage) parentFrame).setControls();
+                ((ViewJFrameImage) parentFrame).setTitle();
                 setCompleted(true);
             } else {
                 resultImage = (ModelImage) importImage.clone();
-                setCompleted( ((ViewJFrameImage) parentFrame).setAndLoad(resultImage, doOrigins, doOrients));
+                setCompleted(((ViewJFrameImage) parentFrame).setAndLoad(resultImage, doOrigins, doOrients));
             }
-            
+
         }
     }
 }

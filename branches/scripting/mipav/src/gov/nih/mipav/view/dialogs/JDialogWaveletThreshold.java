@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -154,9 +154,6 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-        ViewJFrameImage imageFrameW = null;
-
         if (algorithm instanceof AlgorithmWaveletThreshold) {
             image.clearMask();
 
@@ -168,7 +165,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                 try {
 
                     // resultImage.setImageName("Unsharp mask");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -182,7 +179,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                         updateFFTFileInfo(image, waveletImage, ModelStorageBase.FLOAT);
 
                         try {
-                            imageFrameW = new ViewJFrameImage(waveletImage, null, new Dimension(610, 220));
+                            new ViewJFrameImage(waveletImage, null, new Dimension(610, 220));
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: Unable to open wavelet image frame");
                         }
@@ -224,7 +221,6 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-        
 
         waveletAlgo.finalize();
         waveletAlgo = null;
@@ -239,51 +235,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cNum",cNum));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholdType",thresholdType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold",threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("doWaveletImage",doWaveletImage));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            this.setDisplayLocNew();
-        } else {
-            this.setDisplayLocReplace();
-        }
-        
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        cNum = scriptParameters.getParams().getInt("cNum");
-        thresholdType = scriptParameters.getParams().getInt("thresholdType");
-        threshold = scriptParameters.getParams().getFloat("threshold");
-        doWaveletImage = scriptParameters.getParams().getBoolean("doWaveletImage");
-        
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(resultImage);
-        }
-    }
-    
+
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -400,6 +352,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             waveletAlgo.setProgressBarVisible(false);
                         }
@@ -454,6 +407,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             waveletAlgo.setProgressBarVisible(false);
                         }
@@ -509,6 +463,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             waveletAlgo.setProgressBarVisible(false);
                         }
@@ -562,6 +517,7 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             waveletAlgo.setProgressBarVisible(false);
                         }
@@ -575,6 +531,51 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                 }
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+
+        if (scriptParameters.doOutputNewImage()) {
+            this.setDisplayLocNew();
+        } else {
+            this.setDisplayLocReplace();
+        }
+
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        cNum = scriptParameters.getParams().getInt("num_coefficients");
+        thresholdType = scriptParameters.getParams().getInt("threshold_type");
+        threshold = scriptParameters.getParams().getFloat("threshold");
+        doWaveletImage = scriptParameters.getParams().getBoolean("do_show_wavelet_image");
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_coefficients", cNum));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_type", thresholdType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_wavelet_image", doWaveletImage));
     }
 
     /**

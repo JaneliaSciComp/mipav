@@ -3,10 +3,9 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
@@ -149,56 +148,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY", radiusY));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr", radiusCr));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb", radiusCb));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("includeNeighbors", includeNeighbors));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("reduce", reduce));
-        scriptParameters.storeProcess3DAs25D(image25D);
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams(){
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.doOutputNewImage()) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        radiusY = scriptParameters.getParams().getFloat("radiusY");
-        radiusCr = scriptParameters.getParams().getFloat("radiusCr");
-        radiusCb = scriptParameters.getParams().getFloat("radiusCb");
-        threshold = scriptParameters.getParams().getFloat("threshold");
-        includeNeighbors = scriptParameters.getParams().getBoolean("includeNeighbors");
-        reduce = scriptParameters.getParams().getBoolean("reduce");
-        image25D = scriptParameters.doProcess3DAs25D();
-    }
 
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
     /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
      *
@@ -230,6 +180,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -280,7 +231,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-        
+
         adaptivePathSmoothAlgo.finalize();
         adaptivePathSmoothAlgo = null;
         dispose();
@@ -367,7 +318,6 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
-
 
 
     /**
@@ -460,7 +410,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
         ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), " ...", 0, 100, true);
         progressBar.setSeparateThread(runInSeparateThread);
         progressBar.setVisible(userInterface.isAppFrameVisible());
-        
+
         if (image.getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
@@ -495,7 +445,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptivePathSmoothAlgo.addListener(this);
                 adaptivePathSmoothAlgo.addProgressChangeListener(progressBar);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -525,14 +475,15 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 adaptivePathSmoothAlgo = new AlgorithmAdaptivePathSmooth(null, image, radiusY, radiusCr, radiusCb,
-                                                                         threshold, includeNeighbors, reduce, image25D, 0, 100);
+                                                                         threshold, includeNeighbors, reduce, image25D,
+                                                                         0, 100);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptivePathSmoothAlgo.addListener(this);
                 adaptivePathSmoothAlgo.addProgressChangeListener(progressBar);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -565,6 +516,56 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        radiusY = scriptParameters.getParams().getFloat("radius_Y");
+        radiusCr = scriptParameters.getParams().getFloat("radius_Cr");
+        radiusCb = scriptParameters.getParams().getFloat("radius_Cb");
+        threshold = scriptParameters.getParams().getFloat("threshold");
+        includeNeighbors = scriptParameters.getParams().getBoolean("include_neighbors");
+        reduce = scriptParameters.getParams().getBoolean("do_reduce_dims");
+        image25D = scriptParameters.doProcess3DAs25D();
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Y", radiusY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cr", radiusCr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cb", radiusCb));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("include_neighbors", includeNeighbors));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_reduce_dims", reduce));
+        scriptParameters.storeProcess3DAs25D(image25D);
     }
 
     /**

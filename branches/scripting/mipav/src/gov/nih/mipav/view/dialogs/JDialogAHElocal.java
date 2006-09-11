@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -56,6 +56,9 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     private JTextField clampValueText;
 
     /** DOCUMENT ME! */
+    private JPanelColorChannels colorPanel;
+
+    /** DOCUMENT ME! */
     private JComboBox comboBoxKernelShape;
 
     /** DOCUMENT ME! */
@@ -83,6 +86,9 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     private float minThresholdValue;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
@@ -99,10 +105,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
-    private JPanelColorChannels colorPanel;
-    
-    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -184,68 +186,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         }
     }
 
-    // ************************************************************************
-    // ************************** Algorithm Events ****************************
-    // ************************************************************************
-
-   
-    //~ Constructors ---------------------------------------------------------------------------------------------------
-
-    /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws  ParserException  If there is a problem creating/recording the new parameters.
-     */
-    protected void storeParamsFromGUI() throws ParserException{
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
-       
-        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
-        
-        scriptParameters.storeColorOptions(colorPanel);
-  
-        scriptParameters.getParams().put(ParameterFactory.newParameter("clamp", clamp));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("clampValue", clampValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelShape", kernelShape));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelSize", kernelSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("minThresholdValue", minThresholdValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleMaxValue", scaleMaxValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
-    }
-  
-    /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
-     */
-    protected void setGUIFromParams(){
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        
-        colorPanel = new JPanelColorChannels(image);
-        scriptParameters.setColorOptionsGUI(colorPanel);
-       
-        clamp = scriptParameters.getParams().getBoolean("clamp");
-        clampValue= scriptParameters.getParams().getInt("clampValue");
-        kernelShape = scriptParameters.getParams().getInt("kernelShape");
-        kernelSize = scriptParameters.getParams().getInt("kernelSize");
-        minThresholdValue = scriptParameters.getParams().getFloat("minThresholdValue");
-        scaleMaxValue = scriptParameters.getParams().getInt("scaleMaxValue");
-        threshold = scriptParameters.getParams().getBoolean("threshold");
-    }
-   
-    /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
-     * Defaults to no action, override to actually have it do something.
-     */
-     protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
      * it has completed or failed to to complete, so that the dialog can be display the result image and/or clean up.
@@ -253,6 +193,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmAHElocal) {
             image.clearMask();
 
@@ -287,7 +228,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                 // String("Cross");
                 //
                 // if (clamp) {    image.setImageName("CLAHElocal ("+shape+", "+kernelSize+", "+ clampValue+ "%): "
-                //        +image.getImageName()); } else {      // not clipping the histogram
+                // +image.getImageName()); } else {      // not clipping the histogram
                 // image.setImageName("AHElocal("+shape+", "+kernelSize+"): " +image.getImageName()); }
 
                 // These next lines set the titles in all frames where the source image is displayed to
@@ -321,7 +262,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-        
+
         aheAlgo.finalize();
         aheAlgo = null;
         dispose();
@@ -337,7 +278,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         return resultImage;
     }
 
-  
 
     /**
      * Accessor that sets the clamp flag.
@@ -447,7 +387,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
 
         // return clampingPanel;
     }
-    
+
     /**
      * Creates the comboBox that allows user to define the way the neighboring pixels are chosen for the histogram. The
      * kernel-shape may be
@@ -502,7 +442,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
      *   <li>129</li>
      * </ul>
      *
-     * but any odd figure could be entered.
+     * <p>but any odd figure could be entered.</p>
      *
      * <p>builds the label to be used, applies it to the left side of the JPanel <i>holder</i>, then builds the drop-box
      * so the user may make a selection, and applies it to the far-right of the JPanel <i>holder</i>.</p>
@@ -634,6 +574,183 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     }
 
     /**
+     * Once all the necessary variables are set, call the local AHE algorithm based on what type of image this is and
+     * whether or not there is a separate destination image.
+     *
+     * @see  AlgorithmAHElocal
+     */
+    protected void callAlgorithm() {
+
+        String name = makeImageName(image.getImageName(), "_LocalAHE");
+        int[] destExtents = new int[image.getNDims()];
+
+        for (int i = 0; i < image.getNDims(); i++) {
+            destExtents[i] = image.getExtents()[i];
+        } // E[i] dim
+
+        if (outputPanel.isOutputNewImageSet()) {
+
+            try {
+
+                // Make result image of float type
+                // resultImage = new ModelImage(image.getType(), destExtents,  image.getImageName(),userInterface);
+                resultImage = (ModelImage) image.clone(name);
+
+                if (resultImage.getNDims() == 2) {
+
+                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002",
+                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016",
+                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
+                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                    }
+                } else {
+
+                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+
+                        for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
+                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
+                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26);
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17",
+                                                                                    16); // bogus Implementation UID
+                                                                                         // made up by Matt
+                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
+                        }
+                    }
+                }
+
+                // Make algorithm
+                aheAlgo = new AlgorithmAHElocal(resultImage, image, kernelSize, kernelShape,
+                                                outputPanel.isProcessWholeImageSet());
+                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
+                                            colorPanel.isGreenProcessingRequested(),
+                                            colorPanel.isBlueProcessingRequested());
+
+                if (clamp) {
+                    aheAlgo.setContrastLimited(true);
+                    aheAlgo.setClipLevel(clampValue);
+                }
+
+                aheAlgo.setHistogramScaleRule(scaleMaxValue);
+
+                if (threshold) {
+                    aheAlgo.setThresholdImage(true);
+                    aheAlgo.setMinimumThreshold(minThresholdValue);
+                }
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                aheAlgo.addListener(this);
+                setVisible(false); // Hide dialog
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (aheAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    if (!userInterface.isAppFrameVisible()) {
+                        aheAlgo.setProgressBarVisible(false);
+                    }
+
+                    aheAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog Adaptive Histogram Equalization local: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                return;
+            }
+        } else { // displayLoc == REPLACE
+
+            try {
+
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+                aheAlgo = new AlgorithmAHElocal(image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet());
+                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
+                                            colorPanel.isGreenProcessingRequested(),
+                                            colorPanel.isBlueProcessingRequested());
+
+                if (clamp) {
+                    aheAlgo.setContrastLimited(true);
+                    aheAlgo.setClipLevel(clampValue);
+                }
+
+                aheAlgo.setHistogramScaleRule(scaleMaxValue);
+
+                if (threshold) {
+                    aheAlgo.setThresholdImage(true);
+                    aheAlgo.setMinimumThreshold(minThresholdValue);
+                }
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed or failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                aheAlgo.addListener(this);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                Vector imageFrames = image.getImageFrameVector();
+                titles = new String[imageFrames.size()];
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                }
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (aheAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    if (!userInterface.isAppFrameVisible()) {
+                        aheAlgo.setProgressBarVisible(false);
+                    }
+
+                    aheAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog AHE local: unable to allocate enough memory");
+
+                return;
+            }
+        }
+    }
+
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the
+     * image table). Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
      * Takes a text field, and forces the textfield to accept numbers, backspace and delete-key entries.
      *
      * @param  txt  Text field to modify.
@@ -691,6 +808,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     protected void makeNumericsOnly(JTextField txt) {
         txt.addKeyListener(new KeyAdapter() { // make the field
                 public void keyTyped(KeyEvent evt) { // not accept letters
+
                     char ch = evt.getKeyChar();
 
                     if (((ch < '0') || (ch > '9')) && ((ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE))) {
@@ -702,6 +820,55 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                     }
                 }
             });
+    }
+
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        colorPanel = new JPanelColorChannels(image);
+        scriptParameters.setColorOptionsGUI(colorPanel);
+
+        clamp = scriptParameters.getParams().getBoolean("do_clamping");
+        clampValue = scriptParameters.getParams().getInt("clamp_value");
+        kernelShape = scriptParameters.getParams().getInt("kernel_type");
+        kernelSize = scriptParameters.getParams().getInt("kernel_size");
+        minThresholdValue = scriptParameters.getParams().getFloat("min_threshold");
+        scaleMaxValue = scriptParameters.getParams().getInt("max_scale");
+        threshold = scriptParameters.getParams().getBoolean("threshold");
+    }
+
+    // ************************************************************************
+    // ************************** Algorithm Events ****************************
+    // ************************************************************************
+
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     *
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+
+        scriptParameters.storeColorOptions(colorPanel);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_clamping", clamp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("clamp_value", clampValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type", kernelShape));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_threshold", minThresholdValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_scale", scaleMaxValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
     }
 
     /**
@@ -736,165 +903,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
     }
 
     /**
-     * Once all the necessary variables are set, call the local AHE algorithm based on what type of image this is and
-     * whether or not there is a separate destination image.
-     *
-     * @see  AlgorithmAHElocal
-     */
-    protected void callAlgorithm() {
-
-        String name = makeImageName(image.getImageName(), "_LocalAHE");
-        int[] destExtents = new int[image.getNDims()];
-
-        for (int i = 0; i < image.getNDims(); i++) {
-            destExtents[i] = image.getExtents()[i];
-        } // E[i] dim
-
-        if (outputPanel.isOutputNewImageSet()) {
-
-            try {
-
-                // Make result image of float type
-                // resultImage = new ModelImage(image.getType(), destExtents,  image.getImageName(),userInterface);
-                resultImage = (ModelImage) image.clone(name);
-
-                if (resultImage.getNDims() == 2) {
-
-                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016",
-                                                                                "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
-                        ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                    }
-                } else {
-
-                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
-
-                        for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0008,0016",
-                                                                                    "1.2.840.10008.5.1.4.1.1.7 ", 26);
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0012", "1.2.840.34379.17",
-                                                                                    16); // bogus Implementation UID
-                                                                                         // made up by Matt
-                            ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
-                        }
-                    }
-                }
-
-                // Make algorithm
-                aheAlgo = new AlgorithmAHElocal(resultImage, image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet());
-                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
-
-                if (clamp) {
-                    aheAlgo.setContrastLimited(true);
-                    aheAlgo.setClipLevel(clampValue);
-                }
-
-                aheAlgo.setHistogramScaleRule(scaleMaxValue);
-
-                if (threshold) {
-                    aheAlgo.setThresholdImage(true);
-                    aheAlgo.setMinimumThreshold(minThresholdValue);
-                }
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed or failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                aheAlgo.addListener(this);
-                setVisible(false); // Hide dialog
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (aheAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        aheAlgo.setProgressBarVisible(false);
-                    }
-
-                    aheAlgo.run();
-                }
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog Adaptive Histogram Equalization local: unable to allocate enough memory");
-
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up memory of result image
-                    resultImage = null;
-                }
-
-                return;
-            }
-        } else { // displayLoc == REPLACE
-
-            try {
-
-                // No need to make new image space because the user has choosen to replace the source image
-                // Make the algorithm class
-                aheAlgo = new AlgorithmAHElocal(image, kernelSize, kernelShape, outputPanel.isProcessWholeImageSet());
-                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());
-
-                if (clamp) {
-                    aheAlgo.setContrastLimited(true);
-                    aheAlgo.setClipLevel(clampValue);
-                }
-
-                aheAlgo.setHistogramScaleRule(scaleMaxValue);
-
-                if (threshold) {
-                    aheAlgo.setThresholdImage(true);
-                    aheAlgo.setMinimumThreshold(minThresholdValue);
-                }
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed or failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                aheAlgo.addListener(this);
-
-                // Hide the dialog since the algorithm is about to run.
-                setVisible(false);
-
-                // These next lines set the titles in all frames where the source image is displayed to
-                // "locked - " image name so as to indicate that the image is now read/write locked!
-                // The image frames are disabled and then unregisted from the userinterface until the
-                // algorithm has completed.
-                Vector imageFrames = image.getImageFrameVector();
-                titles = new String[imageFrames.size()];
-
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                }
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (aheAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        aheAlgo.setProgressBarVisible(false);
-                    }
-
-                    aheAlgo.run();
-                }
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog AHE local: unable to allocate enough memory");
-
-                return;
-            }
-        }
-    }
-
-    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -909,13 +917,13 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
         gbc.insets = new Insets(2, 0, 2, 0); // component width = minwidth + (2ipadx)
 
         setupBox.add(buildKernelPanel(gbc, gbl));
-        
+
         colorPanel = new JPanelColorChannels(image);
         setupBox.add(colorPanel);
-    
+
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         setupBox.add(outputPanel);
-        
+
         mainDialogPanel.add(setupBox, BorderLayout.CENTER);
 
         // OK, Cancel, Help:

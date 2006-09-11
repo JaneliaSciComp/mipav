@@ -2,9 +2,9 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -27,7 +27,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
-public class JDialogClose extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogClose extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -85,6 +85,9 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
     private JPanel maskPanel;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
@@ -101,11 +104,6 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private float value;
-
-    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -137,59 +135,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-     
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException{
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
-        
-        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), do25D);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("itersD", itersD));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("itersE", itersE));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel", kernel));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernelSize", kernelSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("value", value));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
-                (image.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
 
-            return;
-        }
-        
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        
-        do25D = scriptParameters.doProcess3DAs25D();
-        itersD = scriptParameters.getParams().getInt("itersD");
-        itersE = scriptParameters.getParams().getInt("itersE");
-        kernel = scriptParameters.getParams().getInt("kernel");
-        kernelSize = scriptParameters.getParams().getInt("kernelSize");
-        value = scriptParameters.getParams().getInt("value");
-   }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
     /**
      * actionPerformed - Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -220,6 +166,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
      * @param  algorithm  algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -410,19 +357,19 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
     /**
      * Process the image in 2.5D.
      *
-     * @param  b  whether to do 2.5D morphology
+     * @param  image25D  whether to do 2.5D morphology
      */
-    public void setImage25D(boolean b) {
-        do25D = b;
+    public void setImage25D(boolean image25D) {
+        do25D = image25D;
     }
 
     /**
      * Accessor that sets the kernel size.
      *
-     * @param  s  the desired kernel size
+     * @param  size  the desired kernel size
      */
-    public void setKernelSize(float s) {
-        kernelSize = s;
+    public void setKernelSize(float size) {
+        kernelSize = size;
     }
 
     /**
@@ -440,39 +387,19 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
     /**
      * Accessor that sets the number of dilations to perform.
      *
-     * @param  n  The number of erosions to do.
+     * @param  iters  The number of erosions to do.
      */
-    public void setNumDilations(int n) {
-        itersD = n;
+    public void setNumDilations(int iters) {
+        itersD = iters;
     }
 
     /**
      * Accessor that sets the number of erosions to perform.
      *
-     * @param  n  The number of erosions to do.
+     * @param  iters  The number of erosions to do.
      */
-    public void setNumErosions(int n) {
-        itersE = n;
-    }
-
-    /**
-     * buildComboBox.
-     */
-    private void buildComboBox() {
-
-        comboBoxKernel = new JComboBox();
-        comboBoxKernel.setFont(serif12);
-        comboBoxKernel.setBackground(Color.white);
-
-        if (image.getNDims() == 2) {
-            comboBoxKernel.addItem("3x3 -  4 connected");
-            comboBoxKernel.addItem("5x5 - 12 connected");
-            comboBoxKernel.addItem("User sized circle.");
-        } else if (image.getNDims() == 3) {
-            comboBoxKernel.addItem("3x3x3 -  6 connected (2.5D: 4)");
-            comboBoxKernel.addItem("5x5x5 - 24 connected (2.5D: 12)");
-            comboBoxKernel.addItem("User sized sphere.");
-        }
+    public void setNumErosions(int iters) {
+        itersE = iters;
     }
 
     /**
@@ -519,6 +446,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             closeAlgo2D.setProgressBarVisible(false);
                         }
@@ -578,6 +506,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             closeAlgo2D.setProgressBarVisible(false);
                         }
@@ -626,6 +555,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             closeAlgo3D.setProgressBarVisible(false);
                         }
@@ -683,6 +613,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             closeAlgo3D.setProgressBarVisible(false);
                         }
@@ -741,6 +672,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             closeAlgo25D.setProgressBarVisible(false);
                         }
@@ -764,7 +696,8 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     closeAlgo25D = new AlgorithmMorphology25D(image, kernel, kernelSize, AlgorithmMorphology25D.CLOSE,
-                                                              itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
+                                                              itersD, itersE, 0, 0,
+                                                              outputPanel.isProcessWholeImageSet());
 
                     if (outputPanel.isProcessWholeImageSet() == false) {
                         closeAlgo25D.setMask(image.generateVOIMask());
@@ -800,6 +733,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             closeAlgo25D.setProgressBarVisible(false);
                         }
@@ -812,6 +746,77 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     return;
                 }
             }
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        do25D = scriptParameters.doProcess3DAs25D();
+        itersD = scriptParameters.getParams().getInt("dilation_iterations");
+        itersE = scriptParameters.getParams().getInt("erosion_iterations");
+        kernel = scriptParameters.getParams().getInt("kernel_type");
+        kernelSize = scriptParameters.getParams().getInt("kernel_size");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), do25D);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("dilation_iterations", itersD));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("erosion_iterations", itersE));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type", kernel));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
+    }
+
+    /**
+     * buildComboBox.
+     */
+    private void buildComboBox() {
+
+        comboBoxKernel = new JComboBox();
+        comboBoxKernel.setFont(serif12);
+        comboBoxKernel.setBackground(Color.white);
+
+        if (image.getNDims() == 2) {
+            comboBoxKernel.addItem("3x3 -  4 connected");
+            comboBoxKernel.addItem("5x5 - 12 connected");
+            comboBoxKernel.addItem("User sized circle.");
+        } else if (image.getNDims() == 3) {
+            comboBoxKernel.addItem("3x3x3 -  6 connected (2.5D: 4)");
+            comboBoxKernel.addItem("5x5x5 - 24 connected (2.5D: 12)");
+            comboBoxKernel.addItem("User sized sphere.");
         }
     }
 
@@ -914,7 +919,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
         gbc.weightx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textKernelSize, gbc);
-        
+
         outputPanel = new JPanelAlgorithmOutputOptions(image);
 
         image25D = new JCheckBox("Process image in 2.5D", false);

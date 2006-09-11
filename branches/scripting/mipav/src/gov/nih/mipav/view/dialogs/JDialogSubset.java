@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -88,7 +88,6 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
      */
     public JDialogSubset() { }
 
-
     /**
      * Creates new dialog for getting subset.
      *
@@ -100,20 +99,6 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
         image = im; // set the image from the arguments to an image in this class
         userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogSubset(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -158,8 +143,6 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmSubset) {
 
             if ((subsetAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -168,7 +151,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
                 try {
 
                     // put the new image into a new frame
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
+                    new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("JDialogSubset reports: out of memory; " + "unable to open a new frame");
                 }
@@ -224,38 +207,6 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
     }
 
     /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("removeDim", removeDim));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("sliceNum", sliceNum));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        setModal(false);
-        removeDim = scriptParameters.getParams().getInt("removeDim");
-        sliceNum = scriptParameters.getParams().getInt("sliceNum");
-        
-    }
-   
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(resultImage);
-    }
-    
-    /**
      * Accessor that sets the Dimension to remove according to the parameter.
      *
      * @param  dim  Which dimension to remove (either REMOVE_X, REMOVE_Y, REMOVE_Z, REMOVE_T)
@@ -267,10 +218,10 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
     /**
      * Accessor that sets the slice number to be used to the parameter.
      *
-     * @param  n  The slice index number to be use
+     * @param  slice  The slice index number to be use
      */
-    public void setSliceNum(int n) {
-        sliceNum = n;
+    public void setSliceNum(int slice) {
+        sliceNum = slice;
     }
 
     /**
@@ -370,6 +321,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     subsetAlgo.setProgressBarVisible(false);
                 }
@@ -388,6 +340,37 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
 
             return;
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        removeDim = scriptParameters.getParams().getInt("remove_dim");
+        sliceNum = scriptParameters.getParams().getInt("slice_num");
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, true);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("remove_dim", removeDim));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("slice_num", sliceNum));
     }
 
     /**

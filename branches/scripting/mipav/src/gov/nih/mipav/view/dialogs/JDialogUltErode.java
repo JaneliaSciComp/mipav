@@ -3,11 +3,13 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -38,15 +40,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** false = apply algorithm only to VOI regions. */
     private float dist;
 
     /** DOCUMENT ME! */
@@ -59,22 +52,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
-
-    /** DOCUMENT ME! */
-    private JPanel maskPanel;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** or if the source image is to be replaced. */
-    private boolean regionFlag; // true = apply algorithm to the whole image
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -87,12 +65,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -121,29 +93,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogUltErode(ViewUserInterface UI, ModelImage im) {
-        super();
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -177,8 +126,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
         String name = makeImageName(image.getImageName(), "_ultErode");
 
         if (algorithm instanceof AlgorithmMorphology2D) {
@@ -191,7 +138,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     resultImage.setImageName(name);
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -232,7 +179,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
                     resultImage.setImageName("name");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -294,36 +241,12 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
     }
 
     /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
      * Accessor that sets the the maximum threshold distance to remove objects at.
      *
-     * @param  d  the desired distance
+     * @param  max  the desired distance
      */
-    public void setDistance(float d) {
-        dist = d;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
+    public void setDistance(float max) {
+        dist = max;
     }
 
     /**
@@ -334,7 +257,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
 
         if (image.getNDims() == 2) { // source image is 2D
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -345,10 +268,10 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                     // Make algorithm
                     erodeAlgo2D = new AlgorithmMorphology2D(resultImage, AlgorithmMorphology2D.CONNECTED8, 9,
                                                             AlgorithmMorphology2D.ULTIMATE_ERODE, 0, 0, 0, 0,
-                                                            regionFlag);
+                                                            outputPanel.isProcessWholeImageSet());
                     erodeAlgo2D.setPixDistance(dist);
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -394,10 +317,10 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                     // Make the algorithm class
                     erodeAlgo2D = new AlgorithmMorphology2D(image, AlgorithmMorphology2D.CONNECTED8, 9,
                                                             AlgorithmMorphology2D.ULTIMATE_ERODE, 0, 0, 0, 0,
-                                                            regionFlag);
+                                                            outputPanel.isProcessWholeImageSet());
                     erodeAlgo2D.setPixDistance(dist);
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -447,7 +370,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
             }
         } else if (image.getNDims() == 3) {
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -456,10 +379,10 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
 
                     // Make algorithm
                     erodeAlgo3D = new AlgorithmMorphology3D(resultImage, 1, 0, AlgorithmMorphology3D.ULTIMATE_ERODE, 0,
-                                                            0, 0, 0, regionFlag);
+                                                            0, 0, 0, outputPanel.isProcessWholeImageSet());
                     erodeAlgo3D.setPixDistance(dist);
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -503,10 +426,10 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
 
                     // Make algorithm
                     erodeAlgo3D = new AlgorithmMorphology3D(image, 0, 0, AlgorithmMorphology3D.ULTIMATE_ERODE, 0, 0, 0,
-                                                            0, regionFlag);
+                                                            0, outputPanel.isProcessWholeImageSet());
                     erodeAlgo3D.setPixDistance(dist);
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         erodeAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -562,7 +485,7 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
      */
     protected void doPostAlgorithmActions() {
 
-        if (displayLoc == NEW) {
+        if (outputPanel.isOutputNewImageSet()) {
             AlgorithmParameters.storeImageInRunner(resultImage);
         }
     }
@@ -573,15 +496,12 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
 
-        if (scriptParameters.doOutputNewImage()) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
 
-        regionFlag = scriptParameters.doProcessWholeImage();
-        dist = scriptParameters.getParams().getFloat("dist");
+        dist = scriptParameters.getParams().getFloat("maximum_distance");
     }
 
     /**
@@ -589,10 +509,11 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, displayLoc == NEW);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
 
-        scriptParameters.storeProcessWholeImage(regionFlag);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("dist", dist));
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_distance", dist));
     }
 
     /**
@@ -601,11 +522,11 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
     private void init() {
         setTitle("Ultimate erode");
 
-        maskPanel = new JPanel();
+        JPanel maskPanel = new JPanel();
 
         String unitString = null;
         String borderString = new String();
-        unitString = new String(image.getFileInfo()[0].sUnits[image.getFileInfo()[0].getUnitsOfMeasure(0)]);
+        unitString = new String(FileInfoBase.sUnits[image.getFileInfo()[0].getUnitsOfMeasure(0)]);
 
         borderString = "Remove objects closer than ";
 
@@ -626,64 +547,18 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
         unitLabel.setForeground(Color.black);
         maskPanel.add(unitLabel);
 
-        destinationPanel = new JPanel(new GridBagLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
 
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setBounds(10, 42, 120, 25);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-
+        JPanel mainPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
         gbc.anchor = GridBagConstraints.WEST;
-        destinationPanel.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanel.add(replaceImage, gbc);
-
-        imageVOIPanel = new JPanel(new GridBagLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Ultimate erode"));
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        imageVOIPanel.add(wholeImage, gbc);
-        gbc.gridy = 1;
-        imageVOIPanel.add(VOIRegions, gbc);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.BOTH;
-        mainPanel.add(destinationPanel, gbc);
-        gbc.gridx = 1;
-        mainPanel.add(imageVOIPanel, gbc);
+        mainPanel.add(maskPanel, gbc);
+        gbc.gridy++;
+        mainPanel.add(outputPanel, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -706,18 +581,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
         System.gc();
 
         String tmpStr;
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
 
         tmpStr = textNPix.getText();
 

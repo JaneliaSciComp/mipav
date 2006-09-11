@@ -3,9 +3,9 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
@@ -43,7 +43,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
 
     /** Indicates if a new image is to be generated or if the source image is to be replaced. */
     private int displayLoc;
-    
+
     /** DOCUMENT ME! */
     private float distWeight;
 
@@ -123,60 +123,16 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
     public JDialogAdaptiveSmooth(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface =  ViewUserInterface.getReference();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("distWeight", distWeight));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusY", radiusY));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCr", radiusCr));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("radiusCb", radiusCb));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("reduce", reduce));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.doOutputNewImage()) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        distWeight = scriptParameters.getParams().getFloat("distWeight");
-        radiusY = scriptParameters.getParams().getFloat("radiusY");
-        radiusCr = scriptParameters.getParams().getFloat("radiusCr");
-        radiusCb = scriptParameters.getParams().getFloat("radiusCb");
-        reduce = scriptParameters.getParams().getBoolean("reduce");
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
-    /**
      * Closes dialog box when the OK button is pressed, sets variables and calls algorithm.
-     * 
-     * @param event Event that triggers function.
+     *
+     * @param  event  Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -205,6 +161,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmAdaptiveSmooth) {
             image.clearMask();
 
@@ -251,7 +208,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-        
+
         dispose();
     }
 
@@ -336,7 +293,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
         ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), " ...", 0, 100, true);
         progressBar.setSeparateThread(runInSeparateThread);
         progressBar.setVisible(userInterface.isAppFrameVisible());
-        
+
         if (image.getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
@@ -370,7 +327,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveSmoothAlgo.addListener(this);
                 adaptiveSmoothAlgo.addProgressChangeListener(progressBar);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -381,7 +338,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                 
+
                     adaptiveSmoothAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -408,7 +365,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveSmoothAlgo.addListener(this);
                 adaptiveSmoothAlgo.addProgressChangeListener(progressBar);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -433,7 +390,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                   
+
                     adaptiveSmoothAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -442,6 +399,51 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                 return;
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        distWeight = scriptParameters.getParams().getFloat("edge_preservation_strength");
+        radiusY = scriptParameters.getParams().getFloat("radius_Y");
+        radiusCr = scriptParameters.getParams().getFloat("radius_Cr");
+        radiusCb = scriptParameters.getParams().getFloat("radius_Cb");
+        reduce = scriptParameters.getParams().getBoolean("do_reduce_dims");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("edge_preservation_strength", distWeight));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Y", radiusY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cr", radiusCr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cb", radiusCb));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_reduce_dims", reduce));
     }
 
     /**
