@@ -22,6 +22,7 @@ import java.util.zip.*;
  * Now in going to MIPAV a change must occur.
  * MGH has L->R and P->A while MIPAV uses R->L and A->P, so this would cause
  * xr, yr, zr, rorigin, xa, ya, za, and aorigin to be multiplied by -1.
+ * cr, ca, and cs refer to the center point of the scanner coordinate system.
  
  A 284 byte header always precedes the data buffer
  In version 1 if the goodRASFlag <= 0, then only the first 30 bytes are read.  
