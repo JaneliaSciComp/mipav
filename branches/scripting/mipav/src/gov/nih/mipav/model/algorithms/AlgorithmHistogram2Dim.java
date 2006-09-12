@@ -258,7 +258,19 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
                 // invert y
                 histBuffer[ch1 + (bin1 * (bin2 - 1 - ch2))]++;
             }
-
+            
+            // PFH I want to zero out the entries along the main diagonal
+            // I am interested in values in he image the do NOT match!!
+/*
+            int idx, x, y;
+            for (y = 0; y < bin1; y++) {
+            	for (x = 0; x < bin2; x++) {
+            		idx = (bin1 - 1 - y) * bin2 + x;
+           		if (idx == 0 || histBuffer[idx] > 0) 
+            			System.out.println("Labels  TOSS: " + x + " MANUAL: " + y + "  histVal: " + histBuffer[idx]);
+            	}
+            }
+*/
             if (threadStopped) { // do before copying back into image
                 finalize();
 

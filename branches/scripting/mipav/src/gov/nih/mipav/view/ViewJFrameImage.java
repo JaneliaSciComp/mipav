@@ -8,7 +8,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.util.NDARPipeline;
+import gov.nih.mipav.model.util.*;
 
 import gov.nih.mipav.plugins.*;
 
@@ -34,7 +34,7 @@ import javax.swing.event.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      ViewJComponentEditImage
  */
-public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, MouseListener, MouseMotionListener{
+public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, MouseListener, MouseMotionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -145,7 +145,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** Reference to the magnification tool. */
     private JDialogZoom zoomDialog = null;
 
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -223,7 +222,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             getLUTa().zeroToOneLUTAdjust();
         }
 
-        }
+    }
 
     /**
      * Creates a new ViewJFrameImage object.
@@ -366,10 +365,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 /**
                  * Also need to disable the auto upload to srb function.
                  */
-                JCheckBoxMenuItem menuItemAutoUpload = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Auto Upload on|off");
+                JCheckBoxMenuItem menuItemAutoUpload = (JCheckBoxMenuItem)
+                                                           menuBuilder.getMenuItem("Auto Upload on|off");
+
                 if (menuItemAutoUpload.isSelected()) {
                     menuItemAutoUpload.setSelected(false);
                 }
+
                 if (userInterface.getNDARPipeline() != null) {
                     userInterface.getNDARPipeline().uninstall();
                 }
@@ -393,20 +395,26 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.transferSRBFiles();
         } else if (command.equals("AutoUploadToSRB")) {
             NDARPipeline pipeline = userInterface.getNDARPipeline();
+
             if (pipeline == null) {
                 pipeline = new NDARPipeline();
                 userInterface.setNDARPipeline(pipeline);
             }
+
             if (((JCheckBoxMenuItem) source).isSelected()) {
                 JCheckBoxMenuItem itemDicom = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Enable DICOM receiver");
+
                 if (!itemDicom.isSelected()) {
+
                     if (userInterface.getDICOMCatcher() != null) {
                         userInterface.getDICOMCatcher().setStop();
                     }
+
                     itemDicom.setSelected(true);
                     userInterface.setDICOMCatcher(new DICOM_Receiver());
                     menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 }
+
                 pipeline.install(userInterface.getDICOMCatcher());
             } else {
                 pipeline.uninstall();
@@ -423,9 +431,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("AnonymizeDirectory")) {
             userInterface.buildAnonDirectoryDialog();
         } else if (command.equals("RecordScript") || command.equals("ToolbarScriptRecord")) {
+
             // pass script events to the VUI, since there's no need to have the same implementation twice
             ViewUserInterface.getReference().actionPerformed(event);
         } else if (command.equals("RunScript")) {
+
             // pass script events to the VUI, since there's no need to have the same implementation twice
             ViewUserInterface.getReference().actionPerformed(event);
         } else if (command.equals("ToolbarScriptDir")) {
@@ -453,6 +463,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // this is different from RunScript ... this is from the scripting toolbar
             if (ScriptRecorder.getReference().getRecorderStatus() != ScriptRecorder.STOPPED) {
                 MipavUtil.displayError("Cannot run a script while recording a script.");
+
                 return;
             } else {
                 Preferences.debug("Run the currently selected script from the toolbar.\n");
@@ -462,7 +473,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             if (isMultipleImages() == true) {
                 new JDialogLoadImage(this, getImageA(), JDialogLoadImage.LOAD_FROM_FRAME);
-               
             } else {
                 MipavUtil.displayError("There are no other images to load.\n");
             }
@@ -493,6 +503,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (this.canCloseImageBAfterLoad()) {
                     menuBuilder.setMenuItemEnabled("Close image(B)", true);
+                    menuBuilder.setMenuItemEnabled("Extract image(B)", true);
                 }
 
                 if (command.equals("OpenMask") && !imageA.isColorImage()) {
@@ -571,6 +582,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
+            menuBuilder.setMenuItemEnabled("Clone/extract image(B)", true);
 
             setActiveImage(ViewJFrameImage.IMAGE_B); // set image B to active by default, for convenience of user
             controls.setActiveImage(ViewJFrameImage.IMAGE_B); // set the controls to show that image B is active
@@ -578,9 +590,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setControls();
             setTitle();
         } else if (command.equals("LoadBlankB")) {
-
             new JDialogLoadImage(this, getImageA(), JDialogLoadImage.LOAD_BLANK);
-            
         } else if (command.equals("SaveImage")) {
             saveImageInfo();
             save(new FileWriteOptions(false), -1);
@@ -655,6 +665,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 closeImageB();
 
                 menuBuilder.setMenuItemEnabled("Close image(B)", false);
+                menuBuilder.setMenuItemEnabled("Extract image(B)", false);
                 setControls();
                 setTitle();
                 updateImages(null, null, true, -1);
@@ -675,7 +686,34 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
             }
+        } else if (command.equals("ExtractImageB")) {
+            ModelImage clonedImage = null;
+
+            try {
+                clonedImage = (ModelImage) getImageB().clone();
+
+                ModelLUT lutClone = null;
+
+                lutClone = (ModelLUT) LUTb.clone();
+
+                new ViewJFrameImage(clonedImage, lutClone, new Dimension(610, 200), getImageB().getLogMagDisplay());
+                System.gc();
+
+                ScriptRecorder.getReference().addLine(new ActionExtractImageB(getImageA(), clonedImage));
+            } catch (OutOfMemoryError error) {
+
+                if (clonedImage != null) {
+                    clonedImage.disposeLocal();
+                }
+
+                clonedImage = null;
+                System.gc();
+                MipavUtil.displayError("Out of memory: unable to open new frame");
+
+                return;
+            }
         } else if (command.equals("EditImageInfo")) {
+
             showEditImageInfo();
         } else if (command.equals("Exit")) {
             userInterface.windowClosing(null);
@@ -724,7 +762,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             Preferences.setProperty(Preferences.PREF_IMAGE_TOOLBAR_ON, String.valueOf(showImage));
             Preferences.setProperty(Preferences.PREF_PAINT_TOOLBAR_ON, String.valueOf(showPaint));
 
-            controls.buildToolbar(showImage, showVOI, showPaint, showScript, componentImage.getVOIHandler().getVOI_ID());
+            controls.buildToolbar(showImage, showVOI, showPaint, showScript,
+                                  componentImage.getVOIHandler().getVOI_ID());
             setControls();
         } else if (command.equals("PaintBrush")) {
             componentImage.setMode(ViewJComponentEditImage.PAINT_VOI);
@@ -1002,7 +1041,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), maskImage, ActionVOIToMask.MASK_BINARY));
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), maskImage,
+                                                                      ActionVOIToMask.MASK_BINARY));
         } else if (command.equals("ShortMask")) {
             ModelImage shortImage = null;
 
@@ -1030,7 +1070,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), shortImage, ActionVOIToMask.MASK_SHORT));
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), shortImage,
+                                                                      ActionVOIToMask.MASK_SHORT));
         } else if (command.equals("UnsignedByteMask")) {
             ModelImage uByteImage = null;
 
@@ -1058,16 +1099,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), uByteImage, ActionVOIToMask.MASK_UBYTE));
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), uByteImage,
+                                                                      ActionVOIToMask.MASK_UBYTE));
         } else if (command.equals("MaskToVOI")) {
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
-            //VOIExtractionAlgo.setActiveImage(false);
+
+            // VOIExtractionAlgo.setActiveImage(false);
             VOIExtractionAlgo.run();
 
             ScriptRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
-            
+
             updateImages();
         } else if (command.equals("MaskToPaint")) {
+
             // TODO: only runs with an imageB mask, not if imageA is a mask itself.
             handleMaskToPaint(true);
 
@@ -1110,7 +1154,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("PaintToShortMask")) {
             ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(componentImage.commitPaintToMask());
 
-            ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage, ActionPaintToMask.MASK_SHORT));
+            ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage,
+                                                                        ActionPaintToMask.MASK_SHORT));
         } else if (command.equals("Open VOI")) {
             boolean success = openVOI(false);
 
@@ -1315,8 +1360,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 dOrder.callAlgorithm();
             }
         } else if (command.equals("ReplaceBlankWithAvg")) {
-            JDialogReplaceBlankSlicesWithAverages rBlankWithAvg =
-                new JDialogReplaceBlankSlicesWithAverages(this, getActiveImage());
+            JDialogReplaceBlankSlicesWithAverages rBlankWithAvg = new JDialogReplaceBlankSlicesWithAverages(this,
+                                                                                                            getActiveImage());
             rBlankWithAvg.callAlgorithm();
 
         } else if (command.equals("FlipY")) {
@@ -1443,9 +1488,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // JDialogIHN3Correction N3 =
             new JDialogIHN3Correction(this, getActiveImage());
         } else if (command.equals("SMRISNR")) {
-            new JDialogSingleMRIImageSNR(this,getActiveImage());
+            new JDialogSingleMRIImageSNR(this, getActiveImage());
         } else if (command.equals("DMRISNR")) {
-            new JDialogTwoMRIImagesSNR(this,getActiveImage());
+            new JDialogTwoMRIImagesSNR(this, getActiveImage());
         } else if (command.equals("waveletThreshold")) {
             new JDialogWaveletThreshold(this, getActiveImage());
         } else if (command.equals("Calculator")) {
@@ -1552,7 +1597,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogGaborFilter(this, getActiveImage());
         } else if (command.equals("hFilter")) {
             new JDialogHomomorphicFilter(this, getActiveImage());
-        } else if (command.equals("Mask")) {
+        } else if (command.equals("Fill image")) {
             new JDialogMask(this, getActiveImage());
         } else if (command.equals("QuickMask")) {
             new JDialogMask(getActiveImage(), false, false);
@@ -1896,6 +1941,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogLevelSet(this, getActiveImage());
         } else if (command.equals("LevelsetDiffusion")) {
             new JDialogLevelSetDiffusion(this, getActiveImage());
+        } else if (command.equals("CirToRec")) {
+            new JDialogCircularSectorToRectangle(this, getActiveImage());
         } else if (command.equals("Transform")) {
             new JDialogTransform(this, getActiveImage());
         } else if (command.equals("TransformNL")) {
@@ -2561,7 +2608,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param  event  event that triggered function
      */
     public synchronized void componentResized(ComponentEvent event) {
-    	int width, height;
+        int width, height;
         float bigger;
 
         if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
@@ -2579,19 +2626,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         if (zoom > componentImage.getZoomX()) {
             componentImage.setZoom((int) zoom, (int) zoom); // ***************************
+
             // setZoom(zoom, zoom);
             updateImages(true);
 
             if ((componentImage.getSize(null).width + 200) > xScreen) {
-               width = xScreen - 200;
+                width = xScreen - 200;
             } else {
-               width = componentImage.getSize(null).width /* + fudgeFactor*/;
+                width = componentImage.getSize(null).width /* + fudgeFactor*/;
             }
 
             if ((componentImage.getSize(null).height + 200) > yScreen) {
-               height = yScreen - 200;
+                height = yScreen - 200;
             } else {
-               height = componentImage.getSize(null).height /* + fudgeFactor*/;
+                height = componentImage.getSize(null).height /* + fudgeFactor*/;
             }
         } else if ((width < componentImage.getSize(null).width) && (height >= componentImage.getSize(null).height)) {
 
@@ -2603,27 +2651,29 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     scrollPane.getVerticalScrollBar().getWidth();
             // height += fudgeFactor;
 
-       /*
-        * The below else if block was modified to handle a bug found on Linux.  When a window was made smaller
-        * on windows on action event triggered the calling of this method, however on Linux several hundred
-        * events would be triggered by the same action.  The code would enter the below block, which did nothing.
-        * Then later in this method a small amount would be added to the width and height each time.  Until eventually
-        * the image would reach the original size before the user made it smaller.
-        *
-        * This code now re-adds the component listener and then just returns without allowing the code to reach
-        * the point where it adds to the size.  This has been tested on Windows and Linux and appears to produce
-        * the desired behavior on both.
-        *
-        * Nathan Pollack (Contractor-SSAI)  June 19, 2006
-        */
+            /*
+             * The below else if block was modified to handle a bug found on Linux.  When a window was made smaller on
+             * windows on action event triggered the calling of this method, however on Linux several hundred events
+             * would be triggered by the same action.  The code would enter the below block, which did nothing. Then
+             * later in this method a small amount would be added to the width and height each time.  Until eventually
+             * the image would reach the original size before the user made it smaller.
+             *
+             * This code now re-adds the component listener and then just returns without allowing the code to reach the
+             * point where it adds to the size.  This has been tested on Windows and Linux and appears to produce the
+             * desired behavior on both.
+             *
+             * Nathan Pollack (Contractor-SSAI)  June 19, 2006
+             */
         } else if ((width < componentImage.getSize(null).width) || (height < componentImage.getSize(null).height)) { // width += fudgeFactor;
-         	addComponentListener(this);
-        	return;
-                                                                                                                    // height += fudgeFactor;
+            addComponentListener(this);
+
+            return;
+            // height += fudgeFactor;
         } else if ((width > componentImage.getSize(null).width) || (height > componentImage.getSize(null).height)) {
 
             if (width > componentImage.getSize(null).width) {
                 width = componentImage.getSize(null).width; // ?????
+
                 // height += fudgeFactor;
             }
 
@@ -2633,7 +2683,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else {
             addComponentListener(this);
-             return;
+
+            return;
         }
 
         width += scrollPane.getInsets().left + scrollPane.getInsets().right;
@@ -2644,15 +2695,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 scrollPane.getSize().height + getInsets().top + getInsets().bottom);
 
 
-
-
-        //validate();
+        // validate();
         setTitle();
         updateImages(true);
         addComponentListener(this);
         // componentImage.frameHeight = getSize().height;
         // componentImage.frameWidth = getSize().width;
-     }
+    }
 
     /**
      * Decreases the slice to be displayed by one and updates title frame.
@@ -2705,6 +2754,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     public void enableImageB(boolean enable) {
         menuBuilder.setMenuItemEnabled("Close image(B)", enable);
+        menuBuilder.setMenuItemEnabled("Extract image(B)", enable);
     }
 
     /**
@@ -3244,8 +3294,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param  event  DOCUMENT ME!
      */
     public void mouseClicked(MouseEvent event) {
+
         if (event.getButton() == MouseEvent.BUTTON3) {
-             if (event.getSource() instanceof JToggleButton) {
+
+            if (event.getSource() instanceof JToggleButton) {
                 JToggleButton btnSource = (JToggleButton) event.getSource();
 
                 if (btnSource.getActionCommand().equals("MagImage") ||
@@ -3259,34 +3311,44 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /**
      * DOCUMENT ME!
      *
-     * @param  event  DOCUMENT ME!
+     * @param  e  DOCUMENT ME!
      */
-    public void mouseEntered(MouseEvent event) {}
+    public void mouseDragged(MouseEvent e) { }
 
     /**
      * DOCUMENT ME!
      *
      * @param  event  DOCUMENT ME!
      */
-    public void mouseExited(MouseEvent event) {}
+    public void mouseEntered(MouseEvent event) { }
 
     /**
      * DOCUMENT ME!
      *
      * @param  event  DOCUMENT ME!
      */
-    public void mousePressed(MouseEvent event) {}
+    public void mouseExited(MouseEvent event) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void mouseMoved(MouseEvent e) { }
 
     /**
      * DOCUMENT ME!
      *
      * @param  event  DOCUMENT ME!
      */
-    public void mouseReleased(MouseEvent event) {}
+    public void mousePressed(MouseEvent event) { }
 
-    public void mouseDragged(MouseEvent e){}
-
-    public void mouseMoved(MouseEvent e){}
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseReleased(MouseEvent event) { }
 
 
     /**
@@ -3404,7 +3466,28 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   image2load  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean setAndLoad(ModelImage image2load) {
+        return setAndLoad(image2load, doOrigins, doOrients);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   image2load  DOCUMENT ME!
+     * @param   doOrigins   DOCUMENT ME!
+     * @param   doOrients   DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
     public boolean setAndLoad(ModelImage image2load, boolean doOrigins, boolean doOrients) {
+
         if (loadImage(image2load, componentImage, false, doOrigins, doOrients)) {
 
             if ((imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
@@ -3419,25 +3502,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                       menuBuilder.isMenuItemSelected("VOI toolbar"),
                                       menuBuilder.isMenuItemSelected("Paint toolbar"),
-                                      menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
+                                      menuBuilder.isMenuItemSelected("Scripting toolbar"),
+                                      componentImage.getVOIHandler().getVOI_ID());
             }
 
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
+            menuBuilder.setMenuItemEnabled("Extract image(B)", true);
 
             setControls();
             setTitle();
+
             return true;
         }
+
         return false;
-    }
-    
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  image2load  DOCUMENT ME!
-     */
-    public boolean setAndLoad(ModelImage image2load) {
-        return setAndLoad(image2load, doOrigins, doOrients);
     }
 
     /**
@@ -3906,7 +3984,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                               menuBuilder.isMenuItemSelected("VOI toolbar"),
                               menuBuilder.isMenuItemSelected("Paint toolbar"),
-                              menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
+                              menuBuilder.isMenuItemSelected("Scripting toolbar"),
+                              componentImage.getVOIHandler().getVOI_ID());
 
         // controls.setZSlider(zSlice);
         setControls();
@@ -4781,7 +4860,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                               menuBuilder.isMenuItemSelected("VOI toolbar"),
                               menuBuilder.isMenuItemSelected("Paint toolbar"),
-                              menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
+                              menuBuilder.isMenuItemSelected("Scripting toolbar"),
+                              componentImage.getVOIHandler().getVOI_ID());
 
         if (getActiveImage().getFileInfo(0).getFileFormat() == FileBase.DICOM) {
 
@@ -4843,11 +4923,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
 
         /*
-         * The addComponentListener statement was moved from earlier in the code to the end
-         * because of a bug found on Linux.  It appeared that adding the component listener
-         * earlier caused events to be sent which led to a deadlocked situation.  So on the opening
-         * of a new window in Linux MIPAV would sometimes freeze up.  The moving of this statement
-         * to this line appeared to resolve that, and so this statement should remain here.
+         * The addComponentListener statement was moved from earlier in the code to the end because of a bug found on
+         * Linux.  It appeared that adding the component listener earlier caused events to be sent which led to a
+         * deadlocked situation.  So on the opening of a new window in Linux MIPAV would sometimes freeze up.  The
+         * moving of this statement to this line appeared to resolve that, and so this statement should remain here.
          *
          * Nathan Pollack (Contractor - SSAI)  June 19, 2006
          */
@@ -4866,7 +4945,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         componentImage = new ViewJComponentEditImage(this, imageA, LUTa, imageBufferA, null, null, imageBufferB,
                                                      pixBuffer, zoom, extents, logMagDisplay,
-                                                     ViewJComponentEditImage.NA );
+                                                     ViewJComponentEditImage.NA);
 
         componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
 
@@ -4906,10 +4985,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         // Add images from user interface that have the same exact dimensionality
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
-            
+
             if (!imageA.getImageName().equals(name)) {
                 createDialog = true;
-                if (imageB != null && imageB.getImageName().equals(name)) {
+
+                if ((imageB != null) && imageB.getImageName().equals(name)) {
                     createDialog = false;
                 }
             }

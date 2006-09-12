@@ -698,70 +698,12 @@ public class VOIHandler extends JComponent
                             }
 
                         } else if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
-                            int length;
-                            float[][] rgbPositions;
-                            float[][] rgbIntensities;
-
-                            float[][] rgbPos = null;
-                            float[][] rgbInten = null;
-
-                            VOIs.VOIAt(i).exportArrays(lineX, lineY, lineZ, compImage.getSlice());
-
-                            if (compImage.getActiveImage().isColorImage() == true) {
-
-                                length = (int) (Math.sqrt(
-                                    ( (lineX[1] - lineX[0]) * (lineX[1] - lineX[0]))
-                                    + ( (lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
-                                rgbPositions = new float[3][length * 2 + 1];
-                                rgbIntensities = new float[3][length * 2 + 1];
-                                for (int c = 0; c < 3; c++) {
-                                    int pt = ( (VOILine) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(0))).
-                                        findPositionAndIntensityRGB(
-                                            rgbPositions[c], rgbIntensities[c], c, compImage.getActiveImageBuffer(),
-                                            compImage.getActiveImage().getFileInfo()[compImage.getSlice()].getResolutions(),
-                                            compImage.getActiveImage().getExtents()[0], compImage.getActiveImage().getExtents()[1]);
-
-                                    if (c == 0) {
-                                        rgbPos = new float[3][pt];
-                                        rgbInten = new float[3][pt];
-                                    }
-                                    for (m = 0; m < pt; m++) {
-                                        rgbPos[c][m] = rgbPositions[c][m];
-                                        rgbInten[c][m] = rgbIntensities[c][m];
-                                    }
-                                }
-                                if (VOIs.VOIAt(i).getContourGraph() != null) {
-                                    VOIs.VOIAt(i).getContourGraph().saveNewFunction(rgbPos, rgbInten, 0);
-                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
-                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(
-                                            compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                }
+                            
+                            if (VOIs.VOIAt(i).getContourGraph() != null) {
+                                graphLineVOI(i, 0);
+                                break;
                             }
-                            else {
-                                length = (int) (Math.sqrt(
-                                    ( (lineX[1] - lineX[0]) * (lineX[1] - lineX[0]))
-                                    + ( (lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
-                                position = new float[length * 2 + 1];
-                                intensity = new float[length * 2 + 1];
-                                int pt = VOIs.VOIAt(i).findPositionAndIntensity(compImage.getSlice(), 0, position, intensity,
-                                    compImage.getActiveImageBuffer(), compImage.getActiveImage().getFileInfo()[compImage.getSlice()].getResolutions(),
-                                    compImage.getActiveImage().getExtents()[0], compImage.getActiveImage().getExtents()[1]);
-                                float[] pos = new float[pt];
-                                float[] inten = new float[pt];
-
-                                for (m = 0; m < pt; m++) {
-                                    pos[m] = position[m];
-                                    inten[m] = intensity[m];
-                                }
-                                if (VOIs.VOIAt(i).getContourGraph() != null) {
-                                    VOIs.VOIAt(i).getContourGraph().replaceFunction(pos, inten);
-                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(
-                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(
-                                            compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                }
-                            }
-                        } // if (VOIs.VOIAt(i).getCurveType() == VOI.LINE)
-                        break;
+                        }
                     } // if( VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).getCurveType() != VOI.POINT)
                 } // for (i = 0; i < nVOI; i++)
 
@@ -1277,13 +1219,8 @@ public class VOIHandler extends JComponent
     public void mousePressed(MouseEvent mouseEvent) {
         int xS, yS;
         int x, y;
-        float[] lineX = null;
-        float[] lineY = null;
-        float[] lineZ = null;
-        float[] position;
-        float[] intensity;
-        ViewJFrameGraph lineGraph;
-        int i, j, m;
+       
+        int i, j;
         int nVOI;
         ViewVOIVector VOIs;
 
@@ -1310,9 +1247,6 @@ public class VOIHandler extends JComponent
         }
 
         try {
-            lineX = new float[2];
-            lineY = new float[2];
-            lineZ = new float[2];
 
             xS = compImage.getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
             yS = compImage.getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
@@ -1433,94 +1367,10 @@ public class VOIHandler extends JComponent
                                         // do not pop up graph here, instead return
                                         return;
                                     }
-
-                                    int length;
-                                    float[][] rgbPositions;
-                                    float[][] rgbIntensities;
-
-                                    float[][] rgbPos = null;
-                                    float[][] rgbInten = null;
-
-                                    VOIs.VOIAt(i).exportArrays(lineX, lineY, lineZ, compImage.getSlice(), j);
-
-                                    if (compImage.getActiveImage().isColorImage() == true) {
-
-                                        length = (int) (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
-                                                                  ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
-                                        rgbPositions = new float[3][(length * 2) + 1];
-                                        rgbIntensities = new float[3][(length * 2) + 1];
-
-                                        for (int c = 0; c < 3; c++) {
-                                            int pt = ((VOILine) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
-                                                         .findPositionAndIntensityRGB(rgbPositions[c],
-                                                                                          rgbIntensities[c], c,
-                                                                                          compImage.getActiveImageBuffer(),
-                                                                                          compImage.getActiveImage().getResolutions(compImage.getSlice()),
-                                                                                          compImage.getActiveImage().getExtents()[0],
-                                                                                          compImage.getActiveImage().getExtents()[1]);
-
-                                            if (c == 0) {
-                                                rgbPos = new float[3][pt];
-                                                rgbInten = new float[3][pt];
-                                            }
-
-                                            for (m = 0; m < pt; m++) {
-                                                rgbPos[c][m] = rgbPositions[c][m];
-                                                rgbInten[c][m] = rgbIntensities[c][m];
-                                            }
-                                        }
-
-                                        if (VOIs.VOIAt(i).getContourGraph() == null) {
-                                            ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbInten,
-                                                                                               "Intensity Graph",
-                                                                                               VOIs.VOIAt(i),
-                                                                                               FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-
-                                            contourGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
-                                            contourGraph.setVisible(true);
-                                            VOIs.VOIAt(i).setContourGraph(contourGraph);
-                                            contourGraph.setVOI(VOIs.VOIAt(i));
-                                        } else {
-                                            VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                            VOIs.VOIAt(i).getContourGraph().saveNewFunction(rgbPos, rgbInten, j);
-                                        }
-
-                                        return;
-                                    } else {
-
-                                        length = (int) (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
-                                                                  ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
-                                        position = new float[(length * 2) + 1];
-                                        intensity = new float[(length * 2) + 1];
-
-                                        int pt = VOIs.VOIAt(i).findPositionAndIntensity(compImage.getSlice(), j, position, intensity,
-                                                                                        compImage.getActiveImageBuffer(),
-                                                                                        compImage.getActiveImage().getFileInfo()[compImage.getSlice()].getResolutions(),
-                                                                                        compImage.getActiveImage().getExtents()[0],
-                                                                                        compImage.getActiveImage().getExtents()[1]);
-                                        float[] pos = new float[pt];
-                                        float[] inten = new float[pt];
-
-                                        for (m = 0; m < pt; m++) {
-                                            pos[m] = position[m];
-                                            inten[m] = intensity[m];
-                                        }
-
-                                        if (VOIs.VOIAt(i).getContourGraph() == null) {
-                                            lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", VOIs.VOIAt(i),
-                                                                            FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                            lineGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
-                                            lineGraph.setVisible(true);
-                                            VOIs.VOIAt(i).setContourGraph(lineGraph);
-                                            lineGraph.setVOI(VOIs.VOIAt(i));
-                                        } else {
-                                            VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                            VOIs.VOIAt(i).getContourGraph().replaceFunction(pos, inten, VOIs.VOIAt(i),
-                                                                                            j);
-                                        }
-                                        // update...*/
-                                        return;
+                                    else {
+                                        graphLineVOI(i, j);
                                     }
+                                    
                                 }
                             }
 
@@ -2920,6 +2770,113 @@ public class VOIHandler extends JComponent
 
 
     /**
+     * Graphs/updates graph of Line VOI intensities
+     * @param voiIndex int index of active Line VOI
+     * @param contourIndex int index of line's contour (can use zero)
+     */
+    private void graphLineVOI(int voiIndex, int contourIndex) {
+        float[] lineX = null;
+        float[] lineY = null;
+        float[] lineZ = null;
+        lineX = new float[2];
+        lineY = new float[2];
+        lineZ = new float[2];
+        float[] position;
+        float[] intensity;
+        ViewJFrameGraph lineGraph;
+        int length;
+        float[][] rgbPositions;
+        float[][] rgbIntensities;
+
+        float[][] rgbPos = null;
+        float[][] rgbInten = null;
+        int m;
+
+        ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
+        
+        VOIs.VOIAt(voiIndex).exportArrays(lineX, lineY, lineZ, compImage.getSlice(), contourIndex);
+
+        if (compImage.getActiveImage().isColorImage() == true) {
+
+            length = (int) (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
+                                      ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
+            rgbPositions = new float[3][(length * 2) + 1];
+            rgbIntensities = new float[3][(length * 2) + 1];
+
+            for (int c = 0; c < 3; c++) {
+                int pt = ((VOILine) (VOIs.VOIAt(voiIndex).getCurves()[compImage.getSlice()].elementAt(contourIndex)))
+                             .findPositionAndIntensityRGB(rgbPositions[c],
+                                                              rgbIntensities[c], c,
+                                                              compImage.getActiveImageBuffer(),
+                                                              compImage.getActiveImage().getResolutions(compImage.getSlice()),
+                                                              compImage.getActiveImage().getExtents()[0],
+                                                              compImage.getActiveImage().getExtents()[1]);
+
+                if (c == 0) {
+                    rgbPos = new float[3][pt];
+                    rgbInten = new float[3][pt];
+                }
+
+                for (m = 0; m < pt; m++) {
+                    rgbPos[c][m] = rgbPositions[c][m];
+                    rgbInten[c][m] = rgbIntensities[c][m];
+                }
+            }
+
+            if (VOIs.VOIAt(voiIndex).getContourGraph() == null) {
+                ViewJFrameGraph contourGraph = new ViewJFrameGraph(rgbPos, rgbInten,
+                                                                   "Intensity Graph",
+                                                                   VOIs.VOIAt(voiIndex),
+                                                                   FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
+
+                contourGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                contourGraph.setVisible(true);
+                VOIs.VOIAt(voiIndex).setContourGraph(contourGraph);
+                contourGraph.setVOI(VOIs.VOIAt(voiIndex));
+            } else {
+                VOIs.VOIAt(voiIndex).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
+                VOIs.VOIAt(voiIndex).getContourGraph().saveNewFunction(rgbPos, rgbInten, contourIndex);
+            }
+
+            return;
+        } else {
+
+            length = (int) (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
+                                      ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
+            position = new float[(length * 2) + 1];
+            intensity = new float[(length * 2) + 1];
+
+            int pt = VOIs.VOIAt(voiIndex).findPositionAndIntensity(compImage.getSlice(), contourIndex, position, intensity,
+                                                            compImage.getActiveImageBuffer(),
+                                                            compImage.getActiveImage().getFileInfo()[compImage.getSlice()].getResolutions(),
+                                                            compImage.getActiveImage().getExtents()[0],
+                                                            compImage.getActiveImage().getExtents()[1]);
+            float[] pos = new float[pt];
+            float[] inten = new float[pt];
+
+            for (m = 0; m < pt; m++) {
+                pos[m] = position[m];
+                inten[m] = intensity[m];
+            }
+
+            if (VOIs.VOIAt(voiIndex).getContourGraph() == null) {
+                lineGraph = new ViewJFrameGraph(pos, inten, "Line VOI Graph", VOIs.VOIAt(voiIndex),
+                                                FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
+                lineGraph.setDefaultDirectory(compImage.getActiveImage().getUserInterface().getDefaultDirectory());
+                lineGraph.setVisible(true);
+                VOIs.VOIAt(voiIndex).setContourGraph(lineGraph);
+                lineGraph.setVOI(VOIs.VOIAt(voiIndex));
+            } else {
+                VOIs.VOIAt(voiIndex).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
+                VOIs.VOIAt(voiIndex).getContourGraph().replaceFunction(pos, inten, VOIs.VOIAt(voiIndex),
+                                                                contourIndex);
+            }
+            // update...*/
+            return;
+        }
+    }
+    
+    /**
      * Generates and displays a 1D graph of the image intensities underlying the contour of the VOI.
      */
     public void graphVOI() {
@@ -2993,6 +2950,10 @@ public class VOIHandler extends JComponent
                             contourGraph.setVisible(true);
 
                             return;
+                        } else if ((VOIs.VOIAt(i).getCurveType() == VOI.LINE)) {
+                            System.err.println("graphin");
+                            graphLineVOI(i, 0);
+                            return;
                         }
                     }
                 }
@@ -3052,6 +3013,10 @@ public class VOIHandler extends JComponent
                                     return;
                                 }
                             }
+                        } else if ((VOIs.VOIAt(i).getCurveType() == VOI.LINE)) {
+                            System.err.println("graphin");
+                            graphLineVOI(i, 0);
+                            return;
                         }
                     }
                 }

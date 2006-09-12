@@ -28,7 +28,6 @@ import javax.vecmath.*;
  * See the document BrainExtraction.pdf for a detailed description of the algorithm as implemented in this class. A few
  * modifications to the original algorithm were made.
  *
- * @author  David Henry Eberly, Magic Software. Under contract from NIH. with modifications by Matthew McAuliffe
  */
 public class AlgorithmBrainExtractor extends AlgorithmBase {
 
@@ -55,93 +54,87 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** Axis orientation Superior to Inferior. */
     public static final int ORI_S2I_TYPE = 6;
 
-    /** DOCUMENT ME! */
+    /** Indicates that the image is in Sagittal or Coronal orientation */
     public static final int SAT_COR = 0;
 
-    /** DOCUMENT ME! */
+    /** Indicates that the image is in Axial orientation */
     public static final int AXIAL = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    protected float f3Factor = 0.08f;
-
-    /** DOCUMENT ME! */
+    /** Stores curvature information of the surface. */
     protected float[] m_afCurvature;
 
-    /** DOCUMENT ME! */
+    /** Triangle edge length. */
     protected float[] m_afLength;
 
-    /** DOCUMENT ME! */
+    /** Surface triangle connection  */
     protected int[] m_aiConnect;
 
     /** The 3D MRI image stored as a 1D array. The mapping from (x,y,z) to 1D is: index = x + xbound*(y + ybound*z). */
     protected int[] m_aiImage;
 
-    /** brain mask creation. */
+    /** Brain segmenation mask. */
     protected byte[] m_aiMask;
 
-    /** DOCUMENT ME! */
+    /** Surface adjacentcy list. */
     protected UnorderedSetInt[] m_akAdjacent;
 
-    /** DOCUMENT ME! */
+    /** Surface normals */
     protected Vector3f[] m_akSNormal;
 
-    /** DOCUMENT ME! */
+    /** Surface tangents */
     protected Vector3f[] m_akSTangent;
 
-    /** DOCUMENT ME! */
+    /** Surface vertex list. */
     protected Point3f[] m_akVertex;
 
-    /** DOCUMENT ME! */
+    /** Average vector */
     protected Point3f[] m_akVMean;
 
-    /** DOCUMENT ME! */
+    /** Vertex normal */
     protected Vector3f[] m_akVNormal;
 
-    /** DOCUMENT ME! */
-    protected float m_fBrainSelection;
+    /** Factored used to adjust image influence - this is a fixed value.  */
+    private float m_fBrainSelection;
+    
+    /** Controls how much the image influences the surface evolution. */
+    protected float imageFactor = 0.08f;
 
     /** DOCUMENT ME! */
     protected float m_fEParam, m_fFParam;
 
-    /** update parameters. */
+    /** Mean length of the vector. */
     protected float m_fMeanEdgeLength;
 
     /** DOCUMENT ME! */
     protected float m_fRayDelta = 1;
 
-    /** DOCUMENT ME! */
+    /** Reduce the size of the 1st axis of the ellipsoid so that it fits entirely into brain. */
     protected float m_fReductionX = 0.6f;
 
-    /** DOCUMENT ME! */
+    /** Reduce the size of the 2st axis of the ellipsoid so that it fits entirely into brain. */
     protected float m_fReductionY = 0.4f;
 
-    /** DOCUMENT ME! */
+    /** Reduce the size of the 3st axis of the ellipsoid so that it fits entirely into brain. */
     protected float m_fReductionZ = 0.6f;
 
-    /** DOCUMENT ME! */
+    /** Stiffness of the surface. */
     protected float m_fStiffness = 0.15f;
 
     /** The size of a voxel, in voxel units. */
     protected float m_fXDelta, m_fYDelta, m_fZDelta;
 
-    /** DOCUMENT ME! */
+    /** Backgroung threshold */
     protected int m_iBackThreshold;
 
-    /** DOCUMENT ME! */
+    /** High threshold */
     protected int m_iBrightThreshold;
 
-    /** DOCUMENT ME! */
-    protected int m_iDMax; // dilation size
+    /** Dilation size used in generating boundary from the surface */
+    protected int m_iDMax; 
 
-    /** DOCUMENT ME! */
-    protected int m_iEQuantity;
-
-    /** DOCUMENT ME! */
-    protected int m_iHalfMaxDepth = 3;
-
-    /** DOCUMENT ME! */
+    /** The length of the vector _normal_ to the surface to sample along. */
     protected int m_iMaxDepth = 7;
 
     /** DOCUMENT ME! */
@@ -150,40 +143,40 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** DOCUMENT ME! */
     protected int m_iMedianIntensity;
 
-    /** histogram parameters. */
+    /** Histogram parameters. */
     protected int m_iMinThreshold;
 
-    /** DOCUMENT ME! */
+    /** The number of triangle in the ellipsoid. */
     protected int m_iTQuantity;
 
-    /** mesh data. */
+    /** The number of vertices in the ellipsoid. */
     protected int m_iVQuantity;
 
     /** The MRI image bounds and quantity of voxels. */
     protected int m_iXBound, m_iYBound, m_iZBound, m_iQuantity;
 
     /** initial ellipsoid parameters. */
-    protected Point3f m_kCenter;
+    protected Point3f m_kCenter = new Point3f();
 
-    /** DOCUMENT ME! */
+    /** Edge map. */
     protected HashMap m_kEMap; // map<Edge,int>
 
-    /** DOCUMENT ME! */
+    /** Used to rotate the initial mesh into the same orientation as the data. */
     protected Matrix3f m_kRotate;
 
-    /** DOCUMENT ME! */
-    protected int nIterations = 1500;
+    /** Number of surface evolutions. */
+    protected int nIterations = 500;
 
-    /** DOCUMENT ME! */
+    /** Indicated the orientation of the dataset. Default sagittal/cornal */
     protected int orientationFlag = SAT_COR;
 
-    /** DOCUMENT ME! */
+    /** If true stop processing. */
     private boolean abort = false;
 
     /** factor above median at which edge values are taken to zero. */
     private float aboveMedian = 1.5f;
 
-    /** DOCUMENT ME! */
+    /** Description the axis orientations of the image. */
     private int[] axisOrientation;
 
     /** DOCUMENT ME! */
@@ -192,31 +185,31 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** DOCUMENT ME! */
     private int[] direction;
 
-    /** DOCUMENT ME! */
+    /** If true, do not phyically segment the image but generate a paint mask. */
     private boolean extractPaint;
 
-    /** DOCUMENT ME! */
+    /** Factor used in controlling the input of the tangetial component of the surface evolution. */
     private float fUpdate1 = 0.5f;
 
-    /** DOCUMENT ME! */
+    /** Reference to the source image. */
     private ModelImage image;
 
-    /** DOCUMENT ME! */
+    /** The number of voxels that define the brain. */
     private int nBrainVoxels = 0;
 
-    /** DOCUMENT ME! */
-    private boolean onlyEllipse = false;
+    /** If true run one iteration so that one can observe initial surface location. */
+    private boolean runOneIter = false;
 
-    /** DOCUMENT ME! */
+    /** If true, the surface representing the brain (mesh) is saved. */
     private boolean saveBrainMesh = true;
 
     /** Tells whether second stage which erodes edge values exceeding median by a factor >= aboveMedian occurs. */
     private boolean secondStageErosion = false;
 
-    /** DOCUMENT ME! */
+    /** Origin of the image. Upper left hand corner of the first image. */
     private float[] startLocation;
 
-    /** DOCUMENT ME! */
+    /** If true initialize surface as a sphere. */
     private boolean useSphere = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -224,20 +217,23 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Create an extractor for segmenting the brain from a 3D magnetic resonance image.
      *
-     * @param  srcImg          the source image. Should be MR image of the brain
-     * @param  orientation     image orienation
-     * @param  justEllipse     DOCUMENT ME!
-     * @param  estimateSphere  DOCUMENT ME!
-     * @param  centerPoint     DOCUMENT ME!
+     * @param  srcImg          The source image. Should be MR image of the brain
+     * @param  orientation     Image orienation
+     * @param  runOneIteration Run one iteration so that one can observe initial surface location.
+     * @param  estimateSphere  Use sphere as the initial surface to be evolved.
+     * @param  centerPoint     The center of the initial ellipsoid or sphere.
      */
-    public AlgorithmBrainExtractor(ModelImage srcImg, int orientation, boolean justEllipse, boolean estimateSphere,
+    public AlgorithmBrainExtractor(ModelImage srcImg, int orientation, boolean runOneIteration, boolean estimateSphere,
                                    Point3f centerPoint) {
         int i;
         float fMax, fMin;
         orientationFlag = orientation;
-        onlyEllipse = justEllipse;
+        runOneIter = runOneIteration;
         useSphere = estimateSphere;
-        m_kCenter = centerPoint;
+        m_kCenter.x = centerPoint.x;
+        m_kCenter.y = centerPoint.y;
+        m_kCenter.z = centerPoint.z;
+        
 
         /* The number of levels to subdivide the initial
          *   ellipsoid into a mesh that approximates the brain surface.  The  number of triangles in the mesh is
@@ -292,7 +288,6 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // Based on empirical studies, these parameters seem to work well.
         m_fBrainSelection = 0.5f;
         m_iMaxDepth = 7;
-        m_iHalfMaxDepth = m_iMaxDepth / 2;
         m_fRayDelta = 1.0f;
         m_fStiffness = 0.1f;
         m_iDMax = 0;
@@ -364,20 +359,18 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         int iMaxUpdate;
 
         int tmpMD = m_iMaxDepth;
-        int tmHMD = m_iHalfMaxDepth;
-        float tmpF3F = f3Factor;
+        float tmpF3F = imageFactor;
         float tmpStiff = m_fStiffness;
 
         m_iMaxDepth = 7;
-        m_iHalfMaxDepth = 3;
-        f3Factor = 0.1f;
+        imageFactor = 0.1f;
         m_fStiffness = 0.2f;
 
         buildProgressBar(image.getImageName(), "Extracting brain ...", 0, 100);
         
 
-        if (onlyEllipse == true) {
-            iMaxUpdate = 0;
+        if (runOneIter == true) {
+            iMaxUpdate = 1;
         } else {
             iMaxUpdate = 100;
         }
@@ -399,17 +392,11 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         }
 
         m_iMaxDepth = tmpMD;
-        m_iHalfMaxDepth = tmHMD;
-        f3Factor = tmpF3F;
+        imageFactor = tmpF3F;
         m_fStiffness = tmpStiff;
 
-        //
-        // m_iMaxDepth         = 4;
-        // m_iHalfMaxDepth     = 3;
-        // f3Factor            = 0.08f;        // --> 0  more stiff
-        // m_fStiffness        = 0.15f;        // --> 0  less stiff
-        if (onlyEllipse == true) {
-            iMaxUpdate = 0;
+        if (runOneIter == true) {
+            iMaxUpdate = 1;
         } else {
             iMaxUpdate = nIterations;
         }
@@ -443,12 +430,11 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             // to the image.  Therefore, use the eroded image to recalculate the mesh.
             progressBar.setMessage("Recalculating mesh for eroded image");
             m_iMaxDepth = 7;
-            m_iHalfMaxDepth = 3;
-            f3Factor = 0.1f;
+            imageFactor = 0.1f;
             m_fStiffness = 0.2f;
 
-            if (onlyEllipse == true) {
-                iMaxUpdate = 0;
+            if (runOneIter == true) {
+                iMaxUpdate = 1;
             } else {
                 iMaxUpdate = 100;
             }
@@ -465,17 +451,15 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
 
             m_iMaxDepth = tmpMD;
-            m_iHalfMaxDepth = tmHMD;
-            f3Factor = tmpF3F;
+            imageFactor = tmpF3F;
             m_fStiffness = tmpStiff;
 
-            //
             // m_iMaxDepth         = 4;
             // m_iHalfMaxDepth     = 3;
-            // f3Factor            = 0.08f;        // --> 0  more stiff
+            // imageFactor            = 0.08f;        // --> 0  more stiff
             // m_fStiffness        = 0.15f;        // --> 0  less stiff
-            if (onlyEllipse == true) {
-                iMaxUpdate = 0;
+            if (runOneIter == true) {
+                iMaxUpdate = 1;
             } else {
                 iMaxUpdate = nIterations;
             }
@@ -605,7 +589,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
     /**
      * Set the reduction factor for estimating the initial ellipsoid, as described in BrainExtraction.pdf. The default
-     * value is 0.75.
+     * value is 0.6.
      *
      * @return  the current reduction factor
      */
@@ -615,7 +599,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
     /**
      * Set the reduction factor for estimating the initial ellipsoid, as described in BrainExtraction.pdf. The default
-     * value is 0.75.
+     * value is 0.4.
      *
      * @return  the current reduction factor
      */
@@ -625,7 +609,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
     /**
      * Set the reduction factor for estimating the initial ellipsoid, as described in BrainExtraction.pdf. The default
-     * value is 0.75.
+     * value is 0.6.
      *
      * @return  the current reduction factor
      */
@@ -776,7 +760,6 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // Based on empirical studies, these parameters seem to work well.
         m_fBrainSelection = 0.5f;
         m_iMaxDepth = 7;
-        m_iHalfMaxDepth = m_iMaxDepth / 2;
         m_fRayDelta = 1.0f;
         m_fStiffness = 0.1f;
         m_iDMax = 0;
@@ -896,7 +879,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * @param  ratio  DOCUMENT ME!
      */
     public final void setImageRatio(float ratio) {
-        f3Factor = ratio;
+        imageFactor = ratio;
     }
 
     /**
@@ -915,7 +898,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * @param  flag  if true skip evolution of surface
      */
     public final void setJustIntialEllipsoid(boolean flag) {
-        onlyEllipse = flag;
+        runOneIter = flag;
     }
 
     /**
@@ -926,7 +909,6 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      */
     public final void setMaxDepth(int iMaxDepth) {
         m_iMaxDepth = iMaxDepth;
-        m_iHalfMaxDepth = iMaxDepth / 2;
     }
 
     /**
@@ -1120,9 +1102,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                     if (iIntensity > m_iBackThreshold) {
 
                         // transform to ellipsoid coordinates
-                        float fX = (float) iX - m_kCenter.x;
-                        float fY = (float) iY - m_kCenter.y;
-                        float fZ = (float) iZ - m_kCenter.z;
+                        float fX = ((float)(iX)) - m_kCenter.x;
+                        float fY = ((float)(iY)) - m_kCenter.y;
+                        float fZ = ((float)(iZ)) - m_kCenter.z;
                         kP.x = (fX * m_kRotate.m00) + (fY * m_kRotate.m10) + (fZ * m_kRotate.m20);
                         kP.y = (fX * m_kRotate.m01) + (fY * m_kRotate.m11) + (fZ * m_kRotate.m21);
                         kP.z = (fX * m_kRotate.m02) + (fY * m_kRotate.m12) + (fZ * m_kRotate.m22);
@@ -1406,9 +1388,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // m_afLength[0] *= m_fReduction;
         // m_afLength[1] *= m_fReduction;
         // m_afLength[2] *= m_fReduction;
-        m_afLength[0] = radius * 0.45f;
-        m_afLength[1] = radius * 0.45f;
-        m_afLength[2] = (radius * 0.3f) * (m_fXDelta / m_fZDelta);
+        m_afLength[0] = radius * 0.40f;
+        m_afLength[1] = radius * 0.40f;
+        m_afLength[2] = (radius * 0.25f) * (m_fXDelta / m_fZDelta);
 
         Preferences.debug("Brain extractor: extimateSphere:  sphere length 1 = " + m_afLength[0] + "\n");
         Preferences.debug("Brain extractor: extimateSphere:  sphere length 2 = " + m_afLength[1] + "\n");
@@ -1553,7 +1535,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // E1 = 2*E0 + 3*T0
         // T1 = 4*T0
         m_iVQuantity = 6;
-        m_iEQuantity = 12;
+        int m_iEQuantity = 12;
         m_iTQuantity = 8;
 
         int iStep;
@@ -2546,6 +2528,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         float fIMin = (float) m_iMedianIntensity;
         float fIMax = (float) m_iBackThreshold;
+        int iHalfMaxDepth = m_iMaxDepth/2;
 
         // TO DO.  The ray depth should be in millimeters, not voxel units.
         // For now I'll just use the value as specified.  Later I need to
@@ -2587,7 +2570,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 fIMin = fValue;
             }
 
-            if (j < m_iHalfMaxDepth) {
+            if (j < iHalfMaxDepth) {
 
                 // update the maximum intensity
                 if (fValue > fIMax) {
@@ -2599,7 +2582,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         float fRatio = (-m_fBrainSelection + ((fIMin - m_iMinThreshold) / (fIMax - m_iMinThreshold)));
 
         // float fUpdate3 = 0.05f * fRatio * m_fMeanEdgeLength;
-        float fUpdate3 = f3Factor * fRatio * m_fMeanEdgeLength;
+        float fUpdate3 = imageFactor * fRatio * m_fMeanEdgeLength;
 
         return fUpdate3;
     }
@@ -2609,8 +2592,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      * procedure is turned on.
      */
     private void constructLog() {
-        historyString = new String("ExtractBrain(" + orientationFlag + ", " + onlyEllipse + ", " + useSphere + ", " +
-                                   nIterations + ", " + m_iMaxDepth + ", " + f3Factor + ", " + m_fStiffness + ", " +
+        historyString = new String("ExtractBrain(" + orientationFlag + ", " + runOneIter + ", " + useSphere + ", " +
+                                   nIterations + ", " + m_iMaxDepth + ", " + imageFactor + ", " + m_fStiffness + ", " +
                                    secondStageErosion + ", " + aboveMedian + ")\n");
     }
 
@@ -2798,7 +2781,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
          *
          * @return  The value is true if and only if the element is found in the set.
          */
-        public boolean exists(int iElement) {
+        public final boolean exists(int iElement) {
 
             for (int i = 0; i < m_iQuantity; i++) {
 

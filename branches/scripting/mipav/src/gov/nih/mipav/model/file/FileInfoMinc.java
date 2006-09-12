@@ -455,7 +455,7 @@ public class FileInfoMinc extends FileInfoBase {
                             }
                         }
 
-                        table.put("(" + group + "," + elem + ")", data.trim());
+                        table.put("(" + group.toUpperCase() + "," + elem.toUpperCase() + ")", data.trim());
                     }
                 }
             }

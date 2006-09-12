@@ -69,17 +69,6 @@ public class SurfaceRender extends RenderViewBase {
     /** Value which indicates the probe entry point color. */
     public static final int ENTRY_POINT = 6;
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** X, Y, Z label constants. */
-    public static final int X = 0;
-
-    /** DOCUMENT ME! */
-    public static final int Y = 1;
-
-    /** DOCUMENT ME! */
-    public static final int Z = 2;
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Flag to indicate whether the view volume texture is aligned or not. */
@@ -91,24 +80,14 @@ public class SurfaceRender extends RenderViewBase {
     /** Mode is tri-planar volume view or not. */
     boolean isTriPlanarVolView = false;
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** Axis orietation. */
-    private int axisXOrient, axisYOrient, axisZOrient;
-
     /** Dialog to turn bounding box of surface renderer on and off, and to change the color of the frame. */
     private JPanelDisplay boxPanel;
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** The frame around the x slice. */
-    private ViewJComponentBoxSlice boxSliceX;
-
-    /** The frame around the y slice. */
-    private ViewJComponentBoxSlice boxSliceY;
-
-    /** The frame around the z slice. */
-    private ViewJComponentBoxSlice boxSliceZ;
+    /** The frame around the AXIAL, CORONAL, SAGITTAL slices: */
+    private ViewJComponentBoxSlice[] boxSlices = new ViewJComponentBoxSlice[3];
+    /** The transformed boxSlices frames used to sample the volume data along
+     * diagonal slices: */
+    private Point3Df[][] boxSliceVertices;
 
     /** Buffer factor, 1 usually, 4 for color images. */
     private int bufferFactor = 1;
@@ -116,16 +95,9 @@ public class SurfaceRender extends RenderViewBase {
     /** Dialog to turn the clipping palne box on and off. */
     private JPanelClip clipPanel;
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** XY image plane. */
-    private ViewJComponentTriSliceImage componentImageXY;
-
-    /** XZ image plane. */
-    private ViewJComponentTriSliceImage componentImageXZ;
-
-    /** ZY image plane. */
-    private ViewJComponentTriSliceImage componentImageZY;
+    /** ImageRenderers for the AXIAL, CORONAL, SAGITTAL slices:*/
+    private ViewJComponentTriSliceImage[] triSliceImages = new ViewJComponentTriSliceImage[3];
+    private Shape3D[] triSliceGeometry = new Shape3D[3];
 
     /** Volume image object. */
     private ViewJComponentSurfaceVolume componentVolImage;
@@ -163,28 +135,6 @@ public class SurfaceRender extends RenderViewBase {
     /** Current image B. */
     private ModelImage imageB;
 
-    /*********************************************************************************/
-
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** Buffer that holds image A data for the XY plane. */
-    private float[] imageBufferA_XY;
-
-    /** Buffer that holds image A data for the XZ plane. */
-    private float[] imageBufferA_XZ;
-
-    /** Buffer that holds image A data for the ZY plane. */
-    private float[] imageBufferA_ZY;
-
-    /** Buffer that holds image B data for the XY plane. */
-    private float[] imageBufferB_XY;
-
-    /** Buffer that holds image B data for the XZ plane. */
-    private float[] imageBufferB_XZ;
-
-    /** Buffer that holds image B data for the ZY plane. */
-    private float[] imageBufferB_ZY;
-
     /** Buffer that holds image A volume data. */
     private float[] imageVolBufferA;
 
@@ -203,43 +153,11 @@ public class SurfaceRender extends RenderViewBase {
      */
     private double m_dOriginalScreenScale = 1.0;
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** Map vectors. Mapping from the pixel space(0-256) to texture space(0, 1). */
-    private Vector4f m_kCoordMapX, m_kCoordMapY, m_kCoordMapZ, m_kCoordMapZNeg;
+    /** TransformGroup[] used to rotate the AXIAL, CORONAL, SAGITTAL slice BOXES:*/
+    private TransformGroup[] m_kObjBoxSliceProbe_TG = new TransformGroup[3]; /* Rotates the X Box */
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** TransformGroups used to rotate the x,y,z slices and x,y,z boxes based on the probe angle and position:. */
-    private TransformGroup m_kObjBoxSliceProbeX_TG; /* Rotates the X Box */
-
-    /** DOCUMENT ME! */
-    private TransformGroup m_kObjBoxSliceProbeY_TG; /* Rotates the Y Box */
-
-    /** DOCUMENT ME! */
-    private TransformGroup m_kObjBoxSliceProbeZ_TG; /* Rotates the Z Box */
-
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** DOCUMENT ME! */
-    private Point3f[] m_kObjBoxVertsX = null; /* Reference to the X-Box vertices */
-
-    /** DOCUMENT ME! */
-    private Point3f[] m_kObjBoxVertsY = null; /* Reference to the Y-Box vertices */
-
-    /** DOCUMENT ME! */
-    private Point3f[] m_kObjBoxVertsZ = null; /* Reference to the Z-Box vertices */
-
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** DOCUMENT ME! */
-    private TransformGroup m_kObjPlaneProbeX_TG; /* Rotates the X plane*/
-
-    /** DOCUMENT ME! */
-    private TransformGroup m_kObjPlaneProbeY_TG; /* Rotates the Y plane*/
-
-    /** DOCUMENT ME! */
-    private TransformGroup m_kObjPlaneProbeZ_TG; /* Rotates the Z plane*/
+    /** TransformGroup[] used to rotate the AXIAL, CORONAL, SAGITTAL slice PLANES: */
+    private TransformGroup[] m_kObjPlaneProbe_TG = new TransformGroup[3];
 
     /**
      * The Transform3D used to position the planes based on the Probe position and angle. The planes are rotates about
@@ -248,7 +166,7 @@ public class SurfaceRender extends RenderViewBase {
      * matricies into one transform, which is used to set the Transforms for the TransformGroups above and also to
      * sample the ModelImage data on the diagonal slice:
      */
-    private Transform3D m_kProbeTransform = null;
+    private Transform3D m_kProbeTransform = new Transform3D();
 
     /** Used to compute software lighting of composite texture volume. */
     private SoftwareLightSet m_kSoftwareLightSet = new SoftwareLightSet();
@@ -271,38 +189,14 @@ public class SurfaceRender extends RenderViewBase {
     /** Initial center viewing point of the image. */
     private Point3d myEyePoint = new Point3d();
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** Parent of the x slice. */
-    private BranchGroup objBoxSliceX_BG;
+    /** BranchGroup[] containing the slice BOXES: */
+    private BranchGroup[] objBoxSlices_BG = new BranchGroup[3];
 
-    /** Parent of the y slice. */
-    private BranchGroup objBoxSliceY_BG;
-
-    /** Parent of the z slice. */
-    private BranchGroup objBoxSliceZ_BG;
-
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
     /** Group dictating how the XY plane is translated. */
-    private TransformGroup objTransXY_TG;
+    private TransformGroup[] objTransSlices_TG = new TransformGroup[3];
 
-    /** Group dictating how the XZ plane is translated. */
-    private TransformGroup objTransXZ_TG;
-
-    /** Group dictating how the ZY plane is translated. */
-    private TransformGroup objTransZY_TG;
-
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** Parent of the XY plane image. */
-    private BranchGroup objXYPlaneBG;
-
-    /** Parent of the XZ plane image. */
-    private BranchGroup objXZPlaneBG;
-
-    /** Parent of the ZY plane image. */
-    private BranchGroup objZYPlaneBG;
+    /** BranchGroup[] containing the image planes. */
+    private BranchGroup[] objPlane_BG = new BranchGroup[3];
 
     /** Parallel rotation flag. */
     private boolean parallelRotation = true;
@@ -339,23 +233,17 @@ public class SurfaceRender extends RenderViewBase {
     /** Tri planar view and the 3D texture volume view switch group. */
     private Switch switchGroup;
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** Currently unused. */
-    private TransparencyAttributes taXY, taXZ, taZY;
+    /** ViewJComponentTriSliceImages -> Texture2D transparency values: */
+    private TransparencyAttributes[] sliceTransparency = new TransparencyAttributes[3];
 
     /** Reference to 3D texture node for the volume. */
     private VolumeTexture texture = null;
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** Tri planar slice use Texture2D to display the images. */
-    private Texture2D texXY, texXZ, texZY;
+    /** ViewJComponentTriSliceImages -> Texture2D to display the image slices: */
+    private Texture2D[] sliceTextures = new Texture2D[3];
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** Each texture2D add the ImageComponent2D as image. */
-    private ImageComponent2D texXYImageComp2D, texXZImageComp2D, texZYImageComp2D;
+    /** Each Texture2D adds a ImageComponent2D: */
+    private ImageComponent2D[] sliceImageComponent2D = new ImageComponent2D[3];
 
     /** Cubic tansform3D. */
     private Transform3D transformCubic;
@@ -385,18 +273,14 @@ public class SurfaceRender extends RenderViewBase {
     private OrderedGroup volRenderOG;
 
     /**
-     * If true display 3D volume as a 3D texture map or 2D array of texture maps. If false display 3 orthogonal image
-     * planes.
+     * If true display 3D volume as a 3D texture map or 2D array of texture
+     * maps. If false display 3 orthogonal image planes.
      */
     private boolean volumeDisplayMode3D = false;
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /** Numbers dicatating the sizes of the planes based on the extents and resolutions of the image. */
+    /** Numbers dicatating the sizes of the planes based on the extents and
+     * resolutions of the image. */
     private float xBox, yBox, zBox, maxBox;
-
-    /** Flags indicating if the slices have changed position. */
-    private boolean xChanged = false, yChanged = false, zChanged = false;
 
     /** Dimensions of image A. */
     private int xDim, yDim, zDim, tDim;
@@ -452,29 +336,25 @@ public class SurfaceRender extends RenderViewBase {
 
         background.setColor(new Color3f(Color.black));
 
-        xDim = imageA.getExtents()[0];
-        yDim = imageA.getExtents()[1];
-        zDim = imageA.getExtents()[2];
-        resols[0] = Math.abs(imageA.getFileInfo()[0].getResolutions()[0]);
-        resols[1] = Math.abs(imageA.getFileInfo()[0].getResolutions()[1]);
-        resols[2] = Math.abs(imageA.getFileInfo()[0].getResolutions()[2]);
-
-        // if the slice spacing value is greater than the z-res, use the slice spacing instead
-        if (resols[2] < imageA.getFileInfo(0).getSliceSpacing()) {
+        int[] dimExtents = imageA.getExtents(  );
+        xDim = dimExtents[0];
+        yDim = dimExtents[1];
+        zDim = dimExtents[2];
+        resols = imageA.getResolutions( 0 );
+        for ( int i = 0; i < 3; i++ )
+        {
+            resols[i] = Math.abs(resols[i]);
+        }
+        if (resols[2] < imageA.getFileInfo(0).getSliceSpacing())
+        {
             resols[2] = imageA.getFileInfo(0).getSliceSpacing();
         }
-
         if ((resols[0] == 0.0f) || (resols[1] == 0.0f) || (resols[2] == 0.0f)) {
             resols[0] = 1.0f;
             resols[1] = 1.0f;
             resols[2] = 1.0f;
         }
-
-        units[0] = imageA.getFileInfo()[0].getUnitsOfMeasure()[0];
-        units[1] = imageA.getFileInfo()[0].getUnitsOfMeasure()[1];
-        units[2] = imageA.getFileInfo()[0].getUnitsOfMeasure()[2];
-
-        setupOrientation();
+        units = imageA.getUnitsOfMeasure();
 
         parallelScaleT3D = new Transform3D();
         boxPanel = new JPanelDisplay(this);
@@ -534,11 +414,10 @@ public class SurfaceRender extends RenderViewBase {
         objRootBG.compile();
         universe.addBranchGraph(objRootBG);
 
-        updateBoxSliceX();
-        updateBoxSliceY();
-        updateBoxSliceZ();
+        updateBoxSlices(  );
 
-        update3DTriplanar(null, null, false);
+        transformBoxSlices( new Transform3D() );
+        update3DTriplanar(LUTa, LUTb, true);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -577,99 +456,39 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Adds the slice frame for slice x back into the scene graph. It is necessary to make a new branch group and
-     * transform group because otherwise there is a RestrictedAccessException.
+     * Adds the slice frame for slice of the given orientation to the scene
+     * graph. It is necessary to make a new branch group and transform group
+     * because otherwise there is a RestrictedAccessException.
+     * @param orientation, the slice to add: AXIAL, CORONAL, or SAGITTAL
      */
-    public void addBoxSliceX() {
-        objBoxSliceX_BG = new BranchGroup();
-        objBoxSliceX_BG.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        objBoxSliceX_BG.setCapability(Group.ALLOW_CHILDREN_READ);
-        objBoxSliceX_BG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        objBoxSliceX_BG.setCapability(BranchGroup.ALLOW_DETACH);
-        objBoxSliceX_BG.setPickable(false);
+    private void addBoxSlice( int orientation )
+    {
+        objBoxSlices_BG[ orientation ] = new BranchGroup();
+        objBoxSlices_BG[ orientation ].setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        objBoxSlices_BG[ orientation ].setCapability(Group.ALLOW_CHILDREN_READ);
+        objBoxSlices_BG[ orientation ].setCapability(Group.ALLOW_CHILDREN_WRITE);
+        objBoxSlices_BG[ orientation ].setCapability(BranchGroup.ALLOW_DETACH);
+        objBoxSlices_BG[ orientation ].setPickable(false);
 
-        TransformGroup temp = new TransformGroup();
+        m_kObjBoxSliceProbe_TG[ orientation ] = new TransformGroup();
+        m_kObjBoxSliceProbe_TG[ orientation ].setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        m_kObjBoxSliceProbe_TG[ orientation ].setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
+        m_kObjBoxSliceProbe_TG[ orientation ].setCapability(Group.ALLOW_CHILDREN_READ);
+        m_kObjBoxSliceProbe_TG[ orientation ].setCapability(Group.ALLOW_CHILDREN_WRITE);
+        objBoxSlices_BG[ orientation ].addChild(m_kObjBoxSliceProbe_TG[ orientation ]);
 
-        temp.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        temp.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        temp.setCapability(Group.ALLOW_CHILDREN_READ);
-        temp.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        objBoxSliceX_BG.addChild(temp);
+        Appearance app = new Appearance();
+        app.setLineAttributes( new LineAttributes( 1.5f, LineAttributes.PATTERN_SOLID, true ) );
 
-        updateBoxSliceXPos();
-
-        Shape3D shape = new Shape3D(boxSliceX, null);
-
+        Shape3D shape = new Shape3D(boxSlices[ orientation ], app);
         shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
         shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-        temp.addChild(shape);
-        triPlanarViewBG.addChild(objBoxSliceX_BG);
+        
+
+        m_kObjBoxSliceProbe_TG[ orientation ].addChild(shape);
+        triPlanarViewBG.addChild(objBoxSlices_BG[ orientation ]);
     }
 
-    /**
-     * Adds the slice frame for slice y back into the scene graph. It is necessary to make a new branch group and
-     * transform group because otherwise there is a RestrictedAccessException.
-     */
-    public void addBoxSliceY() {
-
-        // I have to make a new one because otherwise I get a RestrictedAccessException
-        objBoxSliceY_BG = new BranchGroup();
-        objBoxSliceY_BG.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        objBoxSliceY_BG.setCapability(Group.ALLOW_CHILDREN_READ);
-        objBoxSliceY_BG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        objBoxSliceY_BG.setCapability(BranchGroup.ALLOW_DETACH);
-        objBoxSliceY_BG.setPickable(false);
-
-        TransformGroup temp = new TransformGroup();
-
-        temp.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        temp.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        temp.setCapability(Group.ALLOW_CHILDREN_READ);
-        temp.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        objBoxSliceY_BG.addChild(temp);
-
-        updateBoxSliceYPos();
-
-        Shape3D shape = new Shape3D(boxSliceY, null);
-
-        shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-        shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-        shape.setCapability(Shape3D.ENABLE_PICK_REPORTING);
-        temp.addChild(shape);
-        triPlanarViewBG.addChild(objBoxSliceY_BG);
-    }
-
-    /**
-     * Adds the slice frame for slice z back into the scene graph. It is necessary to make a new branch group and
-     * transform group because otherwise there is a RestrictedAccessException.
-     */
-    public void addBoxSliceZ() {
-        objBoxSliceZ_BG = new BranchGroup();
-        objBoxSliceZ_BG.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        objBoxSliceZ_BG.setCapability(Group.ALLOW_CHILDREN_READ);
-        objBoxSliceZ_BG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        objBoxSliceZ_BG.setCapability(BranchGroup.ALLOW_DETACH);
-        objBoxSliceZ_BG.setPickable(false);
-
-        TransformGroup temp = new TransformGroup();
-
-        temp.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        temp.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        temp.setCapability(Group.ALLOW_CHILDREN_READ);
-        temp.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        temp.setCapability(TransformGroup.ENABLE_PICK_REPORTING);
-        objBoxSliceZ_BG.addChild(temp);
-
-        updateBoxSliceZPos();
-
-        Shape3D shape = new Shape3D(boxSliceZ, null);
-
-        shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-        shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-        shape.setCapability(Shape3D.ENABLE_PICK_REPORTING);
-        temp.addChild(shape);
-        triPlanarViewBG.addChild(objBoxSliceZ_BG);
-    }
 
     /**
      * Attach cubic control branch group.
@@ -973,19 +792,13 @@ public class SurfaceRender extends RenderViewBase {
             volRenderNode = null;
         }
 
-        if (componentImageXY != null) {
-            componentImageXY.disposeLocal();
-            componentImageXY = null;
-        }
-
-        if (componentImageZY != null) {
-            componentImageZY.disposeLocal();
-            componentImageZY = null;
-        }
-
-        if (componentImageXZ != null) {
-            componentImageXZ.disposeLocal();
-            componentImageXZ = null;
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( triSliceImages[i] != null )
+            {
+                triSliceImages[i].disposeLocal();
+                triSliceImages[i] = null;
+            }
         }
 
         if (componentVolImage != null) {
@@ -1012,17 +825,6 @@ public class SurfaceRender extends RenderViewBase {
         }
 
         volOpacityPanel = null;
-        imageBufferA_XY = null;
-        imageBufferA_XZ = null;
-        imageBufferA_ZY = null;
-        imageBufferB_XY = null;
-        imageBufferB_ZY = null;
-        imageBufferB_XZ = null;
-        imageBufferB_XZ = null;
-
-        taXY = null;
-        taXZ = null;
-        taZY = null;
         imageA = null;
         imageB = null;
 
@@ -1080,10 +882,9 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Called from the parent class when the Probe Entry Point is selected in the PlaneRender object. The input kPoint
-     * has coordinates (0,1), these are scaled to fit in the probe coordinates before sending the probe object.
+     * Called from the parent class when the Probe Entry Point is selected in the PlaneRender object.
      *
-     * @param  kPoint  DOCUMENT ME!
+     * @param  kPoint  probe entry point in ModelStorageBase Coordinates
      */
     public void drawRFAPoint(Point3f kPoint) {
 
@@ -1094,6 +895,7 @@ public class SurfaceRender extends RenderViewBase {
 
         /* update the probe position: */
         probePanel.getProbeBase().updatePosition(kPoint);
+        updateProbePos();
     }
 
     /**
@@ -1197,137 +999,6 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Get the actual X, Y, Z label from the current orientation.
-     *
-     * @param   label  desired X, Y, Z label
-     * @param   isTag  is label tag or not, if label tag, get the specific orientation.
-     *
-     * @return  int
-     */
-    public int getLabel(int label, boolean isTag) {
-
-        if (label == X) {
-
-            if ((axisXOrient == FileInfoBase.ORI_L2R_TYPE) || (axisXOrient == FileInfoBase.ORI_R2L_TYPE)) {
-                return X;
-            } else if ((axisXOrient == FileInfoBase.ORI_A2P_TYPE) || (axisXOrient == FileInfoBase.ORI_P2A_TYPE)) {
-
-                if (isTag) {
-
-                    if ((axisZOrient == FileInfoBase.ORI_R2L_TYPE) || (axisZOrient == FileInfoBase.ORI_L2R_TYPE) ||
-                            (axisZOrient == FileInfoBase.ORI_I2S_TYPE) || (axisZOrient == FileInfoBase.ORI_S2I_TYPE)) {
-                        return Y;
-                    }
-
-                } else {
-
-                    if ((axisZOrient == FileInfoBase.ORI_R2L_TYPE) || (axisZOrient == FileInfoBase.ORI_L2R_TYPE)) {
-                        return Z;
-                    } else if ((axisZOrient == FileInfoBase.ORI_I2S_TYPE) ||
-                                   (axisZOrient == FileInfoBase.ORI_S2I_TYPE)) {
-                        return Y;
-                    }
-                }
-            } else if ((axisXOrient == FileInfoBase.ORI_I2S_TYPE) || (axisXOrient == FileInfoBase.ORI_S2I_TYPE)) {
-
-                if (isTag) {
-
-                    if ((axisZOrient == FileInfoBase.ORI_R2L_TYPE) || (axisZOrient == FileInfoBase.ORI_L2R_TYPE) ||
-                            (axisZOrient == FileInfoBase.ORI_P2A_TYPE) || (axisZOrient == FileInfoBase.ORI_A2P_TYPE)) {
-                        return Z;
-                    }
-
-                } else {
-
-                    if ((axisZOrient == FileInfoBase.ORI_R2L_TYPE) || (axisZOrient == FileInfoBase.ORI_L2R_TYPE)) {
-                        return Z;
-                    } else if ((axisZOrient == FileInfoBase.ORI_P2A_TYPE) ||
-                                   (axisZOrient == FileInfoBase.ORI_A2P_TYPE)) {
-                        return Y;
-                    }
-                }
-            } else { // X axis UNKNOWN
-                return X;
-            }
-        } else if (label == Y) {
-
-            // Setup Y box frame
-            if (((axisXOrient == FileInfoBase.ORI_A2P_TYPE) || (axisXOrient == FileInfoBase.ORI_P2A_TYPE)) &&
-                    ((axisZOrient == FileInfoBase.ORI_R2L_TYPE) || (axisZOrient == FileInfoBase.ORI_L2R_TYPE))) {
-
-                if (isTag) {
-                    return Z;
-                } else {
-                    return X;
-                }
-            } else if (((axisZOrient == FileInfoBase.ORI_A2P_TYPE) || (axisZOrient == FileInfoBase.ORI_P2A_TYPE)) &&
-                           ((axisXOrient == FileInfoBase.ORI_I2S_TYPE) || (axisXOrient == FileInfoBase.ORI_S2I_TYPE))) {
-
-                if (isTag) {
-                    return X;
-                } else {
-                    return Z;
-                }
-            } else if ((axisYOrient == FileInfoBase.ORI_L2R_TYPE) || (axisYOrient == FileInfoBase.ORI_R2L_TYPE)) {
-                return X;
-            } else if ((axisYOrient == FileInfoBase.ORI_P2A_TYPE) || (axisYOrient == FileInfoBase.ORI_A2P_TYPE)) {
-                return Y;
-            } else if ((axisYOrient == FileInfoBase.ORI_I2S_TYPE) || (axisYOrient == FileInfoBase.ORI_S2I_TYPE)) {
-                return Z;
-            } else { // Y axis UNKNOWN
-                return Y;
-            }
-        } else if (label == Z) {
-
-            // Setup Z box frame
-            if ((axisZOrient == FileInfoBase.ORI_I2S_TYPE) || (axisZOrient == FileInfoBase.ORI_S2I_TYPE)) {
-                return Z;
-            } else if ((axisZOrient == FileInfoBase.ORI_L2R_TYPE) || (axisZOrient == FileInfoBase.ORI_R2L_TYPE)) {
-
-                if (isTag) {
-
-                    if ((axisXOrient == FileInfoBase.ORI_A2P_TYPE) || (axisXOrient == FileInfoBase.ORI_P2A_TYPE) ||
-                            (axisXOrient == FileInfoBase.ORI_I2S_TYPE) || (axisXOrient == FileInfoBase.ORI_S2I_TYPE)) {
-                        return X;
-                    }
-
-                } else {
-
-                    if ((axisXOrient == FileInfoBase.ORI_A2P_TYPE) || (axisXOrient == FileInfoBase.ORI_P2A_TYPE)) {
-                        return Y;
-                    } else if ((axisXOrient == FileInfoBase.ORI_I2S_TYPE) ||
-                                   (axisXOrient == FileInfoBase.ORI_S2I_TYPE)) {
-                        return X;
-                    }
-                }
-            } else if ((axisZOrient == FileInfoBase.ORI_A2P_TYPE) || (axisZOrient == FileInfoBase.ORI_P2A_TYPE)) {
-
-                if (isTag) {
-
-                    if ((axisXOrient == FileInfoBase.ORI_R2L_TYPE) || (axisXOrient == FileInfoBase.ORI_L2R_TYPE) ||
-                            (axisXOrient == FileInfoBase.ORI_I2S_TYPE) || (axisXOrient == FileInfoBase.ORI_S2I_TYPE)) {
-                        return Y;
-                    }
-
-                } else {
-
-                    if ((axisXOrient == FileInfoBase.ORI_R2L_TYPE) || (axisXOrient == FileInfoBase.ORI_L2R_TYPE)) {
-                        return Y;
-                    } else if ((axisXOrient == FileInfoBase.ORI_I2S_TYPE) ||
-                                   (axisXOrient == FileInfoBase.ORI_S2I_TYPE)) {
-                        return X;
-                    }
-                }
-            } else { // Z axis UNKNOWN
-                return Z;
-            }
-        }
-
-        return -1;
-
-    }
-
-    /**
      * Return mousePanel from parent frame.
      *
      * @return  mousePanel Mouse Dialog box.
@@ -1355,26 +1026,9 @@ public class SurfaceRender extends RenderViewBase {
      *
      * @return  objBoxSliceX_BG Called be the JDialogSliceBox
      */
-    public BranchGroup getObjBoxSliceX_BG() {
-        return objBoxSliceX_BG;
-    }
-
-    /**
-     * Return the Y box color frame.
-     *
-     * @return  objBoxSliceY_BG Called be the JDialogSliceBox
-     */
-    public BranchGroup getObjBoxSliceY_BG() {
-        return objBoxSliceY_BG;
-    }
-
-    /**
-     * Return the Z box color frame.
-     *
-     * @return  objBoxSliceZ_BG Called be the JDialogSliceBox
-     */
-    public BranchGroup getObjBoxSliceZ_BG() {
-        return objBoxSliceZ_BG;
+    public BranchGroup getObjBoxSlice_BG( int orientation )
+    {
+        return objBoxSlices_BG[orientation];
     }
 
     /**
@@ -1382,26 +1036,9 @@ public class SurfaceRender extends RenderViewBase {
      *
      * @return  objXYPlaneBG called by JDialogSliceBox
      */
-    public BranchGroup getObjXYPlaneBG() {
-        return objXYPlaneBG;
-    }
-
-    /**
-     * Gets the objXZPlaneBG branch group.
-     *
-     * @return  objXZPlaneBG called by JDialogSliceBox
-     */
-    public BranchGroup getObjXZPlaneBG() {
-        return objXZPlaneBG;
-    }
-
-    /**
-     * Gets the objZYPlaneBG branch group.
-     *
-     * @return  objZYPlaneBG called by JDialogSliceBox
-     */
-    public BranchGroup getObjZYPlaneBG() {
-        return objZYPlaneBG;
+    public BranchGroup getObjPlane_BG( int orientation )
+    {
+        return objPlane_BG[ orientation ];
     }
 
     /**
@@ -1452,8 +1089,8 @@ public class SurfaceRender extends RenderViewBase {
 
         return new SceneState(getSlicePanel().getXSlice(), getSlicePanel().getYSlice(), getSlicePanel().getZSlice(),
                               getSlicePanel().getXOpacitySlice(), getSlicePanel().getYOpacitySlice(),
-                              getSlicePanel().getZOpacitySlice(), getSlicePanel().getXVisible(),
-                              getSlicePanel().getYVisible(), getSlicePanel().getZVisible(),
+                              getSlicePanel().getZOpacitySlice(), getSlicePanel().getVisible(0),
+                              getSlicePanel().getVisible(1), getSlicePanel().getVisible(2),
                               getSurfaceDialog().getSurfaceOpacity(), getClipDialog().getSliceA(),
                               getClipDialog().getSliceX(), getClipDialog().getSliceY(), getClipDialog().getSliceZ(),
                               getClipDialog().getSliceXInv(), getClipDialog().getSliceYInv(),
@@ -1591,83 +1228,11 @@ public class SurfaceRender extends RenderViewBase {
         return (Group) kReturn;
     }
 
-    /**
-     * Get the x slider position.
-     *
-     * @return  int x slice value.
-     */
-    public int getXPosition() {
-        int xPos = 0;
-
-        switch (getLabel(X, false)) {
-
-            case X:
-                xPos = slicePanel.xSlice;
-                break;
-
-            case Y:
-                xPos = slicePanel.ySlice;
-                break;
-
-            case Z:
-                xPos = slicePanel.zSlice;
-                break;
-        }
-
-        return xPos;
+    public float[] getResolutions()
+    {
+        return resols;
     }
 
-    /**
-     * Get the y slider position.
-     *
-     * @return  int y slice value.
-     */
-    public int getYPosition() {
-        int yPos = 0;
-
-        switch (getLabel(Y, false)) {
-
-            case X:
-                yPos = slicePanel.xSlice;
-                break;
-
-            case Y:
-                yPos = slicePanel.ySlice;
-                break;
-
-            case Z:
-                yPos = slicePanel.zSlice;
-                break;
-        }
-
-        return yPos;
-    }
-
-    /**
-     * Get the y slider position.
-     *
-     * @return  int y slice value.
-     */
-    public int getZPosition() {
-        int zPos = 0;
-
-        switch (getLabel(Z, false)) {
-
-            case X:
-                zPos = slicePanel.xSlice;
-                break;
-
-            case Y:
-                zPos = slicePanel.ySlice;
-                break;
-
-            case Z:
-                zPos = slicePanel.zSlice;
-                break;
-        }
-
-        return zPos;
-    }
 
     /**
      * Makes the box frame invisible.
@@ -1775,24 +1340,15 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Detaches the slice frame on slice x.
+     * Detaches the slice frame on the slice for the given orientation.
+     * @param orientation, the slice to add: AXIAL, CORONAL, or SAGITTAL
      */
-    public void removeBoxSliceX() {
-        objBoxSliceX_BG.detach();
-    }
-
-    /**
-     * Detaches the slice frame on slice y.
-     */
-    public void removeBoxSliceY() {
-        objBoxSliceY_BG.detach();
-    }
-
-    /**
-     * Detaches the slice frame on slice z.
-     */
-    public void removeBoxSliceZ() {
-        objBoxSliceZ_BG.detach();
+    public void removeBoxSlice( int orientation )
+    {
+        if ( objBoxSlices_BG[ orientation ] != null )
+        {
+            objBoxSlices_BG[ orientation ].detach();
+        }
     }
 
     /**
@@ -1861,16 +1417,12 @@ public class SurfaceRender extends RenderViewBase {
 
         if (volumeDisplayMode3D == false) {
 
-            if (componentImageXY != null) {
-                componentImageXY.setAlphaBlend(value);
-            }
-
-            if (componentImageXZ != null) {
-                componentImageXZ.setAlphaBlend(value);
-            }
-
-            if (componentImageZY != null) {
-                componentImageZY.setAlphaBlend(value);
+            for ( int i = 0; i < 3; i++ )
+            {
+                if ( triSliceImages[i] != null )
+                {
+                    triSliceImages[i].setAlphaBlend(value);
+                }
             }
         }
     }
@@ -2066,9 +1618,13 @@ public class SurfaceRender extends RenderViewBase {
      * @param  LUT  The LUT.
      */
     public void setLUTa(ModelLUT LUT) {
-        componentImageXY.setLUTa(LUT);
-        componentImageXZ.setLUTa(LUT);
-        componentImageZY.setLUTa(LUT);
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( triSliceImages[i] != null )
+            {
+                triSliceImages[i].setLUTa(LUT);
+            }
+        }
     }
 
     /**
@@ -2077,9 +1633,13 @@ public class SurfaceRender extends RenderViewBase {
      * @param  LUT  The LUT
      */
     public void setLUTb(ModelLUT LUT) {
-        componentImageXY.setLUTb(LUT);
-        componentImageXZ.setLUTb(LUT);
-        componentImageZY.setLUTb(LUT);
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( triSliceImages[i] != null )
+            {
+                triSliceImages[i].setLUTb(LUT);
+            }
+        }
     }
 
     /**
@@ -2126,37 +1686,31 @@ public class SurfaceRender extends RenderViewBase {
      * to the probe position. The three transformations are concatenated into one Transform3D, which is used to display
      * the slices, boxes, and to sample the ModelImage on the diagonal:
      *
-     * @param  kTransform  DOCUMENT ME!
-     * @param  bTwist      DOCUMENT ME!
+     * @param  kTransform  current probe transform
+     * @param  bTwist      true if there is twist about the probe axis
      */
     public void setProbeTG(Transform3D kTransform, boolean bTwist) {
 
         /* Get the translation and inverse translation transforms: */
         Vector3f kTranslateVector = new Vector3f();
-
         kTransform.get(kTranslateVector);
 
         Transform3D kTranslate = new Transform3D();
-
         kTranslate.setTranslation(kTranslateVector);
 
         Transform3D kTranslateInv = new Transform3D();
-
         kTranslateInv.setTranslation(new Vector3f(-kTranslateVector.x, -kTranslateVector.y, -kTranslateVector.z));
 
         /* Get the rotation transform: */
         Matrix3f kRotationMatrix = new Matrix3f();
-
         kTransform.getRotationScale(kRotationMatrix);
 
         Transform3D kRotate = new Transform3D();
-
         kRotate.setRotationScale(kRotationMatrix);
 
         /* Concatenate the three transformations to rotate about the probe
          * position: */
         Transform3D kTransformTotal = new Transform3D();
-
         kTransformTotal.mul(kTranslate);
         kTransformTotal.mul(kRotate);
         kTransformTotal.mul(kTranslateInv);
@@ -2165,22 +1719,19 @@ public class SurfaceRender extends RenderViewBase {
         if (m_kProbeTransform == null) {
             m_kProbeTransform = new Transform3D(kTransformTotal);
         } else if (bTwist) {
-
             m_kProbeTransform.mul(kTransformTotal, m_kProbeTransform);
         } else {
             m_kProbeTransform.set(kTransformTotal);
         }
 
+        transformBoxSlices( m_kProbeTransform );
+
         /* Set the transforms for displaying the slices and boxes: */
-        m_kObjBoxSliceProbeX_TG.setTransform(m_kProbeTransform);
-        m_kObjPlaneProbeX_TG.setTransform(m_kProbeTransform);
-
-        m_kObjBoxSliceProbeY_TG.setTransform(m_kProbeTransform);
-        m_kObjPlaneProbeY_TG.setTransform(m_kProbeTransform);
-
-        m_kObjBoxSliceProbeZ_TG.setTransform(m_kProbeTransform);
-        m_kObjPlaneProbeZ_TG.setTransform(m_kProbeTransform);
-
+        for ( int i = 0; i < 3; i++ )
+        {
+            m_kObjBoxSliceProbe_TG[i].setTransform(m_kProbeTransform);
+            m_kObjPlaneProbe_TG[i].setTransform(m_kProbeTransform);
+        }
     }
 
     /**
@@ -2234,16 +1785,12 @@ public class SurfaceRender extends RenderViewBase {
      */
     public void setRGBTA(ModelRGB RGBT) {
 
-        if (componentImageXY != null) {
-            componentImageXY.setRGBTA(RGBT);
-        }
-
-        if (componentImageXZ != null) {
-            componentImageXZ.setRGBTA(RGBT);
-        }
-
-        if (componentImageZY != null) {
-            componentImageZY.setRGBTA(RGBT);
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( triSliceImages[i] != null )
+            {
+                triSliceImages[i].setRGBTA(RGBT);
+            }
         }
 
         if (componentVolImage != null) {
@@ -2258,16 +1805,12 @@ public class SurfaceRender extends RenderViewBase {
      */
     public void setRGBTB(ModelRGB RGBT) {
 
-        if (componentImageXY != null) {
-            componentImageXY.setRGBTB(RGBT);
-        }
-
-        if (componentImageXZ != null) {
-            componentImageXZ.setRGBTB(RGBT);
-        }
-
-        if (componentImageZY != null) {
-            componentImageZY.setRGBTB(RGBT);
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( triSliceImages[i] != null )
+            {
+                triSliceImages[i].setRGBTB(RGBT);
+            }
         }
 
         if (componentVolImage != null) {
@@ -2282,6 +1825,24 @@ public class SurfaceRender extends RenderViewBase {
      */
     public void setSegmentationImage(ModelImage img) {
         segmentationImage = img;
+    }
+
+    /**
+     * Sets the values for JPanelSlices, based on the positions in the
+     * PlaneRender class for the AXIAL, CORONAL, and SAGITTAL views.
+     * @param center, the three slider values in File Coordinates
+     */
+    public void setCenter( Point3Df center )
+    {
+        /* update the sliders: */
+        slicePanel.setCenter( (int)center.x, (int)center.y, (int)center.z );
+        for ( int i = 0; i < 3; i++ )
+        {
+            /* update the ViewJComponentTriSliceImages: */
+            triSliceImages[i].setCenter( (int)center.x, (int)center.y, (int)center.z );
+        }
+        /* re-render: */
+        update3DTriplanar(null, null, true);
     }
 
     /**
@@ -2315,55 +1876,20 @@ public class SurfaceRender extends RenderViewBase {
         }
     }
 
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
     /**
      * Sets the color of the x slice frame.
      *
      * @param  color  Color to set to.
      */
-    public void setSliceXColor(Color color) {
-        boxSliceX.setColor(color);
+    public void setSliceColor(Color color, int orientation)
+    {
+        boxSlices[ orientation ].setColor(color);
 
         if (parent instanceof ViewJFrameVolumeView) {
             if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).setSliceHairColor( ViewJComponentBase.SAGITTAL, color );
+                ((ViewJFrameVolumeView) parent).setSliceHairColor( orientation, color );
             }
         }
-    }
-
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /**
-     * Sets the color of the y slice frame.
-     *
-     * @param  color  Color to set to.
-     */
-    public void setSliceYColor(Color color) {
-        boxSliceY.setColor(color);
-
-         if (parent instanceof ViewJFrameVolumeView) {
-             if (((ViewJFrameVolumeView) parent) != null) {
-                 ((ViewJFrameVolumeView) parent).setSliceHairColor(ViewJComponentBase.CORONAL, color);
-             }
-         }
-    }
-
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /**
-     * Sets the color of the z slice frame.
-     *
-     * @param  color  Color to set to.
-     */
-    public void setSliceZColor(Color color) {
-        boxSliceZ.setColor(color);
-
-         if (parent instanceof ViewJFrameVolumeView) {
-             if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).setSliceHairColor( ViewJComponentBase.AXIAL, color);
-             }
-         }
     }
 
     /**
@@ -2428,61 +1954,20 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Makes the box slice X visible.
+     * Makes the box slice for the given orientation visible.
+     * @param orientation: AXIAL, CORONAL, or SAGITTAL
      */
-    public void showBoxSliceX() {
-
-        if (slicePanel.xVisible == true) {
-
-            if (xChanged == true) {
-                updateBoxSliceX();
-                xChanged = false;
-            } else {
-
-                if (!objBoxSliceX_BG.isLive()) {
-                    triPlanarViewBG.addChild(objBoxSliceX_BG);
-                }
+    public void showBoxSlice( int orientation )
+    {
+        if (slicePanel.getVisible( orientation ) == true)
+        {
+            if (!objBoxSlices_BG[orientation].isLive())
+            {
+                triPlanarViewBG.addChild(objBoxSlices_BG[orientation]);
             }
         }
     }
 
-    /**
-     * Makes the box slice Y visible.
-     */
-    public void showBoxSliceY() {
-
-        if (slicePanel.yVisible == true) {
-
-            if (yChanged == true) {
-                updateBoxSliceY();
-                yChanged = false;
-            } else {
-
-                if (!objBoxSliceY_BG.isLive()) {
-                    triPlanarViewBG.addChild(objBoxSliceY_BG);
-                }
-            }
-        }
-    }
-
-    /**
-     * Makes the box slice Z visible.
-     */
-    public void showBoxSliceZ() {
-
-        if (slicePanel.zVisible == true) {
-
-            if (zChanged == true) {
-                updateBoxSliceZ();
-                zChanged = false;
-            } else {
-
-                if (!objBoxSliceZ_BG.isLive()) {
-                    triPlanarViewBG.addChild(objBoxSliceZ_BG);
-                }
-            }
-        }
-    }
 
     /**
      * Sets how the image plane should be displayed depending on value of slider.
@@ -2669,70 +2154,152 @@ public class SurfaceRender extends RenderViewBase {
      */
     public boolean update3DTriplanar(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow) {
 
-        if ((componentImageXY == null) || (componentImageXZ == null) || (componentImageZY == null)) {
+
+        if (getDisplayMode3D())
+        {
             return false;
         }
+        /* update the boxSliceVertices based on probe rotations: */
+        transformBoxSlices( m_kProbeTransform );
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( triSliceImages[i] == null )
+            {
+                return false;
+            }
 
-        if (getDisplayMode3D()) {
-            return false;
+            if (triSliceImages[i].show(slicePanel.tSlice,
+                                       slicePanel.getSlice( i ),
+                                       LUTa, LUTb, forceShow, boxSliceVertices[i] ) == true)
+            {
+                sliceImageComponent2D[i].set(triSliceImages[i].getImage());
+            } else {
+                return false;
+            }
         }
-
-        if (componentImageXY.show(slicePanel.tSlice, slicePanel.zSlice, LUTa, LUTb, forceShow, m_kProbeTransform,
-                                      m_kObjBoxVertsZ) == true) {
-            texXYImageComp2D.set(componentImageXY.getImage());
-
-            Transform3D t3d_XY_t = new Transform3D();
-
-            t3d_XY_t.setTranslation(new Vector3f(0, 0.0f, zBox -
-                                                 (2 * ((float) slicePanel.zSlice / (zDim - 1)) * zBox)));
-            objTransXY_TG.setTransform(t3d_XY_t);
-            t3d_XY_t = null;
-        } else {
-            return false;
-        }
-
-        if (componentImageXZ.show(slicePanel.tSlice, slicePanel.ySlice, LUTa, LUTb, forceShow, m_kProbeTransform,
-                                      m_kObjBoxVertsY) == true) {
-            texXZImageComp2D.set(componentImageXZ.getImage());
-
-            Transform3D t3d_XZ_t = new Transform3D();
-
-            t3d_XZ_t.setTranslation(new Vector3f(0.0f, yBox - (2 * ((float) slicePanel.ySlice / (yDim - 1)) * yBox),
-                                                 0.0f));
-            objTransXZ_TG.setTransform(t3d_XZ_t);
-            t3d_XZ_t = null;
-        } else {
-            return false;
-        }
-
-        if (componentImageZY.show(slicePanel.tSlice, slicePanel.xSlice, LUTa, LUTb, forceShow, m_kProbeTransform,
-                                      m_kObjBoxVertsX) == true) {
-            texZYImageComp2D.set(componentImageZY.getImage());
-
-            Transform3D t3d_ZY_t = new Transform3D();
-
-            t3d_ZY_t.setTranslation(new Vector3f(-xBox + (2 * ((float) slicePanel.xSlice / (xDim - 1)) * xBox), 0.0f,
-                                                 0.0f));
-            objTransZY_TG.setTransform(t3d_ZY_t);
-            t3d_ZY_t = null;
-        } else {
-            return false;
-        }
-
         return true;
     }
 
     /**
+     * transform the points used to render the triSliceImages textures.
+     * @param kTransform, the Transform3D used to rotate the boxes.
+     */
+    private void transformBoxSlices( Transform3D kTransform )
+    {
+        if ( kTransform == null )
+        {
+            kTransform = new Transform3D();
+            kTransform.setIdentity();
+        }
+        Point3f[][] inVertices = new Point3f[3][];
+        Point3f[][] outVertices = new Point3f[3][];
+
+        for ( int j = 0; j < 3; j++ )
+        {
+          
+            inVertices[j] = boxSlices[j].getVertices();
+            outVertices[j] = new Point3f[4];
+            if ( boxSliceVertices[j] == null )
+            {
+                boxSliceVertices[j] = new Point3Df[4];
+            }
+            for (int i = 0; i < 4; i++)
+            {
+                outVertices[j][i] = new Point3f();
+                if ( boxSliceVertices[j][i] == null )
+                {
+                    boxSliceVertices[j][i] = new Point3Df();
+                }
+
+                /* Rotate the points in the bounding box: */
+                kTransform.transform( inVertices[j][i], outVertices[j][i] );
+
+                /* Convert the points to ModelImage space: */
+                ScreenToModel( new Point3Df( outVertices[j][i].x, outVertices[j][i].y, outVertices[j][i].z ),
+                               boxSliceVertices[j][i] );
+            }
+        }
+        
+    }
+
+    /** Translate from normalized plane coordinates to Model coordinates:
+     * @param screen the input point to be transformed from normalized plane coordinates
+     * @param model the output point in Model coordinates
+     */
+    private void ScreenToModel( Point3Df screen, Point3Df model )
+    {
+        model.x = ((screen.x + xBox) / (2.0f * xBox)) * ((float)xDim - 1);
+        model.y = ((screen.y - yBox) / (-2.0f * yBox)) * ((float)yDim - 1);
+        model.z = ((screen.z + zBox) / (2.0f * zBox)) * ((float)zDim - 1);
+    }
+
+    /** Translate from Model coordinates to normalized plane coordinates:
+     * @param model the input point in Model coordinates
+     * @param screen the output point in normalized plane coordinates
+     */
+    private void ModelToScreen( Point3Df model, Point3Df screen )
+    {
+        screen.x = (2.0f * xBox) * (model.x / ((float)xDim - 1)) - xBox;
+        screen.y = (-2.0f * yBox) * (model.y / ((float)yDim - 1)) + yBox;
+        screen.z = (2.0f * zBox) * (model.z / ((float)zDim - 1)) - zBox;
+    }
+
+
+    /**
      * Update the X, Y, Z box frame positions.
      */
-    public void updateBoxSlicePos() {
-        updateBoxSliceXPos();
-        updateBoxSliceYPos();
-        updateBoxSliceZPos();
+    public void updateBoxSlicePos( ) {
+        /* MipavCoordinateSystems upgrade: this goes in
+         * MipavCoordinateSystems.FileToModel: */
+        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.AXIAL );
+        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.CORONAL );
+        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.SAGITTAL );
 
+        
+        float[][] boxPoints = new float[3][];
+        for ( int i = 0; i < 3; i++ )
+        {
+            boxPoints[i] = new float[3];
+            boxPoints[i][0] = xDim;
+            boxPoints[i][1] = yDim;
+            boxPoints[i][2] = zDim;
+        }
+        boxPoints[0][axialOrder[2]] = slicePanel.getSlice( FileInfoBase.AXIAL );
+        boxPoints[1][coronalOrder[2]] = slicePanel.getSlice( FileInfoBase.CORONAL );
+        boxPoints[2][sagittalOrder[2]] = slicePanel.getSlice( FileInfoBase.SAGITTAL );
+
+        Point3Df[] screenBoxPoints = new Point3Df[3];
+        for ( int i = 0; i < 3; i++ )
+        {
+            screenBoxPoints[i] = new Point3Df();
+            this.ModelToScreen( new Point3Df( boxPoints[i][0], boxPoints[i][1], boxPoints[i][2] ),
+                                screenBoxPoints[i] );
+        }
+
+        int[] modelSliceConstants = new int[3];
+        modelSliceConstants[0] = axialOrder[2];
+        modelSliceConstants[1] = coronalOrder[2];
+        modelSliceConstants[2] = sagittalOrder[2];
+
+
+        Point3Df center = slicePanel.getCenter();
+        for ( int i = 0; i < 3; i++ )
+        {
+            boxSlices[i].setSlices( screenBoxPoints[i].x,
+                                    screenBoxPoints[i].y,
+                                    screenBoxPoints[i].z,
+                                    modelSliceConstants[i] );
+
+            QuadArray kGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.TEXTURE_COORDINATE_2);
+            kGeometry.setCoordinates( 0, boxSlices[i].getVertices() );
+            triSliceGeometry[i].setGeometry( kGeometry );
+
+            triSliceImages[i].setCenter( (int)center.x, (int)center.y, (int)center.z );
+        }
         if (parent instanceof ViewJFrameVolumeView) {
 
             if (((ViewJFrameVolumeView) parent) != null) {
+                ((ViewJFrameVolumeView) parent).setSliceFromSurface( center );
                 ((ViewJFrameVolumeView) parent).setAbsPositionLabels();
             }
         }
@@ -2741,98 +2308,15 @@ public class SurfaceRender extends RenderViewBase {
     /**
      * Sets new frame around slice x based on the new position.
      */
-    public void updateBoxSliceX() {
-        removeBoxSliceX();
-        addBoxSliceX();
-    }
-
-    /**
-     * update slice x the new position when x bounding checkbox isn't selected.
-     */
-    public void updateBoxSliceXPos() {
-
-        switch (getLabel(X, false)) {
-
-            case X:
-                boxSliceX.setSlices(-xBox + (2 * ((float) slicePanel.xSlice / (xDim - 1)) * xBox), yBox, zBox,
-                                    ViewJComponentBoxSlice.X_SLICE);
-                break;
-
-            case Y:
-                boxSliceX.setSlices(xBox, yBox - (2 * ((float) slicePanel.ySlice / (yDim - 1)) * yBox), zBox,
-                                    ViewJComponentBoxSlice.Y_SLICE);
-                break;
-
-            case Z:
-                boxSliceX.setSlices(xBox, yBox, zBox - (2 * ((float) slicePanel.zSlice / (zDim - 1)) * zBox),
-                                    ViewJComponentBoxSlice.Z_SLICE);
-                break;
+    public void updateBoxSlices( ) {
+        for ( int i = 0; i < 3; i++ )
+        {
+            removeBoxSlice( i );
+            addBoxSlice( i );
         }
+        updateBoxSlicePos( );
     }
 
-    /**
-     * Sets new frame around slice y based on the new position.
-     */
-    public void updateBoxSliceY() {
-        removeBoxSliceY();
-        addBoxSliceY();
-    }
-
-    /**
-     * update slice y the new position when y bounding checkbox isn't selected.
-     */
-    public void updateBoxSliceYPos() {
-
-        switch (getLabel(Y, false)) {
-
-            case X:
-                boxSliceY.setSlices(-xBox + (2 * ((float) slicePanel.xSlice / (xDim - 1)) * xBox), yBox, zBox,
-                                    ViewJComponentBoxSlice.X_SLICE);
-                break;
-
-            case Y:
-                boxSliceY.setSlices(xBox, yBox - (2 * ((float) slicePanel.ySlice / (yDim - 1)) * yBox), zBox,
-                                    ViewJComponentBoxSlice.Y_SLICE);
-                break;
-
-            case Z:
-                boxSliceY.setSlices(xBox, yBox, zBox - (2 * ((float) slicePanel.zSlice / (zDim - 1)) * zBox),
-                                    ViewJComponentBoxSlice.Z_SLICE);
-                break;
-        }
-    }
-
-    /**
-     * Sets new frame around slice z based on the new position.
-     */
-    public void updateBoxSliceZ() {
-        removeBoxSliceZ();
-        addBoxSliceZ();
-    }
-
-    /**
-     * update slice z the new position when x bounding checkbox isn't selected.
-     */
-    public void updateBoxSliceZPos() {
-
-        switch (getLabel(Z, false)) {
-
-            case X:
-                boxSliceZ.setSlices(-xBox + (2 * ((float) slicePanel.xSlice / (xDim - 1)) * xBox), yBox, zBox,
-                                    ViewJComponentBoxSlice.X_SLICE);
-                break;
-
-            case Y:
-                boxSliceZ.setSlices(xBox, yBox - (2 * ((float) slicePanel.ySlice / (yDim - 1)) * yBox), zBox,
-                                    ViewJComponentBoxSlice.Y_SLICE);
-                break;
-
-            case Z:
-                boxSliceZ.setSlices(xBox, yBox, zBox - (2 * ((float) slicePanel.zSlice / (zDim - 1)) * zBox),
-                                    ViewJComponentBoxSlice.Z_SLICE);
-                break;
-        }
-    }
 
     /**
      * Update the transform3D for the cubic.
@@ -2969,8 +2453,12 @@ public class SurfaceRender extends RenderViewBase {
      */
     public boolean updateImages() {
 
-        if ((componentImageXY == null) || (componentImageZY == null) || (componentImageXZ == null)) {
-            return false;
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( triSliceImages[i] == null )
+            {
+                return false;
+            }
         }
 
         updateVolume(null, null, false);
@@ -3045,76 +2533,80 @@ public class SurfaceRender extends RenderViewBase {
         if (opX != -1) {
 
             if ((1 - (opX / 100.0f)) == 0) {
-                taZY.setTransparencyMode(TransparencyAttributes.NONE);
+                sliceTransparency[1].setTransparencyMode(TransparencyAttributes.NONE);
             } else {
-                taZY.setTransparencyMode(TransparencyAttributes.BLENDED);
+                sliceTransparency[1].setTransparencyMode(TransparencyAttributes.BLENDED);
             }
 
-            taZY.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
-            taZY.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
-            taZY.setTransparency(1 - (opX / 100.0f));
+            sliceTransparency[1].setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
+            sliceTransparency[1].setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
+            sliceTransparency[1].setTransparency(1 - (opX / 100.0f));
         } else if (opY != -1) {
 
             if ((1 - (opY / 100.0f)) == 0) {
-                taXZ.setTransparencyMode(TransparencyAttributes.NONE);
+                sliceTransparency[2].setTransparencyMode(TransparencyAttributes.NONE);
             } else {
-                taXZ.setTransparencyMode(TransparencyAttributes.BLENDED);
+                sliceTransparency[2].setTransparencyMode(TransparencyAttributes.BLENDED);
             }
 
-            taXZ.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
-            taXZ.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
-            taXZ.setTransparency(1 - (opY / 100.0f));
+            sliceTransparency[2].setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
+            sliceTransparency[2].setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
+            sliceTransparency[2].setTransparency(1 - (opY / 100.0f));
         } else if (opZ != -1) {
 
             if ((1 - (opZ / 100.0f)) == 0) {
-                taXY.setTransparencyMode(TransparencyAttributes.NONE);
+                sliceTransparency[0].setTransparencyMode(TransparencyAttributes.NONE);
             } else {
-                taXY.setTransparencyMode(TransparencyAttributes.BLENDED);
+                sliceTransparency[0].setTransparencyMode(TransparencyAttributes.BLENDED);
             }
 
-            taXY.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
-            taXY.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
-            taXY.setTransparency(1 - (opZ / 100.0f));
+            sliceTransparency[0].setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
+            sliceTransparency[0].setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
+            sliceTransparency[0].setTransparency(1 - (opZ / 100.0f));
         }
     }
 
     /**
-     * Updates the slice textures based on the Probe position and rotation angle. The ModelImage data is sampled along
-     * the diagonal, not axis-aligned. bInterpolate indicates whether to use nearest-neighbors or to interpolate the
-     * data.
+     * Updates the slice textures based on the Probe position and rotation
+     * angle. The ModelImage data is sampled along the diagonal, not
+     * axis-aligned. bInterpolate indicates whether to use nearest-neighbors
+     * or to interpolate the data.
      *
-     * @param   forceShow     DOCUMENT ME!
-     * @param   bInterpolate  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * @param   forceShow  Forces triSliceImages[i].show to re-calculate the image texture.
+     * @param   bInterpolate  uses nearest-neighbors when false, interpolates data when true
+     * @param bReset when true indicates that the probe navigation has been
+     * reset and the slice bounding boxes should be displayed, when false the
+     * probe is no axis-aligned and the slice bounding boxes are not displayed
      */
-    public boolean updateProbe(boolean forceShow, boolean bInterpolate) {
+    public void updateProbe(boolean forceShow, boolean bInterpolate, boolean bReset)
+    {
 
-        if ((componentImageXY == null) || (componentImageXZ == null) || (componentImageZY == null)) {
-            return false;
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( triSliceImages[i] == null )
+            {
+                return;
+            }
+            /* Set super-sample or nearest-neighbors sampling: */
+            triSliceImages[i].Interpolate(bInterpolate);
+            if (triSliceImages[i].show(slicePanel.tSlice,
+                                       slicePanel.getSlice( i ),
+                                       null, null, forceShow, boxSliceVertices[i] ) == true)
+            {
+                sliceImageComponent2D[i].set(triSliceImages[i].getImage());
+            }
+            /* Turn slice bounding boxes on: */
+            if ( bReset )
+            {
+                showBoxSlice( i );
+            }
+            /* Turn slice bounding boxes off: */
+            else
+            {
+                removeBoxSlice( i );
+            }
         }
-
-        /* Set super-sample or nearest-neighbors sampling: */
-        componentImageXY.Interpolate(bInterpolate);
-        componentImageXZ.Interpolate(bInterpolate);
-        componentImageZY.Interpolate(bInterpolate);
-
-        if (componentImageXY.show(slicePanel.tSlice, slicePanel.zSlice, null, null, forceShow, m_kProbeTransform,
-                                      m_kObjBoxVertsZ) == true) {
-            texXYImageComp2D.set(componentImageXY.getImage());
-        }
-
-        if (componentImageXZ.show(slicePanel.tSlice, slicePanel.ySlice, null, null, forceShow, m_kProbeTransform,
-                                      m_kObjBoxVertsY) == true) {
-            texXZImageComp2D.set(componentImageXZ.getImage());
-        }
-
-        if (componentImageZY.show(slicePanel.tSlice, slicePanel.xSlice, null, null, forceShow, m_kProbeTransform,
-                                      m_kObjBoxVertsX) == true) {
-            texZYImageComp2D.set(componentImageZY.getImage());
-        }
-
-        return false;
+        return;
     }
 
     /**
@@ -3171,22 +2663,6 @@ public class SurfaceRender extends RenderViewBase {
     public void updateTransform(Transform3D transform) {
         updateTextureVolumeRender();
 
-    }
-
-    /** MipavCoordinateSystems upgrade: TODO: change 'x' 'y' 'z' variables to
-     * match correct names (axial, sagittal, coronal), etc. */
-    /**
-     * Updates the ViewJFrameVolumeView slider positions.
-     *
-     * @param  iView The plane's view of the data (AXIAL, CORONAL, or SAGITTAL)
-     * @param  fValue The new slice value
-     */
-    public void updateTriPlanar( int iView, float fValue) {
-        if (parent instanceof ViewJFrameVolumeView) {
-            if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).setSliceFromSurface( iView, fValue );
-            }
-        }
     }
 
     /**
@@ -3741,47 +3217,61 @@ public class SurfaceRender extends RenderViewBase {
             }
         }
 
-        // XY -- Z plane
-        imageBufferA_XY = new float[bufferFactor * xDim * yDim];
-
-        if (imageB != null) {
-            imageBufferB_XY = new float[bufferFactor * imageB.getSliceSize()];
-        }
-
-        componentImageXY = new ViewJComponentTriSliceImage(this, imageA, LUTa, imageBufferA_XY, imageB, LUTb,
-                                                           imageBufferB_XY, extents, ViewJComponentBase.AXIAL);
-        componentImageXY.setBuffers(imageBufferA_XY, imageBufferB_XY);
-
-        // XZ -- Y Plane
-        imageBufferA_XZ = new float[bufferFactor * imageA.getExtents()[0] * imageA.getExtents()[2]];
-
-        if (imageB != null) {
-            imageBufferB_XZ = new float[bufferFactor * imageB.getExtents()[0] * imageB.getExtents()[2]];
-        }
-
-        componentImageXZ = new ViewJComponentTriSliceImage(this, imageA, LUTa, imageBufferA_XZ, imageB, LUTb,
-                                                           imageBufferB_XZ, extents, ViewJComponentBase.CORONAL);
-        componentImageXZ.setBuffers(imageBufferA_XZ, imageBufferB_XZ);
-
-        // ZY -- X plane
-        imageBufferA_ZY = new float[bufferFactor * imageA.getExtents()[2] * imageA.getExtents()[1]];
-
-        if (imageB != null) {
-            imageBufferB_ZY = new float[bufferFactor * imageB.getExtents()[2] * imageB.getExtents()[1]];
-        }
-
-        componentImageZY = new ViewJComponentTriSliceImage(this, imageA, LUTa, imageBufferA_ZY, imageB, LUTb,
-                                                           imageBufferB_ZY, extents, ViewJComponentBase.SAGITTAL);
-        componentImageZY.setBuffers(imageBufferA_ZY, imageBufferB_ZY);
+        /* Axial, Sagittal, Coronal view of the data: */
+        /* Axial: */
+        triSliceImages[0] = new ViewJComponentTriSliceImage( imageA, imageB, ViewJComponentBase.AXIAL);
+        /* Coronal: */
+        triSliceImages[1] = new ViewJComponentTriSliceImage(imageA, imageB, ViewJComponentBase.CORONAL);
+        /* Sagittal*/
+        triSliceImages[2] = new ViewJComponentTriSliceImage(imageA, imageB, ViewJComponentBase.SAGITTAL);
 
         Preferences.debug("Preferred graphics configuration: " + config + "\n");
         canvas = new VolumeCanvas3D(config);
         Preferences.debug("Canvas: " + canvas.queryProperties() + "\n");
 
-        componentImageXY.show(slicePanel.tSlice, slicePanel.zSlice, null, null, true, null, null);
-        componentImageXZ.show(slicePanel.tSlice, slicePanel.ySlice, null, null, true, null, null);
-        componentImageZY.show(slicePanel.tSlice, slicePanel.xSlice, null, null, true, null, null);
+        boxSliceVertices = new Point3Df[3][];
+        boxSliceVertices[0] = null;
+        boxSliceVertices[1] = null;
+        boxSliceVertices[2] = null;
     }
+
+    /**
+     * create texture coordmaps for the texture-mapped planes displaying the
+     * triSliceImages.
+     * @param orientation, the orientation of the plane for which the texture
+     * coordinates are generated (AXIAL, CORONAL, or SAGITTAL)
+     * @param texCoord, the dimension along which the texture coordinate varies
+     */
+    private Vector4f generateCoordMaps( int orientation, int texCoord )
+    {
+        /* MipavCoordinateSystems upgrade: this goes in
+         * MipavCoordinateSystems.FileToModel: */
+        int[] axisOrder = MipavCoordinateSystems.getAxisOrder( imageA, orientation );
+        float[] coordMapArray = new float[3];
+        coordMapArray[0] = (maxBox/xBox) / 2.0f;
+        coordMapArray[1] = -(maxBox/yBox) / 2.0f;
+        coordMapArray[2] = (maxBox/zBox) / 2.0f;
+        if ( axisOrder[ 2 ] == 0 )
+        {
+            coordMapArray[2] = -(maxBox/zBox) / 2.0f;
+        }
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( i != axisOrder[ texCoord ] )
+            {
+                coordMapArray[ i ] = 0f;
+            }
+        }
+
+        Vector4f coordMap = new Vector4f();
+        coordMap.x = coordMapArray[0];
+        coordMap.y = coordMapArray[1];
+        coordMap.z = coordMapArray[2];
+        coordMap.w = 0.5f;
+
+        return coordMap;
+    }
+
 
     /**
      * Creates the scene graph, made up of a branch group parent, a transform group under that which applies mouse
@@ -3791,38 +3281,6 @@ public class SurfaceRender extends RenderViewBase {
      * actually displayed.
      */
     private void createImageSceneGraph() {
-
-        xBox = (xDim - 1) * resols[0];
-        yBox = (yDim - 1) * resols[1];
-        zBox = (zDim - 1) * resols[2];
-        maxBox = xBox;
-
-        if (yBox > maxBox) {
-            maxBox = yBox;
-        }
-
-        if (zBox > maxBox) {
-            maxBox = zBox;
-        }
-
-        // Define vectors used for mapping each coordinate from its
-        // real range X=[0,xdim-1], Y=[0,ydim-1], Z=[0,zdim-1] into
-        // the (s,t,r) texture coordinates where each texture coordinate
-        // is defined over the range [0,1].
-        // Note that integral screen coordinates represent pixel centers
-        // whereas integral texture coordinates represent texel boundaries.
-        // Therefore, X maps to s=(X+0.5)/xdim, and correspondingly
-        // for Y and Z mapping to t and r, respectively.
-        m_kCoordMapX = new Vector4f((maxBox / xBox) / 2.0f, 0.0f, 0.0f, 0.5f);
-        m_kCoordMapY = new Vector4f(0.0f, (maxBox / yBox) / 2.0f, 0.0f, 0.5f);
-        m_kCoordMapZ = new Vector4f(0.0f, 0.0f, -(maxBox / zBox) / 2.0f, 0.5f);
-        m_kCoordMapZNeg = new Vector4f(0.0f, 0.0f, (maxBox / zBox) / 2.0f, 0.5f);
-
-        // Normalize the size
-        // xBox range between 0 - 1.
-        xBox = xBox / maxBox;
-        yBox = yBox / maxBox;
-        zBox = zBox / maxBox;
 
         // Create a Transformgroup to scale all objects so they
         // appear in the scene.
@@ -3893,405 +3351,199 @@ public class SurfaceRender extends RenderViewBase {
 
         sceneRootTG.addChild(switchGroup);
 
-        objXYPlaneBG = new BranchGroup();
-        objXYPlaneBG.setCapability(BranchGroup.ALLOW_DETACH);
-        triPlanarViewBG.addChild(objXYPlaneBG);
-
-        objTransXY_TG = new TransformGroup();
-        objTransXY_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        objTransXY_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        objTransXY_TG.setCapability(TransformGroup.ENABLE_PICK_REPORTING);
-        objXYPlaneBG.setPickable(false);
-
-        /* Z-Probe Transform Group */
-        m_kObjPlaneProbeZ_TG = new TransformGroup();
-        m_kObjPlaneProbeZ_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        m_kObjPlaneProbeZ_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        m_kObjPlaneProbeZ_TG.setCapability(Group.ALLOW_CHILDREN_READ);
-        m_kObjPlaneProbeZ_TG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        m_kObjPlaneProbeZ_TG.addChild(objTransXY_TG);
-        objXYPlaneBG.addChild(m_kObjPlaneProbeZ_TG);
-
-        objXZPlaneBG = new BranchGroup();
-        objXZPlaneBG.setCapability(BranchGroup.ALLOW_DETACH);
-        triPlanarViewBG.addChild(objXZPlaneBG);
-
-        objTransXZ_TG = new TransformGroup();
-        objTransXZ_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        objTransXZ_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        objTransXZ_TG.setCapability(TransformGroup.ENABLE_PICK_REPORTING);
-        objXZPlaneBG.setPickable(false);
-
-        /* Y-Probe Transform Group */
-        m_kObjPlaneProbeY_TG = new TransformGroup();
-        m_kObjPlaneProbeY_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        m_kObjPlaneProbeY_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        m_kObjPlaneProbeY_TG.setCapability(Group.ALLOW_CHILDREN_READ);
-        m_kObjPlaneProbeY_TG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        m_kObjPlaneProbeY_TG.addChild(objTransXZ_TG);
-        objXZPlaneBG.addChild(m_kObjPlaneProbeY_TG);
-
-        objZYPlaneBG = new BranchGroup();
-        objZYPlaneBG.setCapability(BranchGroup.ALLOW_DETACH);
-        triPlanarViewBG.addChild(objZYPlaneBG);
-
-        objTransZY_TG = new TransformGroup();
-        objTransZY_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        objTransZY_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        objTransZY_TG.setCapability(TransformGroup.ENABLE_PICK_REPORTING);
-        objZYPlaneBG.setPickable(false);
-
-        /* X-Probe Transform Group */
-        m_kObjPlaneProbeX_TG = new TransformGroup();
-        m_kObjPlaneProbeX_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        m_kObjPlaneProbeX_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        m_kObjPlaneProbeX_TG.setCapability(Group.ALLOW_CHILDREN_READ);
-        m_kObjPlaneProbeX_TG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        m_kObjPlaneProbeX_TG.addChild(objTransZY_TG);
-        objZYPlaneBG.addChild(m_kObjPlaneProbeX_TG);
-
-        objBoxSliceX_BG = new BranchGroup();
-        objBoxSliceX_BG.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        objBoxSliceX_BG.setCapability(Group.ALLOW_CHILDREN_READ);
-        objBoxSliceX_BG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        objBoxSliceX_BG.setCapability(BranchGroup.ALLOW_DETACH);
-        objBoxSliceX_BG.setPickable(false);
-
-        objBoxSliceY_BG = new BranchGroup();
-        objBoxSliceY_BG.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        objBoxSliceY_BG.setCapability(Group.ALLOW_CHILDREN_READ);
-        objBoxSliceY_BG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        objBoxSliceY_BG.setCapability(BranchGroup.ALLOW_DETACH);
-        objBoxSliceY_BG.setPickable(false);
-
-        objBoxSliceZ_BG = new BranchGroup();
-        objBoxSliceZ_BG.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        objBoxSliceZ_BG.setCapability(Group.ALLOW_CHILDREN_READ);
-        objBoxSliceZ_BG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        objBoxSliceZ_BG.setCapability(BranchGroup.ALLOW_DETACH);
-        objBoxSliceZ_BG.setPickable(false);
-
-        TransformGroup objTransSliceX = new TransformGroup();
-
-        objTransSliceX.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        objTransSliceX.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        objTransSliceX.setCapability(TransformGroup.ENABLE_PICK_REPORTING);
-        objBoxSliceX_BG.addChild(objTransSliceX);
-
-        TransformGroup objTransSliceY = new TransformGroup();
-
-        objTransSliceY.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        objTransSliceY.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        objTransSliceY.setCapability(TransformGroup.ENABLE_PICK_REPORTING);
-        objBoxSliceY_BG.addChild(objTransSliceY);
-
-        TransformGroup objTransSliceZ = new TransformGroup();
-
-        objTransSliceZ.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        objTransSliceZ.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        objTransSliceZ.setCapability(TransformGroup.ENABLE_PICK_REPORTING);
-        objBoxSliceZ_BG.addChild(objTransSliceZ);
-
-        m_kObjBoxSliceProbeX_TG = new TransformGroup();
-        m_kObjBoxSliceProbeX_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        m_kObjBoxSliceProbeX_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        m_kObjBoxSliceProbeX_TG.setCapability(Group.ALLOW_CHILDREN_READ);
-        m_kObjBoxSliceProbeX_TG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-
-        m_kObjBoxSliceProbeY_TG = new TransformGroup();
-        m_kObjBoxSliceProbeY_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        m_kObjBoxSliceProbeY_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        m_kObjBoxSliceProbeY_TG.setCapability(Group.ALLOW_CHILDREN_READ);
-        m_kObjBoxSliceProbeY_TG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-
-        m_kObjBoxSliceProbeZ_TG = new TransformGroup();
-        m_kObjBoxSliceProbeZ_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        m_kObjBoxSliceProbeZ_TG.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
-        m_kObjBoxSliceProbeZ_TG.setCapability(Group.ALLOW_CHILDREN_READ);
-        m_kObjBoxSliceProbeZ_TG.setCapability(Group.ALLOW_CHILDREN_WRITE);
-
         buildCubicBranch();
 
-        texXYImageComp2D = new ImageComponent2D(ImageComponent.FORMAT_RGBA, imageA.getExtents()[0],
-                                                imageA.getExtents()[1]);
-        texXYImageComp2D.setCapability(ImageComponent2D.ALLOW_IMAGE_WRITE);
-        texXYImageComp2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
-        texXYImageComp2D.setCapability(ImageComponent2D.ALLOW_SIZE_READ);
-        texXYImageComp2D.setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
-        texXYImageComp2D.set(componentImageXY.getImage());
+        xBox = (xDim - 1) * resols[0];
+        yBox = (yDim - 1) * resols[1];
+        zBox = (zDim - 1) * resols[2];
+        maxBox = xBox;
 
-        // Replace by Texture2D
-        texXY = new Texture2D(Texture.BASE_LEVEL, Texture.RGBA, imageA.getExtents()[0], imageA.getExtents()[1]);
-        texXY.setEnable(true);
-        texXY.setMinFilter(Texture.BASE_LEVEL_LINEAR);
-        texXY.setMagFilter(Texture.BASE_LEVEL_LINEAR);
-        texXY.setBoundaryModeS(Texture.CLAMP_TO_EDGE);
-        texXY.setBoundaryModeT(Texture.CLAMP_TO_EDGE);
-        texXY.setImage(0, texXYImageComp2D);
-        texXY.setCapability(Texture2D.ALLOW_IMAGE_WRITE);
-        texXY.setCapability(Texture2D.ALLOW_IMAGE_READ);
-        texXY.setCapability(Texture2D.ALLOW_ENABLE_WRITE);
+        if (yBox > maxBox) {
+            maxBox = yBox;
+        }
 
-        texXZImageComp2D = new ImageComponent2D(ImageComponent.FORMAT_RGBA, imageA.getExtents()[0],
-                                                imageA.getExtents()[2]);
-        texXZImageComp2D.setCapability(ImageComponent2D.ALLOW_IMAGE_WRITE);
-        texXZImageComp2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
-        texXZImageComp2D.setCapability(ImageComponent2D.ALLOW_SIZE_READ);
-        texXZImageComp2D.setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
-        texXZImageComp2D.set(componentImageXZ.getImage());
+        if (zBox > maxBox) {
+            maxBox = zBox;
+        }
 
-        texXZ = new Texture2D(Texture.BASE_LEVEL, Texture.RGBA, imageA.getExtents()[0], imageA.getExtents()[2]);
-        texXZ.setEnable(true);
-        texXZ.setMinFilter(Texture.BASE_LEVEL_LINEAR);
-        texXZ.setMagFilter(Texture.BASE_LEVEL_LINEAR);
-        texXZ.setBoundaryModeS(Texture.CLAMP_TO_EDGE);
-        texXZ.setBoundaryModeT(Texture.CLAMP_TO_EDGE);
-        texXZ.setImage(0, texXZImageComp2D);
-        texXZ.setCapability(Texture2D.ALLOW_IMAGE_WRITE);
-        texXZ.setCapability(Texture2D.ALLOW_IMAGE_READ);
-        texXZ.setCapability(Texture2D.ALLOW_ENABLE_WRITE);
+        /* MipavCoordinateSystems upgrade: this goes in
+         * MipavCoordinateSystems.FileToModel: */
+        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.AXIAL );
+        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.CORONAL );
+        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.SAGITTAL );
 
-        texZYImageComp2D = new ImageComponent2D(ImageComponent.FORMAT_RGBA, imageA.getExtents()[2],
-                                                imageA.getExtents()[1]);
-        texZYImageComp2D.setCapability(ImageComponent2D.ALLOW_IMAGE_WRITE);
-        texZYImageComp2D.setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
-        texZYImageComp2D.setCapability(ImageComponent2D.ALLOW_SIZE_READ);
-        texZYImageComp2D.setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
-        texZYImageComp2D.set(componentImageZY.getImage());
+        // Define vectors used for mapping each coordinate from its
+        // real range X=[0,xdim-1], Y=[0,ydim-1], Z=[0,zdim-1] into
+        // the (s,t,r) texture coordinates where each texture coordinate
+        // is defined over the range [0,1].
+        // Note that integral screen coordinates represent pixel centers
+        // whereas integral texture coordinates represent texel boundaries.
+        // Therefore, X maps to s=(X+0.5)/xdim, and correspondingly
+        // for Y and Z mapping to t and r, respectively.
+        Vector4f[][] coordMaps = new Vector4f[3][2];
+        for ( int i = 0; i < 2; i++ )
+        {
+            coordMaps[0][i] = generateCoordMaps( FileInfoBase.AXIAL, i );
+            coordMaps[1][i] = generateCoordMaps( FileInfoBase.CORONAL, i );
+            coordMaps[2][i] = generateCoordMaps( FileInfoBase.SAGITTAL, i );
+        }
 
-        texZY = new Texture2D(Texture.BASE_LEVEL, Texture.RGBA, imageA.getExtents()[2], imageA.getExtents()[1]);
-        texZY.setEnable(true);
-        texZY.setMinFilter(Texture.BASE_LEVEL_LINEAR);
-        texZY.setMagFilter(Texture.BASE_LEVEL_LINEAR);
-        texZY.setBoundaryModeS(Texture.CLAMP_TO_EDGE);
-        texZY.setBoundaryModeT(Texture.CLAMP_TO_EDGE);
-        texZY.setImage(0, texZYImageComp2D);
-        texZY.setCapability(Texture2D.ALLOW_IMAGE_WRITE);
-        texZY.setCapability(Texture2D.ALLOW_IMAGE_READ);
-        texZY.setCapability(Texture2D.ALLOW_ENABLE_WRITE);
+        /* MipavCoordinateSystems upgrade: the following logic is to match
+         * TextureCoordinate Maps to the ViewJComponentBoxSlice Vertex
+         * Array: */
+        if ( (axialOrder[0] > axialOrder[1]) && (axialOrder[2] != 0) )
+        {
+            Vector4f temp = coordMaps[0][0];
+            coordMaps[0][0] = coordMaps[0][1];
+            coordMaps[0][1] = temp;
+        }
+        if ( (coronalOrder[0] > coronalOrder[1]) && (coronalOrder[2] != 0) )
+        {
+            Vector4f temp = coordMaps[1][0];
+            coordMaps[1][0] = coordMaps[1][1];
+            coordMaps[1][1] = temp;
+        }
+        if ( (sagittalOrder[0] > sagittalOrder[1]) && (sagittalOrder[2] != 0) )
+        {
+            Vector4f temp = coordMaps[2][0];
+            coordMaps[2][0] = coordMaps[2][1];
+            coordMaps[2][1] = temp;
+        }
 
-        // ****************  Box for XY Plane
-        Box imPlane1 = new Box(xBox, yBox, 0.0f, Box.GENERATE_TEXTURE_COORDS, null, 1);
+        if ( (axialOrder[0] < axialOrder[1]) && (axialOrder[2] == 0) )
+        {
+            Vector4f temp = coordMaps[0][0];
+            coordMaps[0][0] = coordMaps[0][1];
+            coordMaps[0][1] = temp;
+        }
+        if ( (coronalOrder[0] < coronalOrder[1]) && (coronalOrder[2] == 0) )
+        {
+            Vector4f temp = coordMaps[1][0];
+            coordMaps[1][0] = coordMaps[1][1];
+            coordMaps[1][1] = temp;
+        }
+        if ( (sagittalOrder[0] < sagittalOrder[1]) && (sagittalOrder[2] == 0) )
+        {
+            Vector4f temp = coordMaps[2][0];
+            coordMaps[2][0] = coordMaps[2][1];
+            coordMaps[2][1] = temp;
+        }
 
-        taXY = new TransparencyAttributes();
-        taXY.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-        taXY.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
-        taXY.setCapability(TransparencyAttributes.ALLOW_BLEND_FUNCTION_WRITE);
-        taXY.setTransparencyMode(TransparencyAttributes.NONE);
-        taXY.setTransparency(0.0f); // 0 = Opaque
 
-        TextureAttributes ta = new TextureAttributes();
+        // Normalize the size
+        // xBox range between 0 - 1.
+        xBox = xBox / maxBox;
+        yBox = yBox / maxBox;
+        zBox = zBox / maxBox;
 
-        ta.setTextureMode(TextureAttributes.MODULATE);
+        float[][] boxPoints = new float[3][];
+        for ( int i = 0; i < 3; i++ )
+        {
+            boxPoints[i] = new float[3];
+            boxPoints[i][0] = xDim;
+            boxPoints[i][1] = yDim;
+            boxPoints[i][2] = zDim;
+        }
+        boxPoints[0][axialOrder[2]] = slicePanel.getSlice( FileInfoBase.AXIAL );
+        boxPoints[1][coronalOrder[2]] = slicePanel.getSlice( FileInfoBase.CORONAL );
+        boxPoints[2][sagittalOrder[2]] = slicePanel.getSlice( FileInfoBase.SAGITTAL );
 
-        Appearance appFXY = new Appearance();
+        Point3Df[] screenBoxPoints = new Point3Df[3];
+        for ( int i = 0; i < 3; i++ )
+        {
+            screenBoxPoints[i] = new Point3Df();
+            this.ModelToScreen( new Point3Df( boxPoints[i][0], boxPoints[i][1], boxPoints[i][2] ),
+                                screenBoxPoints[i] );
+        }
 
-        appFXY.setTransparencyAttributes(taXY);
-        appFXY.setTextureAttributes(ta);
+        int[] modelSliceConstants = new int[3];
+        modelSliceConstants[0] = axialOrder[2];
+        modelSliceConstants[1] = coronalOrder[2];
+        modelSliceConstants[2] = sagittalOrder[2];
 
-        appFXY.setTexture(texXY);
-        appFXY.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-                                                            TexCoordGeneration.TEXTURE_COORDINATE_2, m_kCoordMapX,
-                                                            m_kCoordMapY));
+        Color[] sliceColors = new Color[3];
+        sliceColors[0] = Color.red;
+        sliceColors[1] = Color.green;
+        sliceColors[2] = Color.yellow;
 
-        Shape3D shape = imPlane1.getShape(Box.FRONT);
+        for ( int i = 0; i < 3; i++ )
+        {
 
-        shape.setAppearance(appFXY);
+            boxSlices[i] = new ViewJComponentBoxSlice( screenBoxPoints[i].x,
+                                                       screenBoxPoints[i].y,
+                                                       screenBoxPoints[i].z,
+                                                       modelSliceConstants[i]);
+            boxSlices[i].setColor(sliceColors[i]);
 
-        Appearance appBXY = new Appearance();
 
-        appBXY.setTransparencyAttributes(taXY);
-        appBXY.setTextureAttributes(ta);
+            objPlane_BG[i] = new BranchGroup();
+            objPlane_BG[i].setCapability(BranchGroup.ALLOW_DETACH);
+            triPlanarViewBG.addChild(objPlane_BG[i]);
 
-        appBXY.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-                                                            TexCoordGeneration.TEXTURE_COORDINATE_2, m_kCoordMapX,
-                                                            m_kCoordMapY));
-        appBXY.setTexture(texXY);
+            objTransSlices_TG[i] = new TransformGroup();
+            objTransSlices_TG[i].setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+            objTransSlices_TG[i].setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
+            objTransSlices_TG[i].setCapability(TransformGroup.ENABLE_PICK_REPORTING);
 
-        shape = imPlane1.getShape(Box.BACK);
-        shape.setAppearance(appBXY);
+            objPlane_BG[i].setPickable(false);
 
-        objTransXY_TG.addChild(imPlane1);
+            m_kObjPlaneProbe_TG[i] = new TransformGroup();
+            m_kObjPlaneProbe_TG[i].setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+            m_kObjPlaneProbe_TG[i].setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
+            m_kObjPlaneProbe_TG[i].setCapability(Group.ALLOW_CHILDREN_READ);
+            m_kObjPlaneProbe_TG[i].setCapability(Group.ALLOW_CHILDREN_WRITE);
+            m_kObjPlaneProbe_TG[i].addChild(objTransSlices_TG[ i ]);
+            objPlane_BG[i].addChild(m_kObjPlaneProbe_TG[i]);
 
-        // ****************  Box for XZ Plane
-        Box imPlane2 = new Box(xBox, 0.0f, zBox, Box.GENERATE_TEXTURE_COORDS, null, 1);
+            int[] textureExtents = imageA.getExtents( i );
+            sliceImageComponent2D[i] = new ImageComponent2D(ImageComponent.FORMAT_RGBA, textureExtents[0], textureExtents[1]);
+            sliceImageComponent2D[i].setCapability(ImageComponent2D.ALLOW_IMAGE_WRITE);
+            sliceImageComponent2D[i].setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+            sliceImageComponent2D[i].setCapability(ImageComponent2D.ALLOW_SIZE_READ);
+            sliceImageComponent2D[i].setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
+            sliceImageComponent2D[i].set(triSliceImages[i].getImage());
 
-        objTransXZ_TG.addChild(imPlane2);
+            sliceTextures[i] = new Texture2D(Texture.BASE_LEVEL, Texture.RGBA, textureExtents[0], textureExtents[1]);
+            sliceTextures[i].setEnable(true);
+            sliceTextures[i].setMinFilter(Texture.BASE_LEVEL_LINEAR);
+            sliceTextures[i].setMagFilter(Texture.BASE_LEVEL_LINEAR);
+            sliceTextures[i].setBoundaryModeS(Texture.CLAMP_TO_EDGE);
+            sliceTextures[i].setBoundaryModeT(Texture.CLAMP_TO_EDGE);
+            sliceTextures[i].setImage( 0, sliceImageComponent2D[i] );
+            sliceTextures[i].setCapability(Texture2D.ALLOW_IMAGE_WRITE);
+            sliceTextures[i].setCapability(Texture2D.ALLOW_IMAGE_READ);
+            sliceTextures[i].setCapability(Texture2D.ALLOW_ENABLE_WRITE);
 
-        taXZ = new TransparencyAttributes();
-        taXZ.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-        taXZ.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
-        taXZ.setCapability(TransparencyAttributes.ALLOW_BLEND_FUNCTION_WRITE);
-        taXZ.setTransparencyMode(TransparencyAttributes.NONE);
-        taXZ.setTransparency(0.0f); // 0 = Opaque
+            sliceTransparency[i] = new TransparencyAttributes();
+            sliceTransparency[i].setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
+            sliceTransparency[i].setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
+            sliceTransparency[i].setCapability(TransparencyAttributes.ALLOW_BLEND_FUNCTION_WRITE);
+            sliceTransparency[i].setTransparencyMode(TransparencyAttributes.NONE);
+            sliceTransparency[i].setTransparency(0.0f); // 0 = Opaque
 
-        shape = imPlane2.getShape(Box.TOP);
+            TextureAttributes ta = new TextureAttributes();
+            ta.setTextureMode(TextureAttributes.DECAL);
+            Appearance app = new Appearance();
+            app.setTransparencyAttributes(sliceTransparency[i]);
+            app.setTextureAttributes(ta);
+            app.setTexture(sliceTextures[i]);
+            app.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
+                                                             TexCoordGeneration.TEXTURE_COORDINATE_2,
+                                                             coordMaps[i][0],
+                                                             coordMaps[i][1] ) );
+            app.setPolygonAttributes( new PolygonAttributes( PolygonAttributes.POLYGON_FILL,
+                                                             PolygonAttributes.CULL_NONE, 0f ) );
 
-        Appearance appTXZ = new Appearance();
+            QuadArray kGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.TEXTURE_COORDINATE_2);
+            kGeometry.setCoordinates( 0, boxSlices[i].getVertices() );
+            triSliceGeometry[i] = new Shape3D( kGeometry, app );
+            triSliceGeometry[i].setCapability( Shape3D.ALLOW_GEOMETRY_WRITE );
+            objTransSlices_TG[i].addChild( triSliceGeometry[i] );
 
-        appTXZ.setTransparencyAttributes(taXZ);
-        appTXZ.setTextureAttributes(ta);
-        appTXZ.setTexture(texXZ);
-        appTXZ.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-                                                            TexCoordGeneration.TEXTURE_COORDINATE_2, m_kCoordMapX,
-                                                            m_kCoordMapZNeg));
-
-        shape.setAppearance(appTXZ);
-
-        shape = imPlane2.getShape(Box.BOTTOM);
-
-        Appearance appBXZ = new Appearance();
-
-        appBXZ.setTransparencyAttributes(taXZ);
-        appBXZ.setTextureAttributes(ta);
-        appBXZ.setTexture(texXZ);
-        appBXZ.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-                                                            TexCoordGeneration.TEXTURE_COORDINATE_2, m_kCoordMapX,
-                                                            m_kCoordMapZNeg));
-
-        shape.setAppearance(appBXZ);
-
-        // *********************  Box for ZY Plane
-        Box imPlane3 = new Box(0.0f, yBox, zBox, Box.GENERATE_TEXTURE_COORDS, null, 1);
-
-        objTransZY_TG.addChild(imPlane3);
-
-        shape = imPlane3.getShape(Box.LEFT);
-
-        TextureAttributes texAttrLZY = new TextureAttributes();
-
-        texAttrLZY.setTextureMode(TextureAttributes.DECAL);
-        texAttrLZY.setPerspectiveCorrectionMode(TextureAttributes.NICEST);
-
-        Appearance appLZY = new Appearance();
-
-        taZY = new TransparencyAttributes();
-        taZY.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-        taZY.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
-        taZY.setCapability(TransparencyAttributes.ALLOW_BLEND_FUNCTION_WRITE);
-
-        taZY.setTransparencyMode(TransparencyAttributes.NONE);
-        taZY.setTransparency(0.0f); // 0 = Opaque
-        appLZY.setTransparencyAttributes(taZY);
-        appLZY.setTextureAttributes(ta);
-        appLZY.setTexture(texZY);
-        appLZY.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-                                                            TexCoordGeneration.TEXTURE_COORDINATE_2, m_kCoordMapZ,
-                                                            m_kCoordMapY));
-
-        shape.setAppearance(appLZY);
-
-        shape = imPlane3.getShape(Box.RIGHT);
-
-        TextureAttributes texAttrRZY = new TextureAttributes();
-
-        texAttrRZY.setTextureMode(TextureAttributes.DECAL);
-        texAttrRZY.setPerspectiveCorrectionMode(TextureAttributes.NICEST);
-
-        Appearance appRZY = new Appearance();
-
-        appRZY.setTransparencyAttributes(taZY);
-        appRZY.setTextureAttributes(ta);
-        appRZY.setTexture(texZY);
-        appRZY.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
-                                                            TexCoordGeneration.TEXTURE_COORDINATE_2, m_kCoordMapZ,
-                                                            m_kCoordMapY));
-
-        shape.setAppearance(appRZY);
+        }
 
         // Creates a bounding frame around the view
         createBoxFrame(xBox, yBox, zBox);
-
-        // Setup X box frame
-        switch (getLabel(X, false)) {
-
-            case X:
-                boxSliceX = new ViewJComponentBoxSlice(0, yBox, zBox, ViewJComponentBoxSlice.X_SLICE);
-                break;
-
-            case Y:
-                boxSliceX = new ViewJComponentBoxSlice(xBox, 0, zBox, ViewJComponentBoxSlice.Y_SLICE);
-                break;
-
-            case Z:
-                boxSliceX = new ViewJComponentBoxSlice(xBox, yBox, 0, ViewJComponentBoxSlice.Z_SLICE);
-                break;
-        }
-
-        boxSliceX.setColor(Color.yellow);
-
-        switch (getLabel(Y, false)) {
-
-            case X:
-                boxSliceY = new ViewJComponentBoxSlice(0, yBox, zBox, ViewJComponentBoxSlice.X_SLICE);
-                break;
-
-            case Y:
-                boxSliceY = new ViewJComponentBoxSlice(xBox, 0, zBox, ViewJComponentBoxSlice.Y_SLICE);
-                break;
-
-            case Z:
-                boxSliceY = new ViewJComponentBoxSlice(xBox, yBox, 0, ViewJComponentBoxSlice.Z_SLICE);
-                break;
-        }
-
-        boxSliceY.setColor(Color.green);
-
-        switch (getLabel(Z, false)) {
-
-            case X:
-                boxSliceZ = new ViewJComponentBoxSlice(0, yBox, zBox, ViewJComponentBoxSlice.X_SLICE);
-                break;
-
-            case Y:
-                boxSliceZ = new ViewJComponentBoxSlice(xBox, 0, zBox, ViewJComponentBoxSlice.Y_SLICE);
-                break;
-
-            case Z:
-                boxSliceZ = new ViewJComponentBoxSlice(xBox, yBox, 0, ViewJComponentBoxSlice.Z_SLICE);
-                break;
-        }
-
-        boxSliceZ.setColor(Color.red);
-
-        /* Determine which boxSlice is the X_Slice, Y_Slice and Z_Slice, set
-         * the m_kObjBoxVerts appropriately: */
-        if (boxSliceX.getMode() == ViewJComponentBoxSlice.X_SLICE) {
-            m_kObjBoxVertsX = boxSliceX.getVertices();
-            objBoxSliceX_BG.addChild(m_kObjBoxSliceProbeX_TG);
-        } else if (boxSliceX.getMode() == ViewJComponentBoxSlice.Y_SLICE) {
-            m_kObjBoxVertsY = boxSliceX.getVertices();
-            objBoxSliceY_BG.addChild(m_kObjBoxSliceProbeY_TG);
-        } else if (boxSliceX.getMode() == ViewJComponentBoxSlice.Z_SLICE) {
-            m_kObjBoxVertsZ = boxSliceX.getVertices();
-            objBoxSliceZ_BG.addChild(m_kObjBoxSliceProbeZ_TG);
-        }
-
-        /* Determine which boxSlice is the X_Slice, Y_Slice and Z_Slice, set
-         * the m_kObjBoxVerts appropriately: */
-        if (boxSliceY.getMode() == ViewJComponentBoxSlice.X_SLICE) {
-            m_kObjBoxVertsX = boxSliceY.getVertices();
-            objBoxSliceX_BG.addChild(m_kObjBoxSliceProbeX_TG);
-        } else if (boxSliceY.getMode() == ViewJComponentBoxSlice.Y_SLICE) {
-            m_kObjBoxVertsY = boxSliceY.getVertices();
-            objBoxSliceY_BG.addChild(m_kObjBoxSliceProbeY_TG);
-        } else if (boxSliceY.getMode() == ViewJComponentBoxSlice.Z_SLICE) {
-            m_kObjBoxVertsZ = boxSliceY.getVertices();
-            objBoxSliceZ_BG.addChild(m_kObjBoxSliceProbeZ_TG);
-        }
-
-        /* Determine which boxSlice is the X_Slice, Y_Slice and Z_Slice, set
-         * the m_kObjBoxVerts appropriately: */
-        if (boxSliceZ.getMode() == ViewJComponentBoxSlice.X_SLICE) {
-            m_kObjBoxVertsX = boxSliceZ.getVertices();
-            objBoxSliceX_BG.addChild(m_kObjBoxSliceProbeX_TG);
-        } else if (boxSliceZ.getMode() == ViewJComponentBoxSlice.Y_SLICE) {
-            m_kObjBoxVertsY = boxSliceZ.getVertices();
-            objBoxSliceY_BG.addChild(m_kObjBoxSliceProbeY_TG);
-        } else if (boxSliceZ.getMode() == ViewJComponentBoxSlice.Z_SLICE) {
-            m_kObjBoxVertsZ = boxSliceZ.getVertices();
-            objBoxSliceZ_BG.addChild(m_kObjBoxSliceProbeZ_TG);
-        }
 
         objBehaviorBG = new BranchGroup();
         objBehaviorBG.setCapability(BranchGroup.ALLOW_DETACH);
@@ -4342,14 +3594,6 @@ public class SurfaceRender extends RenderViewBase {
         myEyePoint.z = kVolumeCenterPoint.z + kBounds.getRadius();
     }
 
-    /**
-     * Setup the X, Y, Z axis orientation.
-     */
-    private void setupOrientation() {
-        axisXOrient = imageA.getFileInfo(0).getAxisOrientation()[0];
-        axisYOrient = imageA.getFileInfo(0).getAxisOrientation()[1];
-        axisZOrient = imageA.getFileInfo(0).getAxisOrientation()[2];
-    }
 
     /**
      * Determine the current viewing transformation and pass it to the texture volume renderer so that it can update

@@ -3,17 +3,14 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
-
 import javax.swing.*;
 
 
@@ -171,7 +168,14 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
             image.clearMask();
 
             if ((maskAlgo.isCompleted() == true) && (resultImage != null)) {
-                updateFileInfo(image, resultImage);
+                // copy over the file info from the original image, was just copying the data over before.
+                // now the new image is "of the same image type" as the original
+                FileInfoBase fileInfo;
+                for (int i = 0; i < image.getFileInfo().length; i++) {
+                    fileInfo = (FileInfoBase) (image.getFileInfo(i).cloneItself());
+                    resultImage.setFileInfo(fileInfo, i);
+                }
+                
                 resultImage.clearMask();
 
                 // The algorithm has completed and produced a new image to be displayed.
@@ -448,7 +452,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Mask image");
+        setTitle("Fill image");
 
         JLabel labelValue;
         JLabel labelValueG = null;

@@ -41,7 +41,7 @@ import gov.nih.mipav.view.*;
  *   ConfluentHypergeometric ch = new ConfluentHypergeometric(-0.5, 1, 1.0, result, method);
  *   ch.run();
  *   Preferences.debug("Confluent hypergeomtric result = " + result[0] +  " method = " + 
- *                       method + \n");
+ *                       method[0] + \n");
  *   
  *   For 1F1(-1/2, 1, x) tested with Shanjie Zhang and Jianming Jin Computation of Special
  *   Functions CHGM routine and ACM Algorithm 707 conhyp routine by Mark Nardin, W. F. Perger,
@@ -1792,7 +1792,7 @@ public class ConfluentHypergeometric {
         iL2 = ((aa == (int)aa) && (aa <= 0.0));
         iL3 = Math.abs(a*(a-b+1.0))/x <= 2.0;
         bL1 = (x <= 5.0 || ((x <= 10.0) && (a <= 2.0)));
-        bL2 = (((x > 5.0) && (x<= 12.5)) && ((a >= 1.0) && (b >= a+4.0)));
+        bL2 = (((x > 5.0) && (x <= 12.5)) && ((a >= 1.0) && (b >= a+4.0)));
         bL3 = (x > 12.5) && (a >= 5.0) && (b >= a+5.0);
         bn = (b == (int)b) && (b != 0.0);
         id1[0] = -100;
@@ -1844,6 +1844,7 @@ public class ConfluentHypergeometric {
             }
         } // else a < 0.0
         if (id[0] < 6) {
+            Preferences.debug("No accurate result obtained for confluent hypergeometric function" + "\n");
             MipavUtil.displayError("No accurate result obtained");
         }
         return;
@@ -1934,7 +1935,7 @@ public class ConfluentHypergeometric {
         double r;
         int k;
         int nm = 0;
-        double ra;
+        double ra = 0.0;
         double r0 = 0.0;
         
         id[0] = -100;
@@ -1975,6 +1976,7 @@ public class ConfluentHypergeometric {
                 r0 = ra;
                 result[0] = result[0] + r;
             } // for (k = 1; k <= 25; k++)
+            id[0] = (int)Math.abs(0.4342944819*Math.log(ra));
             result[0] = Math.pow(x,-a)*result[0];
         } // else
         return;

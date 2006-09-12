@@ -1208,17 +1208,17 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 m_akPlaneRender[0] = new PlaneRender(this,
                                                      imageA, LUTa,
                                                      imageB, LUTb,
-                                                     config, 
+                                                     config,
                                                      ViewJComponentBase.AXIAL, false);
                 m_akPlaneRender[1] = new PlaneRender(this,
                                                      imageA, LUTa,
                                                      imageB, LUTb,
-                                                     config, 
+                                                     config,
                                                      ViewJComponentBase.SAGITTAL, false);
                 m_akPlaneRender[2] = new PlaneRender(this,
                                                      imageA, LUTa,
                                                      imageB, LUTb,
-                                                     config, 
+                                                     config,
                                                      ViewJComponentBase.CORONAL, false);
             }
 
@@ -2218,16 +2218,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Set the absolute position label from the plane render mouse drags and slice panel slider moves.
      */
     public void setAbsPositionLabels() {
-        int x, y, z;
-
-        // +1 since slice start from 1.
-        x = surRender.getXPosition() + 1;
-        y = surRender.getYPosition() + 1;
-        z = surRender.getZPosition() + 1;
-
-        labelXPos.setText("" + x);
-        labelYPos.setText("" + y);
-        labelZPos.setText("" + z);
+    }
+    public void setAbsPositionLabels( float x, float y, float z )
+    {
+        labelXPos.setText("" + (int)x);
+        labelYPos.setText("" + (int)y);
+        labelZPos.setText("" + (int)z);
 
         setPositionLabels(surRender.getSlicePanel().getXSlice(), surRender.getSlicePanel().getYSlice(),
                           surRender.getSlicePanel().getZSlice());
@@ -2256,29 +2252,32 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param fValue, the normalized z-slice value:
      *
      */
-    public void setSlice( int iView, float fValue )
+    public void setSliceFromPlane( Point3Df center )
     {
         for ( int i = 0; i < 3; i++ )
         {
-            m_akPlaneRender[ i ].setSlice( iView, fValue );
+            m_akPlaneRender[ i ].setCenter( center );
         }
-        surRender.getSlicePanel().setSlicePos( iView, fValue );
+        setAbsPositionLabels( center.x, center.y, center.z );
+        surRender.setCenter( center );
     }
 
-    /* MipavCoordinateSystems upgrade: TODO: */
     /**
-     * Sets the PlaneRender z-slice value for the view iView. Called from
      * SurfaceRenderer
-     * @param iView, AXIAL, SAGITTAL, or CORONAL
-     * @param fValue, the normalized z-slice value:
      *
      */
-    /* MipavCoordinateSystems upgrade: TODO: */
-    public void setSliceFromSurface( int iView, float fValue )
+    public void setSliceFromSurface( Point3Df center )
     {
+        if ( m_akPlaneRender == null )
+        {
+            return;
+        }
         for ( int i = 0; i < 3; i++ )
         {
-            m_akPlaneRender[ i ].setSlice( iView, fValue );
+            if ( m_akPlaneRender[ i ] != null )
+            {
+                m_akPlaneRender[ i ].setCenter( center );
+            }
         }
     }
 

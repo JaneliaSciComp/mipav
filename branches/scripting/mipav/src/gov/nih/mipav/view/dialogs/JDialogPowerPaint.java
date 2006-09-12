@@ -27,7 +27,7 @@ import javax.swing.*;
  * @see      JDialogBase
  * @see      AlgorithmInterface
  */
-public class JDialogPowerPaint extends JDialogBase implements MouseListener, MouseWheelListener {
+public class JDialogPowerPaint extends JDialogBase implements MouseListener, MouseWheelListener, KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -143,6 +143,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 
     /** DOCUMENT ME! */
     private JComboBox comboStructureType;
+
+    /** DOCUMENT ME! */
+    private JToggleButton buttonShortkeys;
 
     /** DOCUMENT ME! */
     private String connectType = "6/26";
@@ -279,7 +282,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     private String structureType = "ball";
 
     /** DOCUMENT ME! */
-    private String[] structureTypes = { "ball", "diamond" };
+    private String[] structureTypes = { "ball", "diamond", "cube"};
 
     /** DOCUMENT ME! */
     private JTextField textSave;
@@ -438,7 +441,19 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 MipavUtil.centerOnScreen(multiPaintDialog);
                 multiPaintDialog.setVisible(true);
             }
-        }
+        } else if (command.equals("Shortkeys")) {
+			if (buttonShortkeys.isSelected()) {
+				setFocusable(true);
+				addKeyListener(this);
+				requestFocusInWindow();
+				image.getParentFrame().getComponentImage().setFocusable(true);
+				image.getParentFrame().getComponentImage().addKeyListener(this);
+				image.getParentFrame().getComponentImage().requestFocusInWindow();
+			} else {
+				removeKeyListener(this);
+				image.getParentFrame().getComponentImage().removeKeyListener(this);
+			}
+		}
     }
 
     /**
@@ -483,10 +498,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionY())
                               );
 
+            Point3Df patientMousePoint = new Point3Df( mouseEvent.getX()/screenFactor.x, mouseEvent.getY()/screenFactor.y,
+                                                       image.getTriImageFrame().getAxialComponentSlice() );
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
-                                                                image.getTriImageFrame().getAxialComponentSlice() ),
-                                                  pt, screenFactor, image, FileInfoBase.AXIAL );
+            MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.AXIAL );
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
@@ -503,10 +518,11 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                               (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomY() *
                                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionY())
                               );
+
+            Point3Df patientMousePoint = new Point3Df( mouseEvent.getX()/screenFactor.x, mouseEvent.getY()/screenFactor.y,
+                                                       image.getTriImageFrame().getCoronalComponentSlice() );
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
-                                                                image.getTriImageFrame().getCoronalComponentSlice() ),
-                                                  pt, screenFactor, image, FileInfoBase.CORONAL );
+            MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.CORONAL );
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
@@ -524,10 +540,10 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                                image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionY())
                               );
 
+            Point3Df patientMousePoint = new Point3Df( mouseEvent.getX()/screenFactor.x, mouseEvent.getY()/screenFactor.y,
+                                                       image.getTriImageFrame().getSagittalComponentSlice() );
             Point3Df pt = new Point3Df();
-            MipavCoordinateSystems.ScreenToModel( new Point3Df( mouseEvent.getX(), mouseEvent.getY(),
-                                                                image.getTriImageFrame().getSagittalComponentSlice() ),
-                                                  pt, screenFactor, image, FileInfoBase.SAGITTAL );
+            MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.SAGITTAL );
             xS = (int)pt.x;
             yS = (int)pt.y;
             zS = (int)pt.z;
@@ -650,6 +666,26 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         }
 
     }
+	
+	/** Handle the key typed event */
+    public void keyTyped(KeyEvent e) {
+		String key = Character.toString(e.getKeyChar());
+		System.out.println("key: "+key);
+		if (key.equals("d")) actionPerformed(new ActionEvent(this, 0, "Dilate"));
+		else if (key.equals("e")) actionPerformed(new ActionEvent(this, 0, "Erode"));
+		else if (key.equals("g")) actionPerformed(new ActionEvent(this, 0, "GrowRegion"));
+		else if (key.equals("f")) actionPerformed(new ActionEvent(this, 0, "Background"));
+		else if (key.equals("r")) actionPerformed(new ActionEvent(this, 0, "RmObject"));
+    }
+
+    /** Handle the key pressed event */
+    public void keyPressed(KeyEvent e) {
+    }
+
+    /** Handle the key released event */
+    public void keyReleased(KeyEvent e) {
+    }
+   
 
     /**
      * 3D images: 18-neighborhood.
@@ -1425,7 +1461,17 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                     }
                 }
             }
-        }
+        } else if (structureType.equals("cube")) {
+			for (int i=0;i<dmx;i++) for (int j=0;j<dmy;j++) {
+				se2xy.set( i + dmx*j, true);
+			}
+			for (int i=0;i<dmx;i++) for (int j=0;j<dmz;j++) {
+				se2xz.set( i + dmx*j, true);
+			}
+			for (int i=0;i<dmy;i++) for (int j=0;j<dmz;j++) {
+				se2yz.set( i + dmy*j, true);
+			}
+		}
 
         return;
     }
@@ -1500,7 +1546,11 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                     }
                 }
             }
-        }
+        } else if (structureType.equals("cube")) {
+			for (int i=0;i<dmx;i++) for (int j=0;j<dmy;j++) for (int k=0;k<dmz;k++) {
+				se3.set( i + dmx*j + dmx*dmy*k, true);
+			}
+		}
 
         return;
     }
@@ -1509,7 +1559,8 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
      * dilation.
      */
     private void dilateImage() {
-
+		System.out.println("dilate");
+		
         if (image == null) {
             System.gc();
             MipavUtil.displayError("image not found");
@@ -2818,14 +2869,20 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         buttonShowAdvancedPaintControls.setFont(serif12);
         buttonShowAdvancedPaintControls.setEnabled(!image.isColorImage());
 
-        objectPanel = new JPanel(new GridBagLayout());
-        objectPanel.setBorder(buildTitledBorder("Object Processing"));
+        buttonShortkeys = new JToggleButton("Use shortkeys");
+        buttonShortkeys.addActionListener(this);
+        buttonShortkeys.setActionCommand("Shortkeys");
+        buttonShortkeys.setFont(serif12);
+        buttonShortkeys.setToolTipText("Use shortkeys for all commands: g: grow, f: fill, r: remove, d: dilate, e:erode");
 
-        GridBagConstraints gbc = new GridBagConstraints();
+		GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 2, 2, 2);
+
+        objectPanel = new JPanel(new GridBagLayout());
+        objectPanel.setBorder(buildTitledBorder("Object Processing"));
 
         gbc.gridx = 1;
         gbc.gridy = 0;
@@ -3030,6 +3087,8 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         gbc.gridy = 5;
         gbc.insets = new Insets(2, 2, 2, 2);
         mainPanel.add(buttonShowAdvancedPaintControls, gbc);
+        gbc.gridy = 6;
+        mainPanel.add(buttonShortkeys, gbc);
 
         botPanel = new JPanel();
         botPanel.add(buildCloseButton());
@@ -3633,5 +3692,6 @@ class PaintAutoSave extends TimerTask {
 
         tmp = null;
     }
-
 }
+
+

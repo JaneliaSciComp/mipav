@@ -26,9 +26,15 @@ public abstract class FileInfoXML extends FileInfoBase {
     private static final long serialVersionUID = -7709467226605763815L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** Name (not path) of the header file. */
-    protected String headerFileName;
+    
+    /**
+     * Name (not path) of the (usually raw) image data file.  The name of the image xml header file is stored in
+     * FileInfoBase.getFileName().
+     * 
+     * @see  FileInfoBase#getFileName()
+     * @see  FileInfoBase#setFileName(String)
+     */
+    protected String imageDataFileName;
 
     /** Brief description of the image - optional XML tag. */
     protected String imageDescription;
@@ -81,12 +87,12 @@ public abstract class FileInfoXML extends FileInfoBase {
     }
 
     /**
-     * Returns the name of the header file.
+     * Returns the name of the image data file (not the xml header).
      *
-     * @return  name of the header file
+     * @return  name of the image data file
      */
-    public String getHeaderFileName() {
-        return this.headerFileName;
+    public String getImageDataFileName() {
+        return this.imageDataFileName;
     }
 
     /**
@@ -99,12 +105,12 @@ public abstract class FileInfoXML extends FileInfoBase {
     }
 
     /**
-     * Sets the name of the header file.
+     * Sets the name of the image data file (not the xml header).
      *
-     * @param  headerFileName  header file name (not path)
+     * @param  dataFileName  image data file name (not path)
      */
-    public void setHeaderFileName(String headerFileName) {
-        this.headerFileName = headerFileName;
+    public void setImageDataFileName(String dataFileName) {
+        this.imageDataFileName = dataFileName;
     }
 
     /**

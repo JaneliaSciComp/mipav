@@ -456,6 +456,8 @@ public class ViewMenuBar {
                                         
                                         menuBuilder.makeMenu("Transformation tools", false,
                                                              new JMenuItem[] {
+                                                                 menuBuilder.buildMenuItem("Circular sector to rectangle",
+                                                                                           "CirToRec", 0, null, false),
                                                                  menuBuilder.buildMenuItem("Reslice - isotropic voxels",
                                                                                            null, 0, null, false),
                                                                  menuBuilder.buildMenuItem("Subsample", "subsample", 0,
@@ -555,8 +557,11 @@ public class ViewMenuBar {
         JMenu dicomMenu = makeDicomMenu();
 
         JMenuItem closeImageBItem = menuBuilder.buildMenuItem("Close image(B)", "CloseImageB", 0, null, true);
-        menuBuilder.setMenuItemEnabled("Close image(B)", isAnImageOpen);
+        menuBuilder.setMenuItemEnabled("Close image(B)", false);
 
+        JMenuItem extractImageBItem = menuBuilder.buildMenuItem("Extract image(B)", "ExtractImageB", 0, null, true);
+        menuBuilder.setMenuItemEnabled("Extract image(B)", false);
+        
         JMenuItem saveImageItem = menuBuilder.buildMenuItem("Save image", "SaveImage", 0, "save.gif", true);
         JMenuItem saveImageAsItem = menuBuilder.buildMenuItem("Save image as", "SaveImageAs", 0, "save.gif", true);
         menuBuilder.setMenuItemEnabled("Save image", isAnImageOpen);
@@ -579,7 +584,7 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Image browser",
                                                                                            "BrowseImages", 0, null,
                                                                                            true),
-                                                             }), separator, loadMenu, closeImageBItem, separator,
+                                                             }), separator, loadMenu, extractImageBItem, closeImageBItem, separator,
                                         saveImageItem, saveImageAsItem, captureMenu, separator, dicomMenu, separator,
                                         srbMenu, separator, menuBuilder.buildQuickList(), separator,
                                         menuBuilder.buildMenuItem("DCCIE image conversion", "dccieconvert", 0, null,
@@ -871,7 +876,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Image calculator", "Calculator", 0, null, false),
                                         menuBuilder.buildMenuItem("Image math", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Invert", null, 0, null, false),
-                                        menuBuilder.buildMenuItem("Mask", null, 0, null, false),
+                                        menuBuilder.buildMenuItem("Fill image", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Match images", "matchImages", 0, null, false),
                                         menuBuilder.buildMenuItem("Noise", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Quantify using mask", "Quantify", 0, null, false),
@@ -1133,7 +1138,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Inhomogeneity N3 correction", false);
             menuBuilder.setMenuItemEnabled("Levelset", false);
             menuBuilder.setMenuItemEnabled("Levelset diffusion", false);
-            menuBuilder.setMenuItemEnabled("Mask", false);
+            menuBuilder.setMenuItemEnabled("Fill image", false);
             menuBuilder.setMenuItemEnabled("Morphological", false);
             menuBuilder.setMenuItemEnabled("MRI combined info", false);
             menuBuilder.setMenuItemEnabled("Noise", false);
@@ -1175,6 +1180,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Pad with slices", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
+            menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
@@ -1185,6 +1191,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Swap dims 3<->4", false);
             menuBuilder.setMenuItemEnabled("Time series optimized automatic registration", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
+            menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
         } else if (numberOfDimensions == 2) {
             menuBuilder.setMenuItemEnabled("3D rectangle", false);
             menuBuilder.setMenuItemEnabled("Animate", false);

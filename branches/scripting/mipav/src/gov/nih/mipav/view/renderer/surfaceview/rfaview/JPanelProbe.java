@@ -162,6 +162,9 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
     /** Control the tri-planar probe nevigation mode. */
     private JToggleButton probeTargetButton;
 
+    /** Reset probe nevigation mode. */
+    private JToggleButton probeResetButton;
+
     /** Buring point sphere diameter. */
     private Point3f radius;
 
@@ -356,6 +359,8 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         } else if (command.equals("ProbeTargetPoint")) {
             cursorMode = PROBEMOVE;
             parentFrame.enableTargetPointPicking();
+        } else if (command.equals("ProbeReset")) {
+            probe.resetProbeTransform();
         } else if (command.equals("Navigation")) {
             probe.navigation();
         } else if (command.equals("addTarget")) {
@@ -2364,6 +2369,10 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
                                                              "Picks a probe target point using the Tri-Planar views",
                                                              "probepoint", cursorGroup);
         toolBar.add(probeTargetButton);
+        probeResetButton = toolbarBuilder.buildToggleButton("ProbeReset",
+                                                             "Resets the Probe navigation",
+                                                             "probepoint", cursorGroup);
+        toolBar.add(probeResetButton);
         toolBar.add(ViewToolBarBuilder.makeSeparator());
         skinPresetButton = toolbarBuilder.buildButton("SkinPreset", "Skin visualization settings.", "histolut");
         toolBar.add(skinPresetButton);

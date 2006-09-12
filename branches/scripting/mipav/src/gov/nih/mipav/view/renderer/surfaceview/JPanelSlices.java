@@ -1,6 +1,10 @@
 package gov.nih.mipav.view.renderer.surfaceview;
 
 
+import gov.nih.mipav.*;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.renderer.*;
 
@@ -10,6 +14,7 @@ import java.awt.event.*;
 import java.util.*;
 
 import javax.media.j3d.*;
+import javax.vecmath.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -27,15 +32,6 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -8359831093707979536L;
 
-    /** X, Y, Z label constants. */
-    public static final int X = 0;
-
-    /** DOCUMENT ME! */
-    public static final int Y = 1;
-
-    /** DOCUMENT ME! */
-    public static final int Z = 2;
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Check boxes that turn the image plane on and off. */
@@ -51,7 +47,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     public int xSlice;
 
     /** Flags indicating if the image slices are on or off. */
-    public boolean xVisible = true, yVisible = true, zVisible = true;
+    public boolean[] sliceVisible = { true, true, true };
 
     /** Which slice is currently displayed in the XZ plane. */
     public int ySlice;
@@ -63,22 +59,10 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     private JPanel boundingBoxPanel;
 
     /** Check box for turning x on and off. */
-    private JCheckBox boundingCheckX;
-
-    /** Check box for turning y on and off. */
-    private JCheckBox boundingCheckY;
-
-    /** Check box for turning z on and off. */
-    private JCheckBox boundingCheckZ;
+    private JCheckBox[] boundingCheck = new JCheckBox[3];
 
     /** Color button for changing x color. */
-    private JButton colorButtonX;
-
-    /** Color button for changing y color. */
-    private JButton colorButtonY;
-
-    /** Color button for changing z color. */
-    private JButton colorButtonZ;
+    private JButton[] colorButton = new JButton[3];
 
     /** Color chooser dialog. */
     private ViewJColorChooser colorChooser;
@@ -119,10 +103,6 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     /** Slider events used by the mouse recorder. */
     private MouseEventVector sliderEvents;
 
-    /* MipavCoordinateSystems upgrade TODO: */
-    /** The positions of the sliders - and therefore how they map to x,y,z:. */
-    private int sliderXPos, sliderYPos, sliderZPos;
-
     /** Text fields that display the slice number next to the sliders. */
     private JTextField textX, textY, textZ, textT;
 
@@ -144,9 +124,15 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      */
     public JPanelSlices(SurfaceRender parent) {
         super(parent);
-        xDim = renderBase.getImageA().getExtents()[0];
-        yDim = renderBase.getImageA().getExtents()[1];
-        zDim = renderBase.getImageA().getExtents()[2];
+
+        int[] axialImageExtents = renderBase.getImageA().getExtents( FileInfoBase.AXIAL );
+        xDim = axialImageExtents[2];
+
+        int[] coronalImageExtents = renderBase.getImageA().getExtents( FileInfoBase.CORONAL );
+        yDim = coronalImageExtents[2];
+
+        int[] sagittalImageExtents = renderBase.getImageA().getExtents( FileInfoBase.SAGITTAL );
+        zDim = sagittalImageExtents[2];
 
         xSlice = (xDim - 1) / 2;
         ySlice = (yDim - 1) / 2;
@@ -183,74 +169,59 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
                                                  new CancelListener());
         }
 
-        if (source == boundingCheckX) {
-
-            if (boundingCheckX.isSelected()) {
-                ((SurfaceRender) renderBase).updateBoxSlicePos();
-                ((SurfaceRender) renderBase).showBoxSliceX();
-                colorButtonX.setEnabled(true);
-            } else {
-                ((SurfaceRender) renderBase).removeBoxSliceX();
-                colorButtonX.setEnabled(false);
+        for ( int i = 0; i < 3; i++ )
+        {
+            if (source == boundingCheck[i]) {
+                
+                if (boundingCheck[i].isSelected()) {
+                    ((SurfaceRender) renderBase).updateBoxSlicePos();
+                    ((SurfaceRender) renderBase).showBoxSlice(i);
+                    colorButton[i].setEnabled(true);
+                } else {
+                    ((SurfaceRender) renderBase).removeBoxSlice(i);
+                    colorButton[i].setEnabled(false);
+                }
+                break;
             }
-        } else if (source == boundingCheckY) {
+        }
 
-            if (boundingCheckY.isSelected()) {
-                ((SurfaceRender) renderBase).updateBoxSlicePos();
-                ((SurfaceRender) renderBase).showBoxSliceY();
-                colorButtonY.setEnabled(true);
-            } else {
-                ((SurfaceRender) renderBase).removeBoxSliceY();
-                colorButtonY.setEnabled(false);
-            }
-        } else if (source == boundingCheckZ) {
-
-            if (boundingCheckZ.isSelected()) {
-                ((SurfaceRender) renderBase).updateBoxSlicePos();
-                ((SurfaceRender) renderBase).showBoxSliceZ();
-                colorButtonZ.setEnabled(true);
-            } else {
-                ((SurfaceRender) renderBase).removeBoxSliceZ();
-                colorButtonZ.setEnabled(false);
-            }
-        } else if (command.equals("X")) {
-
+        if (command.equals("X")) {
             if (!boxX.isSelected()) {
-                ((SurfaceRender) renderBase).getObjZYPlaneBG().detach();
+                ((SurfaceRender) renderBase).getObjPlane_BG(0).detach();
                 setXSliderEnabled(false);
                 setOpacitySliderXEnabled(false);
-                xVisible = false;
+                sliceVisible[1] = false;
             } else {
-                renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjZYPlaneBG());
+                renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(0));
                 setXSliderEnabled(true);
                 setOpacitySliderXEnabled(true);
-                xVisible = true;
+                sliceVisible[1] = true;
             }
         } else if (command.equals("Y")) {
 
             if (!boxY.isSelected()) {
-                ((SurfaceRender) renderBase).getObjXZPlaneBG().detach();
+                ((SurfaceRender) renderBase).getObjPlane_BG(1).detach();
                 setYSliderEnabled(false);
                 setOpacitySliderYEnabled(false);
-                yVisible = false;
+                sliceVisible[2] = false;
             } else {
-                renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjXZPlaneBG());
+                renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(1));
                 setYSliderEnabled(true);
                 setOpacitySliderYEnabled(true);
-                yVisible = true;
+                sliceVisible[2] = true;
             }
         } else if (command.equals("Z")) {
 
             if (!boxZ.isSelected()) {
-                ((SurfaceRender) renderBase).getObjXYPlaneBG().detach();
+                ((SurfaceRender) renderBase).getObjPlane_BG(2).detach();
                 setZSliderEnabled(false);
                 setOpacitySliderZEnabled(false);
-                zVisible = false;
+                sliceVisible[0] = false;
             } else {
-                renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjXYPlaneBG());
+                renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(2));
                 setZSliderEnabled(true);
                 setOpacitySliderZEnabled(true);
-                zVisible = true;
+                sliceVisible[0] = true;
             }
         }
 
@@ -276,23 +247,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
         cpGBC.fill = GridBagConstraints.BOTH;
 
-        switch (((SurfaceRender) renderBase).getLabel(X, true)) {
-
-            case X:
-                labelX = new JLabel(" X (1 - " + String.valueOf(xDim) + ")");
-                levelX = 0;
-                break;
-
-            case Y:
-                labelX = new JLabel(" Y (1 - " + String.valueOf(xDim) + ")");
-                levelX = 1;
-                break;
-
-            case Z:
-                labelX = new JLabel(" Z (1 - " + String.valueOf(xDim) + ")");
-                levelX = 2;
-                break;
-        }
+        labelX = new JLabel(" Axial: (1 - " + String.valueOf(xDim) + ")");
+        levelX = 0;
 
         boxX = new JCheckBox();
         boxX.setSelected(true);
@@ -346,23 +302,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
         cpGBC.fill = GridBagConstraints.BOTH;
 
-        switch (((SurfaceRender) renderBase).getLabel(Y, true)) {
-
-            case X:
-                labelY = new JLabel(" X (1 - " + String.valueOf(yDim) + ")");
-                levelY = 0;
-                break;
-
-            case Y:
-                labelY = new JLabel(" Y (1 - " + String.valueOf(yDim) + ")");
-                levelY = 1;
-                break;
-
-            case Z:
-                labelY = new JLabel(" Z (1 - " + String.valueOf(yDim) + ")");
-                levelY = 2;
-                break;
-        }
+        labelY = new JLabel(" Coronal: (1 - " + String.valueOf(yDim) + ")");
+        levelY = 1;
 
         boxY = new JCheckBox();
         boxY.setSelected(true);
@@ -416,23 +357,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
         cpGBC.fill = GridBagConstraints.BOTH;
 
-        switch (((SurfaceRender) renderBase).getLabel(Z, true)) {
-
-            case X:
-                labelZ = new JLabel(" X (1 - " + String.valueOf(zDim) + ")");
-                levelZ = 0;
-                break;
-
-            case Y:
-                labelZ = new JLabel(" Y (1 - " + String.valueOf(zDim) + ")");
-                levelZ = 1;
-                break;
-
-            case Z:
-                labelZ = new JLabel(" Z (1 - " + String.valueOf(zDim) + ")");
-                levelZ = 2;
-                break;
-        }
+        labelZ = new JLabel(" Sagittal (1 - " + String.valueOf(zDim) + ")");
+        levelZ = 2;
 
         boxZ = new JCheckBox();
         boxZ.setSelected(true);
@@ -489,11 +415,6 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
             buildTimeSlider();
         }
 
-        /* Keep track of the positions of the sliders so we can keep track of
-         * how they map to x,y,z: */
-        sliderXPos = levelX;
-        sliderYPos = levelY;
-        sliderZPos = levelZ;
     }
 
     /**
@@ -516,23 +437,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
         cpGBC.fill = GridBagConstraints.BOTH;
 
-        switch (((SurfaceRender) renderBase).getLabel(X, true)) {
-
-            case X:
-                opacityLabelX = new JLabel("X Opacity");
-                levelX = 0;
-                break;
-
-            case Y:
-                opacityLabelX = new JLabel("Y Opacity");
-                levelX = 2;
-                break;
-
-            case Z:
-                opacityLabelX = new JLabel("Z Opacity");
-                levelX = 4;
-                break;
-        }
+        opacityLabelX = new JLabel("X Opacity");
+        levelX = 0;
 
         opacityLabelX.setFont(serif12B);
         opacityLabelX.setForeground(Color.black);
@@ -568,23 +474,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         opacitySliderLabelsX[2].setEnabled(true);
         addOpacityControlPanel(opacitySliderX, cpGBC, 0, levelX + 1, 8, 1);
 
-        switch (((SurfaceRender) renderBase).getLabel(Y, true)) {
-
-            case X:
-                opacityLabelY = new JLabel("X Opacity");
-                levelY = 0;
-                break;
-
-            case Y:
-                opacityLabelY = new JLabel("Y Opacity");
-                levelY = 2;
-                break;
-
-            case Z:
-                opacityLabelY = new JLabel("Z Opacity");
-                levelY = 4;
-                break;
-        }
+        opacityLabelY = new JLabel("Y Opacity");
+        levelY = 2;
 
         opacityLabelY.setFont(serif12B);
         opacityLabelY.setForeground(Color.black);
@@ -620,23 +511,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         opacitySliderLabelsY[2].setEnabled(true);
         addOpacityControlPanel(opacitySliderY, cpGBC, 0, levelY + 1, 8, 1);
 
-        switch (((SurfaceRender) renderBase).getLabel(Z, true)) {
-
-            case X:
-                opacityLabelZ = new JLabel("X Opacity");
-                levelZ = 0;
-                break;
-
-            case Y:
-                opacityLabelZ = new JLabel("Y Opacity");
-                levelZ = 2;
-                break;
-
-            case Z:
-                opacityLabelZ = new JLabel("Z Opacity");
-                levelZ = 4;
-                break;
-        }
+        opacityLabelZ = new JLabel("Z Opacity");
+        levelZ = 4;
 
         opacityLabelZ.setFont(serif12B);
         opacityLabelZ.setForeground(Color.black);
@@ -679,42 +555,29 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      */
     public void disableSlices() {
 
-        if (((SurfaceRender) renderBase).getObjZYPlaneBG().isLive()) {
-            ((SurfaceRender) renderBase).getObjZYPlaneBG().detach();
+        for ( int i = 0; i < 3; i++ )
+        {
+            if (((SurfaceRender) renderBase).getObjPlane_BG(i).isLive())
+            {
+                ((SurfaceRender) renderBase).getObjPlane_BG(i).detach();
+            }
+            if (((SurfaceRender) renderBase).getObjBoxSlice_BG(i).isLive())
+            {
+                ((SurfaceRender) renderBase).getObjBoxSlice_BG(i).detach();
+            }
         }
-
-        if (((SurfaceRender) renderBase).getObjXZPlaneBG().isLive()) {
-            ((SurfaceRender) renderBase).getObjXZPlaneBG().detach();
-        }
-
-        if (((SurfaceRender) renderBase).getObjXYPlaneBG().isLive()) {
-            ((SurfaceRender) renderBase).getObjXYPlaneBG().detach();
-        }
-
-        if (((SurfaceRender) renderBase).getObjBoxSliceX_BG().isLive()) {
-            ((SurfaceRender) renderBase).getObjBoxSliceX_BG().detach();
-        }
-
-        if (((SurfaceRender) renderBase).getObjBoxSliceY_BG().isLive()) {
-            ((SurfaceRender) renderBase).getObjBoxSliceY_BG().detach();
-        }
-
-        if (((SurfaceRender) renderBase).getObjBoxSliceZ_BG().isLive()) {
-            ((SurfaceRender) renderBase).getObjBoxSliceZ_BG().detach();
-        }
-
     }
 
     /**
      * Dispose memory.
      */
     public void dispose() {
-        boundingCheckX = null;
-        boundingCheckY = null;
-        boundingCheckZ = null;
-        colorButtonX = null;
-        colorButtonY = null;
-        colorButtonZ = null;
+//         boundingCheckX = null;
+//         boundingCheckY = null;
+//         boundingCheckZ = null;
+//         colorButtonX = null;
+//         colorButtonY = null;
+//         colorButtonZ = null;
         boundingBoxPanel = null;
         opacityLabelX = null;
         opacityLabelY = null;
@@ -760,40 +623,35 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      */
     public void enableSlices() {
 
-        if (yVisible && !((SurfaceRender) renderBase).getObjXZPlaneBG().isLive()) {
-            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjXZPlaneBG());
+        if ( sliceVisible[2] && !((SurfaceRender) renderBase).getObjPlane_BG(2).isLive()) {
+            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(2));
             setYSliderEnabled(true);
             setOpacitySliderYEnabled(true);
             boxY.setSelected(true);
-            yVisible = true;
+            sliceVisible[2] = true;
         }
 
-        if (zVisible && !((SurfaceRender) renderBase).getObjXYPlaneBG().isLive()) {
-            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjXYPlaneBG());
+        if ( sliceVisible[0] && !((SurfaceRender) renderBase).getObjPlane_BG(0).isLive()) {
+            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(0));
             setZSliderEnabled(true);
             setOpacitySliderZEnabled(true);
             boxZ.setSelected(true);
-            zVisible = true;
+            sliceVisible[0] = true;
         }
 
-        if (xVisible && !((SurfaceRender) renderBase).getObjZYPlaneBG().isLive()) {
-            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjZYPlaneBG());
+        if ( sliceVisible[0] && !((SurfaceRender) renderBase).getObjPlane_BG(0).isLive()) {
+            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjPlane_BG(0));
             setXSliderEnabled(true);
             setOpacitySliderXEnabled(true);
             boxX.setSelected(true);
-            xVisible = true;
+            sliceVisible[0] = true;
         }
 
-        if (boundingCheckX.isSelected() && !((SurfaceRender) renderBase).getObjBoxSliceX_BG().isLive()) {
-            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjBoxSliceX_BG());
-        }
-
-        if (boundingCheckY.isSelected() && !((SurfaceRender) renderBase).getObjBoxSliceY_BG().isLive()) {
-            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjBoxSliceY_BG());
-        }
-
-        if (boundingCheckZ.isSelected() && !((SurfaceRender) renderBase).getObjBoxSliceZ_BG().isLive()) {
-            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjBoxSliceZ_BG());
+        for ( int i = 0; i < 3; i++ )
+        {
+            if (boundingCheck[i].isSelected() && !((SurfaceRender) renderBase).getObjBoxSlice_BG(i).isLive()) {
+            renderBase.getTriPlanarViewBG().addChild(((SurfaceRender) renderBase).getObjBoxSlice_BG(i));
+            }
         }
 
     }
@@ -906,6 +764,51 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         return xProbe;
     }
 
+
+    public int getSlice( int orientation )
+    {
+        if ( orientation == FileInfoBase.AXIAL )
+        {
+            return xSlice;
+        }
+        else if ( orientation == FileInfoBase.CORONAL )
+        {
+            return ySlice;
+        }
+        return zSlice;
+    }
+
+    public void setCenter( int i, int j, int k )
+    {
+        int[] center = { i, j, k };
+        /* MipavCoordinateSystems upgrade: this goes in
+         * MipavCoordinateSystems.FileToModel: */
+        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.AXIAL );
+        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.CORONAL );
+        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.SAGITTAL );
+
+        setXSlicePos( center[ axialOrder[2] ] );
+        setYSlicePos( center[ coronalOrder[2] ] );
+        setZSlicePos( center[ sagittalOrder[2] ] );
+    }
+
+    public Point3Df getCenter( )
+    {
+        /* MipavCoordinateSystems upgrade: this goes in
+         * MipavCoordinateSystems.FileToModel: */
+        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.AXIAL );
+        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.CORONAL );
+        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.SAGITTAL );
+
+        float[] fileCenter = new float[3];
+        fileCenter[ axialOrder[2] ] = xSlice;
+        fileCenter[ coronalOrder[2] ] = ySlice;
+        fileCenter[ sagittalOrder[2] ] = zSlice;
+
+        Point3Df fileSlice = new Point3Df( fileCenter[0], fileCenter[1], fileCenter[2] );
+        return fileSlice;
+    }
+
     /**
      * Get the X slider value.
      *
@@ -916,12 +819,13 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * X slider visible or not.
+     * slice slider visible or not.
      *
-     * @return  xVisible if <code>true</code> visible, otherwise invisible.
+     * @return  sliceVisible if <code>true</code> visible, otherwise invisible.
      */
-    public boolean getXVisible() {
-        return xVisible;
+    public boolean getVisible( int orientation )
+    {
+        return sliceVisible[orientation];
     }
 
     /**
@@ -952,15 +856,6 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Y slider visible or not.
-     *
-     * @return  yVisible if <code>true</code> visible, otherwise invisible.
-     */
-    public boolean getYVisible() {
-        return yVisible;
-    }
-
-    /**
      * Get the z opacity slider value.
      *
      * @return  zOpacityslice Z opacity slider value.
@@ -987,14 +882,6 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         return zSlice;
     }
 
-    /**
-     * Z slider visible or not.
-     *
-     * @return  zVisible if <code>true</code> visible, otherwise invisible.
-     */
-    public boolean getZVisible() {
-        return zVisible;
-    }
 
     /**
      * Initializes GUI components.
@@ -1146,113 +1033,57 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         zSlice = ((SceneState) scene).z;
 
         if (!((SceneState) scene).xVisible) {
-            ((SurfaceRender) renderBase).getObjZYPlaneBG().detach();
+            ((SurfaceRender) renderBase).getObjPlane_BG(0).detach();
             setXSliderEnabled(false);
-            xVisible = false;
+            sliceVisible[0] = false;
             boxX.setSelected(false);
         } else if (((SceneState) scene).xVisible) {
 
-            if (!((SurfaceRender) renderBase).getObjZYPlaneBG().isLive()) {
-                (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjZYPlaneBG());
+            if (!((SurfaceRender) renderBase).getObjPlane_BG(0).isLive()) {
+                (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjPlane_BG(0));
             }
 
             setXSliderEnabled(true);
-            xVisible = true;
+            sliceVisible[0] = true;
             boxX.setSelected(true);
         }
 
         if (!((SceneState) scene).yVisible) {
-            ((SurfaceRender) renderBase).getObjXZPlaneBG().detach();
+            ((SurfaceRender) renderBase).getObjPlane_BG(1).detach();
             setYSliderEnabled(false);
-            yVisible = false;
+            sliceVisible[1] = false;
             boxY.setSelected(false);
         } else if (((SceneState) scene).yVisible) {
 
-            if (!((SurfaceRender) renderBase).getObjXZPlaneBG().isLive()) {
-                (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjXZPlaneBG());
+            if (!((SurfaceRender) renderBase).getObjPlane_BG(1).isLive()) {
+                (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjPlane_BG(1));
             }
 
             setYSliderEnabled(true);
-            yVisible = true;
+            sliceVisible[1] = true;
             boxY.setSelected(true);
         }
 
         if (!((SceneState) scene).zVisible) {
-            ((SurfaceRender) renderBase).getObjXYPlaneBG().detach();
+            ((SurfaceRender) renderBase).getObjPlane_BG(2).detach();
             setZSliderEnabled(false);
-            zVisible = false;
+            sliceVisible[2] = false;
             boxZ.setSelected(false);
         } else if (((SceneState) scene).zVisible) {
 
-            if (!((SurfaceRender) renderBase).getObjXYPlaneBG().isLive()) {
-                (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjXYPlaneBG());
+            if (!((SurfaceRender) renderBase).getObjPlane_BG(2).isLive()) {
+                (renderBase.getTriPlanarViewBG()).addChild(((SurfaceRender) renderBase).getObjPlane_BG(2));
             }
 
             setZSliderEnabled(true);
-            zVisible = true;
+            sliceVisible[2] = true;
             boxZ.setSelected(true);
         }
 
-        xVisible = ((SceneState) scene).xVisible;
-        yVisible = ((SceneState) scene).yVisible;
-        zVisible = ((SceneState) scene).zVisible;
+        sliceVisible[0] = ((SceneState) scene).xVisible;
+        sliceVisible[1] = ((SceneState) scene).yVisible;
+        sliceVisible[2] = ((SceneState) scene).zVisible;
     }
-
-    /**
-     * Sets the slice position based on a relative percentage of the X dimension.
-     *
-     * @param  iView   the Slice to set the position for
-     * @param  fSlice  the relative slize position
-     */
-    public void setSlicePos( int iView, float fSlice )
-    {
-        if ( iView == ViewJComponentBase.AXIAL )
-        {
-            if ( sliderXPos == Z )
-            {
-                setXSlicePos(Math.round((xDim - 1) * fSlice));
-            }
-            else if ( sliderYPos == Z )
-            {
-                setYSlicePos(Math.round((yDim - 1) * fSlice));
-            }
-            else if ( sliderZPos == Z )
-            {
-                setZSlicePos(Math.round((zDim - 1) * fSlice));
-            }
-        }
-        else if ( iView == ViewJComponentBase.SAGITTAL )
-        {
-            if ( sliderXPos == X )
-            {
-                setXSlicePos(Math.round((xDim - 1) * fSlice));
-            }
-            else if ( sliderYPos == X )
-            {
-                setYSlicePos(Math.round((yDim - 1) * fSlice));
-            }
-            else if ( sliderZPos == X )
-            {
-                setZSlicePos(Math.round((zDim - 1) * fSlice));
-            }
-        }
-        else if  ( iView == ViewJComponentBase.CORONAL )
-        {
-            if ( sliderXPos == Y )
-            {
-                setXSlicePos(Math.round((xDim - 1) * fSlice));
-            }
-            else if ( sliderYPos == Y )
-            {
-                setYSlicePos(Math.round((yDim - 1) * fSlice));
-            }
-            else if ( sliderZPos == Y )
-            {
-                setZSlicePos(Math.round((zDim - 1) * fSlice));
-            }
-        }
-    }
-
 
     /**
      * Set probe x coordinate.
@@ -1268,7 +1099,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      *
      * @param  _xSlice  x slider position
      */
-    public void setXSlicePos(int _xSlice) {
+    private void setXSlicePos(int _xSlice)
+    {
         xSlice = _xSlice;
         sliderX.setValue(xSlice);
     }
@@ -1300,7 +1132,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      *
      * @param  _ySlice  y slider position
      */
-    public void setYSlicePos(int _ySlice) {
+    private void setYSlicePos(int _ySlice) {
         ySlice = _ySlice;
         sliderY.setValue(ySlice);
     }
@@ -1332,7 +1164,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      *
      * @param  _zSlice  z slider position
      */
-    public void setZSlicePos(int _zSlice) {
+    private void setZSlicePos(int _zSlice) {
         zSlice = _zSlice;
         sliderZ.setValue(zSlice);
     }
@@ -1365,141 +1197,63 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         if (source == sliderX) {
 
             // Change the currently displayed x slice
+            if ( xSlice == sliderX.getValue() )
+            {
+                return;
+            }
             xSlice = sliderX.getValue();
             textX.setText(String.valueOf(xSlice + 1));
             ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
 
             if (myMouseDialog.isRecording() && setSliderFlag) {
 
-                switch (sliderXPos) {
-
-                    case X:
-                        sliderEvents.setName("xSlider" + current);
-                        myMouseDialog.listModel.addElement("xSlider" + current);
-                        break;
-
-                    case Y:
-                        sliderEvents.setName("ySlider" + current);
-                        myMouseDialog.listModel.addElement("ySlider" + current);
-                        break;
-
-                    case Z:
-                        sliderEvents.setName("zSlider" + current);
-                        myMouseDialog.listModel.addElement("zSlider" + current);
-                        break;
-                }
+                sliderEvents.setName("xSlider" + current);
+                myMouseDialog.listModel.addElement("xSlider" + current);
 
                 setSliderFlag = false;
             }
 
             ((SurfaceRender) renderBase).updateBoxSlicePos();
-
-            /* Update the SurfaceRender, and frame ViewJFrameVolumeView based
-             * on the relative position of the slider */
-            switch (sliderXPos)
-            {
-            case X:
-                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.SAGITTAL, (float) (xSlice) / (float) (xDim - 1) );
-                break;
-            case Y:
-                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.CORONAL, (float) (xSlice) / (float) (xDim - 1) );
-                break;
-            case Z:
-                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.AXIAL, (float) (xSlice) / (float) (xDim - 1) );
-                break;
-            }
         } else if (source == sliderY) {
 
             // Change the currently displayed y slice
+            if ( ySlice == sliderY.getValue() )
+            {
+                return;
+            }
             ySlice = sliderY.getValue();
             textY.setText(String.valueOf(ySlice + 1));
             ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
 
             if (myMouseDialog.isRecording() && setSliderFlag) {
 
-                switch (sliderYPos) {
-
-                    case X:
-                        sliderEvents.setName("xSlider" + current);
-                        myMouseDialog.listModel.addElement("xSlider" + current);
-                        break;
-
-                    case Y:
-                        sliderEvents.setName("ySlider" + current);
-                        myMouseDialog.listModel.addElement("ySlider" + current);
-                        break;
-
-                    case Z:
-                        sliderEvents.setName("zSlider" + current);
-                        myMouseDialog.listModel.addElement("zSlider" + current);
-                        break;
-                }
+                sliderEvents.setName("ySlider" + current);
+                myMouseDialog.listModel.addElement("ySlider" + current);
 
                 setSliderFlag = false;
             }
 
             ((SurfaceRender) renderBase).updateBoxSlicePos();
-
-            /* Update the SurfaceRender, and frame ViewJFrameVolumeView based
-             * on the relative position of the slider */
-            switch (sliderYPos)
-            {
-            case X:
-                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.SAGITTAL, (float) (ySlice) / (float) (yDim - 1) );
-                break;
-            case Y:
-                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.CORONAL, (float) (ySlice) / (float) (yDim - 1) );
-                break;
-            case Z:
-                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.AXIAL, (float) (ySlice) / (float) (yDim - 1) );
-                break;
-            }
         } else if (source == sliderZ) {
 
             // Change the currently displayed z slice
+            if ( zSlice == sliderZ.getValue() )
+            {
+                return;
+            }
             zSlice = sliderZ.getValue();
             textZ.setText(String.valueOf(zSlice + 1));
             ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
 
             if (myMouseDialog.isRecording() && setSliderFlag) {
 
-                switch (sliderZPos) {
-
-                    case X:
-                        sliderEvents.setName("xSlider" + current);
-                        myMouseDialog.listModel.addElement("xSlider" + current);
-                        break;
-
-                    case Y:
-                        sliderEvents.setName("ySlider" + current);
-                        myMouseDialog.listModel.addElement("ySlider" + current);
-                        break;
-
-                    case Z:
-                        sliderEvents.setName("zSlider" + current);
-                        myMouseDialog.listModel.addElement("zSlider" + current);
-                        break;
-                }
+                sliderEvents.setName("zSlider" + current);
+                myMouseDialog.listModel.addElement("zSlider" + current);
 
                 setSliderFlag = false;
             }
 
             ((SurfaceRender) renderBase).updateBoxSlicePos();
-
-            /* Update the SurfaceRender, and frame ViewJFrameVolumeView based
-             * on the relative position of the slider */
-            switch (sliderZPos)
-            {
-            case X:
-                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.SAGITTAL, (float) (zSlice) / (float) (zDim - 1) );
-                break;
-            case Y:
-                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.CORONAL, (float) (zSlice) / (float) (zDim - 1) );
-                break;
-            case Z:
-                ((SurfaceRender) renderBase).updateTriPlanar( ViewJComponentBase.AXIAL, (float) (zSlice) / (float) (zDim - 1) );
-                break;
-            }
         } else if (source == sliderT) {
 
             // Change the currently displayed t slice
@@ -1514,23 +1268,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
             if (myMouseDialog.isRecording() && setSliderFlag) {
 
-                switch (sliderXPos) {
-
-                    case X:
-                        sliderEvents.setName("xSliderOpacity" + current);
-                        myMouseDialog.listModel.addElement("xSliderOpacity" + current);
-                        break;
-
-                    case Y:
-                        sliderEvents.setName("ySliderOpacity" + current);
-                        myMouseDialog.listModel.addElement("ySliderOpacity" + current);
-                        break;
-
-                    case Z:
-                        sliderEvents.setName("zSliderOpacity" + current);
-                        myMouseDialog.listModel.addElement("zSliderOpacity" + current);
-                        break;
-                }
+                sliderEvents.setName("xSliderOpacity" + current);
+                myMouseDialog.listModel.addElement("xSliderOpacity" + current);
 
                 setSliderFlag = false;
             }
@@ -1542,23 +1281,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
             if (myMouseDialog.isRecording() && setSliderFlag) {
 
-                switch (sliderYPos) {
-
-                    case X:
-                        sliderEvents.setName("xSliderOpacity" + current);
-                        myMouseDialog.listModel.addElement("xSliderOpacity" + current);
-                        break;
-
-                    case Y:
-                        sliderEvents.setName("ySliderOpacity" + current);
-                        myMouseDialog.listModel.addElement("ySliderOpacity" + current);
-                        break;
-
-                    case Z:
-                        sliderEvents.setName("zSliderOpacity" + current);
-                        myMouseDialog.listModel.addElement("zSliderOpacity" + current);
-                        break;
-                }
+                sliderEvents.setName("ySliderOpacity" + current);
+                myMouseDialog.listModel.addElement("ySliderOpacity" + current);
 
                 setSliderFlag = false;
             }
@@ -1570,23 +1294,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
             if (myMouseDialog.isRecording() && setSliderFlag) {
 
-                switch (sliderZPos) {
-
-                    case X:
-                        sliderEvents.setName("xSliderOpacity" + current);
-                        myMouseDialog.listModel.addElement("xSliderOpacity" + current);
-                        break;
-
-                    case Y:
-                        sliderEvents.setName("ySliderOpacity" + current);
-                        myMouseDialog.listModel.addElement("ySliderOpacity" + current);
-                        break;
-
-                    case Z:
-                        sliderEvents.setName("zSliderOpacity" + current);
-                        myMouseDialog.listModel.addElement("zSliderOpacity" + current);
-                        break;
-                }
+                sliderEvents.setName("zSliderOpacity" + current);
+                myMouseDialog.listModel.addElement("zSliderOpacity" + current);
 
                 setSliderFlag = false;
             }
@@ -1605,12 +1314,12 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      */
     protected void setBoxColor(JButton button, Color color) {
 
-        if (button == colorButtonX) {
-            ((SurfaceRender) renderBase).setSliceXColor(color);
-        } else if (button == colorButtonY) {
-            ((SurfaceRender) renderBase).setSliceYColor(color);
-        } else if (button == colorButtonZ) {
-            ((SurfaceRender) renderBase).setSliceZColor(color);
+        if (button == colorButton[0]) {
+            ((SurfaceRender) renderBase).setSliceColor(color, 0);
+        } else if (button == colorButton[1]) {
+            ((SurfaceRender) renderBase).setSliceColor(color, 1);
+        } else if (button == colorButton[2]) {
+            ((SurfaceRender) renderBase).setSliceColor(color, 2);
         }
     }
 
@@ -1655,41 +1364,30 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      */
     private void buildBoundingBox() {
 
-        boundingCheckX = new JCheckBox("Show x slice frame");
-        boundingCheckX.setFont(serif12);
-        boundingCheckX.addActionListener(this);
-        boundingCheckX.setSelected(true);
+        boundingCheck[0] = new JCheckBox("Show axial slice frame");
+        boundingCheck[1] = new JCheckBox("Show coronal slice frame");
+        boundingCheck[2] = new JCheckBox("Show sagittal slice frame");
+        for ( int i = 0; i < 3; i++ )
+        {
+            boundingCheck[i].setFont(serif12);
+            boundingCheck[i].addActionListener(this);
+            boundingCheck[i].setSelected(true);
 
-        colorButtonX = new JButton();
-        colorButtonX.setPreferredSize(new Dimension(25, 25));
-        colorButtonX.setToolTipText("Change x frame color");
-        colorButtonX.addActionListener(this);
-        colorButtonX.setBackground(Color.yellow);
-        colorButtonX.setEnabled(true);
+            colorButton[i] = new JButton();
+            colorButton[i].setPreferredSize(new Dimension(25, 25));
+            colorButton[i].addActionListener(this);
+            colorButton[i].setEnabled(true);
+        }
 
-        boundingCheckY = new JCheckBox("Show y slice frame");
-        boundingCheckY.setFont(serif12);
-        boundingCheckY.addActionListener(this);
-        boundingCheckY.setSelected(true);
+        colorButton[0].setToolTipText("Change axial frame color");
+        colorButton[0].setBackground(Color.red);
 
-        colorButtonY = new JButton();
-        colorButtonY.setPreferredSize(new Dimension(25, 25));
-        colorButtonY.setToolTipText("Change y frame color");
-        colorButtonY.addActionListener(this);
-        colorButtonY.setBackground(Color.green);
-        colorButtonY.setEnabled(true);
+        colorButton[1].setToolTipText("Change coronal frame color");
+        colorButton[1].setBackground(Color.green);
 
-        boundingCheckZ = new JCheckBox("Show z slice frame");
-        boundingCheckZ.setFont(serif12);
-        boundingCheckZ.addActionListener(this);
-        boundingCheckZ.setSelected(true);
+        colorButton[2].setToolTipText("Change sagittal frame color");
+        colorButton[2].setBackground(Color.yellow);
 
-        colorButtonZ = new JButton();
-        colorButtonZ.setPreferredSize(new Dimension(25, 25));
-        colorButtonZ.setToolTipText("Change z frame color");
-        colorButtonZ.addActionListener(this);
-        colorButtonZ.setBackground(Color.red);
-        colorButtonZ.setEnabled(true);
 
         boundingBoxPanel = new JPanel(new GridBagLayout());
 
@@ -1701,21 +1399,15 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        boundingBoxPanel.add(colorButtonX, gbc);
-        gbc.gridx = 1;
-        boundingBoxPanel.add(boundingCheckX, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        boundingBoxPanel.add(colorButtonY, gbc);
-        gbc.gridx = 1;
-        boundingBoxPanel.add(boundingCheckY, gbc);
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        boundingBoxPanel.add(colorButtonZ, gbc);
-        gbc.gridx = 1;
-        boundingBoxPanel.add(boundingCheckZ, gbc);
+        for ( int i = 0; i < 3; i++ )
+        {
+            boundingBoxPanel.add(colorButton[i], gbc);
+            gbc.gridx = 1;
+            boundingBoxPanel.add(boundingCheck[i], gbc);
+            gbc.gridx = 0;
+            gbc.gridy++;
+        }
         boundingBoxPanel.setBorder(buildTitledBorder("Slices bounding box"));
-
     }
 
     /**

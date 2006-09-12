@@ -2037,4 +2037,12 @@ public class FileInfoMagnetomVision extends FileInfoBase {
         this.TextTimeMM = TextTimeMM;
     }
 
+    /**
+     * Returns the image name which should be used for the image this file info is attached to.
+     * 
+     * @return  The name to give to this file info's image.
+     */
+    public String getImageNameFromInfo() {
+        return TextSequence.trim() + "_" + TextScanNumberA.trim() + "_" + TextScanNumberB.trim() + "_" + TextImageNumber.trim();
+    }
 }

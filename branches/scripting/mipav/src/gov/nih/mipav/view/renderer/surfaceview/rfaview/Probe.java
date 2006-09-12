@@ -770,6 +770,21 @@ public class Probe implements MouseBehaviorCallback {
         }
     }
 
+    /** 
+     * Resets the probe navigation (rotation, translation, zoom) to the
+     * origin. Updates the SurfaceRender with the reset probe position.
+     */
+    public void resetProbeTransform()
+    {
+        /* reset the probe transform to the identity matrix: */
+        probeRootParentTG.setTransform( new Transform3D() );
+        probeTransform = new Transform3D();
+        /* Update the surface probe positions: */
+        surfaceRender.setProbeTG(probeTransform, false);
+        /* re-render the slices: */
+        surfaceRender.updateProbe(true, true, true);
+    }
+
     /**
      * Detach all the detection sphere branches.
      */
@@ -815,7 +830,7 @@ public class Probe implements MouseBehaviorCallback {
                 surfaceRender.setProbeTG(transform, false);
 
                 /* Update the surface probe positions: */
-                surfaceRender.updateProbe(true, false);
+                surfaceRender.updateProbe(true, false, false);
             }
         }
     }
@@ -854,7 +869,7 @@ public class Probe implements MouseBehaviorCallback {
         kTransform.get(kTransVector);
         m_kTwist.setTranslation(kTransVector);
         surfaceRender.setProbeTG(m_kTwist, true);
-        surfaceRender.updateProbe(true, !bIsAdjusting);
+        surfaceRender.updateProbe(true, !bIsAdjusting, false);
 
         /* Reset probe translation for m_kTwist to zero: */
         m_kTwist.setTranslation(new Vector3f(0f, 0f, 0f));

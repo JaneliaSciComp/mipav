@@ -3078,9 +3078,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             Sz = (orgDim[2] * orgResol[2]) / (newDim[2] * newResol[2]);
             transMatrix = new TransMatrix(4);
             transMatrix.setZoom(Sx, Sy, Sz);
-            xfrm = new float[4][4];
-            xfrm = matrixtoInverseArray(transMatrix);
-            transformTrilinear(workingBuffer, xfrm);
+            // xfrm = new float[4][4];
+            //xfrm = matrixtoInverseArray(transMatrix);
+            transformTrilinear(workingBuffer, transMatrix);
         } // else shrink != 1.0f
 
         workingBuffer = null;
@@ -3559,18 +3559,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
      * @param  imgBuffer  image array
      * @param  xfrm       transformation matrix to be applied
      */
-    private void transformTrilinear(float[] imgBuffer, float[][] xfrm) {
-        double[][] dMat = new double[4][4];
-        TransMatrix matrix = new TransMatrix(4);
-
-        for (int j = 0; j < 4; j++) {
-
-            for (int i = 0; i < 4; i++) {
-                dMat[j][i] = (double) xfrm[j][i];
-            }
-        }
-
-        matrix.setMatrix(dMat);
+    private void transformTrilinear(float[] imgBuffer, TransMatrix matrix) {
+        
         AlgorithmTransform.transformTrilinear(imgBuffer, fieldBuffer, matrix, newDim[0], newDim[1], newDim[2],
                                               newResol[0], newResol[1], newResol[2], orgDim[0], orgDim[1], orgDim[2],
                                               orgResol[0], orgResol[1], orgResol[2], null);

@@ -20,18 +20,18 @@ import java.io.*;
  * associated with an image - one stored in the qform_code parameters and one stored in the sform_code parameters. While
  * MIPAV separately stores axis orientation and matrix information, NIFTI does not store axis orientation information.
  * NIFTI uses a routine to derive axis orientations from the upper 3 by 3 parameters of the 4 by 4 matrix. The 4 by 4
- * matrix in NIFTI transforms i,j,k indexes to (x,y,z) coordinates where +x = Right, +y = Anterior, +z = Superior. In
+ * matrix in NIFTI transforms x,y,z indexes to (right, anterior, superior) coordinates where +x = Right, +y = Anterior, +z = Superior. In
  * MIPAV the 4 by 4 matrix does not imply the axis orientations.</p>
  * 
  * For qform_code > 0, which should be the normal case the NIFTI definition is:
- * [x]    [R11 R12 R13] [       pixdim[1] * i]   [qoffset_x]
- * [y] =  [R21 R22 R23] [       pixdim[2] * j] + [qoffset_y]
- * [z]    [R31 R32 R33] [qfac * pixdim[3] * k]   [qoffset_z]
+ * [right]       [R11 R12 R13] [       pixdim[1] * i]   [qoffset_right]
+ * [anterior] =  [R21 R22 R23] [       pixdim[2] * j] + [qoffset_anterior]
+ * [superior]    [R31 R32 R33] [qfac * pixdim[3] * k]   [qoffset_superior]
  * Now in going to MIPAV 3 changes must occur.
- * 1.) NIFTI has X L->R and Y P->A while MIPAV uses X R->L and Y A->P, so this would cause
- * R11, R12, R13, qoffset_x, R21, R22, R23, and qoffset_y to be multiplied by -1.
+ * 1.) NIFTI is L->R and P->A while MIPAV is R->L and A->P, so this would cause
+ * R11, R12, R13, qoffset_right, R21, R22, R23, and qoffset_anterior to be multiplied by -1.
  * 2.) The NIFTI image is flipped along the j axis, so this would cause R12, R22, R32, and
- * qoffset_y to be multiplied by -1.
+ * qoffset_anterior to be multiplied by -1.
  * 3.) R13, R23, and R33 are multiplied by qfac.
  * So we in going to MIPAV we use -R11, -R13*qfac, -qoffset_x, -R21,
  * -R23*qfac, -R32, and R33*qfac.
@@ -1588,9 +1588,9 @@ public class FileNIFTI extends FileBase {
 
                 
                 fileInfo.setOrigin(origin);
-                matrix.setMatrix((double) LPSOrigin[0], 0, 3);
-                matrix.setMatrix((double) LPSOrigin[1], 1, 3);
-                matrix.setMatrix((double) LPSOrigin[2], 2, 3);
+                matrix.setMatrix((double) origin[0], 0, 3);
+                matrix.setMatrix((double) origin[1], 1, 3);
+                matrix.setMatrix((double) origin[2], 2, 3);
                 Preferences.debug("matrix = \n" + matrix + "\n");
                 fileInfo.setMatrix(matrix);
 
@@ -1669,9 +1669,9 @@ public class FileNIFTI extends FileBase {
                 }
                 
                 fileInfo.setOrigin(origin);
-                matrix.setMatrix((double) LPSOrigin[0], 0, 3);
-                matrix.setMatrix((double) LPSOrigin[1], 1, 3);
-                matrix.setMatrix((double) LPSOrigin[2], 2, 3);
+                matrix.setMatrix((double) origin[0], 0, 3);
+                matrix.setMatrix((double) origin[1], 1, 3);
+                matrix.setMatrix((double) origin[2], 2, 3);
                 Preferences.debug("matrix = \n" + matrix + "\n");
                 fileInfo.setMatrix(matrix);
 
@@ -3648,8 +3648,13 @@ public class FileNIFTI extends FileBase {
                 fileInfo.setDescription(FileInfoBase.getModalityStr(modality));
             }
 
-            setBufferString(bufferByte, fileInfo.getDescription(), 148);
-            setBufferString(bufferByte, fileInfo.getAuxFile(), 228);
+            if (fileInfo.getDescription() != null) {
+                setBufferString(bufferByte, fileInfo.getDescription(), 148);
+            }
+            
+            if (fileInfo.getAuxFile() != null) {
+                setBufferString(bufferByte, fileInfo.getAuxFile(), 228);
+            }
 
             // Write out info for both method 2 and method 3
             // qform_code
@@ -3709,7 +3714,9 @@ public class FileNIFTI extends FileBase {
                 setBufferFloat(bufferByte, 0.0f, 324, endianess);
             }
 
-            setBufferString(bufferByte, fileInfo.getIntentName(), 328);
+            if (fileInfo.getIntentName() != null) {
+                setBufferString(bufferByte, fileInfo.getIntentName(), 328);
+            }
         } else { // Not a NIFTI file.  Pad the header with blanks and set all known info
 
             setBufferInt(bufferByte, fileInfo.getSizeOfHeader(), 0, endianess);
