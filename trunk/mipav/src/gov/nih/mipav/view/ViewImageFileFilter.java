@@ -80,7 +80,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
     private static String[] descriptions = {
-        "All (*.*)", // ALL
+        "All Files", // ALL
         "AVI (*.avi)", // AVI
         "Class Files (*.class)", // CLASS
         "FreeSurfer (*.asc)", // FREESURFER
