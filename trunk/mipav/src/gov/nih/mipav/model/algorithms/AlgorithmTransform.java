@@ -3703,8 +3703,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 destImage.setMatrix(transMatrix);
                 destImage.getFileInfo(0).setTransformID(srcImage.getFileInfo(0).getTransformID());
             } else {
-
-                if (srcImage.getNDims() > 2) {
+                /*if (srcImage.getNDims() > 2) {
                     newMatrix = new Matrix(4, 4);
                     newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
 
@@ -3740,8 +3739,30 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     newTMatrix = new TransMatrix(3);
-                } // srcImage.getNDims() == 2
+                } // srcImage.getNDims() == 2*/
+                transMatrix.invert();
+                if (srcImage.getNDims() > 2) {
+                    if (transMatrix.getNCols() == 4) {
+                        newMatrix = new Matrix(4, 4);
+                        newMatrix.setMatrix(transMatrix.getMatrix());
+                        newMatrix.timesEquals(srcImage.getMatrix());
+                    }
+                    else { // 2.5D processing
+                        newMatrix = new Matrix(4, 4);
+                        newMatrix.setMatrix(0, 2, 0, 2, transMatrix);
+                        newMatrix.timesEquals(srcImage.getMatrix());
+                    }
+                    
+                    newTMatrix = new TransMatrix(4);
+                }
+                else { // srcImage.getNDims() == 2
+                    newMatrix = new Matrix(3, 3);
+                    newMatrix.setMatrix(transMatrix.getMatrix());
+                    newMatrix.timesEquals(srcImage.getMatrix());
+                    newTMatrix = new TransMatrix(3);
+                }
 
+                    
                 newTMatrix.setMatrix(newMatrix.getArray());
 
                 destImage.setMatrix(newTMatrix);
