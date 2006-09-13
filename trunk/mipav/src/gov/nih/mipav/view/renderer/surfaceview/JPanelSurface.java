@@ -184,7 +184,7 @@ public class JPanelSurface extends JPanelRendererBase
     private GeneralLight[] m_akLights;
 
     /** per-vertex color for the m_aiMask:. */
-    private Color3f[] m_akMaskColor = null;
+    private Color4f[] m_akMaskColor = null;
 
     /** Dimensions of image A. */
     private int m_iXBound, m_iYBound, m_iZBound;
@@ -1355,7 +1355,7 @@ public class JPanelSurface extends JPanelRendererBase
                     addedNames.add(surfaceName);
 
                     /* Tell the surfaceRenderer to add the triangle mesh surface: */
-                    ((SurfaceRender) renderBase).surfaceAdded();
+                    ((SurfaceRender) renderBase).updateData();
                 } else {
                     MipavUtil.displayError("Cannot add two surfaces with the same name.");
                 }
@@ -1383,12 +1383,44 @@ public class JPanelSurface extends JPanelRendererBase
             surColor = Color.RED;
 
             /** mask the surface added. */
-            maskInsideVoxels(getSurface(), true);
+            maskInsideVoxels( surfaceVector.size(), getSurface(), true, 1.0f );
 
             /* Tell the surfaceRenderer to add the triangle mesh surface: */
-            ((SurfaceRender) renderBase).branchSurfaceAdded();
-            ((SurfaceRender) renderBase).branchSetColor(new Color4f(1, 0, 0, 1));
+            ((SurfaceRender) renderBase).updateData();
+
+            int numTriangles = kMesh.getIndexCount();
+            float volume = kMesh.volume();
+            float area = kMesh.area();
+            SurfaceAttributes surface = new SurfaceAttributes( kBranch, "", "branch", new Color4f( 1, 0, 0, 1), 64, 100,
+                                                               PolygonAttributes.POLYGON_FILL, numTriangles, volume, area,
+                                                               true, 1, kMesh.center(), getSurfaceMask());
+            
+            surfaceVector.add(surface);
+            triangleText.setText(String.valueOf(numTriangles));
+            volumeText.setText(String.valueOf(volume));
+            areaText.setText(String.valueOf(area));
+            
+            /* Add to the surfaceList: */
+            int iNameIndex = 0;
+            int iIndex = 0;
+            Vector surfaceNames = new Vector();
+            
+            for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
+                String kElementName = ((SurfaceAttributes) en.nextElement()).name;
+                
+                surfaceNames.addElement(kElementName);
+                
+                if (kElementName.equals("branch")) {
+                    iNameIndex = iIndex;
+                }
+                
+                iIndex++;
+            }
+            
+            surfaceList.setListData(surfaceNames);
+            surfaceList.setSelectedIndex(iNameIndex);
         }
+
     }
 
     /**
@@ -1549,14 +1581,7 @@ public class JPanelSurface extends JPanelRendererBase
         }
 
         /* Tell the surfaceRenderer to add the triangle mesh surface: */
-        ((SurfaceRender) renderBase).surfaceAdded();
-
-        int[] aiSelected = surfaceList.getSelectedIndices();
-
-        for (iIndex = 0; iIndex < aiSelected.length; iIndex++) {
-            ((SurfaceRender) parentScene).setColor(aiSelected[iIndex],
-                                                   ((SurfaceAttributes) surfaceVector.get(aiSelected[iIndex])).color);
-        }
+        ((SurfaceRender) renderBase).updateData();
     }
 
     /**
@@ -1574,13 +1599,8 @@ public class JPanelSurface extends JPanelRendererBase
             if (surfaceVector.size() > 0) {
                 ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(true);
             }
-
-            int[] aiSelected = surfaceList.getSelectedIndices();
-
-            for (int iIndex = 0; iIndex < aiSelected.length; iIndex++) {
-                ((SurfaceRender) parentScene).setColor(aiSelected[iIndex],
-                                                       ((SurfaceAttributes) surfaceVector.get(aiSelected[iIndex])).color);
-            }
+            /* Tell the surfaceRenderer to add the triangle mesh surface: */
+            ((SurfaceRender) renderBase).updateData();
         } catch (IOException e) { }
 
     }
@@ -1643,7 +1663,7 @@ public class JPanelSurface extends JPanelRendererBase
         }
 
         /* Tell the surfaceRenderer to add the triangle mesh surface: */
-        ((SurfaceRender) renderBase).surfaceAdded();
+        ((SurfaceRender) renderBase).updateData();
 
         // if new surfaces were loaded, update the list data
         if (bNameAdded) {
@@ -2065,9 +2085,9 @@ public class JPanelSurface extends JPanelRendererBase
     /**
      * Get the current added surface mask color.
      *
-     * @return  Color3f[]
+     * @return  Color4f[]
      */
-    public Color3f[] getMaskColor() {
+    public Color4f[] getMaskColor() {
         return m_akMaskColor;
     }
 
@@ -2391,26 +2411,24 @@ public class JPanelSurface extends JPanelRendererBase
     public void removeBranch(BranchGroup kBranch, boolean bRemoveMesh) {
         surfaceRootBG.removeChild(kBranch);
 
-        /* Tell the surfaceRenderer to remove the triangle mesh surface
-         * (default mesh #0): */
-        if (bRemoveMesh) {
-            ((SurfaceRender) renderBase).branchSurfaceRemoved();
+        for ( int i = 0; i < surfaceVector.size();  i++ )
+        {
+            String kElementName = ((SurfaceAttributes) surfaceVector.get(i)).name;
+            if ( kElementName.equals( "branch" ) )
+            {
+                surfaceVector.removeElementAt(i);
+                parentScene.getImageA().removeSurfaceMask(i);
+                break;
+            }
         }
+        
+        ((SurfaceRender) renderBase).updateData();
     }
 
     /**
      * Remove the surface from the volume render.
      */
     public void removeSurface() {
-
-        /* Tell the surfaceRenderer to remove the triangle mesh surface,
-         * must be done before the surfaceList is updated: */
-        int[] aiSelected = surfaceList.getSelectedIndices();
-
-        for (int iIndex = 0; iIndex < aiSelected.length; iIndex++) {
-            ((SurfaceRender) renderBase).surfaceRemoved(aiSelected[iIndex]);
-        }
-
         removeSurfaces();
 
         if (((SurfaceRender) renderBase).getProbeDialog() != null) {
@@ -2420,7 +2438,7 @@ public class JPanelSurface extends JPanelRendererBase
         if (surfaceVector.size() <= 0) {
             ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(false);
         }
-
+        ((SurfaceRender) renderBase).updateData();
     }
 
     /**
@@ -2643,7 +2661,6 @@ public class JPanelSurface extends JPanelRendererBase
 
             Color4f kColor = new Color4f(kDiffuse.get());
             colorButton.setBackground(kDiffuse.get());
-            ((SurfaceRender) parentScene).setColor(iIndex, kColor);
             ((SurfaceAttributes) surfaceVector.get(iIndex)).color = kColor;
 
             kAmbient = null;
@@ -2773,6 +2790,15 @@ public class JPanelSurface extends JPanelRendererBase
                 int iValue = opacitySlider.getValue();
 
                 ((SurfaceAttributes) surfaceVector.get(iIndex)).opacity = iValue / 100.0f;
+
+                Color4f newColor = new Color4f( ((SurfaceAttributes) surfaceVector.get(iIndex)).color.x,
+                                                ((SurfaceAttributes) surfaceVector.get(iIndex)).color.y,
+                                                ((SurfaceAttributes) surfaceVector.get(iIndex)).color.z,
+                                                ((SurfaceAttributes) surfaceVector.get(iIndex)).opacity );
+                /* Change the mask color: */
+                parentScene.getImageA().addSurfaceMask( iIndex, null, null, newColor );
+                /* update the surface renderer: */
+                ((SurfaceRender) renderBase).updateData();
 
                 // change the object opacity
                 if (((SurfaceAttributes) surfaceVector.get(iIndex)).isVOIPt) {
@@ -3281,7 +3307,8 @@ public class JPanelSurface extends JPanelRendererBase
      * @param  kMesh            ModelTriangleMesh Tumor surface
      * @param  bHasVertexColor  boolean
      */
-    protected void maskInsideVoxels(ModelTriangleMesh[] kMesh, boolean bHasVertexColor) {
+    protected void maskInsideVoxels(int index, ModelTriangleMesh[] kMesh, boolean bHasVertexColor, float fOpacity)
+    {
 
         float iX, iY, iZ;
 
@@ -3301,7 +3328,7 @@ public class JPanelSurface extends JPanelRendererBase
         m_iQuantity = xDim * yDim * zDim;
 
         m_aiMask = new BitSet(m_iQuantity);
-        m_akMaskColor = new Color3f[m_iQuantity];
+        m_akMaskColor = new Color4f[m_iQuantity];
 
         // initialize the surface mask
         surfaceMask = new BitSet(m_iQuantity);
@@ -3386,7 +3413,7 @@ public class JPanelSurface extends JPanelRendererBase
           Point3f kV0 = new Point3f();
           Point3f kV1 = new Point3f();
           Point3f kV2 = new Point3f();
-
+          
           Color3f kC0, kC1, kC2;
 
           for (int iT = 0; iT < m_iTQuantity; iT++) {
@@ -3406,16 +3433,17 @@ public class JPanelSurface extends JPanelRendererBase
             kV2.y = tV2.y;
             kV2.z = tV2.z;
 
-            Color3f kTriColor = null;
+            Color4f kTriColor = null;
 
             kC0 = kTriColors[m_aiConnect[3 * iT]];
             kC1 = kTriColors[m_aiConnect[ (3 * iT) + 1]];
             kC2 = kTriColors[m_aiConnect[ (3 * iT) + 2]];
 
             if ( (kC0 != null) && (kC1 != null) && (kC2 != null)) {
-              kTriColor = new Color3f( (kC0.x + kC1.x + kC2.x) / 3.0f,
-                                      (kC0.y + kC1.y + kC2.y) / 3.0f,
-                                      (kC0.z + kC1.z + kC2.z) / 3.0f);
+                kTriColor = new Color4f( (kC0.x + kC1.x + kC2.x) / 3.0f,
+                                         (kC0.y + kC1.y + kC2.y) / 3.0f,
+                                         (kC0.z + kC1.z + kC2.z) / 3.0f,
+                                         fOpacity );
             }
 
             kV0.x = ( (kV0.x - m_fX0) / (m_fX1 - m_fX0)) * (xDim - 1);
@@ -3591,27 +3619,10 @@ public class JPanelSurface extends JPanelRendererBase
         System.err.println("voxels = " + v);
         System.err.println("volume = " + (v * resols[0] * resols[1] * resols[2]));
 
-        /*
-         * byte[] volumeMask = new byte[m_aiMask.size()];
-         *
-         * for (int i = 0; i < m_aiMask.size(); i++ ) { if ( surfaceMask.get(i) ) { volumeMask[i] = 1; } else {
-         * volumeMask[i] = 0; } }
-         */
-
-        /*
-        ModelImage newImage = new ModelImage(parentScene.getImageA().getType(),
-                                             parentScene.getImageA().getExtents(),
-                                             "Mask Image",
-                                             parentScene.getImageA().getUserInterface());
-        try {
-          newImage.importData(0, surfaceMask, true);
-          newImage.setFileInfo(parentScene.getImageA().getFileInfo());
-        }
-        catch (IOException er) {
-          return;
-        }
-        new ViewJFrameImage(newImage, null, new Dimension(610, 200));
-        */
+        ModelImage imageA = parentScene.getImageA();
+        Color4f surColor4f = new Color4f( surColor );
+        surColor4f.w = fOpacity;
+        imageA.addSurfaceMask( index, m_aiMask, m_akMaskColor, surColor4f );
     }
 
     /**
@@ -3698,7 +3709,7 @@ public class JPanelSurface extends JPanelRendererBase
 
         m_kSurface = new ModelTriangleMesh[1];
         m_kSurface[0] = kMesh[0];
-        maskInsideVoxels(getSurface(), false);
+        maskInsideVoxels( surfaceVector.size(), getSurface(), false, opacity);
 
         int numTriangles = kMesh[0].getIndexCount();
         float volume = kMesh[0].volume();
@@ -4151,7 +4162,7 @@ public class JPanelSurface extends JPanelRendererBase
         surfaceRootBG.addChild(root);
         numTriangles = numTriangles / 3;
 
-        maskInsideVoxels(getSurface(), false);
+        maskInsideVoxels( surfaceVector.size(), getSurface(), false, opacity);
 
         SurfaceAttributes surface = new SurfaceAttributes(root, file.getPath(), name, color, 64, 100,
                                                           PolygonAttributes.POLYGON_FILL, numTriangles, volume, area,
@@ -4308,7 +4319,7 @@ public class JPanelSurface extends JPanelRendererBase
         surfaceRootBG.addChild(root);
         numTriangles = numTriangles / 3;
 
-        maskInsideVoxels(getSurface(), false);
+        maskInsideVoxels( surfaceVector.size(), getSurface(), false, opacity);
 
         SurfaceAttributes surface = new SurfaceAttributes(root, file.getPath(), name, color, 64, 100,
                                                           PolygonAttributes.POLYGON_FILL, numTriangles, volume, area,
@@ -4400,7 +4411,7 @@ public class JPanelSurface extends JPanelRendererBase
                 addSurface(files[i], color, kName, 0.5f, -1, true);
 
                 /* Tell the surfaceRenderer to add the triangle mesh surface: */
-                ((SurfaceRender) renderBase).surfaceAdded();
+                ((SurfaceRender) renderBase).updateData();
             }
             /* Read the xml file and add to the scene graph: */
             else if (kName.indexOf(".xml") != -1) {
@@ -4411,7 +4422,7 @@ public class JPanelSurface extends JPanelRendererBase
                     int iSurface = addModelTriangleMesh(kFileInfo.getMesh(), kFileInfo.getMaterial(), files[i], kName, 1.0f);
                     /* Tell the surfaceRenderer to add the triangle mesh
                      * surface: */
-                    ((SurfaceRender) renderBase).surfaceAdded();
+                    ((SurfaceRender) renderBase).updateData();
                     ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(true);
                     setMaterial(kFileInfo.getMaterial(), iSurface);
                     setOpacity( kFileInfo.getOpacity(), iSurface);
@@ -4766,14 +4777,16 @@ public class JPanelSurface extends JPanelRendererBase
         for (int i = 0; i < aiSelected.length; i++) {
             int iIndex = aiSelected[i];
 
-            ((SurfaceRender) parentScene).setColor(iIndex, new Color4f(color));
-
             /** when surface color changed, record it here. */
             surColor = color;
 
             Color4f newColor = new Color4f(color);
 
             ((SurfaceAttributes) surfaceVector.get(iIndex)).color = newColor;
+            /* Change the mask color: */
+            parentScene.getImageA().addSurfaceMask( iIndex, null, null, newColor );
+            /* update the surface renderer: */
+            ((SurfaceRender) renderBase).updateData();
 
             if (((SurfaceAttributes) surfaceVector.get(iIndex)).isVOIPt) {
                 BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
@@ -5513,7 +5526,10 @@ public class JPanelSurface extends JPanelRendererBase
         // remove the items
         for (i = 0; i < aiSelected.length; i++) {
             removeSurface(((SurfaceAttributes) removeSurfaces.get(i)).surface);
-            surfaceVector.remove(removeSurfaces.get(i));
+            int removeIndex = surfaceVector.indexOf(removeSurfaces.get(i));
+            //surfaceVector.remove(removeSurfaces.get(i));
+            surfaceVector.removeElementAt(removeIndex);
+            parentScene.getImageA().removeSurfaceMask(removeIndex);
 
             // remove the surface from the image's file info if it is XML (so that it won't be saved with it)
             if (parentScene.getParentFrame().getImageOriginal().getFileInfo()[0] instanceof FileInfoImageXML) {

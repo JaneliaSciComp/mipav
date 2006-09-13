@@ -36,8 +36,8 @@ public class ViewJComponentTriSliceImage {
     /** AlphaBlending values for compositing two images. */
     private float alphaBlend = 0.5f;
 
-    /** AlphaBlending values for compositing two images. */
-    private float alphaPrime = 0.5f;
+    /** Frame where the component image is displayed. */
+    private SurfaceRender frame;
 
     /** Model for image A. */
     private ModelImage imageA;
@@ -63,9 +63,6 @@ public class ViewJComponentTriSliceImage {
     /** Orientation of this component image. */
     private int orientation = 0;
 
-    /** Resolutions of the image plane (2D). */
-    private float[] res = new float[3];
-
     /** PatientSlice contains all the Patient Coordinate System view-specific
      * data for rendering this component: */
     private PatientSlice m_kPatientSlice;
@@ -80,8 +77,9 @@ public class ViewJComponentTriSliceImage {
      * @param  _imageB       Model of the image that will be displayed.
      * @param  _orientation  Orientation of the image.
      */
-    public ViewJComponentTriSliceImage( ModelImage _imageA, ModelImage _imageB, int _orientation )
+    public ViewJComponentTriSliceImage( SurfaceRender _frame, ModelImage _imageA, ModelImage _imageB, int _orientation )
     {
+        frame = _frame;
         imageA = _imageA;
         imageB = _imageB;
         imageActive = imageA;
@@ -91,15 +89,8 @@ public class ViewJComponentTriSliceImage {
 
         img = new BufferedImage( localImageExtents[0], localImageExtents[1], BufferedImage.TYPE_INT_ARGB);
 
-        res = imageA.getResolutions( 0, orientation );
-        if ((res[0] == 0.0f) || (res[1] == 0.0f) || (res[2] == 0.0f)) {
-            res[0] = 1.0f;
-            res[1] = 1.0f;
-            res[2] = 1.0f;
-        }
-
-        m_kPatientSlice = new PatientSlice( imageA, null, new float[ localImageExtents[0] * localImageExtents[1]],
-                                            imageB, null, new float[ localImageExtents[0] * localImageExtents[1]],
+        m_kPatientSlice = new PatientSlice( imageA, null,
+                                            imageB, null,
                                             orientation );
         m_kPatientSlice.setShowDiagonal( true );
 
@@ -115,7 +106,6 @@ public class ViewJComponentTriSliceImage {
         imageA = null;
         imageB = null;
         localImageExtents = null;
-        res = null;
         m_kPatientSlice.disposeLocal(true);
         m_kPatientSlice = null;
     }
@@ -201,7 +191,6 @@ public class ViewJComponentTriSliceImage {
      */
     public void setAlphaBlend(int value) {
         alphaBlend = value / 100.0f;
-        alphaPrime = 1 - alphaBlend;
     }
 
     /**
@@ -298,7 +287,7 @@ public class ViewJComponentTriSliceImage {
     }
 
     /**
-     * setCenter sets the PatientSlice center: 
+     * setCenter sets the PatientSlice center:
      * @param i, FileCoordinates
      * @param j, FileCoordinates
      * @param k, FileCoordinates
@@ -327,49 +316,25 @@ public class ViewJComponentTriSliceImage {
         {
             return false;
         }
-        int buffFactor = 1;
-        if ( imageA.isColorImage() )
-        {
-            buffFactor = 4;
-        }
+        int buffFactor = imageA.isColorImage() ? 4 : 1;
         int[] imageBufferA = new int[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
-        buffFactor = 1;
-        int[] imageBufferB = null;
-        if ( (imageB != null) && imageB.isColorImage() )
-        {
-            buffFactor = 4;
-            imageBufferB = new int[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
-        }
 
         m_kPatientSlice.setDiagonalVerts( akVertices );
         m_kPatientSlice.setLUTa( _LUTa );
         m_kPatientSlice.setLUTb( _LUTb );
-        m_kPatientSlice.showUsingOrientation( tSlice, imageBufferA, imageBufferB );
-        img.setRGB( 0, 0, localImageExtents[0], localImageExtents[1], imageBufferA, 0, localImageExtents[0] );
 
-        return true;
+        if (frame.getVolOpacityPanel() != null) {
+            alphaBlend = (100.0f - (float) frame.getVolOpacityPanel().getAlphaBlendSliderValue()) / 100.0f;
+        }
+
+        if ( m_kPatientSlice.showUsingOrientation( tSlice, imageBufferA, null, forceShow, true, alphaBlend, false ) )
+        {
+            img.setRGB( 0, 0, localImageExtents[0], localImageExtents[1], imageBufferA, 0, localImageExtents[0] );
+            return true;
+        }
+        return false;
     }
 
-    /**
-     * showDiagonal samples the ModelImage data along a non-axis aligned plane. The plane may intersect the ModelImage
-     * volume, defined in x,y,z space, along a diagonal direction. This function has several steps, similar to the
-     * show() functions below:
-     *
-     * <p>1. Get the HistoLUT or RGB lookup tables for grayscale or color images, depending on the ModelImage data type.
-     * This first step initializes the lookup tables for either type of image, and for both imageA and imageB if both
-     * are defined:</p>
-     *
-     * <p>2. The second step is to calculate the bounding box of the plane that intersects the ModelImage data, and
-     * transforming the four corners of the plane to the new rotated coordinates. The four transformed/rotated
-     * coordinates are used for steping through and interpolating the ModelImage data along the diagonal directions:</p>
-     *
-     * <p>3. The third step is to step through the image we are writing the data in, using the four transformed points
-     * to step through the ModelImage along the diagonal directions, read the corresonding point in the ModelImage and
-     * write the value into the image array. If m_bInterpolate is set to true, the ModelImage data for non-interger
-     * vertices is interpolated using tri-linear interpolation. Note: there is one loop for steping though he data, no
-     * matter which type of plane this object represents (XY, XZ, or ZY).</p>
-     *
-     */
 
     /**
      * Calls garbage collector to release system resources.

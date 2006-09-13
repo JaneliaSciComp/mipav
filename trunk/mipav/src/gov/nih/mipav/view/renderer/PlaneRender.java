@@ -152,12 +152,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /** Image scaling from Zoom:. */
     private float m_fZoomScale = 1.0f;
 
-    /** number of surfaces. */
-    private int m_iBranchSurface = -1;
-
-    /** number of surface in the surface list. */
-    private int m_iNumChildren = 0;
-
     /** Which dimension of the ModelImage to render. */
     private int m_iPlaneOrientation = 0;
 
@@ -169,9 +163,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
     /** The Canvas3D object on which the plane is drawn. */
     private VolumeCanvas3D m_kCanvas;
-
-    /** Surface color vector. */
-    private Vector m_kColorVector = new Vector();
 
     /** DOCUMENT ME! */
     private Transform3D m_kCurrentTransform;
@@ -190,12 +181,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
     /** DOCUMENT ME! */
     private String m_kLabelY = new String("Y");
-
-    /** Surface mask color vector. */
-    private Vector m_kMaskColorVector = new Vector();
-
-    /** Surface mask vector. */
-    private Vector m_kMaskVector = new Vector();
 
     /** Mouse translate behavior. */
     private MouseTranslation m_kMouseTranslate;
@@ -277,8 +262,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         m_kCanvas.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
         m_kCanvas.setBackground(Color.white);
 
-        m_kPatientSlice = new PatientSlice( m_kImageA, kLUTa, new float[ m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]],
-                                            m_kImageB, kLUTb, new float[ m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1]],
+        m_kPatientSlice = new PatientSlice( m_kImageA, kLUTa,
+                                            m_kImageB, kLUTb,
                                             m_iPlaneOrientation );
 
 
@@ -336,10 +321,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         m_kMouseZoom = null;
         m_kMouseTranslate = null;
-
-        for (int iChild = 0; iChild < m_iNumChildren; iChild++) {
-            removeSurface(iChild);
-        }
 
         m_kTextBranchGroup = null;
         m_kTextTransformGroup = null;
@@ -581,30 +562,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * Removes the branch surface boundary.
-     */
-    public void removeBranchSurface() {
-        removeSurfaceColor(m_iBranchSurface);
-    }
-
-    /**
-     * Called when the surface is removed from the JPanelSurfaces. Detaches the MeshBranch group from the
-     * m_kOrderedGroup, and deletes it and it's associated variables:
-     *
-     * @param  iIndex  DOCUMENT ME!
-     */
-    public void removeSurface(int iIndex) {
-
-        if (iIndex == m_iBranchSurface) {
-            iIndex++;
-        } else if (iIndex < m_iBranchSurface) {
-            m_iBranchSurface--;
-        }
-
-        removeSurfaceColor(iIndex);
-    }
-
-    /**
      * Sets the background color for the frame and rendered image.
      *
      * @param  color  RGBA color to use as the background color.
@@ -616,62 +573,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * Sets.
-     *
-     * @param  kColor  Color4f
-     */
-    public void setBranchColor(Color4f kColor) {
-        Color currColor = new Color(0, 0, 0);
-
-        currColor = kColor.get();
-
-        if (m_kColorVector.elementAt(m_iBranchSurface) != null) {
-            m_kColorVector.setElementAt(currColor, m_iBranchSurface);
-        }
-
-        writeTexture();
-    }
-
-    /**
-     * Update the plane render surface boundary with the given mask and color.
-     *
-     * @param  kMask        DOCUMENT ME!
-     * @param  kMaskColors  DOCUMENT ME!
-     * @param  kColor       DOCUMENT ME!
-     */
-    public void setBranchSurface(BitSet kMask, Color3f[] kMaskColors, Color kColor) {
-        m_iBranchSurface = m_kColorVector.size();
-
-        m_kColorVector.addElement(kColor);
-        m_kMaskVector.add(kMask);
-        m_kMaskColorVector.add(kMaskColors);
-
-        writeTexture();
-    }
-
-    /**
-     * Called when the color is changed in JPanelSurface, sets the new color for the ModelTriangleMesh.
-     *
-     * @param  iIndex  DOCUMENT ME!
-     * @param  kColor  DOCUMENT ME!
-     */
-    public void setColor(int iIndex, Color4f kColor) {
-        Color currColor = new Color(0, 0, 0);
-
-        currColor = kColor.get();
-
-        if (iIndex == m_iBranchSurface) {
-            iIndex++;
-        }
-
-        if (m_kColorVector.elementAt(iIndex) != null) {
-            m_kColorVector.setElementAt(currColor, iIndex);
-        }
-
-        writeTexture();
-    }
-
-    /**
      * Accessor that sets the LUT for image A.
      *
      * @param  LUT  The LUT.
@@ -679,7 +580,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     public void setLUTa(ModelLUT LUT)
     {
         m_kPatientSlice.setLUTa( LUT );
-        writeTexture();
+        writeTexture( true );
     }
 
     /**
@@ -690,7 +591,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     public void setLUTb(ModelLUT LUT)
     {
         m_kPatientSlice.setLUTb( LUT );
-        writeTexture();
+        writeTexture( true );
     }
 
     /**
@@ -711,7 +612,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     public void setRGBTA(ModelRGB RGBT)
     {
         m_kPatientSlice.setRGBTA( RGBT );
-        writeTexture();
+        writeTexture( true );
     }
 
     /**
@@ -722,7 +623,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     public void setRGBTB(ModelRGB RGBT)
     {
         m_kPatientSlice.setRGBTB( RGBT );
-        writeTexture();
+        writeTexture( true );
     }
 
     /**
@@ -749,28 +650,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             if (m_bMemoryUsage) {
                 m_kDisplayedImage.set(m_akImageComponent[m_iSlice].getImage());
             } else {
-                writeTexture();
+                writeTexture( true );
             }
         }
-    }
-
-    /**
-     * Adds a surface to the PlaneRender view. The surface is displayed as the intersection of the trianglemesh with the
-     * current Z-Slice (m_iSlice). The intersection is done with a ModelClip object, setting the z-clipping planes to be
-     * m_iSlice-1 and m_iSlice+1. The surface is first transformed into local x,y,z coordinates. The surface color is
-     * set to match the Z-Slice color for this PlaneRender object. The surface is first transformed into local x,y,z
-     * coordinates. The surface color is set to match the Z-Slice color for this PlaneRender object.
-     *
-     * @param  kMask        BitSet surface bit set mask
-     * @param  kMaskColors  DOCUMENT ME!
-     * @param  kColor       Color surface color
-     */
-    public void setSurface(BitSet kMask, Color3f[] kMaskColors, Color kColor) {
-        m_kColorVector.addElement(kColor);
-        m_kMaskVector.add(kMask);
-        m_kMaskColorVector.add(kMaskColors);
-
-        writeTexture();
     }
 
     /**
@@ -894,8 +776,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * Causes new data to be loaded from the ModelImage into the textures and redisplayed on the texture-mapped polygon:
      */
     public void updateData() {
-        writeTexture();
-        drawLabels();
+        writeTexture( true );
+        update();
     }
 
     /**
@@ -907,7 +789,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     public void updateLut(ModelLUT LUTa, ModelLUT LUTb) {
         m_kPatientSlice.setLUTa( LUTa );
         m_kPatientSlice.setLUTb( LUTb );
-        writeTexture();
+        writeTexture( true );
     }
 
     /**
@@ -917,7 +799,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      */
     public void updateRGBTA(ModelRGB RGBT) {
         m_kPatientSlice.setRGBTA( RGBT );
-        writeTexture();
+        writeTexture( true );
     }
 
     /**
@@ -927,7 +809,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      */
     public void updateRGBTB(ModelRGB RGBT) {
         m_kPatientSlice.setRGBTB( RGBT );
-        writeTexture();
+        writeTexture( true );
     }
 
     /**
@@ -1091,6 +973,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         Vector4f kCoordMapX = new Vector4f((m_fMaxBox / m_fXBox) / 2.0f, 0.0f, 0.0f, 0.5f);
         Vector4f kCoordMapY = new Vector4f(0.0f, (m_fMaxBox / m_fYBox) / 2.0f, 0.0f, 0.5f);
+
         TexCoordGeneration kTexCoordGeneration = new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
                                                                         TexCoordGeneration.TEXTURE_COORDINATE_2,
                                                                         kCoordMapX, kCoordMapY);
@@ -1103,7 +986,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         m_kDisplayedImage.setCapability(ImageComponent2D.ALLOW_SIZE_READ);
         m_kDisplayedImage.setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
 
-        writeTexture();
+        writeTexture( true );
 
         m_kTexture = new Texture2D(Texture.BASE_LEVEL, Texture.RGBA, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1]);
         m_kTexture.setEnable(true);
@@ -1561,6 +1444,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
     public void setCenter( Point3Df center )
     {
+        /* update PatientSlice first: */
+        m_kPatientSlice.setCenter( (int)center.x, (int)center.y, (int)center.z );
+
         Point3Df patient = new Point3Df();
         MipavCoordinateSystems.FileToPatient( center, patient, m_kImageA, m_iPlaneOrientation );
         setXBar( patient.x );
@@ -1570,10 +1456,12 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         Point2Df screen = new Point2Df();
         this.PatientToScreen( new Point2Df( m_fCenterX, m_fCenterY), screen );
         m_fScreenY = screen.y;
-
-        m_kPatientSlice.setCenter( (int)center.x, (int)center.y, (int)center.z );
     }
 
+    public Point3Df getCenter()
+    {
+        return m_kPatientSlice.getCenter();
+    }
 
     /**
      * If the right mouse button is pressed and dragged. processRightMouseDrag updates the HistoLUT window and level
@@ -1731,20 +1619,10 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * When surface is removed from the surface list, remove the color and mask associate with that surface.
-     *
-     * @param  iIndex  int surface index
-     */
-    private void removeSurfaceColor(int iIndex) {
-        m_kMaskVector.removeElementAt(iIndex);
-        m_kMaskColorVector.removeElementAt(iIndex);
-        m_kColorVector.removeElementAt(iIndex);
-        writeTexture();
-    }
-
-    /**
-     * Based on the orientaion of the ModelImage, sets up the index parameters, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], and m_aiLocalImageExtents[2], the
-     * drawing colors for the z box, x and y bars, and the invert flags.
+     * Based on the orientaion of the ModelImage, sets up the index
+     * parameters, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], and
+     * m_aiLocalImageExtents[2], the drawing colors for the z box, x and y
+     * bars, and the invert flags.
      *
      * <p>Once setup everything is rendered into an x,y plane where x,y may be any of the original x,y, or z dimensions
      * in the original ModelImage.</p>
@@ -1853,23 +1731,19 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Stores the ModelImage data as an array of texture maps, with LUT or RGBA color lookup:.
      */
-    private void writeTexture() {
+    private void writeTexture( boolean bForceShow )
+    {
 
         if ( m_kImageA == null )
         {
             return;
         }
-        int buffFactor = 1;
-        if ( m_kImageA.isColorImage() )
-        {
-            buffFactor = 4;
-        }
+        int buffFactor = m_kImageA.isColorImage() ? 4 : 1;
         int[] iImageBufferA = new int[ m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1] * buffFactor ];
-        buffFactor = 1;
         int[] iImageBufferB = null;
-        if ( (m_kImageB != null) && m_kImageB.isColorImage() )
+        if ( m_kImageB != null )
         {
-            buffFactor = 4;
+            buffFactor = m_kImageB.isColorImage() ? 4 : 1;
             iImageBufferB = new int[ m_aiLocalImageExtents[0] * m_aiLocalImageExtents[1] * buffFactor ];
         }
 
@@ -1879,6 +1753,13 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             iNumberSlices = 1;
         }
         m_akImageComponent = new ImageComponent2D[iNumberSlices];
+
+        float alphaBlend = 0.5f;
+//         if (frame.getVolOpacityPanel() != null)
+//         {
+//             alphaBlend = (100.0f - (float) frame.getVolOpacityPanel().getAlphaBlendSliderValue()) / 100.0f;
+//         }
+
         for (int iZ = 0; iZ < iNumberSlices; iZ++) {
             if ( !m_bMemoryUsage )
             {
@@ -1888,27 +1769,24 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             {
                 m_kPatientSlice.updateSlice( iZ );
             }
-            m_kPatientSlice.showUsingOrientation( 0, iImageBufferA, iImageBufferB );
+            if ( m_kPatientSlice.showUsingOrientation( 0, iImageBufferA, iImageBufferB, bForceShow, true, alphaBlend, true ) )
+            {
+                BufferedImage kBuff = new BufferedImage( m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], BufferedImage.TYPE_INT_ARGB );
+                kBuff.setRGB( 0, 0, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], iImageBufferA, 0, m_aiLocalImageExtents[0] );
+                
+                m_akImageComponent[iZ] = new ImageComponent2D(ImageComponent.FORMAT_RGBA, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1]);
+                m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_IMAGE_WRITE);
+                m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
+                m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_SIZE_READ);
+                m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
+                m_akImageComponent[iZ].set( kBuff );
 
-            BufferedImage kBuff = new BufferedImage( m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], BufferedImage.TYPE_INT_ARGB );
-            kBuff.setRGB( 0, 0, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], iImageBufferA, 0, m_aiLocalImageExtents[0] );
-
-            m_akImageComponent[iZ] = new ImageComponent2D(ImageComponent.FORMAT_RGBA, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1]);
-            m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_IMAGE_WRITE);
-            m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_IMAGE_READ);
-            m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_SIZE_READ);
-            m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_FORMAT_READ);
-            m_akImageComponent[iZ].set( kBuff );
-        }
-
-        /* Setup the texture map: */
-        if ( !m_bMemoryUsage )
-        {
-            m_kDisplayedImage.set(m_akImageComponent[0].getImage());
-        }
-        else
-        {
-            m_kDisplayedImage.set(m_akImageComponent[m_iSlice].getImage());
+                /* Setup the texture map: */
+                if ( (iZ == m_iSlice) || !m_bMemoryUsage )
+                {
+                    m_kDisplayedImage.set(m_akImageComponent[iZ].getImage());
+                }
+            }
         }
     }
 }

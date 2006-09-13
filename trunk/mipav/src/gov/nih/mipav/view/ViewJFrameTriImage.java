@@ -184,33 +184,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Constant to determine how many pixels would be optimal for the image to be initially zoomed to */
     protected static final int DEFAULT_OPTIMAL_ZOOM = 256;
 
-    /**
-     * These constants are used to index into the boundingBoxPoints[] array, and represent the corners of the bounding
-     * box. relative to the image's ORIGINAL orientation
-     */
-    public static final int UPPER_LEFT_FRONT = 0;
-
-    /** DOCUMENT ME! */
-    public static final int UPPER_RIGHT_FRONT = 1;
-
-    /** DOCUMENT ME! */
-    public static final int LOWER_RIGHT_FRONT = 2;
-
-    /** DOCUMENT ME! */
-    public static final int LOWER_LEFT_FRONT = 3;
-
-    /** DOCUMENT ME! */
-    public static final int UPPER_LEFT_BACK = 4;
-
-    /** DOCUMENT ME! */
-    public static final int UPPER_RIGHT_BACK = 5;
-
-    /** DOCUMENT ME! */
-    public static final int LOWER_RIGHT_BACK = 6;
-
-    /** DOCUMENT ME! */
-    public static final int LOWER_LEFT_BACK = 7;
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Label heading for the absolute x, y, z values in the image volume. */
@@ -389,14 +362,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Reference to the volume coordinate panel when it is in the plug-in position */
     protected JPanel volumePositionPanel;
 
+    /** Volume Boundary may be changed for cropping the volume */
+    private CubeBounds volumeBounds;
+
     /** Magnification for image. */
     protected float zoom = 1.0f;
 
     /** DOCUMENT ME! */
     private JToggleButton addPointToggleButton;
-
-    /** Array of points that specify the corners of the bounding box */
-    private Point3Df[] boundingBoxPoints = new Point3Df[8];
 
     /** DOCUMENT ME! */
     private JToggleButton dropperPaintToggleButton;
@@ -656,7 +629,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             btnInvisible[3].setSelected(!centerButtonSelected);
 
             if (centerButtonSelected) {
-                setCenter( extents[0]/2, extents[1]/2, extents[2]/2 );
+                setCenter( (extents[0]-1)/2, (extents[1]-1)/2, (extents[2]-1)/2 );
             } else {
 
                 for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -1067,9 +1040,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             dialogCrop.setSeparateThread(true);
 
-            int[] xBounds = new int[] { (int)boundingBoxPoints[UPPER_LEFT_FRONT].x, (int)boundingBoxPoints[UPPER_RIGHT_FRONT].x };
-            int[] yBounds = new int[] { (int)boundingBoxPoints[UPPER_LEFT_FRONT].y, (int)boundingBoxPoints[LOWER_LEFT_FRONT].y };
-            int[] zBounds = new int[] { (int)boundingBoxPoints[UPPER_LEFT_FRONT].z, (int)boundingBoxPoints[UPPER_LEFT_BACK].z };
+            int[] xBounds = { volumeBounds.lowX(), volumeBounds.highX() };
+            int[] yBounds = { volumeBounds.lowY(), volumeBounds.highY() };
+            int[] zBounds = { volumeBounds.lowZ(), volumeBounds.highZ() };
 
             dialogCrop.setXBounds(xBounds);
             dialogCrop.setYBounds(yBounds);
@@ -1265,6 +1238,26 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
+     * Sets the new crop volume in the ViewJComponentTriImage frames and sets
+     * the volumeBounds.
+     * @param lower the lower corner of the crop volume in File Coordinates
+     * @param upper the upper corner of the crop volume in File Coordinates
+     */
+    public void setCrop( Point3Df lower, Point3Df upper )
+    {
+        /* set the crop dimensions for each triImage: */
+        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+            if (triImage[i] != null) {
+                triImage[i].setCrop( lower, upper );
+            }
+        }
+        /* set the volumeBounds: */
+        setVolumeBounds( lower, upper );
+    }
+
+
+    /**
      * Gets the axial position of the slice.
      *
      * @return  The axial location in the slice.
@@ -1273,14 +1266,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         return triImage[AXIAL_A].getSlice();
     }
 
-    /**
-     * Gets the array of 3D volume space points that represent the 8 corners of the bounding box.
-     *
-     * @return  Point3D[] the array of 3D points
-     */
-    public Point3Df[] getBoundingBoxPoints() {
-        return boundingBoxPoints;
-    }
 
     /**
      * Sets the x coordinate of the point to be the center of the transformed image.
@@ -2189,6 +2174,48 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         volumeCenter[1] = y;
         volumeCenter[2] = z;
     }
+
+    /** 
+     * Sets the CubeBounds data member volumeBounds to the crop volume defined
+     * by the lower and upper volume points. The CubeBounds are ordered low to
+     * high and are checked against the volume extents.
+     * @param lower the lower bound in File Coordinates
+     * @param upper the upper bound in File Coordinates
+     */
+    private void setVolumeBounds( Point3Df lower, Point3Df upper )
+    {
+        int[] xBounds = new int[2];
+        xBounds[0] = (int)lower.x <= (int)upper.x ? (int)lower.x : (int)upper.x;
+        xBounds[1] = (int)lower.x <= (int)upper.x ? (int)upper.x : (int)lower.x;
+        xBounds[0] = Math.max( xBounds[0], 0 );
+        xBounds[1] = Math.min( xBounds[1], extents[0]-1 );
+        
+        int[] yBounds = new int[2];
+        yBounds[0] = (int)lower.y <= (int)upper.y ? (int)lower.y : (int)upper.y;
+        yBounds[1] = (int)lower.y <= (int)upper.y ? (int)upper.y : (int)lower.y;
+        yBounds[0] = Math.max( yBounds[0], 0 );
+        yBounds[1] = Math.min( yBounds[1], extents[1]-1 );
+        
+        int[] zBounds = new int[2];
+        zBounds[0] = (int)lower.z <= (int)upper.z ? (int)lower.z : (int)upper.z;
+        zBounds[1] = (int)lower.z <= (int)upper.z ? (int)upper.z : (int)lower.z;
+        zBounds[0] = Math.max( zBounds[0], 0 );
+        zBounds[1] = Math.min( zBounds[1], extents[2]-1 );
+
+        volumeBounds = new CubeBounds( xBounds[1], xBounds[0],
+                                       yBounds[1], yBounds[0],
+                                       zBounds[1], zBounds[0]  ); 
+    }
+
+    /**
+     * Returns the crop bounding volume as a CubeBounds object.
+     * @return volumeBounds the crop volume
+     */
+    public CubeBounds getBoundedVolume()
+    {
+        return volumeBounds;
+    }
+
 
     /**
      * Sets the color of the X slice crosshairs.
@@ -3119,8 +3146,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         tSlice = 0;
 
-        setupBoundingBoxPoints();
-
         zoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
 
         // these lines of code set up the initial crosshair position - centered in the image and independent of
@@ -3135,8 +3160,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         /* set the center after the triImage[].setResolutions and
          * triImage[].setZoom calls have been made: */
-        setCenter( extents[0]/2, extents[1]/2, extents[2]/2 );
+        setCenter( (extents[0]-1)/2, (extents[1]-1)/2, (extents[2]-1)/2 );
+        setCrop( new Point3Df( 0, 0, 0 ),
+                 new Point3Df( extents[0]-1, extents[1]-1, extents[2]-1 )  );
 
+        
         setTitle();
 
         // MUST register frame to image models
@@ -4402,29 +4430,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             spinnerMax = Double.MAX_VALUE;
             spinnerStep = 1;
         }
-    }
-
-    /**
-     * Initialized the bounding box array. This is an array of volume space points that represent the 8 corners of the
-     * tri-planar's bounding box.
-     */
-    private void setupBoundingBoxPoints() {
-        boundingBoxPoints[UPPER_LEFT_FRONT] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.25f),
-                                                          (int) (extents[2] * 0.25f));
-        boundingBoxPoints[UPPER_RIGHT_FRONT] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.25f),
-                                                           (int) (extents[2] * 0.25f));
-        boundingBoxPoints[LOWER_RIGHT_FRONT] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.75f),
-                                                           (int) (extents[2] * 0.25f));
-        boundingBoxPoints[LOWER_LEFT_FRONT] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.75f),
-                                                          (int) (extents[2] * 0.25f));
-        boundingBoxPoints[UPPER_LEFT_BACK] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.25f),
-                                                         (int) (extents[2] * 0.75f));
-        boundingBoxPoints[UPPER_RIGHT_BACK] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.25f),
-                                                          (int) (extents[2] * 0.75f));
-        boundingBoxPoints[LOWER_RIGHT_BACK] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.75f),
-                                                          (int) (extents[2] * 0.75f));
-        boundingBoxPoints[LOWER_LEFT_BACK] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.75f),
-                                                         (int) (extents[2] * 0.75f));
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------

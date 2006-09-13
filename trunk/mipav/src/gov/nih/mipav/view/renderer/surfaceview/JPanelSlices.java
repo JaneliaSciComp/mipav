@@ -43,6 +43,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     /** Which time slice is currently displayed. */
     public int tSlice;
 
+    private Point3Df slicePosition = new Point3Df();
     /** Which slice is currently displayed in the ZY plane. */
     public int xSlice;
 
@@ -125,14 +126,14 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     public JPanelSlices(SurfaceRender parent) {
         super(parent);
 
-        int[] axialImageExtents = renderBase.getImageA().getExtents( FileInfoBase.AXIAL );
-        xDim = axialImageExtents[2];
+        int[] fileExtents = renderBase.getImageA().getExtents( );
+        Point3Df modelExtents = new Point3Df();
+        MipavCoordinateSystems.FileToModel( new Point3Df( fileExtents[0], fileExtents[1], fileExtents[2] ),
+                                            modelExtents, renderBase.getImageA() );
 
-        int[] coronalImageExtents = renderBase.getImageA().getExtents( FileInfoBase.CORONAL );
-        yDim = coronalImageExtents[2];
-
-        int[] sagittalImageExtents = renderBase.getImageA().getExtents( FileInfoBase.SAGITTAL );
-        zDim = sagittalImageExtents[2];
+        xDim = (int)modelExtents.x;
+        yDim = (int)modelExtents.y;
+        zDim = (int)modelExtents.z;
 
         xSlice = (xDim - 1) / 2;
         ySlice = (yDim - 1) / 2;
@@ -141,6 +142,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         xProbe = xSlice;
         yProbe = ySlice;
         zProbe = zSlice;
+
+
 
         if (renderBase.getImageA().getNDims() == 4) {
             tDim = renderBase.getImageA().getExtents()[3];
@@ -174,7 +177,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
             if (source == boundingCheck[i]) {
                 
                 if (boundingCheck[i].isSelected()) {
-                    ((SurfaceRender) renderBase).updateBoxSlicePos();
+                    ((SurfaceRender) renderBase).updateBoxSlicePos( true );
                     ((SurfaceRender) renderBase).showBoxSlice(i);
                     colorButton[i].setEnabled(true);
                 } else {
@@ -769,13 +772,13 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     {
         if ( orientation == FileInfoBase.AXIAL )
         {
-            return xSlice;
+            return xSlice - 1;
         }
         else if ( orientation == FileInfoBase.CORONAL )
         {
-            return ySlice;
+            return ySlice - 1;
         }
-        return zSlice;
+        return zSlice - 1;
     }
 
     public void setCenter( int i, int j, int k )
@@ -1103,6 +1106,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     {
         xSlice = _xSlice;
         sliderX.setValue(xSlice);
+        textX.setText(String.valueOf(xSlice + 1));
     }
 
     /**
@@ -1135,6 +1139,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     private void setYSlicePos(int _ySlice) {
         ySlice = _ySlice;
         sliderY.setValue(ySlice);
+        textY.setText(String.valueOf(ySlice + 1));
     }
 
     /**
@@ -1167,6 +1172,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     private void setZSlicePos(int _zSlice) {
         zSlice = _zSlice;
         sliderZ.setValue(zSlice);
+        textZ.setText(String.valueOf(zSlice + 1));
     }
 
     /**
@@ -1192,17 +1198,15 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         Object source = e.getSource();
         JPanelMouse myMouseDialog = ((SurfaceRender) renderBase).getMouseDialog();
 
-        ((SurfaceRender) renderBase).updateBoxSlicePos();
-
         if (source == sliderX) {
-
-            // Change the currently displayed x slice
             if ( xSlice == sliderX.getValue() )
             {
                 return;
             }
+            // Change the currently displayed x slice
             xSlice = sliderX.getValue();
             textX.setText(String.valueOf(xSlice + 1));
+            ((SurfaceRender) renderBase).updateBoxSlicePos( true );
             ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
 
             if (myMouseDialog.isRecording() && setSliderFlag) {
@@ -1212,17 +1216,15 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
                 setSliderFlag = false;
             }
-
-            ((SurfaceRender) renderBase).updateBoxSlicePos();
         } else if (source == sliderY) {
-
-            // Change the currently displayed y slice
             if ( ySlice == sliderY.getValue() )
             {
                 return;
             }
+            // Change the currently displayed y slice
             ySlice = sliderY.getValue();
             textY.setText(String.valueOf(ySlice + 1));
+            ((SurfaceRender) renderBase).updateBoxSlicePos( true );
             ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
 
             if (myMouseDialog.isRecording() && setSliderFlag) {
@@ -1232,17 +1234,16 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
                 setSliderFlag = false;
             }
-
-            ((SurfaceRender) renderBase).updateBoxSlicePos();
         } else if (source == sliderZ) {
-
-            // Change the currently displayed z slice
             if ( zSlice == sliderZ.getValue() )
             {
                 return;
             }
+
+            // Change the currently displayed z slice
             zSlice = sliderZ.getValue();
             textZ.setText(String.valueOf(zSlice + 1));
+            ((SurfaceRender) renderBase).updateBoxSlicePos( true );
             ((SurfaceRender) renderBase).update3DTriplanar(null, null, false);
 
             if (myMouseDialog.isRecording() && setSliderFlag) {
@@ -1252,8 +1253,6 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
 
                 setSliderFlag = false;
             }
-
-            ((SurfaceRender) renderBase).updateBoxSlicePos();
         } else if (source == sliderT) {
 
             // Change the currently displayed t slice

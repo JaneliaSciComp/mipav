@@ -8,8 +8,8 @@ import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
-
 import java.util.*;
+import javax.vecmath.*;
 
 
 /**
@@ -288,6 +288,20 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * so that on an inverse_fft this image will be centered properly. Default
      * is false. */
     private boolean m_bConvolve = false;
+
+    /** Surface color vector. */
+    private Vector m_kColorVector = new Vector();
+
+    /** Surface mask color vector. */
+    private Vector m_kMaskColorVector = new Vector();
+
+    /** Surface mask vector. */
+    private Vector m_kMaskVector = new Vector();
+
+    /** When true, display the data in the Radiological View, when false
+     * display the Neurological View: */
+    private boolean m_bRadiologicalView = true;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -6913,13 +6927,13 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param slice -- the constant slice
      * @param values -- the array to write the data into
      */
-    public final synchronized void export( int orientation,
-                                           int tSlice, int slice,
-                                           float[] values ) throws IOException
+    public final synchronized float[] export( int orientation,
+                                              int tSlice, int slice,
+                                              float[] values ) throws IOException
     {
         int[] axisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
         boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( this, orientation );
-        export( orientation, axisOrder, axisFlip, tSlice, slice, values );
+        return export( orientation, axisOrder, axisFlip, tSlice, slice, values );
     }
 
     /* MipavCoordinateSystems upgrade TODO: : */
@@ -6935,9 +6949,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @param slice -- the constant slice
      * @param values -- the array to write the data into
      */
-    private final synchronized void export( int orientation, int[] axisOrder, boolean[] axisFlip,
-                                            int tSlice, int slice,
-                                            float[] values ) throws IOException
+    private final synchronized float[] export( int orientation, int[] axisOrder, boolean[] axisFlip,
+                                               int tSlice, int slice,
+                                               float[] values ) throws IOException
     {
         try {
             setLock(W_LOCKED);
@@ -6970,6 +6984,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
 
+        float[] fReturn = null;
+
         /* loop over the 2D image (values) we're writing into */
         for (int j = 0; j < jBound; j++)
         {
@@ -6994,6 +7010,33 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     (kIndex * kFactor) +
                     (tSlice * tFactor);
 
+                /* surface Mask? */
+                Color4f kMaskColor = null;
+                if ( m_kMaskVector != null )
+                {
+                    for (int iMask = 0; iMask < m_kMaskVector.size(); iMask++) {
+                        BitSet kMaskSet = (BitSet) m_kMaskVector.elementAt(iMask);
+
+                        if ((kMaskSet != null) && kMaskSet.get(index)) {
+                            if ( fReturn == null )
+                            {
+                                fReturn = new float[ jBound * iBound * 4];
+                            }
+                            kMaskColor = ((Color4f) m_kColorVector.elementAt(iMask));
+                            
+                            Color4f[] kMaskColors = (Color4f[]) m_kMaskColorVector.elementAt(iMask);
+                            if ( kMaskColors[index] != null )
+                            {
+                                kMaskColor = kMaskColors[index];
+                            }
+                            fReturn[(j * iBound + i) * 4 + 0] = kMaskColor.w;
+                            fReturn[(j * iBound + i) * 4 + 1] = 255 * kMaskColor.x;
+                            fReturn[(j * iBound + i) * 4 + 2] = 255 * kMaskColor.y;
+                            fReturn[(j * iBound + i) * 4 + 3] = 255 * kMaskColor.z;
+                        }
+                    }
+                }
+
                 /* if color: */
                 if ((bufferType == ARGB) ||
                     (bufferType == ARGB_USHORT) ||
@@ -7013,9 +7056,23 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
 
         releaseLock();
-        return;
+        return fReturn;
     }
 
+    /**
+     * showDiagonal samples the ModelImage data along a non-axis aligned
+     * plane. The plane may intersect the ModelImage volume, defined in x,y,z
+     * space, along a diagonal direction.
+     *
+     * This function steps through the image, using the four transformed
+     * points to step through the ModelImage along the diagonal directions,
+     * read the corresonding point in the ModelImage and write the value into
+     * the image array. If m_bInterpolate is set to true, the ModelImage data
+     * for non-interger vertices is interpolated using tri-linear
+     * interpolation. Note: there is one loop for steping though he data, no
+     * matter which type of plane this object represents (XY, XZ, or ZY).</p>
+     *
+     */
     public final synchronized void exportDiagonal( int orientation,
                                                    int tSlice, int slice,
                                                    int[] extents,
@@ -7085,7 +7142,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     (bufferType == ARGB_USHORT) ||
                     (bufferType == ARGB_FLOAT))
                 {
-                    if ( (index >= 0) && (index < dataSize) )
+                    if ( (index >= 0) && ((index * 4 + 3) < dataSize) )
                     {
                         values[(j * iBound + i) * 4 + 0] = getFloat(index * 4 + 0);
                         values[(j * iBound + i) * 4 + 1] = getFloat(index * 4 + 1);
@@ -7169,7 +7226,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         float[] resTemp = fileInfo[index].getResolutions();
 
-        /* MipavCoordinateSystems upgrade: TODO: */
         if ( resTemp[2] < fileInfo[index].getSliceSpacing())
         {
             resTemp[2] = fileInfo[index].getSliceSpacing();
@@ -7183,6 +7239,34 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         return resReturn;
     }
+
+    /**
+     * Returns the image origin for the image translated into the
+     * Patient-Coordinate systsm:
+     * @param index, the fileInfo index
+     * @param orientation, the Patient-Coordinate view for which the
+     * origin are needed:
+     * @return the origin of the image in Patient Coordinates
+     */
+    public float[] getOrigin(int index, int orientation ){
+        if(fileInfo == null){
+            return null;
+        }
+        float[] originTemp = fileInfo[index].getOrigin();
+        float[] originReturn = new float[3];
+        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
+        boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( this, orientation );
+        for ( int i = 0; i < 3; i++ )
+        {
+            originReturn[i] = originTemp[ aiAxisOrder[i] ];
+            if ( axisFlip[i] )
+            {
+                originReturn[i] *= -1;
+            }
+        }
+        return originReturn;
+    }
+
 
     /* MipavCoordinateSystems upgrade TODO: : */
     /**
@@ -7461,5 +7545,57 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         return out;
     }
+
+    /**
+     * Adds a surface mask to this image.
+     * @param index, the index of the mask.
+     * @param kMask, the surface mask
+     * @param kMaskColors, the per-voxel colors for the mask
+     * @param kColor, the overall mask color if per-voxel mask colors are not defined.
+     */
+    public void addSurfaceMask( int index, BitSet kMask, Color4f[] kMaskColors, Color4f kColor )
+    {
+        if ( kColor != null )
+        {
+            m_kColorVector.insertElementAt(kColor, index);
+        }
+        if ( kMask != null )
+        {
+            m_kMaskVector.insertElementAt(kMask, index);
+        }
+        if ( kMaskColors != null )
+        {
+            m_kMaskColorVector.insertElementAt(kMaskColors, index);
+        }
+    }
+
+    /**
+     *  Removes the surface mask from this image.
+     * @param index, the index of the mask to remove.
+     */
+    public void removeSurfaceMask( int index )
+    {
+        m_kColorVector.removeElementAt(index);
+        m_kMaskVector.removeElementAt(index);
+        m_kMaskColorVector.removeElementAt(index);
+    }
+
+    /** Sets the radiological view flag
+     * @param bEnabled, when true the radiological view is displayed, when
+     * false the neurological view is displayed.
+     */
+    public void setRadiologicalView( boolean bEnabled )
+    {
+        m_bRadiologicalView = bEnabled;
+    }
+
+    /** Gets the radiological view flag:
+     * @return the RadiologicalView on/off
+     */
+    public boolean getRadiologicalView(  )
+    {
+        return m_bRadiologicalView;
+    }
+
 
 }

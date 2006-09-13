@@ -367,13 +367,14 @@ public abstract class JPanelRendererBase extends JPanel
     }
 
     /**
-     * Builds a titled border with the given title, an etched border, and the proper font and color.
-     *
+     * Builds a titled border with the given title, an etched border, and the
+     * proper font and color.  Changed to public static member so that it can
+     * be used for other JPanels not inherited from this base class.
      * @param   title  Title of the border
      *
      * @return  The titled border.
      */
-    protected TitledBorder buildTitledBorder(String title) {
+    public static TitledBorder buildTitledBorder(String title) {
         return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
                                 Color.black);
     }
