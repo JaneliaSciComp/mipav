@@ -2342,6 +2342,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     if (imageB != null) {
                         linkTriFrame.setRGBTB(componentImage.getRGBTB());
                     }
+                    linkTriFrame.updateImages(true);
                 }
 
                 // to set the radio button correctly in the tri-planar frame

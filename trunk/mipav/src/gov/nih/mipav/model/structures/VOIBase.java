@@ -559,125 +559,12 @@ public abstract class VOIBase extends Vector {
     /**
      * Tests if a point is near a vertex of the curve.
      *
-     * @param   x            x coordinate of point
-     * @param   y            y coordinate of point
-     * @param   zoom         magnification of image
-     * @param   resolutionX  X resolution (aspect ratio)
-     * @param   resolutionY  Y resolution (aspect ratio)
-     * @param   orientation  DOCUMENT ME!
+     * @param   volPoint point in FileCoordinates
      *
      * @return  returns boolean result of test
      */
-    public boolean nearPoint(int x, int y, float zoom, float resolutionX, float resolutionY, int orientation) {
-        int i;
-        int xC, yC;
-        float dist;
-
-        // System.err.println("calling nearPoint2");
-        nearPoint = NOT_A_POINT;
-
-        for (i = 0; i < size(); i++) {
-
-            if ((orientation == XY) || (orientation == NA)) {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).x * zoom * resolutionX);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).y * zoom * resolutionY);
-            } else if (orientation == XZ) {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).x * zoom * resolutionX);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).z * zoom * resolutionY);
-            } else if (orientation == ZY) {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).z * zoom * resolutionX);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).y * zoom * resolutionY);
-            } else {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).x * zoom * resolutionX);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).y * zoom * resolutionY);
-            }
-
-            dist = (float) MipavMath.distance(x, xC, y, yC);
-
-            if (dist < 3) {
-                nearPoint = i;
-                lastPoint = nearPoint;
-            }
-        }
-
-        if (nearPoint == NOT_A_POINT) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Tests if a point is near a vertex of the curve.
-     *
-     * @param   x                 x coordinate of point
-     * @param   y                 y coordinate of point
-     * @param   zoom              magnification of image
-     * @param   resolutionX       X resolution (aspect ratio)
-     * @param   resolutionY       Y resolution (aspect ratio)
-     * @param   orientation       DOCUMENT ME!
-     * @param   axialOrientation  true if dicom reoredered triImage
-     *
-     * @return  returns boolean result of test
-     */
-    public boolean nearPoint(int x, int y, float zoom, float resolutionX, float resolutionY, int orientation,
-                             boolean axialOrientation) {
-        int i;
-        int xC, yC;
-        float dist;
-
-        // System.err.println("near point 3");
-        nearPoint = NOT_A_POINT;
-
-        for (i = 0; i < size(); i++) {
-
-            if ((orientation == XY) || (orientation == NA)) {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).x * zoom * resolutionX);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).y * zoom * resolutionY);
-            } else if (orientation == XZ) {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).x * zoom * resolutionX);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).z * zoom * resolutionY);
-            } else if (orientation == ZY) {
-
-                if (axialOrientation) {
-                    xC = MipavMath.round(((Point3Df) (elementAt(i))).z * zoom * resolutionY);
-                    yC = MipavMath.round(((Point3Df) (elementAt(i))).y * zoom * resolutionX);
-                } else {
-                    xC = MipavMath.round(((Point3Df) (elementAt(i))).z * zoom * resolutionX);
-                    yC = MipavMath.round(((Point3Df) (elementAt(i))).y * zoom * resolutionY);
-                }
-            } else {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).x * zoom * resolutionX);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).y * zoom * resolutionY);
-            }
-
-            dist = (float) MipavMath.distance(x, xC, y, yC);
-
-            if (dist < 3) {
-                nearPoint = i;
-                lastPoint = nearPoint;
-                // return true;
-            }
-        }
-
-        if (nearPoint == NOT_A_POINT) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    /**
-     * Tests if a point is near a vertex of the curve.
-     *
-     * @param   x            x coordinate of point
-     * @param   y            y coordinate of point
-     * @param   plane        DOCUMENT ME!
-     * @param   orientation  DOCUMENT ME!
-     *
-     * @return  returns boolean result of test
-     */
-    public boolean nearPointInPlane(int x, int y, int plane, int orientation) {
+    public boolean nearPointInPlane( Point3Df volPoint )
+    {
         int i;
         int xC, yC, zC;
         float dist;
@@ -685,50 +572,12 @@ public abstract class VOIBase extends Vector {
 
         nearPoint = NOT_A_POINT;
 
-        for (i = 0; i < size(); i++) {
-            inPlane = false;
-
-            if ((orientation == XY) || (orientation == NA)) {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).x);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).y);
-                zC = MipavMath.round(((Point3Df) (elementAt(i))).z);
-
-                if (Math.abs(zC - plane) < 5) {
-                    inPlane = true;
-                }
-            } else if (orientation == XZ) {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).x);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).z);
-                zC = MipavMath.round(((Point3Df) (elementAt(i))).y);
-
-                if (Math.abs(zC - plane) < 5) {
-                    inPlane = true;
-                }
-            } else if (orientation == ZY) {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).z);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).y);
-                zC = MipavMath.round(((Point3Df) (elementAt(i))).x);
-
-                if (Math.abs(zC - plane) < 5) {
-                    inPlane = true;
-                }
-            } else {
-                xC = MipavMath.round(((Point3Df) (elementAt(i))).x);
-                yC = MipavMath.round(((Point3Df) (elementAt(i))).y);
-                zC = MipavMath.round(((Point3Df) (elementAt(i))).z);
-
-                if (Math.abs(zC - plane) < 5) {
-                    inPlane = true;
-                }
-            }
-
-            if (inPlane) {
-                dist = (float) MipavMath.distance(x, xC, y, yC);
-
-                if (dist < 5) {
-                    nearPoint = i;
-                    lastPoint = nearPoint;
-                }
+        for (i = 0; i < size(); i++)
+        {
+            if ( MipavMath.distance( volPoint, (Point3Df)(elementAt(i)) ) < 5 )
+            {
+                nearPoint = i;
+                lastPoint = nearPoint;
             }
         }
 

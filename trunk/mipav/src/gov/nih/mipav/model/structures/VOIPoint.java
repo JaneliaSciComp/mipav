@@ -459,11 +459,9 @@ public class VOIPoint extends VOIBase {
      *  @param g             graphics to paint in
      *  @param x             the x coordinate
      *  @param y             the y coordinate
-     *  @param xLabel        the x component label
-     *  @param yLabel        the y component label
+     *  @param positionLabel the position in FileCoordinates
      */
-    public void drawAxialSelf( Graphics g, int x, int y,
-                               int xLabel, int yLabel ) {
+    public void drawAxialSelf( Graphics g, int x, int y, Point3Df positionLabel ) {
         int xPos, yPos;
 
         if ( g == null ) {
@@ -471,22 +469,24 @@ public class VOIPoint extends VOIBase {
             return;
         }
 
-        // show the label as 1-based, not 0-based
-        xLabel++;
-        yLabel++;
-
         doName = (Preferences.is(Preferences.PREF_SHOW_VOI_NAME) && name != null);
 
-
+        // show the label as 1-based, not 0-based
         //Create the string that will be drawn for label and name
         if (doName) {
-            str = new String(name + ": (" + xLabel + "," + yLabel + ")");
+            str = new String(name + ": (" +
+                             positionLabel.x + 1 + "," +
+                             positionLabel.y + 1 + ")" );
         }
         else if (label != null) {
-            str = new String(label + ": (" + xLabel + "," + yLabel + ")");
+            str = new String(label + ": (" +
+                             positionLabel.x + 1 + "," +
+                             positionLabel.y + 1 + ")" );
         }
         else {
-            str = new String("(" + xLabel + "," + yLabel + ")");
+            str = new String("(" +
+                             positionLabel.x + 1 + "," +
+                             positionLabel.y + 1 + ")" );
         }
 
         g.drawLine( x, y - 5, x, y + 5 );

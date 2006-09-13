@@ -3382,8 +3382,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 if ((growDialog instanceof JDialogPaintGrow) && ((JDialogPaintGrow) growDialog).boundsConstrained()) {
 
                     // constrain bounds to cropping volume
-                    regionGrowBounds = ((ViewJComponentTriImage) ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.AXIAL_A))
-                                           .getBoundedVolume();
+                    regionGrowBounds = ((ViewJFrameTriImage) frame).getBoundedVolume();
                 } else {
 
                     // bounds are not constrained by cropping volume, use image extents as bounds
@@ -3518,8 +3517,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 if (((JDialogPaintGrow) growDialog).boundsConstrained()) {
 
                     // constrain bounds to cropping volume
-                    regionGrowBounds = ((ViewJComponentTriImage) ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.AXIAL_A))
-                                           .getBoundedVolume();
+                    regionGrowBounds = ((ViewJFrameTriImage) frame).getBoundedVolume();
                 } else {
 
                     // bounds are not constrained by cropping volume, use image extents as bounds
@@ -3660,8 +3658,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 if ((growDialog instanceof JDialogPaintGrow) && ((JDialogPaintGrow) growDialog).boundsConstrained()) {
 
                     // constrain bounds to cropping volume
-                    regionGrowBounds = ((ViewJComponentTriImage) ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.AXIAL_A))
-                                           .getBoundedVolume();
+                    regionGrowBounds = ((ViewJFrameTriImage) frame).getBoundedVolume();
                 } else {
 
                     // bounds are not constrained by cropping volume, use image extents as bounds
@@ -3804,8 +3801,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 if (((JDialogPaintGrow) growDialog).boundsConstrained()) {
 
                     // constrain bounds to cropping volume
-                    regionGrowBounds = ((ViewJComponentTriImage) ((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.AXIAL_A))
-                                           .getBoundedVolume();
+                    regionGrowBounds = ((ViewJFrameTriImage) frame).getBoundedVolume();
                 } else {
 
                     // bounds are not constrained by cropping volume, use image extents as bounds

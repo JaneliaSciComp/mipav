@@ -604,7 +604,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
     /**
      * Display the mesh in the SurfaceRenderer:
      *
-     * @return  DOCUMENT ME!
+     * @return  a Branchgroup containing a copy of the ModelTriangleMesh
      */
     public BranchGroup getMesh() {
 
@@ -615,7 +615,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
             m_kMeshBranchRoot.setCapability(Group.ALLOW_CHILDREN_WRITE);
             m_kMeshBranchRoot.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
             m_kMeshBranchRoot.setCapability(Node.ALLOW_COLLIDABLE_READ);
-            m_kMeshBranchRoot.addChild(m_kTransformGroupPoseMesh);
+            m_kMeshBranchRoot.addChild(m_kShapeMesh.cloneTree());
         }
 
         return m_kMeshBranchRoot;
@@ -624,7 +624,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
     /**
      * Display the mesh lines in the SurfaceRenderer:
      *
-     * @return  DOCUMENT ME!
+     * @return  a BranchGroup containing a copy of the TriangleMesh Lat/Lon Lines
      */
     public BranchGroup getMeshLines() {
 
@@ -999,13 +999,21 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
         /* TriangleMesh: */
         m_kTriangleMesh = createTriangleMesh(m_kCortical.getPoints(), kTriangleMesh.getNormalCopy(), akColor,
                                              aiConnect);
-        m_kShapeMesh = new Shape3D(m_kTriangleMesh, new Appearance());
+        /* For compatibliity: loading the mesh into the surface renderer,
+         * appearance, polygon attributes must be non-null: */
+        Appearance kMeshAppearance = new Appearance();
+        kMeshAppearance.setPolygonAttributes( new PolygonAttributes() );
+        kMeshAppearance.setCapability( Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE );
+        kMeshAppearance.setCapability( Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ );
+        m_kShapeMesh = new Shape3D(m_kTriangleMesh, kMeshAppearance);
 
         Material kMaterial = new Material();
         kMaterial.setLightingEnable(true);
         m_kShapeMesh.getAppearance().setMaterial(kMaterial);
         m_kShapeMesh.setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
         m_kShapeMesh.setCapability(Shape3D.ALLOW_GEOMETRY_READ);
+        m_kShapeMesh.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+        m_kShapeMesh.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
         m_kShapeMesh.setCapability(Geometry.ALLOW_INTERSECT);
         m_kShapeMesh.setPickable(true);
         m_kTransformGroupMesh = new TransformGroup();
