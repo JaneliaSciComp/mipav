@@ -132,8 +132,8 @@ import java.util.*;
  * </p>
  *
  * <p>Hard segmentation produces only 1 unsigned byte output image which assigns pixels which do not meet threshold
- * requirements values of 0. The first class is assigned a value of 255/nClass, the second class is assigned a pixel
- * value of 2*255/nClass, and so on. The last class has a value of 255.</p>
+ * requirements values of 0. The first class is assigned a value of 1, the second class is assigned a pixel
+ * value of 2, and so on. The last class has a value of nClass.</p>
  *
  * <p>Fuzzy segmentation produces 1 image of the same type as the source image for every segmentation class. The
  * membership function is scaled so that the minimum membership value scales to the source image minimum value and the
@@ -955,7 +955,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         if (segmentation != FUZZY_ONLY) {
 
             try {
-                int range = 255 / nClass;
 
                 segBuffer = new byte[orgSlice];
 
@@ -973,7 +972,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                             c = 0;
                         } // if (!objMask.get(x + yStepOut))
                         else {
-                            c = range;
+                            c = 1;
                             dtemp = mems[x + yStepOut];
 
                             for (i = 1; i < nClass; i++) {
@@ -981,7 +980,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
                                 if (mems[indexM] > dtemp) {
                                     dtemp = mems[indexM];
-                                    c = ((i + 1) * range);
+                                    c = (i + 1);
                                 } // if (mems[indexM] > dtemp)
                             } // for (i = 1; i < nClass; i++)
                         } // else
@@ -1464,7 +1463,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             } // if (segmentation != HARD_ONLY)
 
             if (segmentation != FUZZY_ONLY) {
-                int range = 255 / nClass;
 
                 segBuffer = new byte[orgVol];
 
@@ -1486,7 +1484,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                                 c = 0;
                             } // if (!objMask.get(x + yStepOut))
                             else {
-                                c = range;
+                                c = 1;
                                 dtemp = mems[x + yStepOut];
 
                                 for (i = 1; i < nClass; i++) {
@@ -1494,7 +1492,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
                                     if (mems[indexM] > dtemp) {
                                         dtemp = mems[indexM];
-                                        c = ((i + 1) * range);
+                                        c = (i + 1);
                                     } // if (mems[indexM] > dtemp)
                                 } // for (i = 1; i < nClass; i++)
                             } // else
