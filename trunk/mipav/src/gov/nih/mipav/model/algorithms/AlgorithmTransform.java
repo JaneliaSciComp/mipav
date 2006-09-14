@@ -3749,7 +3749,20 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
                     else { // 2.5D processing
                         newMatrix = new Matrix(4, 4);
-                        newMatrix.setMatrix(0, 2, 0, 2, transMatrix);
+                        double array2D[][];
+                        array2D = transMatrix.getMatrix();
+                        newMatrix.set(0, 0, array2D[0][0]);
+                        newMatrix.set(0, 1, array2D[0][1]);
+                        newMatrix.set(0, 2, 0.0);
+                        newMatrix.set(0, 3, array2D[0][2]);
+                        newMatrix.set(1, 0, array2D[1][0]);
+                        newMatrix.set(1, 1, array2D[1][1]);
+                        newMatrix.set(1, 2, 0.0);
+                        newMatrix.set(1, 3, array2D[1][2]);
+                        newMatrix.set(2, 0, array2D[2][0]);
+                        newMatrix.set(2, 1, array2D[2][1]);
+                        newMatrix.set(2, 2, array2D[2][2]);
+                        newMatrix.set(3, 3, 1.0);
                         newMatrix.timesEquals(srcImage.getMatrix());
                     }
                     
