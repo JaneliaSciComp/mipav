@@ -690,6 +690,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
 
                     if (!parseLine(line)) {
                         setCompleted(false);
+
                         return;
                     }
 
@@ -702,16 +703,19 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 MipavUtil.displayError("Error getting file.");
                 isRunning = false;
                 setCompleted(false);
+
                 return;
             } catch (NoSuchElementException e) {
                 MipavUtil.displayError("Error in the formatting in script file.");
                 isRunning = false;
                 setCompleted(false);
+
                 return;
             } catch (IOException e) {
                 MipavUtil.displayError("Error while reading script.");
                 isRunning = false;
                 setCompleted(false);
+
                 return;
             }
         } // not parsing a file, parsing a string already passed in
@@ -726,6 +730,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
 
                 if (!parseLine(line)) {
                     setCompleted(false);
+
                     return;
                 }
             }
@@ -1010,7 +1015,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
         }
 
         num = tokens.countTokens();
-        
+
         opts.setAxisOrientation(image.getAxisOrientation());
 
         // Defaults.  So save entire range of images.  For MINC and TIFF, set respective defaults and set time slice to
@@ -1221,7 +1226,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 key = getNextString();
 
                 if (io.getFileType((String) fileNames.elementAt(currFileIndex),
-                                       ((String) fileDirs.elementAt(currFileIndex))) == FileBase.RAW) {
+                                   ((String) fileDirs.elementAt(currFileIndex))) == FileBase.RAW) {
                     name = fileUI.open(((String) fileDirs.elementAt(currFileIndex)) +
                                        ((String) fileNames.elementAt(currFileIndex)), false, getRawFileInfo(false));
                 } else {
@@ -1265,7 +1270,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 ModelImage image;
 
                 if (io.getFileType((String) fileNames.elementAt(currFileIndex),
-                                       ((String) fileDirs.elementAt(currFileIndex))) == FileBase.RAW) {
+                                   ((String) fileDirs.elementAt(currFileIndex))) == FileBase.RAW) {
                     image = io.readImage(((String) fileNames.elementAt(currFileIndex)),
                                          ((String) fileDirs.elementAt(currFileIndex)), false, getRawFileInfo(false));
                 } else {
@@ -1295,7 +1300,7 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 key = getNextString();
 
                 if (io.getFileType((String) fileNames.elementAt(currFileIndex),
-                                       ((String) fileDirs.elementAt(currFileIndex))) == FileBase.RAW) {
+                                   ((String) fileDirs.elementAt(currFileIndex))) == FileBase.RAW) {
                     name = fileUI.open(((String) fileDirs.elementAt(currFileIndex)) +
                                        ((String) fileNames.elementAt(currFileIndex)), true, getRawFileInfo(true));
                 } else {
@@ -1348,14 +1353,16 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 name = (String) variableTable.get(getNextString());
 
                 if (savedImageFileName != null) {
-                    FileWriteOptions fOption;
-                    if (prefix == null) {
-                        fOption = getWriteOptions(name, true);
-                    } else {
-                        fOption = getWriteOptions(prefix + name, true);
-                    }
+                    FileWriteOptions fOption = getWriteOptions(name, true);
+
                     fOption.setFileName(FileUtility.getFileName(savedImageFileName));
-                    fOption.setFileDirectory(FileUtility.getFileDirectory(savedImageFileName));
+
+                    if (FileUtility.getFileDirectory(savedImageFileName) == null) {
+                        fOption.setFileDirectory(UI.getRegisteredImageByName(name).getFileInfo(0).getFileDirectory());
+                    } else {
+                        fOption.setFileDirectory(FileUtility.getFileDirectory(savedImageFileName));
+                    }
+
                     getFrameFromName(name).save(fOption, -1);
                 } else {
                     getFrameFromName(name).saveImageInfo();
@@ -1363,8 +1370,11 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 }
             } catch (Exception e) {
                 System.out.println(e);
-                for (int i = 0; i < e.getStackTrace().length; i++)
+
+                for (int i = 0; i < e.getStackTrace().length; i++) {
                     System.out.println(e.getStackTrace()[i]);
+                }
+
                 MipavUtil.displayError("Error in script file near \"SaveImageAs\".  Image " + name +
                                        " not found or error in options.\n");
                 isRunning = false;
@@ -1519,10 +1529,11 @@ public class AlgorithmScriptParser extends AlgorithmBase {
                 ViewVOIVector VOIs = UI.getRegisteredImageByName(name).getVOIs();
 
                 VOIs.VOIAt(0).setAllActive(true);
-                getFrameFromName(name).getComponentImage().getVOIHandler().setVOI_IDs(VOIs.VOIAt(0).getID(), VOIs.VOIAt(0).getUID());
+                getFrameFromName(name).getComponentImage().getVOIHandler().setVOI_IDs(VOIs.VOIAt(0).getID(),
+                                                                                      VOIs.VOIAt(0).getUID());
                 getFrameFromName(name).getComponentImage().getVOIHandler().fireVOISelectionChange(VOIs.VOIAt(0),
-                                                                                  ((VOIBase)
-                                                                                       VOIs.VOIAt(0).getCurves()[getFrameFromName(name).getComponentImage().getSlice()].elementAt(0)));
+                                                                                                  ((VOIBase)
+                                                                                                   VOIs.VOIAt(0).getCurves()[getFrameFromName(name).getComponentImage().getSlice()].elementAt(0)));
                 ;
             } catch (Exception e) {
                 MipavUtil.displayError("Error in script file near \"OpenAllVOIs\".  Image " + name +
