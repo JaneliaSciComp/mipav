@@ -835,9 +835,13 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 invertCheckbox.setEnabled(false);
                 rotCenter.setEnabled(false);
                 rotOrigin.setEnabled(false);
+                padRadio.setEnabled(false);
+                cropRadio.setEnabled(false);
             } else {
                 rotCenter.setEnabled(true);
                 rotOrigin.setEnabled(true);
+                padRadio.setEnabled(true);
+                cropRadio.setEnabled(true);
             }
         } else if (source == padRadio) {
 
@@ -1811,7 +1815,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         cropOrPad = new ButtonGroup();
         cropRadio = new JRadioButton("Retain original image size", true);
         cropRadio.setFont(serif12);
-        cropRadio.setEnabled(true);
+        cropRadio.setEnabled(false);
         cropOrPad.add(cropRadio);
         optionPanel.add(cropRadio);
         cropRadio.addItemListener(this);
@@ -1819,7 +1823,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
         padRadio = new JRadioButton("Pad image to include entire original image", false);
         padRadio.setFont(serif12);
-        padRadio.setEnabled(true);
+        padRadio.setEnabled(false);
         cropOrPad.add(padRadio);
         padRadio.addItemListener(this);
         padRadio.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1891,7 +1895,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         rotationAxisGroup = new ButtonGroup();
         rotOrigin = new JRadioButton("Origin", true);
         rotOrigin.setFont(serif12);
-        rotOrigin.setEnabled(true);
+        rotOrigin.setEnabled(false);
         rotationAxisGroup.add(rotOrigin);
         optionPanel.add(rotOrigin);
         rotOrigin.addItemListener(this);
@@ -1899,7 +1903,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
         rotCenter = new JRadioButton("Center", false);
         rotCenter.setFont(serif12);
-        rotCenter.setEnabled(true);
+        rotCenter.setEnabled(false);
         rotationAxisGroup.add(rotCenter);
         rotCenter.addItemListener(this);
         // rotCenter.setAlignmentX(Component.LEFT_ALIGNMENT);
