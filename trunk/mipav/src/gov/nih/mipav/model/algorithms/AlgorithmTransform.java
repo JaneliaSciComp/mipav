@@ -3744,34 +3744,36 @@ public class AlgorithmTransform extends AlgorithmBase {
                 if (srcImage.getNDims() > 2) {
                     if (transMatrix.getNCols() == 4) {
                         newMatrix = new Matrix(4, 4);
-                        newMatrix.setMatrix(transMatrix.getMatrix());
-                        newMatrix.timesEquals(srcImage.getMatrix());
+                        newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
+                        newMatrix.timesEquals(transMatrix);
                     }
                     else { // 2.5D processing
                         newMatrix = new Matrix(4, 4);
+                        newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
                         double array2D[][];
                         array2D = transMatrix.getMatrix();
-                        newMatrix.set(0, 0, array2D[0][0]);
-                        newMatrix.set(0, 1, array2D[0][1]);
-                        newMatrix.set(0, 2, 0.0);
-                        newMatrix.set(0, 3, array2D[0][2]);
-                        newMatrix.set(1, 0, array2D[1][0]);
-                        newMatrix.set(1, 1, array2D[1][1]);
-                        newMatrix.set(1, 2, 0.0);
-                        newMatrix.set(1, 3, array2D[1][2]);
-                        newMatrix.set(2, 0, array2D[2][0]);
-                        newMatrix.set(2, 1, array2D[2][1]);
-                        newMatrix.set(2, 2, array2D[2][2]);
-                        newMatrix.set(3, 3, 1.0);
-                        newMatrix.timesEquals(srcImage.getMatrix());
+                        Matrix mat3D = new Matrix(4, 4);
+                        mat3D.set(0, 0, array2D[0][0]);
+                        mat3D.set(0, 1, array2D[0][1]);
+                        mat3D.set(0, 2, 0.0);
+                        mat3D.set(0, 3, array2D[0][2]);
+                        mat3D.set(1, 0, array2D[1][0]);
+                        mat3D.set(1, 1, array2D[1][1]);
+                        mat3D.set(1, 2, 0.0);
+                        mat3D.set(1, 3, array2D[1][2]);
+                        mat3D.set(2, 0, array2D[2][0]);
+                        mat3D.set(2, 1, array2D[2][1]);
+                        mat3D.set(2, 2, array2D[2][2]);
+                        mat3D.set(3, 3, 1.0);
+                        newMatrix.timesEquals(mat3D);
                     }
                     
                     newTMatrix = new TransMatrix(4);
                 }
                 else { // srcImage.getNDims() == 2
                     newMatrix = new Matrix(3, 3);
-                    newMatrix.setMatrix(transMatrix.getMatrix());
-                    newMatrix.timesEquals(srcImage.getMatrix());
+                    newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
+                    newMatrix.timesEquals(transMatrix);
                     newTMatrix = new TransMatrix(3);
                 }
 
