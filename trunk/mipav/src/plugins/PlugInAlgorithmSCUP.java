@@ -9,7 +9,7 @@ import java.util.*;
 
 
 /**
- * The OAI -- Osteoarthritis Initiative – is a nationwide research study sponsored by the National Institutes of Health,
+ * The OAI -- Osteoarthritis Initiative - is a nationwide research study sponsored by the National Institutes of Health,
  * that will help us better understand how to prevent and treat knee osteoarthritis, one of the most common causes of
  * disability in adults. It is a four-year study and will recruit men and women aged 45 and above at high risk for
  * developing symptomatic knee osteoarthritis. Osteoarthritis causes more health problems and medical expenses than any
