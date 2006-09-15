@@ -2277,6 +2277,8 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
      * Calls the algorithm with the set variables.
      */
     private void callAlgorithm() {
+        Point3Df center;
+        
 
         if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
             xfrm.invert();
@@ -2304,6 +2306,12 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                                                doClip, doPad);
             algoTrans.setPadValue(padValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+        }
+        
+        if (rotCenter.isSelected()) { // rotate about center of image
+            center = resampleImage.getImageCentermm();
+            algoTrans.setDoCenter(true);
+            algoTrans.setCenter(center);
         }
 
         // This is very important. Adding this object as a listener allows
@@ -3280,7 +3288,9 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         }
 
         // TRANSFORMATION MATRIX INFO
-        if (rotCenter.isSelected()) { // rotate about center of image
+        /*if (rotCenter.isSelected()) { // rotate about center of image
+            Note that when rotation around the center is selected,
+            this operation now occurs in AlgorithmTransform.transform().
             center = resampleImage.getImageCentermm();
 
             if ((DIM >= 3) && (!do25D)) {
@@ -3288,7 +3298,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             } else { // (DIM == 2) || do25D
                 xfrm.setTranslate(center.x, center.y);
             }
-        }
+        }*/
 
         if (fileMatrix.isSelected()) { // read matrix from file
 
@@ -3504,8 +3514,9 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             Preferences.debug("oRes = " + oXres + ", " + oYres + ", " + oZres);
         }
 
-        if (rotCenter.isSelected()) { // rotate about center of image
-
+        /*if (rotCenter.isSelected()) { // rotate about center of image
+            Note that when rotation around the center is selected,
+            this operation now occurs in AlgorithmTransform.transform().
             if ((DIM >= 3) && (!do25D)) {
                 center = image.getImageCentermm();
                 xfrm.setTranslate(-center.x, -center.y, -center.z);
@@ -3513,7 +3524,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 center = image.getImageCentermm();
                 xfrm.setTranslate(-center.x, -center.y);
             }
-        }
+        }*/
 
         Preferences.debug(xfrm + "\n");
 
