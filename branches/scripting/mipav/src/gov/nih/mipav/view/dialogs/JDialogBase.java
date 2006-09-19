@@ -905,11 +905,7 @@ public abstract class JDialogBase extends JDialog
      * @param pListener algorithmbase that will notify progress updates to the pBar
      */
     protected void createProgressBar(String title, AlgorithmBase pListener) {
-        progressBar = new ViewJProgressBar(title, " ...", 0, 100, true);
-        progressBar.setSeparateThread(runInSeparateThread);
-        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
-        pListener.addProgressChangeListener(progressBar);
-        pListener.setMinMaxProgressValues(0, 100);
+    	createProgressBar(title, " ...", pListener);
     }
     
     protected void createProgressBar(String title, String msg, AlgorithmBase pListener) {
