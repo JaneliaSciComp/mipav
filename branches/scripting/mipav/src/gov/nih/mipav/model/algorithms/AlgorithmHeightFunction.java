@@ -2,12 +2,13 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ProgressChangeListener;
 
 import java.io.*;
 
 import javax.vecmath.*;
-
-
+import gov.nih
+.mipav.view.*;
 /**
  * The class generates a triangle or quad mesh of a 2D dataset (image) to be displayed in the surface viewer. If the
  * image is 3D, takes the 2D current slice. The triangle mesh is like a relief map of the image; the higher intensities
@@ -226,8 +227,9 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             } else {
                 surfaceFileName = srcImage.getUserInterface().getDefaultDirectory() + surfaceFileName;
             }
-
-            qMesh.save(surfaceFileName, progressBar, 90, 10);
+            
+                        
+            qMesh.save(surfaceFileName, getProgressChangeListener(), 90, 10);
         } catch (IOException e) {
             System.gc();
             displayError("AlgorithmHeightFunction: " + e);

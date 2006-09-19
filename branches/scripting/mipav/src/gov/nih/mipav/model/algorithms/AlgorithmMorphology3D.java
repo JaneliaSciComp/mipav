@@ -1140,16 +1140,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         for (int i = 0; (i < zDim) && !threadStopped; i++) {
 
-            try {
-                progressBar.setMessage("Skeletonizing Slice " + (i + 1));
-                fireProgressStateChanged(Math.round(((float) i) / ((float) zDim) * 100));
-            } catch (NullPointerException npe) {
-
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                      Preferences.DEBUG_ALGORITHM);
-                }
-            }
+            fireProgressStateChanged("Skeletonizing Slice " + (i + 1));
+            fireProgressStateChanged(Math.round(((float) i) / ((float) zDim) * 100));
+           
 
             do {
                 pixelsRemoved = thin(pass++, i, table);
@@ -1225,7 +1218,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         float[] minDistanceBuffer;
         Vector edgePoints = new Vector();
 
-       progressBar.setMessage("Bg. distance image ...");
+        fireProgressStateChanged("Bg. distance image ...");
        fireProgressStateChanged(0);
         
 

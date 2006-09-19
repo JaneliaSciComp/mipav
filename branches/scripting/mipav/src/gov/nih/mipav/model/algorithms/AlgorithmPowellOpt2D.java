@@ -254,11 +254,9 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
 
             for (int i = 0; (i < nDims) && !parent.isThreadStopped(); i++) {
 
-                if (myProgressBar != null) {
-                    myProgressBar.updateValue(progressBegin +
-                                              ((((nDims * count) + (i + 1)) * progressMax) / (nDims * maxIterations)),
-                                              runningInSeparateThread);
-                }
+               
+                    fireProgressStateChanged(((((nDims * count) + (i + 1)) * 100) / (nDims * maxIterations)));
+                
 
                 for (int j = 0; j < nDims; j++) {
                     directions[j] = 0;
@@ -334,17 +332,6 @@ public class AlgorithmPowellOpt2D extends AlgorithmPowellOptBase {
         }
     }
 
-    /**
-     * Accessor that sets the progress bar so it can be updated from here.
-     *
-     * @param  progress  DOCUMENT ME!
-     * @param  begin     Value of progress bar when sent here.
-     * @param  max       Maximum value allowed.
-     */
-    public void setProgressBar(ViewJProgressBar progress, int begin, int max) {
-        myProgressBar = progress;
-        progressBegin = begin;
-        progressMax = max;
-    }
+   
 
 }

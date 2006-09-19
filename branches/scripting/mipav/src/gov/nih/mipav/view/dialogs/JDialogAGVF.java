@@ -468,7 +468,8 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     agvfAlgo.addListener(this);
-
+                    createProgressBar(image.getImageName(), agvfAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -583,6 +584,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     agvfAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), agvfAlgo);
 
                     // Hide dialog
                     setVisible(false);

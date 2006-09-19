@@ -250,6 +250,8 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
             // This is made possible by implementing AlgorithmedPerformed interface
             dicomOrderAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), dicomOrderAlgo);
+            
             // Hide dialog
             setVisible(false);
 

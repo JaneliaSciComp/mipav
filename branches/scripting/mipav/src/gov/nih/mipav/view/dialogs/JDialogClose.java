@@ -436,6 +436,8 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), closeAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -478,6 +480,8 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), closeAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -537,6 +541,8 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), closeAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -577,6 +583,8 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), closeAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -646,6 +654,8 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), closeAlgo25D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -690,6 +700,8 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), closeAlgo25D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 

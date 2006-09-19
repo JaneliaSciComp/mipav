@@ -407,10 +407,6 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
         String name = makeImageName(image.getImageName(), "_AdaptivePathSmooth");
         int[] destExtents;
 
-        ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), " ...", 0, 100, true);
-        progressBar.setSeparateThread(runInSeparateThread);
-        progressBar.setVisible(userInterface.isAppFrameVisible());
-
         if (image.getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
@@ -444,7 +440,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptivePathSmoothAlgo.addListener(this);
-                adaptivePathSmoothAlgo.addProgressChangeListener(progressBar);
+                createProgressBar(image.getImageName(), adaptivePathSmoothAlgo);
 
                 // Hide dialog
                 setVisible(false);
@@ -481,7 +477,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptivePathSmoothAlgo.addListener(this);
-                adaptivePathSmoothAlgo.addProgressChangeListener(progressBar);
+                createProgressBar(image.getImageName(), adaptivePathSmoothAlgo);
 
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);

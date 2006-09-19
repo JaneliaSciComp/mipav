@@ -2374,11 +2374,9 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         maxIter = baseNumIter * 2;
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(DOF), maxIter, rigidFlag,
                                           bracketBound);
-
-        if (isProgressBarVisible()) {
-            powell.setProgressBar(progressBar, 60, 40);
-        }
-
+        linkProgressToAlgorithm(powell);
+        powell.setMinMaxProgressValues(generateProgressValues(60,100));
+        
         powell.run();
 
         if (threadStopped) {
@@ -2450,9 +2448,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, initial, getTolerance(DOF), maxIter, rigidFlag,
                                           bracketBound);
 
-        if (isProgressBarVisible()) {
-            powell.setProgressBar(progressBar, 60, 40);
-        }
+        linkProgressToAlgorithm(powell);
+        powell.setMinMaxProgressValues(generateProgressValues(60,100));
 
         powell.run();
 
@@ -2533,10 +2530,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                           rigidFlag, bracketBound);
-
-        if (isProgressBarVisible()) {
-            powell.setProgressBar(progressBar, 35, 8);
-        }
+        linkProgressToAlgorithm(powell);
+        powell.setMinMaxProgressValues(generateProgressValues(35, 43));
 
         powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
         Preferences.debug("item for level2 powell run = " + (MatrixListItem) minima.elementAt(0) + "\n");
@@ -2562,10 +2557,8 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
             powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                               rigidFlag, bracketBound);
-
-            if (isProgressBarVisible()) {
-                powell.setProgressBar(progressBar, 43, 8);
-            }
+            linkProgressToAlgorithm(powell);
+            powell.setMinMaxProgressValues(generateProgressValues(43, 51));
 
             powell.run();
 
@@ -2581,18 +2574,15 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                 powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                                   rigidFlag, bracketBound);
 
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged("Optimizing with 7 DOF");
-                }
+                fireProgressStateChanged("Optimizing with 7 DOF");
+                
 
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(51);
-                }
+                fireProgressStateChanged(51);
+                
 
-                if (isProgressBarVisible()) {
-                    powell.setProgressBar(progressBar, 51, 9);
-                }
-
+                linkProgressToAlgorithm(powell);
+                powell.setMinMaxProgressValues(generateProgressValues(51,60));
+              
                 powell.run();
 
                 if (threadStopped) {

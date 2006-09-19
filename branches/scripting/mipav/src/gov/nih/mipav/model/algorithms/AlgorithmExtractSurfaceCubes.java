@@ -343,7 +343,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
 
             fireProgressStateChanged("Starting surface extraction");
 
-            ModelTriangleMesh kMesh = kExtractor.getLevelSurface(level, progressBar);
+            ModelTriangleMesh kMesh = kExtractor.getLevelSurface(level, getProgressChangeListener());
 
             buffer = null;
             System.gc();
@@ -395,7 +395,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                     Point3f[] akVertex = akComponent[i].getVertexCopy();
                     int[] aiConnect = akComponent[i].getIndexCopy();
 
-                    kDecimator.decimate(akVertex, aiConnect, progressBar, 50 + (i * 50 / akComponent.length),
+                    kDecimator.decimate(akVertex, aiConnect, getProgressChangeListener(), 50 + (i * 50 / akComponent.length),
                                         akComponent.length * 2);
 
                     akClod[i] = new ModelClodMesh(akVertex, aiConnect, kDecimator.getRecords());

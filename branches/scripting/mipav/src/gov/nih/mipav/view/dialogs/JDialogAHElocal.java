@@ -646,6 +646,9 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 aheAlgo.addListener(this);
+                
+                createProgressBar(image.getImageName(), aheAlgo);
+                
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {
@@ -697,6 +700,8 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                 // This is made possible by implementing AlgorithmedPerformed interface
                 aheAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), aheAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

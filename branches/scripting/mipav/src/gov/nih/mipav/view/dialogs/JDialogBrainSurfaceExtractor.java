@@ -258,14 +258,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
 
             createProgressBar(image.getImageName(), extractBrainAlgo);
             progressBar.setMessage("Extracting brain ...");
-            /**
-             * Creates the progress bar and make it listen to the FileBase.
-             */
-            ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Extracting brain...", 0, 100, true);
-            progressBar.setSeparateThread(runInSeparateThread);
-            extractBrainAlgo.addProgressChangeListener(progressBar);
-            progressBar.setVisible(true);
-           
+                     
             // Hide dialog
             setVisible(false);
 

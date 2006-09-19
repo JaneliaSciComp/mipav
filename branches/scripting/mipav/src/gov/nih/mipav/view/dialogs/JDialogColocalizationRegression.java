@@ -1016,6 +1016,8 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
             // This is made possible by implementing AlgorithmedPerformed interface
             colocalizationAlgo.addListener(this);
 
+            createProgressBar(firstImage.getImageName(), colocalizationAlgo);
+            
             // Hide dialog
             setVisible(false);
 

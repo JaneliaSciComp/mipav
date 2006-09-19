@@ -236,6 +236,8 @@ public class JDialogConvertDicom extends JDialogBase implements AlgorithmInterfa
 
         algoDicomConvert.addListener(this);
 
+        createProgressBar(dirField.getText(), algoDicomConvert);
+        
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.

@@ -347,10 +347,6 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
      */
     protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_adiffusion");
-
-        ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), " ...", 0, 100, true);
-        progressBar.setSeparateThread(runInSeparateThread);
-        progressBar.setVisible(userInterface.isAppFrameVisible());
         
         if (image.getNDims() == 2) { // source image is 2D
 
@@ -377,7 +373,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     diffusionAlgo.addListener(this);
 
-                    diffusionAlgo.addProgressChangeListener(progressBar);
+                    createProgressBar(image.getImageName(), diffusionAlgo);
                     
                     // Hide dialog
                     setVisible(false);
@@ -415,7 +411,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     diffusionAlgo.addListener(this);
 
-                    diffusionAlgo.addProgressChangeListener(progressBar);
+                    createProgressBar(image.getImageName(), diffusionAlgo);
                     
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
@@ -474,7 +470,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     diffusionAlgo.addListener(this);
 
-                    diffusionAlgo.addProgressChangeListener(progressBar);
+                    createProgressBar(image.getImageName(), diffusionAlgo);
                     
                     // Hide dialog
                     setVisible(false);
@@ -512,7 +508,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     diffusionAlgo.addListener(this);
 
-                    diffusionAlgo.addProgressChangeListener(progressBar);
+                    createProgressBar(image.getImageName(), diffusionAlgo);
                     
                     // Hide dialog
                     setVisible(false);

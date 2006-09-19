@@ -291,6 +291,8 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), distanceMapAlgo2D);
+                    
                     if (outputPanel.isProcessWholeImageSet() == false) {
                         distanceMapAlgo2D.setMask(image.generateVOIMask());
                     }
@@ -326,6 +328,9 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo2D.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), distanceMapAlgo2D);
+                    
 
                     if (outputPanel.isProcessWholeImageSet() == false) {
                         distanceMapAlgo2D.setMask(image.generateVOIMask());
@@ -386,6 +391,8 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), distanceMapAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -421,6 +428,8 @@ public class JDialogBGDistanceMap extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), distanceMapAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 

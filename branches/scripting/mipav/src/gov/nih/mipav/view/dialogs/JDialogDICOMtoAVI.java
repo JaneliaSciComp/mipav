@@ -173,6 +173,7 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
 
         AlgorithmDICOMtoAVI algoDicomConvert = new AlgorithmDICOMtoAVI(dirField.getText(),
                                                                        aviField.getText(), compression);
+        createProgressBar(dirField.getText(), algoDicomConvert);
 
         /**
          * Only set quality for MJPEG compression

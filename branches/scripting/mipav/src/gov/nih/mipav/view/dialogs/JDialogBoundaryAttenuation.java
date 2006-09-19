@@ -239,11 +239,10 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase implements
     protected void callAlgorithm() {
         setVisible(false);
 
-        createProgressBar(srcImage.getImageName());
         
         attenuationAlgo = new AlgorithmBoundaryAttenuation(srcImage, numErosions, maxAttenuation);
         attenuationAlgo.addListener(this);
-        attenuationAlgo.addProgressChangeListener(progressBar);
+        createProgressBar(srcImage.getImageName(), attenuationAlgo);
 
         if (isRunInSeparateThread()) {
 

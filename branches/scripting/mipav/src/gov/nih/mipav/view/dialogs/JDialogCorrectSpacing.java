@@ -278,6 +278,8 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
                 correctSpaceAlgo = new AlgorithmCorrectSpacing(image, resultImage, numRepIm, numBlank);
                 correctSpaceAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), correctSpaceAlgo);
+                
                 Vector imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 

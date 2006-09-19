@@ -342,6 +342,8 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     deleteAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), deleteAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -385,6 +387,8 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     deleteAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), deleteAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -448,6 +452,8 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     deleteAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), deleteAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -490,6 +496,8 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     deleteAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), deleteAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 

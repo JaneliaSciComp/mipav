@@ -339,7 +339,7 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
             return;
         }
 
-        if (!waitForFileDone(progressBar, maxVal)) {
+        if (!waitForFileDone(maxVal)) {
             MipavUtil.displayError("Failure during wait for file done");
             return;
         }
@@ -453,7 +453,7 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
      *
      * @return  DOCUMENT ME!
      */
-    boolean waitForFileDone(ViewJProgressBar bar, int maxTime) {
+    boolean waitForFileDone(int maxTime) {
 
         synchronized (waitFileSync) {
 
@@ -461,13 +461,11 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
 
                 while (!fileDone) {
                     waitFileSync.wait(200);
-                    bar.updateValueImmed(100 * ((int) p.getMediaTime().getSeconds() + 1) / maxTime);
+                    fireProgressStateChanged(100 * ((int) p.getMediaTime().getSeconds() + 1) / maxTime);
 
                 }
             } catch (Exception e) { }
         }
-
-        bar.setVisible(false);
 
         return fileSuccess;
     }

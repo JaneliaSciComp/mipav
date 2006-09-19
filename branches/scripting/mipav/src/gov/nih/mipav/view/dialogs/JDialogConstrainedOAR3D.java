@@ -1492,6 +1492,8 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
         reg3.addListener(this);
 
+        createProgressBar(matchImage.getImageName(), reg3);
+        
         // Hide dialog
         setVisible(false);
 

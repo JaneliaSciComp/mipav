@@ -370,7 +370,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
             // Next line extracts the surface at the supplied level.
             // kExtractor.flag = true;
-            ModelTriangleMesh kMesh = kExtractor.get((int) level, progressBar);
+            ModelTriangleMesh kMesh = kExtractor.get((int) level, getProgressChangeListener());
 
             buffer2 = null;
             fireProgressStateChanged(50);
@@ -421,7 +421,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                     Point3f[] akVertex = akComponent[i].getVertexCopy();
                     int[] aiConnect = akComponent[i].getIndexCopy();
 
-                    kDecimator.decimate(akVertex, aiConnect, progressBar, 50 + (i * 50 / akComponent.length),
+                    kDecimator.decimate(akVertex, aiConnect, getProgressChangeListener(), 50 + (i * 50 / akComponent.length),
                                         akComponent.length * 2);
 
                     akClod[i] = new ModelClodMesh(akVertex, aiConnect, kDecimator.getRecords());

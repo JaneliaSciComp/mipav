@@ -482,6 +482,8 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     dilateAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), dilateAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -522,6 +524,8 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     dilateAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), dilateAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -580,6 +584,8 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     dilateAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), dilateAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -619,6 +625,8 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     dilateAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), dilateAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -688,6 +696,8 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     dilateAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), dilateAlgo25D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -728,6 +738,8 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     dilateAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), dilateAlgo25D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 

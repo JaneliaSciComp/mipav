@@ -477,6 +477,8 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                 // This is made possible by implementing AlgorithmedPerformed interface
                 mathAlgo.addListener(this);
 
+                createProgressBar(imageA.getImageName(), mathAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 

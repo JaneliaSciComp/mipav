@@ -290,11 +290,6 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
         String name = makeImageName(image.getImageName(), "_adaptiveNR");
         int[] destExtents;
 
-        ViewJProgressBar progressBar = new ViewJProgressBar(image.getImageName(), "Converting to Y,Cr,Cb ...", 0, 100,
-                                                            true);
-        progressBar.setSeparateThread(runInSeparateThread);
-        progressBar.setVisible(userInterface.isAppFrameVisible());
-
         if (image.getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
             destExtents[0] = image.getExtents()[0]; // X dim
@@ -328,7 +323,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveNRAlgo.addListener(this);
 
-                adaptiveNRAlgo.addProgressChangeListener(progressBar);
+                createProgressBar(image.getImageName(), adaptiveNRAlgo);
 
                 // Hide dialog
                 setVisible(false);
@@ -365,7 +360,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveNRAlgo.addListener(this);
 
-                adaptiveNRAlgo.addProgressChangeListener(progressBar);
+                createProgressBar(image.getImageName(), adaptiveNRAlgo);
 
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);

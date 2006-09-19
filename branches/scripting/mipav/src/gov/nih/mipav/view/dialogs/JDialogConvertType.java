@@ -816,6 +816,8 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), changeTypeAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -852,7 +854,9 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
-
+                    
+                    createProgressBar(image.getImageName(), changeTypeAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -927,6 +931,8 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), changeTypeAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -963,6 +969,8 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), changeTypeAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

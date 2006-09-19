@@ -150,6 +150,8 @@ public class JDialogConvert4Dto3D extends JDialogScriptableBase implements Algor
             // This is made possible by implementing AlgorithmedPerformed interface
             convert4Dto3DAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), convert4Dto3DAlgo);
+            
             // Hide dialog
             setVisible(false);
 

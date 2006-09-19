@@ -507,6 +507,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     // Listen to the algorithm so we get notified when it is succeeded or failed.
                     // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
                     imageMarginsAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -568,6 +569,8 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     // Listen to the algorithm so we get notified when it is succeeded or failed.
                     // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
                     imageMarginsAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -608,7 +611,8 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     }
 
                     imageMarginsAlgo.addListener(this);
-
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -652,7 +656,8 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                     }
 
                     imageMarginsAlgo.addListener(this);
-
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 

@@ -201,6 +201,8 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
 
         algoConvert.addListener(this);
 
+        createProgressBar(dirField.getText(), algoConvert);
+        
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.

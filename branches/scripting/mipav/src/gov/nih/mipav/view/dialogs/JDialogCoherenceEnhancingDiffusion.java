@@ -200,7 +200,6 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
      */
     protected void callAlgorithm() {
 
-        createProgressBar(srcImage.getImageName());
 
         String name;
 
@@ -225,7 +224,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
             // This is made possible by implementing AlgorithmedPerformed interface
             coherenceEnhancingDiffusionAlgo.addListener(this);
 
-            coherenceEnhancingDiffusionAlgo.addProgressChangeListener(progressBar);
+            createProgressBar(srcImage.getImageName(), coherenceEnhancingDiffusionAlgo);
 
             if (isRunInSeparateThread()) {
 

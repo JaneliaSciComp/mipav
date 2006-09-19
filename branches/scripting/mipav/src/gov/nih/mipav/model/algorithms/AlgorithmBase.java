@@ -70,7 +70,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     protected boolean pBarVisible = true;
 
     /** Progress bar object. */
-    protected ViewJProgressBar progressBar;
+   // protected ViewJProgressBar progressBar;
 
     /** Source image. */
     protected ModelImage srcImage;
@@ -606,15 +606,26 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
     }
 
+    public ViewJProgressBar getProgressChangeListener() {
+    	ProgressChangeListener pListeners [] = getProgressChangeListeners();
+        ViewJProgressBar pBar = null;
+        for (int p = 0; p < pListeners.length; p++){
+        	if (pListeners[p] instanceof ViewJProgressBar) {
+        		pBar = (ViewJProgressBar)pListeners[p];
+        	}
+        }
+        
+        return pBar;
+    }
+    
     /**
      * Returns the progress change event listener list.
      * @return the progress change event listener list.
      */
-    public ProgressChangeListener[] getProgressChangeListeners(){{
+    public ProgressChangeListener[] getProgressChangeListeners(){
         return (ProgressChangeListener[])listenerList.getListeners(ProgressChangeListener.class);
     }
-        
-    }
+    
     /**
      * Adds the ProgressChangeListener to this FileBase object.
      * 
@@ -665,7 +676,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
             }
         }
     }
-
     protected void fireProgressStateChanged(float fVal, String title, String message) {
     	fireProgressStateChanged(getProgressFromFloat(fVal), title, message);
     }

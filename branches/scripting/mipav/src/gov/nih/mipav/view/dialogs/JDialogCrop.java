@@ -324,6 +324,8 @@ public class JDialogCrop extends JDialogScriptableBase implements AlgorithmInter
             // This is made possible by implementing AlgorithmedPerformed interface
             cropAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), cropAlgo);
+            
             // Hide the dialog since the algorithm is about to run.
             setVisible(false);
 

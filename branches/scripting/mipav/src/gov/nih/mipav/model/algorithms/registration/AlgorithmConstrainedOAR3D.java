@@ -3110,7 +3110,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         AlgorithmConstPowellOpt3D powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial,
                                                                          getTolerance(degree), maxIter, bracketBound);
 
-        powell.setProgressBar(progressBar, 60, 40);
+        linkProgressToAlgorithm(powell);
+        powell.setMinMaxProgressValues(generateProgressValues(60, 100));
+        
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.setLimits(limits);
         powell.run();
@@ -3211,7 +3213,10 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         Collections.sort(minima);
 
         fireProgressStateChanged("Optimizing with " + degree + " DOF");
-        powell.setProgressBar(progressBar, 35, 8);
+        
+        linkProgressToAlgorithm(powell);
+        powell.setMinMaxProgressValues(generateProgressValues(35,43));
+        
         powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.run();
@@ -3234,7 +3239,8 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             fireProgressStateChanged(43);
             powell = new AlgorithmConstPowellOpt3D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                                    bracketBound);
-            powell.setProgressBar(progressBar, 43, 8);
+            linkProgressToAlgorithm(powell);
+            powell.setMinMaxProgressValues(generateProgressValues(43,51));
             powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.setLimits(limits);
             powell.run();
@@ -3253,7 +3259,9 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
                 fireProgressStateChanged(51);
                 powell = new AlgorithmConstPowellOpt3D(this, cog, 12, cost, item.initial, getTolerance(12), maxIter,
                                                        bracketBound);
-                powell.setProgressBar(progressBar, 51, 9);
+                
+                linkProgressToAlgorithm(powell);
+                powell.setMinMaxProgressValues(generateProgressValues(51, 60));
                 powell.setRunningInSeparateThread(runningInSeparateThread);
                 powell.setLimits(limits);
                 powell.run();

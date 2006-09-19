@@ -247,6 +247,9 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             denAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), denAlgo);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
