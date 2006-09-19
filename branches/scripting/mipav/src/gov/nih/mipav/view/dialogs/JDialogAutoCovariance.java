@@ -418,10 +418,7 @@ public class JDialogAutoCovariance extends JDialogScriptableBase implements Algo
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!UI.isAppFrameVisible()) {
-                    algoAutoCovariance.setProgressBarVisible(false);
-                }
-
+                
                 algoAutoCovariance.run();
             }
         } catch (OutOfMemoryError x) {

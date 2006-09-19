@@ -242,31 +242,6 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         srcImage = null;
         super.finalize();
     }
-    
-    /**
-     * To create the standard progressBar. Stores in the class-global, progressBar
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Calculating MRI SNR ...", 0, 100, true, this,
-                                                   this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
-    }
 
     /**
      * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
@@ -383,7 +358,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Calculating MRI SNR ...");
 
         constructLog();
         xDim = srcImage.getExtents()[0];
@@ -407,7 +382,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
         } catch (IOException e) {
             MipavUtil.displayError("IOException " + e +
                                    " on srcImage.export(0, imageLength, floatBuffer)");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -506,7 +481,7 @@ public class AlgorithmSingleMRIImageSNR extends AlgorithmBase {
             } // if (useMaxLikelihood)
         } // if (signal2Index >= 0)
 
-        disposeProgressBar();
+        
         setCompleted(true);
         return;
     }

@@ -55,9 +55,8 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
      * @param  img25D  Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                 images disregard this flag.
      */
-    public AlgorithmGaussianBlurITK(ModelImage srcImg, float[] sigmas, boolean img25D, 
-            int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+    public AlgorithmGaussianBlurITK(ModelImage srcImg, float[] sigmas, boolean img25D ) {
+        super(null, srcImg);
 
         this.sigmas = sigmas;
         image25D = img25D;
@@ -72,9 +71,8 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
      * @param  img25D   Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                  images disregard this flag.
      */
-    public AlgorithmGaussianBlurITK(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean img25D, 
-            int minProgressValue, int maxProgressValue) {
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+    public AlgorithmGaussianBlurITK(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean img25D) {
+        super(destImg, srcImg);
 
         this.sigmas = sigmas;
         image25D = img25D;
@@ -113,9 +111,9 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
         }
 
         if ((srcImage.getNDims() == 3) && image25D) {
-            fireProgressStateChanged(minProgressValue, null, "Blurring slices ...");
+            fireProgressStateChanged(0, null, "Blurring slices ...");
         } else {
-            fireProgressStateChanged(minProgressValue, null, "Blurring ...");
+            fireProgressStateChanged(0, null, "Blurring ...");
         }
 
         
@@ -250,7 +248,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
-                        fireProgressStateChanged(getProgressFromFloat((float) (iSlice + 1) / iNumSlices), null, null);
+                        fireProgressStateChanged(((float) (iSlice + 1) / iNumSlices), null, null);
                        
                         if (threadStopped) {
 
@@ -288,7 +286,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
-                        fireProgressStateChanged(getProgressFromFloat((float) (iSlice + 1) / iNumSlices), null, null);
+                        fireProgressStateChanged(((float) (iSlice + 1) / iNumSlices), null, null);
                         
                         if (threadStopped) {
 
@@ -332,7 +330,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
-                        fireProgressStateChanged(getProgressFromFloat((float) (iSlice + 1) / iNumSlices), null, null);
+                        fireProgressStateChanged(((float) (iSlice + 1) / iNumSlices), null, null);
                         
 
                         if (threadStopped) {
@@ -360,7 +358,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
-                        fireProgressStateChanged(getProgressFromFloat((float) (iSlice + 1) / iNumSlices), null, null);
+                        fireProgressStateChanged(((float) (iSlice + 1) / iNumSlices), null, null);
                         
 
                         if (threadStopped) {

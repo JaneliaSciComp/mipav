@@ -201,10 +201,6 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        imgHessianAlgor.setProgressBarVisible(false);
-                    }
-
                     imgHessianAlgor.run();
                 } // end if (isRunInSeparateThread())
             } catch (OutOfMemoryError x) {

@@ -164,10 +164,6 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                //if (!userInterface.isAppFrameVisible()) {
-                    flipAlgo.setProgressBarVisible(false);
-                //}
-
                 flipAlgo.run();
             }
         } catch (OutOfMemoryError x) {

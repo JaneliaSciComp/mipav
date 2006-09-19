@@ -72,12 +72,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /** Progress bar object. */
     protected ViewJProgressBar progressBar;
 
-    /** Progress bar default location. */
-    protected Point progressBarLocation = null;
-
-    /** Progress mode - either standard, no cancel, or no progress bar. */
-    protected int progressMode = STANDARD;
-
     /** Source image. */
     protected ModelImage srcImage;
 
@@ -102,8 +96,10 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /**
      * Used to store the minimum and maximum value of the progress bar.
      */
-    protected int minProgressValue = 0;
-    protected int maxProgressValue = 100;
+    private int minProgressValue = 0;
+    private int maxProgressValue = 100;
+    
+    
     /**
      * A list of the ChangeListeners which are interested in the ChangeEvent. 
      */
@@ -123,6 +119,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         threadStopped = false;
     }
 
+     
     /**
      * Constructor which sets thread stopped to false and sets source and destination images.
      *
@@ -130,17 +127,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @param  srcImage   Source image, should not be null.
      */
     public AlgorithmBase(ModelImage destImage, ModelImage srcImage) {
-        this(destImage, srcImage, 0, 100);
-    }
-
-    
-    /**
-     * Constructor which sets thread stopped to false and sets source and destination images.
-     *
-     * @param  destImage  Destination image, can be null.
-     * @param  srcImage   Source image, should not be null.
-     */
-    public AlgorithmBase(ModelImage destImage, ModelImage srcImage, int minProgressValue, int maxProgressValue) {
         listenerList = new EventListenerList();
         this.destImage = destImage;
         this.srcImage = srcImage;
@@ -151,48 +137,25 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
             destFlag = true;
         }
 
-        this.minProgressValue = minProgressValue;
-        this.maxProgressValue = maxProgressValue;
-
         threadStopped = false;
     }
 
+    public void setProgressBarVisible(boolean bar) {
+    	//nada..keep til remove
+    }
+
+    //kill this later too
+    public boolean isProgressBarVisible() { return true; }
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+
+    public void actionPerformed(ActionEvent e) { }
+    
     /**
      * Actually runs the algorithm. Implemented by inheriting algorithms.
      */
     public abstract void runAlgorithm();
-
-    // ************************************************************************
-    // **************************** Action Events *****************************
-    // ************************************************************************
-    /**
-     * Sets completed to <code>false</code>, stops the thread, and disposes the progress bar.
-     *
-     * @param  event  Event that triggered function.
-     */
-    public void actionPerformed(ActionEvent event) {
-
-        if ((progressBar != null) && !progressBar.isComplete()) {
-            completed = false;
-
-            if (Preferences.is(Preferences.PREF_LOG)) {
-                String tempStr = new String(this.getClass().getName().substring(this.getClass().getName().lastIndexOf(".") +
-                                                                                1) + " failed.");
-
-                if (srcImage != null) {
-                    srcImage.getHistoryArea().append(tempStr);
-                }
-            }
-
-            threadStopped = true;
-
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-        }
-    }
 
     /**
      * Add a listener to this class so that when when the algorithm has completed processing it can use notifyListener
@@ -252,7 +215,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
         setCompleted(false);
         setThreadStopped(true);
-        disposeProgressBar();
+        
 
         if (destImage != null) {
             destImage.releaseLock();
@@ -268,7 +231,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         mask = null;
 
         if (keepProgressBar == false) {
-            disposeProgressBar();
+            
         }
 
         try {
@@ -336,20 +299,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public boolean isKeepProgressBar() {
         return keepProgressBar;
-    }
-
-    /**
-     * Returns flag that indicates that the progressBar is visible.
-     *
-     * @return  <code>true</code> if progress bar is visible.
-     */
-    public final boolean isProgressBarVisible() {
-
-        if ((pBarVisible == true) && (progressBar != null)) {
-            return true;
-        } else {
-            return false;
-        }
     }
 
     /**
@@ -478,43 +427,15 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         mask = imageMask;
     }
 
-    /**
-     * Sets the location of the progress bar to the specified x, y coordinate.
-     *
-     * @param  xCoord  int x coordinate of the new progress bar location
-     * @param  yCoord  int y coordinate of the new progress bar location
-     */
-    public void setProgressBarInitLocation(int xCoord, int yCoord) {
-
-        if (progressBarLocation == null) {
-            progressBarLocation = new Point(xCoord, yCoord);
-        } else {
-            progressBarLocation.setLocation(xCoord, yCoord);
-        }
-    }
-
-    /**
-     * Sets Progress Bar visibility.
-     *
-     * @param  flag  flag to set to
-     */
-    public void setProgressBarVisible(boolean flag) {
-
-        pBarVisible = flag;
-
-        if (progressBar != null) {
-            progressBar.setVisible(flag);
-        }
-    }
-
-    protected int getProgressFromFloat(float percentage) {
+ 
+    private int getProgressFromFloat(float percentage) {
         return MipavMath.round(minProgressValue + (percentage * (maxProgressValue - minProgressValue)));
     }
     
-    protected int getProgressFromInt(int percentage) {
+    private int getProgressFromInt(int percentage) {
         return MipavMath.round(minProgressValue + ((percentage / 100.0) * (maxProgressValue - minProgressValue)));
     }
-    
+        
     protected void linkProgressToAlgorithm(AlgorithmBase baseAlgo) {
         ProgressChangeListener[] listeners = this.getProgressChangeListeners();
         if (listeners != null) {
@@ -588,12 +509,8 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public void windowClosing(WindowEvent event) {
 
-        completed = false;
+        setCompleted(false);
         threadStopped = true;
-
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
     }
 
     /**
@@ -628,27 +545,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public void windowOpened(WindowEvent event) { }
 
-    /**
-     * Constructs progress bar.
-     *
-     * @param  imageName  title of the toolbar
-     * @param  message    message to be displayed in the frame
-     * @param  start      start (typical = 0)
-     * @param  end        end (typical = 100)
-     */
-    protected void buildProgressBar(String imageName, String message, int start, int end) {
-
-        if (pBarVisible == true) {
-
-            if (progressMode == STANDARD) {
-                progressBar = new ViewJProgressBar(imageName, message, start, end, true, this, this);
-            } else if (progressMode == NO_CANCEL) {
-                progressBar = new ViewJProgressBar(imageName, message, start, end, false, this, this);
-            } else if (progressMode == NO_PROGRESS) {
-                Preferences.debug("Tried to build a progress bar when progressMode == NO_PROGRESS.\n");
-            }
-        }
-    }
+   
 
     /**
      * Takes an array of strings and converts each entry into a float value. Useful for updating DICOM file information.
@@ -677,9 +574,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     protected void disposeProgressBar() {
 
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
     }
 
     /**
@@ -753,11 +647,17 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @param title   the title of the progress dialog.
      * @param message the message for that specific progress value.
      */
-    public void fireProgressStateChanged(int value, String title, String message){
+    protected void fireProgressStateChanged(int value, String title, String message){
         Object[] listeners = listenerList.getListenerList();
         if(listeners == null){
             return;
         }
+        
+        //adjust value based on minProgress and maxProgress
+        if (value != -1) {
+        	value = getProgressFromInt(value);
+        }
+        
         for(int i = listeners.length-2; i >= 0; i -= 2){
             if(listeners[i] == ProgressChangeListener.class){
                 ProgressChangeEvent event = new ProgressChangeEvent(this, value, title, message);
@@ -766,14 +666,44 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
     }
 
+    protected void fireProgressStateChanged(float fVal, String title, String message) {
+    	fireProgressStateChanged(getProgressFromFloat(fVal), title, message);
+    }
+
+    /**
+     * Updates listeners of progress status
+     * @param imageName
+     * @param message
+     */
+    protected void fireProgressStateChanged(String imageName, String message) {
+    	fireProgressStateChanged(-1, imageName, message);
+    }
+    
+    /**
+     * Notifies listeners that have registered interest for notification
+     * on this event type
+     * @param message the new message to display on the progress bar
+     */
+    protected void fireProgressStateChanged(String message) {
+    	fireProgressStateChanged(-1, null, message);
+    }
+    
     /**
      * Notifies all listeners that have registered interest for notification
      * on this event type.
      * 
      * @param value  the value of the progress bar.
      */
-    public void fireProgressStateChanged(int value){
+    protected void fireProgressStateChanged(int value){
         fireProgressStateChanged(value, null, null);
+    }
+    
+    public int [] generateProgressValues(int currentProgress, int desiredMaxProgress) {
+    	return new int[] { getProgressFromInt(currentProgress), getProgressFromInt(desiredMaxProgress)};
+    }
+    
+    public int generateMaxProgressValue(int desiredMaxProgress) {
+    	return getProgressFromInt(desiredMaxProgress);
     }
     
     public int getMinProgressValue(){
@@ -792,4 +722,14 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         this.maxProgressValue = maxProgressValue;
     }
 
+    public void setMinMaxProgressValues(int min, int max) {
+    	this.minProgressValue = min;
+    	this.maxProgressValue = max;
+    }
+    
+    public void setMinMaxProgressValues(int [] minmax) {
+    	this.minProgressValue = minmax[0];
+    	this.maxProgressValue = minmax[1];
+    }
+    
 }

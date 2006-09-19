@@ -218,10 +218,6 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements A
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!ViewUserInterface.getReference().isAppFrameVisible()) {
-                    defaceAlgo.setProgressBarVisible(false);
-                }
-
                 defaceAlgo.run();
             }
         } catch (OutOfMemoryError x) {

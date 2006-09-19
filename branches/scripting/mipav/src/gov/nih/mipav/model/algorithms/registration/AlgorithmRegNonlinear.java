@@ -621,7 +621,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
         int resultZDim;
         int i;
 
-        buildProgressBar(sourceImage.getImageName(), "Reslicing source image", 0, 100);
+        fireProgressStateChanged(sourceImage.getImageName(), "Reslicing source image");
         
 
         if (sourceImage.getNDims() == 2) {
@@ -665,23 +665,21 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
         } catch (IOException error) {
             finalize();
             displayError("AlgorithmRegNonlinear: IOException on sourceImage.exportData");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             finalize();
             displayError("AlgorithmRegNonlinear: Out of memory on sourceImage.exportData");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
         }
 
-        if (progressBar != null) {
-            progressBar.setMessage("Reslicing source image");
-        }
-
+        fireProgressStateChanged("Reslicing source image");
+       
         if (inPlane) { // 2D
 
             if (sourceImage.isColorImage()) {
@@ -705,7 +703,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
         } catch (IOException error) {
             finalize();
             MipavUtil.displayError("AlgorithmRegNonlinear: IOException on resultImage" + ".importData(0,dataOut,true)");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -713,7 +711,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
             finalize();
             MipavUtil.displayError("AlgorithmRegNonlinear: Out of memory on resultImage" +
                                    ".importData(0,dataOut,true)");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -742,7 +740,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
             } catch (IOException error) {
                 finalize();
                 MipavUtil.displayError("Algorithm RegNonlinear: maskImage locked");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -768,7 +766,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 finalize();
                 MipavUtil.displayError("AlgorithmRegNonlinear: IOException on maskImage" +
                                        ".importData(0,dataOut,true)");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -776,7 +774,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 finalize();
                 MipavUtil.displayError("AlgorithmRegNonlinear: Out of memory on maskImage" +
                                        ".importData(0,dataOut,true)");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -881,13 +879,13 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
         if (doParam) {
             paramRun();
-            disposeProgressBar();
+            
             setCompleted(true);
 
             return;
         }
 
-        buildProgressBar(sourceImage.getImageName(), "Registering source image", 0, 100);
+        fireProgressStateChanged(sourceImage.getImageName(), "Registering source image");
         
 
         if ((sourceImage.getNDims() == 2) || (series2D)) {
@@ -1229,7 +1227,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 finalize();
                 MipavUtil.displayError("AlgorithmRegNonlinear: IOException on sourceImage.exportData" +
                                        "referenceSlice*sourceSliceSize,sourceSliceSize,sourceArray)");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1241,7 +1239,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 finalize();
                 MipavUtil.displayError("AlgorithmRegNonlinear: IOException on resultImage" +
                                        ".importData(referenceSlice*sourceSliceSize,sourceArray,false)");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1287,7 +1285,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     finalize();
                     MipavUtil.displayError("AlgorithmRegNonlinear: IOException on sourceImage.exportData" +
                                            "referenceSlice*targetSliceSize,targetSliceSize,targetArray)");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1313,7 +1311,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     finalize();
                     MipavUtil.displayError("AlgorithmRegNonlinear: IOException on targetImage" +
                                            ".importData(0,targetArray,true)");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1329,11 +1327,9 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
             if (series2D) {
 
-                if (progressBar != null) {
-                    progressBar.setMessage("Registering slice number " + String.valueOf(sNumber));
-                    progressBar.updateValue(100 * series / seriesNumber, runningInSeparateThread);
-                }
-
+                    fireProgressStateChanged("Registering slice number " + String.valueOf(sNumber));
+                    fireProgressStateChanged(100 * series / seriesNumber);
+            
                 if (doAdjacent) {
 
                     if (tNumber == referenceSlice) {
@@ -1344,7 +1340,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                             finalize();
                             MipavUtil.displayError("AlgorithmRegNonlinear: IOException on sourceImage.exportData" +
                                                    "referenceSlice*targetSliceSize,targetSliceSize,targetArray)");
-                            disposeProgressBar();
+                            
                             setCompleted(false);
 
                             return;
@@ -1372,7 +1368,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                             finalize();
                             MipavUtil.displayError("AlgorithmRegNonlinear: IOException on resultImage.exportData" +
                                                    "tNumber*targetSliceSize,targetSliceSize,targetArray)");
-                            disposeProgressBar();
+                            
                             setCompleted(false);
 
                             return;
@@ -1399,7 +1395,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                         finalize();
                         MipavUtil.displayError("AlgorithmRegNonlinear: IOException on targetImage" +
                                                ".importData(0,targetArray,true)");
-                        disposeProgressBar();
+                        
                         setCompleted(false);
 
                         return;
@@ -1412,7 +1408,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     finalize();
                     MipavUtil.displayError("AlgorithmRegNonlinear: IOException on sourceImage.exportData" +
                                            "sNumber*sourceSliceSize,sourceSliceSize,sourceArray)");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1438,7 +1434,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     finalize();
                     MipavUtil.displayError("AlgorithmRegNonlinear: IOException on sImage" +
                                            ".importData(0,sourceArray,true)");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1451,7 +1447,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (IOException error) {
                     finalize();
                     displayError("AlgorithmRegNonlinear: IOException on sImage.exportData");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1462,7 +1458,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (IOException error) {
                     finalize();
                     displayError("AlgorithmRegNonlinear: IOException on targetImage.exportData");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1520,7 +1516,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
             if (sampleFactor < 1) {
                 finalize();
                 MipavUtil.displayError("sampleFactor cannot be less than 1");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1529,7 +1525,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
             if (sampleFactor2 > sampleFactor) {
                 finalize();
                 MipavUtil.displayError("final sampling cannot be > than initial sampling");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1544,7 +1540,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
             if (sfFactor <= 1) {
                 finalize();
                 MipavUtil.displayError("sampling decrement ratio must be > 1");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1680,7 +1676,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
             if (threadStopped) {
                 finalize();
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1691,10 +1687,10 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                 try {
 
-                    if ((!series2D) && (progressBar != null)) {
-                        progressBar.setMessage("Blurring source Image");
-                        progressBar.updateValue(5, runningInSeparateThread);
-                    } // if ((!series2D) && (progressBar != null))
+                    if ((!series2D) ) {
+                        fireProgressStateChanged("Blurring source Image");
+                        fireProgressStateChanged(5);
+                    } // if ((!series2D) && )
 
                     sigmas[0] = sourceGaussX;
                     sigmas[1] = sourceGaussY;
@@ -1707,7 +1703,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (OutOfMemoryError x) {
                     finalize();
                     MipavUtil.displayError("Algorithm Registration Nonlinear: unable to allocate enough memory for sourceGaussianImage");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1718,7 +1714,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (IOException error) {
                     finalize();
                     displayError("AlgorithmRegNonlinear: sourceImage is locked after Gaussian blur");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1727,7 +1723,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
             if (threadStopped) {
                 finalize();
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1737,9 +1733,9 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                 try {
 
-                    if ((!series2D) && (progressBar != null)) {
-                        progressBar.setMessage("Blurring target Image");
-                        progressBar.updateValue(10, runningInSeparateThread);
+                    if ((!series2D)  ) {
+                        fireProgressStateChanged("Blurring target Image");
+                        fireProgressStateChanged(10);
                     }
 
                     sigmas[0] = targetGaussX;
@@ -1753,7 +1749,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (OutOfMemoryError x) {
                     finalize();
                     MipavUtil.displayError("Algorithm Registration Nonlinear: unable to allocate enough memory for targetGaussianImage");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1764,7 +1760,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (IOException error) {
                     finalize();
                     displayError("AlgorithmRegNonlinear: targetImage is locked after Gaussian blur");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1800,7 +1796,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (OutOfMemoryError x) {
                     finalize();
                     MipavUtil.displayError("AlgorithmRegistration Nonlinear: Unable to " + "allocate q1 thru q7");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1809,72 +1805,72 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
             while (model <= fmodel) {
 
-                if ((!series2D) && (progressBar != null)) {
+                if ((!series2D)  ) {
 
                     switch (model) {
 
                         case LINEAR2D6:
                         case LINEAR3D12:
-                            progressBar.setMessage("Calculating first order parameters");
+                            fireProgressStateChanged("Calculating first order parameters");
                             break;
 
                         case NL2D12:
                         case NL3D30:
-                            progressBar.setMessage("Calculating second order parameters");
-                            progressBar.updateValue(60, runningInSeparateThread);
+                            fireProgressStateChanged("Calculating second order parameters");
+                            fireProgressStateChanged(60);
                             break;
 
                         case NL2D20:
                         case NL3D60:
-                            progressBar.setMessage("Calculating third order parameters");
+                            fireProgressStateChanged("Calculating third order parameters");
                             break;
 
                         case NL2D30:
                         case NL3D105:
-                            progressBar.setMessage("Calculating fourth order parameters");
+                            fireProgressStateChanged("Calculating fourth order parameters");
                             break;
 
                         case NL2D42:
                         case NL3D168:
-                            progressBar.setMessage("Calculating fifth order parameters");
+                            fireProgressStateChanged("Calculating fifth order parameters");
                             break;
 
                         case NL2D56:
                         case NL3D252:
-                            progressBar.setMessage("Calculating sixth order parameters");
+                            fireProgressStateChanged("Calculating sixth order parameters");
                             break;
 
                         case NL2D72:
                         case NL3D360:
-                            progressBar.setMessage("Calculating seventh order parameters");
+                            fireProgressStateChanged("Calculating seventh order parameters");
                             break;
 
                         case NL2D90:
                         case NL3D495:
-                            progressBar.setMessage("Calculating eighth order parameters");
+                            fireProgressStateChanged("Calculating eighth order parameters");
                             break;
 
                         case NL2D110:
                         case NL3D660:
-                            progressBar.setMessage("Calculating ninth order parameters");
+                            fireProgressStateChanged("Calculating ninth order parameters");
                             break;
 
                         case NL2D132:
                         case NL3D858:
-                            progressBar.setMessage("Calculating tenth order parameters");
+                            fireProgressStateChanged("Calculating tenth order parameters");
                             break;
 
                         case NL2D156:
                         case NL3D1092:
-                            progressBar.setMessage("Calculating eleventh order parameters");
+                            fireProgressStateChanged("Calculating eleventh order parameters");
                             break;
 
                         case NL2D182:
                         case NL3D1365:
-                            progressBar.setMessage("Calculating twelfth order parameters");
+                            fireProgressStateChanged("Calculating twelfth order parameters");
                             break;
                     } // switch(model)
-                } // if ((!series2D) && (progressBar != null))
+                } // if ((!series2D) && )
 
                 // Perform alignment
                 if (costFxn == SCALED_LEAST_SQUARES) {
@@ -1896,7 +1892,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (OutOfMemoryError x) {
                     finalize();
                     MipavUtil.displayError("Algorithm Registration Nonlinear: unable to allocate enough memory for matrices");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -2072,7 +2068,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                                     finalize();
                                     MipavUtil.displayError("\nWARNING: REGISTRATION TERMINATED DUE TO A HESSIAN MATRIX THAT WAS NOT POSITIVE DEFINITE\n");
                                     MipavUtil.displayError("INSPECTION OF RESULTS IS ADVISED\n");
-                                    disposeProgressBar();
+                                    
                                     setCompleted(false);
 
                                     return;
@@ -2133,7 +2129,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                     if (threadStopped) {
                         finalize();
-                        disposeProgressBar();
+                        
                         setCompleted(false);
 
                         return;
@@ -2266,15 +2262,15 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
             if (threadStopped) {
                 finalize();
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
             }
 
-            if ((!series2D) && (progressBar != null)) {
-                progressBar.setMessage("Reslicing source image");
-                progressBar.updateValue(80, runningInSeparateThread);
+            if ((!series2D) ) {
+                fireProgressStateChanged("Reslicing source image");
+                fireProgressStateChanged(80);
             }
 
             if (inPlane) { // 2D
@@ -2309,7 +2305,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     finalize();
                     MipavUtil.displayError("AlgorithmRegNonlinear: IOException on resultImage" +
                                            ".importData(sNumber*sourceSliceSize,dataOut,false)");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -2323,7 +2319,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     finalize();
                     MipavUtil.displayError("AlgorithmRegNonlinear: IOException on resultImage" +
                                            ".importData(0,dataOut,true)");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -2356,15 +2352,15 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (IOException error) {
                     finalize();
                     MipavUtil.displayError("Algorithm RegNonlinear: maskImage locked");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
                 }
 
-                if ((!series2D) && (progressBar != null)) {
-                    progressBar.setMessage("Reslicing mask image");
-                    progressBar.updateValue(85, runningInSeparateThread);
+                if ((!series2D) ) {
+                    fireProgressStateChanged("Reslicing mask image");
+                    fireProgressStateChanged(85);
                 }
 
                 sMinValue = Float.MAX_VALUE;
@@ -2399,7 +2395,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     finalize();
                     MipavUtil.displayError("AlgorithmRegNonlinear: IOException on maskImage" +
                                            ".importData(0,dataOut,true)");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -2407,7 +2403,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     finalize();
                     MipavUtil.displayError("AlgorithmRegNonlinear: Out of memory on maskImage" +
                                            ".importData(0,dataOut,true)");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -2415,9 +2411,9 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                 dataOut = null;
 
-                if ((!series2D) && (progressBar != null)) {
-                    progressBar.setMessage("Performing VOI extraction algorithm");
-                    progressBar.updateValue(90, runningInSeparateThread);
+                if ((!series2D) ) {
+                    fireProgressStateChanged("Performing VOI extraction algorithm");
+                    fireProgressStateChanged(90);
                 }
 
                 AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
@@ -2462,7 +2458,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                     finalize();
                     MipavUtil.displayError("File Not Found Exception with " + fileDir + fileName);
                     MipavUtil.displayError("Unsuccessful attempt to create parameter file");
-                    disposeProgressBar();
+                    
                     setCompleted(true);
 
                     return;
@@ -2491,7 +2487,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (IOException e) {
                     finalize();
                     MipavUtil.displayError("Error writing to parameter file " + fileDir + fileName);
-                    disposeProgressBar();
+                    
                     setCompleted(true);
 
                     return;
@@ -2502,7 +2498,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 } catch (IOException e) {
                     finalize();
                     MipavUtil.displayError("Error closing parameter file " + fileDir + fileName);
-                    disposeProgressBar();
+                    
                     setCompleted(true);
 
                     return;
@@ -2548,7 +2544,7 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
         resultResolutions = null;
         targetUnits = null;
-        disposeProgressBar();
+        
         setCompleted(true);
 
         return;

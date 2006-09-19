@@ -729,10 +729,6 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    histogram2DimAlgo.setProgressBarVisible(false);
-                }
-
                 histogram2DimAlgo.run();
             }
         } catch (OutOfMemoryError x) {

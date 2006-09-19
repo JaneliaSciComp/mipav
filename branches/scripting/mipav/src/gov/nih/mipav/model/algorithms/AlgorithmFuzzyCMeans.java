@@ -531,7 +531,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         sliceSize = xDim * yDim;
         orgSlice = sliceSize;
 
-        buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
         
 
         try {
@@ -569,9 +569,9 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             if (cropBackground) {
 
                 // If cropBackground is true wholeImage is constrained to be true
-                if (progressBar != null) {
-                    progressBar.setMessage("Cropping background");
-                }
+             
+                    fireProgressStateChanged("Cropping background");
+            
 
                 // Find the smallest bounding box for the data
                 xLow = xDim - 1;
@@ -679,9 +679,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("algorithm FuzzyCMeans reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 
@@ -691,9 +688,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm FuzzyCMeans reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 
@@ -711,10 +705,8 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
         while ((iterations <= maxIter) && (maxChange > tolerance) && !threadStopped) {
 
-            if (progressBar != null) {
-                progressBar.setMessage("iteration = " + iterations + " maxChange = " + maxChange);
-            }
-
+         fireProgressStateChanged("iteration = " + iterations + " maxChange = " + maxChange);
+        
             computeCentroids2D(buffer, centroids, mems);
             computeMemberships2D(buffer, centroids, mems, exponent);
             iterations += 1;
@@ -726,9 +718,9 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             return;
         }
 
-        if (progressBar != null) {
-            progressBar.setMessage("Finished iterations");
-        }
+       
+            fireProgressStateChanged("Finished iterations");
+   
 
         buffer = null;
         centroids = null;
@@ -745,9 +737,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                 System.gc();
                 MipavUtil.displayError("FuzzyCMeans: Out of memory");
 
-                if (progressBar != null) {
-                    progressBar.dispose();
-                }
+             
 
                 setCompleted(false);
 
@@ -828,9 +818,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                         MipavUtil.displayError("FuzzyCMeans: IOException on srcImage.importData(0,memsBuffer,true)");
                     }
 
-                    if (progressBar != null) {
-                        progressBar.dispose();
-                    }
 
                     setCompleted(false);
 
@@ -930,9 +917,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
                 }
 
-                if (progressBar != null) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -949,10 +933,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
                 }
 
-                if (progressBar != null) {
-                    progressBar.dispose();
-                }
-
+             
                 setCompleted(false);
 
                 return;
@@ -962,10 +943,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         mems = null;
         objMask = null;
 
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
-
+       
         setCompleted(true);
 
         return;
@@ -1005,7 +983,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
         int classType;
 
-        buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
         
 
         try {
@@ -1015,9 +993,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             cleanUp();
             MipavUtil.displayError("algorithm FuzzyCMeans reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
+          
 
             setCompleted(false);
 
@@ -1027,7 +1003,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             System.gc();
             displayError("Algorithm FuzzyCMeans: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -1068,9 +1044,9 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
                 // If cropBackground is true wholeImage is constrained to be true
                 // Find the smallest bounding box for the data
-                if (progressBar != null) {
-                    progressBar.setMessage("Cropping background");
-                }
+             
+                    fireProgressStateChanged("Cropping background");
+             
 
                 xLow = xDim - 1;
                 yLow = yDim - 1;
@@ -1202,7 +1178,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             System.gc();
             displayError("Algorithm FuzzyCMeans: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -1215,9 +1191,9 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
         while ((iterations <= maxIter) && (maxChange > tolerance) && !threadStopped) {
 
-            if (progressBar != null) {
-                progressBar.setMessage("Iteration = " + iterations + " maxChange = " + maxChange);
-            }
+         
+                fireProgressStateChanged("Iteration = " + iterations + " maxChange = " + maxChange);
+         
 
             computeCentroids3D(buffer);
             computeMemberships3D(buffer);
@@ -1231,10 +1207,8 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             return;
         }
 
-        if (progressBar != null) {
-            progressBar.setMessage("Iterations finished");
-        }
-
+            fireProgressStateChanged("Iterations finished");
+     
         for (int m = 0; m < centroids.length; m++) {
             Preferences.debug(" Centoid " + i + " = " + centroids[m], Preferences.DEBUG_ALGORITHM);
         }
@@ -1322,10 +1296,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                         } else {
                             MipavUtil.displayError("FuzzyCMeans: IOException on srcImage.importData(0,memsBuffer,true)");
 
-                        }
-
-                        if (progressBar != null) {
-                            progressBar.dispose();
                         }
 
                         setCompleted(false);
@@ -1422,9 +1392,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
                     }
 
-                    if (progressBar != null) {
-                        progressBar.dispose();
-                    }
 
                     setCompleted(false);
 
@@ -1443,9 +1410,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
             }
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 
@@ -1454,9 +1418,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
         cleanUp();
 
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
 
         setCompleted(true);
 
@@ -1516,9 +1477,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                 cleanUp();
                 MipavUtil.displayError("FuzzyCMeans: Overflow in ComputeCentroids2D");
 
-                if (progressBar != null) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1613,9 +1571,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             } else {
                 MipavUtil.displayError("FuzzyCMeans: Overflow in ComputeCentroids3D");
 
-                if (progressBar != null) {
-                    progressBar.dispose();
-                }
+          
 
                 setCompleted(false);
 
@@ -1680,10 +1636,8 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         for (y = 0; y < yDim; y++) {
             yStepper = y * xDim;
 
-            if (progressBar != null) {
-                progressBar.updateValue((int) (y * (100.0f / yDim)), runningInSeparateThread);
-            }
-
+                fireProgressStateChanged((int) (y * (100.0f / yDim)));
+         
             for (x = 0; (x < xDim) && !threadStopped; x++) {
 
                 // Iterate over each cluster for the current intensity value
@@ -1720,10 +1674,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                     if (total == 0.0f) {
                         cleanUp();
                         MipavUtil.displayError("FuzzyCMeans: Overflow in ComputeMemberships");
-
-                        if (progressBar != null) {
-                            progressBar.dispose();
-                        }
 
                         setCompleted(false);
 
@@ -1774,9 +1724,8 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         for (z = 0; (z < zDim) && !threadStopped; z++) {
             zStepOut = z * sliceSize;
 
-            if (progressBar != null) {
-                progressBar.updateValue((int) (z * (100.0f / zDim)), runningInSeparateThread);
-            }
+            fireProgressStateChanged((int) (z * (100.0f / zDim)));
+           
 
             for (y = 0; (y < yDim) && !threadStopped; y++) {
                 index = (y * xDim) + zStepOut;
@@ -1813,10 +1762,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
                         if (total == 0.0f) {
                             MipavUtil.displayError("FuzzyCMeans: Overflow in ComputeMemberships");
-
-                            if (progressBar != null) {
-                                progressBar.dispose();
-                            }
 
                             setCompleted(false);
 

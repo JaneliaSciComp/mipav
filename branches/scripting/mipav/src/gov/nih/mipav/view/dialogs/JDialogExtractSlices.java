@@ -330,10 +330,6 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!ViewUserInterface.getReference().isAppFrameVisible()) {
-                    extractSlicesAlgo.setProgressBarVisible(false);
-                }
-
                 extractSlicesAlgo.run();
             }
 

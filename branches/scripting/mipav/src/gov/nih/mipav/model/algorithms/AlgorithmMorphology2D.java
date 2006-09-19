@@ -740,13 +740,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         deleteObjects(min, max, true);
 
-        if (progressBar != null) {
-            progressBar.setMessage("Identifing objects ...");
-        }
+        fireProgressStateChanged("Identifing objects ...");
+        
 
-        if (progressBar != null) {
-            progressBar.updateValue(0, runningInSeparateThread);
-        }
+        fireProgressStateChanged(0);
+        
 
         int mod = sliceSize / 50; // mod is 2 percent of length
 
@@ -755,7 +753,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (((pix % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((pix + 1) / ((float) sliceSize) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((pix + 1) / ((float) sliceSize) * 100));
                 }
             } catch (NullPointerException npe) {
 
@@ -850,18 +848,18 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -902,20 +900,18 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
         try {
+        	
+        	fireProgressStateChanged("Pruning image ...");
+            
 
-            if (progressBar != null) {
-                progressBar.setMessage("Pruning image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
+            fireProgressStateChanged(0);
+            
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
@@ -954,7 +950,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         // if THREAD stopped already, then dump out!
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -1115,12 +1111,12 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1155,20 +1151,18 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
         try {
 
-            if (progressBar != null) {
-                progressBar.setMessage("Pruning image ...");
-            }
+        	fireProgressStateChanged("Pruning image ...");
+            
 
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
+            
+            fireProgressStateChanged(0);
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
@@ -1207,7 +1201,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         // if THREAD stopped already, then dump out!
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -1270,7 +1264,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in Dilate");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -1435,7 +1429,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in PruneAuto");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -1458,12 +1452,12 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1503,7 +1497,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             imgBuffer = new short[length];
             processBuffer = new short[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Morph2D ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Morph2D ...");
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
@@ -1762,22 +1756,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int sliceSize = xDim * yDim;
         short[] tempBuffer;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Skeletonize image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        
+        fireProgressStateChanged("Skeletonize image ...");
+           
+                fireProgressStateChanged(0);
+         
 
         for (pix = 0; pix < sliceSize; pix++) {
             processBuffer[pix] = 0;
@@ -1808,7 +1791,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in skeletonize");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -1834,12 +1817,12 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1869,22 +1852,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int[] pointArray;
         int pointIndex = 0;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Distance image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+       
+                fireProgressStateChanged("Distance image ...");
+          
+                fireProgressStateChanged(0);
+       
 
         try {
             pointArray = new int[sliceSize / 2];
@@ -1943,7 +1915,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (((pix % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((pix + 1) / ((float) sliceSize) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((pix + 1) / ((float) sliceSize) * 100));
                 }
             } catch (NullPointerException npe) {
 
@@ -1994,18 +1966,18 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -2031,7 +2003,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
@@ -2045,22 +2017,11 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         short floodValue = 1;
         short[] tmpBuffer;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Removing objects ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+      
+                fireProgressStateChanged("Removing objects ...");
+          
+                fireProgressStateChanged(0);
+         
 
         objects.removeAllElements();
 
@@ -2085,7 +2046,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
@@ -2096,7 +2057,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         processBuffer = tmpBuffer;
 
         try {
-            progressBar.updateValue(33, runningInSeparateThread);
+            fireProgressStateChanged(33);
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
@@ -2110,7 +2071,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(33 + ((i + 1) / ((float) objects.size()) * 33)), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round(33 + ((i + 1) / ((float) objects.size()) * 33)));
                 }
             } catch (NullPointerException npe) {
 
@@ -2143,14 +2104,14 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
         }
 
         try {
-            progressBar.updateValue(66, runningInSeparateThread);
+            fireProgressStateChanged(66);
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
@@ -2165,7 +2126,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(66 + ((i + 1) / ((float) objects.size()) * 34)), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round(66 + ((i + 1) / ((float) objects.size()) * 34)));
                 }
             } catch (NullPointerException npe) {
 
@@ -2185,7 +2146,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         }
 
         try {
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
@@ -2208,7 +2169,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+                
                 finalize();
 
                 return;
@@ -2222,18 +2183,18 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -2269,13 +2230,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int stepY = kDim * xDim;
         short[] tempBuffer;
 
-        if (progressBar != null) {
-            progressBar.setMessage("Dilating image ...");
-        }
-
-        if (progressBar != null) {
-            progressBar.updateValue(0, runningInSeparateThread);
-        }
+       fireProgressStateChanged("Dilating image ...");
+       fireProgressStateChanged(0);
+      
 
         for (pix = 0; pix < sliceSize; pix++) {
             processBuffer[pix] = 0;
@@ -2290,8 +2247,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 try {
 
                     if (((((c * sliceSize) + pix) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
-                                                               100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
+                                                               100));
                     }
                 } catch (NullPointerException npe) {
 
@@ -2362,7 +2319,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in Dilate");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -2386,12 +2343,12 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -2421,22 +2378,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int[] pointArray;
         int pointIndex = 0;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Distance image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged("Distance image ...");
+            fireProgressStateChanged(0);
+            
 
         try {
             pointArray = new int[sliceSize / 2];
@@ -2491,7 +2435,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
             try {
 
                 if (((pix % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((pix + 1) / ((float) sliceSize) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((pix + 1) / ((float) sliceSize) * 100));
                 }
             } catch (NullPointerException npe) {
 
@@ -2542,18 +2486,18 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -2590,13 +2534,9 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         int stepY = kDim * xDim;
         short[] tempBuffer;
 
-        if (progressBar != null) {
-            progressBar.setMessage("Eroding image ...");
-        }
-
-        if (progressBar != null) {
-            progressBar.updateValue(0, runningInSeparateThread);
-        }
+        fireProgressStateChanged("Eroding image ...");
+       fireProgressStateChanged(0);
+        
 
         int mod = (iters * sliceSize) / 20; // mod is 5 percent of length
 
@@ -2611,8 +2551,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 try {
 
                     if (((((c * sliceSize) + pix) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
-                                                               100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
+                                                               100));
                     }
                 } catch (NullPointerException npe) {
 
@@ -2698,7 +2638,7 @@ kernelLoop:
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in Erode");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -2722,12 +2662,12 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -2793,13 +2733,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -2813,7 +2753,7 @@ kernelLoop:
             } catch (IOException error) {
                 displayError("Algorithm Morphology2D: Image(s) locked in Fill Objects");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -2825,7 +2765,7 @@ kernelLoop:
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
     }
@@ -2941,29 +2881,16 @@ kernelLoop:
         int stepY = kDim * xDim;
         short[] tempBuffer;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Finding Edges ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged("Finding Edges ...");
+        fireProgressStateChanged(0);
+         
 
         try {
             tempBuffer = new short[imgBuffer.length];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -2983,8 +2910,7 @@ kernelLoop:
                 try {
 
                     if ((((sliceSize + pix) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100),
-                                                runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100));
                     }
                 } catch (NullPointerException npe) {
 
@@ -3059,8 +2985,7 @@ kernelLoop:
                 try {
 
                     if ((((sliceSize + pix) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100),
-                                                runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100));
                     }
                 } catch (NullPointerException npe) {
 
@@ -3162,12 +3087,12 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
     }
@@ -3493,7 +3418,7 @@ kernelLoop:
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
@@ -3510,22 +3435,9 @@ kernelLoop:
         ModelImage distanceImage = null;
         AlgorithmWatershed ws = null;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Particle analysis (PA) ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged("Particle analysis (PA) ...");
+          fireProgressStateChanged(0);
+       
 
         // add open and close to remove noise; Might not need because delete objects
         // of some size works.
@@ -3535,13 +3447,11 @@ kernelLoop:
             // add set minimum dist
             ultimateErode(true); // forms list of points (one point per object)
 
-            if (progressBar != null) {
-                progressBar.updateValue(25, runningInSeparateThread);
-            }
-
-            if (progressBar != null) {
-                progressBar.setMessage("PA - distance map ...");
-            }
+            
+                fireProgressStateChanged(25);
+          
+                fireProgressStateChanged("PA - distance map ...");
+         
 
             srcImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
             bgPoint = new Point(-1, -1);
@@ -3555,13 +3465,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D..particleAnalysis: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D.particleAnalysis: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -3583,7 +3493,7 @@ kernelLoop:
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
@@ -3606,23 +3516,9 @@ kernelLoop:
             }
         }
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Watershed stage ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(70, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
-
+      fireProgressStateChanged("Watershed stage ...");
+         fireProgressStateChanged(70);
+       
         destExtents[0] = xDim;
         destExtents[1] = yDim;
 
@@ -3660,7 +3556,7 @@ kernelLoop:
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+                
                 finalize();
 
                 return;
@@ -3675,13 +3571,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -3694,14 +3590,14 @@ kernelLoop:
         // if the watershed algo is halted,
         if (!ws.isCompleted()) {
             setThreadStopped(true); // halt the rest of this processing.
-            disposeProgressBar(); // and kill progressbar
+             // and kill progressbar
             setCompleted(false);
 
             return;
         }
 
         try {
-            progressBar.updateValue(90, runningInSeparateThread);
+            fireProgressStateChanged(90);
             wsImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
 
             // once the data from the watershed has been exported to imgBuffer, the
@@ -3713,7 +3609,7 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (NullPointerException npe) {
@@ -3724,22 +3620,9 @@ kernelLoop:
             }
         }
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Deleting objects ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(90, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+       fireProgressStateChanged("Deleting objects ...");
+       fireProgressStateChanged(90);
+       
 
         deleteObjects(min, max, false);
 
@@ -3756,7 +3639,7 @@ kernelLoop:
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
@@ -3772,53 +3655,30 @@ kernelLoop:
         ModelImage distanceImage = null;
         AlgorithmWatershed ws = null;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Particle analysis (PA) ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged("Particle analysis (PA) ...");
+        fireProgressStateChanged(0);
+        
 
         try {
 
             // add set minimum dist
-            if (progressBar != null) {
-                progressBar.updateValue(25, runningInSeparateThread);
-            }
-
-            if (progressBar != null) {
-                progressBar.setMessage("PA - distance map ...");
-            }
+           fireProgressStateChanged(25);
+           fireProgressStateChanged("PA - distance map ...");
+           
 
             srcImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
             distanceMap(true);
             destExtents = new int[2];
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
         } catch (IOException error) {
             displayError("Algorithm Morphology2D..particleAnalysis: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D.particleAnalysis: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -3840,7 +3700,7 @@ kernelLoop:
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
@@ -3863,22 +3723,9 @@ kernelLoop:
             }
         }
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Watershed stage ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(70, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+      fireProgressStateChanged("Watershed stage ...");
+        fireProgressStateChanged(70);
+       
 
         destExtents[0] = xDim;
         destExtents[1] = yDim;
@@ -3917,7 +3764,7 @@ kernelLoop:
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+                
                 finalize();
 
                 return;
@@ -3930,13 +3777,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -3949,7 +3796,7 @@ kernelLoop:
         // if the watershed algo is halted,
         if (!ws.isCompleted()) {
             setThreadStopped(true); // halt the rest of this processing.
-            disposeProgressBar(); // and kill progressbar
+             // and kill progressbar
             setCompleted(false);
 
             return;
@@ -3958,10 +3805,10 @@ kernelLoop:
         // new ViewJFrameImage( wsImage, null, new Dimension( 300, 300 ), srcImage.getUserInterface(), false );
 
         /*
-         * disposeProgressBar(); setCompleted( true ); returnFlag = true; if ( returnFlag == true ) { return; }
+         *  setCompleted( true ); returnFlag = true; if ( returnFlag == true ) { return; }
          */
         try {
-            progressBar.updateValue(90, runningInSeparateThread);
+            fireProgressStateChanged(90);
             wsImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
             srcImage.importData(0, imgBuffer, true);
 
@@ -3974,7 +3821,7 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (NullPointerException npe) {
@@ -3989,7 +3836,7 @@ kernelLoop:
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -4412,7 +4259,7 @@ kernelLoop:
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -4433,18 +4280,18 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

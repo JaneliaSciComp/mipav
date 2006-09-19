@@ -1992,7 +1992,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoARed = new AlgorithmHistogram(histogramARed, offset, imageA, entireFlag);
 
-            histoAlgoARed.setProgressBarVisible(progressFlag);
+           // histoAlgoARed.setProgressBarVisible(progressFlag);
 
             // histoAlgoARed.setSeparateThread(false);
             histoAlgoARed.run();
@@ -2012,7 +2012,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoAGreen = new AlgorithmHistogram(histogramAGreen, offset, imageA, entireFlag);
 
-            histoAlgoAGreen.setProgressBarVisible(progressFlag);
+           // histoAlgoAGreen.setProgressBarVisible(progressFlag);
 
             // histoAlgoAGreen.setSeparateThread(false);
             histoAlgoAGreen.run();
@@ -2032,7 +2032,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoABlue = new AlgorithmHistogram(histogramABlue, offset, imageA, entireFlag);
 
-            histoAlgoABlue.setProgressBarVisible(progressFlag);
+           // histoAlgoABlue.setProgressBarVisible(progressFlag);
 
             // histoAlgoABlue.setSeparateThread(false);
             histoAlgoABlue.run();
@@ -2055,7 +2055,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoBRed = new AlgorithmHistogram(histogramBRed, offset, imageB, entireFlag);
 
-            histoAlgoBRed.setProgressBarVisible(progressFlag);
+         //   histoAlgoBRed.setProgressBarVisible(progressFlag);
 
             // histoAlgoBRed.setSeparateThread(false);
             histoAlgoBRed.run();
@@ -2075,7 +2075,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoBGreen = new AlgorithmHistogram(histogramBGreen, offset, imageB, entireFlag);
 
-            histoAlgoBGreen.setProgressBarVisible(progressFlag);
+            //histoAlgoBGreen.setProgressBarVisible(progressFlag);
 
             // histoAlgoBGreen.setSeparateThread(false);
             histoAlgoBGreen.run();
@@ -2095,7 +2095,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoBBlue = new AlgorithmHistogram(histogramBBlue, offset, imageB, entireFlag);
 
-            histoAlgoBBlue.setProgressBarVisible(progressFlag);
+         //   histoAlgoBBlue.setProgressBarVisible(progressFlag);
 
             // histoAlgoBBlue.setSeparateThread(false);
             histoAlgoBBlue.run();

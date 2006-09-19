@@ -98,7 +98,7 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
         }
 
         constructLog();
-        buildProgressBar(srcImage.getImageName(), "Slice averaging ...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Slice averaging ...");
         
 
         sAveraging();
@@ -146,7 +146,7 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
             totalLength = sliceSize * zDim;
         }
 
-        progressBar.setMessage("Exporting source data");
+        fireProgressStateChanged("Exporting source data");
 
         try {
             values = new float[totalLength];
@@ -163,9 +163,9 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(10, runningInSeparateThread);
+        fireProgressStateChanged(10);
 
-        progressBar.setMessage("Averaging data");
+        fireProgressStateChanged("Averaging data");
 
         try {
 
@@ -264,9 +264,9 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(90, runningInSeparateThread);
+        fireProgressStateChanged(90);
 
-        progressBar.setMessage("Importing averaged data");
+        fireProgressStateChanged("Importing averaged data");
 
         if (destImage != null) {
 
@@ -293,7 +293,7 @@ public class AlgorithmSliceAveraging extends AlgorithmBase {
             }
         } // else destImage == null
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

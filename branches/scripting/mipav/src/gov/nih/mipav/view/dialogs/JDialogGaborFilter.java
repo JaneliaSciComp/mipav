@@ -372,7 +372,7 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
 
                 // Make algorithm
                 FrequencyFilterAlgo = new AlgorithmFrequencyFilter(resultImage, image, freqU, freqV, sigmaU, sigmaV,
-                                                                   theta, createGabor, 0, 100);
+                                                                   theta, createGabor);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -391,10 +391,6 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        FrequencyFilterAlgo.setProgressBarVisible(false);
-                    }
-
                     FrequencyFilterAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -414,7 +410,7 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 FrequencyFilterAlgo = new AlgorithmFrequencyFilter(image, freqU, freqV, sigmaU, sigmaV, theta,
-                                                                   createGabor, 0, 100);
+                                                                   createGabor);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -447,10 +443,6 @@ public class JDialogGaborFilter extends JDialogScriptableBase implements Algorit
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        FrequencyFilterAlgo.setProgressBarVisible(false);
-                    }
-
                     FrequencyFilterAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

@@ -442,10 +442,6 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    extractSurAlgo.setProgressBarVisible(false);
-                }
-
                 extractSurAlgo.run();
             }
         }

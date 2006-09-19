@@ -269,12 +269,12 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             int resultIndex = 0;
 
             if (insertBlank) {
-                buildProgressBar(resultImage.getImageName(), "Inserting Blank Slice...", 0, 100);    
+                fireProgressStateChanged(resultImage.getImageName(), "Inserting Blank Slice...");    
             }
             else {
-                buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
+                fireProgressStateChanged(resultImage.getImageName(), "Inserting Weighted Averaged Slice...");
             }
-            progressBar.updateValue(0, runningInSeparateThread);
+            fireProgressStateChanged(0);
             
 
             int length = resultImage.getExtents()[2];
@@ -295,7 +295,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     srcIndex++;
                 }
 
-                progressBar.updateValue((int) ((((float) resultIndex + 1.0f) / (float) length) * 50.0f), runningInSeparateThread);
+                fireProgressStateChanged((int) ((((float) resultIndex + 1.0f) / (float) length) * 50.0f));
             }
 
             // System.err.println("finished copying original slices into result image");
@@ -324,8 +324,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     foundStart = false;
                 }
 
-                progressBar.updateValue((int) ((((float) resultIndex + 1.0f) / (float) length) * 50.0f) + 50,
-                                        runningInSeparateThread);
+                fireProgressStateChanged((int) ((((float) resultIndex + 1.0f) / (float) length) * 50.0f) + 50);
             }
 
             imageBuffer = null;
@@ -477,12 +476,12 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
 
 
             if (insertBlank) {
-                buildProgressBar(resultImage.getImageName(), "Inserting Blank Slice...", 0, 100);    
+                fireProgressStateChanged(resultImage.getImageName(), "Inserting Blank Slice...");    
             }
             else {
-                buildProgressBar(resultImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
+                fireProgressStateChanged(resultImage.getImageName(), "Inserting Weighted Averaged Slice...");
             }
-            progressBar.updateValue(0, runningInSeparateThread);
+            fireProgressStateChanged(0);
             
 
             int sliceArea = extents[0] * extents[1];
@@ -534,7 +533,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     }
                 }
 
-                progressBar.updateValue((int) ((((float) x + 1.0f) / (float) length) * 50.0f), runningInSeparateThread);
+                fireProgressStateChanged((int) ((((float) x + 1.0f) / (float) length) * 50.0f));
             }
 
             foundStart = false;
@@ -560,7 +559,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     foundStart = false;
                 }
 
-                progressBar.updateValue((int) ((((float) x + 1.0f) / (float) length) * 50.0f) + 50, runningInSeparateThread);
+                fireProgressStateChanged((int) ((((float) x + 1.0f) / (float) length) * 50.0f) + 50);
             }
 
             imageBuffer = null;
@@ -629,7 +628,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             numSlices = destExtents[2];
 
             if (isProgressBarVisible()) {
-                progressBar.setMessage("Importing Image Data...");
+                fireProgressStateChanged("Importing Image Data...");
             }
 
             try {
@@ -662,7 +661,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 displayError("Algorithm Replace Removed Slices reports: Out of memory getting results.");
                 srcImage.releaseLock();
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             } catch (IOException e2) {
@@ -672,7 +671,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 displayError(e2.getMessage());
                 srcImage.releaseLock();
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -739,8 +738,8 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             resultImage.disposeLocal();
         }
 
-        progressBar.setVisible(false);
-        progressBar.dispose();
+        
+        
         System.gc();
         setCompleted(true);
     }

@@ -418,10 +418,7 @@ public class JDialogAutoCorrelation extends JDialogScriptableBase implements Alg
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!UI.isAppFrameVisible()) {
-                    algoAutoCorrelation.setProgressBarVisible(false);
-                }
-
+              
                 algoAutoCorrelation.run();
             }
         } catch (OutOfMemoryError x) {

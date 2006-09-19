@@ -320,7 +320,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                 // resultImage.setImageName(name);
                 // Make algorithm
                 adaptiveSmoothAlgo = new AlgorithmAdaptiveSmooth(resultImage, image, radiusY, radiusCr, radiusCb,
-                                                                 distWeight, reduce, 0, 100);
+                                                                 distWeight, reduce);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -358,7 +358,7 @@ public class JDialogAdaptiveSmooth extends JDialogScriptableBase implements Algo
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 adaptiveSmoothAlgo = new AlgorithmAdaptiveSmooth(null, image, radiusY, radiusCr, radiusCb, distWeight,
-                                                                 reduce, 0, 100);
+                                                                 reduce);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.

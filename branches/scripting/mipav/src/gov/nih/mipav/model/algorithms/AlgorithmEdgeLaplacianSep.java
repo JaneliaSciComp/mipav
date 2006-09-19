@@ -93,25 +93,20 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
      */
     public AlgorithmEdgeLaplacianSep(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
                                      boolean img25D) {
-        this(destImg, srcImg, sigmas, maskFlag, img25D, 0, 0, 0, 100);
-    }
+        super(destImg, srcImg);
 
-    /**
-     * Creates a new AlgorithmEdgeLaplacianSep object.
-     *
-     * @param  destImg   image model where result image is to stored
-     * @param  srcImg    source image model
-     * @param  sigmas    Gaussian's standard deviations in the each dimension
-     * @param  maskFlag  Flag that indicates that the EdgeLap will be calculated for the whole image if equal to true
-     * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
-     *                   images disregard this flag.
-     * @param  loThres   used to define the lower threshold to reduce noise (edges) in the laplacian image
-     * @param  hiThres   used to define the upper threshold to reduce noise (edges) in the laplacian image
-     */
-    public AlgorithmEdgeLaplacianSep(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
-                                     boolean img25D, float loThres, float hiThres) {
-        this(destImg, srcImg, sigmas, maskFlag, img25D, loThres, hiThres, 0, 100);
+        this.loThres = 0;
+        this.hiThres = 0;
+        this.sigmas = sigmas;
+        image25D = img25D;
+
+        entireImage = maskFlag;
+
+        if (entireImage == false) {
+            mask = srcImage.generateVOIMask();
+        }
     }
+    
     /**
      * Creates a new AlgorithmEdgeLaplacianSep object.
      *
@@ -127,8 +122,8 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
      * @param  maxProgressValue the maximum value of progress range.
      */
     public AlgorithmEdgeLaplacianSep(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
-                                     boolean img25D, float loThres, float hiThres, int minProgressValue, int maxProgressValue) {
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+                                     boolean img25D, float loThres, float hiThres) {
+        super(destImg, srcImg);
 
         this.loThres = loThres;
         this.hiThres = hiThres;
@@ -296,14 +291,14 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         float[] xResultBuffer = new float[buffer.length];
         float[] yResultBuffer = new float[buffer.length];
         AlgorithmSeparableConvolver xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer, extents,
-                                                                                 GxxData, kExtents, false, 0, 100); // assume not color
+                                                                                 GxxData, kExtents, false); // assume not color
 
         xConvolver.run();
         xConvolver.finalize();
         xConvolver = null;
 
         AlgorithmSeparableConvolver yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer, extents,
-                                                                                 GyyData, kExtents, false, 0, 100); // assume not color
+                                                                                 GyyData, kExtents, false); // assume not color
 
         yConvolver.run();
         yConvolver.finalize();
@@ -589,7 +584,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             buffer = new float[length];
             xResultBuffer = new float[length];
             yResultBuffer = new float[length];
-            // buildProgressBar(srcImage.getImageName(), "Calculating the Edge ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Calculating the Edge ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Edge Lap Sep: Out of memory", true);
@@ -597,8 +592,8 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Calculating the Edge ...");
-        float stepPerImage = ((float)(maxProgressValue-minProgressValue)) / nImages;
+        fireProgressStateChanged(0, srcImage.getImageName(), "Calculating the Edge ...");
+        float stepPerImage = 100f / nImages;
 
         // initProgressBar();
 
@@ -620,19 +615,16 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             if((max-min) > 1){
                 xConvolver = new AlgorithmSeparableConvolver(xResultBuffer,
                         buffer, new int[] { srcImage.getExtents()[0],
-                                srcImage.getExtents()[1] }, GxxData, kExtents,
-                        false, min, max);
-                ProgressChangeListener[] listeners = this.getProgressChangeListeners();
-                if(listeners != null){
-                    for(int i = 0; i < listeners.length; i++){
-                        xConvolver.addProgressChangeListener(listeners[i]);
-                    }
-                }
+                                srcImage.getExtents()[1] }, GxxData, kExtents, false);
+                
+                xConvolver.setMinMaxProgressValues(generateProgressValues(min, max));
+                linkProgressToAlgorithm(xConvolver);
+                
             } else {
                 xConvolver = new AlgorithmSeparableConvolver(xResultBuffer,
                         buffer, new int[] { srcImage.getExtents()[0],
                                 srcImage.getExtents()[1] }, GxxData, kExtents,
-                        false, 0, 100); // assume not color
+                        false); // assume not color
             }
             if (!entireImage) {
                 xConvolver.setMask(mask);
@@ -649,13 +641,17 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                 yConvolver = new AlgorithmSeparableConvolver(yResultBuffer,
                         buffer, new int[] { srcImage.getExtents()[0],
                                 srcImage.getExtents()[1] }, GyyData, kExtents,
-                        false, min, max); // assume not color
+                        false);
+                
+                yConvolver.setMinMaxProgressValues(generateProgressValues(min, max));
+                linkProgressToAlgorithm(yConvolver);
+            
             }else{
                 yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer,
                         new int[] {
                             srcImage.getExtents()[0],
                             srcImage.getExtents()[1]
-                        }, GyyData, kExtents, false, 0, 100); // assume not color
+                        }, GyyData, kExtents, false); // assume not color
             }
 
             if (!entireImage) {
@@ -696,10 +692,6 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
 
-        // disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
         setCompleted(true);
     }
 
@@ -733,7 +725,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             zResultBuffer = new float[totalLength];
             sliceBuffer = new float[length];
             srcImage.exportData(0, totalLength, buffer); // locks and releases lock
-            // buildProgressBar(srcImage.getImageName(), "Calculating Zero X-ings ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Calculating Zero X-ings ...");
         } catch (IOException error) {
             buffer = null;
             sliceBuffer = null;
@@ -755,27 +747,24 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         }
 
         // initProgressBar();
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Convolving X dimension ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Convolving X dimension ...");
         
         /** Minimum and maximum progress value for the convolving part */
-        int min = minProgressValue;
-        int max = min + Math.round((maxProgressValue - minProgressValue)/2.0f);
+        int min = 0;
+        int max = min + Math.round(100/2.0f);
         float stepPerDimension = ((float)(max- min))/3.0f;
         AlgorithmSeparableConvolver xConvolver = null;
         if(Math.round(stepPerDimension) > 1){
             xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer,
                     srcImage.getExtents(), GxxData,
-                    kExtents, false, min, min + Math.round(stepPerDimension)); // assume not color
-            ProgressChangeListener[] listeners = this.getProgressChangeListeners();
-            if(listeners != null){
-                for(int i = 0; i < listeners.length; i++){
-                    xConvolver.addProgressChangeListener(listeners[i]);
-                }
-            }
+                    kExtents, false); // assume not color
+            
+            xConvolver.setMinMaxProgressValues(generateProgressValues(min, min + Math.round(stepPerDimension)));
+            linkProgressToAlgorithm(xConvolver);
         }else{
             xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer,
                     srcImage.getExtents(), GxxData,
-                    kExtents, false, 0, 100); // assume not color
+                    kExtents, false); // assume not color
         }
         if (!entireImage) {
             xConvolver.setMask(mask);
@@ -790,17 +779,15 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         if((Math.round(stepPerDimension*2) - Math.round(stepPerDimension)) > 1){
             yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer,
                     srcImage.getExtents(), GyyData,
-                    kExtents, false, min + Math.round(stepPerDimension), min + Math.round(stepPerDimension*2)); // assume not color
-            ProgressChangeListener[] listeners = this.getProgressChangeListeners();
-            if(listeners != null){
-                for(int i = 0; i < listeners.length; i++){
-                    yConvolver.addProgressChangeListener(listeners[i]);
-                }
-            }
+                    kExtents, false); // assume not color
+            
+            yConvolver.setMinMaxProgressValues(generateProgressValues(min + Math.round(stepPerDimension), min + Math.round(stepPerDimension*2)));
+            
+            linkProgressToAlgorithm(yConvolver);
         }else{
             yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer,
                     srcImage.getExtents(), GyyData,
-                    kExtents, false, 0, 100); // assume not color
+                    kExtents, false); // assume not color
         }
 
         if (!entireImage) {
@@ -818,17 +805,15 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         if((Math.round(stepPerDimension*3) - Math.round(stepPerDimension*2)) > 1){
             zConvolver = new AlgorithmSeparableConvolver(zResultBuffer, buffer,
                     srcImage.getExtents(), GzzData,
-                    kExtents, false, min + Math.round(stepPerDimension*2), max); // assume not color
-            ProgressChangeListener[] listeners = this.getProgressChangeListeners();
-            if(listeners != null){
-                for(int i = 0; i < listeners.length; i++){
-                    zConvolver.addProgressChangeListener(listeners[i]);
-                }
-            }
+                    kExtents, false); // assume not color
+            
+            zConvolver.setMinMaxProgressValues(generateProgressValues(min + Math.round(stepPerDimension*2), max));
+            
+            linkProgressToAlgorithm(zConvolver);
         }else{
             zConvolver = new AlgorithmSeparableConvolver(zResultBuffer, buffer,
                     srcImage.getExtents(), GzzData,
-                    kExtents, false, 0, 100); // assume not color
+                    kExtents, false); // assume not color
         }
 
         if (!entireImage) {
@@ -840,7 +825,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         zConvolver = null;
 
         min = max;
-        max = maxProgressValue;
+        max = 100;
         float stepPerImage = ((float)(max-min))/nImages;
 
         for (int s = 0; (s < nImages) && !threadStopped; s++) {
@@ -880,10 +865,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
 
-        // disposeProgressBar();
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
+       
         setCompleted(true);
     }
 

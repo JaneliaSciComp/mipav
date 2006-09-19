@@ -56,9 +56,8 @@ public class AlgorithmColorEdge extends AlgorithmBase {
      * @param  blue2
      */
     public AlgorithmColorEdge(ModelImage dest, ModelImage src, int red1int, int green1int, int blue1int,
-                                   int red2int, int green2int, int blue2int,
-                                   int minProgressValue, int maxProgressValue) {
-        super(dest, src, minProgressValue, maxProgressValue);
+                                   int red2int, int green2int, int blue2int) {
+        super(dest, src);
 
         red1 = (double)red1int;
         green1 = (double)green1int;
@@ -153,7 +152,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         int index;
         int i;
         
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Color edge ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Color edge ...");
         
         
         if (srcImage.getType() == ModelStorageBase.ARGB) {
@@ -243,7 +242,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         
         for (z = 0; z < sliceNum; z++) {
             
-            fireProgressStateChanged(getProgressFromFloat((float) (z) / (sliceNum)), null, null);
+            fireProgressStateChanged(((float) (z) / (sliceNum)), null, null);
            
             try {
                 srcImage.exportData(z*colorLen, colorLen, imageData);
@@ -609,7 +608,7 @@ public class AlgorithmColorEdge extends AlgorithmBase {
         } // for (z = 0; z < sliceNum; z++)
         
         
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         destImage.calcMinMax();
         
         setCompleted(true);

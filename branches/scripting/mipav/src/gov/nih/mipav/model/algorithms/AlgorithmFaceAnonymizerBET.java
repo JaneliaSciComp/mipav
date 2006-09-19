@@ -166,7 +166,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
     private void anonymizeFace() {
         int curPosition, closestPosition;
 
-        buildProgressBar(srcImage.getImageName(), "Anonymize face ...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Anonymize face ...");
         
 
         // See if the image orientation is known
@@ -469,7 +469,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         bet.finalize();
         bet = null;
 
-        progressBar.dispose();
+        
 
         setCompleted(true);
     }
@@ -515,6 +515,6 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
      */
     private void incrementProgressBar(int inc) {
         currentProgressBarValue += inc;
-        progressBar.updateValue(currentProgressBarValue, runningInSeparateThread);
+        fireProgressStateChanged(currentProgressBarValue);
     }
 }

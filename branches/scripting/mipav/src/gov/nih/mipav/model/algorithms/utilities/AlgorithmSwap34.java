@@ -119,14 +119,14 @@ public class AlgorithmSwap34 extends AlgorithmBase {
             length = colorFactor * xDim * yDim * zDim * tDim;
             buffer = new float[length];
             resultBuffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Swapping Dimensions 3-4 ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Swapping Dimensions 3-4 ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
             System.gc();
             displayError("AlgorithmSwap34: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -141,7 +141,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
             buffer = null;
             resultBuffer = null;
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -156,7 +156,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
                     index = ((t * zDim * sliceSize) + (z * sliceSize) + xy);
 
                     if (((index % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (index) / (length - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) (index) / (length - 1) * 100));
                     }
 
                     resultBuffer[(z * tDim * sliceSize) + (t * sliceSize) + xy] = buffer[index];
@@ -240,19 +240,19 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         } catch (IOException error) {
             displayError("AlgorithmSwap34: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmSwap34: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

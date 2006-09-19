@@ -266,7 +266,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             boundaryX = new int[length];
             boundaryY = new int[length];
             srcImage.exportData(0, length, gBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Evolving the level set ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
         } catch (IOException error) {
             cleanUp();
             System.gc();
@@ -333,7 +333,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(2, runningInSeparateThread);
+            fireProgressStateChanged(2);
         }
 
         // Adjust beta after the first trial run thru.
@@ -352,7 +352,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         System.gc();
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(4, runningInSeparateThread);
+            fireProgressStateChanged(4);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -396,7 +396,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(6, runningInSeparateThread);
+            fireProgressStateChanged(6);
         }
 
         c13max = -Double.MAX_VALUE;
@@ -473,7 +473,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         for (n = 0; (n < iterations) && !threadStopped && haveChanged; n++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(10 + Math.round((float) n / (iterations - 1) * 90), runningInSeparateThread);
+                fireProgressStateChanged(10 + Math.round((float) n / (iterations - 1) * 90));
             }
 
             c13max = -Double.MAX_VALUE;
@@ -708,7 +708,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         System.gc();
 
         if (threadStopped) {
-            disposeProgressBar();
+            
             setCompleted(false);
             finalize();
 
@@ -749,7 +749,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         algoPaintToVOI.run();
         algoPaintToVOI = null;
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -817,7 +817,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             boundaryY = new int[length];
             boundaryZ = new int[length];
             srcImage.exportData(0, length, gBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Evolving the level set ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
         } catch (IOException error) {
             cleanUp();
             System.gc();
@@ -884,7 +884,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(2, runningInSeparateThread);
+            fireProgressStateChanged(2);
         }
 
         // Adjust beta after the first trial run thru.
@@ -905,7 +905,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         System.gc();
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(4, runningInSeparateThread);
+            fireProgressStateChanged(4);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -950,7 +950,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(6, runningInSeparateThread);
+            fireProgressStateChanged(6);
         }
 
         c13max = -Double.MAX_VALUE;
@@ -1037,7 +1037,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         for (n = 0; (n < iterations) && !threadStopped && haveChanged; n++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(10 + Math.round((float) n / (iterations - 1) * 90), runningInSeparateThread);
+                fireProgressStateChanged(10 + Math.round((float) n / (iterations - 1) * 90));
             }
 
             c13max = -Double.MAX_VALUE;
@@ -1295,7 +1295,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         System.gc();
 
         if (threadStopped) {
-            disposeProgressBar();
+            
             setCompleted(false);
             finalize();
 
@@ -1334,7 +1334,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         algoPaintToVOI.run();
         algoPaintToVOI = null;
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

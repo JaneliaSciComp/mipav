@@ -192,7 +192,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         }
 
         constructLog();
-        buildProgressBar(srcImage.getImageName(), "Principal component ...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Principal component ...");
         
 
         pComponent();
@@ -437,7 +437,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating mean");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -454,7 +454,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             totalLength = samples * zDim;
         }
 
-        progressBar.setMessage("Exporting source data");
+        fireProgressStateChanged("Exporting source data");
 
         try {
             values = new float[totalLength];
@@ -464,7 +464,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating values");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -474,16 +474,16 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         } catch (IOException error) {
             displayError("Algorithm PComponent: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
             setThreadStopped(true);
 
             return;
         }
 
-        progressBar.updateValue(10, runningInSeparateThread);
+        fireProgressStateChanged(10);
 
         // Each element of the mean vector is the mean of 1 of the nPlanes
-        progressBar.setMessage("Calculating mean vector");
+        fireProgressStateChanged("Calculating mean vector");
 
         if (haveColor) {
 
@@ -511,11 +511,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         } // else not color
 
-        progressBar.updateValue(20, runningInSeparateThread);
+        fireProgressStateChanged(20);
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -524,7 +524,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         // The elements of the covar matrix contain the covariances between the nPlanes.
         // The covariance matrix is real and symmetric, so finding a set of nPlanes
         // orthonormal eigenvectors is always possible.
-        progressBar.setMessage("Calculating covariance matrix");
+        fireProgressStateChanged("Calculating covariance matrix");
 
         try {
             covar = new double[nPlanes][nPlanes];
@@ -534,7 +534,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating covar");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -554,7 +554,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating x");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -567,7 +567,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating mm");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -622,17 +622,17 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         }
 
-        progressBar.updateValue(30, runningInSeparateThread);
+        fireProgressStateChanged(30);
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         }
 
-        progressBar.setMessage("Calculating eigenvalues and eigenvectors");
+        fireProgressStateChanged("Calculating eigenvalues and eigenvectors");
 
         try {
             matCovar = new Matrix(covar);
@@ -642,7 +642,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating matCovar");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -655,7 +655,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating eig");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -676,7 +676,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating tempRow");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -714,17 +714,17 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             Preferences.debug(eigenvalue[i] + "\n");
         }
 
-        progressBar.updateValue(40, runningInSeparateThread);
+        fireProgressStateChanged(40);
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         }
 
-        progressBar.setMessage("Calculating principal components");
+        fireProgressStateChanged("Calculating principal components");
 
         // Principal component 1 is formed by performing the inner (dot)
         // product on the first row of eigenvector with the column vector
@@ -737,7 +737,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating p");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -785,11 +785,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             } // for (j = 0; j < samples; j++)
         } // else not color
 
-        progressBar.updateValue(50, runningInSeparateThread);
+        fireProgressStateChanged(50);
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -799,7 +799,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
             // Output pictures of the first 10 principal components or all that are present
             // if less than 10
-            progressBar.setMessage("Creating principal component images");
+            fireProgressStateChanged("Creating principal component images");
 
             try {
                 pImage = new ModelImage[nPresent];
@@ -809,7 +809,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 displayError("Algorithm Principal component: Out of memory allocating pImage");
                 setCompleted(false);
                 setThreadStopped(true);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -826,7 +826,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 displayError("Algorithm Principal component: Out of memory allocating imageFrame");
                 setCompleted(false);
                 setThreadStopped(true);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -839,7 +839,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                     pImage[i].importData(0, p[i], true);
                 } catch (IOException error) {
                     displayError("AlgorithmPrincipalComponents: IOException on pImage[" + i + "] import data");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
                     setThreadStopped(true);
 
@@ -854,7 +854,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     displayError("AlgorithmPrincipalComponents: Out of memory creating imageFrame[" + i + "]");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
                     setThreadStopped(true);
 
@@ -862,11 +862,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 }
             } // for (i = nPresent - 1; (i >= 0) && (!threadStopped); i--)
 
-            progressBar.updateValue(60, runningInSeparateThread);
+            fireProgressStateChanged(60);
 
             if (threadStopped) {
                 finalize();
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -884,7 +884,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
             if (pNumber == -1) {
                 displayError("AlgorithmPrincipalComponents: Error on createPNumberDialog");
-                progressBar.dispose();
+                
                 setCompleted(false);
                 setThreadStopped(true);
 
@@ -892,7 +892,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         } // if (displayAndAsk)
 
-        progressBar.setMessage("Performing inverse transformation");
+        fireProgressStateChanged("Performing inverse transformation");
         // Reconstruct the data with the inverse transform using only the number of principal components chosen Since
         // the rows of eigenvector are orthonormal vectors, the inverse of eignevector is simply equal to the transpose
         // of eigenvector Also remember that we only want the first pNumber rows of eigenvector or the first pNumber
@@ -906,7 +906,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating eigenInverse");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -934,7 +934,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating pTrunc");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -995,11 +995,11 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
 
         pTrunc = null;
         mean = null;
-        progressBar.updateValue(80, runningInSeparateThread);
+        fireProgressStateChanged(80);
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1013,7 +1013,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
                 destImage[iNumber++].importData(0, values, true);
             } catch (IOException error) {
                 displayError("AlgorithmPrincipalComponents: IOException on filter destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1021,12 +1021,12 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
         } // if (doFilter)
 
         if (!doAveraging) {
-            progressBar.dispose();
+            
             setCompleted(true);
         } // if (!doAveraging)
 
         // Now simply average the reconstructed 3D slices to obtain an average
-        progressBar.setMessage("Averaging reconstructed data");
+        fireProgressStateChanged("Averaging reconstructed data");
 
         try {
             result = new float[samples];
@@ -1036,7 +1036,7 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             displayError("Algorithm Principal component: Out of memory allocating result");
             setCompleted(false);
             setThreadStopped(true);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -1071,20 +1071,20 @@ public class AlgorithmPrincipalComponents extends AlgorithmBase implements Actio
             }
         } // else not color
 
-        progressBar.updateValue(90, runningInSeparateThread);
-        progressBar.setMessage("Importing averaged destination data");
+        fireProgressStateChanged(90);
+        fireProgressStateChanged("Importing averaged destination data");
 
         try {
             destImage[iNumber].importData(0, result, true);
         } catch (IOException error) {
             displayError("AlgorithmPrincipalComponents: IOException on averaged destination image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

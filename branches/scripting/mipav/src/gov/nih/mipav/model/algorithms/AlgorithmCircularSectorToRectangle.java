@@ -178,8 +178,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
 
         constructLog();
         
-        buildProgressBar(srcImage.getImageName(), "Circular sector to rectangle ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Circular sector to rectangle ...");
         
         if (srcImage.isColorImage()) {
             cf = 4;
@@ -247,7 +246,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         }
         catch(IOException e) {
             MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
-            disposeProgressBar();
+            
             setCompleted(false);
             return;
         }
@@ -285,7 +284,7 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         var = 0.5*Math.log(rmax/rmin)/theta;
         rscale = Math.sqrt(rmax*rmin);
         for (j = 0; j < yDimDest; j++) {
-            progressBar.updateValueImmed(100*j/yDimDest);
+            fireProgressStateChanged(100*j/yDimDest);
             index1 = j * xDimDest;
             yp = (2.0 * var * j)/(yDimDest - 1) - var;
             // v = -log(r)/(alpha *PI) -> r = exp(-theta*v), then scale by sqrt(rmax/rmin).
@@ -347,12 +346,12 @@ public class AlgorithmCircularSectorToRectangle extends AlgorithmBase {
         }
         catch(IOException e) {
             MipavUtil.displayError("IOException " + e + " on destImage.importData");
-            disposeProgressBar();
+            
             setCompleted(false);
             return;   
         }
         
-        disposeProgressBar();
+        
         setCompleted(true);
         return;
     }

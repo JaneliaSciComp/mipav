@@ -368,10 +368,6 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
                     }
                 } else {
 
-                    if (!userInterface.isAppFrameVisible()) {
-                        aheAlgo.setProgressBarVisible(false);
-                    }
-
                     aheAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -429,10 +425,6 @@ public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterf
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        aheAlgo.setProgressBarVisible(false);
-                    }
 
                     aheAlgo.run();
                 }

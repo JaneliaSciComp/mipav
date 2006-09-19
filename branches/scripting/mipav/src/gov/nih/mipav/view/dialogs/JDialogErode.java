@@ -489,10 +489,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo2D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -548,10 +544,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo2D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -591,10 +583,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo3D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -649,10 +637,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo3D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -701,10 +685,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo25D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo25D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -760,10 +740,6 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo25D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo25D.run();
                     }
                 } catch (OutOfMemoryError x) {

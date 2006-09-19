@@ -191,7 +191,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                 int numberSlices = m_kSimpleImageSource.extents[2];
 
                 // Setup to use the progress bar.
-                buildProgressBar(m_kImageSource.getImageName(), "Transforming ...", 0, 100);
+                fireProgressStateChanged(m_kImageSource.getImageName(), "Transforming ...");
                 
 
                 // Create result image.
@@ -238,7 +238,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
                 Point2f kPoint = new Point2f();
 
                 for (int slice = 0; slice < numberSlices; slice++) {
-                    progressBar.updateValue(100 * slice / numberSlices, runningInSeparateThread);
+                    fireProgressStateChanged(100 * slice / numberSlices);
 
                     ModelSimpleImage kSimpleImageSlice = new ModelSimpleImage(aiSliceExtents, outResolutions,
                                                                               m_kImageSource, slice);
@@ -274,7 +274,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
             else { // !have25D
 
                 // Setup to use the progress bar.
-                buildProgressBar(m_kImageSource.getImageName(), "Transforming ...", 0, 100);
+                fireProgressStateChanged(m_kImageSource.getImageName(), "Transforming ...");
                 
 
                 // Create result image.
@@ -414,7 +414,7 @@ public class AlgorithmTransformBSpline extends AlgorithmBase {
         }
 
         disposeLocal();
-        disposeProgressBar();
+        
     }
 
     /**

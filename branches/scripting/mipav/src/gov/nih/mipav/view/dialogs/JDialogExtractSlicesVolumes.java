@@ -465,10 +465,6 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    extractSlicesAlgo.setProgressBarVisible(false);
-                }
-
                 extractSlicesAlgo.run();
             }
 

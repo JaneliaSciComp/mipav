@@ -437,11 +437,6 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!UI.isAppFrameVisible()) {
-                    fretAlgo.setProgressBarVisible(false);
-                }
-
                 fretAlgo.run();
             }
         } catch (OutOfMemoryError x) {

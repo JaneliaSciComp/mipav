@@ -438,7 +438,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                 // Make algorithm
                 adaptivePathSmoothAlgo = new AlgorithmAdaptivePathSmooth(resultImage, image, radiusY, radiusCr,
                                                                          radiusCb, threshold, includeNeighbors, reduce,
-                                                                         image25D, 0, 100);
+                                                                         image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -475,8 +475,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 adaptivePathSmoothAlgo = new AlgorithmAdaptivePathSmooth(null, image, radiusY, radiusCr, radiusCb,
-                                                                         threshold, includeNeighbors, reduce, image25D,
-                                                                         0, 100);
+                                                                         threshold, includeNeighbors, reduce, image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.

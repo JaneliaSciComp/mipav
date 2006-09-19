@@ -199,8 +199,8 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
      * @param  reduce      DOCUMENT ME!
      */
     public AlgorithmAdaptiveNR(ModelImage destImage, ModelImage srcImg, float radiusY, float radiusCr, float radiusCb,
-                               float distWeight, boolean reduce, int minProgressValue, int maxProgressValue) {
-        super(destImage, srcImg, minProgressValue, maxProgressValue);
+                               float distWeight, boolean reduce) {
+        super(destImage, srcImg);
         this.radiusY = radiusY;
         this.distWeight = distWeight;
         this.radiusCr = radiusCr;
@@ -298,7 +298,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             
             
             
-          //  progressBar = new ViewJProgressBar(srcImage.getImageName(), "Converting to Y,Cr,Cb ...", 0, 100, true, this,
+          //  fireProgressStateChanged(srcImage.getImageName(), "Converting to Y,Cr,Cb ...", true, this,
           //                                     this);
         } catch (IOException error) {
             cleanup();
@@ -315,7 +315,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         }
         
         
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
         if (threadStopped) {
@@ -334,7 +334,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(getProgressFromFloat(.95f), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged(.95f, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
         
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
@@ -369,7 +369,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
 
         if (threadStopped) {
             cleanup();
@@ -379,10 +379,6 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         }
 
         cleanup();
-        
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
         
         setCompleted(true);
     }
@@ -415,7 +411,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             return;
         }
         
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Performing median filter ...");
         
 
         process(imgBuffer);
@@ -450,7 +446,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
                 return;
             }
         }
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Performing median filter ...");
         
         if (threadStopped) {
             cleanup();
@@ -458,11 +454,6 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
 
             return;
         }
-
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
-        
         cleanup();
         setCompleted(true);
     }
@@ -1198,13 +1189,13 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         width = xDim;
         height = yDim;
         
-        fireProgressStateChanged(getProgressFromFloat(.1f)  , srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged(10, srcImage.getImageName(), "Performing median filter ...");
         
         medianFilter(fY);
-        fireProgressStateChanged(getProgressFromFloat(.3f)  , srcImage.getImageName(), "Creating edge graph ...");
+        fireProgressStateChanged(30, srcImage.getImageName(), "Creating edge graph ...");
        
         createEdgeGraph(fY);
-        fireProgressStateChanged((int)((maxProgressValue - minProgressValue) * .5)  , srcImage.getImageName(), "Filtering in Y space ...");
+        fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
         filterProcessBW();
 
         if (threadStopped) {
@@ -1260,15 +1251,15 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         height = yDim;
         
         
-        fireProgressStateChanged(getProgressFromFloat(.1f)  , srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged(10 , srcImage.getImageName(), "Performing median filter ...");
        
         medianFilter(fY, fR, fB);
         
-        fireProgressStateChanged(getProgressFromFloat(.3f)  , srcImage.getImageName(), "Creating edge graph ...");
+        fireProgressStateChanged(30, srcImage.getImageName(), "Creating edge graph ...");
         
         createEdgeGraph(fY, fR, fB);
         
-        fireProgressStateChanged(getProgressFromFloat(.5f)  , srcImage.getImageName(), "Filtering in Y space ...");
+        fireProgressStateChanged(50 , srcImage.getImageName(), "Filtering in Y space ...");
        
         filterProcess();
 
@@ -1282,7 +1273,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         if (!reduce) {
             data = Cb;
             radius = radiusCb;
-            fireProgressStateChanged(getProgressFromFloat(.7f)  , srcImage.getImageName(), "Filtering in Cb space ...");
+            fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
             
             
             filterProcess();
@@ -1296,7 +1287,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
 
             data = Cr;
             radius = radiusCr;
-            fireProgressStateChanged(getProgressFromFloat(.9f)  , srcImage.getImageName(), "Filtering in Cr space ...");
+            fireProgressStateChanged(90 , srcImage.getImageName(), "Filtering in Cr space ...");
             
             filterProcess();
 
@@ -1345,7 +1336,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             data = newB;
             radius = radiusCb / 2.0f;
             
-            fireProgressStateChanged(getProgressFromFloat(.7f)  , srcImage.getImageName(), "Filtering in Cb space ...");
+            fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
             
             filterProcess();
 
@@ -1359,7 +1350,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             data = newR;
             radius = radiusCr / 2.0f;
             
-            fireProgressStateChanged(getProgressFromFloat(.9f)  , srcImage.getImageName(), "Filtering in Cr space ...");
+            fireProgressStateChanged(90, srcImage.getImageName(), "Filtering in Cr space ...");
             
             filterProcess();
 

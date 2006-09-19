@@ -606,7 +606,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
                 buffer2[i] = 1.0f;
             }
 
-            buildProgressBar(srcImage.getImageName(), "Calculating the Edge ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Edge ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             buffer2 = null;
@@ -630,7 +630,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm EdgeNMSup: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -638,7 +638,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -708,7 +708,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -750,7 +750,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
             }
 
             srcImage.exportData(0, totalLength, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating Zero X-ings ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating Zero X-ings ...");
         } catch (IOException error) {
             buffer = null;
             sliceBuffer = null;
@@ -777,7 +777,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
             for (i = start; (i < (start + length)) && !threadStopped; i++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (totalLength - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) i / (totalLength - 1) * 100));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -860,7 +860,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

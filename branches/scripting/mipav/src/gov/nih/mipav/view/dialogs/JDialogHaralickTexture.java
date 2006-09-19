@@ -730,7 +730,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
             textureAlgo = new AlgorithmHaralickTexture(resultImage, image, windowSize, offsetDistance, ns, nesw, ew,
                                                        senw, invariantDir, contrast, dissimilarity, homogeneity,
                                                        inverseOrder1, asm, energy, maxProbability, entropy, mean,
-                                                       variance, standardDeviation, correlation, 0, 100);
+                                                       variance, standardDeviation, correlation);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -748,10 +748,6 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    textureAlgo.setProgressBarVisible(false);
-                }
-
                 textureAlgo.run();
             }
         } catch (OutOfMemoryError x) {

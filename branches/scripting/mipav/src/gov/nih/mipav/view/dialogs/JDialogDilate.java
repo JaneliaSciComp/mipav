@@ -492,10 +492,6 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            dilateAlgo2D.setProgressBarVisible(false);
-                        }
-
                         dilateAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -550,10 +546,6 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            dilateAlgo2D.setProgressBarVisible(false);
-                        }
-
                         dilateAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -598,10 +590,6 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            dilateAlgo2D.setProgressBarVisible(false);
-                        }
-
                         dilateAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -655,10 +643,6 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            dilateAlgo2D.setProgressBarVisible(false);
-                        }
-
                         dilateAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -714,10 +698,6 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            dilateAlgo25D.setProgressBarVisible(false);
-                        }
-
                         dilateAlgo25D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -772,10 +752,6 @@ public class JDialogDilate extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            dilateAlgo25D.setProgressBarVisible(false);
-                        }
-
                         dilateAlgo25D.run();
                     }
                 } catch (OutOfMemoryError x) {

@@ -98,9 +98,8 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
      */
     public AlgorithmRegVOILandmark(ModelImage volume, ModelImage gradMagVol, float[] sigmas, boolean maskFlag,
                                    Vector3Df[] position, double minTx, double maxTx, double minTy, double maxTy,
-                                   double minRz, double maxRz, double step, int opt, int costFunc,
-                                   int minProgressValue, int maxProgressValue) {
-        super(volume, gradMagVol, minProgressValue, maxProgressValue);
+                                   double minRz, double maxRz, double step, int opt, int costFunc) {
+        super(volume, gradMagVol);
         this.volume = volume;
         this.gradMagVol = gradMagVol;
         this.opt = opt;
@@ -141,8 +140,9 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
      */
     public void runAlgorithm() {
         int i;
-        gradientMagAlgo = new AlgorithmGradientMagnitude(gradMagVol, volume, sigmas, maskFlag, true, 
-                minProgressValue, (int)(maxProgressValue * .1));
+        gradientMagAlgo = new AlgorithmGradientMagnitude(gradMagVol, volume, sigmas, maskFlag, true);
+        gradientMagAlgo.setMinMaxProgressValues(generateProgressValues(0,10));
+        
         try {
             gradientMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
             gradientMagAlgo.run();
@@ -320,7 +320,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
         
         for (int t = 1; t < tdim; t++) {
 
-            fireProgressStateChanged( getProgressFromFloat(increment * t), null, null);
+            fireProgressStateChanged( (increment * t), null, null);
         
 
             func.setSlice(t);

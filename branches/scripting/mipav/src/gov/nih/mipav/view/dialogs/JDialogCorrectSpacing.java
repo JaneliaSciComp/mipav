@@ -294,10 +294,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("Correct Spacing reports: A thread is already running on this object [correctSpaceAlgo]");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        correctSpaceAlgo.setProgressBarVisible(false);
-                    }
-
+                   
                     correctSpaceAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

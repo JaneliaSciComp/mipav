@@ -906,10 +906,6 @@ public class JDialogColocalizationEM extends JDialogScriptableBase implements Al
                 }
             } else {
 
-                if (!UI.isAppFrameVisible()) {
-                    colocalizationAlgo.setProgressBarVisible(false);
-                }
-
                 colocalizationAlgo.run();
             }
         } catch (OutOfMemoryError x) {

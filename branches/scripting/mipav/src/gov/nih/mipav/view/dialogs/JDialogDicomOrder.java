@@ -275,10 +275,6 @@ public class JDialogDicomOrder extends JDialogBase implements AlgorithmInterface
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    dicomOrderAlgo.setProgressBarVisible(false);
-                }
-
                 dicomOrderAlgo.run();
             }
         } catch (OutOfMemoryError x) {

@@ -510,7 +510,7 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
 
             // Make algorithm
             algoColorEdge = new AlgorithmColorEdge(resultImage, sourceImage, red1, green1, blue1,
-                                                   red2, green2, blue2, 0, 100);
+                                                   red2, green2, blue2);
 
             // This is very important. Adding this object as a listener
             // allows the algorithm to notify this object when it

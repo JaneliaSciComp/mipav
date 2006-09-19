@@ -412,10 +412,7 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        cropAlgo.setProgressBarVisible(false);
-                    }
-
+                   
                     cropAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -452,10 +449,7 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        cropAlgo.setProgressBarVisible(false);
-                    }
-
+                    
                     cropAlgo.run();
                 }
 

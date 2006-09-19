@@ -273,7 +273,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         m_fStiffness = 0.5f; // --> 0  less stiff  c2
         c3Factor = 0.05f; // --> 0  more stiff  c3
 
-        buildProgressBar(image.getImageName(), "Extracting object ...", 0, 100);
+        fireProgressStateChanged(image.getImageName(), "Extracting object ...");
         
 
         if (onlyInit == true) {
@@ -285,14 +285,14 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
             if (((i % 100) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (i) / (iMaxUpdate) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (i) / (iMaxUpdate) * 100));
             }
 
             updateMesh();
         }
 
         if (threadStopped) {
-            disposeProgressBar();
+            
             setCompleted(false);
             finalize();
 
@@ -307,7 +307,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             System.out.println(" Problem saving mesh.");
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -569,7 +569,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         m_aiMask = new byte[m_iQuantity];
 
         if (threadStopped) {
-            disposeProgressBar();
+            
             setCompleted(false);
             finalize();
 
@@ -1874,7 +1874,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             sigmas[0] = 2f;
             sigmas[1] = 2f;
             sigmas[2] = 0.5f;
-            gradMagAlgo = new AlgorithmGradientMagnitude(energyImage, image, sigmas, true, false, 0, 100);
+            gradMagAlgo = new AlgorithmGradientMagnitude(energyImage, image, sigmas, true, false);
             gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
             gradMagAlgo.run();
 
@@ -1968,7 +1968,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             gvfBuffer = new float[xDim * yDim * zDim];
         } catch (OutOfMemoryError e) {
             finalize();
-            progressBar.dispose();
+            
             displayError("AlgorithmObjectExtractor: Out of memory");
             setCompleted(false);
 
@@ -1980,7 +1980,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         } catch (IOException error) {
             displayError("AlgorithmObjectExtractor: Source image is locked");
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1988,12 +1988,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
         int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar = new ViewJProgressBar(image.getImageName(), "Calculating 3D GVF ...", 0, 100, true, this, this);
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
-
-        progressBar.setMessage("Calculating 3D GVF");
+        fireProgressStateChanged(image.getImageName(), "Calculating 3D GVF ...");
 
         // Make 3D kernels
         int xkDim, ykDim, zkDim;
@@ -2115,7 +2110,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
 
             return;
         }
@@ -2319,7 +2314,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
             // Create a mirror at the u boundaries
             // Create a mirror at the 8 corner points of the cube
-            progressBar.updateValue((iteration * 100) / gvfIterations, runningInSeparateThread);
+            fireProgressStateChanged((iteration * 100) / gvfIterations);
             uVal[0] = uVal[2 + (2 * (xDim + 2)) + (2 * expSliceSize)];
             uVal[xDim + 1] = uVal[(xDim - 1) + (2 * (xDim + 2)) + (2 * expSliceSize)];
             uVal[(yDim + 1) * (xDim + 2)] = uVal[((yDim - 1) * (xDim + 2)) + 2 + (2 * expSliceSize)];
@@ -2650,7 +2645,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         } // for (iteration = 0; iteration < gvfIterations && (!threadStopped); iteration++)
 
         if (threadStopped) {
-            disposeProgressBar();
+            
             setCompleted(false);
             finalize();
 
@@ -2722,7 +2717,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.importData");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -2739,7 +2734,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.saveImage");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -2755,7 +2750,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.importData");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -2772,7 +2767,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.saveImage");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -2788,7 +2783,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.importData");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -2805,7 +2800,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.saveImage");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -2815,7 +2810,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             gvfImage = null;
         } // if (saveGVF)
 
-        progressBar.dispose();
+        
 
         return;
     }

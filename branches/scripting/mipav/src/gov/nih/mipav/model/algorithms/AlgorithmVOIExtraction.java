@@ -234,7 +234,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             return;
         }
 
-        // buildProgressBar(srcImage.getImageName(), "VOIExtraction ...", 0, 100);
+        // fireProgressStateChanged(srcImage.getImageName(), "VOIExtraction ...");
         // initProgressBar();
 
         try {
@@ -256,7 +256,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm VOI Extraction: image bounds exceeded");
                 setCompleted(false);
-                disposeProgressBar();
+                
                 srcImage.releaseLock();
 
                 return;
@@ -468,9 +468,8 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                     } // end of for (x = 0; x < xDimE; x++)
                 } // end of for (y = 0; y < yDimE; y++)
 
-                if (progressBar != null) {
-                    progressBar.updateValue(Math.round((z + 1) * 100.0f / zDim), runningInSeparateThread);
-                }
+                fireProgressStateChanged(Math.round((z + 1) * 100.0f / zDim));
+                
             } // end of for (z = 0; z < zDim; z++)
         }
 
@@ -520,11 +519,6 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
         } // if (nameTable != null)
 
         srcImage.releaseLock();
-
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
-
 
         setCompleted(true);
     }

@@ -191,7 +191,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Cropping image ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Crop Image: Image(s) locked", true);
@@ -223,7 +223,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
                 if (((i % (4 * dimExtents[0])) == 0) && (i != 0)) {
@@ -242,7 +242,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
                 if (((i % dimExtents[0]) == 0) && (i != 0)) {
@@ -263,7 +263,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -337,7 +337,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Cropping image ...");
         
 
         for (slice = z[0], i = 0; slice <= z[1]; slice++) {
@@ -360,7 +360,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                     }
 
                     if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
@@ -378,7 +378,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                     }
 
                     if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
@@ -400,7 +400,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -481,7 +481,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Cropping image ...");
         
 
         for (t = 0, i = 0; t < tDim; t++) {
@@ -506,7 +506,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                         }
 
                         if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
@@ -524,7 +524,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                         }
 
                         if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
@@ -547,7 +547,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -599,7 +599,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Cropping image ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Crop Image: Image(s) locked", true);
@@ -676,7 +676,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
                 if (((i % (4 * dimExtents[0])) == 0) && (i != 0)) {
@@ -695,7 +695,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
                 if (((i % dimExtents[0]) == 0) && (i != 0)) {
@@ -749,12 +749,12 @@ public class AlgorithmCrop extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm RGBtoGray: Output Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -854,7 +854,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Cropping image ...");
         
 
         for (slice = z[0]; slice <= z[1]; slice++) {
@@ -928,7 +928,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                     }
 
                     if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
@@ -946,7 +946,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) i / (croppedVolume - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                     }
 
                     if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
@@ -1047,12 +1047,12 @@ public class AlgorithmCrop extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm RGBtoGray: Output Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1164,7 +1164,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Cropping image ...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Cropping image ...");
         
 
         for (t = 0; t < tDim; t++) {
@@ -1244,7 +1244,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                         }
 
                         if (((i % (4 * dimExtents[0])) == 0) && ((i % croppedLength) != 0)) {
@@ -1262,7 +1262,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / (croppedSeries - 1) * 100), runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                         }
 
                         if (((i % dimExtents[0]) == 0) && ((i % croppedLength) != 0)) {
@@ -1339,12 +1339,12 @@ public class AlgorithmCrop extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm RGBtoGray: Output Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

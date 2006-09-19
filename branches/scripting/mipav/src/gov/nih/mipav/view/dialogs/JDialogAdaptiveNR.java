@@ -321,7 +321,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
                 // resultImage.setImageName(name);
                 // Make algorithm
                 adaptiveNRAlgo = new AlgorithmAdaptiveNR(resultImage, image, radiusY, radiusCr, radiusCb, distWeight,
-                                                         reduce, 0, 100);
+                                                         reduce);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -358,8 +358,7 @@ public class JDialogAdaptiveNR extends JDialogScriptableBase implements Algorith
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                adaptiveNRAlgo = new AlgorithmAdaptiveNR(null, image, radiusY, radiusCr, radiusCb, distWeight, reduce,
-                                                         0, 100);
+                adaptiveNRAlgo = new AlgorithmAdaptiveNR(null, image, radiusY, radiusCr, radiusCb, distWeight, reduce);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.

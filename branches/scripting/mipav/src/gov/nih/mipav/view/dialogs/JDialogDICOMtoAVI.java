@@ -190,10 +190,6 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!userInterface.isAppFrameVisible()) {
-                algoDicomConvert.setProgressBarVisible(false);
-            }
-
             algoDicomConvert.run();
         }
 

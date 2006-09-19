@@ -422,7 +422,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
      * run - starts the program.
      */
     public void runAlgorithm() {
-        buildProgressBar(sourceImage.getImageName(), "Registering source image...", 0, 100);
+        fireProgressStateChanged(sourceImage.getImageName(), "Registering source image...");
         
 
         constructLog();
@@ -977,7 +977,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
         scaleBottomDownLandmarks();
 
         while (!targetImagePyramid.isEmpty()) {
-            progressBar.updateValue(iterationNumber * 100 / (pyramidDepth + 1), runningInSeparateThread);
+            fireProgressStateChanged(iterationNumber * 100 / (pyramidDepth + 1));
             iterationPower /= ITERATION_PROGRESSION;
 
             if (transformation == BILINEAR_DISTORTION) {
@@ -1036,7 +1036,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
             iterationNumber++;
         }
 
-        progressBar.updateValue(pyramidDepth * 100 / (pyramidDepth + 1), runningInSeparateThread);
+        fireProgressStateChanged(pyramidDepth * 100 / (pyramidDepth + 1));
         iterationPower /= ITERATION_PROGRESSION;
 
         if (transformation == BILINEAR_DISTORTION) {
@@ -1081,7 +1081,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
         } // if (interpolation == CUBIC_SPLINE)
 
         iterationPower = (int) Math.pow((double) ITERATION_PROGRESSION, (double) pyramidDepth);
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(0);
 
     }
 
@@ -3240,7 +3240,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
             sourceImage.exportData(0, sourceSliceSize, sourceArray); // locks and releases and lock
         } catch (IOException error) {
             displayError("AlgorithmRegTurbo: Source image is locked");
-            progressBar.dispose();
+            
             setCompleted(false);
             notifyListeners(this);
 
@@ -3249,7 +3249,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
             sourceArray = null;
             System.gc();
             displayError("AlgorithmRegTurbo: Out of memory");
-            progressBar.dispose();
+            
             setCompleted(false);
             notifyListeners(this);
 
@@ -3265,7 +3265,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
             targetImage.exportData(0, targetSliceSize, targetArray); // locks and releases and lock
         } catch (IOException error) {
             displayError("AlgorithmRegTurbo: Target image is locked");
-            progressBar.dispose();
+            
             setCompleted(false);
             notifyListeners(this);
 
@@ -3274,7 +3274,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
             targetArray = null;
             System.gc();
             displayError("AlgorithmRegTurbo: Out of memory");
-            progressBar.dispose();
+            
             setCompleted(false);
             notifyListeners(this);
 
@@ -3287,7 +3287,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
 
             // Compute spline coefficients, image pyramids, and mask pyramids
             // targetImage
-            progressBar.setMessage("Calculating target image coefficients");
+            fireProgressStateChanged("Calculating target image coefficients");
             targetCoefficient = getBasicFromCardinal2D(targetArray, targetWidth, targetHeight);
             pyramidType = TARGET_IMAGE;
 
@@ -3296,18 +3296,18 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
                 case TRANSLATION:
                 case SCALED_ROTATION:
                 case AFFINE:
-                    progressBar.setMessage("Building target image coefficient pyramid");
+                    fireProgressStateChanged("Building target image coefficient pyramid");
                     buildCoefficientPyramid(pyramidType, targetWidth, targetHeight);
                     break;
 
                 case BILINEAR_DISTORTION:
-                    progressBar.setMessage("Building target image pyramid");
+                    fireProgressStateChanged("Building target image pyramid");
                     buildImagePyramid(pyramidType, targetArray, targetWidth, targetHeight);
                     break;
             }
 
             // sourceImage
-            progressBar.setMessage("Calculating source image coefficients");
+            fireProgressStateChanged("Calculating source image coefficients");
             sourceCoefficient = getBasicFromCardinal2D(sourceArray, sourceWidth, sourceHeight);
             pyramidType = SOURCE_IMAGE;
 
@@ -3316,19 +3316,19 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
                 case TRANSLATION:
                 case SCALED_ROTATION:
                 case AFFINE:
-                    progressBar.setMessage("Building target image and gradient pyramid");
+                    fireProgressStateChanged("Building target image and gradient pyramid");
                     imageToXYGradient2D(sourceArray, sourceWidth, sourceHeight);
                     buildImageAndGradientPyramid(pyramidType, sourceArray, sourceWidth, sourceHeight);
                     break;
 
                 case BILINEAR_DISTORTION:
-                    progressBar.setMessage("Building target image pyramid");
+                    fireProgressStateChanged("Building target image pyramid");
                     buildCoefficientPyramid(pyramidType, sourceWidth, sourceHeight);
                     break;
             }
 
             // targetMask
-            progressBar.setMessage("Building target mask pyramid");
+            fireProgressStateChanged("Building target mask pyramid");
             pyramidType = TARGET_MASK;
             targetMask = new boolean[targetSliceSize];
 
@@ -3356,7 +3356,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
             buildPyramid(pyramidType, targetMask, targetWidth, targetHeight);
 
             // sourceMask
-            progressBar.setMessage("Building source mask pyramid");
+            fireProgressStateChanged("Building source mask pyramid");
             pyramidType = SOURCE_MASK;
             sourceMask = new boolean[sourceSliceSize];
 
@@ -3437,18 +3437,18 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
         } // else if (interpolation == NEAREST_NEIGHBOR)
 
         if (automan == AUTOMATIC) {
-            progressBar.setMessage("Refining the source landmark positions");
+            fireProgressStateChanged("Refining the source landmark positions");
             doRegistration();
         } // if (automan == AUTOMATIC)
 
-        progressBar.setMessage("Computing the final image");
+        fireProgressStateChanged("Computing the final image");
         doFinalTransform();
 
         try {
             resultImage[0].importData(0, outImg, true);
         } catch (IOException error) {
             MipavUtil.displayError("AlgorithmRegTurbo: IOException on resultImage[0]" + ".importData(0,outImg,true)");
-            progressBar.dispose();
+            
             setCompleted(false);
             notifyListeners(this);
 
@@ -3456,7 +3456,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             System.gc();
             MipavUtil.displayError("AlgorithmRegTurbo: Out of memory on resultImage[0]" + ".importData(0,outImg,true)");
-            progressBar.dispose();
+            
             setCompleted(false);
             notifyListeners(this);
 
@@ -3467,7 +3467,7 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
             resultImage[1].importData(0, outMsk, true);
         } catch (IOException error) {
             MipavUtil.displayError("AlgorithmRegTurbo: IOException on resultImage[1]" + ".importData(0,outMsk,true)");
-            progressBar.dispose();
+            
             setCompleted(false);
             notifyListeners(this);
 
@@ -3475,14 +3475,14 @@ public class AlgorithmRegTurbo extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             System.gc();
             MipavUtil.displayError("AlgorithmRegTurbo: Out of memory on resultImage[1]" + ".importData(0,outMsk,true)");
-            progressBar.dispose();
+            
             setCompleted(false);
             notifyListeners(this);
 
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
         notifyListeners(this);
 

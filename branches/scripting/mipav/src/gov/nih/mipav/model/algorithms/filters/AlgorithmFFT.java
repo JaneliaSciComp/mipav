@@ -265,10 +265,9 @@ public class AlgorithmFFT extends AlgorithmBase {
      * @param  theta          Rotation in radians
      */
     public AlgorithmFFT(ModelImage srcImg, int transformDir, boolean logMagDisplay, boolean unequalDim, float freqU,
-                        float freqV, float sigmaU, float sigmaV, float theta,
-                        int minProgressValue, int maxProgressValue) {
+                        float freqV, float sigmaU, float sigmaV, float theta) {
 
-        super(null, srcImg, minProgressValue, maxProgressValue);
+        super(null, srcImg);
 
         this.transformDir = transformDir;
         this.logMagDisplay = logMagDisplay;
@@ -338,10 +337,9 @@ public class AlgorithmFFT extends AlgorithmBase {
      * @param  theta          Rotation in radians
      */
     public AlgorithmFFT(ModelImage destImg, ModelImage srcImg, int transformDir, boolean logMagDisplay,
-                        boolean unequalDim, float freqU, float freqV, float sigmaU, float sigmaV, float theta,
-                        int minProgressValue, int maxProgressValue) {
+                        boolean unequalDim, float freqU, float freqV, float sigmaU, float sigmaV, float theta) {
 
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+        super(destImg, srcImg);
 
         this.transformDir = transformDir;
         this.logMagDisplay = logMagDisplay;
@@ -420,10 +418,9 @@ public class AlgorithmFFT extends AlgorithmBase {
      */
     public AlgorithmFFT(ModelImage srcImg, int transformDir, boolean logMagDisplay, boolean unequalDim,
                         boolean image25D, boolean imageCrop, int kernelDiameter, int filterType, float freq1,
-                        float freq2, int constructionMethod, int butterworthOrder,
-                        int minProgressValue, int maxProgressValue) {
+                        float freq2, int constructionMethod, int butterworthOrder) {
 
-        super(null, srcImg, minProgressValue, maxProgressValue);
+        super(null, srcImg);
 
         this.transformDir = transformDir;
         this.logMagDisplay = logMagDisplay;
@@ -517,10 +514,9 @@ public class AlgorithmFFT extends AlgorithmBase {
      */
     public AlgorithmFFT(ModelImage destImg, ModelImage srcImg, int transformDir, boolean logMagDisplay,
                         boolean unequalDim, boolean image25D, boolean imageCrop, int kernelDiameter, int filterType,
-                        float freq1, float freq2, int constructionMethod, int butterworthOrder,
-                        int minProgressValue, int maxProgressValue) {
+                        float freq1, float freq2, int constructionMethod, int butterworthOrder ) {
 
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+        super(destImg, srcImg);
 
         this.transformDir = transformDir;
         this.logMagDisplay = logMagDisplay;
@@ -742,9 +738,9 @@ public class AlgorithmFFT extends AlgorithmBase {
                 imagSubsetData = new float[newSliceSize];
 
                 if (transformDir == FORWARD) {
-                    fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Running forward FFTs ...");
+                    fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
                 } else {
-                    fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Running inverse FFTs ...");
+                    fireProgressStateChanged(0, srcImage.getImageName(), "Running inverse FFTs ...");
                 }
 
                 for (z = 0; z < newDimLengths[2]; z++) {
@@ -756,7 +752,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                     exec(realSubsetData, imagSubsetData, z);
 
-                    fireProgressStateChanged(getProgressFromInt(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80))), null, null);
+                    fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80))), null, null);
                    
 
                     if (transformDir == FORWARD) {
@@ -970,9 +966,9 @@ public class AlgorithmFFT extends AlgorithmBase {
                 imagSubsetData = new float[newSliceSize];
 
                 if (transformDir == FORWARD) {
-                    fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Running forward FFTs ...");
+                    fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
                 } else if (isProgressBarVisible()) {
-                    fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Running forward FFTs ...");
+                    fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
                 }
 
                 for (z = 0; z < newDimLengths[2]; z++) {
@@ -984,7 +980,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                     exec(realSubsetData, imagSubsetData, z);
 
-                    fireProgressStateChanged(getProgressFromInt(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80))), srcImage.getImageName(), "Running forward FFTs ...");
+                    fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80))), srcImage.getImageName(), "Running forward FFTs ...");
                  
                     if (transformDir == FORWARD) {
 
@@ -1168,7 +1164,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         } // end of else if (transformDir == INVERSE)
 
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         setCompleted(true);
     }
 
@@ -1999,7 +1995,7 @@ public class AlgorithmFFT extends AlgorithmBase {
             }
 
             if (!image25D) {
-                fireProgressStateChanged(getProgressFromInt(Math.round(10 + ((float) (i + 1) / ndim * 80))), null, null);
+                fireProgressStateChanged((Math.round(10 + ((float) (i + 1) / ndim * 80))), null, null);
             }
         }
 

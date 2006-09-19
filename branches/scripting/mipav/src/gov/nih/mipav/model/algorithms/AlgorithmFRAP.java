@@ -406,7 +406,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing FRAP ...");
 
         constructLog();
         xDim = srcImage.getExtents()[0];
@@ -494,7 +494,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
         // Create black and white image using only the selected color
         if (srcImage.isColorImage()) {
-            progressBar.setMessage("Creating black and white image");
+            fireProgressStateChanged("Creating black and white image");
             minR = srcImage.getMinR();
             maxR = srcImage.getMaxR();
 
@@ -649,7 +649,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         }
 
         if (register) {
-            progressBar.setMessage("Registering slices");
+            fireProgressStateChanged("Registering slices");
 
             int DOF = 3; // rigid transformation
             int interp = AlgorithmTransform.BILINEAR;
@@ -1030,7 +1030,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             dataString += "whole organ length = " + nf.format(wholeOrganLength) + " microns\n";
         } // if (wholeOrganIndex >= 0)
 
-        progressBar.setMessage("Cacluating average intensities");
+        fireProgressStateChanged("Cacluating average intensities");
         mask = new short[sliceSize * zDim];
 
         if (wholeOrganIndex >= 0) {
@@ -1218,7 +1218,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
         // fluorescence loss through photobleaching over the course of the recovery curve.
         // Assume this loss is of the form exp(-lambda*time)
         /*if (wholeOrganIntensity[firstSliceNum] > wholeOrganIntensity[zDim - 1]) {
-         * progressBar.setMessage("Finding whole organ model"); // The whole organ region is fit to a function of the
+         * fireProgressStateChanged("Finding whole organ model"); // The whole organ region is fit to a function of the
          * form // a0*exp(a1*t), // where a1 < 0.
          *
          * // The exponential decay due to photobleaching does not depend on absolute times. // It only depends on the
@@ -1287,16 +1287,16 @@ public class AlgorithmFRAP extends AlgorithmBase {
         }
 
         if (model == NARROW_BAND_2D) {
-            progressBar.setMessage("Finding double exponential model");
+            fireProgressStateChanged("Finding double exponential model");
         } else if (model == CIRCLE_2D) {
-            progressBar.setMessage("Finiding full reaction-diffusion model");
+            fireProgressStateChanged("Finiding full reaction-diffusion model");
         } else if (model == PURE_1D) {
-            progressBar.setMessage("Finding 1D pure diffusion model");
+            fireProgressStateChanged("Finding 1D pure diffusion model");
         } else {
-            progressBar.setMessage("Finding single exponential model");
+            fireProgressStateChanged("Finding single exponential model");
         }
 
-        progressBar.updateValue(50, runningInSeparateThread);
+        fireProgressStateChanged(50);
 
         if (model == NARROW_BAND_2D) {
             // Determine the constraints on alpha beta and gamma.
@@ -1362,7 +1362,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 /*chiSquared = fdem.getChiSquared();
                  * if (Double.isNaN(chiSquared)) { MipavUtil.displayError( "Fit double exponential failed - Chi-squared
-                 * was not a valid number\n"); if (progressBar != null) { progressBar.dispose(); } setCompleted(false);
+                 * was not a valid number\n"); if  {  } setCompleted(false);
                  *
                  * return; }*/
                 params = fdem.getParameters();
@@ -1414,7 +1414,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 /*chiSquared = fdemnw.getChiSquared();
                  * if (Double.isNaN(chiSquared)) { MipavUtil.displayError( "Fit double exponential failed - Chi-squared
-                 * was not a valid number\n"); if (progressBar != null) { progressBar.dispose(); } setCompleted(false);
+                 * was not a valid number\n"); if  {  } setCompleted(false);
                  *
                  * return; }*/
                 params = fdemnw.getParameters();
@@ -1587,7 +1587,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 float[] yPt = new float[1];
                 float[] zPt = new float[1];
 
-                progressBar.setMessage("Calculating sse array for param variations");
+                fireProgressStateChanged("Calculating sse array for param variations");
 
                 // Require beta <= alpha <= 0
                 // 0.05*params[2]*Math.pow(400.0,0.005*y) <=
@@ -1602,7 +1602,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 ssemax = -Double.MAX_VALUE;
 
                 for (z = 0; z <= 100; z++) {
-                    progressBar.updateValue(z, runningInSeparateThread);
+                    fireProgressStateChanged(z);
                     indexZ = xydim * z;
                     gamma = 0.01 * z;
 
@@ -1656,10 +1656,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     }
                 }
 
-                progressBar.setMessage("Checking for local minima");
+                fireProgressStateChanged("Checking for local minima");
 
                 for (z = 2; z <= 98; z++) {
-                    progressBar.updateValue(z + 2, runningInSeparateThread);
+                    fireProgressStateChanged(z + 2);
                     indexZ = xydim * z;
 
                     for (y = 2; y <= 198; y++) {
@@ -1915,8 +1915,8 @@ public class AlgorithmFRAP extends AlgorithmBase {
             }
 
             for (k = 0; k < 26; k++) {
-                progressBar.setMessage("Performing " + (k + 1) + " of 26 grid search runs");
-                progressBar.updateValue(50 + k, runningInSeparateThread);
+                fireProgressStateChanged("Performing " + (k + 1) + " of 26 grid search runs");
+                fireProgressStateChanged(50 + k);
                 lmod = new FitFullModel(tStripZero, largestPole, tol, initial_kon[k], initial_koff[k]);
                 lmod.driver();
                 timeFunction = lmod.getTimeFunction();
@@ -1938,7 +1938,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
             Preferences.debug("Best initial kon guess = " + initial[0] + "\n");
             Preferences.debug("Best initial koff guess = " + initial[1] + "\n");
 
-            progressBar.setMessage("Performing MATLAB nonlinear fit");
+            fireProgressStateChanged("Performing MATLAB nonlinear fit");
             nonlinmod = new FitWholeNL3Model(tStripZero.length, tStripZero, pStripZero, initial, largestPole, tol);
             nonlinmod.driver();
             nonlinmod.dumpResults();
@@ -1985,7 +1985,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 pfValues[1][z] = (float) (yfit[z - (firstSliceNum + 1)]);
             }
 
-            progressBar.setMessage("Performing ELSUNC nonlinear fit");
+            fireProgressStateChanged("Performing ELSUNC nonlinear fit");
             doSecondFit = true;
             nlinmod2 = new FitWholeNLConModel(tStripZero.length, tStripZero, pStripZero, initial, largestPole, tol);
             nlinmod2.driver();
@@ -2055,10 +2055,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                 float[] yPt = new float[1];
                 float[] zPt = new float[1];
 
-                progressBar.setMessage("Calculating sse array for kon and koff variations");
+                fireProgressStateChanged("Calculating sse array for kon and koff variations");
 
                 for (y = 0; y <= 200; y++) {
-                    progressBar.updateValue(y / 2, runningInSeparateThread);
+                    fireProgressStateChanged(y / 2);
                     indexY = 201 * y;
                     koff = 0.02 * params[1] * Math.pow(2500.0, 0.005 * y);
 
@@ -2087,10 +2087,10 @@ public class AlgorithmFRAP extends AlgorithmBase {
                     } // for (x = 0; x <= 200; x++)
                 } // for (y = 0; y <= 200; y++)
 
-                progressBar.setMessage("Checking for local minima");
+                fireProgressStateChanged("Checking for local minima");
 
                 for (y = 2; y <= 198; y++) {
-                    progressBar.updateValue(y / 2, runningInSeparateThread);
+                    fireProgressStateChanged(y / 2);
                     indexY = 201 * y;
 
                     for (x = 2; x <= 198; x++) {
@@ -2319,7 +2319,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 /*chiSquared = fp1D.getChiSquared();
                  * if (Double.isNaN(chiSquared)) { MipavUtil.displayError( "Fit pure 1D duffusion failed - Chi-squared
-                 * was not a valid number\n"); if (progressBar != null) { progressBar.dispose(); } setCompleted(false);
+                 * was not a valid number\n"); if  {  } setCompleted(false);
                  * return; }*/
                 params = fp1D.getParameters();
                 bottom = params[1];
@@ -2363,7 +2363,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 /*chiSquared = fp1DNW.getChiSquared();
                  * if (Double.isNaN(chiSquared)) { MipavUtil.displayError( "Fit pure 1D no no whole diffusion failed -
-                 * Chi-squared was not a valid number\n"); if (progressBar != null) { progressBar.dispose(); }
+                 * Chi-squared was not a valid number\n"); if  {  }
                  * setCompleted(false);
                  *
                  * return; }*/
@@ -2669,9 +2669,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
         }
 
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
     }
 
     /**
@@ -2792,32 +2789,6 @@ public class AlgorithmFRAP extends AlgorithmBase {
      */
     private double actInt(double x) {
         return 2.0 * Math.sqrt(x);
-    }
-
-
-    /**
-     * To create the standard progressBar. Stores in the class-global, progressBar
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Performing FRAP ...", 0, 100, true, this,
-                                                   this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
     }
 
     /**
@@ -3787,7 +3758,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 /*chiSquared = fp1DNW.getChiSquared();
                  * if (Double.isNaN(chiSquared)) { MipavUtil.displayError( "Fit pure 1D no no whole diffusion failed -
-                 * Chi-squared was not a valid number\n"); if (progressBar != null) { progressBar.dispose(); }
+                 * Chi-squared was not a valid number\n"); if  {  }
                  * setCompleted(false);
                  *
                  * return; }*/
@@ -3975,7 +3946,7 @@ public class AlgorithmFRAP extends AlgorithmBase {
 
                 /*chiSquared = fdemnw.getChiSquared();
                  * if (Double.isNaN(chiSquared)) { MipavUtil.displayError( "Fit double exponential failed - Chi-squared
-                 * was not a valid number\n"); if (progressBar != null) { progressBar.dispose(); } setCompleted(false);
+                 * was not a valid number\n"); if  {  } setCompleted(false);
                  *
                  * return; }*/
                 params = fdemnw.getParameters();

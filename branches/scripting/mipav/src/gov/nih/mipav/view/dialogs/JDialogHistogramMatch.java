@@ -298,10 +298,6 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        matchHistogramAlgo.setProgressBarVisible(false);
-                    }
-
                     matchHistogramAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -354,10 +350,6 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        matchHistogramAlgo.setProgressBarVisible(false);
-                    }
-
                     matchHistogramAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

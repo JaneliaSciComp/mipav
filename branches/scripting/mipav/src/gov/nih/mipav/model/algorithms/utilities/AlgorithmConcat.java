@@ -231,7 +231,7 @@ public class AlgorithmConcat extends AlgorithmBase {
         FileInfoDicom[] fileInfoDicom = null;
 
         try {
-            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
+            fireProgressStateChanged(srcImage1.getImageName(), "Concatenating images ...");
             resols = new float[3];
             xDim = srcImage1.getExtents()[0];
             yDim = srcImage1.getExtents()[1];
@@ -253,7 +253,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
                     }
 
                     srcImage1.exportData(i * buffer.length, length, buffer);
@@ -277,7 +277,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
                     }
 
                     srcImage2.exportData(i * buffer.length, length, buffer);
@@ -407,7 +407,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
@@ -427,7 +427,7 @@ public class AlgorithmConcat extends AlgorithmBase {
         FileInfoDicom[] fileInfoDicom = null;
 
         try {
-            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
+            fireProgressStateChanged(srcImage1.getImageName(), "Concatenating images ...");
             resols = new float[3];
             xDim = srcImage1.getExtents()[0];
             yDim = srcImage1.getExtents()[1];
@@ -447,7 +447,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
                 }
 
                 srcImage1.exportData(i * buffer.length, length, buffer);
@@ -466,7 +466,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             for (j = 0; (j < srcImage2.getExtents()[2]) && !threadStopped; j++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
                 }
 
                 srcImage2.exportData(j * buffer.length, length, buffer);
@@ -565,7 +565,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
@@ -586,7 +586,7 @@ public class AlgorithmConcat extends AlgorithmBase {
         FileInfoDicom[] fileInfoDicom = null;
 
         try {
-            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
+            fireProgressStateChanged(srcImage1.getImageName(), "Concatenating images ...");
             resols = new float[4];
             origins = new float[4];
             xDim = srcImage1.getExtents()[0];
@@ -607,7 +607,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
                 }
 
                 srcImage1.exportData(i * buffer.length, length, buffer);
@@ -626,7 +626,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             for (j = 0; (j < srcImage2.getExtents()[2]) && !threadStopped; j++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
                 }
 
                 srcImage2.exportData(j * buffer.length, length, buffer);
@@ -735,7 +735,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
@@ -758,7 +758,7 @@ public class AlgorithmConcat extends AlgorithmBase {
         int srcALength, srcBLength;
 
         try {
-            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
+            fireProgressStateChanged(srcImage1.getImageName(), "Concatenating images ...");
             resols = new float[4];
             origins = new float[4];
             xDim = srcImage1.getExtents()[0];
@@ -781,7 +781,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 for (i = 0; (i < (srcImage1.getExtents()[2] * srcImage1.getExtents()[3])) && !threadStopped; i++) {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
                     }
 
                     srcImage1.exportData(i * length, length, buffer);
@@ -798,7 +798,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 for (j = 0; (j < srcImage2.getExtents()[2]) && !threadStopped; j++) {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
                     }
 
                     srcImage2.exportData(j * length, length, buffer);
@@ -819,7 +819,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 for (j = 0; (j < srcImage1.getExtents()[2]) && !threadStopped; j++) {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (j) / (nImages - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) (j) / (nImages - 1) * 100));
                     }
 
                     srcImage1.exportData(j * length, length, buffer);
@@ -836,7 +836,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 for (i = 0; (i < (srcImage2.getExtents()[2] * srcImage2.getExtents()[3])) && !threadStopped; i++) {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
                     }
 
                     srcImage2.exportData(i * buffer.length, length, buffer);
@@ -993,7 +993,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;
@@ -1015,7 +1015,7 @@ public class AlgorithmConcat extends AlgorithmBase {
         FileInfoDicom[] fileInfoDicom = null;
 
         try {
-            buildProgressBar(srcImage1.getImageName(), "Concatenating images ...", 0, 100);
+            fireProgressStateChanged(srcImage1.getImageName(), "Concatenating images ...");
             resols = new float[4];
             xDim = srcImage1.getExtents()[0];
             yDim = srcImage1.getExtents()[1];
@@ -1037,7 +1037,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             for (i = 0; (i < (srcImage1.getExtents()[2] * srcImage1.getExtents()[3])) && !threadStopped; i++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i) / (nImages - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
                 }
 
                 srcImage1.exportData(i * length, length, buffer);
@@ -1054,7 +1054,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             for (j = 0; (j < (srcImage2.getExtents()[2] * srcImage2.getExtents()[3])) && !threadStopped; j++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i + j) / (nImages - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
                 }
 
                 srcImage2.exportData(j * length, length, buffer);
@@ -1159,7 +1159,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
         fileInfo = null;
         fileInfoDicom = null;

@@ -364,7 +364,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         ModelImage result = (ModelImage) srcImage.clone();
         ModelImage transformed = null;
 
-        buildProgressBar("Registration", "Getting registered image", 0, 100);
+        fireProgressStateChanged("Registration", "Getting registered image");
         
 
         float[] transformBuffer = new float[imageInput.getSize()];
@@ -373,14 +373,14 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         imageInput.getFileInfo()[0].setResolutions(volumeResolutions);
 
         for (int i = 0; (i < nVolumes) && !threadStopped; i++) {
-            progressBar.updateValue((i + 1) * 100 / nVolumes, runningInSeparateThread);
+            fireProgressStateChanged((i + 1) * 100 / nVolumes);
 
             try {
                 srcImage.exportData(i * transformBuffer.length, transformBuffer.length, transformBuffer);
                 imageInput.importData(0, transformBuffer, true);
             } catch (IOException error) {
                 MipavUtil.displayError("I/O Error while registering.");
-                disposeProgressBar();
+                
 
                 return null;
             }
@@ -397,7 +397,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
                 if (transform.isCompleted() == false) {
                     MipavUtil.displayError("Error while transforming.");
-                    disposeProgressBar();
+                    
 
                     return null;
                 }
@@ -422,7 +422,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 }
             } catch (IOException error) {
                 MipavUtil.displayError("Error while creating registered image in AlgorithmTSOAR.");
-                disposeProgressBar();
+                
 
                 return null;
             }
@@ -438,7 +438,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             transform = null;
         }
 
-        progressBar.dispose();
+        
 
         if (threadStopped) {
             return null;
@@ -466,7 +466,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
      * </ol>
      */
     public void runAlgorithm() {
-        buildProgressBar("Registering images", "Beginning registration", 0, 100);
+        fireProgressStateChanged("Registering images", "Beginning registration");
         
 
         float minSample = 1.0f;
@@ -591,7 +591,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                           "Ref subsampled 4 = " + simpleRefSub4 + "Ref subsampled 8 = " + simpleRefSub8);
 
         if (threadStopped) {
-            progressBar.dispose();
+            
             completed = false;
             finalize();
 
@@ -608,7 +608,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
         if (threadStopped) {
             completed = false;
-            progressBar.dispose();
+            
 
             return;
         }
@@ -628,7 +628,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
         if (threadStopped) {
             completed = false;
-            progressBar.dispose();
+            
 
             return;
         }
@@ -648,7 +648,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
         if (threadStopped) {
             completed = false;
-            progressBar.dispose();
+            
 
             return;
         }
@@ -669,7 +669,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
             if (threadStopped) {
                 completed = false;
-                progressBar.dispose();
+                
 
                 return;
             }
@@ -696,8 +696,8 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
-        progressBar.dispose();
+        fireProgressStateChanged(100);
+        
         completed = true;
     }
 
@@ -972,24 +972,24 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         if (level == 8) {
             offset = 0;
             factor = .8f;
-            progressBar.setMessage("Registering at subsample 8");
+            fireProgressStateChanged("Registering at subsample 8");
         } else if (level == 4) {
             offset = 25;
             factor = .8f;
-            progressBar.setMessage("Registering at subsample 4");
+            fireProgressStateChanged("Registering at subsample 4");
         } else if (level == 2) {
             offset = 50;
             factor = .1f;
-            progressBar.setMessage("Registering at subsample 2");
+            fireProgressStateChanged("Registering at subsample 2");
         } else if (level == 1) {
             offset = 75;
             factor = .1f;
 
             if (normalizedCrossCorrelationSinc) {
                 costChoice = AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SINC;
-                progressBar.setMessage("No subsampling, new cost function");
+                fireProgressStateChanged("No subsampling, new cost function");
             } else {
-                progressBar.setMessage("Registering with no subsampling");
+                fireProgressStateChanged("Registering with no subsampling");
             }
         }
 
@@ -1002,9 +1002,9 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         for (int i = start; (i < nVolumes) && !threadStopped; i++) {
 
             if (reference == true) {
-                progressBar.updateValue(offset + (count * 25 / (nVolumes - 1)), runningInSeparateThread);
+                fireProgressStateChanged(offset + (count * 25 / (nVolumes - 1)));
             } else {
-                progressBar.updateValue(offset + (count * 25 / nVolumes), runningInSeparateThread);
+                fireProgressStateChanged(offset + (count * 25 / nVolumes));
             }
 
             count++;
@@ -1099,9 +1099,9 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         for (int i = refNum - 1; (i >= 0) && !threadStopped; i--) {
 
             if (reference == true) {
-                progressBar.updateValue(offset + (count * 25 / (nVolumes - 1)), runningInSeparateThread);
+                fireProgressStateChanged(offset + (count * 25 / (nVolumes - 1)));
             } else {
-                progressBar.updateValue(offset + (count * 25 / nVolumes), runningInSeparateThread);
+                fireProgressStateChanged(offset + (count * 25 / nVolumes));
             }
 
             count++;

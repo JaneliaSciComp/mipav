@@ -524,10 +524,6 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
                     transform.setUpdateOriginFlag(true);
 
-                    if (!UI.isAppFrameVisible()) {
-                        transform.setProgressBarVisible(false);
-                    }
-
                     transform.run();
                     resultImage = transform.getTransformedImage();
                     transform.finalize();
@@ -1506,10 +1502,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!UI.isAppFrameVisible()) {
-                reg3.setProgressBarVisible(false);
-            }
-
+           
             reg3.run();
         }
 

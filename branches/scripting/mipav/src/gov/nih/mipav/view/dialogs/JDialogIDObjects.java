@@ -326,10 +326,6 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            idObjectsAlgo2D.setProgressBarVisible(false);
-                        }
-
                         idObjectsAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {

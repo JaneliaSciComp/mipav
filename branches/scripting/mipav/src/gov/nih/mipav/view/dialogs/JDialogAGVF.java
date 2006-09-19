@@ -493,9 +493,6 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            agvfAlgo.setProgressBarVisible(false);
-                        }
 
                         agvfAlgo.run();
                     }
@@ -611,9 +608,6 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            agvfAlgo.setProgressBarVisible(false);
-                        }
 
                         agvfAlgo.run();
                     }

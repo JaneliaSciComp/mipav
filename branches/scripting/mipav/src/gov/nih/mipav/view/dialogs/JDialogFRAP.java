@@ -505,11 +505,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!UI.isAppFrameVisible()) {
-                    frapAlgo.setProgressBarVisible(false);
-                }
-
                 frapAlgo.run();
             }
         } catch (OutOfMemoryError x) {

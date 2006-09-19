@@ -317,10 +317,6 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        nmSupAlgo.setProgressBarVisible(false);
-                    }
-
                     nmSupAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

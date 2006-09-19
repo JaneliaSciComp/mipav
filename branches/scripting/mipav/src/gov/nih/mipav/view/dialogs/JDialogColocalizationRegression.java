@@ -1027,9 +1027,6 @@ public class JDialogColocalizationRegression extends JDialogScriptableBase imple
                 }
             } else {
 
-                if (!UI.isAppFrameVisible()) {
-                    colocalizationAlgo.setProgressBarVisible(false);
-                }
 
                 colocalizationAlgo.run();
             }

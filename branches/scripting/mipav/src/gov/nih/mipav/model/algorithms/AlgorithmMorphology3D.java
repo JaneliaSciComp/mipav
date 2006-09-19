@@ -187,26 +187,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
     /**
      * Creates a new AlgorithmMorphology3D object.
      *
-     * @param  srcImg          source image model
-     * @param  destImg         destination image model
-     * @param  kernelType      kernel size (i.e. connectedness)
-     * @param  sphereDiameter  only valid if kernelType == SIZED_SPHERE and represents the width of a circle in the
-     *                         resolution of the image
-     * @param  method          setup the algorithm method (i.e. erode)
-     * @param  iterD           number of times to dilate
-     * @param  iterE           number of times to erode
-     * @param  pruningPix      the number of pixels to prune
-     * @param  edType          the type of edging to perform (inner or outer)
-     * @param  entireImage     flag that indicates if the VOIs should NOT be used and entire image should be processed
-     */
-    public AlgorithmMorphology3D(ModelImage srcImg, ModelImage destImg, int kernelType, float sphereDiameter,
-                                 int method, int iterD, int iterE, int pruningPix, int edType, boolean entireImage) {
-        this(srcImg, null, kernelType, sphereDiameter, method, iterD, iterE, pruningPix, edType, entireImage, 0, 100);
-    }
-
-    /**
-     * Creates a new AlgorithmMorphology3D object.
-     *
      * @param  srcImg            source image model
      * @param  destImg           destination image model
      * @param  kernelType        kernel size (i.e. connectedness)
@@ -222,9 +202,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      * @param  maxProgressValue  the maximum progress value.
      */
     public AlgorithmMorphology3D(ModelImage srcImg, ModelImage destImg, int kernelType, float sphereDiameter,
-                                 int method, int iterD, int iterE, int pruningPix, int edType, boolean entireImage,
-                                 int minProgressValue, int maxProgressValue) {
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+                                 int method, int iterD, int iterE, int pruningPix, int edType, boolean entireImage) {
+        super(destImg, srcImg);
         makeKernel(kernelType);
         setAlgorithm(method);
         iterationsD = iterD;
@@ -291,16 +270,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         int sliceSize = xDim * yDim;
         int imgSize = sliceSize * zDim;
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Finding Edges ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Finding Edges ...");
         /*
                 try {
         
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Finding Edges ...");
                     }
         
-                    if (progressBar != null) {
-                        progressBar.updateValue(0, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(0);
                     }
                 } catch (NullPointerException npe) {
         
@@ -326,7 +305,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             tempBuffer[pix] = 0;
         }
 
-        int pixelsPerProgressValue = Math.round(((float) (maxProgressValue - minProgressValue)) / imgSize);
+        int pixelsPerProgressValue = Math.round(((float) 100) / imgSize);
 
         if (edgingType == OUTER_EDGING) {
 
@@ -334,14 +313,13 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             for (int s = 0; (s < (zDim * sliceSize)) && !threadStopped; s += sliceSize) {
 
                 if ((s % pixelsPerProgressValue) == 0) {
-                    fireProgressStateChanged(minProgressValue + (s / pixelsPerProgressValue));
+                    fireProgressStateChanged((s / pixelsPerProgressValue));
                 }
 
                 try {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round(((float) s) / ((float) (imgSize - 1)) * 100),
-                                                runningInSeparateThread);
+                        fireProgressStateChanged(Math.round(((float) s) / ((float) (imgSize - 1)) * 100));
                     }
                 } catch (NullPointerException npe) {
 
@@ -394,7 +372,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 //                try {
                 //
                 //                    if (isProgressBarVisible()) {
-                //                        progressBar.updateValue(Math.round(((float) s) / ((float) (imgSize - 1)) * 100), runningInSeparateThread);
+                //                        fireProgressStateChanged(Math.round(((float) s) / ((float) (imgSize - 1)) * 100));
                 //                    }
                 //                } catch (NullPointerException npe) {
 
@@ -481,9 +459,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         setCompleted(true);
 
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
     }
 
     /**
@@ -514,12 +489,12 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         /*        try {
 
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Identifing objects ...");
                     }
 
-                    if (progressBar != null) {
-                        progressBar.updateValue(0, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(0);
                     }
                 } catch (NullPointerException npe) {
 
@@ -537,7 +512,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             //            try {
 
             //                if (((pix % mod) == 0) && isProgressBarVisible()) {
-            //                    progressBar.updateValue(Math.round((pix + 1) / ((float) imageLength) * 100), runningInSeparateThread);
+            //                    fireProgressStateChanged(Math.round((pix + 1) / ((float) imageLength) * 100));
             //                }
             //            } catch (NullPointerException npe) {
 
@@ -625,10 +600,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             return;
         }
 
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
-
         setCompleted(true);
     }
 
@@ -678,12 +649,12 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         /*
                 try {
         
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Pruning image ...");
                     }
         
-                    if (progressBar != null) {
-                        progressBar.updateValue(0, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(0);
                     }
                 } catch (NullPointerException npe) {
         
@@ -697,7 +668,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             /*            try {
                             progressBar.setMessage("Pruning Slice " + (slice + 1));
-                            progressBar.updateValue(Math.round(((float) slice) / ((float) zDim) * 100), runningInSeparateThread);
+                            fireProgressStateChanged(Math.round(((float) slice) / ((float) zDim) * 100));
                         } catch (NullPointerException npe) {
 
                             if (threadStopped) {
@@ -887,10 +858,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             return;
         }
 
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
-
         setCompleted(true);
     }
 
@@ -932,7 +899,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
 
-            // buildProgressBar(srcImage.getImageName(), "Morph 3D ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Morph 3D ...");
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
@@ -1152,12 +1119,12 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         /*
                 try {
         
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Skeletonize image ...");
                     }
         
-                    if (progressBar != null) {
-                        progressBar.updateValue(0, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(0);
                     }
                 } catch (NullPointerException npe) {
         
@@ -1175,7 +1142,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             try {
                 progressBar.setMessage("Skeletonizing Slice " + (i + 1));
-                progressBar.updateValue(Math.round(((float) i) / ((float) zDim) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(((float) i) / ((float) zDim) * 100));
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {
@@ -1224,10 +1191,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             return;
         }
 
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
-
         setCompleted(true);
     }
 
@@ -1262,22 +1225,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         float[] minDistanceBuffer;
         Vector edgePoints = new Vector();
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Bg. distance image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+       progressBar.setMessage("Bg. distance image ...");
+       fireProgressStateChanged(0);
+        
 
         try {
             minDistanceBuffer = new float[volSize];
@@ -1343,8 +1293,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                     try {
 
                         if (((pix % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((pix + 1) / ((float) volSize) * 100),
-                                                    runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) * 100));
                         }
                     } catch (NullPointerException npe) {
 
@@ -1418,9 +1367,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             return;
         }
 
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
 
         setCompleted(true);
     }
@@ -1465,12 +1411,12 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         /*
                 try {
         
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Removing objects ...");
                     }
         
-                    if (progressBar != null) {
-                        progressBar.updateValue(0, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(0);
                     }
                 } catch (NullPointerException npe) {
         
@@ -1514,7 +1460,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
         /*
                 try {
-                    progressBar.updateValue(33, runningInSeparateThread);
+                    fireProgressStateChanged(33);
                 } catch (NullPointerException npe) {
         
                     if (threadStopped) {
@@ -1528,7 +1474,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                         try {
             
                             if (isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round(33 + ((i + 1) / ((float) objects.size()) * 33)), runningInSeparateThread);
+                                fireProgressStateChanged(Math.round(33 + ((i + 1) / ((float) objects.size()) * 33)));
                             }
                         } catch (NullPointerException npe) {
             
@@ -1569,7 +1515,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         /*
                 try {
-                    progressBar.updateValue(66, runningInSeparateThread);
+                    fireProgressStateChanged(66);
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -1584,7 +1530,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                         try {
             
                             if (isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round(66 + ((i + 1) / ((float) objects.size()) * 34)), runningInSeparateThread);
+                                fireProgressStateChanged(Math.round(66 + ((i + 1) / ((float) objects.size()) * 34)));
                             }
                         } catch (NullPointerException npe) {
             
@@ -1612,7 +1558,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         }
 
         try {
-            //            progressBar.updateValue(100, runningInSeparateThread);
+            //            fireProgressStateChanged(100);
 
             ViewUserInterface.getReference().setDataText("\nDeleted objects outside range (" + min + "," + max +
                                                          "). \n");
@@ -1660,10 +1606,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
             return;
-        }
-
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
         }
 
         setCompleted(true);
@@ -1714,12 +1656,12 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         /*
                 try {
         
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Dilating image ...");
                     }
         
-                    if (progressBar != null) {
-                        progressBar.updateValue(0, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(0);
                     }
                 } catch (NullPointerException npe) {
         
@@ -1743,7 +1685,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                                 try {
                 
                                     if ((((tmpSize + pix) % mod) == 0) && isProgressBarVisible()) {
-                                        progressBar.updateValue(Math.round((float) (tmpSize + pix) / totalSize * 100), runningInSeparateThread);
+                                        fireProgressStateChanged(Math.round((float) (tmpSize + pix) / totalSize * 100));
                                     }
                                 } catch (NullPointerException npe) {
                 
@@ -1858,10 +1800,6 @@ kernelLoop:
             return;
         }
 
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
-
         setCompleted(true);
     }
 
@@ -1899,12 +1837,12 @@ kernelLoop:
         /*
                 try {
         
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Distance image ...");
                     }
         
-                    if (progressBar != null) {
-                        progressBar.updateValue(0, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(0);
                     }
                 } catch (NullPointerException npe) {
         
@@ -1979,7 +1917,7 @@ kernelLoop:
                                         try {
                     
                                             if (((pix % mod) == 0) && isProgressBarVisible()) {
-                                                progressBar.updateValue(Math.round((pix + 1) / ((float) volSize) * 100), runningInSeparateThread);
+                                                fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) * 100));
                                             }
                                         } catch (NullPointerException npe) {
                     
@@ -2052,10 +1990,6 @@ kernelLoop:
             return;
         }
 
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
-
         setCompleted(true);
     }
 
@@ -2106,12 +2040,12 @@ kernelLoop:
         /*
                 try {
         
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Eroding image ...");
                     }
         
-                    if (progressBar != null) {
-                        progressBar.updateValue(0, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(0);
                     }
                 } catch (NullPointerException npe) {
         
@@ -2133,7 +2067,7 @@ kernelLoop:
                                 try {
                 
                                     if ((((tmpSize + pix) % mod) == 0) && isProgressBarVisible()) {
-                                        progressBar.updateValue(Math.round((float) (tmpSize + pix) / totalSize * 100), runningInSeparateThread);
+                                        fireProgressStateChanged(Math.round((float) (tmpSize + pix) / totalSize * 100));
                                     }
                                 } catch (NullPointerException npe) {
                 
@@ -2259,10 +2193,6 @@ kernelLoop:
             return;
         }
 
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
-        }
-
         setCompleted(true);
     }
 
@@ -2368,10 +2298,6 @@ kernelLoop:
 
         if (returnFlag == true) {
             return;
-        }
-
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
         }
 
         setCompleted(true);
@@ -2850,12 +2776,12 @@ kernelLoop:
         /*
                 try {
         
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Particle analysis (PA) ...");
                     }
         
-                    if (progressBar != null) {
-                        progressBar.updateValue(0, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(0);
                     }
         
                     // add set minimum dist
@@ -2870,7 +2796,7 @@ kernelLoop:
                 } catch (IOException error) {
                     displayError("Algorithm Morphology3D.particleAnalysis: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
         
                     return;
                 }
@@ -2880,11 +2806,11 @@ kernelLoop:
         /*
                 try {
 
-                    if (progressBar != null) {
-                        progressBar.updateValue(25, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(25);
                     }
 
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("PA - distance map ...");
                     }
                 } catch (NullPointerException npe) {
@@ -2968,12 +2894,12 @@ kernelLoop:
         /*
                 try {
         
-                    if (progressBar != null) {
+                    if  {
                         progressBar.setMessage("Watershed stage ...");
                     }
         
-                    if (progressBar != null) {
-                        progressBar.updateValue(70, runningInSeparateThread);
+                    if  {
+                        fireProgressStateChanged(70);
                     }
                 } catch (NullPointerException npe) {
         
@@ -3058,7 +2984,7 @@ kernelLoop:
         }
 
         try {
-            //            progressBar.updateValue(90, runningInSeparateThread);
+            //            fireProgressStateChanged(90);
             wsImage.exportData(0, xDim * yDim * zDim, imgBuffer);
 
             // once the data from the watershed has been exported to imgBuffer, the
@@ -3084,12 +3010,12 @@ kernelLoop:
 
         try {
             /*
-                        if (progressBar != null) {
+                        if  {
                             progressBar.setMessage("Deleting objects ...");
                         }
             
-                        if (progressBar != null) {
-                            progressBar.updateValue(90, runningInSeparateThread);
+                        if  {
+                            fireProgressStateChanged(90);
                         }
             */
             deleteObjects(min, max, false);
@@ -3616,10 +3542,6 @@ kernelLoop:
             fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
             return;
-        }
-
-        if (maxProgressValue == 100) {
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
         }
 
         setCompleted(true);

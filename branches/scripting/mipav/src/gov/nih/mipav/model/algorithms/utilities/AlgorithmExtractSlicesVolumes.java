@@ -187,14 +187,14 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
         // amount of data allocated is based on colorFactor
         try {
             imageBuffer = new float[colorFactor * sliceArea];
-            buildProgressBar(srcImage.getImageName(), "Removing Selected Slices...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Removing Selected Slices...");
         } catch (OutOfMemoryError e) {
             imageBuffer = null;
             System.gc();
             displayError("Algorithm extract slices or volumes reports: Out of memory");
             srcImage.releaseLock();
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -237,7 +237,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                     progress++;
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue((int) ((progress / numToExtract) * 100), runningInSeparateThread);
+                        fireProgressStateChanged((int) ((progress / numToExtract) * 100));
                     }
 
                     try {
@@ -265,7 +265,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                         displayError("Algorithm Extract Individual Slices reports: " + error.getMessage());
                         error.printStackTrace();
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -281,7 +281,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
                     progress++;
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue((int) ((progress / numToExtract) * 100), runningInSeparateThread);
+                        fireProgressStateChanged((int) ((progress / numToExtract) * 100));
                     }
 
                     resultImage = new ModelImage(srcImage.getType(), newExtents,
@@ -328,13 +328,13 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
             imageBuffer = null;
             resultImage = null;
             finalize();
-            disposeProgressBar();
+            
 
             return;
         }
 
         resultImage = null; // after all, this was only temporary
-        disposeProgressBar();
+        
         setCompleted(true);
     } // extractSlices
 

@@ -368,9 +368,6 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    extractObjectAlgo.setProgressBarVisible(false);
-                }
 
                 extractObjectAlgo.run();
             }

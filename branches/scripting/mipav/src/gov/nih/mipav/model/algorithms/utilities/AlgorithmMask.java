@@ -48,8 +48,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  polarity  flag indicating fill location, true = fill inside; false fill outside
      * @param  useVOI    use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage srcImg, float fill, boolean polarity, boolean useVOI, 
-            int minProgressValue, int maxProgressValue) {
+    public AlgorithmMask(ModelImage srcImg, float fill, boolean polarity, boolean useVOI  ) {
 
         super(null, srcImg);
         imageFill = fill;
@@ -69,8 +68,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  polarity    flag indicating fill location, true = fill inside; false fill outside
      * @param  useVOI      use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage srcImg, Color _fillColor, boolean polarity, boolean useVOI, 
-            int minProgressValue, int maxProgressValue) {
+    public AlgorithmMask(ModelImage srcImg, Color _fillColor, boolean polarity, boolean useVOI) {
 
         super(null, srcImg);
         this.polarity = polarity;
@@ -89,8 +87,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  polarity  flag indicating fill location, true = fill inside; false fill outside
      * @param  useVOI    use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage destImg, ModelImage srcImg, float fill, boolean polarity, boolean useVOI, 
-            int minProgressValue, int maxProgressValue) {
+    public AlgorithmMask(ModelImage destImg, ModelImage srcImg, float fill, boolean polarity, boolean useVOI) {
 
         super(destImg, srcImg);
         imageFill = fill;
@@ -111,8 +108,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  polarity  flag indicating fill location, true = fill inside; false fill outside
      * @param  useVOI    use the VOI to define the mask area else it will use the painted area to define the mask.
      */
-    public AlgorithmMask(ModelImage srcImg, float fillR, float fillG, float fillB, boolean polarity, boolean useVOI, 
-            int minProgressValue, int maxProgressValue) {
+    public AlgorithmMask(ModelImage srcImg, float fillR, float fillG, float fillB, boolean polarity, boolean useVOI) {
 
         super(null, srcImg);
         imageFillR = fillR;
@@ -137,8 +133,7 @@ public class AlgorithmMask extends AlgorithmBase {
      * @param  useVOI    use the VOI to define the mask area else it will use the painted area to define the mask.
      */
     public AlgorithmMask(ModelImage destImg, ModelImage srcImg, float fillR, float fillG, float fillB, boolean polarity,
-                         boolean useVOI, 
-                         int minProgressValue, int maxProgressValue) {
+                         boolean useVOI) {
 
         super(destImg, srcImg);
         imageFillR = fillR;
@@ -184,7 +179,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
         int[] lockedIntensities = null;
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
         
         if (intensityLockVector != null) {
             lockedIntensities = new int[intensityLockVector.size()];
@@ -255,7 +250,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     }
 
                     if (srcImage.getNDims() > 2) {
-                        fireProgressStateChanged(getProgressFromFloat((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(), "Masking ...");
+                        fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(), "Masking ...");
                    
                     }
 
@@ -266,7 +261,7 @@ public class AlgorithmMask extends AlgorithmBase {
                     for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                         if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                            fireProgressStateChanged(getProgressFromFloat((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
+                            fireProgressStateChanged(((float) i / (imgLength - 1)), srcImage.getImageName(), "Masking ...");
                           
                         }
 
@@ -351,7 +346,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
 
                 if (srcImage.getNDims() == 3) {
-                    fireProgressStateChanged(getProgressFromFloat((float) z / (srcImage.getExtents()[2] - 1)), 
+                    fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
                             srcImage.getImageName(), "Masking ...");
                 }
 
@@ -362,7 +357,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                     if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                        fireProgressStateChanged(getProgressFromFloat((float) i / (imgLength - 1)), 
+                        fireProgressStateChanged(((float) i / (imgLength - 1)), 
                                 srcImage.getImageName(), "Masking ...");
                     }
 
@@ -447,7 +442,7 @@ public class AlgorithmMask extends AlgorithmBase {
             paintLength = srcImage.getSliceSize();
             imgLength = 4 * paintLength;
             buffer = new byte[imgLength];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -455,7 +450,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, 
+        fireProgressStateChanged(0, 
                 srcImage.getImageName(), "Masking ...");
         
         if (srcImage.getNDims() == 4) {
@@ -485,7 +480,7 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             if ((srcImage.getNDims() == 3)) {
-                fireProgressStateChanged(getProgressFromFloat((float) z / (srcImage.getExtents()[2] - 1)), 
+                fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
                         srcImage.getImageName(), "Masking ...");    
             }
 
@@ -496,7 +491,7 @@ public class AlgorithmMask extends AlgorithmBase {
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
                 if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                    fireProgressStateChanged(getProgressFromFloat((float) i / (imgLength - 1)), 
+                    fireProgressStateChanged(((float) i / (imgLength - 1)), 
                             srcImage.getImageName(), "Masking ...");
                 }
 
@@ -555,7 +550,7 @@ public class AlgorithmMask extends AlgorithmBase {
             paintLength = srcImage.getSliceSize();
             imgLength = 4 * paintLength;
             buffer = new byte[imgLength];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -563,7 +558,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
         if (srcImage.getNDims() == 4) {
             end = srcImage.getExtents()[2];
@@ -592,7 +587,7 @@ public class AlgorithmMask extends AlgorithmBase {
             }
 
             if (srcImage.getNDims() == 3) {
-            fireProgressStateChanged(getProgressFromFloat((float) z / (srcImage.getExtents()[2] - 1)), 
+            fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
                     srcImage.getImageName(), "Masking ...");
             }
 
@@ -603,7 +598,7 @@ public class AlgorithmMask extends AlgorithmBase {
             for (i = 0, j = 0; (i < imgLength) && !threadStopped; i = i + 4, j++) {
 
                 if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                fireProgressStateChanged(getProgressFromFloat((float) i / (imgLength - 1)), 
+                fireProgressStateChanged(((float) i / (imgLength - 1)), 
                         srcImage.getImageName(), "Masking ...");
                 }
 
@@ -693,7 +688,7 @@ public class AlgorithmMask extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(minProgressValue, 
+        fireProgressStateChanged(0, 
                 srcImage.getImageName(), "Masking ...");
         
         if (srcImage.getType() != ModelStorageBase.COMPLEX) {
@@ -702,7 +697,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
                 imgLength = srcImage.getSliceSize();
                 buffer = new float[imgLength];
-                // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+                // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
             } catch (OutOfMemoryError e) {
                 buffer = null;
                 bufferI = null;
@@ -739,7 +734,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
 
                if (srcImage.getNDims() == 3) {
-                fireProgressStateChanged(getProgressFromFloat((float) z / (srcImage.getExtents()[2] - 1)), 
+                fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
                         srcImage.getImageName(), "Masking ...");
                 }
 
@@ -750,7 +745,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                     if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                        fireProgressStateChanged(getProgressFromFloat((float) i / (imgLength - 1)), 
+                        fireProgressStateChanged(((float) i / (imgLength - 1)), 
                                 srcImage.getImageName(), "Masking ...");
                     }
 
@@ -833,7 +828,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 }
 
                 if ((srcImage.getNDims() == 3)) {
-                    fireProgressStateChanged(getProgressFromFloat((float) z / (srcImage.getExtents()[2] - 1)), 
+                    fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), 
                             srcImage.getImageName(), "Masking ...");
                 }
 
@@ -844,7 +839,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 for (i = 0; (i < imgLength) && !threadStopped; i++) {
 
                     if ((srcImage.getNDims() == 2) && ((i % mod) == 0)) {
-                        fireProgressStateChanged(getProgressFromFloat((float) i / (imgLength - 1)), 
+                        fireProgressStateChanged(((float) i / (imgLength - 1)), 
                                 srcImage.getImageName(), "Masking ...");
                     }
                     
@@ -1000,13 +995,13 @@ public class AlgorithmMask extends AlgorithmBase {
 
             return;
         }
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
         int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(getProgressFromFloat((float) i / (length - 1)), srcImage.getImageName(), "Masking ...");
+                fireProgressStateChanged(((float) i / (length - 1)), srcImage.getImageName(), "Masking ...");
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1049,7 +1044,7 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             srcImage.exportRGBData(1, 0, length, buffer); // locks and releases lock
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -1062,7 +1057,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
         
         int mod = length / 100; // mod is 1 percent of length
 
@@ -1070,7 +1065,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(getProgressFromFloat((float) i / (length - 1) * 33), srcImage.getImageName(), "Masking ...");
+                fireProgressStateChanged(((float) i / (length - 1) * 33), srcImage.getImageName(), "Masking ...");
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1114,7 +1109,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
            if (((i % mod) == 0) && isProgressBarVisible()) {
-               fireProgressStateChanged(getProgressFromFloat(33 + ((float) i / (length - 1) * 33)), srcImage.getImageName(), "Masking ...");
+               fireProgressStateChanged((33 + ((float) i / (length - 1) * 33)), srcImage.getImageName(), "Masking ...");
                
             }
 
@@ -1156,14 +1151,14 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }   
         
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
           
         
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if ((i % mod) == 0) {
-                fireProgressStateChanged(getProgressFromInt(Math.round(67 + ((float) i / (length - 1) * 33))), 
+                fireProgressStateChanged((Math.round(67 + ((float) i / (length - 1) * 33))), 
                         srcImage.getImageName(), "Masking ...");
             }
 
@@ -1213,7 +1208,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
         
 
         for (z = 0; z < srcImage.getExtents()[2]; z++) {
@@ -1229,7 +1224,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged(getProgressFromFloat((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(), "Masking ...");
             
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1273,7 +1268,7 @@ public class AlgorithmMask extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -1281,7 +1276,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
         for (z = 0; z < srcImage.getExtents()[2]; z++) {
 
@@ -1296,7 +1291,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged(getProgressFromFloat((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)),
+            fireProgressStateChanged(((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)),
                     srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1334,7 +1329,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(getProgressFromFloat((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)),
+            fireProgressStateChanged(((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)),
                     srcImage.getImageName(), "Masking ...");
             
 
@@ -1373,7 +1368,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(getProgressFromFloat((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)),
+            fireProgressStateChanged(((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)),
                     srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1431,7 +1426,7 @@ public class AlgorithmMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Image(s) locked", true);
@@ -1444,14 +1439,14 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
         
         int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if ((i % mod) == 0) {
-                fireProgressStateChanged(getProgressFromFloat((float) i / (length - 1)), srcImage.getImageName(), "Masking ...");
+                fireProgressStateChanged(((float) i / (length - 1)), srcImage.getImageName(), "Masking ...");
             }
 
             if ((mask.get(i) == true) && (polarity == false)) {
@@ -1503,7 +1498,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
         
         int mod = length / 100; // mod is 1 percent of length
 
@@ -1512,7 +1507,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if ((i % mod) == 0) {
-                fireProgressStateChanged(getProgressFromInt(Math.round((float) i / (length - 1) * 33)), srcImage.getImageName(), "Masking ...");
+                fireProgressStateChanged((Math.round((float) i / (length - 1) * 33)), srcImage.getImageName(), "Masking ...");
             }
 
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1554,7 +1549,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if ((i % mod) == 0) {
-                fireProgressStateChanged(getProgressFromInt(Math.round(33 + ((float) i / (length - 1) * 33))), srcImage.getImageName(), "Masking ...");
+                fireProgressStateChanged((Math.round(33 + ((float) i / (length - 1) * 33))), srcImage.getImageName(), "Masking ...");
             }
             
 
@@ -1597,7 +1592,7 @@ public class AlgorithmMask extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if ((i % mod) == 0) {
-                fireProgressStateChanged(getProgressFromInt(Math.round(67 + ((float) i / (length - 1) * 33))), srcImage.getImageName(), "Masking ...");
+                fireProgressStateChanged((Math.round(67 + ((float) i / (length - 1) * 33))), srcImage.getImageName(), "Masking ...");
             }
             
             if ((mask.get(i) == true) && (polarity == true)) {
@@ -1646,7 +1641,7 @@ public class AlgorithmMask extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -1654,7 +1649,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
         
 
         for (z = 0; (z < srcImage.getExtents()[2]) && !threadStopped; z++) {
@@ -1670,7 +1665,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged(getProgressFromFloat((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged(((float) z / (srcImage.getExtents()[2] - 1)), srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1710,7 +1705,7 @@ public class AlgorithmMask extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-            // buildProgressBar(srcImage.getImageName(), "Masking ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Masking ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Mask: Out of memory", true);
@@ -1718,7 +1713,7 @@ public class AlgorithmMask extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Masking ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Masking ...");
 
         for (z = 0; z < srcImage.getExtents()[2]; z++) {
 
@@ -1733,7 +1728,7 @@ public class AlgorithmMask extends AlgorithmBase {
 
             offset = z * length;
 
-            fireProgressStateChanged(getProgressFromFloat((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged(((float) (3 * z) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage.getImageName(), "Masking ...");
 
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -1769,7 +1764,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(getProgressFromFloat((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged(((float) ((3 * z) + 1) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -1804,7 +1799,7 @@ public class AlgorithmMask extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(getProgressFromFloat((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage.getImageName(), "Masking ...");
+            fireProgressStateChanged(((float) ((3 * z) + 2) / ((3 * (srcImage.getExtents()[2] - 1)) + 2)), srcImage.getImageName(), "Masking ...");
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 

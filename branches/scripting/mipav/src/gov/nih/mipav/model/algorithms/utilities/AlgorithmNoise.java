@@ -141,7 +141,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Adding noise ... ", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Adding noise ... ");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Noise: Image(s) locked", true);
@@ -161,7 +161,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if (noiseType == UNIFORM) {
@@ -196,7 +196,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -214,7 +214,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Adding noise ... ", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Adding noise ... ");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Noise: Image(s) locked", true);
@@ -234,7 +234,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if (noiseType == UNIFORM) {
@@ -270,7 +270,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         }
 
         setCompleted(true);
-        disposeProgressBar();
+        
     }
 
     /**
@@ -297,7 +297,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Adding noise ... ", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Adding noise ... ");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Noise: Image(s) locked", true);
@@ -317,7 +317,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if (noiseType == UNIFORM) {
@@ -346,7 +346,7 @@ public class AlgorithmNoise extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -373,7 +373,7 @@ public class AlgorithmNoise extends AlgorithmBase {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Adding noise ... ", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Adding noise ... ");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Noise: Image(s) locked", true);
@@ -393,7 +393,7 @@ public class AlgorithmNoise extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if (noiseType == UNIFORM) {
@@ -422,7 +422,7 @@ public class AlgorithmNoise extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

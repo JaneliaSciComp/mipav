@@ -278,7 +278,7 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Performing the nonlinear noise reduction ...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Performing the nonlinear noise reduction ...");
         
         progressValue = 0;
 
@@ -469,7 +469,7 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
         }
 
         setCompleted(true);
-        disposeProgressBar();
+        
     }
 
 
@@ -848,7 +848,7 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
 
             if (newProgressValue >= (progressValue + 5)) {
                 progressValue = newProgressValue;
-                progressBar.updateValue(progressValue, runningInSeparateThread);
+                fireProgressStateChanged(progressValue);
             }
 
             for (j = maskSize; (j < (xSize - maskSize)) && !threadStopped; j++) {
@@ -963,7 +963,7 @@ public class AlgorithmNLNoiseReduction extends AlgorithmBase {
 
                 if (newProgressValue >= (progressValue + 5)) {
                     progressValue = newProgressValue;
-                    progressBar.updateValue(progressValue, runningInSeparateThread);
+                    fireProgressStateChanged(progressValue);
                 }
 
                 for (j = maskSize; j < (xSize - maskSize); j++) {

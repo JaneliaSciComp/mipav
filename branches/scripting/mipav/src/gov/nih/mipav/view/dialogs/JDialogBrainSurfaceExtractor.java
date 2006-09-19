@@ -256,6 +256,8 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
             // This is made possible by implementing AlgorithmedPerformed interface
             extractBrainAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), extractBrainAlgo);
+            progressBar.setMessage("Extracting brain ...");
             /**
              * Creates the progress bar and make it listen to the FileBase.
              */
@@ -274,10 +276,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    extractBrainAlgo.setProgressBarVisible(false);
-                }
-
+                
                 extractBrainAlgo.run();
             }
         } catch (OutOfMemoryError x) {

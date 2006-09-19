@@ -326,10 +326,6 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        laplacianSepAlgo.setProgressBarVisible(false);
-                    }
-
                     laplacianSepAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -391,10 +387,6 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        laplacianSepAlgo.setProgressBarVisible(false);
-                    }
-
                     laplacianSepAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -452,10 +444,6 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        laplacianSepAlgo.setProgressBarVisible(false);
-                    }
-
                     laplacianAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -517,10 +505,6 @@ public class JDialogEdgeLaplacian extends JDialogScriptableBase implements Algor
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        laplacianSepAlgo.setProgressBarVisible(false);
-                    }
-
                     laplacianAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

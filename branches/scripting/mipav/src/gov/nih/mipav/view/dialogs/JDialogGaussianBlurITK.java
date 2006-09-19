@@ -337,7 +337,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                     }
 
                     // Make algorithm
-                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(resultImage, image, sigmas, false, 0, 100);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(resultImage, image, sigmas, false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -384,7 +384,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(image, sigmas, false, 0, 100);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(image, sigmas, false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -474,7 +474,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                     }
 
                     // Make algorithm
-                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(resultImage, image, sigmas, image25D, 0, 100);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(resultImage, image, sigmas, image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -520,7 +520,7 @@ public class JDialogGaussianBlurITK extends JDialogScriptableBase
                 try {
 
                     // Make algorithm
-                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(image, sigmas, image25D, 0, 100);
+                    gaussianBlurAlgo = new AlgorithmGaussianBlurITK(image, sigmas, image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.

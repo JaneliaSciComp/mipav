@@ -211,10 +211,6 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
                 }
             } else {
 
-                if (!UI.isAppFrameVisible()) {
-                    cAlgo.setProgressBarVisible(false);
-                }
-
                 cAlgo.run();
             }
         } catch (OutOfMemoryError x) {

@@ -325,16 +325,11 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
 
         // OK, we can now start the actual transcoding.
 
-        ViewJProgressBar progressBar = null;
 
         try {
 
             // Wait for EndOfStream event.
-            progressBar = new ViewJProgressBar("Transcoding " + outputFile.getName(), encodeStr, 0, 100, false, null,
-                                               null);
-            progressBar.updateValueImmed(0);
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            progressBar.setVisible(isProgressBarVisible());
+        	fireProgressStateChanged("Transcoding " + outputFile.getName(), encodeStr);
 
             p.start();
             dsink.start();
@@ -360,7 +355,7 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
         dsink = null;
         iml = null;
         oml = null;
-        progressBar.setVisible(false);
+        
         this.completed = true;
     }
 

@@ -139,7 +139,7 @@ public class AlgorithmVOISimplexOpt extends AlgorithmBase {
 
 
         try {
-            AlgorithmGradientMagnitude gradientMagAlgo = new AlgorithmGradientMagnitude(null, sigmas, true, false, 0, 100);
+            AlgorithmGradientMagnitude gradientMagAlgo = new AlgorithmGradientMagnitude(null, sigmas, true, false);
             gradMagBuf = gradientMagAlgo.calcInBuffer2D(sliceBuf, image.getExtents(), image.isColorImage(), null, null);
         } catch (OutOfMemoryError e) {
             System.gc();

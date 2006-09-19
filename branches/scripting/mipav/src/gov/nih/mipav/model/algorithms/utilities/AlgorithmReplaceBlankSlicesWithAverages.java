@@ -64,12 +64,12 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
 
         float[] sliceData = new float[sliceSize];
         
-        buildProgressBar(srcImage.getImageName(), "Replacing blanks with averages...", 0, 100);
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(srcImage.getImageName(), "Replacing blanks with averages...");
+        fireProgressStateChanged(0);
         
 
         for (z = 0; z < zDim; z++) {
-            progressBar.updateValue(100 * z/zDim);
+            fireProgressStateChanged(100 * z/zDim);
             try {
                 srcImage.exportData(z*sliceSize, sliceSize, sliceData);
             } catch (Exception ex) {
@@ -108,7 +108,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
                     } catch (Exception ex) {
                         MipavUtil.displayError("Error exporting data from slice " +
                                                (zDim-consecutiveBlank));
-                        disposeProgressBar();
+                        
                         setCompleted(false);
                         return;
                     } 
@@ -118,7 +118,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
                             srcImage.importData((zRep * sliceSize), sliceData, false);
                         } catch (Exception ex) {
                             MipavUtil.displayError("Error replacing slice " + (zRep+1) + " in source image");
-                            disposeProgressBar();
+                            
                             setCompleted(false);
                             return;
                         }    
@@ -132,7 +132,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
                             srcImage.exportData(z*sliceSize, sliceSize, sliceData);
                         } catch (Exception ex) {
                             MipavUtil.displayError("Error exporting data from slice " + (z+1));
-                            disposeProgressBar();
+                            
                             setCompleted(false);
                             return;
                         }
@@ -141,7 +141,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
                                 srcImage.importData((zRep * sliceSize), sliceData, false);
                             } catch (Exception ex) {
                                 MipavUtil.displayError("Error replacing slice " + (zRep+1) + " in source image");
-                                disposeProgressBar();
+                                
                                 setCompleted(false);
                                 return;
                             }        
@@ -158,7 +158,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
                             srcImage.exportData((z-consecutiveBlank-1)*sliceSize, sliceSize, sliceData);
                         } catch (Exception ex) {
                             MipavUtil.displayError("Error exporting data from slice " + (z-consecutiveBlank));
-                            disposeProgressBar();
+                            
                             setCompleted(false);
                             return;
                         }
@@ -166,7 +166,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
                             srcImage.exportData(z*sliceSize, sliceSize, sliceData2);
                         } catch (Exception ex) {
                             MipavUtil.displayError("Error exporting data from slice " + (z+1));
-                            disposeProgressBar();
+                            
                             setCompleted(false);
                             return;
                         }
@@ -179,7 +179,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
                             }
                             catch (Exception ex) {
                                 MipavUtil.displayError("Error replacing slice " + z + " in source image");
-                                disposeProgressBar();
+                                
                                 setCompleted(false);
                                 return;
                             }
@@ -196,7 +196,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
                                 }
                                 catch (Exception ex) {
                                     MipavUtil.displayError("Error replacing slice " + (zRep+1) + " in source image");
-                                    disposeProgressBar();
+                                    
                                     setCompleted(false);
                                     return;
                                 }
@@ -209,7 +209,7 @@ public class AlgorithmReplaceBlankSlicesWithAverages extends AlgorithmBase {
         } // for (z = 0; z < zDim; z++)
 
         srcImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
 
         return;

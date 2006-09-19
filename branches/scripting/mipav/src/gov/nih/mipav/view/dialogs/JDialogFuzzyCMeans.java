@@ -483,11 +483,6 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    fcmAlgo.setProgressBarVisible(false);
-                }
-
                 fcmAlgo.run();
             }
         } catch (OutOfMemoryError x) {

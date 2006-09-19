@@ -382,10 +382,6 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        segAlgo.setProgressBarVisible(false);
-                    }
-
                     segAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -421,10 +417,6 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        segAlgo.setProgressBarVisible(false);
-                    }
-
                     segAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

@@ -450,7 +450,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         try {
             constructLog();
 
-            buildProgressBar(srcImage.getImageName(), "Performing graph based segmentation...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Performing graph based segmentation...");
             
 
             xDim = srcImage.getExtents()[0];
@@ -504,7 +504,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             smoothImage = null;
 
             // Build graph
-            progressBar.updateValueImmed(20);
+            fireProgressStateChanged(20);
             edgesA = new int[4 * sliceLength];
             edgesB = new int[4 * sliceLength];
             edgesW = new float[4 * sliceLength];
@@ -557,11 +557,11 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             } // for (y = 0; y < yDim; y++)
 
             // Sort edges by non-decreasing edge weight
-            progressBar.updateValueImmed(40);
+            fireProgressStateChanged(40);
             sort2(edgesW, 0, num, edgesA, edgesB);
 
             // Make a disjoint-set forest
-            progressBar.updateValueImmed(60);
+            fireProgressStateChanged(60);
             numSegComponents = sliceLength;
             eltsRank = new int[sliceLength];
             eltsSize = new int[sliceLength];
@@ -631,7 +631,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             threshold = null;
 
             // post process small components
-            progressBar.updateValueImmed(80);
+            fireProgressStateChanged(80);
 
             for (i = 0; i < num; i++) {
                 y = edgesA[i];
@@ -724,7 +724,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 srcImage.importData(0, segBuffer, true);
             }
 
-            disposeProgressBar();
+            
             setCompleted(true);
 
             return;
@@ -734,9 +734,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("AlgorithmGraphBasedSegmentation reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
+           
 
             setCompleted(false);
 
@@ -746,9 +744,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("AlgorithmGraphBasedSegmentation reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 
@@ -806,7 +801,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         try {
             constructLog();
 
-            buildProgressBar(srcImage.getImageName(), "Performing graph based segmentation...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Performing graph based segmentation...");
             
 
             xDim = srcImage.getExtents()[0];
@@ -858,7 +853,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             smoothImage = null;
 
             // Build graph
-            progressBar.updateValueImmed(20);
+            fireProgressStateChanged(20);
             edgesA = new int[4 * sliceLength];
             edgesB = new int[4 * sliceLength];
             edgesW = new float[4 * sliceLength];
@@ -915,11 +910,11 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             } // for (y = 0; y < yDim; y++)
 
             // Sort edges by non-decreasing edge weight
-            progressBar.updateValueImmed(40);
+            fireProgressStateChanged(40);
             sort2(edgesW, 0, num, edgesA, edgesB);
 
             // Make a disjoint-set forest
-            progressBar.updateValueImmed(60);
+            fireProgressStateChanged(60);
             numSegComponents = sliceLength;
             eltsRank = new int[sliceLength];
             eltsSize = new int[sliceLength];
@@ -989,7 +984,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             threshold = null;
 
             // post process small components
-            progressBar.updateValueImmed(80);
+            fireProgressStateChanged(80);
 
             for (i = 0; i < num; i++) {
                 y = edgesA[i];
@@ -1082,7 +1077,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 srcImage.importData(0, segBuffer, true);
             }
 
-            disposeProgressBar();
+            
             setCompleted(true);
 
             return;
@@ -1092,10 +1087,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("AlgorithmGraphBasedSegmentation reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+          
             setCompleted(false);
 
             return;
@@ -1103,10 +1095,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             finalize();
             System.gc();
             MipavUtil.displayError("AlgorithmGraphBasedSegmentation reports:\n" + error.toString());
-
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 
@@ -1159,7 +1147,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
         try {
             constructLog();
 
-            buildProgressBar(srcImage.getImageName(), "Performing graph based segmentation...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Performing graph based segmentation...");
             
 
             xDim = srcImage.getExtents()[0];
@@ -1191,7 +1179,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             smoothImage = null;
 
             // Build graph
-            progressBar.updateValueImmed(20);
+            fireProgressStateChanged(20);
             edgesA = new int[4 * sliceLength];
             edgesB = new int[4 * sliceLength];
             edgesW = new float[4 * sliceLength];
@@ -1236,11 +1224,11 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             } // for (y = 0; y < yDim; y++)
 
             // Sort edges by non-decreasing edge weight
-            progressBar.updateValueImmed(40);
+            fireProgressStateChanged(40);
             sort2(edgesW, 0, num, edgesA, edgesB);
 
             // Make a disjoint-set forest
-            progressBar.updateValueImmed(60);
+            fireProgressStateChanged(60);
             numSegComponents = sliceLength;
             eltsRank = new int[sliceLength];
             eltsSize = new int[sliceLength];
@@ -1310,7 +1298,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             threshold = null;
 
             // post process small components
-            progressBar.updateValueImmed(80);
+            fireProgressStateChanged(80);
 
             for (i = 0; i < num; i++) {
                 y = edgesA[i];
@@ -1403,7 +1391,7 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                 srcImage.importData(0, segBuffer, true);
             }
 
-            disposeProgressBar();
+            
             setCompleted(true);
 
             return;
@@ -1413,10 +1401,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("AlgorithmGraphBasedSegmentation reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -1424,10 +1408,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
             finalize();
             System.gc();
             MipavUtil.displayError("AlgorithmGraphBasedSegmentation reports:\n" + error.toString());
-
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 

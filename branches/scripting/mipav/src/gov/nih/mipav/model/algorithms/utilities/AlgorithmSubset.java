@@ -100,7 +100,7 @@ public class AlgorithmSubset extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmSubset reports: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -123,13 +123,13 @@ public class AlgorithmSubset extends AlgorithmBase {
                     imageBuffer = new float[volume];
                 }
 
-                buildProgressBar(srcImage.getImageName(), "Creating 3D subset...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Creating 3D subset...");
             } catch (OutOfMemoryError e) {
                 imageBuffer = null;
                 System.gc();
                 displayError("AlgorithmSubset reports: Out of memory");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -230,13 +230,13 @@ public class AlgorithmSubset extends AlgorithmBase {
                     imageBuffer = new float[slice];
                 }
 
-                buildProgressBar(srcImage.getImageName(), "Creating 3D subset...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Creating 3D subset...");
             } catch (OutOfMemoryError e) {
                 imageBuffer = null;
                 System.gc();
                 displayError("AlgorithmSubset reports: Out of memory");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -247,7 +247,7 @@ public class AlgorithmSubset extends AlgorithmBase {
             for (t = 0; (t < tDim) && !threadStopped; t++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (t) / (tDim - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
                 }
 
                 try {
@@ -311,13 +311,13 @@ public class AlgorithmSubset extends AlgorithmBase {
                     imageBuffer = new float[slice];
                 }
 
-                buildProgressBar(srcImage.getImageName(), "Creating 3D subset...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Creating 3D subset...");
             } catch (OutOfMemoryError e) {
                 imageBuffer = null;
                 System.gc();
                 displayError("AlgorithmSubset reports: Out of memory");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -328,7 +328,7 @@ public class AlgorithmSubset extends AlgorithmBase {
             for (t = 0; (t < tDim) && !threadStopped; t++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (t) / (tDim - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
                 }
 
                 try {
@@ -392,13 +392,13 @@ public class AlgorithmSubset extends AlgorithmBase {
                     imageBuffer = new float[slice];
                 }
 
-                buildProgressBar(srcImage.getImageName(), "Creating 3D subset...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Creating 3D subset...");
             } catch (OutOfMemoryError e) {
                 imageBuffer = null;
                 System.gc();
                 displayError("AlgorithmSubset reports: Out of memory");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -409,7 +409,7 @@ public class AlgorithmSubset extends AlgorithmBase {
             for (t = 0; (t < tDim) && !threadStopped; t++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (t) / (tDim - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
                 }
 
                 try {
@@ -458,7 +458,7 @@ public class AlgorithmSubset extends AlgorithmBase {
         } // else REMOVE_X
 
         // Clean up and let the calling dialog know that algorithm did its job
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

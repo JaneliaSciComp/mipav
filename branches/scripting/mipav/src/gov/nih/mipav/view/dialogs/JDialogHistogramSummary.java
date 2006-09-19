@@ -238,11 +238,6 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    histAlgo.setProgressBarVisible(false);
-                }
-
                 histAlgo.run();
             }
 

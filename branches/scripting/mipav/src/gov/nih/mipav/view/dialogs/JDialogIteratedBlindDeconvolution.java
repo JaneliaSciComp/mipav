@@ -177,7 +177,7 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
 
             psfImage = new ModelImage(originalImage.getType(), originalImage.getExtents(), name, UI);
 
-            ibdAlgor = new AlgorithmIteratedBlindDeconvolution(resultImage, originalImage, psfImage, 0, 100);
+            ibdAlgor = new AlgorithmIteratedBlindDeconvolution(resultImage, originalImage, psfImage);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.

@@ -136,9 +136,8 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
      * @param  entireImage      whether to filter the entire image or just the VOI region
      */
     public AlgorithmCoherenceEnhancingDiffusion(ModelImage srcImg, int numI, float k, float derivativeScale,
-                                                float gaussianScale, boolean do25D, boolean entireImage,
-                                                int minProgressValue, int maxProgressValue) {
-        super(srcImg, srcImg, minProgressValue, maxProgressValue);
+                                                float gaussianScale, boolean do25D, boolean entireImage) {
+        super(srcImg, srcImg);
 
         numIterations = numI;
         this.k = k;
@@ -172,9 +171,8 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
      */
     public AlgorithmCoherenceEnhancingDiffusion(ModelImage destImg, ModelImage srcImg, int numI, float k,
                                                 float derivativeScale, float gaussianScale, boolean do25D,
-                                                boolean entireImage,
-                                                int minProgressValue, int maxProgressValue) {
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+                                                boolean entireImage) {
+        super(destImg, srcImg);
 
         numIterations = numI;
         this.k = k;
@@ -937,7 +935,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         } // end try{}-catch{}
 
         
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
         
         // processing each slice starts here
         for (int imgNum = 0; imgNum < numImages; imgNum++) {
@@ -961,7 +959,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             // iterate diffusion for each slice
             for (int iterNum = 1; iterNum <= numIterations; iterNum++) {
                 
-                fireProgressStateChanged(getProgressFromFloat((float)(computationCount++) / (totalComputation - 1)), null, null);
+                fireProgressStateChanged(((float)(computationCount++) / (totalComputation - 1)), null, null);
                 
                 computeDx(dx2, iterationBuffer);
                 computeDy(dy2, iterationBuffer);
@@ -1067,7 +1065,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
         } // end for (int imgNum = 0; ...)
 
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         
         destImage.calcMinMax();
 
@@ -1130,7 +1128,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         boolean useBlue = true;
         int colorsPresent = 3;
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
         
         srcImage.calcMinMax();
 
@@ -1244,7 +1242,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
             // iterate diffusion for each slice
             for (int iterNum = 1; iterNum <= numIterations; iterNum++) {
-                fireProgressStateChanged(getProgressFromFloat((float)(computationCount++) / (totalComputation - 1)), null, null);
+                fireProgressStateChanged(((float)(computationCount++) / (totalComputation - 1)), null, null);
                 
                 if (useRed) {
                     computeDx(dx2, iterationBufferR);
@@ -1545,7 +1543,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
         } // end for (int imgNum = 0; ...)
 
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         
         
         destImage.calcMinMax();
@@ -1582,7 +1580,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         float[] a, b, c; // references to the diffusion tensor
         float[] d, e, f;
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
         
         
         try {
@@ -1706,7 +1704,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             Matrix dMat;
 
             for (int z = 0; z < zDim; z++) {
-                fireProgressStateChanged(getProgressFromInt((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim)), null, null);
+                fireProgressStateChanged(((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim)), null, null);
                 
                 for (int y = 0; y < yDim; y++) {
 
@@ -1855,12 +1853,12 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             return;
         } // end try{}-catch{}
 
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         
         destImage.calcMinMax();
 
         // The meat is done
-        disposeProgressBar();
+        
 
         if (threadStopped) {
             finalize();
@@ -1923,7 +1921,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         boolean useBlue = true;
         int colorsPresent = 3;
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
         
         
         srcImage.calcMinMax();
@@ -2272,7 +2270,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             Matrix dMat;
 
             for (int z = 0; z < zDim; z++) {
-                fireProgressStateChanged(getProgressFromInt((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim)), null, null);
+                fireProgressStateChanged(((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim)), null, null);
 
                 for (int y = 0; y < yDim; y++) {
 
@@ -2564,7 +2562,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             return;
         } // end try{}-catch{}
 
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         
         destImage.calcMinMax();
 

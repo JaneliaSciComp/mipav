@@ -66,9 +66,8 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
      * @param  numErosions     the number of erosions to do
      * @param  maxAttenuation  the maximum amount to reduce the object intensity by (0,1)
      */
-    public AlgorithmBoundaryAttenuation(ModelImage srcImg, int numErosions, float maxAttenuation,
-            int minProgressValue, int maxProgressValue) {
-        super(srcImg, null, minProgressValue, maxProgressValue);
+    public AlgorithmBoundaryAttenuation(ModelImage srcImg, int numErosions, float maxAttenuation) {
+        super(srcImg, null);
         srcImage = srcImg;
         this.numErosions = numErosions;
         this.maxAttenuation = maxAttenuation;
@@ -105,10 +104,11 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
      */
     public void runAlgorithm() {
         
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Boundary Attenuation ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Boundary Attenuation ...");
         
         
-        AlgorithmMask maskAlgo = new AlgorithmMask(maskImage, srcImage, 1, true, true, 0, 5);
+        AlgorithmMask maskAlgo = new AlgorithmMask(maskImage, srcImage, 1, true, true);
+        maskAlgo.setMinMaxProgressValues(generateProgressValues(0, 5));
         linkProgressToAlgorithm(maskAlgo);
         maskAlgo.run();
 
@@ -145,7 +145,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         for (int i = 0; i < attenuationBuffer.length; i++) {
 
             if ((i % mod) == 0) {
-                fireProgressStateChanged(getProgressFromFloat( startPercent + (float)(i/attenuationBuffer.length) * percentChange), 
+                fireProgressStateChanged(( startPercent + (float)(i/attenuationBuffer.length) * percentChange), 
                         srcImage.getImageName(), "Filling object interior ...");
             }
 
@@ -175,7 +175,8 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
         float[] sigmas = new float[] { 2.0f, 2.0f, 2.0f * (xRes / zRes) };
         //start percentage now @ 50... will go to 70%
-        AlgorithmGaussianBlurSep blurAlgo = new AlgorithmGaussianBlurSep(tmpImg, null, sigmas, false, false, 50, 70);
+        AlgorithmGaussianBlurSep blurAlgo = new AlgorithmGaussianBlurSep(tmpImg, null, sigmas, false, false);
+        blurAlgo.setMinMaxProgressValues(generateProgressValues(50,70));
         blurAlgo.setMask(srcImage.generateVOIMask());
         linkProgressToAlgorithm(blurAlgo);
         blurAlgo.run();
@@ -188,7 +189,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         }
 
 
-        fireProgressStateChanged(getProgressFromInt(70), 
+        fireProgressStateChanged((70), 
                 srcImage.getImageName(), "Attenuating image ...");
         
         // combine attenuation buffer with srcImage and put into destImage
@@ -209,7 +210,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(getProgressFromInt(75), 
+        fireProgressStateChanged((75), 
                 srcImage.getImageName(), "Attenuating image ...");
         
 
@@ -222,7 +223,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         for (int i = 0; i < attenuationBuffer.length; i++) {
 
             if ((i % mod) == 0) {
-                fireProgressStateChanged(getProgressFromFloat( startPercent + (float)(i/attenuationBuffer.length) * percentChange), 
+                fireProgressStateChanged(( startPercent + (float)(i/attenuationBuffer.length) * percentChange), 
                         srcImage.getImageName(), "Attenuating image ...");
             }
 
@@ -250,7 +251,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         destImage.copyFileTypeInfo(srcImage);
 
         setCompleted(true);
@@ -322,7 +323,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         for (curIter = 0; (curIter < iterations) && !threadStopped; curIter++) {
             linearAttenuation = maxAttenuation + (linearStep * curIter);
 
-            fireProgressStateChanged(getProgressFromFloat( startPercent + (float)(curIter/iterations) * percentChange ), 
+            fireProgressStateChanged(( startPercent + (float)(curIter/iterations) * percentChange ), 
                     srcImage.getImageName(), "Eroding image ...");
             
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {

@@ -186,9 +186,9 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
         minimum = srcImage.getMin();
         maximum = srcImage.getMax();
 
-        buildProgressBar(srcImage.getFileInfo()[0].getFileName(), "Reordering image to dicom order ...", 0, 100);
+        fireProgressStateChanged(srcImage.getFileInfo()[0].getFileName(), "Reordering image to dicom order ...");
         
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(0);
         xyzSize = xDim * yDim * zDim;
 
         try {
@@ -199,7 +199,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
         } catch (IOException e) {
             MipavUtil.displayError("Error on srcImage.exportData(0,xyzSize,datasetBuffer)");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
@@ -207,7 +207,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Out of memory in Algorithm Dicom Order");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -261,7 +261,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
             newFileInfo = null;
             System.gc();
             MipavUtil.displayError("AlgorithmDicomOrder: Out of memory on new ModelImage");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -270,7 +270,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
         destImage.setFileInfo(newFileInfo);
 
         for (x = 0; (x < xDim) && !threadStopped; x++) {
-            progressBar.updateValue(Math.round(100 * x / (xDim - 1)), runningInSeparateThread);
+            fireProgressStateChanged(Math.round(100 * x / (xDim - 1)));
 
             switch (orient[0]) {
 
@@ -398,14 +398,14 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
             MipavUtil.displayError("Error on resultImage.importData(0,dicomBuffer,true)");
             dicomBuffer = null;
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
         dicomBuffer = null;
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

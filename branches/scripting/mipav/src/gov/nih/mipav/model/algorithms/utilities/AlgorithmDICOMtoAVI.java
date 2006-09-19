@@ -79,11 +79,10 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
     public void runAlgorithm() {
         Vector fileVector = new Vector();
 
-        progressBar = new ViewJProgressBar("DICOM -> Compressed AVI", "Searching for DICOM images", 0, 100, false, null,
-                                           null);
-        progressBar.updateValue(0, runningInSeparateThread);
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(true);
+        fireProgressStateChanged("DICOM -> Compressed AVI", "Searching for DICOM images");
+        fireProgressStateChanged(0);
+        
+        
 
         addFilesToVector(dirPath, fileVector);
 
@@ -93,25 +92,25 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
 
         if (size > 0) {
             float percentDone = 0;
-            progressBar.updateValue((int) percentDone, runningInSeparateThread);
+            fireProgressStateChanged((int) percentDone);
 
             for (int i = 0; i < size; i++) {
-                progressBar.setMessage("Opening DICOM image...");
+                fireProgressStateChanged("Opening DICOM image...");
                 runConversion((String) fileVector.elementAt(i));
                 System.gc();
 
                 percentDone += (100.0 / (float) size);
-                progressBar.updateValue((int) percentDone, runningInSeparateThread);
+                fireProgressStateChanged((int) percentDone);
             }
 
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
         } else {
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
             Preferences.debug("No DICOM files to convert" + "\n");
         }
 
         fileIO = null;
-        progressBar.setVisible(false);
+        
     }
 
     /**
@@ -179,7 +178,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
 
                 return;
             } else if (dicomImage.getNDims() == 2) {
-                progressBar.setMessage("Saving image as tiff...");
+                fireProgressStateChanged("Saving image as tiff...");
                 dicomImage.setImageName(fileName);
 
                 String patientID = null;
@@ -290,7 +289,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
 
                     ModelImage paddedImage = new ModelImage(dicomImage.getType(), newExtents, "TEMPImage");
 
-                    progressBar.setMessage("Adding margins to image...");
+                    fireProgressStateChanged("Adding margins to image...");
 
                     AlgorithmAddMargins algoMarg = null;
 
@@ -324,9 +323,9 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                     aviFile.setProgressBarVisible(false);
 
                     if (compression != 0) {
-                        progressBar.setMessage("Encoding image as compressed avi...");
+                        fireProgressStateChanged("Encoding image as compressed avi...");
                     } else {
-                        progressBar.setMessage("Saving image as avi...");
+                        fireProgressStateChanged("Saving image as avi...");
                     }
 
                     if (aviFile.writeImage(dicomImage, null, lutA, null, null, null, 0, 0, 0, 0, 0,

@@ -352,10 +352,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            deleteAlgo2D.setProgressBarVisible(false);
-                        }
-
+                       
                         deleteAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -412,10 +409,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            deleteAlgo2D.setProgressBarVisible(false);
-                        }
-
+                       
                         deleteAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -464,10 +458,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            deleteAlgo3D.setProgressBarVisible(false);
-                        }
-
+                       
                         deleteAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -523,10 +514,6 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            deleteAlgo3D.setProgressBarVisible(false);
-                        }
-
                         deleteAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {

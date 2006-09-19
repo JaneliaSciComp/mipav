@@ -826,10 +826,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
-
+                     
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -880,10 +877,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
-
+                       
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -943,10 +937,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
-
+                      
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -996,10 +987,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
-
+                       
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

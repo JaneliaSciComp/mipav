@@ -62,7 +62,7 @@ public class AlgorithmFlip extends AlgorithmBase {
      */
     public AlgorithmFlip(ModelImage srcImg, int flipMode, int progress) {
         this(srcImg, flipMode);
-        progressMode = progress;
+      //  progressMode = progress;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -130,14 +130,14 @@ public class AlgorithmFlip extends AlgorithmBase {
             totalLength = length * nImages;
             buffer = new float[length];
             resultBuffer = new float[length * nImages];
-            buildProgressBar(srcImage.getImageName(), "Flipping image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Flipping image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
             System.gc();
             displayError("Algorithm Flip: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -153,7 +153,7 @@ public class AlgorithmFlip extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Flip: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -168,8 +168,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                             index = ((y * xDim) + x);
 
                             if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (start + index) / (totalLength - 1) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) * 100));
                             }
 
                             resultBuffer[start + index] = buffer[(y * xDim) + (xDim - 1 - x)];
@@ -183,8 +182,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                             index = ((y * xDim) + x);
 
                             if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (start + index) / (totalLength - 1) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) * 100));
                             }
 
                             resultBuffer[start + index] = buffer[((yDim - 1 - y) * xDim) + x];
@@ -212,8 +210,8 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 index = ((cf * y * xDim) + (cf * x) + j);
 
                                 if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
-                                    progressBar.updateValue(Math.round((float) (start + index) / (totalLength - 1) *
-                                                                           100), runningInSeparateThread);
+                                    fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) *
+                                                                           100));
                                 }
 
                                 resultBuffer[start + index] = buffer[(cf * y * xDim) + (cf * (xDim - 1 - x)) + j];
@@ -230,8 +228,8 @@ public class AlgorithmFlip extends AlgorithmBase {
                                 index = ((cf * y * xDim) + (cf * x) + j);
 
                                 if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
-                                    progressBar.updateValue(Math.round((float) (start + index) / (totalLength - 1) *
-                                                                           100), runningInSeparateThread);
+                                    fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) *
+                                                                           100));
                                 }
 
                                 resultBuffer[start + index] = buffer[(cf * (yDim - 1 - y) * xDim) + (cf * x) + j];
@@ -274,7 +272,7 @@ public class AlgorithmFlip extends AlgorithmBase {
             buffer = null;
             displayError("Algorithm Flip: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
@@ -283,7 +281,7 @@ public class AlgorithmFlip extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Flip: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -320,7 +318,7 @@ public class AlgorithmFlip extends AlgorithmBase {
             fileInfo[i].setOrigin(loc, index);
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

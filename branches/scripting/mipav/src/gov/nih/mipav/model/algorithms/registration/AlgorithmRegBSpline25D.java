@@ -76,7 +76,7 @@ public class AlgorithmRegBSpline25D extends AlgorithmRegBSpline {
     public void runAlgorithm() {
 
         // Setup
-        buildProgressBar(m_kImageSource.getImageName(), "Registering ...", 0, 100);
+        fireProgressStateChanged(m_kImageSource.getImageName(), "Registering ...");
 
         boolean bMultiPass = (null != m_kOptionsPass2);
 
@@ -104,7 +104,7 @@ iteration:
                                              "  ");
 
             // Update the progress bar.
-            progressBar.updateValue((iSlice + 1) * 100 / iNumSlices, runningInSeparateThread);
+            fireProgressStateChanged((iSlice + 1) * 100 / iNumSlices);
 
             // This is either the specified reference slice or the previous
             // slice (previous slice is set to last slice when the
@@ -133,12 +133,12 @@ iteration:
             }
 
             // Pass 1
-            progressBar.setMessage(kStringSlice + (bMultiPass ? "Pass 1" : ""));
+            fireProgressStateChanged(kStringSlice + (bMultiPass ? "Pass 1" : ""));
             akReg[iSlice] = runPass(kSimpleImageSource, kSimpleImageTarget, m_kOptionsPass1, null);
 
             // Optional Pass 2
             if ((null != m_kOptionsPass2) && !isThreadStopped()) {
-                progressBar.setMessage(kStringSlice + "Pass 2");
+                fireProgressStateChanged(kStringSlice + "Pass 2");
                 akReg[iSlice] = runPass(kSimpleImageSource, kSimpleImageTarget, m_kOptionsPass2, akReg[iSlice]);
             }
 
@@ -188,7 +188,7 @@ iteration:
 
         akReg = null;
         disposeLocal();
-        disposeProgressBar();
+        
     }
 
     /**

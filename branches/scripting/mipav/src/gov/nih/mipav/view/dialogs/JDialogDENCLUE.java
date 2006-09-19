@@ -256,10 +256,6 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    denAlgo.setProgressBarVisible(false);
-                }
-
                 denAlgo.run();
             }
         } catch (OutOfMemoryError x) {

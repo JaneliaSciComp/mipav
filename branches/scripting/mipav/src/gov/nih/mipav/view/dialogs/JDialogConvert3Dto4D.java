@@ -233,11 +233,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    convert3Dto4DAlgo.setProgressBarVisible(false);
-                }
-
-                convert3Dto4DAlgo.run();
+            	convert3Dto4DAlgo.run();
             }
         } catch (OutOfMemoryError x) {
             System.gc();

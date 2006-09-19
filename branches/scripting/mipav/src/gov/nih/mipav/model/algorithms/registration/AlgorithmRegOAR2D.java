@@ -1356,7 +1356,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                               "Input subsampled 8 = " + simpleInputSub8);
         } // if (DOF >= 3)
 
-        buildProgressBar("Registering images", "Beginning registration", 0, 100);
+        fireProgressStateChanged("Registering images", "Beginning registration");
         
 
         long time = System.currentTimeMillis();
@@ -1563,7 +1563,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
             /* Set progress bar: */
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (100 * (float) iBruteCount / (float) iTotal), runningInSeparateThread);
+                fireProgressStateChanged((int) (100 * (float) iBruteCount / (float) iTotal));
             }
 
             /* test current permutation and store results: */
@@ -1966,13 +1966,13 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         // Should we even try to coarse since 2D images at level 8 are pretty small and not computionally taxing ?
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Optimizing at coarse samples");
+            fireProgressStateChanged("Optimizing at coarse samples");
         }
 
         for (int i = 0; (i < coarseNum) && !threadStopped; i++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((i + 1) * 10 / coarseNum, runningInSeparateThread);
+                fireProgressStateChanged((i + 1) * 10 / coarseNum);
             }
 
             initial[0] = rotateBegin + (i * coarseRate);
@@ -1990,7 +1990,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         MatrixListItem[] matrixList = new MatrixListItem[fineNum];
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Measuring at fine samples");
+            fireProgressStateChanged("Measuring at fine samples");
         }
 
         double[] costs = new double[fineNum];
@@ -1999,7 +1999,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         for (int i = 0; (i < fineNum) && !threadStopped; i++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(10 + ((i + 1) * 5 / fineNum), runningInSeparateThread);
+                fireProgressStateChanged(10 + ((i + 1) * 5 / fineNum));
             }
 
             initial[0] = rotateBegin + (i * fineRate);
@@ -2020,7 +2020,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(15, runningInSeparateThread);
+            fireProgressStateChanged(15);
         }
 
         Arrays.sort(costs);
@@ -2032,13 +2032,13 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Optimizing top samples");
+            fireProgressStateChanged("Optimizing top samples");
         }
 
         for (int i = 0; (i < fineNum) && !threadStopped; i++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(15 + ((i + 1) * 5 / fineNum), runningInSeparateThread);
+                fireProgressStateChanged(15 + ((i + 1) * 5 / fineNum));
             }
 
             if (matrixList[i].cost < threshold) {
@@ -2083,7 +2083,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         // Now freely optimizes over rotation:
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Optimizing minima");
+            fireProgressStateChanged("Optimizing minima");
         }
 
         int count = 0;
@@ -2098,7 +2098,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(20 + ((count + 1) * 5 / minima.size()), runningInSeparateThread);
+                fireProgressStateChanged(20 + ((count + 1) * 5 / minima.size()));
             }
 
             powell.setInitialPoint(((MatrixListItem) en.nextElement()).initial);
@@ -2114,7 +2114,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(25, runningInSeparateThread);
+            fireProgressStateChanged(25);
         }
 
         cost.disposeLocal();
@@ -2197,7 +2197,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Vector newMinima = new Vector();
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Optimizing new minima");
+            fireProgressStateChanged("Optimizing new minima");
         }
 
         // Now changed so that the number of minima to test at Level Four is a variable,
@@ -2208,7 +2208,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         for (int i = 0; (i < total) && !threadStopped; i++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(25 + ((i + 1) * 4 / total), runningInSeparateThread);
+                fireProgressStateChanged(25 + ((i + 1) * 4 / total));
             }
 
             powell.setInitialPoint(((MatrixListItem) minima.elementAt(i)).initial);
@@ -2242,7 +2242,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Vector perturbList = new Vector();
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Perturbing minima");
+            fireProgressStateChanged("Perturbing minima");
         }
 
         // Perturb rotation.  Add fine delta and optimize, then subtract fine delta and optimize.
@@ -2251,7 +2251,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(29 + ((((j * 2 * total) + i + 1) * 3) / (total * 12)), runningInSeparateThread);
+                    fireProgressStateChanged(29 + ((((j * 2 * total) + i + 1) * 3) / (total * 12)));
                 }
 
                 initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
@@ -2293,7 +2293,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                 for (int i = 0; (i < (2 * total)) && !threadStopped; i++) {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(32 + ((((2 * j * total) + i + 1) * 3) / (total * 8)), runningInSeparateThread);
+                        fireProgressStateChanged(32 + ((((2 * j * total) + i + 1) * 3) / (total * 8)));
                     }
 
                     initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
@@ -2328,7 +2328,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Collections.sort(perturbList);
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(35, runningInSeparateThread);
+            fireProgressStateChanged(35);
         }
 
         cost.disposeLocal();
@@ -2368,7 +2368,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         degree = DOF;
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Starting last optimization");
+            fireProgressStateChanged("Starting last optimization");
         }
 
         maxIter = baseNumIter * 2;
@@ -2389,11 +2389,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Preferences.debug("Best answer: \n" + item2 + "\n");
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
         }
 
         if (isProgressBarVisible()) {
-            progressBar.dispose();
+            
         }
 
         cost.disposeLocal();
@@ -2443,7 +2443,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         degree = 2;
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Starting last optimization");
+            fireProgressStateChanged("Starting last optimization");
         }
 
         maxIter = baseNumIter * 2;
@@ -2465,11 +2465,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Preferences.debug("Best answer: \n" + item2 + "\n");
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
         }
 
         if (isProgressBarVisible()) {
-            progressBar.dispose();
+            
         }
 
         cost.disposeLocal();
@@ -2515,7 +2515,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                                                                getTolerance(degree), maxIter, rigidFlag, bracketBound);
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Measuring costs of minima");
+            fireProgressStateChanged("Measuring costs of minima");
         }
 
         for (Enumeration en = minima.elements(); en.hasMoreElements();) {
@@ -2528,7 +2528,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         Collections.sort(minima);
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Optimizing with " + degree + " DOF");
+            fireProgressStateChanged("Optimizing with " + degree + " DOF");
         }
 
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
@@ -2553,11 +2553,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             degree = 5;
 
             if (isProgressBarVisible()) {
-                progressBar.setMessage("Optimizing with " + degree + " DOF");
+                fireProgressStateChanged("Optimizing with " + degree + " DOF");
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(43, runningInSeparateThread);
+                fireProgressStateChanged(43);
             }
 
             powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
@@ -2582,11 +2582,11 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                                                   rigidFlag, bracketBound);
 
                 if (isProgressBarVisible()) {
-                    progressBar.setMessage("Optimizing with 7 DOF");
+                    fireProgressStateChanged("Optimizing with 7 DOF");
                 }
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(51, runningInSeparateThread);
+                    fireProgressStateChanged(51);
                 }
 
                 if (isProgressBarVisible()) {
@@ -2605,7 +2605,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(60, runningInSeparateThread);
+            fireProgressStateChanged(60);
         }
 
         cost.disposeLocal();

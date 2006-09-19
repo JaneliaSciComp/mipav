@@ -196,7 +196,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
             lengthOut = srcImage.getSliceSize();
             buffer = new float[lengthIn];
             bufferDest = new float[lengthOut];
-            buildProgressBar(srcImage.getImageName(), "RGB to GRAY ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "RGB to GRAY ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             bufferDest = null;
@@ -312,8 +312,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
                     for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 4, id++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (i + offsetIn) / (totalLength - 1) * 100),
-                                                    runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) (i + offsetIn) / (totalLength - 1) * 100));
                         }
 
                         if (thresholdAverage) {
@@ -407,7 +406,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm RGBtoGray: Output Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -424,7 +423,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -493,7 +492,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         try {
             lengthIn = 4 * f * t * z * sliceSize;
             buffer = new float[lengthIn];
-            buildProgressBar(srcImage.getImageName(), "RGB to GRAY ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "RGB to GRAY ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             System.gc();
@@ -597,7 +596,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         for (i = 0, id = 0; (i < lengthIn) && !threadStopped; i += 4, id++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (i) / (totalLength - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (i) / (totalLength - 1) * 100));
             }
 
             if (thresholdAverage) {
@@ -699,7 +698,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm RGBtoGray: Output Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -712,7 +711,7 @@ public class AlgorithmRGBtoGray extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

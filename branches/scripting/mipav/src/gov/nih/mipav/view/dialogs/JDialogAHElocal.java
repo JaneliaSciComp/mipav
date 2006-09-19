@@ -656,9 +656,6 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                     }
                 } else {
 
-                    if (!userInterface.isAppFrameVisible()) {
-                        aheAlgo.setProgressBarVisible(false);
-                    }
 
                     aheAlgo.run();
                 }
@@ -724,12 +721,7 @@ public class JDialogAHElocal extends JDialogScriptableBase implements AlgorithmI
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        aheAlgo.setProgressBarVisible(false);
-                    }
-
-                    aheAlgo.run();
+                	aheAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog AHE local: unable to allocate enough memory");

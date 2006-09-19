@@ -243,11 +243,7 @@ public class JDialogConvertDicom extends JDialogBase implements AlgorithmInterfa
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!userInterface.isAppFrameVisible()) {
-                algoDicomConvert.setProgressBarVisible(false);
-            }
-
-            algoDicomConvert.run();
+        	algoDicomConvert.run();
         }
 
     }

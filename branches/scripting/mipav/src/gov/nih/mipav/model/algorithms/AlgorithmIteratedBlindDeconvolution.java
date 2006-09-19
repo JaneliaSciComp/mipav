@@ -83,9 +83,8 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
      * @param  srcImg   DOCUMENT ME!
      * @param  psfImg   DOCUMENT ME!
      */
-    public AlgorithmIteratedBlindDeconvolution(ModelImage destImg, ModelImage srcImg, ModelImage psfImg,
-            int minProgressValue, int maxProgressValue) {
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+    public AlgorithmIteratedBlindDeconvolution(ModelImage destImg, ModelImage srcImg, ModelImage psfImg) {
+        super(destImg, srcImg);
         inImage = srcImg;
         psfImage = psfImg;
         outImage = destImg;
@@ -129,7 +128,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             arrayLength *= exts[i];
         }
 
-        fireProgressStateChanged(minProgressValue, null, "Running iterated blind deconvolution ...");
+        fireProgressStateChanged(0, null, "Running iterated blind deconvolution ...");
         
         // allocate the arrays
         try {
@@ -178,7 +177,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
         // take the FFT of the inImage
         AlgorithmFFT blurredFFT = new AlgorithmFFT(blurredImageSpectrum, inImage, forwardTransformDir, logMagDisplay,
                                                    unequalDim, image25D, imageCrop, kernelDiameter, filterType, freq1,
-                                                   freq2, constructionMethod, butterworthOrder, 0, 100);
+                                                   freq2, constructionMethod, butterworthOrder);
         blurredFFT.run();
 
         // fill the blurred arrays with values from the blurredImage
@@ -235,11 +234,11 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
         // take the FFT of the estimatedImage
         estimatedFFT = new AlgorithmFFT(estimatedImageSpectrum, estimatedImage, forwardTransformDir, logMagDisplay,
                                         unequalDim, image25D, imageCrop, kernelDiameter, filterType, freq1, freq2,
-                                        constructionMethod, butterworthOrder, 0, 100);
+                                        constructionMethod, butterworthOrder);
 
         estimatedIFFT = new AlgorithmFFT(estimatedImage, estimatedImageSpectrum, inverseTransformDir, logMagDisplay,
                                          unequalDim, image25D, imageCrop, kernelDiameter, filterType, freq1, freq2,
-                                         constructionMethod, butterworthOrder, 0, 100);
+                                         constructionMethod, butterworthOrder);
 
         psfImageSpectrum = new ModelImage(ModelStorageBase.COMPLEX, inImage.getExtents(), null, null);
         psfImageSpectrum.setOriginalExtents(inImage.getExtents());
@@ -247,12 +246,12 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
 
         psfIFFT = new AlgorithmFFT(psfImage, psfImageSpectrum, inverseTransformDir, logMagDisplay, unequalDim, image25D,
                                    imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                   butterworthOrder, 0, 100);
+                                   butterworthOrder);
 
         psfFFT = new AlgorithmFFT(psfImageSpectrum, psfImage, forwardTransformDir, logMagDisplay, unequalDim, image25D,
                                   imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                  butterworthOrder, 0, 100);
-        fireProgressStateChanged(getProgressFromFloat(.1f), null, null);
+                                  butterworthOrder);
+        fireProgressStateChanged(.1f, null, null);
     }
 
     /**
@@ -536,7 +535,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             estimatedImage.setOriginalMinimum((float) estimatedImage.getMin());
             estimatedImage.setOriginalMaximum((float) estimatedImage.getMax());
 
-            fireProgressStateChanged(getProgressFromFloat(startPercent + (percentChange * (iteration / 200f)) ), 
+            fireProgressStateChanged(startPercent + (percentChange * (iteration / 200f)), 
                     null, null);
             
             iteration++;
@@ -569,7 +568,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             return;
         }
         
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         
     } // end run2D()
 

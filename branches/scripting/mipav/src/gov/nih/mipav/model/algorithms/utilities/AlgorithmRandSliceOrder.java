@@ -42,7 +42,7 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
      */
     public AlgorithmRandSliceOrder(ModelImage srcImg, int progress) {
         this(srcImg);
-        progressMode = progress;
+    //    progressMode = progress;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -117,7 +117,7 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
             threeDLength = length * srcImage.getExtents()[2];
             buffer = new float[threeDLength];
             sliceBuffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Reordering image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Reordering image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             sliceBuffer = null;
@@ -131,7 +131,7 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
         for (s = 0; (s < sliceNumber) && !threadStopped; s++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (s) / (sliceNumber - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (s) / (sliceNumber - 1) * 100));
             }
 
             try {
@@ -206,7 +206,7 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
         }
 
         srcImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

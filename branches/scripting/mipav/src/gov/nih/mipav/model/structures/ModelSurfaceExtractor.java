@@ -144,7 +144,7 @@ public class ModelSurfaceExtractor {
 
             if (progressBar != null) {
 
-                // progressBar.setMessage("Extraction on slice # " + (iZ + 1));
+                // fireProgressStateChanged("Extraction on slice # " + (iZ + 1));
                 progressBar.setMessage("Extraction on slice # " + iZ); // was showing numSlices + 1 as last slice
                                                                        // extracted
                 progressBar.updateValue(15 + ((iZ * 35) / (m_iZBound - 1)), true);

@@ -125,7 +125,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
         int start;
 
-        buildProgressBar(srcImage.getImageName(), "Replacing values...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Replacing values...");
         
 
 
@@ -146,8 +146,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
                     for (buffIndex = 0; buffIndex < length; buffIndex++) {
 
                         if ((counter % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) counter / ((length * t * z) - 1) * 100),
-                                                    runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) counter / ((length * t * z) - 1) * 100));
                         }
 
                         for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
@@ -187,7 +186,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
         destImage.calcMinMax();
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -223,7 +222,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
         int start;
 
-        buildProgressBar(srcImage.getImageName(), "Replacing values...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Replacing values...");
         
 
         int mod = (length * t * z) / 10; // mod is 10 percent of total length
@@ -248,8 +247,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
                     for (buffIndex = 0; buffIndex < length; buffIndex++) {
 
                         if ((counter % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) counter / ((length * t * z) - 1) * 100),
-                                                    runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) counter / ((length * t * z) - 1) * 100));
                         }
 
                         for (rangeCounter = 0; rangeCounter < len; rangeCounter++) {
@@ -288,7 +286,7 @@ public class AlgorithmReplaceValue extends AlgorithmBase {
 
         srcImage.calcMinMax();
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
     }

@@ -596,7 +596,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage[0].getImageName(), "Importing source image...", 0, 100);
+        fireProgressStateChanged(srcImage[0].getImageName(), "Importing source image...");
         
 
         for (i = 0, k = 0; i < imageNumber; i++) {
@@ -606,7 +606,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                 if (srcImage[i].isColorImage()) {
 
                     if (doRed) {
-                        progressBar.setMessage("Importing red from " + srcImage[i].getImageName());
+                        fireProgressStateChanged("Importing red from " + srcImage[i].getImageName());
                         srcImage[i].exportRGBData(1, 0, sliceSize, tBuffer);
 
                         kSlice = k * sliceSize;
@@ -619,7 +619,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     } // if (doRed)
 
                     if (doGreen) {
-                        progressBar.setMessage("Importing green from " + srcImage[i].getImageName());
+                        fireProgressStateChanged("Importing green from " + srcImage[i].getImageName());
                         srcImage[i].exportRGBData(2, 0, sliceSize, tBuffer);
 
                         kSlice = k * sliceSize;
@@ -632,7 +632,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     } // if (doGreen)
 
                     if (doBlue) {
-                        progressBar.setMessage("Importing blue from " + srcImage[i].getImageName());
+                        fireProgressStateChanged("Importing blue from " + srcImage[i].getImageName());
                         srcImage[i].exportRGBData(3, 0, sliceSize, tBuffer);
 
                         kSlice = k * sliceSize;
@@ -644,7 +644,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                         k++;
                     } // if (doBlue)
                 } else { // not color
-                    progressBar.setMessage("Importing " + srcImage[i].getImageName());
+                    fireProgressStateChanged("Importing " + srcImage[i].getImageName());
                     srcImage[i].exportData(0, sliceSize, tBuffer);
 
                     kSlice = k * sliceSize;
@@ -658,7 +658,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             } catch (IOException ioe) {
                 cleanUp();
                 MipavUtil.displayError("Algorithm MSpectralFuzzyCMeans reports:\n" + ioe.toString());
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -701,7 +701,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
                 // Find the smallest bounding box for the 1st data set
                 // If cropBackground is true wholeImage is constrained to be true
-                progressBar.setMessage("Cropping background");
+                fireProgressStateChanged("Cropping background");
                 xLow = xDim - 1;
                 yLow = yDim - 1;
                 xHigh = 0;
@@ -823,7 +823,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             cleanUp();
             System.gc();
             MipavUtil.displayError("Algorithm FuzzyCMeans reports:\n" + error.toString());
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -839,7 +839,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         ComputeMemberships2D(buffer, centroids, mems, exponent);
 
         while ((iterations <= maxIter) && (maxChange > tolerance)) {
-            progressBar.setMessage("Iteration = " + iterations + " maxChange = " + maxChange);
+            fireProgressStateChanged("Iteration = " + iterations + " maxChange = " + maxChange);
 
             ComputeCentroids2D(buffer, centroids, mems, qVal);
 
@@ -854,7 +854,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Finished iterations");
+        fireProgressStateChanged("Finished iterations");
         buffer = null;
         centroids = null;
         buffer2 = null;
@@ -869,7 +869,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                 cleanUp();
                 System.gc();
                 MipavUtil.displayError("FuzzyCMeans: Out of memory");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -932,7 +932,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     cleanUp();
                     MipavUtil.displayError("MSpectralFuzzyCMeans: IOException on destImage[" + destNum +
                                            "].importData(0,memsBuffer,true)");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -995,7 +995,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                 cleanUp();
                 MipavUtil.displayError("MSpectralFuzzyCMeans: IOException on destImage[" + destNum +
                                        "].importData(0,segBuffer,true)");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1004,7 +1004,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                 System.gc();
                 MipavUtil.displayError("MSpectralFuzzyCMeans: Out of memory on destImage[" + destNum +
                                        "].importData(0,segBuffer,true)");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1013,7 +1013,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
         mems = null;
         objMask = null;
-        progressBar.dispose();
+        
         setCompleted(true);
 
         return;
@@ -1093,7 +1093,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage[0].getImageName(), "Importing source image...", 0, 100);
+        fireProgressStateChanged(srcImage[0].getImageName(), "Importing source image...");
         
 
         for (i = 0, k = 0; i < imageNumber; i++) {
@@ -1103,7 +1103,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                 if (srcImage[i].isColorImage()) {
 
                     if (doRed) {
-                        progressBar.setMessage("Importing red from " + srcImage[i].getImageName());
+                        fireProgressStateChanged("Importing red from " + srcImage[i].getImageName());
                         srcImage[i].exportRGBData(1, 0, volSize, tBuffer);
 
                         kVol = k * volSize;
@@ -1116,7 +1116,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     } // if (doRed)
 
                     if (doGreen) {
-                        progressBar.setMessage("Importing green from " + srcImage[i].getImageName());
+                        fireProgressStateChanged("Importing green from " + srcImage[i].getImageName());
                         srcImage[i].exportRGBData(2, 0, volSize, tBuffer);
 
                         kVol = k * volSize;
@@ -1129,7 +1129,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     } // if (doGreen)
 
                     if (doBlue) {
-                        progressBar.setMessage("Importing blue from " + srcImage[i].getImageName());
+                        fireProgressStateChanged("Importing blue from " + srcImage[i].getImageName());
                         srcImage[i].exportRGBData(3, 0, volSize, tBuffer);
 
                         kVol = k * volSize;
@@ -1141,7 +1141,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                         k++;
                     } // if (doBlue)
                 } else { // not color
-                    progressBar.setMessage("Importing " + srcImage[i].getImageName());
+                    fireProgressStateChanged("Importing " + srcImage[i].getImageName());
                     srcImage[i].exportData(0, volSize, tBuffer);
 
                     kVol = k * volSize;
@@ -1155,7 +1155,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             } catch (IOException ioe) {
                 cleanUp();
                 MipavUtil.displayError("Algorithm MSpectralFuzzyCMeans reports:\n" + ioe.toString());
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1200,7 +1200,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
                 // Find the smallest bounding box for the 1st data set
                 // If cropBackground is true wholeImage is constrained to be true
-                progressBar.setMessage("Cropping background");
+                fireProgressStateChanged("Cropping background");
                 xLow = xDim - 1;
                 yLow = yDim - 1;
                 zLow = zDim - 1;
@@ -1347,7 +1347,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             cleanUp();
             System.gc();
             MipavUtil.displayError("FuzzyCMeans reports: Out of memory.");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1364,7 +1364,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         ComputeMemberships3D(buffer, centroids, mems, exponent);
 
         while ((iterations <= maxIter) && (maxChange > tolerance)) {
-            progressBar.setMessage("Iteration = " + iterations + " maxChange = " + maxChange);
+            fireProgressStateChanged("Iteration = " + iterations + " maxChange = " + maxChange);
             ComputeCentroids3D(buffer, centroids, mems, qVal);
             ComputeMemberships3D(buffer, centroids, mems, exponent);
             iterations += 1;
@@ -1377,7 +1377,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Iterations finished");
+        fireProgressStateChanged("Iterations finished");
         buffer = null;
         centroids = null;
         buffer2 = null;
@@ -1451,7 +1451,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                         cleanUp();
                         MipavUtil.displayError("MSpectralFuzzyCMeans: IOException on destImage[" + destNum +
                                                "].importData(0,memsBuffer,true)");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -1510,7 +1510,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     cleanUp();
                     MipavUtil.displayError("MSpectralFuzzyCMeans: IOException on destImage[" + destNum +
                                            "].importData(0,segBuffer,true)");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -1520,14 +1520,14 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
             cleanUp();
             System.gc();
             MipavUtil.displayError("FuzzyCMeans: Out of memory !");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         }
 
         cleanUp();
-        progressBar.dispose();
+        
         setCompleted(true);
 
         return;
@@ -1594,7 +1594,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     centroids[(m * nClass) + c] = numer / denom;
                 } else {
                     MipavUtil.displayError("MSpectralFuzzyCMeans: Overflow in ComputeCentroids2D");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -1705,7 +1705,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     centroids[(m * nClass) + c] = numer / denom;
                 } else {
                     MipavUtil.displayError("MSpectralFuzzyCMeans: Overflow in ComputeCentroids2D");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -1775,7 +1775,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
         for (y = 0; y < yDim; y++) {
             yStepOut = y * xDim;
-            progressBar.updateValue((int) (y * (100.0f / yDim)), runningInSeparateThread);
+            fireProgressStateChanged((int) (y * (100.0f / yDim)));
 
             for (x = 0; (x < xDim) && !threadStopped; x++) {
 
@@ -1809,7 +1809,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     if (total == 0.0f) {
                         cleanUp();
                         MipavUtil.displayError("MSpectralFuzzyCMeans: Overflow in ComputeMemberships");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -1865,7 +1865,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
         for (z = 0; (z < zDim) && !threadStopped; z++) {
             zStepOut = z * sliceSize;
-            progressBar.updateValue((int) (z * (100.0f / zDim)), runningInSeparateThread);
+            fireProgressStateChanged((int) (z * (100.0f / zDim)));
 
             for (y = 0; (y < yDim) && !threadStopped; y++) {
                 yStepOut = (y * xDim) + zStepOut;
@@ -1903,7 +1903,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
                         if (total == 0.0f) {
                             MipavUtil.displayError("MSpectralFuzzyCMeans: Overflow in ComputeMemberships");
-                            progressBar.dispose();
+                            
                             setCompleted(false);
 
                             return;

@@ -208,10 +208,7 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!userInterface.isAppFrameVisible()) {
-                algoConvert.setProgressBarVisible(false);
-            }
-
+           
             algoConvert.run();
         }
 

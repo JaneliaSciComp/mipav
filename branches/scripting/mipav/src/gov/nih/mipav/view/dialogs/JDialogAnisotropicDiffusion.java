@@ -370,7 +370,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                     // Make algorithm
                     diffusionAlgo = new AlgorithmAnisotropicDiffusion(resultImage, image, sigmas, iters, konst,
                                                                       outputPanel.isProcessWholeImageSet(), 
-                                                                      false, 0, 100);
+                                                                      false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -408,7 +408,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     diffusionAlgo = new AlgorithmAnisotropicDiffusion(image, sigmas, iters, konst, 
-                            outputPanel.isProcessWholeImageSet(), false, 0, 100);
+                            outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -467,7 +467,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
                     // Make algorithm
                     diffusionAlgo = new AlgorithmAnisotropicDiffusion(resultImage, image, sigmas, iters, konst,
-                                                                      outputPanel.isProcessWholeImageSet(), image25D, 0, 100);
+                                                                      outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -505,7 +505,7 @@ public class JDialogAnisotropicDiffusion extends JDialogScriptableBase
 
                     // Make algorithm
                     diffusionAlgo = new AlgorithmAnisotropicDiffusion(image, sigmas, iters, konst, outputPanel.isProcessWholeImageSet(),
-                                                                      image25D, 0, 100);
+                                                                      image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.

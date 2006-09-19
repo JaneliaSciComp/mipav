@@ -351,7 +351,7 @@ public class JDialogRegVOILandmark extends JDialogBase implements AlgorithmInter
                 // call algoRegKidney here
                 algoRegVOILankmark = new AlgorithmRegVOILandmark(image, resultImage, sigmas, true, position, minTx,
                                                                  maxTx, minTy, maxTy, minRz, maxRz, step, opt,
-                                                                 costFunc, 0, 100);
+                                                                 costFunc);
                 algoRegVOILankmark.addListener(this);
                 
                 createProgressBar(image.getImageName(), algoRegVOILankmark);

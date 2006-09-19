@@ -159,9 +159,8 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, boolean maskFlag,
-            int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+    public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, boolean maskFlag) {
+        super(null, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -209,10 +208,9 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                   true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean maskFlag,
-                           int minProgressValue, int maxProgressValue) {
+                           boolean maskFlag) {
 
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+        super(destImg, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -259,9 +257,8 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, boolean sliceBySlice,
-                           boolean maskFlag,
-                           int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+                           boolean maskFlag) {
+        super(null, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -318,10 +315,9 @@ public class AlgorithmMedian extends AlgorithmBase {
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean sliceBySlice, boolean maskFlag,
-                           int minProgressValue, int maxProgressValue) {
+                           boolean sliceBySlice, boolean maskFlag) {
 
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+        super(destImg, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -389,7 +385,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         constructLog();
 
-        fireProgressStateChanged(minProgressValue, null, "Filtering ...");
+        fireProgressStateChanged(0, null, "Filtering ...");
         
         if (destImage != null) { // if there exists a destination image
 
@@ -650,11 +646,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        fireProgressStateChanged(getProgressFromFloat(.33f), null, "Filtering ...");
+        fireProgressStateChanged((.33f), null, "Filtering ...");
         
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
 
-        fireProgressStateChanged(getProgressFromFloat(.9f), null, "Importing result ...");
+        fireProgressStateChanged((.9f), null, "Importing result ...");
 
         if (threadStopped) {
             finalize();
@@ -672,7 +668,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             return;
         }
-        fireProgressStateChanged(maxProgressValue, null, "Importing result ...");
+        fireProgressStateChanged(100, null, "Importing result ...");
 
         setCompleted(true);
     }
@@ -741,7 +737,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                fireProgressStateChanged( getProgressFromFloat((float) (currentSlice) / (srcBufferDepth - 1)), null, null);
+                fireProgressStateChanged( ((float) (currentSlice) / (srcBufferDepth - 1)), null, null);
                
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
@@ -1032,13 +1028,13 @@ public class AlgorithmMedian extends AlgorithmBase {
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        fireProgressStateChanged(getProgressFromFloat(.33f), null, "Filtering ...");
+        fireProgressStateChanged((.33f), null, "Filtering ...");
 
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
 
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
 
-        fireProgressStateChanged(getProgressFromFloat(.9f), null, "Importing result ...");
+        fireProgressStateChanged((.9f), null, "Importing result ...");
 
         if (threadStopped) {
             finalize();
@@ -1056,7 +1052,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             return;
         }
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
 
         setCompleted(true);
     }
@@ -1133,7 +1129,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
-                fireProgressStateChanged( getProgressFromFloat((float) (currentSlice) / (srcBufferDepth - 1)), null, null);
+                fireProgressStateChanged( ((float) (currentSlice) / (srcBufferDepth - 1)), null, null);
               
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
                                   currentSlice * srcSliceLength);
@@ -1309,7 +1305,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         for (sliceIndex = 0; sliceIndex < srcBufferDepth; sliceIndex++) {
             
-            fireProgressStateChanged( getProgressFromFloat((float) (sliceIndex) / (srcBufferDepth - 1)), null, null);
+            fireProgressStateChanged( ((float) (sliceIndex) / (srcBufferDepth - 1)), null, null);
           
 
             copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, sliceIndex * srcBufferSliceLength,
@@ -2060,7 +2056,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                     if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
 
-                        fireProgressStateChanged( getProgressFromFloat((float) (currentSlice + (pass * numberOfSlices)) /
+                        fireProgressStateChanged( ((float) (currentSlice + (pass * numberOfSlices)) /
                                 (iterations * numberOfSlices)), null, null);
                        }
 
@@ -2103,7 +2099,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                                 if ((((i - initialIndex) % mod) == 0)) {
                                     
-                                    fireProgressStateChanged( getProgressFromFloat((float) ((3 * (pass * sliceLength)) +
+                                    fireProgressStateChanged( ((float) ((3 * (pass * sliceLength)) +
                                             ((initialIndex - 1) * sliceLength) +
                                             (i / 4)) /
                                        (3 * iterations * sliceLength)), null, null);
@@ -2152,7 +2148,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                         iterations + ") ...");
 
                 if (numberOfSlices > 1) { // 3D image     update progressBar
-                    fireProgressStateChanged( getProgressFromFloat(((float) (currentSlice + (pass * numberOfSlices)) /
+                    fireProgressStateChanged( (((float) (currentSlice + (pass * numberOfSlices)) /
                             (iterations * numberOfSlices))), null, null);
                }
                
@@ -2162,7 +2158,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                     if (numberOfSlices == 1) { // 2D image     update progressBar
 
                         if (((i % mod) == 0)) {
-                            fireProgressStateChanged( getProgressFromFloat((float) ((pass * imageSliceLength) + i) /
+                            fireProgressStateChanged( ((float) ((pass * imageSliceLength) + i) /
                                     (iterations * imageSliceLength)), null, null);
                             
                         }
@@ -2275,7 +2271,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             
             if ((numberOfSlices > 1)) { // 3D image     update progressBar
 
-                fireProgressStateChanged( getProgressFromFloat(((float) (currentSlice + (pass * numberOfSlices)) /
+                fireProgressStateChanged( (((float) (currentSlice + (pass * numberOfSlices)) /
                         (iterations * numberOfSlices))), null, null);
              
             }
@@ -2293,7 +2289,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                             if (numberOfSlices == 1) { // 2D image     update progressBar
 
                                 if (((i % mod) == 0)) {
-                                    fireProgressStateChanged( getProgressFromFloat((float) ((pass * sliceLength) +
+                                    fireProgressStateChanged( ((float) ((pass * sliceLength) +
                                             (i / 4)) /
                                             (iterations * sliceLength)), null, null);
                                     
@@ -2397,7 +2393,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
             
             if ((numberOfSlices > 1)) { // 3D image     update progressBar
-                fireProgressStateChanged( getProgressFromFloat(((float) (currentSlice + (pass * numberOfSlices)) /
+                fireProgressStateChanged( (((float) (currentSlice + (pass * numberOfSlices)) /
                         (iterations * numberOfSlices))), null, null);
             }
             a = buffStart; // set/reset a to address pixels from the beginning of this buffer.
@@ -2414,7 +2410,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                             if (numberOfSlices == 1) { // 2D image     update progressBar
 
                                 if (((i % mod) == 0)) {
-                                    fireProgressStateChanged( getProgressFromFloat((float) ((pass * sliceLength) +
+                                    fireProgressStateChanged( ((float) ((pass * sliceLength) +
                                             (i / 4)) /
                                             (iterations * sliceLength)), null, null);
                                 }
@@ -2643,7 +2639,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                     for (i = initialIndex; (i < imageLength) && !threadStopped; i += 4) {
 
                         if ((((i - initialIndex) % mod) == 0)) {
-                            fireProgressStateChanged( getProgressFromFloat((float) ((iterations * (initialIndex - 1) * imageSize) +
+                            fireProgressStateChanged( ((float) ((iterations * (initialIndex - 1) * imageSize) +
                                     (imageSize * pass) + (i / 4)) /
                                     (3 * iterations * imageSize)), null, null);
                         }
@@ -2780,7 +2776,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                     for (i = 0; (i < imageLength) && !threadStopped; i += 4) {
 
                         if (((i % mod) == 0)) {
-                            fireProgressStateChanged( getProgressFromFloat((float) ((imageSize * pass) + (i / 4)) /
+                            fireProgressStateChanged( ((float) ((imageSize * pass) + (i / 4)) /
                                     (iterations * imageSize)), null, null);
                         }
 
@@ -2910,7 +2906,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                     for (i = 0; (i < imageLength) && !threadStopped; i += 4) {
 
                         if (((i % mod) == 0)) {
-                            fireProgressStateChanged( getProgressFromFloat((float) ((imageSize * pass) + (i / 4)) /
+                            fireProgressStateChanged( ((float) ((imageSize * pass) + (i / 4)) /
                                     (iterations * imageSize)), null, null);
                         }
 
@@ -3029,7 +3025,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             for (i = 0; (i < imageLength) && !threadStopped; i++) {
 
                 if (((i % mod) == 0)) {
-                    fireProgressStateChanged( getProgressFromFloat((float) ((pass * imageLength) + i) /
+                    fireProgressStateChanged( ((float) ((pass * imageLength) + i) /
                             (iterations * imageLength)), null, null);
                 }
 
@@ -3102,7 +3098,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         for (destSlice = 0; (destSlice < srcBufferDepth) && !threadStopped; destSlice++) {
 
-            fireProgressStateChanged( getProgressFromFloat((float) (destSlice) / (srcBufferDepth - 1)), null, null);
+            fireProgressStateChanged( ((float) (destSlice) / (srcBufferDepth - 1)), null, null);
 
             srcBdrBufferSliceOffset = (destSlice * srcBdrBufferSliceLength) + srcBrdBufferKernelOffset;
 

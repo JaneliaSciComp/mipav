@@ -149,13 +149,13 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         try {
             srcImage.setLock(ModelStorageBase.W_LOCKED);
             imageBuffer = new float[colorFactor * sliceArea];
-            buildProgressBar(srcImage.getImageName(), "Removing Selected Slices...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Removing Selected Slices...");
         } catch (IOException err) {
             imageBuffer = null;
             System.gc();
             displayError("Algorithm Remove Slices: Source Image Locked.");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
@@ -164,7 +164,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             displayError("Algorithm Remove Slices reports: Out of memory");
             srcImage.releaseLock();
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -181,7 +181,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             MipavUtil.displayError(err.getMessage());
             srcImage.releaseLock();
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -213,8 +213,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
 
                 // let user know something is happening by updating the progressbar
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100),
-                                            runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100));
                 }
 
                 // so long as the slice has not been marked for removal, copy it all over.
@@ -234,7 +233,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                         displayError("Algorithm RemoveSlices reports: " + error.getMessage());
                         error.printStackTrace();
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -267,7 +266,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             resultImage = null;
             srcImage.releaseLock();
             finalize();
-            disposeProgressBar();
+            
 
             return;
         }
@@ -291,7 +290,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         }
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Importing Image Data...");
+            fireProgressStateChanged("Importing Image Data...");
         }
 
         try {
@@ -324,7 +323,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             displayError("Algorithm Remove Slices reports: Out of memory getting results.");
             srcImage.releaseLock();
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (IOException e2) {
@@ -334,14 +333,14 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             displayError(e2.getMessage());
             srcImage.releaseLock();
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
         // update the fileInfo in the srcImage
         if (isProgressBarVisible()) {
-            progressBar.setMessage("Updating Image Headers...");
+            fireProgressStateChanged("Updating Image Headers...");
         }
 
         updateFileInfo(resultImage, srcImage);
@@ -354,7 +353,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         resultImage.disposeLocal(); // this was not here before... MEMORY LEAK!
 
         resultImage = null; // after all, this was only temporary
-        disposeProgressBar();
+        
         setCompleted(true);
     } // end calcInPlace()
 
@@ -384,13 +383,13 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         // amount of data allocated is based on colorFactor
         try {
             imageBuffer = new float[colorFactor * sliceArea];
-            buildProgressBar(srcImage.getImageName(), "Removing Selected Slices...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Removing Selected Slices...");
         } catch (OutOfMemoryError e) {
             imageBuffer = null;
             System.gc();
             displayError("Algorithm Remove Slices reports: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -403,7 +402,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         } catch (Exception err) {
             MipavUtil.displayWarning("Failed to get axis orientation." + err.getMessage());
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -424,8 +423,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
 
                 // let user know something is happening by updating the progressbar
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100),
-                                            runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100));
                 }
 
                 // so long as the slice has not been marked for removal, copy it all over.
@@ -444,7 +442,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm RemoveSlices reports: " + error.getMessage());
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -476,7 +474,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         if (threadStopped) {
             imageBuffer = null;
             finalize();
-            disposeProgressBar();
+            
 
             return;
         }
@@ -484,7 +482,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         destImage.calcMinMax(); // calculate the minimum & maximum intensity values for the destImage-image
 
         // Clean up and let the calling dialog know that algorithm did its job
-        disposeProgressBar();
+        
         setCompleted(true);
     } // end calcStoreInDest()
 

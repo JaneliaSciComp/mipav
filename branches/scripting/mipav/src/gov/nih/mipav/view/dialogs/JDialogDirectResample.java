@@ -228,10 +228,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             }
             algoTransform.addListener(this);
 
-            if (!userInterface.isAppFrameVisible()) {
-                algoTransform.setProgressBarVisible(false);
-            }
-
+            
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -239,10 +236,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    algoTransform.setProgressBarVisible(false);
-                }
-
+               
                 algoTransform.run();
             }
             return;
@@ -273,10 +267,6 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    algoTransform.setProgressBarVisible(false);
-                }
-
                 algoTransform.run();
             }
         }

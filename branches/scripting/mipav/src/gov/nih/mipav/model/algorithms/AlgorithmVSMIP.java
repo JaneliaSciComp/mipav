@@ -148,28 +148,6 @@ public class AlgorithmVSMIP extends AlgorithmBase {
 
 
     /**
-     * Creates the standard progressBar. Stores in the class-global, progressBar.
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar("MIP Method", "MIP Method", 0, 100, true, this, this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-            Preferences.debug("AlgrithmMean: NullPointerException found while building progress bar.",
-                              Preferences.DEBUG_ALGORITHM);
-        }
-    }
-
-
-    /**
      * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
      * procedure is turned on.
      */
@@ -353,8 +331,8 @@ public class AlgorithmVSMIP extends AlgorithmBase {
      */
     private void runIteration() {
 
-        buildProgressBar();
-        progressBar.setMessage("Swappin Data");
+    	fireProgressStateChanged("MIP Method", "MIP Method");
+        fireProgressStateChanged("Swappin Data");
 
         // copy the image data into the sourceBuffer so we can access it
         volDims = srcImage.getExtents();
@@ -424,7 +402,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
 
         while (angleY < 90.1f) {
 
-            progressBar.setMessage("Ray Trace   Angle X: " + angleX + " Y: " + angleY);
+            fireProgressStateChanged("Ray Trace   Angle X: " + angleX + " Y: " + angleY);
 
             // reset for each iteration
             destIndex = 0;
@@ -463,7 +441,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
             mipPlaneNormal = crossProduct(rowDirection, colDirection);
 
             for (int row = 0; row < mipPlaneDims[1]; row++) {
-                progressBar.updateValue(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)));
                 leftMostPoint[0] = mipTopLeftPrime[0] + (row * dr[0]);
                 leftMostPoint[1] = mipTopLeftPrime[1] + (row * dr[1]);
                 leftMostPoint[2] = mipTopLeftPrime[2] + (row * dr[2]);
@@ -492,7 +470,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
 
         while (angleX < 90.1f) {
 
-            progressBar.setMessage("Ray Trace   Angle X: " + angleX + " Y: " + angleY);
+            fireProgressStateChanged("Ray Trace   Angle X: " + angleX + " Y: " + angleY);
 
             // reset for each iteration
             destIndex = 0;
@@ -531,7 +509,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
             mipPlaneNormal = crossProduct(rowDirection, colDirection);
 
             for (int row = 0; row < mipPlaneDims[1]; row++) {
-                progressBar.updateValue(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)));
                 leftMostPoint[0] = mipTopLeftPrime[0] + (row * dr[0]);
                 leftMostPoint[1] = mipTopLeftPrime[1] + (row * dr[1]);
                 leftMostPoint[2] = mipTopLeftPrime[2] + (row * dr[2]);
@@ -577,7 +555,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
             return;
         } // end try{}-catch{}
 
-        disposeProgressBar();
+        
     } // end runIteration()
 
 
@@ -586,8 +564,8 @@ public class AlgorithmVSMIP extends AlgorithmBase {
      */
     private void runNoIteration() {
 
-        buildProgressBar();
-        progressBar.setMessage("Swappin Data");
+    	fireProgressStateChanged("MIP Method", "MIP Method");
+        fireProgressStateChanged("Swappin Data");
 
         // copy the image data into the sourceBuffer so we can access it
         volDims = srcImage.getExtents();
@@ -663,7 +641,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
 
         float[] mipPlaneNormal = crossProduct(rowDirection, colDirection);
 
-        progressBar.setMessage("Ray Tracing");
+        fireProgressStateChanged("Ray Tracing");
 
         // Initialize raster scan at the top left corner
         float[] leftMostPoint = new float[3];
@@ -674,7 +652,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
         MIPNode mipInfo = new MIPNode();
 
         for (int row = 0; row < mipPlaneDims[1]; row++) {
-            progressBar.updateValue(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)), runningInSeparateThread);
+            fireProgressStateChanged(Math.round(((float) (row) / (mipPlaneDims[1] - 1) * 100)));
             leftMostPoint[0] = mipTopLeftPrime[0] + (row * dr[0]);
             leftMostPoint[1] = mipTopLeftPrime[1] + (row * dr[1]);
             leftMostPoint[2] = mipTopLeftPrime[2] + (row * dr[2]);
@@ -717,7 +695,7 @@ public class AlgorithmVSMIP extends AlgorithmBase {
             return;
         } // end try{}-catch{}
 
-        disposeProgressBar();
+        
     } // end runNoIteration()
 
     /**

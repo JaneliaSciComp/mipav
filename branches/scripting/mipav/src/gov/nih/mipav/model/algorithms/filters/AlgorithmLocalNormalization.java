@@ -92,9 +92,9 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
                                                                                          * in each dimension */
                                        float weight, /* weighting factor for gaussian */
                                        int kernSize, /* width of gaussian kernel */
-                                       float freq, /* bounding frequency for FFT-filter */
-                                       int minProgressValue, int maxProgressValue) {
-        super(dest, src, minProgressValue, maxProgressValue);
+                                       float freq) /* bounding frequency for FFT-filter */
+                                       {
+        super(dest, src);
         tempImage = new ModelImage[2];
         norm = new float[src.getExtents()[0] * src.getExtents()[1]];
 
@@ -256,7 +256,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
          */
         FFTer = new AlgorithmFrequencyFilter(tempImage[1], !is2d, false, kernelDiameter,
                                              AlgorithmFrequencyFilter.LOWPASS, frequency, 0,
-                                             AlgorithmFrequencyFilter.GAUSSIAN, 0, 0, 100);
+                                             AlgorithmFrequencyFilter.GAUSSIAN, 0);
 
         // don't set to a new Thread just yet.  let run serially.
         // (ie., in current Thread):

@@ -508,7 +508,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     outputPanel.isProcessWholeImageSet(), 0, 100);
+                                                     outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -548,7 +548,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, outputPanel.isProcessWholeImageSet(), 0, 100);
+                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -619,7 +619,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     image25D, outputPanel.isProcessWholeImageSet(), 0, 100);
+                                                     image25D, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -659,7 +659,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, image25D,
-                                                     outputPanel.isProcessWholeImageSet(), 0, 100);
+                                                     outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);

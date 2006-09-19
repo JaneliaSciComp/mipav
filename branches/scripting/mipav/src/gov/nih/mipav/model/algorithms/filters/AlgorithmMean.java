@@ -146,9 +146,8 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the mean filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmMean(ModelImage srcImg, int kSize, boolean maskFlag,
-            int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+    public AlgorithmMean(ModelImage srcImg, int kSize, boolean maskFlag ) {
+        super(null, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -176,10 +175,9 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the mean filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmMean(ModelImage destImg, ModelImage srcImg, int kSize, boolean maskFlag,
-            int minProgressValue, int maxProgressValue) {
+    public AlgorithmMean(ModelImage destImg, ModelImage srcImg, int kSize, boolean maskFlag ) {
 
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+        super(destImg, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -208,9 +206,8 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  maskFlag      Flag that indicates that the mean filtering will be performed for the whole image if equal
      *                       to true.
      */
-    public AlgorithmMean(ModelImage srcImg, int kSize, boolean sliceBySlice, boolean maskFlag,
-            int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+    public AlgorithmMean(ModelImage srcImg, int kSize, boolean sliceBySlice, boolean maskFlag) {
+        super(null, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -240,10 +237,9 @@ public class AlgorithmMean extends AlgorithmBase {
      * @param  maskFlag      Flag that indicates that the mean filtering will be performed for the whole image if equal
      *                       to true.
      */
-    public AlgorithmMean(ModelImage destImg, ModelImage srcImg, int kSize, boolean sliceBySlice, boolean maskFlag,
-            int minProgressValue, int maxProgressValue) {
+    public AlgorithmMean(ModelImage destImg, ModelImage srcImg, int kSize, boolean sliceBySlice, boolean maskFlag) {
 
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+        super(destImg, srcImg);
 
         if (srcImg.isColorImage()) {
             isColorImage = true;
@@ -284,7 +280,7 @@ public class AlgorithmMean extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, null, "Filtering image ...");
+        fireProgressStateChanged(0, null, "Filtering image ...");
         
         constructLog();
 
@@ -1020,7 +1016,7 @@ public class AlgorithmMean extends AlgorithmBase {
                 a += initialIndex; // keep the pixel location up with color indexed to
 
                 if ((numberOfSlices > 1)) { // 3D image  
-                    fireProgressStateChanged(getProgressFromFloat((float) (currentSlice) / numberOfSlices), null, null);
+                    fireProgressStateChanged(((float) (currentSlice) / numberOfSlices), null, null);
                 }
 
                 if ((initialIndex == 1) && (!rChannel)) {
@@ -1074,7 +1070,7 @@ public class AlgorithmMean extends AlgorithmBase {
                         if (numberOfSlices == 1) { // 2D image  
 
                             if ((((i - initialIndex) % mod) == 0)) {
-                                fireProgressStateChanged(getProgressFromFloat((float) (((initialIndex - 1) * sliceLength) +
+                                fireProgressStateChanged(((float) (((initialIndex - 1) * sliceLength) +
                                                                             (i / 4)) / (3 * sliceLength)), null, null);
                             }
                         }
@@ -1095,7 +1091,7 @@ public class AlgorithmMean extends AlgorithmBase {
 
                 if (numberOfSlices > 1) { // 3D image 
 
-                    fireProgressStateChanged(getProgressFromFloat(((float) (currentSlice) / (numberOfSlices))), null, null);
+                    fireProgressStateChanged((((float) (currentSlice) / (numberOfSlices))), null, null);
                    
                 }
           
@@ -1104,7 +1100,7 @@ public class AlgorithmMean extends AlgorithmBase {
                 if (numberOfSlices == 1) { // 2D image  
 
                     if (((i % mod) == 0)) {
-                        fireProgressStateChanged(getProgressFromFloat((float) i / (imageSliceLength)), null, null);
+                        fireProgressStateChanged(((float) i / (imageSliceLength)), null, null);
                     }
                 }
 
@@ -1196,7 +1192,7 @@ public class AlgorithmMean extends AlgorithmBase {
             a += initialIndex; // keep the pixel location up with color indexed to
 
             if ((numberOfSlices > 1)) { // 3D image     update progressBar
-                fireProgressStateChanged( getProgressFromFloat((float) (currentSlice) / numberOfSlices), null, null);
+                fireProgressStateChanged( ((float) (currentSlice) / numberOfSlices), null, null);
             }
 
             
@@ -1223,7 +1219,7 @@ public class AlgorithmMean extends AlgorithmBase {
                 if (numberOfSlices == 1) { // 2D image   
 
                     if ((((i - initialIndex) % mod) == 0)) {
-                        fireProgressStateChanged(getProgressFromFloat((float) (((initialIndex - 1) * sliceLength) +
+                        fireProgressStateChanged(((float) (((initialIndex - 1) * sliceLength) +
                                 (i / 4)) / (3 * sliceLength)), null, null);
                     }
                 }
@@ -1274,14 +1270,14 @@ public class AlgorithmMean extends AlgorithmBase {
         buffStart = bufferStartingPoint - (bufferStartingPoint % 4); // & no effect if bufferStartingPoint%4 == 0
                                                                      // !!!
         if ((numberOfSlices > 1)) { // 3D image   
-            fireProgressStateChanged( getProgressFromFloat((float) (currentSlice) / numberOfSlices), null, null);
+            fireProgressStateChanged( ((float) (currentSlice) / numberOfSlices), null, null);
         }
         mod = imageSliceLength / 100; // mod is 1 percent of length of slice * the number of slices.
         for (a = buffStart, i = 0; i < imageSliceLength; a += 4, i += 4) {
             if (numberOfSlices == 1) { // 2D image  
 
                 if (((i % mod) == 0)) {
-                    fireProgressStateChanged( getProgressFromInt(i * 100/imageSliceLength), null, null);
+                    fireProgressStateChanged( (i * 100/imageSliceLength), null, null);
                 }
             }
             destBuffer[a] = srcBuffer[a]; // copy alpha;
@@ -1382,7 +1378,7 @@ public class AlgorithmMean extends AlgorithmBase {
                 for (i = initialIndex; (i < imageLength) && !threadStopped; i += 4) {
 
                     if ((((i - initialIndex) % mod) == 0)) {
-                        fireProgressStateChanged( getProgressFromFloat((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
+                        fireProgressStateChanged( ((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
                                 (3 * imageSize)), null, null);
                     }
 
@@ -1484,7 +1480,7 @@ public class AlgorithmMean extends AlgorithmBase {
                                                 index += 3) {
 
                 if ((((i - initialIndex) % mod) == 0)) {
-                    fireProgressStateChanged( getProgressFromFloat((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
+                    fireProgressStateChanged( ((float) (((initialIndex - 1) * imageSize) + (i / 4)) /
                             (3 * imageSize)), null, null);
                 }
 
@@ -1529,7 +1525,7 @@ public class AlgorithmMean extends AlgorithmBase {
         mod = imageSize / 100; // mod is 1 percent of length of slice * the number of slices.
         for (i = 0; i < imageLength; i += 4) {
             if (((i % mod) == 0)) {
-                fireProgressStateChanged( getProgressFromInt(i * 100/imageLength), null, null);
+                fireProgressStateChanged( (i * 100/imageLength), null, null);
             }
             destBuffer[i] = srcBuffer[i]; // copy alpha;
             if ((entireImage == true) || mask.get(i / 4)) { 
@@ -1579,7 +1575,7 @@ public class AlgorithmMean extends AlgorithmBase {
         for (i = 0; (i < imageLength) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged( getProgressFromFloat((float) (i) / (imageLength - 1)), null, null);
+                fireProgressStateChanged( ((float) (i) / (imageLength - 1)), null, null);
             }
 
             if ((entireImage == true) || mask.get(i / valuesPerPixel)) {

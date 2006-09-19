@@ -684,7 +684,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 // Make algorithm
                 FFTAlgo = new AlgorithmFFT(resultImage, image, transformDir, logMagDisplay, unequalDim, image25D,
                                            imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                           butterworthOrder, 0, 100);
+                                           butterworthOrder);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -718,7 +718,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 // Make the algorithm class
                 FFTAlgo = new AlgorithmFFT(image, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
                                            kernelDiameter, filterType, freq1, freq2, constructionMethod,
-                                           butterworthOrder, 0, 100);
+                                           butterworthOrder);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.

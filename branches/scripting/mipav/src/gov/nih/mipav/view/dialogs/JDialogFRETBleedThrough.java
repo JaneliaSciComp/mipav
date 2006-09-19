@@ -445,10 +445,6 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    fbtAlgo.setProgressBarVisible(false);
-                }
-
                 fbtAlgo.run();
             }
         } catch (OutOfMemoryError x) {

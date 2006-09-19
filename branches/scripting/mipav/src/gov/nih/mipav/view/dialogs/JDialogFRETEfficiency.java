@@ -595,10 +595,6 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    feffAlgo.setProgressBarVisible(false);
-                }
-
                 feffAlgo.run();
             }
         } catch (OutOfMemoryError x) {

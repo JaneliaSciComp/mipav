@@ -308,10 +308,6 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            distanceMapAlgo2D.setProgressBarVisible(false);
-                        }
-
                         distanceMapAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -366,10 +362,6 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            distanceMapAlgo2D.setProgressBarVisible(false);
-                        }
-
                         distanceMapAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -416,10 +408,6 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            distanceMapAlgo3D.setProgressBarVisible(false);
-                        }
-
                         distanceMapAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -473,10 +461,6 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            distanceMapAlgo3D.setProgressBarVisible(false);
-                        }
-
                         distanceMapAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {

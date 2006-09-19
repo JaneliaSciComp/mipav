@@ -145,32 +145,6 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
     }
 
     /**
-     * To create the standard progressBar. Stores in the class-global, progressBar
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(leftImage.getImageName(), "Stereo Depth ...", 0, 100, true, this,
-                                                   this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
-    }
-
-    /**
      * DOCUMENT ME!
      */
     private void calcStereoDepth() {
@@ -217,15 +191,7 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
             return;
         }
 
-        try {
-            this.buildProgressBar();
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged(leftImage.getImageName(), "Stereo Depth ...");
 
         leftBWImage = new ModelImage(ModelImage.FLOAT, leftImage.getExtents(), leftImage.getImageName() + "_changed",
                                      leftImage.getUserInterface());
@@ -800,7 +766,7 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
          *
          * try { destImage.importData(0,rightBuffer,true); } catch(IOException e) { rightBuffer = null;
          * errorCleanUp("Algorithm StereoDepth: IOException on destImage.importData", true); return; } */
-        disposeProgressBar();
+        
         setCompleted(true);
 
     }

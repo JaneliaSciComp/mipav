@@ -167,7 +167,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             resultBuffer2 = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Calculating the Morphological Filter ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Morphological Filter ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -193,7 +193,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm Morphological: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -210,7 +210,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             average = (float) (total / count);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) s / nImages * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) s / nImages * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -221,7 +221,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -232,7 +232,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -243,7 +243,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -343,7 +343,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for (s = 0; s <  nImages && !threadStopped; s++)
 
         srcImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -375,7 +375,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             resultBuffer = new float[length];
             resultBuffer2 = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating the Morphological Filter ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Morphological Filter ...");
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -403,7 +403,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Morphological: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -420,7 +420,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         average = (float) (total / count);
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(20, runningInSeparateThread);
+            fireProgressStateChanged(20);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -431,7 +431,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(40, runningInSeparateThread);
+            fireProgressStateChanged(40);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -442,7 +442,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(60, runningInSeparateThread);
+            fireProgressStateChanged(60);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -453,7 +453,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(80, runningInSeparateThread);
+            fireProgressStateChanged(80);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -550,7 +550,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         }
 
         setCompleted(true);
-        disposeProgressBar();
+        
     }
 
     /**
@@ -583,7 +583,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             resultBuffer2 = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Calculating the Morphological Filter ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Morphological Filter ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -609,7 +609,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm Morphological: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -626,7 +626,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             average = (float) (total / count);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) s / nImages * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) s / nImages * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -637,7 +637,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -648,7 +648,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -659,7 +659,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             } // for ( i = 0; i < length && !threadStopped; i++)
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -760,7 +760,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for (s = 0; s <  nImages && !threadStopped; s++)
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -803,7 +803,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             resultBuffer = new float[length];
             resultBuffer2 = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating the Morphological Filter ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Morphological Filter ...");
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -832,7 +832,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Morphological: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -849,7 +849,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         average = (float) (total / count);
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(20, runningInSeparateThread);
+            fireProgressStateChanged(20);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -860,7 +860,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(40, runningInSeparateThread);
+            fireProgressStateChanged(40);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -871,7 +871,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(60, runningInSeparateThread);
+            fireProgressStateChanged(60);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -882,7 +882,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
         } // for ( i = 0; i < length && !threadStopped; i++)
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(80, runningInSeparateThread);
+            fireProgressStateChanged(80);
         }
 
         for (i = 0; (i < length) && !threadStopped; i++) {
@@ -980,7 +980,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

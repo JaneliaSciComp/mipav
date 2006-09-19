@@ -152,9 +152,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
                                     boolean ns, boolean nesw, boolean ew, boolean senw, boolean invariantDir,
                                     boolean contrast, boolean dissimilarity, boolean homogeneity, boolean inverseOrder1,
                                     boolean asm, boolean energy, boolean maxProbability, boolean entropy, boolean mean,
-                                    boolean variance, boolean standardDeviation, boolean correlation, 
-                                    int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+                                    boolean variance, boolean standardDeviation, boolean correlation) {
+        super(null, srcImg);
         destImage = destImg;
         this.windowSize = windowSize;
         this.offsetDistance = offsetDistance;
@@ -209,7 +208,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
         constructLog();
 
-        fireProgressStateChanged(minProgressValue, null, "Running Haralick textures ...");
+        fireProgressStateChanged(0, null, "Running Haralick textures ...");
         
         calculateHaralick();
     }
@@ -368,7 +367,7 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
         for (y = yStart; (y <= yEnd) && !threadStopped; y++) {
             
-            fireProgressStateChanged(getProgressFromInt((int) ((y - yStart) * (100.0f / (yEnd - yStart)))), null, null);
+            fireProgressStateChanged(((int) ((y - yStart) * (100.0f / (yEnd - yStart)))), null, null);
             
             for (x = xStart; x <= xEnd; x++) {
                 pos = x + (y * xDim);

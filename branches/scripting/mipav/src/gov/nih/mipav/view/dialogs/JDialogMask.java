@@ -356,9 +356,9 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
 
                 // Make algorithm
                 if (image.isColorImage()) {
-                    maskAlgo = new AlgorithmMask(resultImage, image, value, valueG, valueB, polarity, true, 0, 100);
+                    maskAlgo = new AlgorithmMask(resultImage, image, value, valueG, valueB, polarity, true);
                 } else {
-                    maskAlgo = new AlgorithmMask(resultImage, image, value, polarity, true, 0, 100);
+                    maskAlgo = new AlgorithmMask(resultImage, image, value, polarity, true);
                 }
 
                 // This is very important. Adding this object as a listener allows the algorithm to
@@ -399,9 +399,9 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 if (image.isColorImage()) {
-                    maskAlgo = new AlgorithmMask(image, value, valueG, valueB, polarity, true, 0, 100);
+                    maskAlgo = new AlgorithmMask(image, value, valueG, valueB, polarity, true);
                 } else {
-                    maskAlgo = new AlgorithmMask(image, value, polarity, true, 0, 100);
+                    maskAlgo = new AlgorithmMask(image, value, polarity, true);
                 }
 
                 // This is very important. Adding this object as a listener allows the algorithm to

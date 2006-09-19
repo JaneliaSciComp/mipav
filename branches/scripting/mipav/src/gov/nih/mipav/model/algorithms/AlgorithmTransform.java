@@ -504,8 +504,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0) && (progressBar != null)) {
-                            progressBar.updateValue(Math.round((float) counter / (length - 1) * 100));
+                        if (((counter % mod) == 0)  ) {
+                            progressBar.updateValueImmed(Math.round((float) counter / (length - 1) * 100));
                         }
 
                         value = 0; // will remain zero if boundary conditions not met
@@ -552,7 +552,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 return image;
             }
         } finally {
-            progressBar.dispose();
+            
         }
     }
 
@@ -631,8 +631,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0) && (progressBar != null)) {
-                            progressBar.updateValue(Math.round((float) counter / (length - 1) * 100), false);
+                        if (((counter % mod) == 0)  ) {
+                        	progressBar.updateValue(Math.round((float) counter / (length - 1) * 100), false);
                         }
 
                         value = 0; // will remain zero if boundary conditions not met
@@ -770,8 +770,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0) && (progressBar != null)) {
-                            progressBar.updateValue(Math.round((float) counter / (length - 1) * 100));
+                        if (((counter % mod) == 0)  ) {
+                            progressBar.updateValueImmed(Math.round((float) counter / (length - 1) * 100));
                         }
 
                         value[0] = value[1] = value[2] = value[3] = 0; // will remain zero if boundary conditions not
@@ -826,7 +826,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 return null;
             }
         } finally {
-            progressBar.dispose();
+            
         }
     }
 
@@ -910,7 +910,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0) && (progressBar != null)) {
+                        if (((counter % mod) == 0)  ) {
                             progressBar.updateValue(Math.round((float) counter / (length - 1) * 100), false);
                         }
 
@@ -1395,7 +1395,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (j = 0; j < oYdim; j++) {
 
-            if ((progressBar != null) && ((j % mod) == 0)) {
+            if (  ((j % mod) == 0)) {
                 progressBar.updateValue((int) (((float) j / oYdim * 100) + 0.5f), activeImage);
             }
 
@@ -1547,7 +1547,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (j = 0; j < oYdim; j++) {
 
-            if ((progressBar != null) && ((j % mod) == 0)) {
+            if (  ((j % mod) == 0)) {
                 progressBar.updateValue((int) (((float) j / oYdim * 100) + 0.5f), activeImage);
             }
 
@@ -1695,7 +1695,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (j = 0; j < oYdim; j++) {
 
-            if ((progressBar != null) && ((j % mod) == 0)) {
+            if (  ((j % mod) == 0)) {
                 progressBar.updateValue((int) (((float) j / oYdim * 100) + 0.5f), activeImage);
             }
 
@@ -2260,7 +2260,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; k < oZdim; k++) {
 
-            if ((progressBar != null) && ((k % mod) == 0)) {
+            if (  ((k % mod) == 0)) {
                 progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), activeImage);
             }
 
@@ -2467,7 +2467,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             for (k = 0; k < oZdim; k++) {
 
-                if ((progressBar != null) && ((k % mod) == 0)) {
+                if (  ((k % mod) == 0)) {
                     progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), activeImage);
                 }
 
@@ -2565,7 +2565,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } // end for j
             } // end for i
         } finally {
-            progressBar.dispose();
+            
         }
     }
 
@@ -2677,7 +2677,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; k < oZdim; k++) {
 
-            if ((progressBar != null) && ((k % mod) == 0)) {
+            if (  ((k % mod) == 0)) {
                 progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), activeImage);
             }
 
@@ -2851,7 +2851,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             for (int l = 0; l < tDim; l++) {
 
-                if (((counter % mod) == 0) && (progressBar != null)) {
+                if (((counter % mod) == 0)  ) {
                     progressBar.updateValue(Math.round((float) l / (tDim - 1) * 100));
                 }
 
@@ -2946,7 +2946,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 return image;
             }
         } finally {
-            progressBar.dispose();
+            
         }
     }
 
@@ -3013,7 +3013,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (int k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0) && (progressBar != null)) {
+                        if (((counter % mod) == 0)  ) {
                             progressBar.updateValue(Math.round((float) counter / (length - 1) * 100), true);
                         }
 
@@ -3132,7 +3132,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 return null;
             }
         } finally {
-            progressBar.dispose();
+            
         }
     }
 
@@ -3421,7 +3421,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         for (int k = 0; k < zDim; k++) {
 
-                            if (((counter % mod) == 0) && (progressBar != null)) {
+                            if (((counter % mod) == 0) ) {
                                 progressBar.updateValue(Math.round((float) counter / (length - 1) * 100), true);
                             }
 
@@ -3572,7 +3572,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 return image;
             }
         } finally {
-            progressBar.dispose();
+            
         }
     }
 
@@ -3848,12 +3848,12 @@ public class AlgorithmTransform extends AlgorithmBase {
                 }
             }
 
-            buildProgressBar(srcImage.getImageName(), "Transforming image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Transforming image ...");
             
         } catch (IOException error) {
             displayError("Algorithm Transform: IOException on srcImage.exportData");
             setCompleted(false);
-            disposeProgressBar();
+            
             disposeLocal();
 
             return;
@@ -3862,7 +3862,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Transform: ZZZ. Out of memory on srcImage.exportData");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -4205,7 +4205,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         }
 
         setCompleted(true);
-        disposeProgressBar();
+        
     }
 
     /**
@@ -4259,7 +4259,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + .5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + .5));
             }
 
             if (pad) {
@@ -4382,7 +4382,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
             if (pad) {
@@ -4512,7 +4512,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
             if (isProgressBarVisible() && ((j % mod) == 0)) {
-                progressBar.updateValue((int) (((float) j / oYdim * 100) + 0.5f), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) j / oYdim * 100) + 0.5f));
             }
 
             if (pad) {
@@ -4616,7 +4616,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) k / oZdim * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) k / oZdim * 100));
             }
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
@@ -4676,7 +4676,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -4720,7 +4720,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
@@ -4805,7 +4805,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: IOException Error on exportData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -4843,7 +4843,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -4902,7 +4902,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -4944,7 +4944,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -5031,7 +5031,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: IOException Error on exportData");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -5086,7 +5086,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             temp2 = (imm * T10) + T12;
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
@@ -5213,7 +5213,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
             if (isProgressBarVisible() && ((j % mod) == 0)) {
-                progressBar.updateValue((int) (((float) j / oYdim * 100) + 0.5f), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) j / oYdim * 100) + 0.5f));
             }
 
             jmm = j * oYres;
@@ -5277,7 +5277,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -5376,7 +5376,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
             kmm = k * oZres;
@@ -5461,7 +5461,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -5563,7 +5563,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             Bspline.setup2DBSpline(imgBuf, inVolExtents, degree);
@@ -5602,7 +5602,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -5649,7 +5649,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             Bspline.setup2DBSplineC(imgBuf, inVolExtents, degree);
@@ -5702,7 +5702,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: IOException Error on exportData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -5750,7 +5750,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible() && ((l % mod) == 0)) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + .5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
             }
 
             Bspline.setup3DBSpline(imgBuf, inVolExtents, degree);
@@ -5804,7 +5804,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -5851,7 +5851,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -5891,7 +5891,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -5939,7 +5939,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -5993,7 +5993,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: IOException Error on exportData");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -6036,7 +6036,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -6111,7 +6111,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -6209,7 +6209,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
             kmm = k * oZres;
@@ -6304,7 +6304,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -6406,7 +6406,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             CLag.setup2DCubicLagrangian(imgBuf, inVolExtents, clip);
@@ -6445,7 +6445,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -6495,7 +6495,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             if (srcImage.getType() == ModelStorageBase.ARGB) {
@@ -6554,7 +6554,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: IOException Error on importData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -6604,7 +6604,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible() && ((l % mod) == 0)) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + .5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
             }
 
             CLag.setup3DCubicLagrangian(imgBuf, inVolExtents, clip);
@@ -6658,7 +6658,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -6705,7 +6705,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -6745,7 +6745,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -6791,7 +6791,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -6852,7 +6852,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: IOException Error on importData");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -6896,7 +6896,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -6971,7 +6971,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -7065,7 +7065,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -7163,7 +7163,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -7265,7 +7265,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             HLag.setup2DHepticLagrangian(imgBuf, inVolExtents, clip);
@@ -7304,7 +7304,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -7353,7 +7353,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             if (srcImage.getType() == ModelStorageBase.ARGB) {
@@ -7412,7 +7412,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: IOException Error on importData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -7461,7 +7461,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible() && ((l % mod) == 0)) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + .5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
             }
 
             HLag.setup3DHepticLagrangian(imgBuf, inVolExtents, clip);
@@ -7515,7 +7515,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -7561,7 +7561,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -7601,7 +7601,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -7647,7 +7647,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -7708,7 +7708,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: IOException Error on importData");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -7747,7 +7747,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
@@ -7807,7 +7807,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
@@ -7893,7 +7893,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -7974,7 +7974,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
@@ -8064,7 +8064,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) k / oZdim * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) k / oZdim * 100));
             }
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
@@ -8108,7 +8108,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm transform: Image(s) is locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -8141,7 +8141,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
@@ -8183,7 +8183,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             } catch (IOException error) {
                 MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -8195,7 +8195,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     MipavUtil.displayError("AlgorithmTransform: IOException Error on exportData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -8240,7 +8240,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
@@ -8292,7 +8292,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -8325,7 +8325,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -8367,7 +8367,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -8402,7 +8402,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -8454,7 +8454,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: IOException Error on exportData");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -8495,7 +8495,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -8570,7 +8570,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -8664,7 +8664,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -8762,7 +8762,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -8864,7 +8864,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             QLag.setup2DQuinticLagrangian(imgBuf, inVolExtents, clip);
@@ -8903,7 +8903,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -8952,7 +8952,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             if (srcImage.getType() == ModelStorageBase.ARGB) {
@@ -9015,7 +9015,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: IOException Error on importData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -9064,7 +9064,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible() && ((l % mod) == 0)) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + .5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
             }
 
             QLag.setup3DQuinticLagrangian(imgBuf, inVolExtents, clip);
@@ -9118,7 +9118,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -9165,7 +9165,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -9205,7 +9205,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -9252,7 +9252,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -9313,7 +9313,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: IOException Error on importData");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -9381,7 +9381,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -9408,7 +9408,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (j = 0; j < oYdim && !threadStopped; j++) {
     
                 if (isProgressBarVisible() && ((j % mod) == 0)) {
-                    progressBar.updateValue((int) ((((float)z/nz * 100) + ((float)j / (oYdim*nz) * 100)) + 0.5f), runningInSeparateThread);
+                    fireProgressStateChanged((int) ((((float)z/nz * 100) + ((float)j / (oYdim*nz) * 100)) + 0.5f));
                 }
     
                 jmm = j * oYres;
@@ -9504,7 +9504,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -9531,7 +9531,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 for (j = 0; j < oYdim && !threadStopped; j++) {
         
                     if (isProgressBarVisible() && ((j % mod) == 0)) {
-                        progressBar.updateValue((int) ((((float)z/nz * 100) + ((float)c/(3*nz)*100) + ((float)j / (3*oYdim*nz) * 100)) + 0.5f), runningInSeparateThread);
+                        fireProgressStateChanged((int) ((((float)z/nz * 100) + ((float)c/(3*nz)*100) + ((float)j / (3*oYdim*nz) * 100)) + 0.5f));
                     }
         
                     jmm = j * oYres;
@@ -9635,7 +9635,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; k < oZdim && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
             kmm = k * oZres;
@@ -9759,7 +9759,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             for (k = 0; k < oZdim && !threadStopped; k++) {
     
                 if (isProgressBarVisible() && ((k % mod) == 0)) {
-                    progressBar.updateValue((int) (((float) k /(3* oZdim) * 100) + ((float)c/3 * 100) + 0.5f), runningInSeparateThread);
+                    fireProgressStateChanged((int) (((float) k /(3* oZdim) * 100) + ((float)c/3 * 100) + 0.5f));
                 }
     
                 kmm = k * oZres;
@@ -9859,7 +9859,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (t = 0; t < iTdim; t++) {
             
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) t / iTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) t / iTdim * 100) + 0.5));
             }
             
             if ((t >= 1)) {
@@ -9869,7 +9869,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -9997,7 +9997,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
             if (pad) {
@@ -10120,7 +10120,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             tempBuf = null;
         } catch (IOException error) {
             displayError("AlgorithmTransform: IOException on destImage.importdata(0,imgBUf2, false).");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -10173,7 +10173,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) l / oTdim * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) l / oTdim * 100));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -10278,7 +10278,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -10330,7 +10330,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (oXdim) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (oXdim) * 100));
             }
 
             if (pad) {
@@ -10512,7 +10512,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -10587,7 +10587,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -10680,7 +10680,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -10778,7 +10778,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue((int) (((float) i / oXdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
             imm = (float) i * oXres;
@@ -10879,7 +10879,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             WSinc.setup2DWSinc(imgBuf, inVolExtents, clip);
@@ -10918,7 +10918,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -10967,7 +10967,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
             if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
             if (srcImage.getType() == ModelStorageBase.ARGB) {
@@ -11026,7 +11026,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: IOException Error on importData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -11075,7 +11075,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible() && ((l % mod) == 0)) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + .5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
             }
 
             WSinc.setup3DWSinc(imgBuf, inVolExtents, clip);
@@ -11129,7 +11129,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Transform: Image(s) locked");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -11175,7 +11175,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -11215,7 +11215,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -11261,7 +11261,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue((int) (((float) l / oTdim * 100) + 0.5), runningInSeparateThread);
+                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
             }
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
@@ -11322,7 +11322,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Transform: IOException Error on importData");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }

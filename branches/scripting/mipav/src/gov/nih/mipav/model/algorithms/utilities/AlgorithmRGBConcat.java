@@ -161,7 +161,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
             bufferR = new float[srcLength];
             bufferG = new float[srcLength];
             bufferB = new float[srcLength];
-            buildProgressBar(destImage.getImageName(), "Concatinating gray images ...", 0, 100);
+            fireProgressStateChanged(destImage.getImageName(), "Concatinating gray images ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             bufferR = null;
@@ -233,8 +233,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
                 for (i = 0, id = 0; (i < length) && !threadStopped; i += 4, id++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100),
-                                                runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100));
                     }
 
                     buffer[i] = 255;
@@ -259,8 +258,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
                 for (i = 0, id = 0; (i < length) && !threadStopped; i += 4, id++) {
 
                     if (((i % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100),
-                                                runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100));
                     }
 
                     buffer[i] = 255;
@@ -318,7 +316,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm RGBConcat: Import image(s): " + error);
                 setCompleted(false);
-                disposeProgressBar();
+                
                 notifyListeners(this);
 
                 return;
@@ -342,7 +340,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -372,7 +370,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
         int nImages = 1;
 
-        buildProgressBar(srcImageR.getImageName(), "Concatinating gray images ...", 0, 100);
+        fireProgressStateChanged(srcImageR.getImageName(), "Concatinating gray images ...");
 
         extents = srcImageR.getExtents();
         imageName = srcImageR.getImageName();
@@ -498,7 +496,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
             for (i = 0, id = 0; (i < totLength) && !threadStopped; i += 4, id++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i) / (totLength - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (i) / (totLength - 1) * 100));
                 }
 
                 buffer[i] = 255;
@@ -523,7 +521,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
             for (i = 0, id = 0; (i < totLength) && !threadStopped; i += 4, id++) {
 
                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (i) / (totLength - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (i) / (totLength - 1) * 100));
                 }
 
                 buffer[i] = 255;
@@ -592,7 +590,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm RGBConcat: Import image(s): " + error);
             setCompleted(false);
-            disposeProgressBar();
+            
             notifyListeners(this);
 
             return;
@@ -614,7 +612,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

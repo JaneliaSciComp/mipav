@@ -356,10 +356,6 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        emAlgo.setProgressBarVisible(false);
-                    }
-
                     emAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -410,10 +406,6 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        emAlgo.setProgressBarVisible(false);
-                    }
-
                     emAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

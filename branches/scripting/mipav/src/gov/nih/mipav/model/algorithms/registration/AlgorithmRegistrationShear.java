@@ -487,7 +487,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        buildProgressBar(imageA.getFileInfo()[0].getFileName(), "Registering to base ...", 0, 100);
+        fireProgressStateChanged(imageA.getFileInfo()[0].getFileName(), "Registering to base ...");
         
 
         xdel = imageA.getFileInfo(0).getResolutions()[0];
@@ -526,14 +526,14 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (OutOfMemoryError x) {
                 cleanup();
                 MipavUtil.displayError("Unable to allocate enough memory for AlgorithmTransform");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
             }
 
             algoTrans.setProgressBarVisible(false);
-            progressBar.setMessage("Resampling imageB to match imageA dims and resolutions");
+            fireProgressStateChanged("Resampling imageB to match imageA dims and resolutions");
             algoTrans.run();
             resampledImageB = algoTrans.getTransformedImage();
 
@@ -546,7 +546,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             if (resampledImageB == null) {
                 cleanup();
                 MipavUtil.displayError("Null resampledImageB returned by AlgorithmTransform");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -584,8 +584,8 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         /* Make a blurred copy of base image A */
 
         try {
-            progressBar.setMessage("Blurring image A");
-            progressBar.updateValue(5, runningInSeparateThread);
+            fireProgressStateChanged("Blurring image A");
+            fireProgressStateChanged(5);
             blurredImageA = (ModelImage) imageA.clone();
             sigmas[0] = twoblur;
             sigmas[1] = twoblur;
@@ -598,7 +598,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for blurredImageA");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -633,7 +633,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             cleanup();
             displayError("AlgorithmRegistrationShear: Out of memory creating data");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -644,7 +644,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             cleanup();
             displayError("AlgorithmRegistrationShear: Out of memory creating rr");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -655,7 +655,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             cleanup();
             displayError("AlgorithmRegistrationShear: Out of memory creating fitim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -666,7 +666,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             cleanup();
             displayError("AlgorithmRegistrationShear: Out of memory creating chol_fitim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -692,8 +692,8 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         /* Make a blurred copy of matching image B */
 
         try {
-            progressBar.setMessage("Blurring image B");
-            progressBar.updateValue(10, runningInSeparateThread);
+            fireProgressStateChanged("Blurring image B");
+            fireProgressStateChanged(10);
 
             if (resampledImageB != null) {
                 blurredImageB = (ModelImage) resampledImageB.clone();
@@ -708,7 +708,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for blurredImageB");
-            disposeProgressBar();
+            
 
             return;
         }
@@ -717,8 +717,8 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         if ((coarse_del > 0) && (coarse_num > 0)) {
 
             // Getting best coarse shift
-            progressBar.setMessage("Getting best coarse shift");
-            progressBar.updateValue(15, runningInSeparateThread);
+            fireProgressStateChanged("Getting best coarse shift");
+            fireProgressStateChanged(15);
             sx = 0;
             sy = 0;
             sz = 0;
@@ -735,14 +735,14 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 displayError("AlgorithmRegistrationShear: blurredImageA is locked");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
             } catch (OutOfMemoryError e) {
                 cleanup();
                 displayError("AlgorithmRegistrationShear: Out of memory creating blurredA");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -754,14 +754,14 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 displayError("AlgorithmRegistrationShear: blurredImageB is locked");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
             } catch (OutOfMemoryError e) {
                 cleanup();
                 displayError("AlgorithmRegistrationShear: Out of memory creating blurredB");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -830,8 +830,8 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
         /* blurring the first pass weight */
 
-        progressBar.setMessage("Getting the first pass weight");
-        progressBar.updateValue(20, runningInSeparateThread);
+        fireProgressStateChanged("Getting the first pass weight");
+        fireProgressStateChanged(20);
 
         try {
             blurredImageW = (ModelImage) imageA.clone();
@@ -839,14 +839,14 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: IOException on blurredImageW import data");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
             displayError("AlgorithmRegistrationShear: Out of memory on blurredImageW import data");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -854,7 +854,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
         blurredA = null;
 
-        gaussianBlurAlgo = new AlgorithmGaussianBlur(blurredImageW, sigmas, true, false);
+        gaussianBlurAlgo = new AlgorithmGaussianBlur(null, blurredImageW, sigmas, true, false);
         gaussianBlurAlgo.setProgressBarVisible(false);
         gaussianBlurAlgo.run();
 
@@ -863,14 +863,14 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
         // Calculate fitim an array of 7 volSize images and then calculate
         // chol_fitim from fitim
-        progressBar.setMessage("Creating first alignment structure");
-        progressBar.updateValue(30, runningInSeparateThread);
+        fireProgressStateChanged("Creating first alignment structure");
+        fireProgressStateChanged(30);
         success = mri_3dalign_setup(blurredImageA, blurredImageW);
 
         if (success == -1) {
             cleanup();
             MipavUtil.displayError("Failed on mri_3dalign_setup(blurredImageA, blurredImageW)");
-            disposeProgressBar();
+            
 
             return;
         }
@@ -899,7 +899,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for blurredImageB");
-            disposeProgressBar();
+            
 
             return;
         }
@@ -914,8 +914,8 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         init_dy = sy * ydel;
         init_dz = sz * zdel;
 
-        progressBar.setMessage("Calculating first alignment parameters");
-        progressBar.updateValue(40, runningInSeparateThread);
+        fireProgressStateChanged("Calculating first alignment parameters");
+        fireProgressStateChanged(40);
         mri_3dalign_one(blurredImageB);
         blurredImageB.disposeLocal();
         blurredImageB = null;
@@ -954,14 +954,14 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         }
 
         final_regmode = VL_final;
-        progressBar.setMessage("Creating final alignment structure");
-        progressBar.updateValue(60, runningInSeparateThread);
+        fireProgressStateChanged("Creating final alignment structure");
+        fireProgressStateChanged(60);
         success = mri_3dalign_setup(imageA, null);
 
         if (success == -1) {
             cleanup();
             MipavUtil.displayError("Failed on mri_3dalign_setup(imageA,null)");
-            disposeProgressBar();
+            
 
             return;
         }
@@ -976,8 +976,8 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         init_dy = dy_1;
         init_dz = dz_1;
 
-        progressBar.setMessage("Calculating final alignment parameters");
-        progressBar.updateValue(80, runningInSeparateThread);
+        fireProgressStateChanged("Calculating final alignment parameters");
+        fireProgressStateChanged(80);
 
         if (resampledImageB != null) {
             mri_3dalign_one_final(resampledImageB);
@@ -990,15 +990,15 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: IOException on resultImgB import data");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
         cleanup();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1066,7 +1066,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: vol is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -1116,7 +1116,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: IOException on vol import data");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -1557,7 +1557,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: im is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -1627,7 +1627,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: im is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -2488,7 +2488,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             cleanup();
             MipavUtil.displayError("*** Illegal inputs to startup_lsqfit\n");
             displayError("AlgorithmRegistrationShear: Out of memory creating cc");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -2547,7 +2547,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             if (sum <= 0.0) {
                 cleanup();
                 MipavUtil.displayError("Choleski factorization failure in startup_lsqfit\n");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return -1;
@@ -2810,7 +2810,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (OutOfMemoryError x) {
                 cleanup();
                 MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for tim");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -2907,7 +2907,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (OutOfMemoryError x) {
                 cleanup();
                 MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for tim");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -2959,7 +2959,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for tim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -2973,7 +2973,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: tim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -3032,7 +3032,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: imbase is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3047,7 +3047,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for pim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3060,7 +3060,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: pim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3071,7 +3071,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for mim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3084,7 +3084,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: mim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3112,7 +3112,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for pim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3125,7 +3125,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: pim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3136,7 +3136,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for mim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3149,7 +3149,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: mim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3177,7 +3177,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for pim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3190,7 +3190,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: pim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3201,7 +3201,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for mim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3214,7 +3214,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: mim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3242,7 +3242,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for pim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3255,7 +3255,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: pim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3266,7 +3266,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for mim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3279,7 +3279,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: mim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3307,7 +3307,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for pim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3320,7 +3320,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: pim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3331,7 +3331,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for mim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3344,7 +3344,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: mim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3372,7 +3372,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for pim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3385,7 +3385,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: pim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3396,7 +3396,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             cleanup();
             MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for mim");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3409,7 +3409,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         } catch (IOException error) {
             cleanup();
             displayError("AlgorithmRegistrationShear: mim is locked");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return -1;
@@ -3450,7 +3450,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (OutOfMemoryError x) {
                 cleanup();
                 MipavUtil.displayError("Algorithm Registration Shear: unable to allocate enough memory for imageW");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return -1;
@@ -3461,7 +3461,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 displayError("AlgorithmRegistrationShear: imageW is locked");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return -1;
@@ -3476,7 +3476,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 displayError("AlgorithmRegistrationShear: IOException on imageW import data");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return -1;
@@ -3488,7 +3488,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             sigmas[2] = 3.0f * zdel;
 
             // Make algorithm
-            gaussianBlurAlgo = new AlgorithmGaussianBlur(imageW, sigmas, true, false);
+            gaussianBlurAlgo = new AlgorithmGaussianBlur(null, imageW, sigmas, true, false);
             gaussianBlurAlgo.setProgressBarVisible(false);
             gaussianBlurAlgo.run();
             // #endif
@@ -3498,7 +3498,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 displayError("AlgorithmRegistrationShear: imageW is locked");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return -1;
@@ -3515,7 +3515,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 displayError("AlgorithmRegistrationShear: imwt is locked");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return -1;
@@ -4330,7 +4330,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         if (ax[0] < 0) {
             cleanup();
             MipavUtil.displayError("THD_rota_vol: can't compute shear transformation!\n");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -4362,7 +4362,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                 } catch (OutOfMemoryError oome) {
                     cleanup();
                     MipavUtil.displayError("AddMargins reports: unable to allocate enough memory");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -4403,7 +4403,7 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                 } catch (OutOfMemoryError x) {
                     cleanup();
                     MipavUtil.displayError("AlgorithmCrop: unable to allocate enough memory");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;

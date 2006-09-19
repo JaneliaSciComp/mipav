@@ -209,8 +209,8 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
      * @param  reduce      DOCUMENT ME!
      */
     public AlgorithmAdaptiveSmooth(ModelImage destImage, ModelImage srcImg, float radiusY, float radiusCr,
-                                   float radiusCb, float distWeight, boolean reduce, int minProgressValue, int maxProgressValue) {
-        super(destImage, srcImg, minProgressValue, maxProgressValue);
+                                   float radiusCb, float distWeight, boolean reduce) {
+        super(destImage, srcImg);
         this.radiusY = radiusY;
         this.distWeight = distWeight;
         this.radiusCr = radiusCr;
@@ -322,7 +322,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         }
 
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
 
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
@@ -342,7 +342,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(getProgressFromFloat(.95f), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged((.95f), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
      
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
@@ -377,7 +377,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
 
         if (threadStopped) {
             cleanup();
@@ -419,7 +419,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         }
 
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Performing median filter ...");
 
 
         process(imgBuffer);
@@ -454,7 +454,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Performing median filter ...");
 
         if (threadStopped) {
             cleanup();
@@ -881,7 +881,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptiveSmooth: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -916,7 +916,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptiveSmooth: Out of memory creating data1 " + e);
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -973,7 +973,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptiveSmooth: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -1008,7 +1008,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptiveSmooth: Out of memory creating data1 " + e);
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -1309,16 +1309,16 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         width = xDim;
         height = yDim;
         
-        fireProgressStateChanged(getProgressFromFloat(.1f), srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged((.1f), srcImage.getImageName(), "Performing median filter ...");
         
         
         medianFilter(fY);
         
-        fireProgressStateChanged(getProgressFromFloat(.3f), srcImage.getImageName(), "Creating edge graph ...");
+        fireProgressStateChanged((.3f), srcImage.getImageName(), "Creating edge graph ...");
                
         createEdgeGraph(fY);
         
-        fireProgressStateChanged(getProgressFromFloat(.5f), srcImage.getImageName(), "Filtering in Y space ...");
+        fireProgressStateChanged((.5f), srcImage.getImageName(), "Filtering in Y space ...");
                 
         filterProcessBW();
 
@@ -1373,13 +1373,13 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         radius = radiusY;
         width = xDim;
         height = yDim;
-        fireProgressStateChanged(getProgressFromFloat(.1f), srcImage.getImageName(), "Performing median filter ...");
+        fireProgressStateChanged((.1f), srcImage.getImageName(), "Performing median filter ...");
         
         medianFilter(fY, fR, fB);
-        fireProgressStateChanged(getProgressFromFloat(.3f), srcImage.getImageName(), "Creating edge graph ...");
+        fireProgressStateChanged((.3f), srcImage.getImageName(), "Creating edge graph ...");
         
         createEdgeGraph(fY, fR, fB);
-        fireProgressStateChanged(getProgressFromFloat(.5f), srcImage.getImageName(), "Filtering in Y space ...");
+        fireProgressStateChanged((.5f), srcImage.getImageName(), "Filtering in Y space ...");
         
         filterProcess();
 
@@ -1393,7 +1393,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
         if (!reduce) {
             data = Cb;
             radius = radiusCb;
-            fireProgressStateChanged(getProgressFromFloat(.7f), srcImage.getImageName(), "Filtering in Cb space ...");
+            fireProgressStateChanged((.7f), srcImage.getImageName(), "Filtering in Cb space ...");
             
             filterProcess();
 
@@ -1406,7 +1406,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
 
             data = Cr;
             radius = radiusCr;
-            fireProgressStateChanged(getProgressFromFloat(.9f), srcImage.getImageName(), "Filtering in Cr space ...");
+            fireProgressStateChanged((.9f), srcImage.getImageName(), "Filtering in Cr space ...");
             
             filterProcess();
 
@@ -1454,7 +1454,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
             createEdgeGraph(newY, newR, newB);
             data = newB;
             radius = radiusCb / 2.0f;
-            fireProgressStateChanged(getProgressFromFloat(.7f), srcImage.getImageName(), "Filtering in Cb space ...");
+            fireProgressStateChanged((.7f), srcImage.getImageName(), "Filtering in Cb space ...");
             
             filterProcess();
 
@@ -1467,7 +1467,7 @@ public class AlgorithmAdaptiveSmooth extends AlgorithmBase {
 
             data = newR;
             radius = radiusCr / 2.0f;
-            fireProgressStateChanged(getProgressFromFloat(.9f), srcImage.getImageName(), "Filtering in Cr space ...");
+            fireProgressStateChanged((.9f), srcImage.getImageName(), "Filtering in Cr space ...");
             
             filterProcess();
 

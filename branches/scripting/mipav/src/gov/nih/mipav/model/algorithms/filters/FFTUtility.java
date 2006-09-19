@@ -330,7 +330,7 @@ public class FFTUtility extends AlgorithmBase {
         boolean goBack7 = false;
         boolean goBack8 = false;
 
-        buildProgressBar("FFT", "Performing FFT...", 0, 100);
+        fireProgressStateChanged("FFT", "Performing FFT...");
 
         
 
@@ -341,7 +341,7 @@ public class FFTUtility extends AlgorithmBase {
 
         if (nf == 1) {
             MipavUtil.displayError("Error! Dimension length less than 2");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -354,7 +354,7 @@ public class FFTUtility extends AlgorithmBase {
             MipavUtil.displayError("Error! Zero in FFT parameters");
             Preferences.debug("nseg = " + nseg + " n = " + n + "\n");
             Preferences.debug("nspn = " + nspn + " isn = " + isn + "\n");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -420,7 +420,7 @@ public class FFTUtility extends AlgorithmBase {
 
         if ((m + kt) > 15) {
             MipavUtil.displayError("Error! FFT parameter n = " + n + " has more than 15 factors");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -1276,7 +1276,7 @@ outer6:
         } // if (kt != 0)
 
         if (((2 * kt) + 1) >= m) {
-            disposeProgressBar();
+            
             setCompleted(true);
 
             return;
@@ -1450,7 +1450,7 @@ outer8:
             i = nt - inc + 1;
         } while (nt >= 0);
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
         return;
@@ -1510,7 +1510,7 @@ outer8:
         double em;
         int j;
 
-        buildProgressBar("FFT", "Performing FFT REALS...", 0, 100);
+        fireProgressStateChanged("FFT", "Performing FFT REALS...");
 
         
 
@@ -1521,7 +1521,7 @@ outer8:
         if ((nf * isn) == 0) {
             MipavUtil.displayError("Error! Zero in REALS parameters");
             Preferences.debug("n = " + n + " isn = " + isn + "\n");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -1590,7 +1590,7 @@ outer8:
             } // else
         } // for (j = 0; j < nh; j += inc)
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
         return;
@@ -1668,7 +1668,7 @@ outer8:
         boolean goBack = false;
 
 
-        buildProgressBar("FFT", "Performing FFT REALT...", 0, 100);
+        fireProgressStateChanged("FFT", "Performing FFT REALT...");
 
         
 
@@ -1683,7 +1683,7 @@ outer8:
             MipavUtil.displayError("Error! Zero in REALT parameters");
             Preferences.debug("nseg = " + nseg + " n = " + n + "\n");
             Preferences.debug("nspn = " + nspn + " isn = " + isn + "\n");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -1752,7 +1752,7 @@ outer8:
         } // else isn <= 0
 
         if (nf == 1) {
-            disposeProgressBar();
+            
             setCompleted(true);
 
             return;
@@ -1802,7 +1802,7 @@ outer:
                 }
 
                 if (kk > nh) {
-                    disposeProgressBar();
+                    
                     setCompleted(true);
 
                     return;

@@ -156,7 +156,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
             length = srcImage.getSliceSize() * 4;
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Thresholding image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Thresholding image ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Threshold: Image(s) locked", true);
@@ -176,7 +176,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             // alpha channel.... don't touch
@@ -259,7 +259,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -281,7 +281,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Thresholding image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Thresholding image ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Threshold: Image(s) locked", true);
@@ -301,7 +301,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 // alpha channel.... don't touch
             }
 
@@ -387,7 +387,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
     }
@@ -416,7 +416,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
             length = srcImage.getSliceSize() * 4;
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Thresholding image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Thresholding image ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Threshold: Image(s) locked", true);
@@ -436,7 +436,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             // alpha channel.... don't touch
@@ -525,7 +525,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -556,7 +556,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Thresholding image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Thresholding image ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Threshold: Image(s) locked", true);
@@ -576,7 +576,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if ((i % 4) == 0) {
@@ -666,7 +666,7 @@ public class AlgorithmThresholdDualRGB extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

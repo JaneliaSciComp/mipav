@@ -638,10 +638,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    extractBrainAlgo.setProgressBarVisible(false);
-                }
-
                 extractBrainAlgo.run();
             }
         } catch (OutOfMemoryError x) {

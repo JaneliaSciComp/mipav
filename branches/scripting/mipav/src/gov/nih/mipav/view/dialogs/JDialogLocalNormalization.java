@@ -726,7 +726,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
 
                 // Make algorithm
                 algoLocal = new AlgorithmLocalNormalization(resultImage, sourceImage, unsharp, unsharpWeight,
-                                                            blurringDiameter, blurringFreq, 0, 100);
+                                                            blurringDiameter, blurringFreq);
 
                 // only if the src image is colour will any channel
                 // checkboxes be enabled:
@@ -815,7 +815,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
 
                 // Make algorithm
                 algoLocal = new AlgorithmLocalNormalization(resultImage, sourceImage, unsharp, unsharpWeight,
-                                                            blurringDiameter, blurringFreq, 0, 100);
+                                                            blurringDiameter, blurringFreq);
 
                 // only if the src image is colour will any channel checkboxes be enabled
                 algoLocal.setRGBChannelFilter(colorPanel.isRedProcessingRequested(), colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested());

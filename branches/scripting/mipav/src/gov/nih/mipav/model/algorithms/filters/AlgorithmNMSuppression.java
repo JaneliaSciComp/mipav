@@ -440,7 +440,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
                 resultBuffer2[i] = 1.0f;
             }
 
-            buildProgressBar(srcImage.getImageName(), "Calculating the Non-maximum suppression ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Non-maximum suppression ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -465,7 +465,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm NMSuppression: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -473,7 +473,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -554,7 +554,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             genZeroXMask(resultBuffer, resultBuffer2);
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -574,7 +574,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating the Non-maximum suppression ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Non-maximum suppression ...");
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -596,7 +596,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -646,7 +646,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         }
 
         setCompleted(true);
-        disposeProgressBar();
+        
     }
 
     /**
@@ -686,7 +686,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
                 buffer2[i] = 1.0f;
             }
 
-            buildProgressBar(srcImage.getImageName(), "Calculating the Non-maximum suppression ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Non-maximum suppression ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             buffer2 = null;
@@ -714,7 +714,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -795,7 +795,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             genZeroXMask(buffer, buffer2);
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -824,7 +824,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating the Non-maximum suppression ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Non-maximum suppression ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm NMSuppression exportData: Image(s) locked", true);
@@ -844,7 +844,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -876,7 +876,7 @@ public class AlgorithmNMSuppression extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

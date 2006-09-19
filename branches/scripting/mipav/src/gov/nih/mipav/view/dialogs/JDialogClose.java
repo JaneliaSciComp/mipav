@@ -447,11 +447,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                         }
                     } else {
 
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo2D.setProgressBarVisible(false);
-                        }
-
-                        closeAlgo2D.run();
+                    	closeAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog close: unable to allocate enough memory");
@@ -507,10 +503,6 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                         }
                     } else {
 
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo2D.setProgressBarVisible(false);
-                        }
-
                         closeAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -555,10 +547,6 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo3D.setProgressBarVisible(false);
-                        }
 
                         closeAlgo3D.run();
                     }
@@ -613,10 +601,6 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo3D.setProgressBarVisible(false);
-                        }
 
                         closeAlgo3D.run();
                     }
@@ -673,9 +657,6 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                         }
                     } else {
 
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo25D.setProgressBarVisible(false);
-                        }
 
                         closeAlgo25D.run();
                     }
@@ -733,10 +714,6 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo25D.setProgressBarVisible(false);
-                        }
 
                         closeAlgo25D.run();
                     }

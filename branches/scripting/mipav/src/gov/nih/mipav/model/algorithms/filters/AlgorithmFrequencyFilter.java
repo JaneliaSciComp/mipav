@@ -280,9 +280,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  imageCrop  if true crop image if largest image dimension + kDim - 1 exceeds the smallest power of 2
      *                    number >= the largest dimension
      */
-    public AlgorithmFrequencyFilter(ModelImage srcImg, boolean image25D, boolean imageCrop,
-            int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+    public AlgorithmFrequencyFilter(ModelImage srcImg, boolean image25D, boolean imageCrop) {
+        super(null, srcImg);
 
         this.imageCrop = imageCrop;
         this.image25D = image25D;
@@ -302,9 +301,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  createGabor  If true, produce an image of the Gabor filter
      */
     public AlgorithmFrequencyFilter(ModelImage srcImg, float freqU, float freqV, float sigmaU, float sigmaV,
-                                    float theta, boolean createGabor,
-                                    int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+                                    float theta, boolean createGabor) {
+        super(null, srcImg);
 
         this.freqU = freqU;
         this.freqV = freqV;
@@ -335,9 +333,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  highTruncated     part of high histogram end truncated
      */
     public AlgorithmFrequencyFilter(ModelImage srcImg, boolean image25D, float freq1, int butterworthOrder,
-                                    float lowGain, float highGain, float lowTruncated, float highTruncated,
-                                    int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+                                    float lowGain, float highGain, float lowTruncated, float highTruncated) {
+        super(null, srcImg);
 
         this.imageCrop = false;
         this.image25D = image25D;
@@ -364,9 +361,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * @param  createGabor  If true, produce an image of the Gabor filter
      */
     public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, float freqU, float freqV, float sigmaU,
-                                    float sigmaV, float theta, boolean createGabor,
-                                    int minProgressValue, int maxProgressValue) {
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+                                    float sigmaV, float theta, boolean createGabor) {
+        super(destImg, srcImg);
 
         this.freqU = freqU;
         this.freqV = freqV;
@@ -399,9 +395,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      */
     public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, boolean image25D, float freq1,
                                     int butterworthOrder, float lowGain, float highGain, float lowTruncated,
-                                    float highTruncated,
-                                    int minProgressValue, int maxProgressValue) {
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+                                    float highTruncated) {
+        super(destImg, srcImg);
 
         this.imageCrop = false;
         this.image25D = image25D;
@@ -432,9 +427,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      */
     public AlgorithmFrequencyFilter(ModelImage srcImg, boolean image25D, boolean imageCrop, int kernelDiameter,
                                     int filterType, float freq1, float freq2, int constructionMethod,
-                                    int butterworthOrder,
-                                    int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+                                    int butterworthOrder) {
+        super(null, srcImg);
 
         this.image25D = image25D;
         this.imageCrop = imageCrop;
@@ -464,9 +458,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      */
     public AlgorithmFrequencyFilter(ModelImage destImg, ModelImage srcImg, boolean image25D, boolean imageCrop,
                                     int kernelDiameter, int filterType, float freq1, float freq2,
-                                    int constructionMethod, int butterworthOrder,
-                                    int minProgressValue, int maxProgressValue) {
-        super(destImg, srcImg, minProgressValue, maxProgressValue);
+                                    int constructionMethod, int butterworthOrder) {
+        super(destImg, srcImg);
 
         this.imageCrop = imageCrop;
         this.image25D = image25D;
@@ -541,11 +534,11 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
      * sigmas[] = new float[2]; float GxxData[]; float GyyData[]; float realProduct[]; float imagProduct[]; int
      * sliceSize; float resultData[];
      *
-     * buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
+     * fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
      *
      * int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width; int yScreen =
-     * Toolkit.getDefaultToolkit().getScreenSize().height; progressBar.setLocation(xScreen/2, yScreen/2);
-     * progressBar.setVisible(true);
+     * Toolkit.getDefaultToolkit().getScreenSize().height; 
+     * 
      *
      * makeComplexData(); sliceSize = dimLengths[0]*dimLengths[1]; // Perform forward FFT on data transformDir = FORWARD;
      * exec(realData,imagData,0); try {     realProduct     = new float[newSliceSize];     imagProduct     = new
@@ -666,7 +659,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         float[] imagSubsetData;
         int z;
 
-        fireProgressStateChanged(minProgressValue, null, "Running frequency filter ...");
+        fireProgressStateChanged(0, null, "Running frequency filter ...");
         
         makeComplexData();
 
@@ -702,8 +695,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 exec(realSubsetData, imagSubsetData, z);
                 
-                fireProgressStateChanged(getProgressFromInt(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running forward FFTs ...");
-               // progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)), runningInSeparateThread);
+                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running forward FFTs ...");
+               // fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
 
                 for (i = 0; i < newSliceSize; i++) {
                     realData[(z * newSliceSize) + i] = realSubsetData[i];
@@ -771,7 +764,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         if (image25D) {
             realSubsetData = new float[newSliceSize];
             imagSubsetData = new float[newSliceSize];
-            //progressBar.setMessage("Running inverse FFTs");
+            //fireProgressStateChanged("Running inverse FFTs");
 
             for (z = 0; z < newDimLengths[2]; z++) {
 
@@ -782,9 +775,9 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
                 exec(realSubsetData, imagSubsetData, z);
                 
-                fireProgressStateChanged(getProgressFromInt(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running inverse FFTs ...");
+                fireProgressStateChanged((Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running inverse FFTs ...");
                 
-                //progressBar.updateValue(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)), runningInSeparateThread);
+                //fireProgressStateChanged(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)));
             } // for (z = 0; z < newDimLengths[2]; z++)
 
             realSubsetData = null;
@@ -805,7 +798,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         fireProgressStateChanged(-1, null, "Storing inverse FFT in source image ...");
-//        progressBar.setMessage("Storing inverse FFT in source image...");
+//        fireProgressStateChanged("Storing inverse FFT in source image...");
         // back in the spatial domain so only realData is now present
         try {
             srcImage.reallocate(ModelStorageBase.FLOAT, dimLengths);
@@ -841,7 +834,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         
         setCompleted(true);
     }
@@ -858,7 +851,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         float[] imagSubsetData;
         int z;
 
-        fireProgressStateChanged(minProgressValue, null, "Running frequency filter ...");
+        fireProgressStateChanged(0, null, "Running frequency filter ...");
         
         makeComplexData();
 
@@ -893,8 +886,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                fireProgressStateChanged(getProgressFromInt(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running forward FFTs ...");
-              //  progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)), runningInSeparateThread);
+                fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running forward FFTs ...");
+              //  fireProgressStateChanged(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 40)));
 
                 for (i = 0; i < newSliceSize; i++) {
                     realData[(z * newSliceSize) + i] = realSubsetData[i];
@@ -961,7 +954,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         if (image25D) {
             realSubsetData = new float[newSliceSize];
             imagSubsetData = new float[newSliceSize];
-           // progressBar.setMessage("Running inverse FFTs");
+           // fireProgressStateChanged("Running inverse FFTs");
 
             for (z = 0; z < newDimLengths[2]; z++) {
 
@@ -971,8 +964,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 }
 
                 exec(realSubsetData, imagSubsetData, z);
-                fireProgressStateChanged(getProgressFromInt(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running inverse FFTs ...");
-               // progressBar.updateValue(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)), runningInSeparateThread);
+                fireProgressStateChanged((Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40))), null, "Running inverse FFTs ...");
+               // fireProgressStateChanged(Math.round(50 + ((float) (z + 1) / newDimLengths[2] * 40)));
             } // for (z = 0; z < newDimLengths[2]; z++)
 
             realSubsetData = null;
@@ -993,7 +986,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         fireProgressStateChanged(-1, null, "Storing inverse FFT in destination image ...");
-        //progressBar.setMessage("Storing inverse FFT in destination image...");
+        //fireProgressStateChanged("Storing inverse FFT in destination image...");
 
         // back in the spatial domain so only realData is now present
         try {
@@ -1032,7 +1025,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
         // destImage.calcMinMax();
         
-        fireProgressStateChanged(maxProgressValue, null, null);
+        fireProgressStateChanged(100, null, null);
         
         setCompleted(true);
     }
@@ -1795,7 +1788,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                      (constructionMethod == GABOR))) {
 
             if (!image25D) {
-                //progressBar.setMessage("Centering data before inverse FFT...");
+                //fireProgressStateChanged("Centering data before inverse FFT...");
                 fireProgressStateChanged(-1, null, "Centering data before inverse FFT ...");
             }
 
@@ -1803,7 +1796,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         if (!image25D) {
-            //progressBar.setMessage("Running FFT algorithm...");
+            //fireProgressStateChanged("Running FFT algorithm...");
             fireProgressStateChanged(-1, null, "Running FFT algorithm ...");
         }
 
@@ -1882,13 +1875,13 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             if (!image25D) {
 
                 if (transformDir == FORWARD) {
-                    fireProgressStateChanged(getProgressFromInt(Math.round(10 + ((float) (i + 1) / ndim * 40))), null, null);
-                 //   progressBar.updateValue(Math.round(10 + ((float) (i + 1) / ndim * 40)), runningInSeparateThread);
+                    fireProgressStateChanged((Math.round(10 + ((float) (i + 1) / ndim * 40))), null, null);
+                 //   fireProgressStateChanged(Math.round(10 + ((float) (i + 1) / ndim * 40)));
                 }
 
                 if (transformDir == INVERSE) {
-                    fireProgressStateChanged(getProgressFromInt(Math.round(50 + ((float) (i + 1) / ndim * 40))), null, null);
-                  //  progressBar.updateValue(Math.round(50 + ((float) (i + 1) / ndim * 40)), runningInSeparateThread);
+                    fireProgressStateChanged((Math.round(50 + ((float) (i + 1) / ndim * 40))), null, null);
+                  //  fireProgressStateChanged(Math.round(50 + ((float) (i + 1) / ndim * 40)));
                 }
             } // if (!image25D)
         }
@@ -1903,7 +1896,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
             if (!image25D) {
                 fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
-//                progressBar.setMessage("Centering data after FFT algorithm...");
+//                fireProgressStateChanged("Centering data after FFT algorithm...");
             }
 
             center(rData, iData);
@@ -1925,7 +1918,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
             // Do edge stripping to restore the original dimensions the source image had
             // before the forward FFT
             if (!image25D) {
-               // progressBar.setMessage("Zero stripping data after inverse FFT...");
+               // fireProgressStateChanged("Zero stripping data after inverse FFT...");
                 fireProgressStateChanged(-1, null, "Zero stripping data after inverse FFT ...");
             }
 
@@ -2807,7 +2800,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         }
 
         if (filterType == HOMOMORPHIC) {
-           //progressBar.setMessage("Taking log of data");
+           //fireProgressStateChanged("Taking log of data");
             fireProgressStateChanged(-1, null, "Taking log of data ...");
             if (minimum < 1.0f) {
                 float makePos = 1.0f - minimum;
@@ -3017,7 +3010,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         if (zeroPad) {
 
             // zero pad the data so that all dimensions are powers of 2
-            //progressBar.setMessage("Zero padding source data...");
+            //fireProgressStateChanged("Zero padding source data...");
             fireProgressStateChanged(-1, null, "Zero padding source data ...");
             
             try {
@@ -3232,8 +3225,8 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
                 imagData[i] = tempData[i];
             }
 
-            fireProgressStateChanged(getProgressFromFloat(.1f), null, null);
-            //progressBar.updateValue(10, runningInSeparateThread);
+            fireProgressStateChanged((.1f), null, null);
+            //fireProgressStateChanged(10);
         } // end of if (zeroPad)
     } // end of makeComplexData()
 
@@ -3671,14 +3664,14 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
         float[] finalData2;
         
         fireProgressStateChanged(-1, null, "Taking exponentials ...");
-       // progressBar.setMessage("Taking exponentials");
+       // fireProgressStateChanged("Taking exponentials");
 
         for (i = 0; i < finalData.length; i++) {
             finalData[i] = (float) Math.exp(finalData[i]);
         }
 
         if ((lowTruncated > 0.0) || (highTruncated > 0.0)) {
-            //progressBar.setMessage("Sorting data");
+            //fireProgressStateChanged("Sorting data");
             fireProgressStateChanged(-1, null, "Sorting data ...");
             finalData2 = new float[finalData.length];
 
@@ -3690,7 +3683,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
             if (lowTruncated > 0.0) {
                 fireProgressStateChanged(-1, null, "Clamping low data ...");
-                //progressBar.setMessage("Clamping low data");
+                //fireProgressStateChanged("Clamping low data");
 
                 int lowIndex = Math.round(lowTruncated * (finalData.length - 1));
                 float lowClamp = finalData2[lowIndex];
@@ -3705,7 +3698,7 @@ public class AlgorithmFrequencyFilter extends AlgorithmBase {
 
             if (highTruncated > 0.0) {
                 fireProgressStateChanged(-1, null, "Clamping high data ...");
-               // progressBar.setMessage("Clamping high data");
+               // fireProgressStateChanged("Clamping high data");
 
                 int highIndex = Math.round((1 - highTruncated) * (finalData.length - 1));
                 float highClamp = finalData2[highIndex];

@@ -321,10 +321,6 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            idObjectsAlgo2D.setProgressBarVisible(false);
-                        }
-
                         idObjectsAlgo2D.run();
                     }
                     // new ViewJFrameImage( tempImage, null, new Dimension( 300, 300 ), tempImage.getUserInterface(),
@@ -429,10 +425,6 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            idObjectsAlgo3D.setProgressBarVisible(false);
-                        }
-
                         idObjectsAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {

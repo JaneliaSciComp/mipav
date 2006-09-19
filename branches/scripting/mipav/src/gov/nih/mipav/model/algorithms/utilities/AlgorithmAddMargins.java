@@ -679,7 +679,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Add Image Margins: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -694,7 +694,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -703,7 +703,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
                 if (isProgressBarVisible() && ((i % mod) == 0)) {
-                    progressBar.updateValue(Math.round((float) i / (destSliceArea) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) i / (destSliceArea) * 100));
                 }
 
                 row = i / destWidth;
@@ -737,7 +737,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -767,8 +767,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
                             if (isProgressBarVisible() && ((i % mod) == 0)) {
-                                progressBar.updateValue(Math.round((float) ((z * destSliceArea) + i) / (imageLength) *
-                                                                       100), runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) ((z * destSliceArea) + i) / (imageLength) *
+                                                                       100));
                             }
 
                             row = i / destWidth;
@@ -812,7 +812,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -886,7 +886,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             System.gc();
             displayError("Algorithm Add Image Margins: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -900,7 +900,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             } catch (IOException ioe) {
                 sourceSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -919,7 +919,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                                Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
 
             // FILE INFO: add the file info    (if the original is a DICOM image, do a special file info...)
-            progressBar.setMessage("Updating File Info...");
+            fireProgressStateChanged("Updating File Info...");
 
             if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
                 fileInfoDicomBuffer = new FileInfoDicom[1];
@@ -955,7 +955,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm Add Image Margins: Out of memory");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -964,7 +964,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
                 if (isProgressBarVisible() && ((i % mod) == 0)) {
-                    progressBar.updateValue(Math.round((float) i / (destSliceArea) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) i / (destSliceArea) * 100));
                 }
 
                 row = i / destWidth;
@@ -1014,7 +1014,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1035,7 +1035,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 srcImage.setFileInfo(fileInfoBuffer[0], 0);
             }
 
-            progressBar.updateValue(100, runningInSeparateThread); // show at 100%
+            fireProgressStateChanged(100); // show at 100%
 
         } else { // source is 3D or 4D
 
@@ -1074,8 +1074,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
                                 if (isProgressBarVisible() && ((i % mod) == 0)) {
-                                    progressBar.updateValue(Math.round((float) (tNewOffset + (z * destSliceArea) + i) /
-                                                                           (imageLength) * 100), runningInSeparateThread);
+                                    fireProgressStateChanged(Math.round((float) (tNewOffset + (z * destSliceArea) + i) /
+                                                                           (imageLength) * 100));
                                 }
 
                                 row = i / destWidth;
@@ -1170,7 +1170,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                     // FILE INFO: add the file info for 3D images
                     if ((tDim == 1) && isProgressBarVisible()) {
-                        progressBar.setMessage("Updating File Info...");
+                        fireProgressStateChanged("Updating File Info...");
                         // int fillLength = Math.round((float)z/destDepth); int piece = (1 - fillLength);
                     }
 
@@ -1179,7 +1179,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     for (Z = 0; (Z < destDepth) && !threadStopped; Z++) {
 
                         if ((isProgressBarVisible()) && (tDim == 1)) {
-                            progressBar.updateValue(Math.round((float) (Z) / destDepth * 100), runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) (Z) / destDepth * 100));
                         }
 
                         // DICOM
@@ -1273,7 +1273,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     sourceSlice = null;
                     destSlice = null;
                     MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -1292,7 +1292,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     }
                 } // for (t = 0; t < tDim; t++)
 
-                progressBar.updateValue(100, runningInSeparateThread); // show at 100%
+                fireProgressStateChanged(100); // show at 100%
 
                 if (threadStopped) {
                     sourceSlice = null;
@@ -1305,7 +1305,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 sourceSlice = null;
                 destSlice = null;
                 MipavUtil.displayError("AlgorithmAddMargins reports:\n" + ioe.toString());
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1363,7 +1363,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        buildProgressBar(srcImage.getImageName(), "Adding image borders...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Adding image borders...");
         
 
         Number[] headerFooterMargins;
@@ -1426,7 +1426,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm Add Image Margins: Out of memory");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -1450,7 +1450,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     for (i = 0; (i < topMargin) && !threadStopped; i++) {
 
                         if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / destHeight * 100), runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) i / destHeight * 100));
                         }
 
                         destImage.importData(i * destWidth * colorFactor, headerFooterMargins, false);
@@ -1461,8 +1461,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     for (i = 0; (i < srcHeight) && !threadStopped; i++) {
 
                         if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (i + topMargin) / destHeight * 100),
-                                                    runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) (i + topMargin) / destHeight * 100));
                         }
 
                         destImage.importData(colorFactor * (topRows + (destWidth * i)), leftMargins, false); // left margin
@@ -1479,7 +1478,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     for (i = topMargin + srcHeight; (i < destHeight) && !threadStopped; i++) {
 
                         if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) i / destHeight * 100), runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) i / destHeight * 100));
                         }
 
                         destImage.importData(colorFactor * i * destWidth, headerFooterMargins, false);
@@ -1504,7 +1503,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                                        Float.toString(newOriginLPS[1]) + ", " + Float.toString(newOriginLPS[2]));
 
                     // FILE INFO: add the file info    (if the original is a DICOM image, do a special file info...)
-                    progressBar.setMessage("Updating File Info...");
+                    fireProgressStateChanged("Updating File Info...");
 
                     if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
                         FileInfoDicom fileInfoBuffer; // buffer of type DICOM
@@ -1534,7 +1533,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         destImage.setFileInfo(fileInfoBuffer, 0);
                     }
 
-                    progressBar.updateValue(100, runningInSeparateThread); // show at 100%
+                    fireProgressStateChanged(100); // show at 100%
                 } else { // source is 3D or 4D
 
                     int Z;
@@ -1551,8 +1550,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             destPlate = z * destSliceArea;
 
                             if (isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round(((float) ((t * destDepth) + z)) /
-                                                                       (tDim * destDepth) * 100), runningInSeparateThread);
+                                fireProgressStateChanged(Math.round(((float) ((t * destDepth) + z)) /
+                                                                       (tDim * destDepth) * 100));
                             }
 
                             for (i = 0; (i < destHeight) && !threadStopped; i++) {
@@ -1567,8 +1566,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                             // let user know something is happening by updating the progressbar
                             if ((isProgressBarVisible()) && (tDim == 1)) {
-                                progressBar.updateValue(Math.round((float) (z + frontMargin) / destDepth * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (z + frontMargin) / destDepth * 100));
                             }
 
                             // TOP MARGIN LATITUDES: over the top margin, copy in the default values
@@ -1605,7 +1603,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             destPlate = z * destSliceArea;
 
                             if ((isProgressBarVisible()) && (tDim == 1)) {
-                                progressBar.updateValue(Math.round((float) z / (destDepth) * 100), runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) z / (destDepth) * 100));
                             }
 
                             for (i = 0; (i < destHeight) && !threadStopped; i++) {
@@ -1646,7 +1644,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                         // FILE INFO: add the file info for 3D images
                         if ((tDim == 1) && isProgressBarVisible()) {
-                            progressBar.setMessage("Updating File Info...");
+                            fireProgressStateChanged("Updating File Info...");
                             // int fillLength = Math.round((float)z/destDepth); int piece = (1 - fillLength);
                         }
 
@@ -1655,7 +1653,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         for (Z = 0; (Z < destDepth) && !threadStopped; Z++) {
 
                             if ((isProgressBarVisible()) && (tDim == 1)) {
-                                progressBar.updateValue(Math.round((float) (Z) / destDepth * 100), runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (Z) / destDepth * 100));
                             }
 
                             // DICOM
@@ -1738,7 +1736,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 headerFooterMargins = null;
                 values = null;
                 MipavUtil.displayError("AlgorithmAddImageMargin reports:\n" + ioe.toString());
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1761,7 +1759,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         // Clean up and let the calling dialog know that algorithm did its job
         headerFooterMargins = null;
         values = null;
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1783,7 +1781,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         destHeight = srcHeight + topMargin + bottomMargin;
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        buildProgressBar(srcImage.getImageName(), "Adding image borders...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Adding image borders...");
         
 
         useLocalBufferForSource(colorFactor * srcWidth, srcHeight, colorFactor * destWidth, destHeight);
@@ -1795,7 +1793,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         }
 
         // Clean up and let the calling dialog know that algorithm did its job
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

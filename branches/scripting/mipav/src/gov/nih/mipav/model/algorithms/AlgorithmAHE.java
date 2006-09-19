@@ -310,15 +310,15 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         try {
-            buildProgressBar(srcImage.getImageName(), "Equalizing Histogram ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
             
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock
 
                 try {
-                    progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, runningInSeparateThread); // not quite midway
+                    fireProgressStateChanged("Processing Image");
+                    fireProgressStateChanged(45); // not quite midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -346,8 +346,8 @@ public class AlgorithmAHE extends AlgorithmBase {
                         try {
 
                             if (pBarVisible) {
-                                progressBar.updateValue((int) (((float) (color) / valuesPerPixel) * 100), runningInSeparateThread);
-                                progressBar.setMessage("Processing color " + Integer.toString(color));
+                                fireProgressStateChanged((int) (((float) (color) / valuesPerPixel) * 100));
+                                fireProgressStateChanged("Processing color " + Integer.toString(color));
                             }
                         } catch (NullPointerException npe) {
 
@@ -394,7 +394,7 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         // srcImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
-        progressBar.dispose();
+        
 
         setCompleted(true);
     }
@@ -440,7 +440,7 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         try {
-            buildProgressBar(srcImage.getImageName(), "Equalizing Histogram ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
             
 
             if (!isColorImage) {
@@ -451,8 +451,8 @@ public class AlgorithmAHE extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (i) / nSlices) * 100), runningInSeparateThread);
-                            progressBar.setMessage("Processing slice " + Integer.toString(i + 1));
+                            fireProgressStateChanged((int) (((float) (i) / nSlices) * 100));
+                            fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
                         }
                     } catch (NullPointerException npe) {
 
@@ -487,16 +487,15 @@ public class AlgorithmAHE extends AlgorithmBase {
                             try {
 
                                 if (pBarVisible) {
-                                    progressBar.updateValue((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) +
-                                                                             i) / (numColors * nSlices)) * 100),
-                                                            runningInSeparateThread);
+                                    fireProgressStateChanged((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) +
+                                                                             i) / (numColors * nSlices)) * 100));
 
                                     if ((color == 1) && rChannel) {
-                                        progressBar.setMessage("Processing red slice " + Integer.toString(i + 1));
+                                        fireProgressStateChanged("Processing red slice " + Integer.toString(i + 1));
                                     } else if ((color == 2) && gChannel) {
-                                        progressBar.setMessage("Processing green slice " + Integer.toString(i + 1));
+                                        fireProgressStateChanged("Processing green slice " + Integer.toString(i + 1));
                                     } else if ((color == 3) && bChannel) {
-                                        progressBar.setMessage("Processing blue slice " + Integer.toString(i + 1));
+                                        fireProgressStateChanged("Processing blue slice " + Integer.toString(i + 1));
                                     }
                                 }
                             } catch (NullPointerException npe) {
@@ -542,7 +541,7 @@ public class AlgorithmAHE extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -572,15 +571,15 @@ public class AlgorithmAHE extends AlgorithmBase {
         destImage.releaseLock(); // we need to be able to alter the dest image
 
         try {
-            buildProgressBar(srcImage.getImageName(), "Equalizing Histogram ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
             
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock
 
                 try {
-                    progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, runningInSeparateThread); // a little less than midway
+                    fireProgressStateChanged("Processing Image");
+                    fireProgressStateChanged(45); // a little less than midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -605,8 +604,8 @@ public class AlgorithmAHE extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (color) / valuesPerPixel) * 100), runningInSeparateThread);
-                            progressBar.setMessage("Processing color " + Integer.toString(color));
+                            fireProgressStateChanged((int) (((float) (color) / valuesPerPixel) * 100));
+                            fireProgressStateChanged("Processing color " + Integer.toString(color));
                         }
                     } catch (NullPointerException npe) {
 
@@ -657,7 +656,7 @@ public class AlgorithmAHE extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -700,7 +699,7 @@ public class AlgorithmAHE extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Equalizing Histogram ...", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
         
 
         try {
@@ -712,8 +711,8 @@ public class AlgorithmAHE extends AlgorithmBase {
                     try {
 
                         if (pBarVisible) {
-                            progressBar.updateValue((int) ((float) (i) / nSlices * 100), runningInSeparateThread);
-                            progressBar.setMessage("Processing slice " + Integer.toString(i + 1));
+                            fireProgressStateChanged((int) ((float) (i) / nSlices * 100));
+                            fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
                         }
                     } catch (NullPointerException npe) {
 
@@ -748,15 +747,15 @@ public class AlgorithmAHE extends AlgorithmBase {
                         try {
 
                             if (pBarVisible) {
-                                progressBar.updateValue((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) + i) /
-                                                                    (numColors * nSlices)) * 100), runningInSeparateThread);
+                                fireProgressStateChanged((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) + i) /
+                                                                    (numColors * nSlices)) * 100));
 
                                 if ((color == 1) && rChannel) {
-                                    progressBar.setMessage("Processing red slice " + Integer.toString(i + 1));
+                                    fireProgressStateChanged("Processing red slice " + Integer.toString(i + 1));
                                 } else if ((color == 2) && gChannel) {
-                                    progressBar.setMessage("Processing green slice " + Integer.toString(i + 1));
+                                    fireProgressStateChanged("Processing green slice " + Integer.toString(i + 1));
                                 } else if ((color == 3) && bChannel) {
-                                    progressBar.setMessage("Processing blue slice " + Integer.toString(i + 1));
+                                    fireProgressStateChanged("Processing blue slice " + Integer.toString(i + 1));
                                 }
                             }
                         } catch (NullPointerException npe) {
@@ -811,7 +810,7 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         // or the processing completed okay, so dispose of the user notification
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -1340,7 +1339,7 @@ public class AlgorithmAHE extends AlgorithmBase {
         try {
 
             if (pBarVisible == true) {
-                progressBar.setMessage("Copying all " + colorText + " values ... ");
+                fireProgressStateChanged("Copying all " + colorText + " values ... ");
             }
         } catch (NullPointerException npe) {
 

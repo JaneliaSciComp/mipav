@@ -218,7 +218,7 @@ public class JDialogCoherenceEnhancingDiffusion extends JDialogScriptableBase im
                                                                                        numIterations,
                                                                                        diffusitivityDenom,
                                                                                        derivativeScale, gaussianScale,
-                                                                                       do25D, entireImage, 0, 100);
+                                                                                       do25D, entireImage);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.

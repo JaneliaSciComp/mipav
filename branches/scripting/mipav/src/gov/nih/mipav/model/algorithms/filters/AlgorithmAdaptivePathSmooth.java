@@ -270,8 +270,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
      */
     public AlgorithmAdaptivePathSmooth(ModelImage destImage, ModelImage srcImg, float radiusY, float radiusCr,
                                        float radiusCb, float threshold, boolean includeNeighbors, boolean reduce,
-                                       boolean do25D, int minProgressValue, int maxProgressValue) {
-        super(destImage, srcImg, minProgressValue, maxProgressValue);
+                                       boolean do25D) {
+        super(destImage, srcImg);
         this.radiusY = radiusY;
         this.radiusCr = radiusCr;
         this.radiusCb = radiusCb;
@@ -418,7 +418,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Processing slice 1 ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Processing slice 1 ...");
         
         
 
@@ -434,7 +434,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(getProgressFromInt((int)(i * (maxProgressValue - minProgressValue) / zDim)), 
+            fireProgressStateChanged((int)(i * (100) / zDim), 
                     srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
            
             rgb2yCrCb(imgBuffer, Y, Cr, Cb);
@@ -493,7 +493,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             srcImage.calcMinMax();
         }
 
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
    
         if (threadStopped) {
             cleanup();
@@ -532,7 +532,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Processing slice 1 ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Processing slice 1 ...");
 
         for (i = 0; i < zDim; i++) {
 
@@ -546,7 +546,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 return;
             }
 
-            fireProgressStateChanged(getProgressFromInt((int)(i * (maxProgressValue - minProgressValue) / zDim)), srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
+            fireProgressStateChanged((int)(i * 100 / zDim), srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
             
 
             process(imgBuffer, false);
@@ -589,7 +589,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             srcImage.calcMinMax();
         }
 
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
         
         if (threadStopped) {
             cleanup();
@@ -640,7 +640,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
       
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
@@ -660,7 +660,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(getProgressFromFloat(.95f), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged(95, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
         
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
@@ -693,7 +693,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
         
 
         if (threadStopped) {
@@ -739,7 +739,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
 
 
         process(imgBuffer, true);
@@ -774,7 +774,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
 
         if (threadStopped) {
             cleanup();
@@ -829,7 +829,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
 
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
@@ -840,7 +840,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(getProgressFromFloat(.05f), srcImage.getImageName(), "Converting from RGB to YCrCb ...");
+        fireProgressStateChanged(5, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
         process3D(Y, Cr, Cb);
 
         if (threadStopped) {
@@ -850,7 +850,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(getProgressFromFloat(.95f), srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged(95, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
         
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
@@ -884,7 +884,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
         
 
         if (threadStopped) {
@@ -940,7 +940,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
         
         
-        fireProgressStateChanged(minProgressValue, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
 
         try {
             histX = new int[maxLength];
@@ -1020,7 +1020,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             }
         }
 
-        fireProgressStateChanged(maxProgressValue, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
+        fireProgressStateChanged(100, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
         
 
         if (threadStopped) {
@@ -2690,7 +2690,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -2717,7 +2717,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory creating data1 " + e);
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -2778,7 +2778,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -2805,7 +2805,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory creating data1 " + e);
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -3107,12 +3107,12 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         dataBW = Y;
 
     
-        fireProgressStateChanged(getProgressFromFloat(.2f), srcImage.getImageName(), "Creating edge graph ...");
+        fireProgressStateChanged(20, srcImage.getImageName(), "Creating edge graph ...");
         
         createEdgeGraph(fY);
 
         
-        fireProgressStateChanged(getProgressFromFloat(.5f), srcImage.getImageName(), "Filtering in Y space ...");
+        fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
       
         filterProcessBW();
 
@@ -3171,13 +3171,13 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
 
       
         
-        fireProgressStateChanged(getProgressFromFloat(.2f), srcImage.getImageName(), "Creating edge graph ...");
+        fireProgressStateChanged(20, srcImage.getImageName(), "Creating edge graph ...");
        
 
         createEdgeGraph(fY, fR, fB);
 
         
-        fireProgressStateChanged(getProgressFromFloat(.5f), srcImage.getImageName(), "Filtering in Y space ...");
+        fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
         
         filterProcess();
 
@@ -3192,7 +3192,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = Cb;
             radius = radiusCb;
 
-            fireProgressStateChanged(getProgressFromFloat(.7f), srcImage.getImageName(), "Filtering in Cb space ...");
+            fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
             
 
             filterProcess();
@@ -3207,7 +3207,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = Cr;
             radius = radiusCr;
 
-            fireProgressStateChanged(getProgressFromFloat(.9f), srcImage.getImageName(), "Filtering in Cr space ...");
+            fireProgressStateChanged(90, srcImage.getImageName(), "Filtering in Cr space ...");
             
             filterProcess();
 
@@ -3256,7 +3256,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = newB;
             radius = radiusCb / 2.0f;
 
-            fireProgressStateChanged(getProgressFromFloat(.7f), srcImage.getImageName(), "Filtering in Cb space ...");
+            fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
            
             filterProcess();
 
@@ -3270,7 +3270,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = newR;
             radius = radiusCr / 2.0f;
 
-            fireProgressStateChanged(getProgressFromFloat(.9f), srcImage.getImageName(), "Filtering in Cr space ...");
+            fireProgressStateChanged(90, srcImage.getImageName(), "Filtering in Cr space ...");
             
             filterProcess();
 
@@ -3336,7 +3336,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             newValue = pIndex * 100 / totalLength;
 
             if (newValue > oldValue) {
-                fireProgressStateChanged(getProgressFromInt(newValue), srcImage.getImageName(), "Converting from RGB to YCrCb ...");
+                fireProgressStateChanged(newValue, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
                
             }
 
@@ -3506,7 +3506,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             newValue = 5 + (pIndex * 35 / totalLength);
 
             if (newValue > oldValue) {
-                fireProgressStateChanged(getProgressFromInt(newValue), srcImage.getImageName(), "Filtering in Y space ...");
+                fireProgressStateChanged(newValue, srcImage.getImageName(), "Filtering in Y space ...");
                 
             }
 
@@ -3609,7 +3609,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 newValue = 40 + (pIndex * 30 / totalLength);
 
                 if (newValue > oldValue) {
-                    fireProgressStateChanged(getProgressFromInt(newValue), srcImage.getImageName(), "Filtering in Cb space ...");
+                    fireProgressStateChanged((newValue), srcImage.getImageName(), "Filtering in Cb space ...");
                     
                 }
 
@@ -3710,7 +3710,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 newValue = 70 + (pIndex * 25 / totalLength);
 
                 if (newValue > oldValue) {
-                    fireProgressStateChanged(getProgressFromInt(newValue), srcImage.getImageName(), "Filtering in Cr space ...");
+                    fireProgressStateChanged((newValue), srcImage.getImageName(), "Filtering in Cr space ...");
                     
                 }
 
@@ -3922,7 +3922,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 newValue = 40 + (pIndex * 30 / totalLength);
 
                 if (newValue > oldValue) {
-                    fireProgressStateChanged(getProgressFromInt(newValue), srcImage.getImageName(), "Filtering in Cb space ...");
+                    fireProgressStateChanged((newValue), srcImage.getImageName(), "Filtering in Cb space ...");
                     
                 }
 
@@ -4024,7 +4024,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 newValue = 70 + (pIndex * 25 / totalLength);
 
                 if (newValue > oldValue) {
-                    fireProgressStateChanged(getProgressFromInt(newValue), srcImage.getImageName(), "Filtering in Cr space ...");
+                    fireProgressStateChanged((newValue), srcImage.getImageName(), "Filtering in Cr space ...");
                     
                 }
 

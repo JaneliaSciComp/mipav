@@ -139,37 +139,14 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
      * @param  noHoles           whether to fill in all interior holes of the extracted brain
      * @param  doSep             whether to use separable convolver for edge detection
      * @param  extractPaint      whether to extract paint from the brain
-     */
-    public AlgorithmBrainSurfaceExtractor(ModelImage srcImg, int fIter,
-            float fKernel, float eKernel, boolean ero25D, int eroIter,
-            float cKernel, int cIter, boolean showIntermediate,
-            boolean noHoles, boolean doSep, boolean extractPaint) {
-        this(srcImg, fIter, fKernel, eKernel, ero25D, eroIter, cKernel, cIter, showIntermediate, noHoles, doSep, extractPaint, 0, 100);
-    }
-
-    /**
-     * Create an extractor for segmenting the brain from a 3D magnetic resonance image.
-     *
-     * @param  srcImg            the source image. Should be MR image of the brain
-     * @param  fIter             number of passes to make with the filter
-     * @param  fKernel           gaussian kernel size to use when running the filter
-     * @param  eKernel           kernel size to use with edge detection algo
-     * @param  ero25D            whether to use 2.5D processing in erosion / dilation
-     * @param  eroIter           number of erosions / dialations to perform
-     * @param  cKernel           kernel size in mm to be used in closing
-     * @param  cIter             number of closings to perform
-     * @param  showIntermediate  whether to save intermediate images for display
-     * @param  noHoles           whether to fill in all interior holes of the extracted brain
-     * @param  doSep             whether to use separable convolver for edge detection
-     * @param  extractPaint      whether to extract paint from the brain
      * @param  minProgressValue  minimum progress value
      * @param  maxProgressValue  maximum progress value
      */
     public AlgorithmBrainSurfaceExtractor(ModelImage srcImg, int fIter,
             float fKernel, float eKernel, boolean ero25D, int eroIter,
             float cKernel, int cIter, boolean showIntermediate,
-            boolean noHoles, boolean doSep, boolean extractPaint,
-            int minProgressValue, int maxProgressValue) {
+            boolean noHoles, boolean doSep, boolean extractPaint) {
+    	super(null, srcImg);
         image = srcImg;
         filterIterations = fIter;
         filterKernel = fKernel;
@@ -182,8 +159,6 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         fillHolesFlag = noHoles;
         doSeparable = doSep;
         this.extractPaint = extractPaint;
-        this.minProgressValue = minProgressValue;
-        this.maxProgressValue = maxProgressValue;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -225,7 +200,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         String imgName = image.getImageName();
         
-        fireProgressStateChanged(minProgressValue, imgName, "Extracting brain...");
+        fireProgressStateChanged(0, imgName, "Extracting brain...");
         
         if (isThreadStopped()) {
             return;
@@ -238,7 +213,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         int algorithmIndex = 0;
         if (filterIterations > 0) {
             resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imgName + "_temp_results");
-            int[] progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, minProgressValue, maxProgressValue);
+            int[] progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
             if(progressValueBounds == null){
                 MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex-1) + " can't be calculated!");
                 return;
@@ -260,9 +235,9 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                         filterIterations,
                         filterKernel,
                         filterContrast,
-                        do25D,
-                        progressValueBounds[0],
-                        progressValueBounds[1]);
+                        do25D);
+                filterAlgo.setMinMaxProgressValues(generateProgressValues(progressValueBounds[0],
+                		progressValueBounds[1]));
                 linkProgressToAlgorithm(filterAlgo);
             }
             filterAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
@@ -293,7 +268,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         AlgorithmBase edgeAlgo = null;
 
-        int[] progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, minProgressValue, maxProgressValue);
+        int[] progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
         if(progressValueBounds == null){
             MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex-1) + " can't be calculated!");
             return;
@@ -303,11 +278,12 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         if (doSeparable) {
             if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
                 edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage,
-                        resultImage, edgeSigmas, regionFlag, do25D);
+                        resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
             } else {
                 edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage,
-                        resultImage, edgeSigmas, regionFlag, do25D, 0, 0,
-                        progressValueBounds[0], progressValueBounds[1]);
+                        resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
+                edgeAlgo.setMinMaxProgressValues(generateProgressValues(progressValueBounds[0],
+                		progressValueBounds[1]));
                 linkProgressToAlgorithm(edgeAlgo);
             }
             ((AlgorithmEdgeLaplacianSep)edgeAlgo).setZeroDetectionType(AlgorithmEdgeLaplacianSep.NEGATIVE_EDGES);
@@ -322,11 +298,12 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         } else {
             if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
                 edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas,
-                        regionFlag, do25D);
+                        regionFlag, do25D, 0, 0);
             } else {
                 edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage,
-                        resultImage, edgeSigmas, regionFlag, do25D, 0, 0,
-                        progressValueBounds[0], progressValueBounds[1]);
+                        resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
+                edgeAlgo.setMinMaxProgressValues(generateProgressValues(progressValueBounds[0],
+                		progressValueBounds[1]));
                 linkProgressToAlgorithm(edgeAlgo);
             }
             ((AlgorithmEdgeLaplacian)edgeAlgo).setZeroDetectionType(AlgorithmEdgeLaplacian.NEGATIVE_EDGES);
@@ -356,7 +333,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         // invert (want brain to be white for erosion)
         int x, y;
 
-        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, minProgressValue, maxProgressValue);
+        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
         if(progressValueBounds == null){
             MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex-1) + " can't be calculated!");
             return;
@@ -425,7 +402,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         AlgorithmBase erodeAlgo;
 
-        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, minProgressValue, maxProgressValue);
+        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
         if(progressValueBounds == null){
             MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex-1) + " can't be calculated!");
             return;
@@ -444,12 +421,14 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         }else{
             if (!erosion25D) {
                 erodeAlgo = new AlgorithmMorphology3D(resultImage, null, AlgorithmMorphology3D.CONNECTED6, 0, AlgorithmMorphology3D.ERODE, 0,
-                                                      erosionIterations, 0, 0, regionFlag, progressValueBounds[0], progressValueBounds[1]);
+                                                      erosionIterations, 0, 0, regionFlag);
             } else {
                 erodeAlgo = new AlgorithmMorphology25D(resultImage, AlgorithmMorphology25D.CONNECTED4, 0, AlgorithmMorphology25D.ERODE, 0,
-                                                       erosionIterations, 0, 0, regionFlag, progressValueBounds[0], progressValueBounds[1]);
+                                                       erosionIterations, 0, 0, regionFlag);
             }
 
+            erodeAlgo.setMinMaxProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
+            
             linkProgressToAlgorithm(erodeAlgo);
         }
         erodeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
@@ -483,7 +462,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         // dilate
         AlgorithmBase dilateAlgo;
 
-        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, minProgressValue, maxProgressValue);
+        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
         if(progressValueBounds == null){
             MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex-1) + " can't be calculated!");
             return;
@@ -518,7 +497,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         }
 
         // do a closing on the mask
-        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, minProgressValue, maxProgressValue);
+        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
         if(progressValueBounds == null){
             MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex-1) + " can't be calculated!");
             return;
@@ -548,8 +527,8 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         // fill in interior holes of the mask
         if (fillHolesFlag) {
-            // progressBar.setMessage("Filling interior mask holes...");
-            progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, minProgressValue, maxProgressValue);
+            // fireProgressStateChanged("Filling interior mask holes...");
+            progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
             if(progressValueBounds == null){
                 MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex-1) + " can't be calculated!");
                 return;
@@ -574,7 +553,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                 VOIs.VOIAt(i).setAllActive(true);
             }
 
-            progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, minProgressValue, maxProgressValue);
+            progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
             if(progressValueBounds == null){
                 MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex-1) + " can't be calculated!");
                 return;
@@ -583,7 +562,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             fireProgressStateChanged(progressValueBounds[0], resultImage.getImageName(), "Filling interior mask holes ...");
 
             // make a mask from the voi
-            AlgorithmMask maskAlgo = new AlgorithmMask(resultImage, 1, true, true, 0,1);
+            AlgorithmMask maskAlgo = new AlgorithmMask(resultImage, 1, true, true);
             maskAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
             // maskAlgo.setProgressBarVisible(false);
             maskAlgo.addListener(this);
@@ -594,7 +573,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             resultImage.getVOIs().removeAllElements();
             resultImage.clearMask();
             
-            // progressBar.updateValue(progInc * curStep, runningInSeparateThread);
+            // fireProgressStateChanged(progInc * curStep);
 
             if (isThreadStopped()) {
                 return;
@@ -602,7 +581,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         }
 
         // mask against original image
-        // progressBar.setMessage("Masking original image...");
+        // fireProgressStateChanged("Masking original image...");
 
         float[] maskData = new float[imgSize];
         float[] imgData = new float[imgSize];
@@ -641,7 +620,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             return;
         }
         System.out.println("Number of steps in the brain extraction: " + algorithmIndex);
-        fireProgressStateChanged(maxProgressValue);
+        fireProgressStateChanged(100);
 
         int orient = image.getFileInfo(0).getImageOrientation();
         int[] axisOrient = image.getFileInfo(0).getAxisOrientation();
@@ -650,10 +629,6 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             resultImage.getFileInfo(i).setResolutions(new float[] { xRes, yRes, zRes });
             resultImage.getFileInfo(i).setImageOrientation(orient);
             resultImage.getFileInfo(i).setAxisOrientation(axisOrient);
-        }
-
-        if(maxProgressValue == 100){
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
         }
         setCompleted(true);
     }

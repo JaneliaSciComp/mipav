@@ -271,7 +271,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
 
             histoBuffer = new int[bins];
             histogram.exportData(0, bins, histoBuffer); // locks and releases lock
-            buildProgressBar("Histogram", "Calculating histogram...", 0, 100);
+            fireProgressStateChanged("Histogram", "Calculating histogram...");
         } catch (IOException error) {
             errorCleanUp("Algorithm Histogram: Histogram locked", false);
 
@@ -409,7 +409,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (z + 1) / zStop * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
             }
         }
 
@@ -460,7 +460,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         // attempt an otsu threshold
         histogram.setOtsuThreshold(otsuThreshold(image, histoBuffer));
 
-        disposeProgressBar();
+        
         setCompleted(true);
         imgBuffer = null;
         histoBuffer = null;
@@ -489,7 +489,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar("Histogram", "Calculating histogram data...", 0, 100);
+        fireProgressStateChanged("Histogram", "Calculating histogram data...");
         
 
         UI = ViewUserInterface.getReference();
@@ -603,7 +603,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (z + 1) / zStop * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
             }
         }
 
@@ -960,7 +960,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
             }
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
         imgBuffer = null;
         System.gc();

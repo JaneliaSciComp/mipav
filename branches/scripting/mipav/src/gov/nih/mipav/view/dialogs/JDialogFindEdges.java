@@ -359,10 +359,6 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            findEdgesAlgo2D.setProgressBarVisible(false);
-                        }
-
                         findEdgesAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -418,10 +414,6 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            findEdgesAlgo2D.setProgressBarVisible(false);
-                        }
-
                         findEdgesAlgo2D.run();
                     }
 
@@ -469,10 +461,6 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            findEdgesAlgo3D.setProgressBarVisible(false);
-                        }
-
                         findEdgesAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -527,10 +515,6 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            findEdgesAlgo3D.setProgressBarVisible(false);
-                        }
-
                         findEdgesAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {

@@ -505,10 +505,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
                     }
 
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        mathAlgo.setProgressBarVisible(false);
-                    }
-
+                  
                     mathAlgo.run();
 
                 }

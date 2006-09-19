@@ -70,8 +70,8 @@ public class AlgorithmLaplacian extends AlgorithmBase {
      * @param  ampFactor     An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
      */
     public AlgorithmLaplacian(ModelImage srcImg, float[] sigmas, boolean[] objectBuffer, boolean img25D,
-                              float ampFactor, int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+                              float ampFactor) {
+        super(null, srcImg);
 
         destImage = null; // Put results in destination image.
         srcImage = srcImg;
@@ -103,9 +103,8 @@ public class AlgorithmLaplacian extends AlgorithmBase {
      *                    2D images disregard this flag.
      * @param  ampFactor  An amplification factor greater than 1.0 causes this filter to act like a highpass filter.
      */
-    public AlgorithmLaplacian(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D, float ampFactor,
-            int minProgressValue, int maxProgressValue) {
-        super(null, srcImg, minProgressValue, maxProgressValue);
+    public AlgorithmLaplacian(ModelImage srcImg, float[] sigmas, boolean maskFlag, boolean img25D, float ampFactor) {
+        super(null, srcImg);
 
         destImage = null; // Calc in place
         srcImage = srcImg;
@@ -246,7 +245,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged(minProgressValue, null, "Calculation the laplacian ...");
+        fireProgressStateChanged(0, null, "Calculation the laplacian ...");
         
         constructLog();
 
@@ -332,7 +331,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if ((((start + i) % mod) == 0)) {
-                    fireProgressStateChanged(getProgressFromFloat((float) (start + i) / (totalLength - 1)), null, null);
+                    fireProgressStateChanged(((float) (start + i) / (totalLength - 1)), null, null);
                   
                 }
 
@@ -404,7 +403,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(getProgressFromFloat((float) i / (length - 1)), null, null);
+                fireProgressStateChanged(((float) i / (length - 1)), null, null);
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -512,7 +511,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if ((((start + i) % mod) == 0)) {
-                    fireProgressStateChanged(getProgressFromFloat((float) (start + i) / (totalLength - 1)), null, null);
+                    fireProgressStateChanged(((float) (start + i) / (totalLength - 1)), null, null);
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -646,7 +645,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0)) {
-                fireProgressStateChanged(getProgressFromFloat((float) i / (length - 1)), null, null);
+                fireProgressStateChanged(((float) i / (length - 1)), null, null);
             }
 
             if ((entireImage == true) || mask.get(i)) {

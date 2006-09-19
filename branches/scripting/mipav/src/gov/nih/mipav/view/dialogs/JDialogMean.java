@@ -472,7 +472,7 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
                     }
 
                     // Make algorithm
-                    meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, outputPanel.isProcessWholeImageSet(), 0, 100);
+                    meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     meanAlgo.setRGBChannelFilter(filterType, red, green, blue,
@@ -516,7 +516,7 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    meanAlgo = new AlgorithmMean(image, kernelSize, outputPanel.isProcessWholeImageSet(), 0, 100);
+                    meanAlgo = new AlgorithmMean(image, kernelSize, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     meanAlgo.setRGBChannelFilter(filterType, red, green, blue,
@@ -594,8 +594,7 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
                     }
 
                     // Make algorithm
-                    meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, image25D, outputPanel.isProcessWholeImageSet(),
-                            0, 100);
+                    meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, image25D, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     meanAlgo.setRGBChannelFilter(filterType, red, green, blue,
@@ -637,7 +636,7 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
                 try {
 
                     // Make algorithm
-                    meanAlgo = new AlgorithmMean(image, kernelSize, image25D, outputPanel.isProcessWholeImageSet(), 0, 100);
+                    meanAlgo = new AlgorithmMean(image, kernelSize, image25D, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     meanAlgo.setRGBChannelFilter(filterType, red, green, blue,

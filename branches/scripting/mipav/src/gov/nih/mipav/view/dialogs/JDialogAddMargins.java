@@ -516,10 +516,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                             MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            imageMarginsAlgo.setProgressBarVisible(false);
-                        }
-
+                      
                         imageMarginsAlgo.run();
                     }
                 } catch (OutOfMemoryError oome) {
@@ -580,10 +577,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                             MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            imageMarginsAlgo.setProgressBarVisible(false);
-                        }
-
+                       
                         imageMarginsAlgo.run();
                     }
                 } catch (OutOfMemoryError oome) {
@@ -636,10 +630,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            imageMarginsAlgo.setProgressBarVisible(false);
-                        }
-
+                    
                         imageMarginsAlgo.run();
                     }
                 } catch (OutOfMemoryError oome) {
@@ -683,10 +674,7 @@ public class JDialogAddMargins extends JDialogScriptableBase implements Algorith
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            imageMarginsAlgo.setProgressBarVisible(false);
-                        }
-
+                      
                         imageMarginsAlgo.run();
                     }
                 } catch (OutOfMemoryError oome) {

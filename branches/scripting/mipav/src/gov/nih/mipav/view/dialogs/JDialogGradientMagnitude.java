@@ -413,7 +413,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(resultImage, image, sigmas,
                                                                            outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           false, 0, 100);
+                                                                           false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -436,10 +436,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            gradientMagSepAlgo.setProgressBarVisible(false);
-                        }
-
                         gradientMagSepAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -461,7 +457,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make the algorithm class
                     gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(image, sigmas,
                                                                            outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           false, 0, 100);
+                                                                           false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -498,11 +494,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            gradientMagSepAlgo.setProgressBarVisible(false);
-                        }
-
                         gradientMagSepAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -553,7 +544,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(resultImage, image, sigmas,
                                                                            outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           image25D, 0, 100);
+                                                                           image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -576,10 +567,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            gradientMagSepAlgo.setProgressBarVisible(false);
-                        }
-
                         gradientMagSepAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -600,7 +587,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagSepAlgo = new AlgorithmGradientMagnitudeSep(image, sigmas,
                                                                            outputOptionsPanel.isProcessWholeImageSet(),
-                                                                           image25D, 0, 100);
+                                                                           image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -637,10 +624,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            gradientMagSepAlgo.setProgressBarVisible(false);
-                        }
-
                         gradientMagSepAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -690,7 +673,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagAlgo = new AlgorithmGradientMagnitude(resultImage, image, sigmas,
                                                                      outputOptionsPanel.isProcessWholeImageSet(),
-                                                                     false, 0, 100);
+                                                                     false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -713,10 +696,6 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            gradientMagAlgo.setProgressBarVisible(false);
-                        }
-
                         gradientMagAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -738,7 +717,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make the algorithm class
                     gradientMagAlgo = new AlgorithmGradientMagnitude(image, sigmas,
                                                                      outputOptionsPanel.isProcessWholeImageSet(),
-                                                                     false, 0, 100);
+                                                                     false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -826,7 +805,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagAlgo = new AlgorithmGradientMagnitude(resultImage, image, sigmas,
                                                                      outputOptionsPanel.isProcessWholeImageSet(),
-                                                                     image25D, 0, 100);
+                                                                     image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -870,7 +849,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // Make algorithm
                     gradientMagAlgo = new AlgorithmGradientMagnitude(image, sigmas,
                                                                      outputOptionsPanel.isProcessWholeImageSet(),
-                                                                     image25D, 0, 100);
+                                                                     image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.

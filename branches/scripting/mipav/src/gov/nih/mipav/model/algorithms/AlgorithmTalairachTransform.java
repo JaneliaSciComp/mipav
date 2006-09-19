@@ -267,7 +267,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                 buffer = new float[length];
                 srcImage.exportData(0, length, buffer); // locks and releases lock
                 result = new float[nrx * nry * nrz];
-                buildProgressBar(srcImage.getImageName(), "Processing image ...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Processing image ...");
             } catch (IOException error) {
                 buffer = null;
                 result = null;
@@ -290,7 +290,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
             closingLog();
         }
 
-        disposeProgressBar();
+        
 
         if (!threadStopped) {
             setCompleted(true);
@@ -610,7 +610,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
         long start_time = System.currentTimeMillis();
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("process volume (" + transformTypeName + ")");
+            fireProgressStateChanged("process volume (" + transformTypeName + ")");
         }
 
         // debug: UI.setGlobalDataText("\n-- "+transformType+" --\n");
@@ -652,7 +652,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                 for (z = 0; (z < nrz) && !threadStopped; z++) {
 
                     if ((n % mod) == 0) {
-                        progressBar.updateValue(n / mod, runningInSeparateThread);
+                        fireProgressStateChanged(n / mod);
                     }
 
                     n++;
@@ -749,8 +749,8 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                 if ((obj.getCurveType() == VOI.CONTOUR) || (obj.getCurveType() == VOI.POLYLINE)) {
 
                     if (isProgressBarVisible()) {
-                        progressBar.setMessage("process VOI (" + obj.getName() + ")");
-                        progressBar.updateValue(0, runningInSeparateThread);
+                        fireProgressStateChanged("process VOI (" + obj.getName() + ")");
+                        fireProgressStateChanged(0);
                     }
 
                     // create an image with voi tags
@@ -768,7 +768,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                             for (z = 0; (z < nrz) && !threadStopped; z++) {
 
                                 if ((n % mod) == 0) {
-                                    progressBar.updateValue(n / mod, runningInSeparateThread);
+                                    fireProgressStateChanged(n / mod);
                                 }
 
                                 n++;
@@ -823,7 +823,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
         System.out.print("total time: (milliseconds): " + (System.currentTimeMillis() - start_time));
 
         if (isProgressBarVisible()) {
-            progressBar.setMessage("creating result image...");
+            fireProgressStateChanged("creating result image...");
         }
 
         try {
@@ -833,14 +833,14 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
             result = null;
             errorCleanUp("Algorithm: Out of memory creating result", true);
             finalize();
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
         } catch (IOException error) {
             errorCleanUp("Algorithm: export problem to destImage", true);
             finalize();
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;

@@ -141,7 +141,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         int centerIter = 0;
         
         
-        buildProgressBar("Finding density cluster in " + srcImage.getImageName(), "DENCLUE..", 0, 100);
+        fireProgressStateChanged("Finding density cluster in " + srcImage.getImageName(), "DENCLUE..");
         
         
         buffer = new float[length];
@@ -156,7 +156,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         }
         catch (IOException e) {
             MipavUtil.displayError("Error on srcImage.exportData");
-            disposeProgressBar();
+            
             setCompleted(false);
         }
         
@@ -221,7 +221,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
             found = true;
             while (found) {
                 centerIter++;
-                progressBar.setMessage("Center based iteration " + centerIter);
+                fireProgressStateChanged("Center based iteration " + centerIter);
                 found = false;
                 for (y = 0; y < yDim; y++) {
                     for (x = 0; x < xDim; x++) {
@@ -269,8 +269,8 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Extracting VOIs");
-        progressBar.updateValueImmed(80);
+        fireProgressStateChanged("Extracting VOIs");
+        fireProgressStateChanged(80);
         colorTable = new Color[1];
         colorTable[0] = Color.RED;
         algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
@@ -285,7 +285,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         Preferences.debug(srcImage.getVOIs().size() +  " VOIs put in source image\n");
         grayImage.disposeLocal();
         grayImage = null;
-        disposeProgressBar();
+        
 
         setCompleted(true);
 
@@ -318,7 +318,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         int centerIter = 0;
         
         
-        buildProgressBar("Finding density cluster in " + srcImage.getImageName(), "DENCLUE..", 0, 100);
+        fireProgressStateChanged("Finding density cluster in " + srcImage.getImageName(), "DENCLUE..");
         
         
         buffer = new float[length];
@@ -329,14 +329,14 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         }
         catch (IOException e) {
             MipavUtil.displayError("Error on srcImage.exportData");
-            disposeProgressBar();
+            
             setCompleted(false);
         }
         
         if (isGaussian) {
             maxDistance = Math.max(1, (int)(5.0 * distance + 0.5f));
             for (z = 0; z < zDim; z++) {
-                progressBar.updateValueImmed(z * 30/zDim);
+                fireProgressStateChanged(z * 30/zDim);
                 for (y = 0; y < yDim; y++) {
                     for (x = 0; x < xDim; x++) {
                         index = z*sliceSize + y*xDim + x;
@@ -363,7 +363,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         else { // Square wave
             distInt = (int)distance;
             for (z = 0; z < zDim; z++) {
-                progressBar.updateValueImmed(z * 30/zDim);
+                fireProgressStateChanged(z * 30/zDim);
                 for (y = 0; y < yDim; y++) {
                     for (x = 0; x < xDim; x++) {
                         index = z*sliceSize + y*xDim + x;
@@ -401,7 +401,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
             while (found) {
                 found = false;
                 centerIter++;
-                progressBar.setMessage("Center based iteration " + centerIter);
+                fireProgressStateChanged("Center based iteration " + centerIter);
                 for (z = 0; z < zDim; z++) {
                     for (y = 0; y < yDim; y++) {
                         for (x = 0; x < xDim; x++) {
@@ -453,8 +453,8 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Extracting VOIs");
-        progressBar.updateValueImmed(80);
+        fireProgressStateChanged("Extracting VOIs");
+        fireProgressStateChanged(80);
         colorTable = new Color[1];
         colorTable[0] = Color.RED;
         algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
@@ -469,7 +469,7 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         Preferences.debug(srcImage.getVOIs().size() +  " VOIs put in source image\n");
         grayImage.disposeLocal();
         grayImage = null;
-        disposeProgressBar();
+        
 
         setCompleted(true);
 
