@@ -311,6 +311,8 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     idObjectsAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), idObjectsAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -415,6 +417,8 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     idObjectsAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), idObjectsAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 

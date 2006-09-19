@@ -255,7 +255,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 nmSupAlgo.addListener(this);
-
+                createProgressBar(image.getImageName(), nmSupAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -307,6 +308,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
                 // This is made possible by implementing AlgorithmedPerformed interface
                 nmSupAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), nmSupAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 

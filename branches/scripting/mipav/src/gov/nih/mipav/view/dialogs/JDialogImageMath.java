@@ -539,6 +539,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mathAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), mathAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -580,6 +582,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mathAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), mathAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 

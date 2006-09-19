@@ -298,6 +298,8 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), distanceMapAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -338,6 +340,8 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), distanceMapAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -398,6 +402,8 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), distanceMapAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -437,6 +443,8 @@ public class JDialogDistanceMap extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     distanceMapAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), distanceMapAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 

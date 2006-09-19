@@ -427,6 +427,8 @@ public class JDialogFRET extends JDialogBase implements AlgorithmInterface, Item
             // This is made possible by implementing AlgorithmedPerformed interface
             fretAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), fretAlgo);
+            
             // Hide dialog
             setVisible(false);
 

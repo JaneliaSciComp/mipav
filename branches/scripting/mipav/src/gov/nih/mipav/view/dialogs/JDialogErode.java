@@ -479,6 +479,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     erodeAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), erodeAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -519,6 +521,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     erodeAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), erodeAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -573,6 +577,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     erodeAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), erodeAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -612,6 +618,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     erodeAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), erodeAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -675,6 +683,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     erodeAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), erodeAlgo25D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -715,6 +725,8 @@ public class JDialogErode extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     erodeAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), erodeAlgo25D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 

@@ -458,6 +458,8 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
             // This is made possible by implementing AlgorithmedPerformed interface
             N3Algo.addListener(this);
 
+            createProgressBar(image.getImageName(), N3Algo);
+            
             // Hide dialog
             setVisible(false);
 

@@ -458,6 +458,8 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
             // This is made possible by implementing AlgorithmedPerformed interface
             fcmAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), fcmAlgo);
+            
             if (regionFlag == false) {
                 fcmAlgo.setMask(image.generateVOIMask());
                 // if non null, were set by script file

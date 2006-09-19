@@ -372,6 +372,8 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
                 // This is made possible by implementing AlgorithmedPerformed interface
                 segAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), segAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -407,6 +409,8 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
                 // This is made possible by implementing AlgorithmedPerformed interface
                 segAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), segAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

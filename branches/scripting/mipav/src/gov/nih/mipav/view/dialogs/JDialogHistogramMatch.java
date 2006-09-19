@@ -288,6 +288,8 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
                 // This is made possible by implementing AlgorithmedPerformed interface
                 matchHistogramAlgo.addListener(this);
 
+                createProgressBar(matchImage.getImageName(), matchHistogramAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -325,6 +327,8 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
                 // This is made possible by implementing AlgorithmedPerformed interface
                 matchHistogramAlgo.addListener(this);
 
+                createProgressBar(matchImage.getImageName(), matchHistogramAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

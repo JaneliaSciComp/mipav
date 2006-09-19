@@ -424,6 +424,8 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mathAlgo.addListener(this);
 
+                    createProgressBar(imageA.getImageName(), mathAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -465,6 +467,8 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mathAlgo.addListener(this);
 
+                    createProgressBar(imageA.getImageName(), mathAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 

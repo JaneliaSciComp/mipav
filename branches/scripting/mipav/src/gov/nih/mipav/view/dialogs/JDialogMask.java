@@ -366,6 +366,8 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 // This is made possible by implementing AlgorithmedPerformed interface
                 maskAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), maskAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -408,7 +410,9 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 maskAlgo.addListener(this);
-
+                
+                createProgressBar(image.getImageName(), maskAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

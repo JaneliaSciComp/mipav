@@ -416,6 +416,9 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             insertSliceAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), insertSliceAlgo);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {

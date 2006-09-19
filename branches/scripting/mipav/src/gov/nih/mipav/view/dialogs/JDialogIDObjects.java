@@ -316,6 +316,8 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
 
                     idObjectsAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), idObjectsAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -354,6 +356,8 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
 
                     idObjectsAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), idObjectsAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -419,6 +423,8 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
 
                     idObjectsAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), idObjectsAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -463,6 +469,8 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
 
                     idObjectsAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), idObjectsAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 

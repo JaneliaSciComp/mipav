@@ -308,6 +308,8 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gvfAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gvfAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -390,6 +392,8 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gvfAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gvfAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

@@ -434,6 +434,7 @@ public class JDialogFRETBleedThrough extends JDialogScriptableBase
             // This is made possible by implementing AlgorithmedPerformed interface
             fbtAlgo.addListener(this);
 
+            createProgressBar(srcImage.getImageName(), fbtAlgo);
 
             // Hide dialog
             setVisible(false);

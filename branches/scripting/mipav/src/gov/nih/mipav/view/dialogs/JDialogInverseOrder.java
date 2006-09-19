@@ -155,6 +155,8 @@ public class JDialogInverseOrder extends JDialogScriptableBase implements Algori
             // This is made possible by implementing AlgorithmedPerformed interface
             orderAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), orderAlgo);
+            
             // Hide dialog
             setVisible(false);
 

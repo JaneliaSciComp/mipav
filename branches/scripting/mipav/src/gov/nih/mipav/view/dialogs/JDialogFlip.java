@@ -140,6 +140,9 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             // This is made possible by implementing AlgorithmedPerformed interface
             flipAlgo.addListener(this);
 
+            
+            createProgressBar(image.getImageName(), flipAlgo);
+            
             // Hide dialog
             setVisible(false);
 

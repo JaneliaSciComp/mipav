@@ -206,6 +206,8 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
     public void callAlgorithm() {
         AlgorithmLoadB algoLoad = new AlgorithmLoadB();
         algoLoad.addListener(this);
+        createProgressBar(image.getImageName(), algoLoad);
+        
         algoLoad.run();
     }
 

@@ -208,6 +208,8 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements A
             defaceAlgo.setBETParameters(estimateWithSphereBET, imageInfluenceBET, stiffnessBET);
             defaceAlgo.addListener(this);
 
+            createProgressBar(srcImage.getImageName(), defaceAlgo);
+            
             // Hide dialog
             setVisible(false);
 

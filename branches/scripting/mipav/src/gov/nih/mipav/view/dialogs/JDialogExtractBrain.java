@@ -613,6 +613,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             // This is made possible by implementing AlgorithmedPerformed interface
             extractBrainAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), extractBrainAlgo);
+            
             // Hide dialog
             setVisible(false);
 

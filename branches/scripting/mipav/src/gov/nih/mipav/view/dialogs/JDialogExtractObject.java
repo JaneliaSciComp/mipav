@@ -344,6 +344,8 @@ public class JDialogExtractObject extends JDialogBase implements AlgorithmInterf
             // This is made possible by implementing AlgorithmedPerformed interface
             extractObjectAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), extractObjectAlgo);
+            
             // Hide dialog
             setVisible(false);
 

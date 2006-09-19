@@ -495,6 +495,8 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             // This is made possible by implementing AlgorithmedPerformed interface
             frapAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), frapAlgo);
+            
             // Hide dialog
             setVisible(false);
 

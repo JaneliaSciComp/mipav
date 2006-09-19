@@ -432,6 +432,8 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
             // This is made possible by implementing AlgorithmedPerformed interface
             extractSurAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), extractSurAlgo);
+            
             // Hide dialog
             setVisible(false);
 

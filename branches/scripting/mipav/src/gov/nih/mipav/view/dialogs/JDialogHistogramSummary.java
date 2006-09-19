@@ -228,6 +228,8 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
             // This is made possible by implementing AlgorithmedPerformed interface
             histAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), histAlgo);
+            
             // Hide dialog
             setVisible(false);
 

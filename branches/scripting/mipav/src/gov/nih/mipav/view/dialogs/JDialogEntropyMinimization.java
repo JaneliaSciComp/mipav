@@ -346,6 +346,8 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
                 // This is made possible by implementing AlgorithmedPerformed interface
                 emAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), emAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -382,6 +384,8 @@ public class JDialogEntropyMinimization extends JDialogScriptableBase implements
                 // This is made possible by implementing AlgorithmedPerformed interface
                 emAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), emAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

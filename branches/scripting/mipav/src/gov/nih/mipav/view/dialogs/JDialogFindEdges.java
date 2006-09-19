@@ -349,6 +349,8 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     findEdgesAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), findEdgesAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -390,6 +392,8 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     findEdgesAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), findEdgesAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -451,6 +455,8 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     findEdgesAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), findEdgesAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -491,6 +497,8 @@ public class JDialogFindEdges extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     findEdgesAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), findEdgesAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 

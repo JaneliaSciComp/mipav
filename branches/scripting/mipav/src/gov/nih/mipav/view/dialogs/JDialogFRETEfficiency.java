@@ -584,6 +584,7 @@ public class JDialogFRETEfficiency extends JDialogScriptableBase
             // This is made possible by implementing AlgorithmedPerformed interface
             feffAlgo.addListener(this);
 
+            createProgressBar(srcImage.getImageName(), feffAlgo);
 
             // Hide dialog
             setVisible(false);

@@ -349,6 +349,8 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), changeTypeAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

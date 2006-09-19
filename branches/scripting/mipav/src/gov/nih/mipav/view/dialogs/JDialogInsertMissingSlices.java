@@ -329,6 +329,9 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase implements
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             rSliceAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), rSliceAlgo);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {

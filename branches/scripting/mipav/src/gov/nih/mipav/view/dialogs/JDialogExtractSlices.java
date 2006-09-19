@@ -320,6 +320,8 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
             // This is made possible by implementing AlgorithmedPerformed interface
             extractSlicesAlgo.addListener(this);
 
+            createProgressBar(srcImage.getImageName(), extractSlicesAlgo);
+            
             // Hide dialog
             setVisible(false);
 

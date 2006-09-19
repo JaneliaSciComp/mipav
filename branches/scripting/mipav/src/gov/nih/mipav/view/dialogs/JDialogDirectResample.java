@@ -228,6 +228,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             }
             algoTransform.addListener(this);
 
+            createProgressBar(image.getImageName(), algoTransform);
             
             if (isRunInSeparateThread()) {
 
@@ -261,6 +262,8 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             }
             algoTransform.addListener(this);
 
+            createProgressBar(image.getImageName(), algoTransform);
+            
             if (isRunInSeparateThread()) {
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (algoTransform.startMethod(Thread.MIN_PRIORITY) == false) {

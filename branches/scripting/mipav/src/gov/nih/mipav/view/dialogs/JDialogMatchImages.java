@@ -301,6 +301,8 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
             // This is made possible by implementing AlgorithmedPerformed interface
             matchAlgo.addListener(this);
 
+            createProgressBar(imageA.getImageName(), matchAlgo);
+            
             // Hide dialog
             setVisible(false);
 
@@ -311,10 +313,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    matchAlgo.setProgressBarVisible(false);
-                }
-
+              
                 matchAlgo.run();
             }
         } catch (OutOfMemoryError x) {

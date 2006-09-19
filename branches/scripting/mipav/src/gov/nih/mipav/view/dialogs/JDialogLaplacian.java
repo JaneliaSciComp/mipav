@@ -360,6 +360,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     laplacianAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), laplacianAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -370,10 +372,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            laplacianAlgo.setProgressBarVisible(false);
-                        }
-
+                       
                         laplacianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -471,6 +470,8 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                     // This is made possible by implementing AlgorithmedPerformed interface
                     laplacianAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), laplacianAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -481,10 +482,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            laplacianAlgo.setProgressBarVisible(false);
-                        }
-
+                   
                         laplacianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -535,10 +533,7 @@ public class JDialogLaplacian extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            laplacianAlgo.setProgressBarVisible(false);
-                        }
-
+                      
                         laplacianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

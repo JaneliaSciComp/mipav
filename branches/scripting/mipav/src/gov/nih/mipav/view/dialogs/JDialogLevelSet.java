@@ -361,6 +361,8 @@ public class JDialogLevelSet extends JDialogBase implements AlgorithmInterface {
                     // This is made possible by implementing AlgorithmedPerformed interface
                     levelSetAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), levelSetAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -409,6 +411,8 @@ public class JDialogLevelSet extends JDialogBase implements AlgorithmInterface {
                     // This is made possible by implementing AlgorithmedPerformed interface
                     levelSetAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), levelSetAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

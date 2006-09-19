@@ -456,6 +456,9 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
         if (numChecked != 0) {
             extractSlicesAlgo = new AlgorithmExtractSlicesVolumes(srcImage, checkListExtract);
             extractSlicesAlgo.addListener(this);
+            
+            createProgressBar(srcImage.getImageName(), extractSlicesAlgo);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {

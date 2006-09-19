@@ -235,6 +235,9 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
                     // This is made possible by implementing AlgorithmedPerformed interface
                     levelSetAlgo.addListener(this);
 
+                    
+                    createProgressBar(image.getImageName(), levelSetAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -282,6 +285,8 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
                     // This is made possible by implementing AlgorithmedPerformed interface
                     levelSetAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), levelSetAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

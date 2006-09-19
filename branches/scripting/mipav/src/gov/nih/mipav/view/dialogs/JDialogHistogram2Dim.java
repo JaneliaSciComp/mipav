@@ -719,6 +719,8 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
             // This is made possible by implementing AlgorithmedPerformed interface
             histogram2DimAlgo.addListener(this);
 
+            createProgressBar(firstImage.getImageName(), histogram2DimAlgo);
+            
             // Hide dialog
             setVisible(false);
 

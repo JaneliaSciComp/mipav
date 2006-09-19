@@ -898,16 +898,6 @@ public abstract class JDialogBase extends JDialog
 
         return tf;
     }
-
-    /**
-     * Creates the progress bar that will listen to an algorithm's progress changes
-     * @param title the progress bar's title (generally the srcImage's name)
-     */
-    protected void createProgressBar(String title) {
-        progressBar = new ViewJProgressBar(title, " ...", 0, 100, true);
-        progressBar.setSeparateThread(runInSeparateThread);
-        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
-    }
     
     /**
      * Creates the progress bar that will listen to an algorithm's progress changes
@@ -916,6 +906,14 @@ public abstract class JDialogBase extends JDialog
      */
     protected void createProgressBar(String title, AlgorithmBase pListener) {
         progressBar = new ViewJProgressBar(title, " ...", 0, 100, true);
+        progressBar.setSeparateThread(runInSeparateThread);
+        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        pListener.addProgressChangeListener(progressBar);
+        pListener.setMinMaxProgressValues(0, 100);
+    }
+    
+    protected void createProgressBar(String title, String msg, AlgorithmBase pListener) {
+    	progressBar = new ViewJProgressBar(title, msg, 0, 100, true);
         progressBar.setSeparateThread(runInSeparateThread);
         progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
         pListener.addProgressChangeListener(progressBar);
