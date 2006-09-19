@@ -1520,8 +1520,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
     void processEM(float[] image, int Inx, int Iny, int Inz, float[] result, int Rx, int Ry, int Rz, float[] psf,
                    int Px, int Py, int Pz, float[] diffr, int lowZ, int highZ) {
 
-        
-        float imageSum = imageWeightedSum(image, Inx, Iny, Inx, Iny, Inz);
+                float imageSum = imageWeightedSum(image, Inx, Iny, Inx, Iny, Inz);
 
         // calculate the OTF
         float[] OTF;
