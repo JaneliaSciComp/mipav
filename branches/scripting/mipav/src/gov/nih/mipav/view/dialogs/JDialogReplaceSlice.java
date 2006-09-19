@@ -132,6 +132,8 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
 
         algo.addListener(this);
 
+        createProgressBar(image.getImageName(), algo);
+        
         setVisible(false);
         algo.run();
     }

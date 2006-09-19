@@ -500,6 +500,8 @@ public class JDialogOpen extends JDialogScriptableBase implements AlgorithmInter
                     // This is made possible by implementing AlgorithmedPerformed interface
                     openAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), openAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -545,6 +547,8 @@ public class JDialogOpen extends JDialogScriptableBase implements AlgorithmInter
                     // This is made possible by implementing AlgorithmedPerformed interface
                     openAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), openAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -605,6 +609,8 @@ public class JDialogOpen extends JDialogScriptableBase implements AlgorithmInter
                     // This is made possible by implementing AlgorithmedPerformed interface
                     openAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), openAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -648,6 +654,8 @@ public class JDialogOpen extends JDialogScriptableBase implements AlgorithmInter
                     // This is made possible by implementing AlgorithmedPerformed interface
                     openAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), openAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -719,6 +727,8 @@ public class JDialogOpen extends JDialogScriptableBase implements AlgorithmInter
                     // This is made possible by implementing AlgorithmedPerformed interface
                     openAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), openAlgo25D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -764,6 +774,8 @@ public class JDialogOpen extends JDialogScriptableBase implements AlgorithmInter
                     // This is made possible by implementing AlgorithmedPerformed interface
                     openAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), openAlgo25D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 

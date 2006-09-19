@@ -379,6 +379,9 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     modeAlgo.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), modeAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -417,6 +420,8 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                     // This is made possible by implementing AlgorithmedPerformed interface
                     modeAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), modeAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -486,6 +491,9 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     modeAlgo.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), modeAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -522,6 +530,8 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     modeAlgo.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), modeAlgo);
 
                     // Hide dialog
                     setVisible(false);

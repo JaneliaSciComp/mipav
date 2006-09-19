@@ -166,6 +166,8 @@ public class JDialogRGBtoGrays extends JDialogScriptableBase implements Algorith
             // This is made possible by implementing AlgorithmedPerformed interface
             RGBAlgo.addListener(this);
 
+            createProgressBar(imageA.getImageName(), RGBAlgo);
+            
             // Hide dialog
             setVisible(false);
 

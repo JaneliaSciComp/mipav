@@ -315,6 +315,8 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
                 // This is made possible by implementing AlgorithmedPerformed interface
                 sAverAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), sAverAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -356,6 +358,8 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
                 // This is made possible by implementing AlgorithmedPerformed interface
                 sAverAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), sAverAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

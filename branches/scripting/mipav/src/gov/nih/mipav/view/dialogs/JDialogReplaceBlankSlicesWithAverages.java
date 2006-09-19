@@ -137,6 +137,8 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogScriptableBase
             // This is made possible by implementing AlgorithmedPerformed interface
             rAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), rAlgo);
+            
             // Hide dialog
             setVisible(false);
 

@@ -906,6 +906,8 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         // Start the thread as a low priority because we wish to still have user interface work fast.
         reg35.addListener(this);
 
+        createProgressBar(matchImage.getImageName(), reg35);
+        
         // Hide dialog
         setVisible(false);
 

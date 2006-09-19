@@ -670,6 +670,10 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
             // This is made possible by implementing AlgorithmedPerformed interface
             afcmAlgo.addListener(this);
 
+            
+            createProgressBar(srcImage[0].getImageName(), afcmAlgo);
+            
+            
             if (regionFlag == false) {
                 afcmAlgo.setMask(srcImage[0].generateVOIMask());
             }
@@ -696,10 +700,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    afcmAlgo.setProgressBarVisible(false);
-                }
-
+             
                 afcmAlgo.run();
             }
         } catch (OutOfMemoryError x) {

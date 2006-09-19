@@ -523,6 +523,8 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         // See algorithm performed event. This is made possible by implementing
         m_kAlgorithmReg.addListener(this);
 
+        createProgressBar(m_kImageSrc.getImageName(), m_kAlgorithmReg);
+        
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have

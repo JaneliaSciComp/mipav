@@ -477,6 +477,8 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         // See algorithm performed event. This is made possible by implementing
         LSMatch.addListener(this);
 
+        createProgressBar(baseImage.getImageName(), LSMatch);
+        
         // These next lines set the titles in all frames where the source image
         // is displayed to "locked - " image name so as to indicate that the image
         // is now read/write locked!  The image frames are disabled and then

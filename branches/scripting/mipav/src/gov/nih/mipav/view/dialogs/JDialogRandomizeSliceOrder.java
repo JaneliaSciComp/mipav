@@ -167,6 +167,8 @@ public class JDialogRandomizeSliceOrder extends JDialogScriptableBase implements
             // This is made possible by implementing AlgorithmedPerformed interface
             orderAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), orderAlgo);
+            
             // Hide dialog
             setVisible(false);
 

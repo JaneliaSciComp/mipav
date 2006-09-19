@@ -202,6 +202,8 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
             // This is made possible by implementing AlgorithmedPerformed interface
             alignAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), alignAlgo);
+            
             // Hide dialog
             setVisible(false);
 

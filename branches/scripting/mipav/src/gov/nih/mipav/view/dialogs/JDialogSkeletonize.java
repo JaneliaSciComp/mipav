@@ -413,6 +413,8 @@ public class JDialogSkeletonize extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     skeletonizeAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), skeletonizeAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -464,6 +466,8 @@ public class JDialogSkeletonize extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     skeletonizeAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), skeletonizeAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -533,6 +537,8 @@ public class JDialogSkeletonize extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     skeletonizeAlgo3D.addListener(this);
 
+                    
+                    createProgressBar(image.getImageName(), skeletonizeAlgo3D);
                     // Hide dialog
                     setVisible(false);
 
@@ -583,6 +589,8 @@ public class JDialogSkeletonize extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     skeletonizeAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), skeletonizeAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -647,6 +655,8 @@ public class JDialogSkeletonize extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     skeletonizeAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), skeletonizeAlgo25D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -698,6 +708,8 @@ public class JDialogSkeletonize extends JDialogScriptableBase implements Algorit
                     // This is made possible by implementing AlgorithmedPerformed interface
                     skeletonizeAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), skeletonizeAlgo25D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 

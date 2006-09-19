@@ -200,6 +200,8 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
             // This is made possible by implementing AlgorithmedPerformed interface
             resliceAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), resliceAlgo);
+            
             // Hide dialog
             setVisible(false);
 

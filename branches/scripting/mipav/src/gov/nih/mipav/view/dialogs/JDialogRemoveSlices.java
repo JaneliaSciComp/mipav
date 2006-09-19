@@ -782,6 +782,9 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     removeSlicesAlgo.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), removeSlicesAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -822,6 +825,9 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     removeSlicesAlgo.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), removeSlicesAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     // These next lines set the titles in all frames where the source image is displayed to

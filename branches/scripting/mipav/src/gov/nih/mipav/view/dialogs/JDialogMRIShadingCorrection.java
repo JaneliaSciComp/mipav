@@ -461,6 +461,8 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
                 // This is made possible by implementing AlgorithmedPerformed interface
                 mAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), mAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -501,6 +503,8 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
                 // This is made possible by implementing AlgorithmedPerformed interface
                 mAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), mAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

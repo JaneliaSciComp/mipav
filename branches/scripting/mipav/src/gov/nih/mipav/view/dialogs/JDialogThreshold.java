@@ -538,6 +538,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 // This is made possible by implementing AlgorithmedPerformed interface
                 thresholdAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), thresholdAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -579,6 +581,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 // This is made possible by implementing AlgorithmedPerformed interface
                 thresholdAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), thresholdAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

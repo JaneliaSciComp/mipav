@@ -203,6 +203,8 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
             // This is made possible by implementing AlgorithmedPerformed interface
             rotateAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), rotateAlgo);
+            
             // Hide dialog
             setVisible(false);
 

@@ -287,6 +287,8 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
                 // This is made possible by implementing AlgorithmedPerformed interface
                 subVOIAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), subVOIAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 

@@ -348,6 +348,8 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
             // This is made possible by implementing AlgorithmedPerformed interface
             skeletonize3DAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), skeletonize3DAlgo);
+            
             // Hide dialog
             setVisible(false);
 

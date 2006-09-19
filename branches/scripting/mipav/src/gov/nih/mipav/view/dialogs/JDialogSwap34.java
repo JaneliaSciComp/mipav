@@ -155,6 +155,8 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
             // This is made possible by implementing AlgorithmedPerformed interface
             swap34Algo.addListener(this);
 
+            createProgressBar(image.getImageName(), swap34Algo);
+            
             // Hide dialog
             setVisible(false);
 

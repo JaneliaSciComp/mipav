@@ -174,6 +174,8 @@ public class JDialogSkelGeom3D extends JDialogBase implements AlgorithmInterface
             // This is made possible by implementing AlgorithmedPerformed interface
             skelGeom3DAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), skelGeom3DAlgo);
+            
             // Hide dialog
             setVisible(false);
 

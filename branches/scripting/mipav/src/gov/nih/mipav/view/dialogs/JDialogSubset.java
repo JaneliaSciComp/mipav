@@ -312,6 +312,9 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             subsetAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), subsetAlgo);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {

@@ -342,6 +342,8 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                     // This is made possible by implementing AlgorithmedPerformed interface
                     waveletAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), waveletAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -383,6 +385,8 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                     // This is made possible by implementing AlgorithmedPerformed interface
                     waveletAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), waveletAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -453,6 +457,8 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                     // This is made possible by implementing AlgorithmedPerformed interface
                     waveletAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), waveletAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -493,6 +499,8 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                     // This is made possible by implementing AlgorithmedPerformed interface
                     waveletAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), waveletAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

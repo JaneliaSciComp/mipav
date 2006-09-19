@@ -229,6 +229,8 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
 
         algoReplace.addListener(this);
 
+        createProgressBar(image.getImageName(), algoReplace);
+        
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.

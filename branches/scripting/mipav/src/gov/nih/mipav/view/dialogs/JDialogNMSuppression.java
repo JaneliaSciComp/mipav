@@ -337,6 +337,8 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     nmSuppressionAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), nmSuppressionAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -377,6 +379,8 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     nmSuppressionAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), nmSuppressionAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -454,6 +458,8 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     nmSuppressionAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), nmSuppressionAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -493,6 +499,8 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     // This is made possible by implementing AlgorithmedPerformed interface
                     nmSuppressionAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), nmSuppressionAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

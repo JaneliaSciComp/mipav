@@ -519,6 +519,9 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
         // the algorithm to notify this object when it has completed of failed.
         // See algorithm performed event. This is made possible by implementing
         algoTrans.addListener(this);
+        
+        createProgressBar(image.getImageName(), algoTrans);
+        
         // Start the thread as a low priority because we wish to still have
         // user interface work fast
 

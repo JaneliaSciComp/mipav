@@ -294,6 +294,8 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
             // This is made possible by implementing AlgorithmedPerformed interface
             pComponentAlgo.addListener(this);
 
+            createProgressBar(srcImage.getImageName(), pComponentAlgo);
+            
             // Hide dialog
             setVisible(false);
 

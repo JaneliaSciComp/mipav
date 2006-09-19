@@ -352,6 +352,9 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
                                            threshold);
 
         pointAlgo.addListener(this);
+        
+        createProgressBar(srcImage.getImageName(), pointAlgo);
+        
         setVisible(false); // Hide dialog
 
         if (isRunInSeparateThread()) {

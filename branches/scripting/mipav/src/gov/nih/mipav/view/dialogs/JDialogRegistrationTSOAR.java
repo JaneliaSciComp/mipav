@@ -468,6 +468,8 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
                                         finalRegistrationAtLevel2);
         algoReg.addListener(this);
 
+        createProgressBar(image.getImageName(), algoReg);
+        
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.

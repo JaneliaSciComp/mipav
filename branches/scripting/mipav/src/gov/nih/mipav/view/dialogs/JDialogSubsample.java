@@ -222,6 +222,8 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
 
         algoSub.addListener(this);
 
+        createProgressBar(image.getImageName(), algoSub);
+        
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.

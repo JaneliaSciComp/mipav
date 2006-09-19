@@ -340,6 +340,8 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                     // This is made possible by implementing AlgorithmedPerformed interface
                     nlnrAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), nlnrAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -381,6 +383,8 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                     // This is made possible by implementing AlgorithmedPerformed interface
                     nlnrAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), nlnrAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -451,6 +455,8 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                     // This is made possible by implementing AlgorithmedPerformed interface
                     nlnrAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), nlnrAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -491,6 +497,8 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                     // This is made possible by implementing AlgorithmedPerformed interface
                     nlnrAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), nlnrAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

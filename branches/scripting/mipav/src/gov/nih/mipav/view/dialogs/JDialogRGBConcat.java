@@ -398,6 +398,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 // This is made possible by implementing AlgorithmedPerformed interface
                 mathAlgo.addListener(this);
 
+                createProgressBar(imageR.getImageName(), mathAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -443,6 +445,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                 // This is made possible by implementing AlgorithmedPerformed interface
                 mathAlgo.addListener(this);
 
+                createProgressBar(imageR.getImageName(), mathAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

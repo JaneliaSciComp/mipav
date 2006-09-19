@@ -223,6 +223,8 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
             // This is made possible by implementing AlgorithmedPerformed interface
             xcosmEMAlgo.addListener(this);
 
+            createProgressBar(originalImage.getImageName(), xcosmEMAlgo);
+            
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.

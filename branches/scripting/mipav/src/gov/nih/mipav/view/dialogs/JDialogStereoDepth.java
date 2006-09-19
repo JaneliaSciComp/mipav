@@ -200,6 +200,8 @@ public class JDialogStereoDepth extends JDialogScriptableBase implements Algorit
             // This is made possible by implementing AlgorithmedPerformed interface
             stereoDepthAlgo.addListener(this);
 
+            createProgressBar(rightImage.getImageName(), stereoDepthAlgo);
+            
             // Hide dialog
             setVisible(false);
 

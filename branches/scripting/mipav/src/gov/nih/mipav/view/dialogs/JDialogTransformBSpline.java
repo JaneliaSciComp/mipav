@@ -235,6 +235,8 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
             // This is made possible by implementing AlgorithmedPerformed interface
             algoTrans.addListener(this);
 
+            createProgressBar(image.getImageName(), algoTrans);
+            
             // Hide dialog
             setVisible(false);
 

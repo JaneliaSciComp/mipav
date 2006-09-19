@@ -204,6 +204,8 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
             // This is made possible by implementing AlgorithmedPerformed interface
             snrAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), snrAlgo);
+            
             // Hide dialog
             setVisible(false);
 

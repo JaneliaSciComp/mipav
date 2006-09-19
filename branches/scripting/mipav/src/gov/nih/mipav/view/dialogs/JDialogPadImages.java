@@ -345,6 +345,9 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 padSlicesAlgo.addListener(this);
+                
+                createProgressBar(image.getImageName(), padSlicesAlgo);
+                
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {
@@ -385,6 +388,9 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 padSlicesAlgo.addListener(this);
+                
+                createProgressBar(image.getImageName(), padSlicesAlgo);
+                
                 setVisible(false); // Hide dialog
 
                 // These next lines set the titles in all frames where the source image is displayed to

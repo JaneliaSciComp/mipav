@@ -224,6 +224,8 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
         // Start the thread as a low priority because we wish to still have user interface work fast.
         RegPatPos.addListener(this);
 
+        createProgressBar(imageA.getImageName(), RegPatPos);
+        
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.

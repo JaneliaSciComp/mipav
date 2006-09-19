@@ -311,6 +311,8 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
             // This is made possible by implementing AlgorithmedPerformed interface
             regIsoDiffusionAlgo.addListener(this);
 
+            createProgressBar(srcImage.getImageName(), regIsoDiffusionAlgo);
+            
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.

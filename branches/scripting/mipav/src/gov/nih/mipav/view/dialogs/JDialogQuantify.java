@@ -184,6 +184,8 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
             // This is made possible by implementing AlgorithmedPerformed interface
             algoQuantify.addListener(this);
 
+            createProgressBar(image.getImageName(), algoQuantify);
+            
             // Hide dialog
             setVisible(false);
 

@@ -1322,6 +1322,8 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
 
         reg3.addListener(this);
 
+        
+        createProgressBar(matchImage.getImageName(), reg3);
         // Hide dialog
         setVisible(false);
 

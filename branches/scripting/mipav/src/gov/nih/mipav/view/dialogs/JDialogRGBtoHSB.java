@@ -160,6 +160,8 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
             // This is made possible by implementing AlgorithmedPerformed interface
             HSBAlgo.addListener(this);
 
+            createProgressBar(imageA.getImageName(), HSBAlgo);
+            
             // Hide dialog
             setVisible(false);
 

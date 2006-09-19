@@ -538,6 +538,8 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
                                                                  fillValues, useChannel, regionFlag, isInverse);
                 thresholdAlgoRGB.addListener(this);
 
+                createProgressBar(image.getImageName(), thresholdAlgoRGB);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -579,6 +581,8 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
                 // This is made possible by implementing AlgorithmedPerformed interface
                 thresholdAlgoRGB.addListener(this);
 
+                createProgressBar(image.getImageName(), thresholdAlgoRGB);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

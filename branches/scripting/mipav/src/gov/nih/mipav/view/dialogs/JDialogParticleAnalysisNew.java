@@ -556,6 +556,8 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                     // This is made possible by implementing AlgorithmedPerformed interface
                     particleAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), particleAlgo2D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -604,6 +606,8 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                     // This is made possible by implementing AlgorithmedPerformed interface
                     particleAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), particleAlgo2D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -668,6 +672,8 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                     // This is made possible by implementing AlgorithmedPerformed interface
                     particleAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), particleAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -712,6 +718,8 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                     // This is made possible by implementing AlgorithmedPerformed interface
                     particleAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), particleAlgo3D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -787,6 +795,8 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                     // This is made possible by implementing AlgorithmedPerformed interface
                     particleAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), particleAlgo25D);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -832,6 +842,8 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                     // This is made possible by implementing AlgorithmedPerformed interface
                     particleAlgo25D.addListener(this);
 
+                    createProgressBar(image.getImageName(), particleAlgo25D);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 

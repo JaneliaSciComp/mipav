@@ -395,7 +395,9 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mfAlgo.addListener(this);
-
+                    
+                    createProgressBar(image.getImageName(), mfAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -435,6 +437,8 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mfAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), mfAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -506,6 +510,8 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mfAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), mfAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -544,6 +550,8 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mfAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), mfAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

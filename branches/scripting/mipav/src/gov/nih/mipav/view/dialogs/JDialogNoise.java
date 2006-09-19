@@ -330,6 +330,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     randomAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), randomAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -370,6 +372,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     randomAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), randomAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -443,6 +447,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     randomAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), randomAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -482,6 +488,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     randomAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), randomAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

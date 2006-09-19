@@ -239,6 +239,8 @@ public class JDialogWatershed extends JDialogBase implements AlgorithmInterface 
                     // This is made possible by implementing AlgorithmedPerformed interface
                     watershedAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), watershedAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -281,6 +283,8 @@ public class JDialogWatershed extends JDialogBase implements AlgorithmInterface 
                     // This is made possible by implementing AlgorithmedPerformed interface
                     watershedAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), watershedAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 

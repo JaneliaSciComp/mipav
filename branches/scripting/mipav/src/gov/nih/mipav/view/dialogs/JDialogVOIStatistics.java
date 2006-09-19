@@ -351,6 +351,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
         calculator.setPrecisionDisplay(precision, doForce);
         calculator.addListener(this);
 
+        createProgressBar(image.getImageName(), calculator);
+        
         calculator.setVOIList(selectedList.getModel());
         calculator.setShowTotals(showTotals);
         // da.addTextUpdateListener(this);   // unimplemented -- meant to permit messaging between running thread and
