@@ -200,7 +200,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         String imgName = image.getImageName();
         
-        fireProgressStateChanged(0, imgName, "Extracting brain...");
+        fireProgressStateChanged(0);
         
         if (isThreadStopped()) {
             return;
@@ -214,11 +214,12 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         if (filterIterations > 0) {
             resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imgName + "_temp_results");
             int[] progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
+        
             if(progressValueBounds == null){
                 MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex-1) + " can't be calculated!");
                 return;
             }
-            fireProgressStateChanged(progressValueBounds[0], image.getImageName(), "Filtering image ...");
+            fireProgressStateChanged(progressValueBounds[0], null, "Filtering image ...");
             AlgorithmRegularizedIsotropicDiffusion filterAlgo = null;
             if((progressValueBounds[1] - progressValueBounds[0]) < 2){
                 filterAlgo = new AlgorithmRegularizedIsotropicDiffusion(
@@ -236,9 +237,10 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                         filterKernel,
                         filterContrast,
                         do25D);
+                linkProgressToAlgorithm(filterAlgo);
                 filterAlgo.setProgressValues(generateProgressValues(progressValueBounds[0],
                 		progressValueBounds[1]));
-                linkProgressToAlgorithm(filterAlgo);
+               
             }
             filterAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
             filterAlgo.addListener(this);
@@ -274,7 +276,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             return;
         }
         
-        fireProgressStateChanged(progressValueBounds[0], resultImage.getImageName(), "Detecting edges ...");
+        fireProgressStateChanged(progressValueBounds[0], null, "Detecting edges ...");
         if (doSeparable) {
             if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
                 edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage,
@@ -302,9 +304,10 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             } else {
                 edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage,
                         resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
+                linkProgressToAlgorithm(edgeAlgo);
                 edgeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0],
                 		progressValueBounds[1]));
-                linkProgressToAlgorithm(edgeAlgo);
+                
             }
             ((AlgorithmEdgeLaplacian)edgeAlgo).setZeroDetectionType(AlgorithmEdgeLaplacian.NEGATIVE_EDGES);
             edgeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
@@ -339,7 +342,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             return;
         }
         
-        fireProgressStateChanged(progressValueBounds[0], resultImage.getImageName(), "Inverting edge mask...");
+        fireProgressStateChanged(progressValueBounds[0], null, "Inverting edge mask...");
         if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
             for (int i = 0; (i < imgSize) && !threadStopped; i++) {
 
@@ -408,7 +411,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             return;
         }
         
-        fireProgressStateChanged(progressValueBounds[0], resultImage.getImageName(), "Eroding edges...");
+        fireProgressStateChanged(progressValueBounds[0], null, "Eroding edges...");
         
         if((progressValueBounds[1]-progressValueBounds[0]) < 2){
             if (!erosion25D) {
@@ -468,7 +471,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             return;
         }
         
-        fireProgressStateChanged(progressValueBounds[0], resultImage.getImageName(), "Dilating the brain mask ...");
+        fireProgressStateChanged(progressValueBounds[0], null, "Dilating the brain mask ...");
         if (!erosion25D) {
             int erosionKernel = AlgorithmMorphology3D.CONNECTED6;
             dilateAlgo = new AlgorithmMorphology3D(resultImage, erosionKernel, 0, AlgorithmMorphology3D.DILATE,
@@ -503,7 +506,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             return;
         }
         
-        fireProgressStateChanged(progressValueBounds[0], resultImage.getImageName(), "Closing ...");
+        fireProgressStateChanged(progressValueBounds[0], null, "Closing ...");
 
         AlgorithmMorphology25D closeAlgo = new AlgorithmMorphology25D(resultImage, closeKernel, closeKernelSize,
                                                                       AlgorithmMorphology25D.CLOSE, closeIterations + 1,
@@ -534,12 +537,11 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                 return;
             }
             
-            fireProgressStateChanged(progressValueBounds[0], resultImage.getImageName(), "Extracting VOI ...");
+            fireProgressStateChanged(progressValueBounds[0], null, "Extracting VOI ...");
 
             // create a voi from the mask
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(resultImage);
             // VOIExtractionAlgo.setProgressBarVisible(false);
-            VOIExtractionAlgo.addListener(this);
             VOIExtractionAlgo.addListener(this);
             VOIExtractionAlgo.run();
 
@@ -559,7 +561,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                 return;
             }
             
-            fireProgressStateChanged(progressValueBounds[0], resultImage.getImageName(), "Filling interior mask holes ...");
+            fireProgressStateChanged(progressValueBounds[0], null, "Filling interior mask holes ...");
 
             // make a mask from the voi
             AlgorithmMask maskAlgo = new AlgorithmMask(resultImage, 1, true, true);

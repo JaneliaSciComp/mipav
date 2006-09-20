@@ -873,8 +873,8 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
         linkProgressToAlgorithm(algoSepConvolver);
 
         for (int iterNum = 0; iterNum < numIterations; iterNum++) {
-            algoSepConvolver.setMinProgressValue(getMinProgressValue() + Math.round(stepProgressValue * iterNum));
-            algoSepConvolver.setMaxProgressValue(getMinProgressValue() + Math.round(stepProgressValue * (iterNum+1)));
+        	algoSepConvolver.setProgressValues(generateProgressValues(getMinProgressValue() + Math.round(stepProgressValue * iterNum),
+        			getMinProgressValue() + Math.round(stepProgressValue * (iterNum+1))));
             algoSepConvolver.run();
   
             gradientMagnitude3D(gaussianBuffer, gradientBuffer);
@@ -912,7 +912,7 @@ public class AlgorithmRegularizedIsotropicDiffusion extends AlgorithmBase {
 
             return;
         }
-
+        
         setCompleted(true);
     } // end run3D
 
