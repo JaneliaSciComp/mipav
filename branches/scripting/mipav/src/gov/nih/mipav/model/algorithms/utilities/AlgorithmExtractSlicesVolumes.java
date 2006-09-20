@@ -5,9 +5,9 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
+
+import java.util.*;
 
 
 /**
@@ -25,11 +25,11 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
     /** List of slices to remove from source image. */
     private boolean[] extract;
 
+    /** DOCUMENT ME! */
+    private Vector extractedImages;
+
     /** Original Z dimension of the image. */
     private int oldZdim;
-
-    /** Stores the patient name to call the sliced frame for a DICOM image. */
-    private String patientName;
 
     /** Area of a slice (Xdim * Ydim). */
     private int sliceArea;
@@ -58,6 +58,8 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
         sliceArea = Xdim * Ydim; // one slice has sliceArea number of pixels
 
         oldZdim = srcImage.getExtents()[2]; //
+
+        extractedImages = new Vector();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -67,6 +69,21 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
      */
     public void finalize() {
         super.finalize();
+    }
+
+    /**
+     * Return the images extracted from the source image.
+     *
+     * @return  The extracted images.
+     */
+    public ModelImage[] getExtractedImages() {
+        ModelImage[] array = new ModelImage[extractedImages.size()];
+
+        for (int i = 0; i < array.length; i++) {
+            array[i] = (ModelImage) extractedImages.get(i);
+        }
+
+        return array;
     }
 
     /**
@@ -194,13 +211,12 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
             displayError("Algorithm extract slices or volumes reports: Out of memory");
             srcImage.releaseLock();
             setCompleted(false);
-            
+
 
             return;
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        
 
         newExtents = new int[srcImage.getExtents().length - 1];
 
@@ -259,13 +275,12 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
                         resultImage.calcMinMax();
 
-                        // open up result in new window (per each slice)
-                        new ViewJFrameImage(resultImage);
+                        extractedImages.add(resultImage);
                     } catch (IOException error) {
                         displayError("Algorithm Extract Individual Slices reports: " + error.getMessage());
                         error.printStackTrace();
                         setCompleted(false);
-                        
+
 
                         return;
                     }
@@ -316,9 +331,7 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
                     resultImage.calcMinMax();
 
-                    // open up result in new window (per each slice)
-                    new ViewJFrameImage(resultImage);
-
+                    extractedImages.add(resultImage);
                 }
             }
 
@@ -328,13 +341,13 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
             imageBuffer = null;
             resultImage = null;
             finalize();
-            
+
 
             return;
         }
 
         resultImage = null; // after all, this was only temporary
-        
+
         setCompleted(true);
     } // extractSlices
 

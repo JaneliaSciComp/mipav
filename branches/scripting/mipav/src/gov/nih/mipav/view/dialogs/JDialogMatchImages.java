@@ -121,6 +121,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMatchImages) {
             boolean isNewA = matchAlgo.isNewA();
             boolean isNewB = matchAlgo.isNewB();
@@ -197,42 +198,6 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
     public ModelImage getResultImageB() {
         return resultImageB;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(imageA);
-        scriptParameters.storeInputImage(imageB);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doOrigins));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_dimensions", doDimensions));
-        
-        AlgorithmParameters.storeImageInRecorder(getResultImageA());
-        AlgorithmParameters.storeImageInRecorder(getResultImageB());
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        imageA = scriptParameters.retrieveInputImage(1);
-        imageA = scriptParameters.retrieveInputImage(2);
-        
-        userInterface = imageA.getUserInterface();
-        parentFrame = imageA.getParentFrame();
-        
-        doOrigins = scriptParameters.getParams().getBoolean("do_match_origins");
-        doDimensions = scriptParameters.getParams().getBoolean("do_match_dimensions");
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImageA());
-        AlgorithmParameters.storeImageInRunner(getResultImageB());
-    }
 
     /**
      * Accessor that sets image A.
@@ -250,37 +215,6 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
      */
     public void setImageB(ModelImage im) {
         imageB = im;
-    }
-
-    /**
-     * Builds a list of images to operate on from the template image.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private JComboBox buildComboBoxImage() {
-        ViewUserInterface UI;
-
-        JComboBox comboBoxImage = new JComboBox();
-        comboBoxImage.setFont(serif12);
-        comboBoxImage.setBackground(Color.white);
-
-        UI = imageA.getUserInterface();
-
-        Enumeration names = UI.getRegisteredImageNames();
-
-        // Add images from user interface
-        // Guaranteed to have at least one unique potential image B, because it's
-        // tested for in ViewJFrameImage before this dialog is created.
-        while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
-            ModelImage img = UI.getRegisteredImageByName(name);
-
-            if (UI.getFrameContainingImage(img) != null) {
-                comboBoxImage.addItem(name);
-            }
-        }
-
-        return comboBoxImage;
     }
 
     /**
@@ -302,7 +236,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
             matchAlgo.addListener(this);
 
             createProgressBar(imageA.getImageName(), matchAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -313,7 +247,6 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-              
                 matchAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -322,6 +255,80 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
 
             return;
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (getResultImageA() != null) {
+            AlgorithmParameters.storeImageInRunner(getResultImageA());
+        }
+
+        if (getResultImageB() != null) {
+            AlgorithmParameters.storeImageInRunner(getResultImageB());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage(1);
+        imageA = scriptParameters.retrieveInputImage(2);
+
+        userInterface = imageA.getUserInterface();
+        parentFrame = imageA.getParentFrame();
+
+        doOrigins = scriptParameters.getParams().getBoolean("do_match_origins");
+        doDimensions = scriptParameters.getParams().getBoolean("do_match_dimensions");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        scriptParameters.storeInputImage(imageB);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doOrigins));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_dimensions", doDimensions));
+
+        if (getResultImageA() != null) {
+            AlgorithmParameters.storeImageInRecorder(getResultImageA());
+        }
+
+        if (getResultImageB() != null) {
+            AlgorithmParameters.storeImageInRecorder(getResultImageB());
+        }
+    }
+
+    /**
+     * Builds a list of images to operate on from the template image.
+     *
+     * @return  DOCUMENT ME!
+     */
+    private JComboBox buildComboBoxImage() {
+        JComboBox comboBoxImage = new JComboBox();
+        comboBoxImage.setFont(serif12);
+        comboBoxImage.setBackground(Color.white);
+
+        Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
+
+        // Add images from user interface
+        // Guaranteed to have at least one unique potential image B, because it's
+        // tested for in ViewJFrameImage before this dialog is created.
+        while (names.hasMoreElements()) {
+            String name = (String) names.nextElement();
+            ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
+
+            if (ViewUserInterface.getReference().getFrameContainingImage(img) != null) {
+                comboBoxImage.addItem(name);
+            }
+        }
+
+        return comboBoxImage;
     }
 
     /**
@@ -408,11 +415,10 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        ViewUserInterface UI = imageA.getUserInterface();
         selectedNameA = (String) comboBoxImageA.getSelectedItem();
         selectedNameB = (String) comboBoxImageB.getSelectedItem();
-        imageA = UI.getRegisteredImageByName(selectedNameA);
-        imageB = UI.getRegisteredImageByName(selectedNameB);
+        imageA = ViewUserInterface.getReference().getRegisteredImageByName(selectedNameA);
+        imageB = ViewUserInterface.getReference().getRegisteredImageByName(selectedNameB);
         doOrigins = checkOrigins.isSelected();
         doDimensions = checkDimensions.isSelected();
 

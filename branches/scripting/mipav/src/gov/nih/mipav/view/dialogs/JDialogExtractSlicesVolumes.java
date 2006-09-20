@@ -3,7 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -61,6 +61,9 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
     private JLabel exampleLabel2;
 
     /** DOCUMENT ME! */
+    private ModelImage[] extractedImages;
+
+    /** DOCUMENT ME! */
     private AlgorithmExtractSlicesVolumes extractSlicesAlgo;
 
     /** DOCUMENT ME! */
@@ -73,9 +76,6 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
     private JTextField rangeField;
 
     /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
     private JScrollPane scrollPane;
 
     /** DOCUMENT ME! */
@@ -86,9 +86,6 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
 
     /** DOCUMENT ME! */
     private JCheckBox useRange;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -106,47 +103,11 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
     public JDialogExtractSlicesVolumes(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         srcImage = im;
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-     
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(srcImage);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("slices", getSliceRangeString(checkListExtract)));
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        srcImage = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = srcImage.getParentFrame();
-        
-        if (srcImage.getNDims() < 3) {
-            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "3D or 4D image required.");
-        }
-        
-        checkListExtract = parseRangeString(srcImage.getExtents()[2], scriptParameters.getParams().getString("slices"));
-        if (checkListExtract == null) {
-            throw new ParameterException("slices", "A problem was encountered while parsing the list of slices to extract.");
-        }
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -176,10 +137,12 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                 (checkboxList[i]).setSelected(false);
             }
         } else if (command.equals("CheckEven")) {
+
             for (i = 1; i < nSlices; i += 2) {
                 (checkboxList[i]).setSelected(true);
             }
         } else if (command.equals("CheckOdd")) {
+
             for (i = 0; i < nSlices; i += 2) {
                 (checkboxList[i]).setSelected(true);
             }
@@ -199,9 +162,10 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmExtractSlicesVolumes) {
+            extractedImages = extractSlicesAlgo.getExtractedImages();
 
-            if (algorithm.isCompleted()) {
-                insertScriptLine();
+            for (int i = 0; i < extractedImages.length; i++) {
+                new ViewJFrameImage(extractedImages[i]);
             }
 
             if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
@@ -250,20 +214,15 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                     }
                 }
             } // if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM))
+
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         } // if ( algorithm instanceof AlgorithmExtractSlicesVolumes )
 
         extractSlicesAlgo.finalize();
         extractSlicesAlgo = null;
         dispose();
-    }
-
-    /**
-     * Accessor that returns the result image.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public ModelImage getResultImage() {
-        return resultImage;
     }
 
     /**
@@ -301,6 +260,211 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
                 }
             }
         }
+    }
+
+    /**
+     * Once all the necessary variables are set, call the Remove Slices algorithm based on what type of image this is
+     * and whether or not there is a separate destination image.
+     */
+    protected void callAlgorithm() {
+        System.gc();
+
+        nSlices = srcImage.getExtents()[2];
+        numChecked = 0;
+
+        for (int i = 0; i < nSlices; i++) {
+
+            if (checkListExtract[i]) {
+                numChecked++;
+            }
+        }
+
+        if (numChecked != 0) {
+            extractSlicesAlgo = new AlgorithmExtractSlicesVolumes(srcImage, checkListExtract);
+            extractSlicesAlgo.addListener(this);
+
+            createProgressBar(srcImage.getImageName(), extractSlicesAlgo);
+
+            setVisible(false); // Hide dialog
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (extractSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                extractSlicesAlgo.run();
+            }
+
+        } else if (numChecked == 0) {
+            MipavUtil.displayError("No slices were selected!  Select some slices.");
+        } else {
+            MipavUtil.displayError("All slices are selected!  Unselect some slices.");
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        for (int i = 0; i < extractedImages.length; i++) {
+            AlgorithmParameters.storeImageInRunner(extractedImages[i]);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        parentFrame = srcImage.getParentFrame();
+
+        if (srcImage.getNDims() < 3) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "3D or 4D image required.");
+        }
+
+        checkListExtract = parseRangeString(srcImage.getExtents()[2], scriptParameters.getParams().getString("slices"));
+
+        if (checkListExtract == null) {
+            throw new ParameterException("slices",
+                                         "A problem was encountered while parsing the list of slices to extract.");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+
+        for (int i = 0; i < extractedImages.length; i++) {
+            AlgorithmParameters.storeImageInRecorder(extractedImages[i]);
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("slices",
+                                                                       getSliceRangeString(checkListExtract)));
+    }
+
+    /**
+     * Converts from a boolean array marking which slices should be extracted to a (more compact) range string
+     * indicating which slices should be extracted.
+     *
+     * @param   extractList  The boolean array indicating slices to extract.
+     *
+     * @return  A range string of comma-separated slice numbers (1-based) and/or slice ranges; ex. '1-4,5,7,10,25-32'.
+     */
+    private static String getSliceRangeString(boolean[] extractList) {
+        String rangeStr = new String();
+        boolean isFirst = true;
+
+        for (int startSlice = 0; startSlice < extractList.length; startSlice++) {
+
+            if (extractList[startSlice]) {
+                int endSlice;
+
+                // keep going until we find a slice that we don't want extracted
+                for (endSlice = startSlice + 1; extractList[endSlice] && (endSlice < extractList.length); endSlice++) { }
+
+                if (endSlice == (startSlice + 1)) {
+
+                    // only one slice this time..
+                    if (isFirst) {
+                        rangeStr += (startSlice + 1);
+                        isFirst = false;
+                    } else {
+                        rangeStr += "," + (startSlice + 1);
+                    }
+                } else {
+
+                    // more than one slice..
+                    if (isFirst) {
+                        rangeStr += (startSlice + 1) + "-" + endSlice;
+                        isFirst = false;
+                    } else {
+                        rangeStr += "," + (startSlice + 1) + "-" + endSlice;
+                    }
+                }
+
+                // in effect moves to endSlice + 1 since we already know endSlice is false
+                startSlice = endSlice;
+            }
+        }
+
+        return rangeStr;
+    }
+
+    /**
+     * Extract the slices that should be extracted from a range string.
+     *
+     * @param   numSlices  The number of slices in the image being processed.
+     * @param   rangeStr   The range string to parse; ex. '1-10,13,20-32'.
+     *
+     * @return  An array of booleans for every slice in the image, where true indicates a slice that should be
+     *          extracted.
+     */
+    private static boolean[] parseRangeString(int numSlices, String rangeStr) {
+        boolean[] extractionList = new boolean[numSlices];
+
+        for (int i = 0; i < numSlices; i++) {
+            extractionList[i] = false;
+        }
+
+        // must parse the range field
+        StringTokenizer tokens = new StringTokenizer(rangeStr, ",");
+        boolean hasTokens = false;
+
+        while (tokens.hasMoreTokens()) {
+            hasTokens = true;
+
+            try {
+                String temp = tokens.nextToken();
+                StringTokenizer tokens2 = new StringTokenizer(temp, "-");
+                String startString = tokens2.nextToken();
+
+                while (startString.startsWith(" ")) {
+                    startString = startString.substring(1, startString.length());
+                }
+
+                int start = Integer.parseInt(startString);
+
+                if (!tokens2.hasMoreTokens()) {
+
+                    if (start > numSlices) {
+                        MipavUtil.displayError("Must specify valid range.  Ex: 10-20, 25, 30-50");
+
+                        return null;
+                    } else {
+                        extractionList[start - 1] = true;
+                    }
+                } else {
+                    String endString = tokens2.nextToken();
+                    int end = Integer.parseInt(endString);
+
+                    if ((start > end) || (end > numSlices)) {
+                        MipavUtil.displayError("Must specify valid range.  Ex: 10-20, 25, 30-50");
+
+                        return null;
+                    } else {
+
+                        for (int i = start; i < (end + 1); i++) {
+                            extractionList[i - 1] = true;
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                MipavUtil.displayError("Must specify valid range.  Ex: 10-20, 25, 30-50");
+
+                return null;
+            }
+        }
+
+        if (!hasTokens) {
+            return null;
+        }
+
+        return extractionList;
     }
 
     /**
@@ -437,48 +601,6 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
     }
 
     /**
-     * Once all the necessary variables are set, call the Remove Slices algorithm based on what type of image this is
-     * and whether or not there is a separate destination image.
-     */
-    protected void callAlgorithm() {
-        System.gc();
-
-        nSlices = srcImage.getExtents()[2];
-        numChecked = 0;
-
-        for (int i = 0; i < nSlices; i++) {
-
-            if (checkListExtract[i]) {
-                numChecked++;
-            }
-        }
-
-        if (numChecked != 0) {
-            extractSlicesAlgo = new AlgorithmExtractSlicesVolumes(srcImage, checkListExtract);
-            extractSlicesAlgo.addListener(this);
-            
-            createProgressBar(srcImage.getImageName(), extractSlicesAlgo);
-            
-            setVisible(false); // Hide dialog
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (extractSlicesAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-                extractSlicesAlgo.run();
-            }
-
-        } else if (numChecked == 0) {
-            MipavUtil.displayError("No slices were selected!  Select some slices.");
-        } else {
-            MipavUtil.displayError("All slices are selected!  Unselect some slices.");
-        }
-    }
-
-    /**
      * Use the GUI results to set up the variables needed to run the algorithm.
      *
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
@@ -489,7 +611,7 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
         if (!useRange.isSelected()) {
 
             checkListExtract = new boolean[nSlices];
-            
+
             for (i = 0; i < nSlices; i++) {
 
                 if (checkboxList[i].isSelected()) {
@@ -500,122 +622,12 @@ public class JDialogExtractSlicesVolumes extends JDialogScriptableBase implement
             }
         } else {
             checkListExtract = parseRangeString(nSlices, rangeField.getText());
+
             if (checkListExtract == null) {
                 return false;
             }
         }
 
         return true;
-    }
-    
-    /**
-     * Converts from a boolean array marking which slices should be extracted to a (more compact) range string indicating which slices should be extracted.
-     * 
-     * @param   extractList  The boolean array indicating slices to extract.
-     * 
-     * @return  A range string of comma-separated slice numbers (1-based) and/or slice ranges; ex. '1-4,5,7,10,25-32'.
-     */
-    private static final String getSliceRangeString(boolean[] extractList) {
-        String rangeStr = new String();
-        boolean isFirst = true;
-        
-        for (int startSlice = 0; startSlice < extractList.length; startSlice++) {
-            if (extractList[startSlice]) {
-                int endSlice;
-                // keep going until we find a slice that we don't want extracted
-                for (endSlice = startSlice + 1; !extractList[endSlice] && endSlice < extractList.length; endSlice++) {}
-                
-                if (endSlice == startSlice + 1) {
-                    // only one slice this time..
-                    if (isFirst) {
-                        rangeStr += (startSlice + 1);
-                        isFirst = false;
-                    } else {
-                        rangeStr += "," + (startSlice + 1);
-                    }
-                } else {
-                    // more than one slice..
-                    if (isFirst) {
-                        rangeStr += (startSlice + 1) + "-" + endSlice;
-                        isFirst = false;
-                    } else {
-                        rangeStr += "," + (startSlice + 1) + "-" + endSlice;
-                    }
-                }
-                
-                // in effect moves to endSlice + 1 since we already know endSlice is false
-                startSlice = endSlice;
-            }
-        }
-        
-        return rangeStr;
-    }
-    
-    /**
-     * Extract the slices that should be extracted from a range string.
-     * 
-     * @param   numSlices  The number of slices in the image being processed.
-     * @param   rangeStr   The range string to parse; ex. '1-10,13,20-32'.
-     * 
-     * @return  An array of booleans for every slice in the image, where true indicates a slice that should be extracted.
-     */
-    private static final boolean[] parseRangeString(int numSlices, String rangeStr) {
-        boolean[] extractionList = new boolean[numSlices];
-        
-        for (int i = 0; i < numSlices; i++) {
-            extractionList[i] = false;
-        }
-
-        // must parse the range field
-        StringTokenizer tokens = new StringTokenizer(rangeStr, ",");
-        boolean hasTokens = false;
-
-        while (tokens.hasMoreTokens()) {
-            hasTokens = true;
-
-            try {
-                String temp = tokens.nextToken();
-                StringTokenizer tokens2 = new StringTokenizer(temp, "-");
-                String startString = tokens2.nextToken();
-
-                while (startString.startsWith(" ")) {
-                    startString = startString.substring(1, startString.length());
-                }
-
-                int start = Integer.parseInt(startString);
-
-                if (!tokens2.hasMoreTokens()) {
-
-                    if (start > numSlices) {
-                        MipavUtil.displayError("Must specify valid range.  Ex: 10-20, 25, 30-50");
-                        return null;
-                    } else {
-                        extractionList[start - 1] = true;
-                    }
-                } else {
-                    String endString = tokens2.nextToken();
-                    int end = Integer.parseInt(endString);
-
-                    if ((start > end) || (end > numSlices)) {
-                        MipavUtil.displayError("Must specify valid range.  Ex: 10-20, 25, 30-50");
-                        return null;
-                    } else {
-
-                        for (int i = start; i < (end + 1); i++) {
-                            extractionList[i - 1] = true;
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                MipavUtil.displayError("Must specify valid range.  Ex: 10-20, 25, 30-50");
-                return null;
-            }
-        }
-
-        if (!hasTokens) {
-            return null;
-        }
-        
-        return extractionList;
     }
 }
