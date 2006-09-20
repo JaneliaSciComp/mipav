@@ -398,6 +398,13 @@ public abstract class JDialogBase extends JDialog
         }
 
         super.setVisible(status);
+        
+        //now is when we want to display the progress bar (if it exists and the app frame is visible)
+      //  if (status == false && 
+      //  		progressBar != null &&
+      //  		ViewUserInterface.getReference().isAppFrameVisible()) {
+      //  	progressBar.setVisible(true);
+      //  }
     }
 
 
@@ -908,6 +915,12 @@ public abstract class JDialogBase extends JDialog
     	createProgressBar(title, " ...", pListener);
     }
     
+    /**
+     * Creates the progress bar (should be created within JDialog's callAlgorithm method
+     * @param title progress bar's title
+     * @param msg the message to display on the progress bar (initial setting)
+     * @param pListener the algorithm that will register the progress bar as a listener
+     */
     protected void createProgressBar(String title, String msg, AlgorithmBase pListener) {
     	progressBar = new ViewJProgressBar(title, msg, 0, 100, true);
         progressBar.setSeparateThread(runInSeparateThread);
