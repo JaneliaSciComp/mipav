@@ -2375,7 +2375,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(DOF), maxIter, rigidFlag,
                                           bracketBound);
         linkProgressToAlgorithm(powell);
-        powell.setMinMaxProgressValues(generateProgressValues(60,100));
+        powell.setProgressValues(generateProgressValues(60,100));
         
         powell.run();
 
@@ -2449,7 +2449,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                                           bracketBound);
 
         linkProgressToAlgorithm(powell);
-        powell.setMinMaxProgressValues(generateProgressValues(60,100));
+        powell.setProgressValues(generateProgressValues(60,100));
 
         powell.run();
 
@@ -2531,7 +2531,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                           rigidFlag, bracketBound);
         linkProgressToAlgorithm(powell);
-        powell.setMinMaxProgressValues(generateProgressValues(35, 43));
+        powell.setProgressValues(generateProgressValues(35, 43));
 
         powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
         Preferences.debug("item for level2 powell run = " + (MatrixListItem) minima.elementAt(0) + "\n");
@@ -2558,7 +2558,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             powell = new AlgorithmPowellOpt2D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                               rigidFlag, bracketBound);
             linkProgressToAlgorithm(powell);
-            powell.setMinMaxProgressValues(generateProgressValues(43, 51));
+            powell.setProgressValues(generateProgressValues(43, 51));
 
             powell.run();
 
@@ -2581,7 +2581,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
                 
 
                 linkProgressToAlgorithm(powell);
-                powell.setMinMaxProgressValues(generateProgressValues(51,60));
+                powell.setProgressValues(generateProgressValues(51,60));
               
                 powell.run();
 

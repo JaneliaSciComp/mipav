@@ -61,7 +61,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
      */
     public AlgorithmSubsample(ModelImage src, ModelImage result, int[] newExtents, float[] _sigmas, boolean indep,
                               boolean transformVOI, TransMatrix transMatrix) {
-
+    	super(result, src);
         if (src == null) {
             MipavUtil.displayError("No source image provided to be subsampled.");
 

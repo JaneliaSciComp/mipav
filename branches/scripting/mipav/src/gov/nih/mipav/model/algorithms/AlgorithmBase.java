@@ -103,7 +103,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /**
      * A list of the ChangeListeners which are interested in the ChangeEvent. 
      */
-    private EventListenerList listenerList;
+    private EventListenerList listenerList = new EventListenerList();
 
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -127,7 +127,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @param  srcImage   Source image, should not be null.
      */
     public AlgorithmBase(ModelImage destImage, ModelImage srcImage) {
-        listenerList = new EventListenerList();
         this.destImage = destImage;
         this.srcImage = srcImage;
 
@@ -606,6 +605,15 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
     }
 
+    /**
+     * If there is a progress bar that is listening to the algorithm's progress change events, 
+     * this will retrieve that progress bar.  This function is really only here to support
+     * AlgorithmExtractSurface, AlgorithmExtractSurfaceCubes, and AlgorithmHeightFunction
+     * which use ModelQuadMesh and ModelTriangle Mesh (which do not follow the standard algorithmbase setup).
+     * This function should not be used elsewhere and will probably be removed (and modelquad/trianglemesh will
+     * be changed).
+     * @return a progressbar if there is one listening, null otherwise.
+     */
     public ViewJProgressBar getProgressChangeListener() {
     	ProgressChangeListener pListeners [] = getProgressChangeListeners();
         ViewJProgressBar pBar = null;
@@ -659,13 +667,15 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @param message the message for that specific progress value.
      */
     protected void fireProgressStateChanged(int value, String title, String message){
+    	
         Object[] listeners = listenerList.getListenerList();
         if(listeners == null){
             return;
         }
         
         //adjust value based on minProgress and maxProgress
-        if (value != -1) {
+        if (value != ViewJProgressBar.PROGRESS_VALUE_UNCHANGED &&
+        		value != ViewJProgressBar.PROGRESS_WINDOW_CLOSING) {
         	value = getProgressFromInt(value);
         }
         
@@ -686,7 +696,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @param message
      */
     protected void fireProgressStateChanged(String imageName, String message) {
-    	fireProgressStateChanged(-1, imageName, message);
+    	fireProgressStateChanged(ViewJProgressBar.PROGRESS_VALUE_UNCHANGED, imageName, message);
     }
     
     /**
@@ -695,7 +705,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @param message the new message to display on the progress bar
      */
     protected void fireProgressStateChanged(String message) {
-    	fireProgressStateChanged(-1, null, message);
+    	fireProgressStateChanged(ViewJProgressBar.PROGRESS_VALUE_UNCHANGED, null, message);
     }
     
     /**
@@ -708,36 +718,68 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         fireProgressStateChanged(value, null, null);
     }
     
+    /**
+     * Helper function to determine which values to pass on to linked algorithms (that will fire progress changes
+     * to the same progress bar).  You pass in the current progress and then the max desired progress....
+     * you do NOT adjust the progress yourself, you assume a 0-100 range always, so if the current progress
+     * of a certain algorithm was 50%, and you want the helper algorithm to run on an adjusted scale of 50% to 70%,
+     * then you pass 50 and 70 as current & desiredMax respectively.  if the algorithm passing this in was
+     * on a scale of 0->50, then the displayed progress will range from 25% to 35% (50% of 50->70)
+     * @param currentProgress current progress of algorithm on a 0->100 scale
+     * @param desiredMaxProgress max progress desired for linked algorithm
+     * @return array of 2 ints [current, max]
+     */
     public int [] generateProgressValues(int currentProgress, int desiredMaxProgress) {
     	return new int[] { getProgressFromInt(currentProgress), getProgressFromInt(desiredMaxProgress)};
     }
-    
-    public int generateMaxProgressValue(int desiredMaxProgress) {
-    	return getProgressFromInt(desiredMaxProgress);
-    }
-    
+
+    /**
+     * Returns the min progress value
+     * @return min progress value
+     */
     public int getMinProgressValue(){
         return minProgressValue;
     }
     
+    /**
+     * Sets the min progress value
+     * @param minProgressValue the minimum progress value
+     */
     public void setMinProgressValue(int minProgressValue){
         this.minProgressValue = minProgressValue;
     }
     
+    /**
+     * Returns the max progress value
+     * @return max progress value
+     */
     public int getMaxProgressValue(){
         return maxProgressValue;
     }
     
+    /**
+     * Sets the max progress value
+     * @param maxProgressValue the maximum progress value
+     */
     public void setMaxProgressValue(int maxProgressValue){
         this.maxProgressValue = maxProgressValue;
     }
 
-    public void setMinMaxProgressValues(int min, int max) {
+    /**
+     * Sets both the min and max progress values
+     * @param min the min progress value
+     * @param max the max progress value
+     */
+    public void setProgressValues(int min, int max) {
     	this.minProgressValue = min;
     	this.maxProgressValue = max;
     }
     
-    public void setMinMaxProgressValues(int [] minmax) {
+    /**
+     * Sets the min and max progress values from an array of two ints
+     * @param minmax array of two ints [min, max]
+     */
+    public void setProgressValues(int [] minmax) {
     	this.minProgressValue = minmax[0];
     	this.maxProgressValue = minmax[1];
     }

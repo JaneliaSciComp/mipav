@@ -35,8 +35,10 @@ public class ViewJProgressBar extends JFrame
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -4893646677987678693L;
 
+    public static final int PROGRESS_VALUE_UNCHANGED = -1;
+    
     /** DOCUMENT ME! */
-    public static final int PROGRESS_WINDOW_CLOSING = -1;
+    public static final int PROGRESS_WINDOW_CLOSING = -2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -281,7 +283,7 @@ public class ViewJProgressBar extends JFrame
         }
 
         /** Put this in here so you can change the message without updating the value */
-        if (value != -1) {
+        if (value != PROGRESS_VALUE_UNCHANGED) {
             updateValue(value);
         }
     }
@@ -418,6 +420,7 @@ public class ViewJProgressBar extends JFrame
      * @param  event  event that triggered function
      */
     public void windowClosing(WindowEvent event) {
+    	System.err.println("disposing");
         dispose();
     }
 

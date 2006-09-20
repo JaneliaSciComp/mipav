@@ -617,7 +617,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                         buffer, new int[] { srcImage.getExtents()[0],
                                 srcImage.getExtents()[1] }, GxxData, kExtents, false);
                 
-                xConvolver.setMinMaxProgressValues(generateProgressValues(min, max));
+                xConvolver.setProgressValues(generateProgressValues(min, max));
                 linkProgressToAlgorithm(xConvolver);
                 
             } else {
@@ -643,7 +643,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                                 srcImage.getExtents()[1] }, GyyData, kExtents,
                         false);
                 
-                yConvolver.setMinMaxProgressValues(generateProgressValues(min, max));
+                yConvolver.setProgressValues(generateProgressValues(min, max));
                 linkProgressToAlgorithm(yConvolver);
             
             }else{
@@ -759,7 +759,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                     srcImage.getExtents(), GxxData,
                     kExtents, false); // assume not color
             
-            xConvolver.setMinMaxProgressValues(generateProgressValues(min, min + Math.round(stepPerDimension)));
+            xConvolver.setProgressValues(generateProgressValues(min, min + Math.round(stepPerDimension)));
             linkProgressToAlgorithm(xConvolver);
         }else{
             xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer,
@@ -781,7 +781,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                     srcImage.getExtents(), GyyData,
                     kExtents, false); // assume not color
             
-            yConvolver.setMinMaxProgressValues(generateProgressValues(min + Math.round(stepPerDimension), min + Math.round(stepPerDimension*2)));
+            yConvolver.setProgressValues(generateProgressValues(min + Math.round(stepPerDimension), min + Math.round(stepPerDimension*2)));
             
             linkProgressToAlgorithm(yConvolver);
         }else{
@@ -807,7 +807,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                     srcImage.getExtents(), GzzData,
                     kExtents, false); // assume not color
             
-            zConvolver.setMinMaxProgressValues(generateProgressValues(min + Math.round(stepPerDimension*2), max));
+            zConvolver.setProgressValues(generateProgressValues(min + Math.round(stepPerDimension*2), max));
             
             linkProgressToAlgorithm(zConvolver);
         }else{

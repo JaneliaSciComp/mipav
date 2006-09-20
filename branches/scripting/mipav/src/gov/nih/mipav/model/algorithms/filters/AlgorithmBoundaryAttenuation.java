@@ -108,7 +108,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         
         
         AlgorithmMask maskAlgo = new AlgorithmMask(maskImage, srcImage, 1, true, true);
-        maskAlgo.setMinMaxProgressValues(generateProgressValues(0, 5));
+        maskAlgo.setProgressValues(generateProgressValues(0, 5));
         linkProgressToAlgorithm(maskAlgo);
         maskAlgo.run();
 
@@ -176,7 +176,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         float[] sigmas = new float[] { 2.0f, 2.0f, 2.0f * (xRes / zRes) };
         //start percentage now @ 50... will go to 70%
         AlgorithmGaussianBlurSep blurAlgo = new AlgorithmGaussianBlurSep(tmpImg, null, sigmas, false, false);
-        blurAlgo.setMinMaxProgressValues(generateProgressValues(50,70));
+        blurAlgo.setProgressValues(generateProgressValues(50,70));
         blurAlgo.setMask(srcImage.generateVOIMask());
         linkProgressToAlgorithm(blurAlgo);
         blurAlgo.run();

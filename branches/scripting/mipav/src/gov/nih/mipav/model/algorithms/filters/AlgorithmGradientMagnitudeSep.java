@@ -803,7 +803,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            xConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(xConvolver);
             xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -823,7 +823,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            yConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(yConvolver);
             yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -845,7 +845,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            zConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(zConvolver);
             zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -989,7 +989,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            xConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(xConvolver);
             xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -1008,7 +1008,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            yConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(yConvolver);
             yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -1027,7 +1027,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            zConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(zConvolver);
             zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -1520,7 +1520,8 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                 }
             }
         }
-
+        fireProgressStateChanged(100, null, "Calculating gradient magnitude ...");
+        
         if (threadStopped) {
             finalize();
 
@@ -1600,7 +1601,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            xConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(xConvolver);
             xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -1621,7 +1622,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            yConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(yConvolver);
             yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -1642,7 +1643,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            zConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(zConvolver);
             zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -1793,7 +1794,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            xConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(xConvolver);
             xConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -1812,7 +1813,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            yConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(yConvolver);
             yConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -1831,7 +1832,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            zConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(zConvolver);
             zConvolver.setRunningInSeparateThread(runningInSeparateThread);
 
@@ -2010,7 +2011,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            xConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             xConvolver.setRunningInSeparateThread(runningInSeparateThread);
             linkProgressToAlgorithm(xConvolver);
             
@@ -2033,7 +2034,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
             yConvolver.setRunningInSeparateThread(runningInSeparateThread);
-            yConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            yConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             linkProgressToAlgorithm(yConvolver);
             
             if (!entireImage) {
@@ -2053,7 +2054,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            zConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             zConvolver.setRunningInSeparateThread(runningInSeparateThread);
             linkProgressToAlgorithm(zConvolver);
             
@@ -2204,7 +2205,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(),
                                                                                      GxDataDerivative, GyDataRound,
                                                                                      GzDataRound, color);
-            xConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            xConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             xConvolver.setRunningInSeparateThread(runningInSeparateThread);
             linkProgressToAlgorithm(xConvolver);
             
@@ -2223,7 +2224,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataDerivative, GzDataRound,
                                                                                      color);
-            yConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            yConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             yConvolver.setRunningInSeparateThread(runningInSeparateThread);
             linkProgressToAlgorithm(yConvolver);
             
@@ -2242,7 +2243,7 @@ public class AlgorithmGradientMagnitudeSep extends AlgorithmBase {
                                                                                      srcImage.getExtents(), GxDataRound,
                                                                                      GyDataRound, GzDataDerivative,
                                                                                      color);
-            zConvolver.setMinMaxProgressValues(generateProgressValues(curPercent, maxPercent));
+            zConvolver.setProgressValues(generateProgressValues(curPercent, maxPercent));
             zConvolver.setRunningInSeparateThread(runningInSeparateThread);
             linkProgressToAlgorithm(zConvolver);
             

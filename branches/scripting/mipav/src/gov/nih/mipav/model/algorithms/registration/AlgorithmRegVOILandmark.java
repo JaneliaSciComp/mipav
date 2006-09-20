@@ -141,7 +141,7 @@ public class AlgorithmRegVOILandmark extends AlgorithmBase {
     public void runAlgorithm() {
         int i;
         gradientMagAlgo = new AlgorithmGradientMagnitude(gradMagVol, volume, sigmas, maskFlag, true);
-        gradientMagAlgo.setMinMaxProgressValues(generateProgressValues(0,10));
+        gradientMagAlgo.setProgressValues(generateProgressValues(0,10));
         
         try {
             gradientMagAlgo.setRunningInSeparateThread(runningInSeparateThread);

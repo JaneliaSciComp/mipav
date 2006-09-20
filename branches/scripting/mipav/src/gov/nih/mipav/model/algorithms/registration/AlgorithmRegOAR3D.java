@@ -2827,7 +2827,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                                                                getTolerance(degree), maxIter, bracketBound);
 
         linkProgressToAlgorithm(powell);
-        powell.setMinMaxProgressValues(generateProgressValues(60,100));
+        powell.setProgressValues(generateProgressValues(60,100));
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.run();
 
@@ -2919,7 +2919,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         fireProgressStateChanged("Optimizing with " + degree + " DOF");
         linkProgressToAlgorithm(powell);
-        powell.setMinMaxProgressValues(generateProgressValues(35,43));
+        powell.setProgressValues(generateProgressValues(35,43));
         powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.run();
@@ -2942,7 +2942,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                               bracketBound);
             linkProgressToAlgorithm(powell);
-            powell.setMinMaxProgressValues(generateProgressValues(43,51));
+            powell.setProgressValues(generateProgressValues(43,51));
             powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.run();
 
@@ -2961,7 +2961,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
                 powell = new AlgorithmPowellOpt3D(this, cog, 12, cost, item.initial, getTolerance(12), maxIter,
                                                   bracketBound);
                 linkProgressToAlgorithm(powell);
-                powell.setMinMaxProgressValues(generateProgressValues(51,60));
+                powell.setProgressValues(generateProgressValues(51,60));
                 powell.setRunningInSeparateThread(runningInSeparateThread);
                 powell.run();
 

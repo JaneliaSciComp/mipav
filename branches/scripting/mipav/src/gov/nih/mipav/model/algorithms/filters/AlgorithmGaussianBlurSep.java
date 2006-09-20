@@ -274,7 +274,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                             srcImage.getExtents()[1]
                         }, GxDataRound, GyDataRound, color);
                 
-                convolver.setMinMaxProgressValues(generateProgressValues(getMinProgressValue() + Math.round(stepProgressValuePerImage*s),
+                convolver.setProgressValues(generateProgressValues(getMinProgressValue() + Math.round(stepProgressValuePerImage*s),
                 		getMinProgressValue() + Math.round(stepProgressValuePerImage*(s+1))));
                 linkProgressToAlgorithm(convolver);
             }
@@ -378,7 +378,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                                 srcImage.getExtents()[2] }, GxDataRound,
                         GyDataRound, GzDataRound, color);
                 
-                convolver.setMinMaxProgressValues(generateProgressValues(getMinProgressValue()
+                convolver.setProgressValues(generateProgressValues(getMinProgressValue()
                                 + Math.round(stepProgressValuePerVolume * t),
                         getMinProgressValue()
                                 + Math.round(stepProgressValuePerVolume
@@ -489,7 +489,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
             } else {
                 convolver = new AlgorithmSeparableConvolver(resultBuffer, buffer, new int[] { srcImage.getExtents()[0], srcImage.getExtents()[1] }, GxDataRound, GyDataRound, color);
                 
-                convolver.setMinMaxProgressValues(generateProgressValues(getMinProgressValue() + Math.round(stepProgressValuePerImage * s), getMinProgressValue() + Math.round(stepProgressValuePerImage * (s + 1))));
+                convolver.setProgressValues(generateProgressValues(getMinProgressValue() + Math.round(stepProgressValuePerImage * s), getMinProgressValue() + Math.round(stepProgressValuePerImage * (s + 1))));
                 linkProgressToAlgorithm(convolver);
             }
             convolver.setRunningInSeparateThread(runningInSeparateThread);
@@ -595,7 +595,7 @@ public class AlgorithmGaussianBlurSep extends AlgorithmBase {
                                 srcImage.getExtents()[2] }, GxDataRound,
                         GyDataRound, GzDataRound, color);
                 
-                convolver.setMinMaxProgressValues(generateProgressValues(getMinProgressValue()
+                convolver.setProgressValues(generateProgressValues(getMinProgressValue()
                                 + Math.round(stepProgressValuePerVolume * t),
                         getMinProgressValue()
                                 + Math.round(stepProgressValuePerVolume

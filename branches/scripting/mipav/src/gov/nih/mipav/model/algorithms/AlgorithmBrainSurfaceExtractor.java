@@ -236,7 +236,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                         filterKernel,
                         filterContrast,
                         do25D);
-                filterAlgo.setMinMaxProgressValues(generateProgressValues(progressValueBounds[0],
+                filterAlgo.setProgressValues(generateProgressValues(progressValueBounds[0],
                 		progressValueBounds[1]));
                 linkProgressToAlgorithm(filterAlgo);
             }
@@ -282,7 +282,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             } else {
                 edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage,
                         resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
-                edgeAlgo.setMinMaxProgressValues(generateProgressValues(progressValueBounds[0],
+                edgeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0],
                 		progressValueBounds[1]));
                 linkProgressToAlgorithm(edgeAlgo);
             }
@@ -302,7 +302,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             } else {
                 edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage,
                         resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
-                edgeAlgo.setMinMaxProgressValues(generateProgressValues(progressValueBounds[0],
+                edgeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0],
                 		progressValueBounds[1]));
                 linkProgressToAlgorithm(edgeAlgo);
             }
@@ -427,7 +427,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                                                        erosionIterations, 0, 0, regionFlag);
             }
 
-            erodeAlgo.setMinMaxProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
+            erodeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
             
             linkProgressToAlgorithm(erodeAlgo);
         }
