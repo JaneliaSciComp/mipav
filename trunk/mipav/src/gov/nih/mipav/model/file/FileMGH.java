@@ -425,6 +425,7 @@ public class FileMGH extends FileBase {
             ca = 0.0f;
             cs = 0.0f;
         }
+        fileInfo.setResolutions(resolutions);
         matrix.setMatrix((double)-xr*resolutions[0], 0, 0);
         matrix.setMatrix((double)-yr*resolutions[1], 0, 1);
         matrix.setMatrix((double)-zr*resolutions[2], 0, 2);
