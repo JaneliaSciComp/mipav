@@ -504,7 +504,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0)  ) {
+                        if (progressBar != null && ((counter % mod) == 0)  ) {
                             progressBar.updateValueImmed(Math.round((float) counter / (length - 1) * 100));
                         }
 
@@ -631,7 +631,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0)  ) {
+                        if (progressBar != null && ((counter % mod) == 0)  ) {
                         	progressBar.updateValue(Math.round((float) counter / (length - 1) * 100), false);
                         }
 
@@ -770,7 +770,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0)  ) {
+                        if (progressBar != null && ((counter % mod) == 0)  ) {
                             progressBar.updateValueImmed(Math.round((float) counter / (length - 1) * 100));
                         }
 
@@ -910,7 +910,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0)  ) {
+                        if (progressBar != null && ((counter % mod) == 0)  ) {
                             progressBar.updateValue(Math.round((float) counter / (length - 1) * 100), false);
                         }
 
@@ -996,7 +996,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * @return  DOCUMENT ME!
      */
-    public static int[] getImageMargins(ModelImage srcImage, TransMatrix transMatrix, float dxOut, float dyOut) {
+    public  int[] getImageMargins(ModelImage srcImage, TransMatrix transMatrix, float dxOut, float dyOut) {
         int i;
         float xi = 0.f;
         float yi = 0.f;
@@ -2851,7 +2851,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             for (int l = 0; l < tDim; l++) {
 
-                if (((counter % mod) == 0)  ) {
+                if (progressBar != null && ((counter % mod) == 0)  ) {
                     progressBar.updateValue(Math.round((float) l / (tDim - 1) * 100));
                 }
 
@@ -3013,7 +3013,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                     for (int k = 0; k < zDim; k++) {
 
-                        if (((counter % mod) == 0)  ) {
+                        if (progressBar != null && ((counter % mod) == 0)  ) {
                             progressBar.updateValue(Math.round((float) counter / (length - 1) * 100), true);
                         }
 
@@ -3421,7 +3421,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                         for (int k = 0; k < zDim; k++) {
 
-                            if (((counter % mod) == 0) ) {
+                            if (progressBar != null && ((counter % mod) == 0) ) {
                                 progressBar.updateValue(Math.round((float) counter / (length - 1) * 100), true);
                             }
 
