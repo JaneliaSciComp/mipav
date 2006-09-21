@@ -437,7 +437,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     closeAlgo2D.addListener(this);
 
                     createProgressBar(image.getImageName(), closeAlgo2D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -449,7 +449,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                         }
                     } else {
 
-                    	closeAlgo2D.run();
+                        closeAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
                     MipavUtil.displayError("Dialog close: unable to allocate enough memory");
@@ -481,7 +481,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     closeAlgo2D.addListener(this);
 
                     createProgressBar(image.getImageName(), closeAlgo2D);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -542,7 +542,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     closeAlgo3D.addListener(this);
 
                     createProgressBar(image.getImageName(), closeAlgo3D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -584,7 +584,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     closeAlgo3D.addListener(this);
 
                     createProgressBar(image.getImageName(), closeAlgo3D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -655,7 +655,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     closeAlgo25D.addListener(this);
 
                     createProgressBar(image.getImageName(), closeAlgo25D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -701,7 +701,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
                     closeAlgo25D.addListener(this);
 
                     createProgressBar(image.getImageName(), closeAlgo25D);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -771,7 +771,7 @@ public class JDialogClose extends JDialogScriptableBase implements AlgorithmInte
         itersD = scriptParameters.getParams().getInt("dilation_iterations");
         itersE = scriptParameters.getParams().getInt("erosion_iterations");
         kernel = scriptParameters.getParams().getInt("kernel_type");
-        kernelSize = scriptParameters.getParams().getInt("kernel_size");
+        kernelSize = scriptParameters.getParams().getFloat("kernel_size");
     }
 
     /**

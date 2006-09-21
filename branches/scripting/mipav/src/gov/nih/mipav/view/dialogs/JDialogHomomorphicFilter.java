@@ -451,13 +451,13 @@ public class JDialogHomomorphicFilter extends JDialogScriptableBase implements A
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+        if (scriptParameters.doOutputNewImage()) {
             setDisplayLocNew();
         } else {
             setDisplayLocReplace();
         }
 
-        setImage25D(scriptParameters.doProcessWholeImage());
+        setImage25D(scriptParameters.doProcess3DAs25D());
         setFreq1(scriptParameters.getParams().getFloat("cutoff_freq"));
         setButterworthOrder(scriptParameters.getParams().getInt("butterworth_order"));
         setLowGain(scriptParameters.getParams().getFloat("low_freq_gain"));

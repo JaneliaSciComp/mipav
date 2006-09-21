@@ -237,68 +237,6 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        int numSelectedSlices = 0;
-        for (int i = 0; i < nSlices; i++) {
-            if (checkListRemove[i]) {
-                numSelectedSlices++;
-            }
-        }
-        
-        int[] selectedSlices = new int[numSelectedSlices];
-        for (int i = 0, j = 0; i < nSlices; i++) {
-            if (checkListRemove[i]) {
-                selectedSlices[j++] = i;
-            }
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("user_selected_slices", selectedSlices));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-
-        int tSlices = image.getExtents()[3];
-        
-        boolean[] checkListRemoved = new boolean[tSlices];
-        for (int i = 0; i < tSlices; i++) {
-            checkListRemoved[i] = false;
-        }
-        
-        int[] selectedSlices = scriptParameters.getParams().getList("user_selected_slices").getAsIntArray();
-        for (int i = 0; i < selectedSlices.length; i++) {
-            checkListRemoved[selectedSlices[i]] = true;
-        }
-        
-        setCheckListRemove(checkListRemoved);
-        
-        nChecked = 0;
-        for (int i = 0; i < nSlices; i++) {
-
-            if (checkListRemove[i]) {
-                nChecked++;
-            }
-        }
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
 
     /**
      * Accessor that sets the which slices to remove according to the boolean array paramater.
@@ -350,9 +288,9 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 removeTSlicesAlgo.addListener(this);
-                
+
                 createProgressBar(image.getImageName(), removeTSlicesAlgo);
-                
+
                 setVisible(false); // Hide dialog
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -370,11 +308,80 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
 
                 return;
             }
-        } else if (this.numberChecked() == 0) {
+        } else if (nChecked == 0) {
             MipavUtil.displayError("No slices were selected!  Select some slices.");
         } else {
             MipavUtil.displayError("All slices are selected!  Unselect some slices.");
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        nSlices = image.getExtents()[3];
+
+        boolean[] checkListRemoved = new boolean[nSlices];
+
+        for (int i = 0; i < nSlices; i++) {
+            checkListRemoved[i] = false;
+        }
+
+        int[] selectedSlices = scriptParameters.getParams().getList("user_selected_slices").getAsIntArray();
+
+        for (int i = 0; i < selectedSlices.length; i++) {
+            checkListRemoved[selectedSlices[i]] = true;
+        }
+
+        setCheckListRemove(checkListRemoved);
+
+        nChecked = 0;
+
+        for (int i = 0; i < nSlices; i++) {
+
+            if (checkListRemove[i]) {
+                nChecked++;
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+
+        int numSelectedSlices = 0;
+
+        for (int i = 0; i < nSlices; i++) {
+
+            if (checkListRemove[i]) {
+                numSelectedSlices++;
+            }
+        }
+
+        int[] selectedSlices = new int[numSelectedSlices];
+
+        for (int i = 0, j = 0; i < nSlices; i++) {
+
+            if (checkListRemove[i]) {
+                selectedSlices[j++] = i;
+            }
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("user_selected_slices", selectedSlices));
     }
 
 

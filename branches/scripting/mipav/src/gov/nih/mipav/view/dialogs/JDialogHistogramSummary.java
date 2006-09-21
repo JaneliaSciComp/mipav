@@ -229,7 +229,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
             histAlgo.addListener(this);
 
             createProgressBar(image.getImageName(), histAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -268,6 +268,7 @@ public class JDialogHistogramSummary extends JDialogScriptableBase implements Al
                                          "This parameter (RGB_offset) is required for the processing of color images.  Please re-record this script using a color image.");
         }
 
+        radWholeImage = new JRadioButton("Whole image");
         radWholeImage.setSelected(scriptParameters.doProcessWholeImage());
     }
 

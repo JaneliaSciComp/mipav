@@ -154,6 +154,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
      * @param  algorithm  algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmNoise) {
             image.clearMask();
 
@@ -218,44 +219,6 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("noise_type", noiseType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("starting_range", min));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setNoiseType(scriptParameters.getParams().getInt("noise_type"));
-        setNoiseLevel(scriptParameters.getParams().getFloat("starting_range"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
@@ -277,7 +240,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
      *
      * @param  n  noise type
      */
-    public void setNoiseLevel(float n) {
+    public void setNoiseLevel(double n) {
         min = n;
     }
 
@@ -331,7 +294,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     randomAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), randomAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -342,6 +305,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             randomAlgo.setProgressBarVisible(false);
                         }
@@ -373,7 +337,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     randomAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), randomAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -398,6 +362,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             randomAlgo.setProgressBarVisible(false);
                         }
@@ -448,7 +413,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     randomAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), randomAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -459,6 +424,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             randomAlgo.setProgressBarVisible(false);
                         }
@@ -489,7 +455,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     randomAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), randomAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -514,6 +480,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             randomAlgo.setProgressBarVisible(false);
                         }
@@ -527,6 +494,45 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                 }
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setNoiseType(scriptParameters.getParams().getInt("noise_type"));
+        setNoiseLevel(scriptParameters.getParams().getDouble("starting_range"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("noise_type", noiseType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("starting_range", min));
     }
 
 

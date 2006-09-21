@@ -120,7 +120,7 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
         userInterface = ViewUserInterface.getReference();
         init();
     }
-    
+
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -202,6 +202,7 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmRGBtoGray) {
 
             if ((RGBAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -241,130 +242,10 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
-            
+
             RGBAlgo.finalize();
             RGBAlgo = null;
         }
-    }
-
-    /**
-     * Calls the algorithm.
-     */
-    protected void callAlgorithm() {
-
-        if (displayLoc == NEW) {
-
-            try {
-
-                if (imageA.getType() == ModelStorageBase.ARGB) {
-                    resultImage = new ModelImage(ModelImage.UBYTE, imageA.getExtents(),
-                                                 (imageA.getImageName() + "Gray"), userInterface);
-                } else if (imageA.getType() == ModelStorageBase.ARGB_USHORT) {
-                    resultImage = new ModelImage(ModelImage.USHORT, imageA.getExtents(),
-                                                 (imageA.getImageName() + "Gray"), userInterface);
-                } else if (imageA.getType() == ModelStorageBase.ARGB_FLOAT) {
-                    resultImage = new ModelImage(ModelImage.FLOAT, imageA.getExtents(),
-                                                 (imageA.getImageName() + "Gray"), userInterface);
-                }
-
-                // get some important information from imageA and put it in
-                // the result image
-                for (int n = 0; n < imageA.getFileInfo().length; n++) {
-                    fInfoBase = (FileInfoBase) (imageA.getFileInfo(n).clone());
-                    fInfoBase.setDataType(resultImage.getType());
-                    resultImage.setFileInfo(fInfoBase, n);
-                }
-
-                // Make algorithm
-                RGBAlgo = new AlgorithmRGBtoGray(resultImage, imageA, redValue, greenValue, blueValue, thresholdAverage,
-                                                 threshold, intensityAverage);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                RGBAlgo.addListener(this);
-
-                createProgressBar(imageA.getImageName(), RGBAlgo);
-                
-                // Hide dialog
-                setVisible(false);
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (RGBAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        RGBAlgo.setProgressBarVisible(false);
-                    }
-
-                    RGBAlgo.run();
-                }
-            } catch (OutOfMemoryError x) {
-
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up memory of result image
-                    resultImage = null;
-                }
-
-                System.gc();
-                MipavUtil.displayError("Dialog RGB to Gray: unable to allocate enough memory");
-
-                return;
-            }
-        } // if (displayLoc == NEW)
-        else { // displayLoc == REPLACE
-
-            try {
-
-                // No need to make new image space because the user has choosen to replace the source image
-                // Make the algorithm class
-                // Make algorithm
-                RGBAlgo = new AlgorithmRGBtoGray(imageA, redValue, greenValue, blueValue, thresholdAverage, threshold,
-                                                 intensityAverage);
-
-                // This is very important. Adding this object as a listener allows the algorithm to
-                // notify this object when it has completed of failed. See algorithm performed event.
-                // This is made possible by implementing AlgorithmedPerformed interface
-                RGBAlgo.addListener(this);
-
-                // Hide the dialog since the algorithm is about to run.
-                setVisible(false);
-
-                // These next lines set the titles in all frames where the source image is displayed to
-                // "locked - " image name so as to indicate that the image is now read/write locked!
-                // The image frames are disabled and then unregisted from the userinterface until the
-                // algorithm has completed.
-                /*Vector imageFrames = imageA.getImageFrameVector();
-                 *
-                 * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i] = (
-                 * (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
-                 * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled( false );
-                 * userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) );}*/
-
-                if (isRunInSeparateThread()) {
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (RGBAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        RGBAlgo.setProgressBarVisible(false);
-                    }
-
-                    RGBAlgo.run();
-                }
-
-            } catch (OutOfMemoryError x) {
-                System.gc();
-                MipavUtil.displayError("Dialog RGBtoGRAY: unable to allocate enough memory");
-
-                return;
-            }
-        } // displayLoc == REPLACE
     }
 
     /**
@@ -374,49 +255,6 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(imageA);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_values", new float[] {redValue, greenValue, blueValue}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold_average", thresholdAverage));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_intensity_average", intensityAverage));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        imageA = scriptParameters.retrieveInputImage();
-        userInterface = imageA.getUserInterface();
-        parentFrame = imageA.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        float[] rgb = scriptParameters.getParams().getList("rgb_values").getAsFloatArray();
-        setRGBValues(rgb[0], rgb[1], rgb[2]);
-        setThresholdAverage(scriptParameters.getParams().getBoolean("do_theshold_average"));
-        setThreshold(scriptParameters.getParams().getFloat("threshold"));
-        setIntensityAverage(scriptParameters.getParams().getBoolean("do_intensity_average"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 
     /**
@@ -500,6 +338,173 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
         if (thresholdAverage) {
             this.intensityAverage = false;
         }
+    }
+
+    /**
+     * Calls the algorithm.
+     */
+    protected void callAlgorithm() {
+
+        if (displayLoc == NEW) {
+
+            try {
+
+                if (imageA.getType() == ModelStorageBase.ARGB) {
+                    resultImage = new ModelImage(ModelImage.UBYTE, imageA.getExtents(),
+                                                 (imageA.getImageName() + "Gray"), userInterface);
+                } else if (imageA.getType() == ModelStorageBase.ARGB_USHORT) {
+                    resultImage = new ModelImage(ModelImage.USHORT, imageA.getExtents(),
+                                                 (imageA.getImageName() + "Gray"), userInterface);
+                } else if (imageA.getType() == ModelStorageBase.ARGB_FLOAT) {
+                    resultImage = new ModelImage(ModelImage.FLOAT, imageA.getExtents(),
+                                                 (imageA.getImageName() + "Gray"), userInterface);
+                }
+
+                // get some important information from imageA and put it in
+                // the result image
+                for (int n = 0; n < imageA.getFileInfo().length; n++) {
+                    fInfoBase = (FileInfoBase) (imageA.getFileInfo(n).clone());
+                    fInfoBase.setDataType(resultImage.getType());
+                    resultImage.setFileInfo(fInfoBase, n);
+                }
+
+                // Make algorithm
+                RGBAlgo = new AlgorithmRGBtoGray(resultImage, imageA, redValue, greenValue, blueValue, thresholdAverage,
+                                                 threshold, intensityAverage);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                RGBAlgo.addListener(this);
+
+                createProgressBar(imageA.getImageName(), RGBAlgo);
+
+                // Hide dialog
+                setVisible(false);
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (RGBAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    if (!userInterface.isAppFrameVisible()) {
+                        RGBAlgo.setProgressBarVisible(false);
+                    }
+
+                    RGBAlgo.run();
+                }
+            } catch (OutOfMemoryError x) {
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                System.gc();
+                MipavUtil.displayError("Dialog RGB to Gray: unable to allocate enough memory");
+
+                return;
+            }
+        } // if (displayLoc == NEW)
+        else { // displayLoc == REPLACE
+
+            try {
+
+                // No need to make new image space because the user has choosen to replace the source image
+                // Make the algorithm class
+                // Make algorithm
+                RGBAlgo = new AlgorithmRGBtoGray(imageA, redValue, greenValue, blueValue, thresholdAverage, threshold,
+                                                 intensityAverage);
+
+                // This is very important. Adding this object as a listener allows the algorithm to
+                // notify this object when it has completed of failed. See algorithm performed event.
+                // This is made possible by implementing AlgorithmedPerformed interface
+                RGBAlgo.addListener(this);
+
+                // Hide the dialog since the algorithm is about to run.
+                setVisible(false);
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // "locked - " image name so as to indicate that the image is now read/write locked!
+                // The image frames are disabled and then unregisted from the userinterface until the
+                // algorithm has completed.
+                /*Vector imageFrames = imageA.getImageFrameVector();
+                 *
+                 * titles = new String[imageFrames.size()]; for ( int i = 0; i < imageFrames.size(); i++ ) { titles[i] = (
+                 * (Frame) ( imageFrames.elementAt( i ) ) ).getTitle(); ( (Frame) ( imageFrames.elementAt( i ) )
+                 * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled( false );
+                 * userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) );}*/
+
+                if (isRunInSeparateThread()) {
+
+                    // Start the thread as a low priority because we wish to still have user interface work fast.
+                    if (RGBAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                        MipavUtil.displayError("A thread is already running on this object");
+                    }
+                } else {
+
+                    if (!userInterface.isAppFrameVisible()) {
+                        RGBAlgo.setProgressBarVisible(false);
+                    }
+
+                    RGBAlgo.run();
+                }
+
+            } catch (OutOfMemoryError x) {
+                System.gc();
+                MipavUtil.displayError("Dialog RGBtoGRAY: unable to allocate enough memory");
+
+                return;
+            }
+        } // displayLoc == REPLACE
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage();
+        userInterface = imageA.getUserInterface();
+        parentFrame = imageA.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        float[] rgb = scriptParameters.getParams().getList("rgb_values").getAsFloatArray();
+        setRGBValues(rgb[0], rgb[1], rgb[2]);
+        setThresholdAverage(scriptParameters.getParams().getBoolean("do_threshold_average"));
+        setThreshold(scriptParameters.getParams().getFloat("threshold"));
+        setIntensityAverage(scriptParameters.getParams().getBoolean("do_intensity_average"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_values",
+                                                                       new float[] { redValue, greenValue, blueValue }));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold_average", thresholdAverage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_intensity_average", intensityAverage));
     }
 
     /**

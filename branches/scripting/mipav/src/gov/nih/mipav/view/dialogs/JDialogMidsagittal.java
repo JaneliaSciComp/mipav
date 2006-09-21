@@ -35,9 +35,6 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -54,7 +51,6 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
     public JDialogMidsagittal(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
 
@@ -94,6 +90,7 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -112,7 +109,7 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
                 resultImage.clearMask();
 
                 try {
-                    new ViewJFrameImage(resultImage, null, userInterface.getNewFrameLocation());
+                    new ViewJFrameImage(resultImage, null, ViewUserInterface.getReference().getNewFrameLocation());
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -131,7 +128,7 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
 
         dispose();
     }
-    
+
     /**
      * Accessor that returns the image.
      *
@@ -140,25 +137,19 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-    }
 
     /**
      * Loads the default settings from Preferences to set up the dialog.
      */
     public void loadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
-        
+
         if (defaultsString != null) {
+
             try {
                 // no params
             } catch (Exception ex) {
+
                 // since there was a problem parsing the defaults string, start over with the original defaults
                 Preferences.debug("Resetting defaults for dialog: " + getDialogName());
                 Preferences.removeProperty(getDialogName());
@@ -172,26 +163,13 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
     public void saveDefaults() {
         Preferences.saveDialogDefaults(getDialogName(), new String());
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
+
         try {
 
             // Make algorithm
@@ -203,7 +181,7 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
             alignAlgo.addListener(this);
 
             createProgressBar(image.getImageName(), alignAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -214,10 +192,6 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    alignAlgo.setProgressBarVisible(false);
-                }
-
                 alignAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -226,6 +200,28 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
 
             return;
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
     }
 
     /**

@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -55,6 +56,9 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
     private int max, min;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
@@ -68,8 +72,6 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
-    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -131,6 +133,7 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -242,44 +245,6 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
-        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
-                (image.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-        
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
@@ -317,7 +282,7 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
                     idObjectsAlgo2D.addListener(this);
 
                     createProgressBar(image.getImageName(), idObjectsAlgo2D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -357,7 +322,7 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
                     idObjectsAlgo2D.addListener(this);
 
                     createProgressBar(image.getImageName(), idObjectsAlgo2D);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -382,6 +347,7 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             idObjectsAlgo2D.setProgressBarVisible(false);
                         }
@@ -424,7 +390,7 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
                     idObjectsAlgo3D.addListener(this);
 
                     createProgressBar(image.getImageName(), idObjectsAlgo3D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -435,6 +401,7 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             idObjectsAlgo3D.setProgressBarVisible(false);
                         }
@@ -470,7 +437,7 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
                     idObjectsAlgo3D.addListener(this);
 
                     createProgressBar(image.getImageName(), idObjectsAlgo3D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -495,6 +462,7 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             idObjectsAlgo3D.setProgressBarVisible(false);
                         }
@@ -511,15 +479,59 @@ public class JDialogIDObjects extends JDialogScriptableBase implements Algorithm
     }
 
     /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        int[] objectRange = scriptParameters.getParams().getList("object_size_range").getAsIntArray();
+        min = objectRange[0];
+        max = objectRange[1];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+        scriptParameters.getParams().put(ParameterFactory.newParameter("object_size_range", new int[] { min, max }));
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
         setForeground(Color.black);
 
         setTitle("Identify objects");
-        
+
         outputPanel = new JPanelAlgorithmOutputOptions(image);
-        
+
         JPanel mainPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();

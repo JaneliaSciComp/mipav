@@ -276,7 +276,7 @@ public class JDialogMatchImages extends JDialogScriptableBase implements Algorit
      */
     protected void setGUIFromParams() {
         imageA = scriptParameters.retrieveInputImage(1);
-        imageA = scriptParameters.retrieveInputImage(2);
+        imageB = scriptParameters.retrieveInputImage(2);
 
         userInterface = imageA.getUserInterface();
         parentFrame = imageA.getParentFrame();

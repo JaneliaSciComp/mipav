@@ -44,8 +44,11 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     /** DOCUMENT ME! */
     private ButtonGroup group;
 
-    /** source image */
+    /** source image. */
     private ModelImage image;
+
+    /** DOCUMENT ME! */
+    private float imaginaryValue = 0.0f;
 
     /** DOCUMENT ME! */
     private JPanel inputPanel;
@@ -66,12 +69,18 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     private int opType;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private JRadioButton radioClip;
 
     /** DOCUMENT ME! */
     private JRadioButton radioPromote;
 
-    /** result image */
+    /** DOCUMENT ME! */
+    private float realValue;
+
+    /** result image. */
     private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
@@ -88,14 +97,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private float realValue;
-
-    /** DOCUMENT ME! */
-    private float imaginaryValue = 0.0f;
-    
-    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -299,45 +300,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
-        
-        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
-        scriptParameters.getParams().put(ParameterFactory.newParameter("real_value", realValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("imaginary_value", imaginaryValue));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("operator_type", opType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type_clip_mode", clipMode));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        
-        setRealValue(scriptParameters.getParams().getFloat("real_value"));
-        setImaginaryValue(scriptParameters.getParams().getFloat("imaginary_value"));
-        setOperator(scriptParameters.getParams().getInt("operator_type"));
-        setClipMode(scriptParameters.getParams().getInt("data_type_clip_mode"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     // *******************************************************************
     // ************************* Item Events ****************************
@@ -419,7 +381,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 // System.err.println("defaultsSTring is: "+ defaultsString);
 
                 outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
-                
+
                 textValue.setText(st.nextToken());
 
                 String iString = st.nextToken();
@@ -473,6 +435,15 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
     }
 
     /**
+     * Accessor that sets the imaginaryValue to be used when performing the algorithm.
+     *
+     * @param  v  realValue
+     */
+    public void setImaginaryValue(float v) {
+        imaginaryValue = v;
+    }
+
+    /**
      * Accessor that sets the operator type.
      *
      * @param  n  operator type
@@ -488,15 +459,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
      */
     public void setRealValue(float v) {
         realValue = v;
-    }
-
-    /**
-     * Accessor that sets the imaginaryValue to be used when performing the algorithm.
-     *
-     * @param  v  realValue
-     */
-    public void setImaginaryValue(float v) {
-        imaginaryValue = v;
     }
 
     /**
@@ -532,7 +494,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     }
 
                     // Make algorithm
-                    mathAlgo = new AlgorithmImageMath(resultImage, image, opType, realValue, imaginaryValue, clipMode, outputPanel.isProcessWholeImageSet());
+                    mathAlgo = new AlgorithmImageMath(resultImage, image, opType, realValue, imaginaryValue, clipMode,
+                                                      outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -540,7 +503,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     mathAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), mathAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -551,6 +514,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             mathAlgo.setProgressBarVisible(false);
                         }
@@ -575,7 +539,8 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    mathAlgo = new AlgorithmImageMath(image, opType, realValue, imaginaryValue, clipMode, outputPanel.isProcessWholeImageSet());
+                    mathAlgo = new AlgorithmImageMath(image, opType, realValue, imaginaryValue, clipMode,
+                                                      outputPanel.isProcessWholeImageSet());
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -583,7 +548,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                     mathAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), mathAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -608,6 +573,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             mathAlgo.setProgressBarVisible(false);
                         }
@@ -622,6 +588,47 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                 }
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        setRealValue(scriptParameters.getParams().getFloat("real_value"));
+        setImaginaryValue(scriptParameters.getParams().getFloat("imaginary_value"));
+        setOperator(scriptParameters.getParams().getInt("operator_type"));
+        setClipMode(scriptParameters.getParams().getInt("data_type_clip_mode"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+        scriptParameters.getParams().put(ParameterFactory.newParameter("real_value", realValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("imaginary_value", imaginaryValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("operator_type", opType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type_clip_mode", clipMode));
     }
 
     /**
@@ -740,7 +747,7 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
         inputPanel.add(radioClip, gbc);
         gbc.gridy = yPos++;
         inputPanel.add(radioPromote, gbc);
-        
+
         outputPanel = new JPanelAlgorithmOutputOptions(image);
 
         JPanel mainPanel = new JPanel(new GridBagLayout());

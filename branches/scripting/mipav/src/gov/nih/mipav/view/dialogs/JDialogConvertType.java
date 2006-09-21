@@ -4,8 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -24,7 +24,8 @@ import javax.swing.*;
  * @version  1.0 Jan 25, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogConvertType extends JDialogScriptableBase implements AlgorithmInterface, ItemListener, DialogDefaultsInterface {
+public class JDialogConvertType extends JDialogScriptableBase
+        implements AlgorithmInterface, ItemListener, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -187,92 +188,11 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
-    /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws ParserException If there is a problem creating/recording the new parameters.
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        
-        scriptParameters.storeProcess3DAs25D(processIndep);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type", dataType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("is_big_endian", endianess));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_default_input_ranges", useDefaultRanges));
-        if (!useDefaultRanges) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("input_range", new double[] {inTempMin, inTempMax}));
-        }
-        scriptParameters.getParams().put(ParameterFactory.newParameter("output_range", new double[] {outTempMin, outTempMax}));
-    }
-
-    /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.doOutputNewImage()) {
-            displayLoc = NEW;
-        } else {
-            displayLoc = REPLACE;
-        }
-        
-        processIndep = scriptParameters.doProcess3DAs25D();
-        
-        dataType = scriptParameters.getParams().getInt("dataType");
-        endianess = scriptParameters.getParams().getBoolean("is_big_endian");
-        
-        useDefaultRanges = scriptParameters.getParams().getBoolean("do_use_default_input_ranges");
-        if (useDefaultRanges) {
-            double[] inRange = scriptParameters.getParams().getList("input_range").getAsDoubleArray();
-            inTempMin = inRange[0];
-            inTempMax = inRange[1];
-        }
-        
-        double[] outRange = scriptParameters.getParams().getList("output_range").getAsDoubleArray();
-        outTempMin = outRange[0];
-        outTempMax = outRange[1];
-        
-        if (inTempMin < inTempMax) {
-            MipavUtil.displayError("Input minimum must be less than the input maximum (" + inTempMin + " >= " + inTempMax + ").");
-            return;
-        }
-        
-        if (outTempMin < outTempMax) {
-            MipavUtil.displayError("Output minimum must be less than the output maximum (" + outTempMin + " >= " + outTempMax + ").");
-            return;
-        }
-        
-        if (inTempMin < image.getMin()) {
-            MipavUtil.displayError("Input minimum must be within the range of the input image (" + inTempMin + " < " + image.getMin() + ").");
-            return;
-        }
-        
-        if (inTempMax > image.getMax()) {
-            MipavUtil.displayError("Input maximum must be within the range of the input image (" + inTempMax + " > " + image.getMax() + ").");
-            return;
-        }
-    }
-
-    /**
-     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the
-     * image table). Defaults to no action, override to actually have it do something.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Closes dialog box when the OK button is pressed and sets the variables.
-     * 
-     * @param event Event that triggers this function
+     *
+     * @param  event  Event that triggers this function
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -343,6 +263,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -443,7 +364,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
+
     /**
      * Sets the flags for the checkboxes and resets labels.
      *
@@ -681,7 +602,6 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
- 
 
     /**
      * Accessor that sets the data type for what the converted image is to be.
@@ -804,8 +724,8 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                 try {
 
                     // Make result image of the new data type
-                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(),
-                                                                                      "_changed"), userInterface);
+                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_changed"),
+                                                 userInterface);
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
@@ -817,7 +737,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                     changeTypeAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), changeTypeAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -828,7 +748,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                     
+
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -854,9 +774,9 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), changeTypeAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -881,7 +801,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                       
+
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -919,8 +839,8 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                 try {
 
                     // Make result image of the new data type
-                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(),
-                                                                                      "_changed"), userInterface);
+                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_changed"),
+                                                 userInterface);
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
@@ -932,7 +852,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                     changeTypeAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), changeTypeAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -943,7 +863,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                      
+
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -970,7 +890,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                     changeTypeAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), changeTypeAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -995,7 +915,7 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                       
+
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -1005,6 +925,104 @@ public class JDialogConvertType extends JDialogScriptableBase implements Algorit
                 }
             }
         }
+    }
+
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the
+     * image table). Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+
+        processIndep = scriptParameters.doProcess3DAs25D();
+
+        dataType = scriptParameters.getParams().getInt("data_type");
+        endianess = scriptParameters.getParams().getBoolean("is_big_endian");
+
+        useDefaultRanges = scriptParameters.getParams().getBoolean("do_use_default_input_ranges");
+
+        if (useDefaultRanges) {
+            setDefaultRanges();
+        } else {
+            double[] inRange = scriptParameters.getParams().getList("input_range").getAsDoubleArray();
+            inTempMin = inRange[0];
+            inTempMax = inRange[1];
+        }
+
+        double[] outRange = scriptParameters.getParams().getList("output_range").getAsDoubleArray();
+        outTempMin = outRange[0];
+        outTempMax = outRange[1];
+
+        if (inTempMin >= inTempMax) {
+            MipavUtil.displayError("Input minimum must be less than the input maximum (" + inTempMin + " >= " +
+                                   inTempMax + ").");
+
+            return;
+        }
+
+        if (outTempMin >= outTempMax) {
+            MipavUtil.displayError("Output minimum must be less than the output maximum (" + outTempMin + " >= " +
+                                   outTempMax + ").");
+
+            return;
+        }
+
+        if (inTempMin < image.getMin()) {
+            MipavUtil.displayError("Input minimum must be within the range of the input image (" + inTempMin + " < " +
+                                   image.getMin() + ").");
+
+            return;
+        }
+
+        if (inTempMax > image.getMax()) {
+            MipavUtil.displayError("Input maximum must be within the range of the input image (" + inTempMax + " > " +
+                                   image.getMax() + ").");
+
+            return;
+        }
+    }
+
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     *
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.storeProcess3DAs25D(processIndep);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type", dataType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_big_endian", endianess));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_default_input_ranges",
+                                                                       useDefaultRanges));
+
+        if (!useDefaultRanges) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("input_range",
+                                                                           new double[] { inTempMin, inTempMax }));
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("output_range",
+                                                                       new double[] { outTempMin, outTempMax }));
     }
 
     /**

@@ -51,9 +51,6 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
     // or if the source image is to be replaced
 
     /** DOCUMENT ME! */
-    private boolean dontOpenFrame = false;
-
-    /** DOCUMENT ME! */
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
@@ -171,9 +168,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                     try {
 
                         // put the new image into a new frame
-                        if (!dontOpenFrame) {
-                            new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
-                        }
+                        new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Pad With Slices reports: out of memory; " +
                                                "unable to open a new frame");
@@ -246,42 +241,6 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("padding_mode", padMode));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setPadMode(scriptParameters.getParams().getInt("padding_mode"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
@@ -297,15 +256,6 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
      */
     public void setDisplayLocReplace() {
         displayLoc = REPLACE;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  dontOpenFrame  DOCUMENT ME!
-     */
-    public void setDontOpenFrame(boolean dontOpenFrame) {
-        this.dontOpenFrame = dontOpenFrame;
     }
 
     /**
@@ -345,9 +295,9 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 padSlicesAlgo.addListener(this);
-                
+
                 createProgressBar(image.getImageName(), padSlicesAlgo);
-                
+
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {
@@ -357,6 +307,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
+
                     if (!userInterface.isAppFrameVisible()) {
                         padSlicesAlgo.setProgressBarVisible(false);
                     }
@@ -388,9 +339,9 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 padSlicesAlgo.addListener(this);
-                
+
                 createProgressBar(image.getImageName(), padSlicesAlgo);
-                
+
                 setVisible(false); // Hide dialog
 
                 // These next lines set the titles in all frames where the source image is displayed to
@@ -414,6 +365,7 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
+
                     if (!userInterface.isAppFrameVisible()) {
                         padSlicesAlgo.setProgressBarVisible(false);
                     }
@@ -429,6 +381,51 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
         } // end if display is LOC or REPLACE
 
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        nSlices = image.getExtents()[2];
+        paddedSlices = dimPowerOfTwo(nSlices);
+
+        if (nSlices == paddedSlices) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1),
+                                         nSlices + " slices is already a power of 2");
+        }
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setPadMode(scriptParameters.getParams().getInt("padding_mode"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("padding_mode", padMode));
     }
 
     /**

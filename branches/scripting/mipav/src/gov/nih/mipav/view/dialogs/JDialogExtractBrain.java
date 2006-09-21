@@ -2,8 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -166,15 +166,15 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
         setForeground(Color.black);
         image = im;
-        userInterface =  ViewUserInterface.getReference();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
-        
+
         centerOfMass = computeCenter(image, orientation, useSphere);
         setVariables();
-        
+
         // use the center of mass if there was a problem with the defaults or the user wants to use it explicitly
-         if (useCenterOfMass || (initCenterX == -1) || (initCenterY == -1) || (initCenterZ == -1)) {
+        if (useCenterOfMass || (initCenterX == -1) || (initCenterY == -1) || (initCenterZ == -1)) {
             initCenterPoint = centerOfMass;
             initCenterX = initCenterPoint.x;
             initCenterY = initCenterPoint.y;
@@ -183,65 +183,11 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             initCenterYTF.setText("" + initCenterY);
             initCenterZTF.setText("" + initCenterZ);
         }
-        
+
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
-    
-    /**
-     * Record the parameters just used to run this algorithm in a script.
-     * 
-     * @throws ParserException If there is a problem creating/recording the new parameters.
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("orientation_type", orientation));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_sphere_estimation", useSphere));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_just_init_ellipse", justEllipse));
-        scriptParameters.storeNumIterations(nIterations);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("depth", depth));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("image_ratio", imageRatio));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("stiffness", stiffness));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_second_stage_erosion", secondStageErosion));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("factor_above_median_to_erode", aboveMedian));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_extract_paint", extractToPaint));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_init_with_center_of_mass", useCenterOfMass));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("init_center_point", new float[] {initCenterPoint.x, initCenterPoint.y, initCenterPoint.z}));
-    }
 
-    /**
-     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
-     */
-    protected void setGUIFromParams() {
-        orientation = scriptParameters.getParams().getInt("orientation_type");
-        useSphere = scriptParameters.getParams().getBoolean("do_use_sphere_estimation");
-        justEllipse = scriptParameters.getParams().getBoolean("do_show_just_init_ellipse");
-        nIterations = scriptParameters.getNumIterations();
-        depth = scriptParameters.getParams().getInt("depth");
-        imageRatio = scriptParameters.getParams().getFloat("image_ratio");
-        stiffness = scriptParameters.getParams().getFloat("stiffness");
-        secondStageErosion = scriptParameters.getParams().getBoolean("do_second_stage_erosion");
-        aboveMedian = scriptParameters.getParams().getFloat("factor_above_median_to_erode");
-        extractToPaint = scriptParameters.getParams().getBoolean("do_extract_paint");
-        
-        centerOfMass = computeCenter(image, orientation, useSphere);
-
-        useCenterOfMass = scriptParameters.getParams().getBoolean("do_init_with_center_of_mass");
-        float[] centerPoint = scriptParameters.getParams().getList("init_center_point").getAsFloatArray();
-        initCenterX = centerPoint[0];
-        initCenterY = centerPoint[1];
-        initCenterZ = centerPoint[2];
-        
-        if (useCenterOfMass) {
-            initCenterPoint = centerOfMass;
-        } else {
-            initCenterPoint = new Point3f(initCenterX, initCenterY, initCenterZ);
-        }
-    }
-    
     /**
      * Calculate the center of the sphere / ellipsoid.
      *
@@ -591,66 +537,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
     }
 
     /**
-     * Calls the algorithm.
-     */
-    protected void callAlgorithm() {
-
-        try {
-            System.gc();
-
-            // Make algorithm
-            extractBrainAlgo = new AlgorithmBrainExtractor(image, orientation, justEllipse, useSphere, initCenterPoint);
-            extractBrainAlgo.setIterations(nIterations);
-            extractBrainAlgo.setMaxDepth(depth);
-            extractBrainAlgo.setImageRatio(imageRatio);
-            extractBrainAlgo.setStiffness(stiffness);
-            extractBrainAlgo.setSecondStageErosion(secondStageErosion);
-            extractBrainAlgo.setAboveMedian(aboveMedian);
-            extractBrainAlgo.setExtractPaint(extractToPaint);
-
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed of failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            extractBrainAlgo.addListener(this);
-
-            createProgressBar(image.getImageName(), extractBrainAlgo);
-            
-            // Hide dialog
-            setVisible(false);
-
-            // These next lines set the titles in all frames where the source image is displayed to
-            // "locked - " image name so as to indicate that the image is now read/write locked!
-            // The image frames are disabled and then unregisted from the userinterface until the
-            // algorithm has completed.
-            Vector imageFrames = image.getImageFrameVector();
-
-            titles = new String[imageFrames.size()];
-
-            for (int i = 0; i < imageFrames.size(); i++) {
-                titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-            }
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (extractBrainAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-                extractBrainAlgo.run();
-            }
-        } catch (OutOfMemoryError x) {
-            System.gc();
-            MipavUtil.displayError("Dialog Extract Brain : unable to allocate enough memory");
-
-            return;
-        }
-    }
-
-    /**
      * Construct a delimited string that contains the parameters to this algorithm.
      *
      * @param   delim  the parameter delimiter (defaults to " " if empty)
@@ -822,7 +708,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
-  
 
     /**
      * Set the factor above the median at which second stage erosion occurs.
@@ -914,6 +799,128 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
      */
     public void setUseSphere(boolean useSphere) {
         this.useSphere = useSphere;
+    }
+
+    /**
+     * Calls the algorithm.
+     */
+    protected void callAlgorithm() {
+
+        try {
+            System.gc();
+
+            // Make algorithm
+            extractBrainAlgo = new AlgorithmBrainExtractor(image, orientation, justEllipse, useSphere, initCenterPoint);
+            extractBrainAlgo.setIterations(nIterations);
+            extractBrainAlgo.setMaxDepth(depth);
+            extractBrainAlgo.setImageRatio(imageRatio);
+            extractBrainAlgo.setStiffness(stiffness);
+            extractBrainAlgo.setSecondStageErosion(secondStageErosion);
+            extractBrainAlgo.setAboveMedian(aboveMedian);
+            extractBrainAlgo.setExtractPaint(extractToPaint);
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed of failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            extractBrainAlgo.addListener(this);
+
+            createProgressBar(image.getImageName(), extractBrainAlgo);
+
+            // Hide dialog
+            setVisible(false);
+
+            // These next lines set the titles in all frames where the source image is displayed to
+            // "locked - " image name so as to indicate that the image is now read/write locked!
+            // The image frames are disabled and then unregisted from the userinterface until the
+            // algorithm has completed.
+            Vector imageFrames = image.getImageFrameVector();
+
+            titles = new String[imageFrames.size()];
+
+            for (int i = 0; i < imageFrames.size(); i++) {
+                titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+            }
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (extractBrainAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                extractBrainAlgo.run();
+            }
+        } catch (OutOfMemoryError x) {
+            System.gc();
+            MipavUtil.displayError("Dialog Extract Brain : unable to allocate enough memory");
+
+            return;
+        }
+    }
+
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        orientation = scriptParameters.getParams().getInt("orientation_type");
+        useSphere = scriptParameters.getParams().getBoolean("do_use_sphere_estimation");
+        justEllipse = scriptParameters.getParams().getBoolean("do_show_just_init_ellipse");
+        nIterations = scriptParameters.getNumIterations();
+        depth = scriptParameters.getParams().getInt("depth");
+        imageRatio = scriptParameters.getParams().getFloat("image_ratio");
+        stiffness = scriptParameters.getParams().getFloat("stiffness");
+        secondStageErosion = scriptParameters.getParams().getBoolean("do_second_stage_erosion");
+        aboveMedian = scriptParameters.getParams().getFloat("factor_above_median_to_erode");
+        extractToPaint = scriptParameters.getParams().getBoolean("do_extract_paint");
+
+        centerOfMass = computeCenter(image, orientation, useSphere);
+
+        useCenterOfMass = scriptParameters.getParams().getBoolean("do_init_with_center_of_mass");
+
+        float[] centerPoint = scriptParameters.getParams().getList("init_center_point").getAsFloatArray();
+        initCenterX = centerPoint[0];
+        initCenterY = centerPoint[1];
+        initCenterZ = centerPoint[2];
+
+        if (useCenterOfMass) {
+            initCenterPoint = centerOfMass;
+        } else {
+            initCenterPoint = new Point3f(initCenterX, initCenterY, initCenterZ);
+        }
+    }
+
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     *
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("orientation_type", orientation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_sphere_estimation", useSphere));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_just_init_ellipse", justEllipse));
+        scriptParameters.storeNumIterations(nIterations);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("depth", depth));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("image_ratio", imageRatio));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("stiffness", stiffness));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_second_stage_erosion", secondStageErosion));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("factor_above_median_to_erode", aboveMedian));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_extract_paint", extractToPaint));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_init_with_center_of_mass", useCenterOfMass));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("init_center_point",
+                                                                       new float[] {
+                                                                           initCenterPoint.x, initCenterPoint.y,
+                                                                           initCenterPoint.z
+                                                                       }));
     }
 
     /**
@@ -1190,7 +1197,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         useCenterOfMass = useCenterOfMassCheckBox.isSelected();
 
         if (!useCenterOfMass) {
-            
+
             tmpStr = initCenterXTF.getText();
 
             if (testParameter(tmpStr, 0, image.getExtents()[0])) {
@@ -1201,7 +1208,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
                 return false;
             }
-            
+
             tmpStr = initCenterYTF.getText();
 
             if (testParameter(tmpStr, 0, image.getExtents()[1])) {
@@ -1217,8 +1224,8 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
             if (testParameter(tmpStr, 0, image.getExtents()[2])) {
                 initCenterZ = Float.valueOf(tmpStr).floatValue();
-                
-                System.out.println("\n initCenterZ py = " + initCenterZ );
+
+                System.out.println("\n initCenterZ py = " + initCenterZ);
             } else {
                 initCenterZTF.requestFocus();
                 initCenterZTF.selectAll();
@@ -1229,7 +1236,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
 
         if (useCenterOfMass) {
-            initCenterPoint = (Point3f)(centerOfMass.clone());
+            initCenterPoint = (Point3f) (centerOfMass.clone());
         } else {
             initCenterPoint = new Point3f(initCenterX, initCenterY, initCenterZ);
         }

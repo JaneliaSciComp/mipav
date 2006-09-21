@@ -50,17 +50,19 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
     private AlgorithmNMSuppression nmSuppressionAlgo;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
+
+    /** DOCUMENT ME! */
+    private JPanelSigmas sigmaPanel;
 
     /** DOCUMENT ME! */
     private String[] titles;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
-    private JPanelAlgorithmOutputOptions outputPanel;
-    
-    private JPanelSigmas sigmaPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -165,7 +167,9 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
             insertScriptLine();
         }
 
-        saveDefaults();
+        if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
+            saveDefaults();
+        }
 
         nmSuppressionAlgo.finalize();
         nmSuppressionAlgo = null;
@@ -179,19 +183,6 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * Store the parameters from the dialog to record the execution of this algorithm.
-     * 
-     * @throws  ParserException  If there is a problem creating one of the new parameters.
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
-
-        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
-        scriptParameters.storeSigmas(sigmaPanel);
     }
 
     // *******************************************************************
@@ -225,7 +216,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                 sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
                 sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
                 sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
-                
+
                 outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
 
                 outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
@@ -249,7 +240,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
      */
     public void saveDefaults() {
         String delim = ",";
-        
+
         String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
         defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
@@ -259,31 +250,6 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         defaultsString += image25DCheckbox.isSelected();
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-    
-    /**
-     * Perform any actions required after the running of the algorithm is complete.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-
-    /**
-     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        sigmaPanel = new JPanelSigmas(image);
-        
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
-        scriptParameters.setSigmasGUI(sigmaPanel);
     }
 
     /**
@@ -330,7 +296,8 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     }
 
                     // Make algorithm
-                    nmSuppressionAlgo = new AlgorithmNMSuppression(resultImage, image, sigmas, outputPanel.isProcessWholeImageSet(), false);
+                    nmSuppressionAlgo = new AlgorithmNMSuppression(resultImage, image, sigmas,
+                                                                   outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -338,7 +305,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     nmSuppressionAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), nmSuppressionAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -349,6 +316,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             nmSuppressionAlgo.setProgressBarVisible(false);
                         }
@@ -372,7 +340,8 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    nmSuppressionAlgo = new AlgorithmNMSuppression(image, sigmas, outputPanel.isProcessWholeImageSet(), false);
+                    nmSuppressionAlgo = new AlgorithmNMSuppression(image, sigmas, outputPanel.isProcessWholeImageSet(),
+                                                                   false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -380,7 +349,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     nmSuppressionAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), nmSuppressionAlgo);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -405,6 +374,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             nmSuppressionAlgo.setProgressBarVisible(false);
                         }
@@ -451,7 +421,8 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     }
 
                     // Make algorithm
-                    nmSuppressionAlgo = new AlgorithmNMSuppression(resultImage, image, sigmas, outputPanel.isProcessWholeImageSet(), image25D);
+                    nmSuppressionAlgo = new AlgorithmNMSuppression(resultImage, image, sigmas,
+                                                                   outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -459,7 +430,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     nmSuppressionAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), nmSuppressionAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -470,6 +441,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             nmSuppressionAlgo.setProgressBarVisible(false);
                         }
@@ -492,7 +464,8 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                 try {
 
                     // Make algorithm
-                    nmSuppressionAlgo = new AlgorithmNMSuppression(image, sigmas, outputPanel.isProcessWholeImageSet(), image25D);
+                    nmSuppressionAlgo = new AlgorithmNMSuppression(image, sigmas, outputPanel.isProcessWholeImageSet(),
+                                                                   image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -500,7 +473,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     nmSuppressionAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), nmSuppressionAlgo);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -525,6 +498,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             nmSuppressionAlgo.setProgressBarVisible(false);
                         }
@@ -540,6 +514,45 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
             }
         }
 
+    }
+
+    /**
+     * Perform any actions required after the running of the algorithm is complete.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        sigmaPanel = new JPanelSigmas(image);
+
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        scriptParameters.setSigmasGUI(sigmaPanel);
+    }
+
+    /**
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     *
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+        scriptParameters.storeSigmas(sigmaPanel);
     }
 
     /**
@@ -566,7 +579,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        
+
         sigmaPanel = new JPanelSigmas(image);
         mainPanel.add(sigmaPanel, gbc);
 
@@ -581,11 +594,11 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
         if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);
         }
-        
+
         gbc.gridx = 0;
         gbc.gridy = 1;
         mainPanel.add(optionPanel, gbc);
-        
+
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         gbc.gridx = 0;
         gbc.gridy = 2;

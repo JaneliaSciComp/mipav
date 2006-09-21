@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -233,69 +233,11 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
- /*   image, transformDir, logMagDisplay, unequalDim, image25D, imageCrop,
-    kernelDiameter, filterType, freq1, freq2, constructionMethod,
-    butterworthOrder*/
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("transform_dir", transformDir));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_log_mag_display", logMagDisplay));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_allow_unequal_dims", unequalDim));
-        scriptParameters.storeProcess3DAs25D(image25D);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_image_crop", imageCrop));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", freq1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("freq2", freq2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_diameter", kernelDiameter));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        transformDir = scriptParameters.getParams().getInt("transform_dir");
-        logMagDisplay = scriptParameters.getParams().getBoolean("do_log_mag_display");
-        unequalDim = scriptParameters.getParams().getBoolean("do_allow_unequal_dims");
-        image25D = scriptParameters.doProcess3DAs25D();
-        imageCrop = scriptParameters.getParams().getBoolean("do_image_crop");
-        filterType = scriptParameters.getParams().getInt("filter_type");
-        freq1 = scriptParameters.getParams().getInt("freq1");
-        freq2 = scriptParameters.getParams().getInt("freq2");
-        constructionMethod = scriptParameters.getParams().getInt("construction_method");
-        butterworthOrder = scriptParameters.getParams().getInt("butterworth_order");
-        kernelDiameter = scriptParameters.getParams().getInt("kernel_diameter");
-    }
-
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     * 
-     * @param event event that triggers function
+     *
+     * @param  event  event that triggers function
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
@@ -547,9 +489,6 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
         return resultImage;
     }
 
- 
-
- 
 
     /**
      * Accessor that sets the butterworth order.
@@ -692,7 +631,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 FFTAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), FFTAlgo);
-                
+
                 // Hide dialog since the algorithm is about to run
                 setVisible(false);
 
@@ -726,7 +665,7 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 FFTAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), FFTAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -741,7 +680,8 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                     titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                    ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame((Frame)
+                                                                                      (imageFrames.elementAt(i)));
                 }
 
                 // Start the thread as a low priority because we wish to still have user interface.
@@ -754,6 +694,62 @@ public class JDialogFFT extends JDialogScriptableBase implements AlgorithmInterf
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        transformDir = scriptParameters.getParams().getInt("transform_dir");
+        logMagDisplay = scriptParameters.getParams().getBoolean("do_log_mag_display");
+        unequalDim = scriptParameters.getParams().getBoolean("do_allow_unequal_dims");
+        image25D = scriptParameters.doProcess3DAs25D();
+        imageCrop = scriptParameters.getParams().getBoolean("do_image_crop");
+        filterType = scriptParameters.getParams().getInt("filter_type");
+        freq1 = scriptParameters.getParams().getFloat("freq1");
+        freq2 = scriptParameters.getParams().getFloat("freq2");
+        constructionMethod = scriptParameters.getParams().getInt("construction_method");
+        butterworthOrder = scriptParameters.getParams().getInt("butterworth_order");
+        kernelDiameter = scriptParameters.getParams().getInt("kernel_diameter");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("transform_dir", transformDir));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_log_mag_display", logMagDisplay));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_allow_unequal_dims", unequalDim));
+        scriptParameters.storeProcess3DAs25D(image25D);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_image_crop", imageCrop));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", freq1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq2", freq2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_diameter", kernelDiameter));
     }
 
     /**
