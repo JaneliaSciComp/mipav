@@ -653,9 +653,13 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
         constructLog();
 
+        fireProgressStateChanged("Retrieving data ...");
+        
         // Get data
         getData();
 
+        fireProgressStateChanged(10, null, "Matching colors ...");
+        
         // Match image colors
         matchColors();
 
@@ -666,6 +670,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             // Match orientations.
             if (!sameOrient) {
                 Preferences.debug("\n Matching orientations...\n");
+                fireProgressStateChanged(25, null, "Matching orientation ...");
                 matchOrients();
             } else {
                 Preferences.debug("Orientations already match.\n");
@@ -679,6 +684,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             }
         }
 
+        fireProgressStateChanged(40, null, " Matching units ...");
         // Match resolutions
         checkUnits();
 
@@ -698,6 +704,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
         if (doResols) {
             Preferences.debug("\nMatching resolutions...\n");
+            fireProgressStateChanged(60, null, " Matching units ...");
             matchResolutions();
         } else {
             Preferences.debug("Resolutions already match.\n");
@@ -712,6 +719,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
         // Match origins.
         if (doOrigins) {
+        	fireProgressStateChanged(80, null, " Matching origins ...");
             Preferences.debug("\nMatching origins...\n");
             matchOrigins();
         }
@@ -736,10 +744,13 @@ public class AlgorithmMatchImages extends AlgorithmBase {
         }
 
         if (doDimensions) {
+        	fireProgressStateChanged(90, null, " Matching dimensions ...");
             Preferences.debug("\nMatching dimensions...\n");
             matchDimensions();
         }
 
+        fireProgressStateChanged(100);
+        
         setCompleted(true);
     }
 
