@@ -166,7 +166,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
     private void anonymizeFace() {
         int curPosition, closestPosition;
 
-        fireProgressStateChanged(srcImage.getImageName(), "Anonymize face ...");
+        fireProgressStateChanged(0, null, "Anonymizing face ...");
         
 
         // See if the image orientation is known
@@ -203,7 +203,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
             return;
         }
 
-        incrementProgressBar(3);
+        fireProgressStateChanged(3);
 
         boolean showInitialEstimation = false;
         Point3f initialCenter = JDialogExtractBrain.computeCenter(srcImage, betOrientation, estimateWithSphereBET);
@@ -219,25 +219,23 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         bet.setExtractPaint(extractBrainToPaint);
         bet.setSaveBrainMesh(false);
         bet.setRunningInSeparateThread(isRunningInSeparateThread());
-
-        if (!ViewUserInterface.getReference().isAppFrameVisible()) {
-            bet.setProgressBarVisible(false);
-        }
-
+        linkProgressToAlgorithm(bet);
+        bet.setProgressValues(generateProgressValues(3, 57));
         bet.run();
-
-        incrementProgressBar(57);
 
         int updateInterval = srcImage.getSize() / 19;
 
         // calc plane from BET extraction
         BitSet brainMask = srcImage.getMask();
 
+        int pBar = 0;
+        
         // go through each slice, find the closest point in the direction the face should be pointing
         for (int i = 0; i < srcImage.getSize(); i++) {
 
             if ((i % updateInterval) == 0) {
-                incrementProgressBar(1);
+            	pBar++;
+                fireProgressStateChanged(57 + pBar);
             }
 
             if (brainMask.get(i)) {
@@ -317,10 +315,14 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
 
         updateInterval = srcImage.getSize() / 19;
 
+        //progress should currently be at 76
+        
+        pBar = 0;
         for (int i = 0; i < srcImage.getSize(); i++) {
 
             if ((i % updateInterval) == 0) {
-                incrementProgressBar(1);
+            	pBar++;
+                fireProgressStateChanged(76 + pBar);
             }
 
             if (faceOrientation == FACING_RIGHT) {
@@ -469,6 +471,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         bet.finalize();
         bet = null;
 
+        fireProgressStateChanged(100);
         
 
         setCompleted(true);
@@ -506,15 +509,5 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         } else {
             return Integer.MAX_VALUE;
         }
-    }
-
-    /**
-     * Increment the progress bar by a value.
-     *
-     * @param  inc  the amount to increment the progress bar by
-     */
-    private void incrementProgressBar(int inc) {
-        currentProgressBarValue += inc;
-        fireProgressStateChanged(currentProgressBarValue);
     }
 }
