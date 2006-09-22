@@ -223,7 +223,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
         algoSub.addListener(this);
 
         createProgressBar(image.getImageName(), algoSub);
-        
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -331,7 +331,7 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
 
         scriptParameters.storeProcess3DAs25D(processIndep);
         scriptParameters.getParams().put(ParameterFactory.newParameter("subsample_factor", denom));

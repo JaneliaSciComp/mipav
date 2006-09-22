@@ -108,6 +108,7 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
      * @param  algorithm  DOCUMENT ME!
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (((algorithm instanceof AlgorithmRegularizedIsotropicDiffusion) &&
                  (regIsoDiffusionAlgo.isCompleted() == true)) && (resultImage != null)) {
 
@@ -135,41 +136,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-    
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(srcImage);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.storeProcess3DAs25D(do25D);
-        scriptParameters.storeNumIterations(numIterations);
-        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.SIGMAS, stdDev));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("diffusion_contrast", contrast));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        srcImage = scriptParameters.retrieveInputImage();
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-        
-        setDo25D(scriptParameters.doProcess3DAs25D());
-        setNumIterations(scriptParameters.getNumIterations());
-        setStdDev(scriptParameters.getParams().getFloat(AlgorithmParameters.SIGMAS));
-        setContrast(scriptParameters.getParams().getFloat("diffusion_contrast"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
@@ -206,6 +172,97 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
      */
     public void setStdDev(float stdDev) {
         this.stdDev = stdDev;
+    }
+
+
+    /**
+     * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
+     * or not there is a separate destination image.
+     */
+    protected void callAlgorithm() {
+        String name;
+
+        name = makeImageName(srcImage.getImageName(), "_rid");
+
+        try {
+
+            if (srcImage.isColorImage()) {
+                resultImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), name, userInterface);
+            } else {
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name, userInterface);
+            }
+
+            regIsoDiffusionAlgo = new AlgorithmRegularizedIsotropicDiffusion(resultImage, srcImage, numIterations,
+                                                                             stdDev, contrast, do25D);
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed or failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            regIsoDiffusionAlgo.addListener(this);
+
+            createProgressBar(srcImage.getImageName(), regIsoDiffusionAlgo);
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (regIsoDiffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+
+                if (!userInterface.isAppFrameVisible()) {
+                    regIsoDiffusionAlgo.setProgressBarVisible(false);
+                }
+
+                regIsoDiffusionAlgo.run();
+            } // end if (isRunInSeparateThread())
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("JDialogRegIsoDiffusion: unable to allocate enough memory");
+
+            if (resultImage != null) {
+                resultImage.disposeLocal(); // Clean up memory of result image
+                resultImage = null;
+            }
+
+            return;
+        } // end try()=catch()
+
+        dispose();
+    } // end callAlgorithm()
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = srcImage.getUserInterface();
+        parentFrame = srcImage.getParentFrame();
+
+        setDo25D(scriptParameters.doProcess3DAs25D());
+        setNumIterations(scriptParameters.getNumIterations());
+        setStdDev(scriptParameters.getParams().getFloat(AlgorithmParameters.SIGMAS));
+        setContrast(scriptParameters.getParams().getFloat("diffusion_contrast"));
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.storeProcess3DAs25D(do25D);
+        scriptParameters.storeNumIterations(numIterations);
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.SIGMAS, stdDev));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("diffusion_contrast", contrast));
     }
 
 
@@ -284,61 +341,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
 
         return parameterPanel;
     } // end buildParameterPanel()
-
-
-    /**
-     * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
-     * or not there is a separate destination image.
-     */
-    protected void callAlgorithm() {
-        String name;
-
-        name = makeImageName(srcImage.getImageName(), "_rid");
-
-        try {
-
-            if (srcImage.isColorImage()) {
-                resultImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), name, userInterface);
-            } else {
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name, userInterface);
-            }
-
-            regIsoDiffusionAlgo = new AlgorithmRegularizedIsotropicDiffusion(resultImage, srcImage, numIterations,
-                                                                             stdDev, contrast, do25D);
-
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed or failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            regIsoDiffusionAlgo.addListener(this);
-
-            createProgressBar(srcImage.getImageName(), regIsoDiffusionAlgo);
-            
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (regIsoDiffusionAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    regIsoDiffusionAlgo.setProgressBarVisible(false);
-                }
-
-                regIsoDiffusionAlgo.run();
-            } // end if (isRunInSeparateThread())
-        } catch (OutOfMemoryError x) {
-            MipavUtil.displayError("JDialogRegIsoDiffusion: unable to allocate enough memory");
-
-            if (resultImage != null) {
-                resultImage.disposeLocal(); // Clean up memory of result image
-                resultImage = null;
-            }
-
-            return;
-        } // end try()=catch()
-
-        dispose();
-    } // end callAlgorithm()
 
     /**
      * DOCUMENT ME!

@@ -157,6 +157,7 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmInsertSlice) {
 
             if ((insertSliceAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -290,44 +291,6 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        if (sliceType == ORIGINAL_SLICE && insertedImage != null) {
-            scriptParameters.storeImage(insertedImage, "insert_from_image");
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("insert_slice_at_position", insertSlice));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("slice_type_to_insert", sliceType));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        setInsertSliceNumber(scriptParameters.getParams().getInt("insert_slice_at_position"));
-        setSliceType(scriptParameters.getParams().getInt("slice_type_to_insert"));
-
-        if (sliceType == ORIGINAL_SLICE && scriptParameters.getParams().containsParameter("insert_from_image")) {
-            setInsertedImage(scriptParameters.retrieveImage("insert_from_image"));
-        }
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
 
     /**
      * Accessor to specify the 2D image used as an inserted slice for ORGINAL_SLICE.
@@ -354,31 +317,6 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
      */
     public void setSliceType(int type) {
         sliceType = type;
-    }
-
-    /**
-     * Builds a list of images to register to the template image.
-     */
-    private void buildComboBox() {
-        comboBoxImage = new JComboBox();
-        comboBoxImage.setFont(serif12);
-        comboBoxImage.setBackground(Color.white);
-        comboBoxImage.addItemListener(this);
-        comboBoxImage.setEnabled(false);
-
-        Enumeration names = userInterface.getRegisteredImageNames();
-
-        while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
-            ModelImage namedImage = userInterface.getRegisteredImageByName(name);
-
-            if ((!image.getImageName().equals(name)) && (userInterface.getFrameContainingImage(namedImage) != null) &&
-                    (namedImage.getNDims() == 2) && (namedImage.getExtents()[0] == image.getExtents()[0]) &&
-                    (namedImage.getExtents()[1] == image.getExtents()[1]) &&
-                    (namedImage.isColorImage() == image.isColorImage())) {
-                comboBoxImage.addItem(name);
-            }
-        }
     }
 
     /**
@@ -416,9 +354,9 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             insertSliceAlgo.addListener(this);
-            
+
             createProgressBar(image.getImageName(), insertSliceAlgo);
-            
+
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -428,6 +366,7 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     insertSliceAlgo.setProgressBarVisible(false);
                 }
@@ -444,6 +383,69 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
             MipavUtil.displayError("Insert Slice reports: unable to allocate enough memory");
 
             return;
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        setInsertSliceNumber(scriptParameters.getParams().getInt("insert_slice_at_position"));
+        setSliceType(scriptParameters.getParams().getInt("slice_type_to_insert"));
+
+        if ((sliceType == ORIGINAL_SLICE) && scriptParameters.getParams().containsParameter("insert_from_image")) {
+            setInsertedImage(scriptParameters.retrieveImage("insert_from_image"));
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        if ((sliceType == ORIGINAL_SLICE) && (insertedImage != null)) {
+            scriptParameters.storeImage(insertedImage, "insert_from_image");
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("insert_slice_at_position", insertSlice));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("slice_type_to_insert", sliceType));
+    }
+
+    /**
+     * Builds a list of images to register to the template image.
+     */
+    private void buildComboBox() {
+        comboBoxImage = new JComboBox();
+        comboBoxImage.setFont(serif12);
+        comboBoxImage.setBackground(Color.white);
+        comboBoxImage.addItemListener(this);
+        comboBoxImage.setEnabled(false);
+
+        Enumeration names = userInterface.getRegisteredImageNames();
+
+        while (names.hasMoreElements()) {
+            String name = (String) names.nextElement();
+            ModelImage namedImage = userInterface.getRegisteredImageByName(name);
+
+            if ((!image.getImageName().equals(name)) && (userInterface.getFrameContainingImage(namedImage) != null) &&
+                    (namedImage.getNDims() == 2) && (namedImage.getExtents()[0] == image.getExtents()[0]) &&
+                    (namedImage.getExtents()[1] == image.getExtents()[1]) &&
+                    (namedImage.isColorImage() == image.isColorImage())) {
+                comboBoxImage.addItem(name);
+            }
         }
     }
 

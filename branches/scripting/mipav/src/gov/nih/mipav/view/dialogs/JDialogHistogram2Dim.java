@@ -647,7 +647,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
 
             scriptParameters.storeInputImage(firstImage);
             scriptParameters.storeInputImage(secondImage);
-            scriptParameters.storeOutputImageParams(getResultImage(), true);
+            AlgorithmParameters.storeImageInRecorder(getResultImage());
 
             scriptParameters.getParams().put(ParameterFactory.newParameter("do_linear_rescale", doLinearRescale));
             scriptParameters.getParams().put(ParameterFactory.newParameter("bin_1", bin1));

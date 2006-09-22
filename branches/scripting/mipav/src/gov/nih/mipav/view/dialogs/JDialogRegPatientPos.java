@@ -150,42 +150,6 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(imageB);
-        scriptParameters.storeImage(imageA, "reference_image");
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doMatch));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        imageB = scriptParameters.retrieveInputImage();
-        UI = imageB.getUserInterface();
-        parentFrame = imageB.getParentFrame();
-        
-        if (imageB.getNDims() != 3) {
-            MipavUtil.displayError("This algorithm only works for 3D datasets.");
-            return;
-        }
-        
-        imageA = scriptParameters.retrieveImage("reference_image");
-        
-        setMatchFlag(scriptParameters.getParams().getBoolean("do_match_origins"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
 
     /**
      * Accessor to set imageA.
@@ -225,7 +189,7 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
         RegPatPos.addListener(this);
 
         createProgressBar(imageA.getImageName(), RegPatPos);
-        
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -233,6 +197,7 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
+
             if (!UI.isAppFrameVisible()) {
                 RegPatPos.setProgressBarVisible(false);
             }
@@ -240,6 +205,43 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
             RegPatPos.run();
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageB = scriptParameters.retrieveInputImage();
+        UI = imageB.getUserInterface();
+        parentFrame = imageB.getParentFrame();
+
+        if (imageB.getNDims() != 3) {
+            MipavUtil.displayError("This algorithm only works for 3D datasets.");
+
+            return;
+        }
+
+        imageA = scriptParameters.retrieveImage("reference_image");
+
+        setMatchFlag(scriptParameters.getParams().getBoolean("do_match_origins"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageB);
+        scriptParameters.storeImage(imageA, "reference_image");
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doMatch));
     }
 
     /**

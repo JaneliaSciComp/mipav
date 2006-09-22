@@ -221,7 +221,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         UI = ViewUserInterface.getReference();
         init();
     }
-    
+
     /**
      * Creates new dialog for user to choose type of 2D image registration algorithm to run.
      *
@@ -814,78 +814,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
     public float getYScaleBruteForce() {
         return yscaleBF;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(matchImage);
-        scriptParameters.storeImage(refImage, "reference_image");
-        
-        if (weighted) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
-            scriptParameters.storeImage(inputWeightImage, "input_weight_image");
-            scriptParameters.storeImage(refWeightImage, "reference_weight_image");
-        }
-        
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", rotateBegin));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", rotateEnd));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", coarseRate));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate", fineRate));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        matchImage = scriptParameters.retrieveInputImage();
-        UI = matchImage.getUserInterface();
-        parentFrame = matchImage.getParentFrame();
-
-        if (matchImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        setReferenceImage(scriptParameters.retrieveImage("reference_image"));
-        
-        setWeighted(scriptParameters.getParams().getBoolean("do_use_weight_images"));
-
-        if (weighted) {
-            setInputWeightImage(scriptParameters.retrieveImage("input_weight_image"));
-            setReferenceWeightImage(scriptParameters.retrieveImage("reference_weight_image"));
-        }
-
-        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
-        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
-        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
-        
-        setCoarseBegin(scriptParameters.getParams().getFloat("rotate_begin"));
-        setCoarseEnd(scriptParameters.getParams().getFloat("rotate_end"));
-        setCoarseRate(scriptParameters.getParams().getFloat("coarse_rate"));
-        setFineRate(scriptParameters.getParams().getFloat("fine_rate"));
-
-        setDisplayTransform(scriptParameters.getParams().getBoolean("do_display_transform"));
-        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
-
-        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
 
     /**
      * Changes the interpolation box to enabled or disabled depending on if the transform box is checked or not.
@@ -1075,6 +1003,161 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
      */
     public void setWeighted(boolean flag) {
         weighted = flag;
+    }
+
+    /**
+     * Calls the algorithm with the set-up parameters.
+     */
+    protected void callAlgorithm() {
+
+        if (voisOnly) {
+            float[] refRes = new float[] {
+                                 refImage.getFileInfo(0).getResolutions()[0],
+                                 refImage.getFileInfo(0).getResolutions()[1]
+                             };
+            float[] matchRes = new float[] {
+                                   matchImage.getFileInfo(0).getResolutions()[0],
+                                   matchImage.getFileInfo(0).getResolutions()[1]
+                               };
+
+            refWeightImage = new ModelImage(ModelStorageBase.BYTE, refImage.getExtents(), "VOI ref",
+                                            refImage.getUserInterface());
+            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match",
+                                              matchImage.getUserInterface());
+
+            refWeightImage.getFileInfo(0).setResolutions(refRes);
+            inputWeightImage.getFileInfo(0).setResolutions(matchRes);
+
+            // make new reference and input images based on the VOIs in them.
+            // pass those new images to the registration algorithm
+            BitSet mask = refImage.generateVOIMask();
+            int imageSize = refImage.getSliceSize();
+
+            for (int i = 0; i < imageSize; i++) {
+
+                if (!mask.get(i)) {
+                    refWeightImage.set(i, 0);
+                } else {
+                    refWeightImage.set(i, 1);
+                }
+            }
+
+            mask = matchImage.generateVOIMask();
+            imageSize = matchImage.getSliceSize();
+
+            for (int i = 0; i < imageSize; i++) {
+
+                if (!mask.get(i)) {
+                    inputWeightImage.set(i, 0);
+                } else {
+                    inputWeightImage.set(i, 1);
+                }
+            }
+
+            weighted = true;
+        } // if (voisOnly)
+
+        if (weighted) {
+            reg2 = new AlgorithmRegOAR2D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+                                         rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, bracketBound,
+                                         maxIterations, numMinima);
+        } else {
+            reg2 = new AlgorithmRegOAR2D(refImage, matchImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
+                                         fineRate, doSubsample, bracketBound, maxIterations, numMinima);
+        }
+
+        // Hide dialog
+        setVisible(false);
+
+        // Start the thread as a low priority because we wish to still have user interface work fast.
+        reg2.addListener(this);
+
+        if (isRunInSeparateThread()) {
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (reg2.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            if (!UI.isAppFrameVisible()) {
+                reg2.setProgressBarVisible(false);
+            }
+
+            reg2.run();
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        matchImage = scriptParameters.retrieveInputImage();
+        UI = matchImage.getUserInterface();
+        parentFrame = matchImage.getParentFrame();
+
+        if (matchImage.isColorImage()) {
+            doColor = true;
+        } else {
+            doColor = false;
+        }
+
+        setReferenceImage(scriptParameters.retrieveImage("reference_image"));
+
+        setWeighted(scriptParameters.getParams().getBoolean("do_use_weight_images"));
+
+        if (weighted) {
+            setInputWeightImage(scriptParameters.retrieveImage("input_weight_image"));
+            setReferenceWeightImage(scriptParameters.retrieveImage("reference_weight_image"));
+        }
+
+        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
+        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
+        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+
+        setCoarseBegin(scriptParameters.getParams().getFloat("rotate_begin"));
+        setCoarseEnd(scriptParameters.getParams().getFloat("rotate_end"));
+        setCoarseRate(scriptParameters.getParams().getFloat("coarse_rate"));
+        setFineRate(scriptParameters.getParams().getFloat("fine_rate"));
+
+        setDisplayTransform(scriptParameters.getParams().getBoolean("do_display_transform"));
+        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
+
+        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(matchImage);
+        scriptParameters.storeImage(refImage, "reference_image");
+
+        if (weighted) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
+            scriptParameters.storeImage(inputWeightImage, "input_weight_image");
+            scriptParameters.storeImage(refWeightImage, "reference_weight_image");
+        }
+
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", rotateBegin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", rotateEnd));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", coarseRate));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate", fineRate));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
     }
 
     /**
@@ -1330,88 +1413,6 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         }
 
         return comboBox;
-    }
-
-    /**
-     * Calls the algorithm with the set-up parameters.
-     */
-    protected void callAlgorithm() {
-
-        if (voisOnly) {
-            float[] refRes = new float[] {
-                                 refImage.getFileInfo(0).getResolutions()[0],
-                                 refImage.getFileInfo(0).getResolutions()[1]
-                             };
-            float[] matchRes = new float[] {
-                                   matchImage.getFileInfo(0).getResolutions()[0],
-                                   matchImage.getFileInfo(0).getResolutions()[1]
-                               };
-
-            refWeightImage = new ModelImage(ModelStorageBase.BYTE, refImage.getExtents(), "VOI ref",
-                                            refImage.getUserInterface());
-            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match",
-                                              matchImage.getUserInterface());
-
-            refWeightImage.getFileInfo(0).setResolutions(refRes);
-            inputWeightImage.getFileInfo(0).setResolutions(matchRes);
-
-            // make new reference and input images based on the VOIs in them.
-            // pass those new images to the registration algorithm
-            BitSet mask = refImage.generateVOIMask();
-            int imageSize = refImage.getSliceSize();
-
-            for (int i = 0; i < imageSize; i++) {
-
-                if (!mask.get(i)) {
-                    refWeightImage.set(i, 0);
-                } else {
-                    refWeightImage.set(i, 1);
-                }
-            }
-
-            mask = matchImage.generateVOIMask();
-            imageSize = matchImage.getSliceSize();
-
-            for (int i = 0; i < imageSize; i++) {
-
-                if (!mask.get(i)) {
-                    inputWeightImage.set(i, 0);
-                } else {
-                    inputWeightImage.set(i, 1);
-                }
-            }
-
-            weighted = true;
-        } // if (voisOnly)
-
-        if (weighted) {
-            reg2 = new AlgorithmRegOAR2D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                                         rotateBegin, rotateEnd, coarseRate, fineRate, doSubsample, bracketBound,
-                                         maxIterations, numMinima);
-        } else {
-            reg2 = new AlgorithmRegOAR2D(refImage, matchImage, cost, DOF, interp, rotateBegin, rotateEnd, coarseRate,
-                                         fineRate, doSubsample, bracketBound, maxIterations, numMinima);
-        }
-
-        // Hide dialog
-        setVisible(false);
-
-        // Start the thread as a low priority because we wish to still have user interface work fast.
-        reg2.addListener(this);
-
-        if (isRunInSeparateThread()) {
-
-            // Start the thread as a low priority because we wish to still have user interface work fast.
-            if (reg2.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
-            if (!UI.isAppFrameVisible()) {
-                reg2.setProgressBarVisible(false);
-            }
-
-            reg2.run();
-        }
     }
 
     /**

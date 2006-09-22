@@ -219,6 +219,7 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmIHN3Correction) {
             image.clearMask();
 
@@ -266,7 +267,7 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
         if (algorithm.isCompleted()) {
             insertScriptLine();
         }
-        
+
         N3Algo.finalize();
         N3Algo = null;
         dispose();
@@ -279,52 +280,6 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.storeProcessWholeImage(regionFlag);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("signal_threshold", threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("field_distance_mm", fieldDistance));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("subsampling_factor", shrink));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_fwhm", kernelfwhm));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("wiener_noise_filter", noise));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_auto_histo_thresholding", autoThreshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_field_image", createField));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        setRegionFlag(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
-        setThreshold(scriptParameters.getParams().getFloat("signal_threshold"));
-        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
-        setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
-        setFieldDistance(scriptParameters.getParams().getFloat("field_distance_mm"));
-        setShrink(scriptParameters.getParams().getFloat("subsampling_factor"));
-        setKernel(scriptParameters.getParams().getFloat("kernel_fwhm"));
-        setNoise(scriptParameters.getParams().getFloat("wiener_noise_filter"));
-        setAutoFlag(scriptParameters.getParams().getBoolean("do_auto_histo_thresholding"));
-        setCreateField(scriptParameters.getParams().getBoolean("do_create_field_image"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
@@ -459,7 +414,7 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
             N3Algo.addListener(this);
 
             createProgressBar(image.getImageName(), N3Algo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -470,6 +425,7 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     N3Algo.setProgressBarVisible(false);
                 }
@@ -493,6 +449,52 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
 
             return;
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        setRegionFlag(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
+        setThreshold(scriptParameters.getParams().getFloat("signal_threshold"));
+        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
+        setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
+        setFieldDistance(scriptParameters.getParams().getFloat("field_distance_mm"));
+        setShrink(scriptParameters.getParams().getFloat("subsampling_factor"));
+        setKernel(scriptParameters.getParams().getFloat("kernel_fwhm"));
+        setNoise(scriptParameters.getParams().getFloat("wiener_noise_filter"));
+        setAutoFlag(scriptParameters.getParams().getBoolean("do_auto_histo_thresholding"));
+        setCreateField(scriptParameters.getParams().getBoolean("do_create_field_image"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.storeProcessWholeImage(regionFlag);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("signal_threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("field_distance_mm", fieldDistance));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("subsampling_factor", shrink));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_fwhm", kernelfwhm));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("wiener_noise_filter", noise));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_auto_histo_thresholding", autoThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_field_image", createField));
     }
 
     /**

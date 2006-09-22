@@ -534,107 +534,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(matchImage);
-        scriptParameters.storeImage(refImage, "reference_image");
-        
-        if (weighted) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
-            scriptParameters.storeImage(inputWeightImage, "input_weight_image");
-            scriptParameters.storeImage(refWeightImage, "reference_weight_image");
-        }
-        
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", new float[] {rotateBeginX, rotateBeginY, rotateBeginZ}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", new float[] {rotateEndX, rotateEndY, rotateEndZ}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", new float[] {coarseRateX, coarseRateY, coarseRateZ}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate", new float[] {fineRateX, fineRateY, fineRateZ}));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_max_of_min_resolutions", maxOfMinResol));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_COG", calcCOG));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        matchImage = scriptParameters.retrieveInputImage();
-        UI = matchImage.getUserInterface();
-        parentFrame = matchImage.getParentFrame();
 
-        if (matchImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        setReferenceImage(scriptParameters.retrieveImage("reference_image"));
-        
-        setWeighted(scriptParameters.getParams().getBoolean("do_use_weight_images"));
-
-        if (weighted) {
-            setInputWeightImage(scriptParameters.retrieveImage("input_weight_image"));
-            setReferenceWeightImage(scriptParameters.retrieveImage("reference_weight_image"));
-        }
-
-        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
-        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
-        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
-        
-        float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
-        float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
-        float[] coarseRates = scriptParameters.getParams().getList("coarse_rate").getAsFloatArray();
-        float[] fineRates = scriptParameters.getParams().getList("fine_rate").getAsFloatArray();
-
-        setCoarseBeginX(rotBegin[0]);
-        setCoarseEndX(rotEnd[0]);
-        setCoarseRateX(coarseRates[0]);
-        setFineRateX(fineRates[0]);
-
-        setCoarseBeginY(rotBegin[1]);
-        setCoarseEndY(rotEnd[1]);
-        setCoarseRateY(coarseRates[1]);
-        setFineRateY(fineRates[1]);
-
-        setCoarseBeginZ(rotBegin[2]);
-        setCoarseEndZ(rotEnd[2]);
-        setCoarseRateZ(coarseRates[2]);
-        setFineRateZ(fineRates[2]);
-
-        setDisplayTransform(scriptParameters.getParams().getBoolean("do_display_transform"));
-        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
-
-        setMaxOfMinResol(scriptParameters.getParams().getBoolean("do_use_max_of_min_resolutions"));
-        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
-        setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
-        setCalcCOG(scriptParameters.getParams().getBoolean("do_calc_COG"));
-
-        setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"),
-                scriptParameters.getParams().getInt("max_iterations"),
-                scriptParameters.getParams().getInt("num_minima"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
     /**
      * Changes the interpolation box to enabled or disabled depending on if the transform box is checked or not.
      *
@@ -1080,6 +980,246 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
     }
 
     /**
+     * Calls the algorithm with the set-up parameters.
+     */
+    protected void callAlgorithm() {
+
+        if (doLS) {
+            JDialogRegistrationLeastSquares lsDialog = new JDialogRegistrationLeastSquares(parentFrame, matchImage,
+                                                                                           refImage);
+            lsCompleted = lsDialog.getLSCompleted();
+
+            if (!lsCompleted) {
+                lsDialog.dispose();
+
+                return;
+            }
+
+            lsMatrix = matchImage.getMatrix();
+            lsImage = lsDialog.getResultImage();
+            lsDialog.dispose();
+        }
+
+
+        if (voisOnly && !doLS) {
+            float[] refRes = new float[] {
+                                 refImage.getFileInfo(0).getResolutions()[0],
+                                 refImage.getFileInfo(0).getResolutions()[1],
+                                 refImage.getFileInfo(0).getResolutions()[2]
+                             };
+            float[] matchRes = new float[] {
+                                   matchImage.getFileInfo(0).getResolutions()[0],
+                                   matchImage.getFileInfo(0).getResolutions()[1],
+                                   matchImage.getFileInfo(0).getResolutions()[2]
+                               };
+
+            refWeightImage = new ModelImage(ModelStorageBase.BYTE, refImage.getExtents(), "VOI ref",
+                                            refImage.getUserInterface());
+            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match",
+                                              matchImage.getUserInterface());
+
+            refWeightImage.getFileInfo(0).setResolutions(refRes);
+            inputWeightImage.getFileInfo(0).setResolutions(matchRes);
+
+            // make new reference and input images based on the VOIs in them.
+            // pass those new images to the registration algorithm
+            BitSet mask = refImage.generateVOIMask();
+            int imageSize = refImage.getSliceSize() * refImage.getExtents()[2];
+
+            for (int i = 0; i < imageSize; i++) {
+
+                if (!mask.get(i)) {
+                    refWeightImage.set(i, 0);
+                } else {
+                    refWeightImage.set(i, 1);
+                }
+            }
+
+            mask = matchImage.generateVOIMask();
+            imageSize = matchImage.getSliceSize() * matchImage.getExtents()[2];
+
+            for (int i = 0; i < imageSize; i++) {
+
+                if (!mask.get(i)) {
+                    inputWeightImage.set(i, 0);
+                } else {
+                    inputWeightImage.set(i, 1);
+                }
+            }
+
+            weighted = true;
+        } // if (voisOnly)
+
+        if (weighted) {
+
+            if (!doLS) {
+                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+                                             rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY,
+                                             coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
+                                             maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations,
+                                             numMinima);
+            } else {
+                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
+                                             rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY,
+                                             coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
+                                             maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations,
+                                             numMinima);
+            }
+        } else {
+            // System.out.println("Reference image name is " +refImage.getImageName());
+            // System.out.println("Moving image name is " +matchImage.getImageName());
+
+            if (!doLS) {
+                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+                                             coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY,
+                                             rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
+                                             doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+            } else {
+                System.err.println("Sending LS Image to OAR3D algorithm");
+                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
+                                             coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY,
+                                             rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
+                                             doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+
+            }
+        }
+
+        reg3.addListener(this);
+
+
+        createProgressBar(matchImage.getImageName(), reg3);
+
+        // Hide dialog
+        setVisible(false);
+
+        if (isRunInSeparateThread()) {
+
+            // Start the thread as a low priority because we wish to still have user interface work fast.
+            if (reg3.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            if (!UI.isAppFrameVisible()) {
+                reg3.setProgressBarVisible(false);
+            }
+
+            reg3.run();
+        }
+
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        matchImage = scriptParameters.retrieveInputImage();
+        UI = matchImage.getUserInterface();
+        parentFrame = matchImage.getParentFrame();
+
+        if (matchImage.isColorImage()) {
+            doColor = true;
+        } else {
+            doColor = false;
+        }
+
+        setReferenceImage(scriptParameters.retrieveImage("reference_image"));
+
+        setWeighted(scriptParameters.getParams().getBoolean("do_use_weight_images"));
+
+        if (weighted) {
+            setInputWeightImage(scriptParameters.retrieveImage("input_weight_image"));
+            setReferenceWeightImage(scriptParameters.retrieveImage("reference_weight_image"));
+        }
+
+        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
+        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
+        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+
+        float[] rotBegin = scriptParameters.getParams().getList("rotate_begin").getAsFloatArray();
+        float[] rotEnd = scriptParameters.getParams().getList("rotate_end").getAsFloatArray();
+        float[] coarseRates = scriptParameters.getParams().getList("coarse_rate").getAsFloatArray();
+        float[] fineRates = scriptParameters.getParams().getList("fine_rate").getAsFloatArray();
+
+        setCoarseBeginX(rotBegin[0]);
+        setCoarseEndX(rotEnd[0]);
+        setCoarseRateX(coarseRates[0]);
+        setFineRateX(fineRates[0]);
+
+        setCoarseBeginY(rotBegin[1]);
+        setCoarseEndY(rotEnd[1]);
+        setCoarseRateY(coarseRates[1]);
+        setFineRateY(fineRates[1]);
+
+        setCoarseBeginZ(rotBegin[2]);
+        setCoarseEndZ(rotEnd[2]);
+        setCoarseRateZ(coarseRates[2]);
+        setFineRateZ(fineRates[2]);
+
+        setDisplayTransform(scriptParameters.getParams().getBoolean("do_display_transform"));
+        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
+
+        setMaxOfMinResol(scriptParameters.getParams().getBoolean("do_use_max_of_min_resolutions"));
+        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
+        setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
+        setCalcCOG(scriptParameters.getParams().getBoolean("do_calc_COG"));
+
+        setAdvancedSettings(scriptParameters.getParams().getInt("bracket_bound"),
+                            scriptParameters.getParams().getInt("max_iterations"),
+                            scriptParameters.getParams().getInt("num_minima"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(matchImage);
+        scriptParameters.storeImage(refImage, "reference_image");
+
+        if (weighted) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
+            scriptParameters.storeImage(inputWeightImage, "input_weight_image");
+            scriptParameters.storeImage(refWeightImage, "reference_weight_image");
+        }
+
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin",
+                                                                       new float[] {
+                                                                           rotateBeginX, rotateBeginY, rotateBeginZ
+                                                                       }));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end",
+                                                                       new float[] {
+                                                                           rotateEndX, rotateEndY, rotateEndZ
+                                                                       }));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate",
+                                                                       new float[] {
+                                                                           coarseRateX, coarseRateY, coarseRateZ
+                                                                       }));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate",
+                                                                       new float[] { fineRateX, fineRateY, fineRateZ }));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_display_transform", displayTransform));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_max_of_min_resolutions", maxOfMinResol));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_COG", calcCOG));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
+    }
+
+    /**
      * Build advanced settings dialog. Returns JDialog.
      *
      * @param   bracketBound  DOCUMENT ME!
@@ -1213,134 +1353,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
         }
 
         return comboBox;
-    }
-
-    /**
-     * Calls the algorithm with the set-up parameters.
-     */
-    protected void callAlgorithm() {
-
-        if (doLS) {
-            JDialogRegistrationLeastSquares lsDialog = new JDialogRegistrationLeastSquares(parentFrame, matchImage,
-                                                                                           refImage);
-            lsCompleted = lsDialog.getLSCompleted();
-
-            if (!lsCompleted) {
-                lsDialog.dispose();
-
-                return;
-            }
-
-            lsMatrix = matchImage.getMatrix();
-            lsImage = lsDialog.getResultImage();
-            lsDialog.dispose();
-        }
-
-
-        if (voisOnly && !doLS) {
-            float[] refRes = new float[] {
-                                 refImage.getFileInfo(0).getResolutions()[0],
-                                 refImage.getFileInfo(0).getResolutions()[1],
-                                 refImage.getFileInfo(0).getResolutions()[2]
-                             };
-            float[] matchRes = new float[] {
-                                   matchImage.getFileInfo(0).getResolutions()[0],
-                                   matchImage.getFileInfo(0).getResolutions()[1],
-                                   matchImage.getFileInfo(0).getResolutions()[2]
-                               };
-
-            refWeightImage = new ModelImage(ModelStorageBase.BYTE, refImage.getExtents(), "VOI ref",
-                                            refImage.getUserInterface());
-            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match",
-                                              matchImage.getUserInterface());
-
-            refWeightImage.getFileInfo(0).setResolutions(refRes);
-            inputWeightImage.getFileInfo(0).setResolutions(matchRes);
-
-            // make new reference and input images based on the VOIs in them.
-            // pass those new images to the registration algorithm
-            BitSet mask = refImage.generateVOIMask();
-            int imageSize = refImage.getSliceSize() * refImage.getExtents()[2];
-
-            for (int i = 0; i < imageSize; i++) {
-
-                if (!mask.get(i)) {
-                    refWeightImage.set(i, 0);
-                } else {
-                    refWeightImage.set(i, 1);
-                }
-            }
-
-            mask = matchImage.generateVOIMask();
-            imageSize = matchImage.getSliceSize() * matchImage.getExtents()[2];
-
-            for (int i = 0; i < imageSize; i++) {
-
-                if (!mask.get(i)) {
-                    inputWeightImage.set(i, 0);
-                } else {
-                    inputWeightImage.set(i, 1);
-                }
-            }
-
-            weighted = true;
-        } // if (voisOnly)
-
-        if (weighted) {
-
-            if (!doLS) {
-                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                                             rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY,
-                                             coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-                                             maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations,
-                                             numMinima);
-            } else {
-                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, refWeightImage, inputWeightImage, cost, DOF, interp,
-                                             rotateBeginX, rotateEndX, coarseRateX, fineRateX, rotateBeginY, rotateEndY,
-                                             coarseRateY, fineRateY, rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ,
-                                             maxOfMinResol, doSubsample, fastMode, bracketBound, maxIterations,
-                                             numMinima);
-            }
-        } else {
-            // System.out.println("Reference image name is " +refImage.getImageName());
-            // System.out.println("Moving image name is " +matchImage.getImageName());
-
-            if (!doLS) {
-                reg3 = new AlgorithmRegOAR3D(refImage, matchImage, cost, DOF, interp, rotateBeginX, rotateEndX,
-                                             coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY,
-                                             rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
-                                             doSubsample, fastMode, bracketBound, maxIterations, numMinima);
-            } else {
-                System.err.println("Sending LS Image to OAR3D algorithm");
-                reg3 = new AlgorithmRegOAR3D(refImage, lsImage, cost, DOF, interp, rotateBeginX, rotateEndX,
-                                             coarseRateX, fineRateX, rotateBeginY, rotateEndY, coarseRateY, fineRateY,
-                                             rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
-                                             doSubsample, fastMode, bracketBound, maxIterations, numMinima);
-
-            }
-        }
-
-        reg3.addListener(this);
-
-        
-        createProgressBar(matchImage.getImageName(), reg3);
-        // Hide dialog
-        setVisible(false);
-
-        if (isRunInSeparateThread()) {
-
-            // Start the thread as a low priority because we wish to still have user interface work fast.
-            if (reg3.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
-            if (!UI.isAppFrameVisible()) {
-                reg3.setProgressBarVisible(false);
-            }
-
-            reg3.run();
-        }
-
     }
 
     /**
@@ -2149,7 +2161,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
             case 6:
                 interp = AlgorithmTransform.WSINC;
                 break;
-                //       case 7:  interp = AlgorithmTransform.NEAREST_NEIGHBOR;  break;
+                // case 7:  interp = AlgorithmTransform.NEAREST_NEIGHBOR;  break;
 
             default:
                 interp = AlgorithmTransform.TRILINEAR;

@@ -3,15 +3,16 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
-import gov.nih.mipav.model.structures.ModelImage;
+import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.components.*;
 
 
 /**
- * <p>This class standardizes the parameter names given to many common parameters used in algorithms.  It also provides helper methods to store/retrieve those common parameters.</p>
- * 
- * @see gov.nih.mipav.view.dialogs.JDialogGaussianBlur
+ * <p>This class standardizes the parameter names given to many common parameters used in algorithms. It also provides
+ * helper methods to store/retrieve those common parameters.</p>
+ *
+ * @see  gov.nih.mipav.view.dialogs.JDialogGaussianBlur
  */
 public class AlgorithmParameters {
 
@@ -43,9 +44,7 @@ public class AlgorithmParameters {
      */
     public static final String DO_PROCESS_3D_AS_25D = "do_process_in_2.5D";
 
-    /**
-     * Label used for the parameter indicating the unnormalized/uncorrected gaussian standard deviation to be used.
-     */
+    /** Label used for the parameter indicating the unnormalized/uncorrected gaussian standard deviation to be used. */
     public static final String SIGMAS = "gauss_std_dev";
 
     /**
@@ -59,10 +58,8 @@ public class AlgorithmParameters {
      * grayscale images).
      */
     public static final String DO_PROCESS_RGB = "do_process_r_g_b_channel";
-    
-    /**
-     * Label used for the parameter indicating the number of iterations to perform in a script action.
-     */
+
+    /** Label used for the parameter indicating the number of iterations to perform in a script action. */
     public static final String NUM_ITERATIONS = "num_iterations";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -113,12 +110,109 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Retrieves the list of parameters to either be used to run the script or store settings for future executions of the algorithm in a script.
+     * Store an image in the script recorder image variable table. Used to store input/output images while recording a
+     * script. Should not be used while running a script.
+     *
+     * @param   image  The image to store in the variable table.
+     *
+     * @return  The image placeholder variable assigned to the image by the variable table.
+     */
+    public static final String storeImageInRecorder(ModelImage image) {
+        return ScriptRecorder.getReference().storeImage(image.getImageName());
+    }
+
+    /**
+     * Store an image in the script runner image variable table. Used to store input/output images while running a
+     * script. Should not be used while recording a script.
+     *
+     * @param   image  The image to store in the variable table.
+     *
+     * @return  The image placeholder variable assigned to the image by the variable table.
+     */
+    public static final String storeImageInRunner(ModelImage image) {
+        return ScriptRunner.getReference().storeImage(image.getImageName());
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean doOutputNewImage() {
+        return params.getBoolean(DO_OUTPUT_NEW_IMAGE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean doProcess3DAs25D() {
+        return params.getBoolean(DO_PROCESS_3D_AS_25D);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean[] doProcessRGB() {
+        return params.getList(DO_PROCESS_RGB).getAsBooleanArray();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean doProcessSeparable() {
+        return params.getBoolean(DO_PROCESS_SEPARABLE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean doProcessWholeImage() {
+        return params.getBoolean(DO_PROCESS_WHOLE_IMAGE);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean doSigmaResolutionCorrection() {
+        return params.getBoolean(SIGMA_DO_Z_RES_CORRECTION);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public int getNumIterations() {
+        return params.getInt(NUM_ITERATIONS);
+    }
+
+    /**
+     * Retrieves the list of parameters to either be used to run the script or store settings for future executions of
+     * the algorithm in a script.
      *
      * @return  The table of parameters for this algorithm.
      */
     public ParameterTable getParams() {
         return params;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public float[] getUnnormalizedSigmas() {
+        return params.getList(SIGMAS).getAsFloatArray();
     }
 
     /**
@@ -136,8 +230,8 @@ public class AlgorithmParameters {
      * Returns the first input image for the algorithm.
      *
      * @return  The first input image.
-     * 
-     * @see #getInputImageLabel(int)
+     *
+     * @see     #getInputImageLabel(int)
      */
     public ModelImage retrieveInputImage() {
         return retrieveImage(getInputImageLabel(1));
@@ -155,7 +249,8 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Sets the color channel GUI panel, based on the script action's parameters.  This is a helper function used to handle parameters common to many algorithms.
+     * Sets the color channel GUI panel, based on the script action's parameters. This is a helper function used to
+     * handle parameters common to many algorithms.
      *
      * @param  colorChannelPanel  The color channel panel to set the values of.
      */
@@ -167,7 +262,8 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Sets up the algorithm output options panel components (whole image vs. VOI and new image vs. replace), based on the script action's parameters.  This is a helper function used to handle parameters common to many algorithms.
+     * Sets up the algorithm output options panel components (whole image vs. VOI and new image vs. replace), based on
+     * the script action's parameters. This is a helper function used to handle parameters common to many algorithms.
      *
      * @param  outputOptionsPanel  The algorithm output options panel to set the values of.
      */
@@ -177,7 +273,8 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Sets up the GUI containing the sigmas used in an algorithm (usually Gaussian sigmas), based on the script action's parameters.  This is a helper function used to handle parameters common to many algorithms.
+     * Sets up the GUI containing the sigmas used in an algorithm (usually Gaussian sigmas), based on the script
+     * action's parameters. This is a helper function used to handle parameters common to many algorithms.
      *
      * @param  sigmaPanel  The sigmas panel to set up based on the parameters.
      */
@@ -190,7 +287,8 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Stores the values from the color channel panel in the parameter table.  This function is used when recording a script.  This is a helper function used to handle parameters common to many algorithms.
+     * Stores the values from the color channel panel in the parameter table. This function is used when recording a
+     * script. This is a helper function used to handle parameters common to many algorithms.
      *
      * @param   colorChannelPanel  The color channel panel to extract the options from.
      *
@@ -202,7 +300,8 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Stores the values of color channel processing options in the parameter table.  This function is used when recording a script.  This is a helper function used to handle parameters common to many algorithms.
+     * Stores the values of color channel processing options in the parameter table. This function is used when
+     * recording a script. This is a helper function used to handle parameters common to many algorithms.
      *
      * @param   processRed    Whether the red channel of a color image should be processed.
      * @param   processGreen  Whether the green channel of a color image should be processed.
@@ -212,27 +311,10 @@ public class AlgorithmParameters {
      */
     public void storeColorOptions(boolean processRed, boolean processGreen, boolean processBlue)
             throws ParserException {
-        boolean[] rgb = new boolean[] {processRed, processGreen, processBlue};
+        boolean[] rgb = new boolean[] { processRed, processGreen, processBlue };
         params.put(ParameterFactory.newParameter(DO_PROCESS_RGB, rgb));
     }
 
-    /**
-     * Stores an input image in the list of parameters for the algorithm.  This image is stored with a new parameter label incremented with each new call to this method.
-     *
-     * @param   inputImage  The input image to store.
-     *
-     * @return  The image placeholder variable assigned to the image by the variable table.
-     * 
-     * @throws  ParserException  If there is a problem creating one of the new parameters.
-     */
-    public String storeInputImage(ModelImage inputImage) throws ParserException {
-        String var = storeImage(inputImage, getInputImageLabel(currentInputImageLabelNumber));
-        
-        currentInputImageLabelNumber++;
-
-        return var;
-    }
-    
     /**
      * Stores an input image in the list of parameters for the algorithm.
      *
@@ -240,26 +322,59 @@ public class AlgorithmParameters {
      * @param   paramLabel  The label to give to the new image parameter.
      *
      * @return  The image placeholder variable assigned to the image by the variable table.
-     * 
+     *
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     public String storeImage(ModelImage image, String paramLabel) throws ParserException {
         boolean isExternalImage = !isImageStoredInRecorder(image);
-        
+
         String var = storeImageInRecorder(image);
         params.put(ParameterFactory.newImage(paramLabel, var, isExternalImage));
-        
+
         return var;
     }
 
     /**
-     * Stores information about the output of images for this algorithm in the parameter table.  It first stores whether a new output image should be generated by the algorithm, and then (if a new image should be generated) stores the new output image in the variable table.
+     * Stores an input image in the list of parameters for the algorithm. This image is stored with a new parameter
+     * label incremented with each new call to this method.
      *
-     * @param   outputImage  The result image generated by the algorithm (may be <code>null</code> if <code>isNewImage</code> is <code>false</code>.
+     * @param   inputImage  The input image to store.
+     *
+     * @return  The image placeholder variable assigned to the image by the variable table.
+     *
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    public String storeInputImage(ModelImage inputImage) throws ParserException {
+        String var = storeImage(inputImage, getInputImageLabel(currentInputImageLabelNumber));
+
+        currentInputImageLabelNumber++;
+
+        return var;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   numIters  DOCUMENT ME!
+     *
+     * @throws  ParserException  DOCUMENT ME!
+     */
+    public void storeNumIterations(int numIters) throws ParserException {
+        params.put(ParameterFactory.newParameter(NUM_ITERATIONS, numIters));
+    }
+
+    /**
+     * Stores information about the output of images for this algorithm in the parameter table. It first stores whether
+     * a new output image should be generated by the algorithm, and then (if a new image should be generated) stores the
+     * new output image in the variable table.
+     *
+     * @param   outputImage  The result image generated by the algorithm (may be <code>null</code> if <code>
+     *                       isNewImage</code> is <code>false</code>.
      * @param   isNewImage   Whether the algorithm should output a new image when it is executed.
      *
-     * @return  The new image placeholder variable assigned to the result image (or <code>null</code> if no output image should be generated).
-     * 
+     * @return  The new image placeholder variable assigned to the result image (or <code>null</code> if no output image
+     *          should be generated).
+     *
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
     public String storeOutputImageParams(ModelImage outputImage, boolean isNewImage) throws ParserException {
@@ -271,42 +386,21 @@ public class AlgorithmParameters {
 
         return null;
     }
-    
+
     /**
-     * Returns whether an image has been registered in the script recorder.  If it has not been used, it must be specified externally when this script is run later.
-     * 
-     * @param   image  The image to look for in the recorder's image table.
-     * 
-     * @return  <code>True</code> if the image has been stored in the recorder's image table, <code>false</code> otherwise.
+     * DOCUMENT ME!
+     *
+     * @param   doProcess3DAs25D  DOCUMENT ME!
+     *
+     * @throws  ParserException  DOCUMENT ME!
      */
-    protected static final boolean isImageStoredInRecorder(ModelImage image) {
-        return ScriptRecorder.getReference().getImageTable().isImageStored(image.getImageName());
-    }
-    
-    /**
-     * Store an image in the script recorder image variable table.  Used to store input/output images while recording a script.  Should not be used while running a script.
-     *
-     * @param   image  The image to store in the variable table.
-     *
-     * @return  The image placeholder variable assigned to the image by the variable table.
-     */
-    protected static final String storeImageInRecorder(ModelImage image) {
-        return ScriptRecorder.getReference().storeImage(image.getImageName());
-    }
-    
-    /**
-     * Store an image in the script runner image variable table.  Used to store input/output images while running a script.  Should not be used while recording a script.
-     *
-     * @param   image  The image to store in the variable table.
-     *
-     * @return  The image placeholder variable assigned to the image by the variable table.
-     */
-    public static final String storeImageInRunner(ModelImage image) {
-        return ScriptRunner.getReference().storeImage(image.getImageName());
+    public void storeProcess3DAs25D(boolean doProcess3DAs25D) throws ParserException {
+        params.put(ParameterFactory.newParameter(DO_PROCESS_3D_AS_25D, doProcess3DAs25D));
     }
 
     /**
-     * Stores options for how an algorithm should process images in the parameter table.  This function is used when recording a script.  This is a helper function used to handle parameters common to many algorithms.
+     * Stores options for how an algorithm should process images in the parameter table. This function is used when
+     * recording a script. This is a helper function used to handle parameters common to many algorithms.
      *
      * @param   doWholeImage  Whether to process the whole image or just VOI regions.
      * @param   do25D         Whether to process 3D images in 2.5D mode (slice by slice).
@@ -319,7 +413,19 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Stores whether the whole image or just VOI regions should be processed in the parameter table.  This function is used when recording a script.  This is a helper function used to handle parameters common to many algorithms.
+     * DOCUMENT ME!
+     *
+     * @param   doProcessSep  DOCUMENT ME!
+     *
+     * @throws  ParserException  DOCUMENT ME!
+     */
+    public void storeProcessSeparable(boolean doProcessSep) throws ParserException {
+        params.put(ParameterFactory.newParameter(DO_PROCESS_SEPARABLE, doProcessSep));
+    }
+
+    /**
+     * Stores whether the whole image or just VOI regions should be processed in the parameter table. This function is
+     * used when recording a script. This is a helper function used to handle parameters common to many algorithms.
      *
      * @param   doWholeImage  Whether to process the whole image or just VOI regions.
      *
@@ -330,7 +436,8 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Stores an algorithm's sigmas in the parameter table.  This function is used when recording a script.  This is a helper function used to handle parameters common to many algorithms.
+     * Stores an algorithm's sigmas in the parameter table. This function is used when recording a script. This is a
+     * helper function used to handle parameters common to many algorithms.
      *
      * @param   sigmaPanel  The sigma GUI panel to extract the parameters from.
      *
@@ -341,10 +448,12 @@ public class AlgorithmParameters {
     }
 
     /**
-     * Stores an algorithm's sigmas in the parameter table.  This function is used when recording a script.  This is a helper function used to handle parameters common to many algorithms.
+     * Stores an algorithm's sigmas in the parameter table. This function is used when recording a script. This is a
+     * helper function used to handle parameters common to many algorithms.
      *
      * @param   sigmas                The unnormalized sigmas (must be a 3D array).
-     * @param   isZCorrectionEnabled  Whether adjustment of the Z sigma should be performed based on the ratio of x resolution to z resolution.
+     * @param   isZCorrectionEnabled  Whether adjustment of the Z sigma should be performed based on the ratio of x
+     *                                resolution to z resolution.
      *
      * @throws  ParserException  If there is a problem creating one of the new parameters.
      */
@@ -352,58 +461,37 @@ public class AlgorithmParameters {
         params.put(ParameterFactory.newParameter(SIGMAS, sigmas));
         params.put(ParameterFactory.newBoolean(SIGMA_DO_Z_RES_CORRECTION, isZCorrectionEnabled));
     }
-    
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   resultImage  DOCUMENT ME!
+     *
+     * @throws  ParserException  DOCUMENT ME!
+     */
     public void tryToStoreResultImageInRunner(ModelImage resultImage) throws ParserException {
+
         if (params.containsParameter(DO_OUTPUT_NEW_IMAGE) && doOutputNewImage()) {
+
             if (resultImage == null) {
-                throw new ParserException("", 0, "A script action wants to register a result image, but none was found after executing the action.");
+                throw new ParserException("", 0,
+                                          "A script action wants to register a result image, but none was found after executing the action.");
             }
-            
+
             storeImageInRunner(resultImage);
         }
     }
-    
-    public void storeProcessSeparable(boolean doProcessSep) throws ParserException {
-        params.put(ParameterFactory.newParameter(DO_PROCESS_SEPARABLE, doProcessSep));
-    }
-    
-    public void storeNumIterations(int numIters) throws ParserException {
-        params.put(ParameterFactory.newParameter(NUM_ITERATIONS, numIters));
-    }
-    
-    public void storeProcess3DAs25D(boolean doProcess3DAs25D) throws ParserException {
-        params.put(ParameterFactory.newParameter(DO_PROCESS_3D_AS_25D, doProcess3DAs25D));
-    }
-    
-    public boolean doProcess3DAs25D() {
-        return params.getBoolean(DO_PROCESS_3D_AS_25D);
-    }
-    
-    public boolean doProcessWholeImage() {
-        return params.getBoolean(DO_PROCESS_WHOLE_IMAGE);
-    }
-    
-    public boolean doOutputNewImage() {
-        return params.getBoolean(DO_OUTPUT_NEW_IMAGE);
-    }
-    
-    public boolean doProcessSeparable() {
-        return params.getBoolean(DO_PROCESS_SEPARABLE);
-    }
-    
-    public boolean[] doProcessRGB() {
-        return params.getList(DO_PROCESS_RGB).getAsBooleanArray();
-    }
-    
-    public boolean doSigmaResolutionCorrection() {
-        return params.getBoolean(SIGMA_DO_Z_RES_CORRECTION);
-    }
-    
-    public float[] getUnnormalizedSigmas() {
-        return params.getList(SIGMAS).getAsFloatArray();
-    }
-    
-    public int getNumIterations() {
-        return params.getInt(NUM_ITERATIONS);
+
+    /**
+     * Returns whether an image has been registered in the script recorder. If it has not been used, it must be
+     * specified externally when this script is run later.
+     *
+     * @param   image  The image to look for in the recorder's image table.
+     *
+     * @return  <code>True</code> if the image has been stored in the recorder's image table, <code>false</code>
+     *          otherwise.
+     */
+    protected static final boolean isImageStoredInRecorder(ModelImage image) {
+        return ScriptRecorder.getReference().getImageTable().isImageStored(image.getImageName());
     }
 }

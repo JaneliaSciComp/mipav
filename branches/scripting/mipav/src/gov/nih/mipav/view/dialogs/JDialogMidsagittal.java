@@ -221,7 +221,7 @@ public class JDialogMidsagittal extends JDialogScriptableBase implements Algorit
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
     }
 
     /**

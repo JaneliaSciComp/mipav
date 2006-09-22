@@ -5,8 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 
@@ -145,13 +143,13 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmConvert3Dto4D: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
         int mod = length / 100; // mod is 1 percent of length
-        
+
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
 
@@ -171,7 +169,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                 destImage = null;
                 buffer = null;
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -187,7 +185,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
                 destImage = null;
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -283,7 +281,6 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
         }
 
-        
         setCompleted(true);
     }
 

@@ -3,7 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -68,51 +68,13 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
- 
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException{
-        scriptParameters.storeInputImage(srcImage);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_convert_4D_to_3D", convert4Dto3D));
-        
-        int[] slices = new int[extractList.size()];
-        for (int i = 0; i < extractList.size(); i++) {
-            slices[i] = Integer.parseInt((String) extractList.elementAt(i));
-        }
-        scriptParameters.getParams().put(ParameterFactory.newParameter("slices", slices));
-     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        srcImage = scriptParameters.retrieveInputImage();
-        parentFrame = srcImage.getParentFrame();
-        
-        convert4Dto3D = scriptParameters.getParams().getBoolean("do_convert_4D_to_3D");
-        
-        int[] slices = scriptParameters.getParams().getList("slices").getAsIntArray();
-        for (int i = 0; i < slices.length; i++) {
-            extractList.addElement("" + slices[i]);
-        }
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
+
     /**
      * Does nothing.
      *
      * @param  event  event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {}
+    public void actionPerformed(ActionEvent event) { }
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -125,6 +87,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmExtractSlices) {
 
             if ((extractSlicesAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -204,28 +167,6 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
     }
 
     /**
-     * Accessor that returns the result image.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public ModelImage getResultImage() {
-        return resultImage;
-    }
-
-    /**
-     * Accessor that returns the whether or not the algorithm completed successfully.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public boolean isSuccessful() {
-        if (extractSlicesAlgo.isCompleted() && (resultImage != null)) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * Run the algorithm.
      */
     public void callAlgorithm() {
@@ -241,9 +182,11 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
             // (if user checked them all) or at least ONE is checked ...
             if (numDestSlices == srcImage.getExtents()[2]) {
                 MipavUtil.displayError("Extract Slices: Cannot extract all slices from image.");
+
                 return;
             } else if (numDestSlices == 0) {
                 MipavUtil.displayError("Extract Slices: Must select slices to extract from image.");
+
                 return;
             }
 
@@ -321,7 +264,7 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
             extractSlicesAlgo.addListener(this);
 
             createProgressBar(srcImage.getImageName(), extractSlicesAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -350,11 +293,77 @@ public class JDialogExtractSlices extends JDialogScriptableBase implements Algor
     }
 
     /**
+     * Accessor that returns the result image.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public ModelImage getResultImage() {
+        return resultImage;
+    }
+
+    /**
+     * Accessor that returns the whether or not the algorithm completed successfully.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean isSuccessful() {
+
+        if (extractSlicesAlgo.isCompleted() && (resultImage != null)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
      * DOCUMENT ME!
      *
      * @param  doConvert  DOCUMENT ME!
      */
     public void setConvert4Dto3D(boolean doConvert) {
         this.convert4Dto3D = doConvert;
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        parentFrame = srcImage.getParentFrame();
+
+        convert4Dto3D = scriptParameters.getParams().getBoolean("do_convert_4D_to_3D");
+
+        extractList = new Vector();
+
+        int[] slices = scriptParameters.getParams().getList("slices").getAsIntArray();
+
+        for (int i = 0; i < slices.length; i++) {
+            extractList.addElement("" + slices[i]);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_convert_4D_to_3D", convert4Dto3D));
+
+        int[] slices = new int[extractList.size()];
+
+        for (int i = 0; i < extractList.size(); i++) {
+            slices[i] = Integer.parseInt((String) extractList.elementAt(i));
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("slices", slices));
     }
 }

@@ -100,6 +100,7 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
      * @param  algorithm  algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmReslice) {
 
             if (resliceAlgo.isCompleted() == true) {
@@ -140,35 +141,7 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation_type", mode));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        setMode(scriptParameters.getParams().getInt("interpolation_type"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
+
     /**
      * Accessor that sets the mode: linear, cubic, or cubic bspline.
      *
@@ -201,7 +174,7 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
             resliceAlgo.addListener(this);
 
             createProgressBar(image.getImageName(), resliceAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -212,6 +185,7 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     resliceAlgo.setProgressBarVisible(false);
                 }
@@ -227,6 +201,34 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
 
             return;
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        setMode(scriptParameters.getParams().getInt("interpolation_type"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation_type", mode));
     }
 
     /**

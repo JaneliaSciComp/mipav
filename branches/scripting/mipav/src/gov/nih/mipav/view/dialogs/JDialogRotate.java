@@ -82,7 +82,7 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
      *
      * @param  event  Event that triggers function.
      */
-    public void actionPerformed(ActionEvent event) {}
+    public void actionPerformed(ActionEvent event) { }
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -130,6 +130,7 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
 
                 // Not so sure about this.
                 if (image.getLightBoxFrame() != null) {
+
                     try {
                         pt = image.getLightBoxFrame().getLocation();
                         image.getLightBoxFrame().close();
@@ -204,7 +205,7 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
             rotateAlgo.addListener(this);
 
             createProgressBar(image.getImageName(), rotateAlgo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -229,6 +230,7 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     rotateAlgo.setProgressBarVisible(false);
                 }
@@ -251,58 +253,14 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
+
     /**
-     * {@inheritDoc}
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        String axis;
-        switch (rotateAxis) {
-
-            case AlgorithmRotate.X_AXIS_180:
-                axis = "X180";
-                break;
-        
-            case AlgorithmRotate.X_AXIS_PLUS:
-                axis = "X+";
-                break;
-
-            case AlgorithmRotate.X_AXIS_MINUS:
-                axis = "X-";
-                break;
-                
-            case AlgorithmRotate.Y_AXIS_180:
-                axis = "Y180";
-                break;
-
-            case AlgorithmRotate.Y_AXIS_PLUS:
-                axis = "Y+";
-                break;
-
-            case AlgorithmRotate.Y_AXIS_MINUS:
-                axis = "Y-";
-                break;
-                
-            case AlgorithmRotate.Z_AXIS_180:
-                axis = "Z180";
-                break;
-
-            case AlgorithmRotate.Z_AXIS_MINUS:
-                axis = "Z-";
-                break;
-
-            case AlgorithmRotate.Z_AXIS_PLUS:
-            default:
-                axis = "Z+";
-                break;
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotation_axis", axis));
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
-    
+
     /**
      * {@inheritDoc}
      */
@@ -314,7 +272,7 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
 
         // TODO: why do we reg the parent frame?  shouldn't it already be registered?
         userInterface.regFrame(image.getParentFrame());
-        
+
         String axisn = scriptParameters.getParams().getString("rotation_axis");
         int axis;
 
@@ -342,11 +300,56 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
 
         rotateAxis = axis;
     }
-    
+
     /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
+     * {@inheritDoc}
      */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        String axis;
+
+        switch (rotateAxis) {
+
+            case AlgorithmRotate.X_AXIS_180:
+                axis = "X180";
+                break;
+
+            case AlgorithmRotate.X_AXIS_PLUS:
+                axis = "X+";
+                break;
+
+            case AlgorithmRotate.X_AXIS_MINUS:
+                axis = "X-";
+                break;
+
+            case AlgorithmRotate.Y_AXIS_180:
+                axis = "Y180";
+                break;
+
+            case AlgorithmRotate.Y_AXIS_PLUS:
+                axis = "Y+";
+                break;
+
+            case AlgorithmRotate.Y_AXIS_MINUS:
+                axis = "Y-";
+                break;
+
+            case AlgorithmRotate.Z_AXIS_180:
+                axis = "Z180";
+                break;
+
+            case AlgorithmRotate.Z_AXIS_MINUS:
+                axis = "Z-";
+                break;
+
+            case AlgorithmRotate.Z_AXIS_PLUS:
+            default:
+                axis = "Z+";
+                break;
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotation_axis", axis));
     }
 }

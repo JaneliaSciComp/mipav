@@ -687,7 +687,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             componentImage[i] = new ViewJComponentEditImage(this, imageA, LUTa, null, imageB, LUTb, null, null,
                                                             magnification / 100, extents, false,
-                                                            ViewJComponentEditImage.NA );
+                                                            ViewJComponentEditImage.NA);
             componentImage[i].setFrameControls(controls);
             componentImage[i].setLocation(borderSize + selectedBorderSize, borderSize + selectedBorderSize);
 
@@ -1957,7 +1957,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
      *   <li>frame location</li>
      * </ul>
      *
-     * into the MipavPreferences file.
+     * <p>into the MipavPreferences file.</p>
      */
     public void storeToDefaults() {
         Preferences.setProperty("LightBoxRowDependent", new Boolean(row_dependent).toString());
@@ -3160,7 +3160,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
             }
 
             dialogES.setSeparateThread(true);
-            dialogES.actionPerformed(new ActionEvent(this, 1, "Script"));
+            dialogES.callAlgorithm();
 
             // turn all the selections off if successful
             if (dialogES.isSuccessful()) {
@@ -3322,12 +3322,14 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
         // find what the new gridRow and gridColumn would be if we
         // "snap" to the nearest image size
-        int newGridRow = (int) Math.round((double) height /
-                                              (double) (imagePanelSizeY + gridSpacing + (2 * borderSize) +
-                                                            (2 * selectedBorderSize)));
-        int newGridColumn = (int) Math.round((double) width /
-                                                 (double) (imagePanelSizeX + gridSpacing + (2 * borderSize) +
-                                                               (2 * selectedBorderSize)));
+        int newGridRow = (int)
+                             Math.round((double) height /
+                                            (double) (imagePanelSizeY + gridSpacing + (2 * borderSize) +
+                                                          (2 * selectedBorderSize)));
+        int newGridColumn = (int)
+                                Math.round((double) width /
+                                               (double) (imagePanelSizeX + gridSpacing + (2 * borderSize) +
+                                                             (2 * selectedBorderSize)));
 
         if (((newGridRow == gridRow) && (newGridColumn == gridColumn))) {
             // || newGridRow * newGridColumn > numTotalSlices  ) {

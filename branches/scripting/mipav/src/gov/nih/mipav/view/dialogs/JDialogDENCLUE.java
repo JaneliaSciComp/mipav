@@ -2,7 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -15,37 +15,69 @@ import javax.swing.*;
 
 
 /**
- * Dialog to get user input, then call the algorithm. It
- * should be noted that the algorithms are executed in their own thread.
+ * Dialog to get user input, then call the algorithm. It should be noted that the algorithms are executed in their own
+ * thread.
  */
-public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmInterface {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -8761669177340930135L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-    
-    private ButtonGroup influenceGroup;
-    private JRadioButton gaussianButton;
-    private boolean isGaussian;
-    private JRadioButton squareButton;
-    private JLabel distanceLabel;
-    private JTextField distanceText;
-    private float distance = 1.0f;
-    private JLabel thresholdLabel;
-    private JTextField thresholdText;
-    private float threshold = 1.0f;
-    private ButtonGroup clusterGroup;
+
+    /** DOCUMENT ME! */
     private JRadioButton arbitraryButton;
+
+    /** DOCUMENT ME! */
     private JRadioButton centerButton;
-    private boolean isArbitrary;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup clusterGroup;
+
+    /** DOCUMENT ME! */
+    private AlgorithmDENCLUE denAlgo = null;
+
+    /** DOCUMENT ME! */
+    private float distance = 1.0f;
+
+    /** DOCUMENT ME! */
+    private JLabel distanceLabel;
+
+    /** DOCUMENT ME! */
+    private JTextField distanceText;
+
+    /** DOCUMENT ME! */
+    private JRadioButton gaussianButton;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private AlgorithmDENCLUE denAlgo = null;
+    private ButtonGroup influenceGroup;
 
-    
+    /** DOCUMENT ME! */
+    private boolean isArbitrary;
+
+    /** DOCUMENT ME! */
+    private boolean isGaussian;
+
+
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
+
+    /** DOCUMENT ME! */
+    private JRadioButton squareButton;
+
+    /** DOCUMENT ME! */
+    private float threshold = 1.0f;
+
+    /** DOCUMENT ME! */
+    private JLabel thresholdLabel;
+
+    /** DOCUMENT ME! */
+    private JTextField thresholdText;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
@@ -74,44 +106,6 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("gaussian_std_dev_or_influence_distance", distance));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_gaussian_function", isGaussian));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_arbitrary_shape_cluster", isArbitrary));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        distance = scriptParameters.getParams().getFloat("gaussian_std_dev_or_influence_distance");
-        threshold = scriptParameters.getParams().getFloat("threshold");
-        isGaussian = scriptParameters.getParams().getBoolean("do_use_gaussian_function");
-        isArbitrary = scriptParameters.getParams().getBoolean("do_use_arbitrary_shape_cluster");
-        
-        if (distance <= 0) {
-            throw new ParameterException("gaussian_std_dev_or_influence_distance", "Distance/standard deviation must be greater than 0 (found " + distance + ").");
-        }
-    }
-
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
-    /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
      * @param  event  Event that triggers function.
@@ -129,13 +123,12 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
             MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
-        }
-        else if ((source == gaussianButton) || (source == squareButton)) {
+        } else if ((source == gaussianButton) || (source == squareButton)) {
+
             if (gaussianButton.isSelected()) {
-                distanceLabel.setText("Standard deviation");    
-            }
-            else {
-                distanceLabel.setText("Influence distance");    
+                distanceLabel.setText("Standard deviation");
+            } else {
+                distanceLabel.setText("Influence distance");
             }
         }
     }
@@ -151,6 +144,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmDENCLUE) {
             image.clearMask();
 
@@ -194,40 +188,42 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
     }
 
     /**
-     * Accessor that sets whether the influence function is gaussian or square wave
+     * Accessor that sets the distance.
      *
-     * @param  isGaussian
-     */
-    public void setIsGaussian(boolean isGaussian) {
-        this.isGaussian = isGaussian;
-    }
-
-    /**
-     * Accessor that sets the distance
-     * @param distance
+     * @param  distance  DOCUMENT ME!
      */
     public void setDistance(float distance) {
         this.distance = distance;
     }
 
     /**
-     * Accessor that sets the threshold
-     * @param threshold
-     */
-    public void setThreshold(float threshold) {
-        this.threshold = threshold;
-    }
-
-    /**
      * Accessor that sets the wheteher the cluster shape is arbitrary or center defined.
      *
-     * @param  isArbitrary
+     * @param  isArbitrary  DOCUMENT ME!
      */
     public void setIsArbitrary(boolean isArbitrary) {
         this.isArbitrary = isArbitrary;
     }
 
-    
+    /**
+     * Accessor that sets whether the influence function is gaussian or square wave.
+     *
+     * @param  isGaussian  DOCUMENT ME!
+     */
+    public void setIsGaussian(boolean isGaussian) {
+        this.isGaussian = isGaussian;
+    }
+
+    /**
+     * Accessor that sets the threshold.
+     *
+     * @param  threshold  DOCUMENT ME!
+     */
+    public void setThreshold(float threshold) {
+        this.threshold = threshold;
+    }
+
+
     /**
      * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
      * or not there is a separate destination image.
@@ -238,7 +234,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
         try {
 
             // Make result image of float type
-            resultImage     = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name, userInterface);
+            resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), name, userInterface);
 
             // Make algorithm
             denAlgo = new AlgorithmDENCLUE(resultImage, image, isGaussian, distance, threshold, isArbitrary);
@@ -247,9 +243,9 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             denAlgo.addListener(this);
-            
+
             createProgressBar(image.getImageName(), denAlgo);
-            
+
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -270,7 +266,48 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
             }
 
             return;
-        }   
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        distance = scriptParameters.getParams().getFloat("gaussian_std_dev_or_influence_distance");
+        threshold = scriptParameters.getParams().getFloat("threshold");
+        isGaussian = scriptParameters.getParams().getBoolean("do_use_gaussian_function");
+        isArbitrary = scriptParameters.getParams().getBoolean("do_use_arbitrary_shape_cluster");
+
+        if (distance <= 0) {
+            throw new ParameterException("gaussian_std_dev_or_influence_distance",
+                                         "Distance/standard deviation must be greater than 0 (found " + distance +
+                                         ").");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gaussian_std_dev_or_influence_distance",
+                                                                       distance));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_gaussian_function", isGaussian));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_arbitrary_shape_cluster", isArbitrary));
     }
 
     /**
@@ -278,21 +315,21 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Density based clustering"); 
+        setTitle("Density based clustering");
 
         // panel gets a grid layout
         GridBagLayout gbl = new GridBagLayout();
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 0, 2, 0); // component width = minwidth + (2ipadx)
-        
+
 
         JPanel paramPanel = new JPanel();
         paramPanel.setLayout(gbl);
         gbc.anchor = GridBagConstraints.WEST;
         paramPanel.setForeground(Color.black);
         paramPanel.setBorder(buildTitledBorder("Clustering parameters")); // set the border ... "Colour channel
-                                                                             // Selection"
+                                                                          // Selection"
 
         influenceGroup = new ButtonGroup();
         gaussianButton = new JRadioButton("Gaussian influence function", true);
@@ -304,7 +341,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         paramPanel.add(gaussianButton, gbc);
-        
+
         squareButton = new JRadioButton("Square wave influence function", false);
         squareButton.setFont(serif12);
         squareButton.setForeground(Color.black);
@@ -312,34 +349,34 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
         influenceGroup.add(squareButton);
         gbc.gridy = 1;
         paramPanel.add(squareButton, gbc);
-        
+
         distanceLabel = new JLabel("Standard deviation");
         distanceLabel.setForeground(Color.black);
         distanceLabel.setFont(serif12);
         gbc.gridy = 2;
         paramPanel.add(distanceLabel, gbc);
-        
+
         distanceText = new JTextField(10);
         distanceText.setText("1.0");
         distanceText.setForeground(Color.BLACK);
         distanceText.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(distanceText, gbc);
-        
+
         thresholdLabel = new JLabel("Threshold");
         thresholdLabel.setForeground(Color.black);
         thresholdLabel.setFont(serif12);
         gbc.gridx = 0;
         gbc.gridy = 3;
         paramPanel.add(thresholdLabel, gbc);
-        
+
         thresholdText = new JTextField(10);
         thresholdText.setText("1.0");
         thresholdText.setForeground(Color.BLACK);
         thresholdText.setFont(serif12);
         gbc.gridx = 1;
         paramPanel.add(thresholdText, gbc);
-        
+
         clusterGroup = new ButtonGroup();
         arbitraryButton = new JRadioButton("Arbitrary shape cluster", true);
         arbitraryButton.setFont(serif12);
@@ -348,15 +385,15 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
         gbc.gridx = 0;
         gbc.gridy = 4;
         paramPanel.add(arbitraryButton, gbc);
-        
+
         centerButton = new JRadioButton("Center defined cluster", false);
         centerButton.setFont(serif12);
         centerButton.setForeground(Color.black);
         clusterGroup.add(centerButton);
         gbc.gridy = 5;
         paramPanel.add(centerButton, gbc);
-        
-        
+
+
         getContentPane().add(paramPanel, BorderLayout.CENTER); // put the setupBox into the dialog
 
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
@@ -375,21 +412,23 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
      */
     private boolean setVariables() {
         String tmpStr;
-        
+
         isGaussian = gaussianButton.isSelected();
-        
+
         tmpStr = distanceText.getText();
         distance = Float.parseFloat(tmpStr);
+
         if (distance <= 0) {
             MipavUtil.displayError("Distance must be greater than zero");
             distanceText.requestFocus();
             distanceText.selectAll();
+
             return false;
         }
-        
+
         tmpStr = thresholdText.getText();
         threshold = Float.parseFloat(tmpStr);
-        
+
         isArbitrary = arbitraryButton.isSelected();
 
         return true;

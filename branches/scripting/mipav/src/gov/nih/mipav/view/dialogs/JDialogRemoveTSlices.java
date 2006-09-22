@@ -361,7 +361,7 @@ public class JDialogRemoveTSlices extends JDialogScriptableBase implements Algor
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
 
         int numSelectedSlices = 0;
 

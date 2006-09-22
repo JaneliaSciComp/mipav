@@ -138,6 +138,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
      * @param  algorithm  AlgorithmBase reference
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -233,39 +234,6 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
     public ModelImage getResultImage() {
         return ubyteImage;
     }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) && (image.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-        
-        displayLoc = NEW;
-    }
 
     /**
      * When OK button is clicked, this method is invoked.
@@ -312,7 +280,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                     idObjectsAlgo2D.addListener(this);
 
                     createProgressBar(image.getImageName(), idObjectsAlgo2D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -372,8 +340,8 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                  * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled( false );
                  * userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }
                  *
-                 * if ( isRunInSeparateThread() ) { // Start the thread as a low priority because we wish to still have user
-                 * interface. if ( idObjectsAlgo2D.startMethod( Thread.MIN_PRIORITY ) == false ) {
+                 * if ( isRunInSeparateThread() ) { // Start the thread as a low priority because we wish to still have
+                 * user interface. if ( idObjectsAlgo2D.startMethod( Thread.MIN_PRIORITY ) == false ) {
                  * MipavUtil.displayError( "A thread is already running on this object" ); } } else {
                  * idObjectsAlgo2D.setActiveImage( isActiveImage ); if ( !userInterface.isAppFrameVisible() ) {
                  * idObjectsAlgo2D.setProgressBarVisible( false ); } idObjectsAlgo2D.run(); } } catch ( OutOfMemoryError
@@ -418,7 +386,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                     idObjectsAlgo3D.addListener(this);
 
                     createProgressBar(image.getImageName(), idObjectsAlgo3D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -469,6 +437,40 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
             }
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        displayLoc = NEW;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
     }
 
 
@@ -570,7 +572,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
      */
     private boolean setVariables() {
         System.gc();
-        
+
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
         } else if (newImage.isSelected()) {

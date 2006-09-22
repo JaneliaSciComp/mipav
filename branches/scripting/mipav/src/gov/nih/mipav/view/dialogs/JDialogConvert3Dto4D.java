@@ -5,7 +5,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -68,9 +68,6 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
     private JTextField textVolumeLength;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private int volumeLength;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -90,49 +87,11 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
         super(theParentFrame, false);
         image = im;
         imageName = image.getImageName();
-        userInterface = ViewUserInterface.getReference();
         init();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException{
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("volume_length", volumeLength));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_resolution", res3));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_resolution", res4));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_unit", measure3));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_unit", measure4));
-        
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        volumeLength = scriptParameters.getParams().getInt("volume_length");
-        res3 = scriptParameters.getParams().getFloat("3_dim_resolution");
-        res4 = scriptParameters.getParams().getFloat("4_dim_resolution");
-        measure3 = scriptParameters.getParams().getInt("3_dim_unit");
-        measure4 = scriptParameters.getParams().getInt("4_dim_unit");        
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {        
-         AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
+
     /**
      * Calls run on the algorithm from the script parser.
      *
@@ -164,6 +123,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmConvert3Dto4D) {
             resultImage = convert3Dto4DAlgo.getResultImage();
 
@@ -197,7 +157,7 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
             insertScriptLine();
         }
 
-        if ((parentFrame != null) && ScriptRecorder.getReference().getRecorderStatus() != ScriptRecorder.RECORDING) {
+        if ((parentFrame != null) && (ScriptRecorder.getReference().getRecorderStatus() != ScriptRecorder.RECORDING)) {
             ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
             ((ViewJFrameBase) (parentFrame)).close();
         }
@@ -205,44 +165,6 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
         convert3Dto4DAlgo.finalize();
         convert3Dto4DAlgo = null;
         dispose();
-    }
-
-    /**
-     * Runs the algorithm.
-     */
-    protected void callAlgorithm() {
-
-        try {
-            System.gc();
-
-            // Make algorithm
-            convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(image, volumeLength, res3, res4, measure3, measure4);
-
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed of failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            convert3Dto4DAlgo.addListener(this);
-
-            createProgressBar(image.getImageName(), convert3Dto4DAlgo);
-            
-            // Hide dialog
-            setVisible(false);
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (convert3Dto4DAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-            	convert3Dto4DAlgo.run();
-            }
-        } catch (OutOfMemoryError x) {
-            System.gc();
-            MipavUtil.displayError("JDialogConvert3Dto4D: unable to allocate enough memory");
-
-            return;
-        }
     }
 
     /**
@@ -254,7 +176,6 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
         return resultImage;
     }
 
- 
 
     /**
      * Accessor that sets the resolution for the 3rd dimension.
@@ -299,6 +220,79 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
      */
     public void setVolumeLength(int volLength) {
         volumeLength = volLength;
+    }
+
+    /**
+     * Runs the algorithm.
+     */
+    protected void callAlgorithm() {
+
+        try {
+            System.gc();
+
+            // Make algorithm
+            convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(image, volumeLength, res3, res4, measure3, measure4);
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed of failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            convert3Dto4DAlgo.addListener(this);
+
+            createProgressBar(image.getImageName(), convert3Dto4DAlgo);
+
+            // Hide dialog
+            setVisible(false);
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (convert3Dto4DAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                convert3Dto4DAlgo.run();
+            }
+        } catch (OutOfMemoryError x) {
+            System.gc();
+            MipavUtil.displayError("JDialogConvert3Dto4D: unable to allocate enough memory");
+
+            return;
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        parentFrame = image.getParentFrame();
+
+        volumeLength = scriptParameters.getParams().getInt("volume_length");
+        res3 = scriptParameters.getParams().getFloat("3_dim_resolution");
+        res4 = scriptParameters.getParams().getFloat("4_dim_resolution");
+        measure3 = scriptParameters.getParams().getInt("3_dim_unit");
+        measure4 = scriptParameters.getParams().getInt("4_dim_unit");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("volume_length", volumeLength));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_resolution", res3));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_resolution", res4));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_unit", measure3));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_unit", measure4));
     }
 
     /**

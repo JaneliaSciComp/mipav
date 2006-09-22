@@ -4,7 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -24,7 +24,7 @@ import javax.swing.*;
  * thickness = spacing. Only works for DICOM or XML files, since they include the sliceSpacing field.
  */
 
-public class JDialogCorrectSpacing extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogCorrectSpacing extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -119,70 +119,13 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), true);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
-        fileFormat = fileInfoBuffer.getFileFormat();
-        space = fileInfoBuffer.getSliceSpacing();
-        thick = fileInfoBuffer.getResolutions()[2];
-        
-        if (image.getNDims() == 3) {
-            extents = new int[4];
-        } else if (image.getNDims() == 4) {
-            extents = new int[3];
-        } else {
-            MipavUtil.displayError("This utility only works with 3D and 4D files.");
-            return;
-        }
-        
-        if (fileFormat != FileBase.XML) {
-            MipavUtil.displayError("This utility only works with XML files.");
-            return;
-        }
-        
-        if (space > thick) {
-            extents = image.getExtents();
-            numIm = extents[2];
-            gap = space - thick;
-            Preferences.debug("\nIn original image set, slice thickness is " + thick + " and gap between slices is "
-                    + gap + ".");
-            zStart = fileInfoBuffer.getOrigin(2);
-            getNewInfo();
-            Preferences.debug("New slice thickness: " + newThick
-                    + ".  To create new images, each original image is repeated " + numRepIm + " times and " + numBlank
-                    + " blanks are inserted.");
-            generateNewImages();
-        }
-    }
-
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
 
     /**
      * Have to define actionPerformed b/c this dialog extends JDialogBase.
-     * 
-     * @param event Event that triggered this function.
+     *
+     * @param  event  Event that triggered this function.
      */
-    public void actionPerformed(ActionEvent event) {}
+    public void actionPerformed(ActionEvent event) { }
 
     /**
      * This method is required if the AlgorithmInterface is implemented.
@@ -190,6 +133,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmCorrectSpacing) {
 
             // resultImage = correctSpaceAlgo.getResultImage();
@@ -279,7 +223,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
                 correctSpaceAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), correctSpaceAlgo);
-                
+
                 Vector imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
@@ -296,7 +240,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("Correct Spacing reports: A thread is already running on this object [correctSpaceAlgo]");
                     }
                 } else {
-                   
+
                     correctSpaceAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -324,6 +268,65 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
     }
 
     /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
+        fileFormat = fileInfoBuffer.getFileFormat();
+        space = fileInfoBuffer.getSliceSpacing();
+        thick = fileInfoBuffer.getResolutions()[2];
+
+        if (image.getNDims() == 3) {
+            extents = new int[4];
+        } else if (image.getNDims() == 4) {
+            extents = new int[3];
+        } else {
+            MipavUtil.displayError("This utility only works with 3D and 4D files.");
+
+            return;
+        }
+
+        if (fileFormat != FileBase.XML) {
+            MipavUtil.displayError("This utility only works with XML files.");
+
+            return;
+        }
+
+        if (space > thick) {
+            extents = image.getExtents();
+            numIm = extents[2];
+            gap = space - thick;
+            Preferences.debug("\nIn original image set, slice thickness is " + thick + " and gap between slices is " +
+                              gap + ".");
+            zStart = fileInfoBuffer.getOrigin(2);
+            getNewInfo();
+            Preferences.debug("New slice thickness: " + newThick +
+                              ".  To create new images, each original image is repeated " + numRepIm + " times and " +
+                              numBlank + " blanks are inserted.");
+            generateNewImages();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+    }
+
+    /**
      * This method corrects spacing for cases where the space is less than the thickness, by assigning space value to
      * the z direction resolution.
      *
@@ -340,8 +343,8 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
             arrayOfFileInfo[i].setResolutions(newThickVal, 2);
         }
 
-        MipavUtil.displayInfo("Since spacing is less than thickness, setting thickness to spacing value (" + newThickVal +
-                              ").");
+        MipavUtil.displayInfo("Since spacing is less than thickness, setting thickness to spacing value (" +
+                              newThickVal + ").");
         dispose();
 
         return;
