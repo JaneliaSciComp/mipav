@@ -67,6 +67,10 @@ public class JPanelStatisticsList extends JPanelChecklist implements VOIStatisti
         return statisticDescription;
     }
 
+    public static String[] getCheckboxLabels() {
+    	return statisticDescription;
+    }
+    
     /**
      * DOCUMENT ME!
      */

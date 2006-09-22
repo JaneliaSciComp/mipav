@@ -740,10 +740,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         deleteObjects(min, max, true);
 
-        fireProgressStateChanged("Identifing objects ...");
-        
-
-        fireProgressStateChanged(0);
+        fireProgressStateChanged(0, null, "Identifing objects ...");
         
 
         int mod = sliceSize / 50; // mod is 2 percent of length
@@ -752,7 +749,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
             try {
 
-                if (((pix % mod) == 0) && isProgressBarVisible()) {
+                if (((pix % mod) == 0)) {
                     fireProgressStateChanged(Math.round((pix + 1) / ((float) sliceSize) * 100));
                 }
             } catch (NullPointerException npe) {
@@ -1514,6 +1511,8 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
         constructLog();
 
+        int [] progressValues = getProgressValues();
+        
         switch (algorithm) {
 
             case ERODE:
@@ -1525,21 +1524,32 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 break;
 
             case CLOSE:
+            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
+                		generateProgressValue(progressValues[0], progressValues[1], 100));
                 erode(false, iterationsE);
                 break;
 
             case OPEN:
+            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
                 erode(true, iterationsE);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
+                		generateProgressValue(progressValues[0], progressValues[1], 100));
                 dilate(false, iterationsD);
                 break;
 
             case PARTICLE_ANALYSIS_NEW:
 
                 // open
+            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 15));
                 fillHoles(true);
 
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 15),
+                		generateProgressValue(progressValues[0], progressValues[1], 30));
                 erode(true, iterationsOpen);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 30),
+                		generateProgressValue(progressValues[0], progressValues[1], 45));
                 dilate(true, iterationsOpen);
 
                 if (kernelTypeErode == SIZED_CIRCLE) {
@@ -1549,12 +1559,22 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 }
 
                 makeKernel(CONNECTED4);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 45),
+                		generateProgressValue(progressValues[0], progressValues[1], 60));
                 erode(true, iterationsE);
 
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 60),
+                		generateProgressValue(progressValues[0], progressValues[1], 75));
                 skeletonize(numPruningPixels, true);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 75),
+                		generateProgressValue(progressValues[0], progressValues[1], 80));
                 pruneAuto(true);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 80),
+                		generateProgressValue(progressValues[0], progressValues[1], 95));
                 particleAnalysisNew(true);
                 setMinMax(0, 1000000);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 95),
+                		generateProgressValue(progressValues[0], progressValues[1], 100));
                 identifyObjects(false);
                 break;
 
@@ -1579,7 +1599,10 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 break;
 
             case ULTIMATE_ERODE:
+            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
                 skeletonize(numPruningPixels, true);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
+                		generateProgressValue(progressValues[0], progressValues[1], 100));
                 pruneAuto(false);
                 break;
 
@@ -1914,7 +1937,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
             try {
 
-                if (((pix % mod) == 0) && isProgressBarVisible()) {
+                if (((pix % mod) == 0) ) {
                     fireProgressStateChanged(Math.round((pix + 1) / ((float) sliceSize) * 100));
                 }
             } catch (NullPointerException npe) {
@@ -2246,7 +2269,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                 try {
 
-                    if (((((c * sliceSize) + pix) % mod) == 0) && isProgressBarVisible()) {
+                    if (((((c * sliceSize) + pix) % mod) == 0) ) {
                         fireProgressStateChanged(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
                                                                100));
                     }
@@ -2434,7 +2457,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
             try {
 
-                if (((pix % mod) == 0) && isProgressBarVisible()) {
+                if (((pix % mod) == 0) ) {
                     fireProgressStateChanged(Math.round((pix + 1) / ((float) sliceSize) * 100));
                 }
             } catch (NullPointerException npe) {
@@ -2550,7 +2573,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
 
                 try {
 
-                    if (((((c * sliceSize) + pix) % mod) == 0) && isProgressBarVisible()) {
+                    if (((((c * sliceSize) + pix) % mod) == 0) ) {
                         fireProgressStateChanged(Math.round((pix + 1 + (c * sliceSize)) / (iters * (float) sliceSize) *
                                                                100));
                     }
@@ -2909,7 +2932,7 @@ kernelLoop:
 
                 try {
 
-                    if ((((sliceSize + pix) % mod) == 0) && isProgressBarVisible()) {
+                    if ((((sliceSize + pix) % mod) == 0) ) {
                         fireProgressStateChanged(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100));
                     }
                 } catch (NullPointerException npe) {
@@ -2984,7 +3007,7 @@ kernelLoop:
 
                 try {
 
-                    if ((((sliceSize + pix) % mod) == 0) && isProgressBarVisible()) {
+                    if ((((sliceSize + pix) % mod) == 0) ) {
                         fireProgressStateChanged(Math.round((pix + 1 + sliceSize) / ((float) sliceSize) * 100));
                     }
                 } catch (NullPointerException npe) {
@@ -3435,22 +3458,27 @@ kernelLoop:
         ModelImage distanceImage = null;
         AlgorithmWatershed ws = null;
 
+        int [] progressValues = getProgressValues();
+        
         fireProgressStateChanged("Particle analysis (PA) ...");
           fireProgressStateChanged(0);
        
 
         // add open and close to remove noise; Might not need because delete objects
         // of some size works.
-
-        try {
-
+          
+          try {
+        	
             // add set minimum dist
-            ultimateErode(true); // forms list of points (one point per object)
+        	  setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 0),
+            		generateProgressValue(progressValues[0], progressValues[1], 25));
+        	  ultimateErode(true); // forms list of points (one point per object)
+        	  setProgressValues(progressValues);
 
             
-                fireProgressStateChanged(25);
+        	  fireProgressStateChanged(25);
           
-                fireProgressStateChanged("PA - distance map ...");
+        	  fireProgressStateChanged("PA - distance map ...");
          
 
             srcImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
@@ -3517,7 +3545,7 @@ kernelLoop:
         }
 
       fireProgressStateChanged("Watershed stage ...");
-         fireProgressStateChanged(70);
+      fireProgressStateChanged(70);
        
         destExtents[0] = xDim;
         destExtents[1] = yDim;
@@ -3582,8 +3610,10 @@ kernelLoop:
             return;
         }
 
+        linkProgressToAlgorithm(ws);
+        ws.setProgressValues(generateProgressValues(70,90));
+        
         ws.setSeedVector(seeds);
-        ws.setProgressBarVisible(false);
         ws.setEnergyImage(distanceImage);
         ws.run();
 
@@ -3615,7 +3645,7 @@ kernelLoop:
         } catch (NullPointerException npe) {
 
             if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                Preferences.debug("somehow you mana	ged to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
                                   Preferences.DEBUG_ALGORITHM);
             }
         }
@@ -3624,7 +3654,10 @@ kernelLoop:
        fireProgressStateChanged(90);
        
 
-        deleteObjects(min, max, false);
+       setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 90),
+       		generateProgressValue(progressValues[0], progressValues[1], 100));
+       deleteObjects(min, max, false);
+       setProgressValues(progressValues);
 
     }
 
@@ -3655,19 +3688,20 @@ kernelLoop:
         ModelImage distanceImage = null;
         AlgorithmWatershed ws = null;
 
+        int [] progressValues = getProgressValues();
+        
         fireProgressStateChanged("Particle analysis (PA) ...");
         fireProgressStateChanged(0);
         
 
         try {
 
-            // add set minimum dist
-           fireProgressStateChanged(25);
-           fireProgressStateChanged("PA - distance map ...");
-           
+            // add set minimum dist           
 
             srcImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
+            setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 60));
             distanceMap(true);
+            setProgressValues(progressValues);
             destExtents = new int[2];
         } catch (IOException error) {
             displayError("Algorithm Morphology2D..particleAnalysis: Image(s) locked");
@@ -3723,8 +3757,7 @@ kernelLoop:
             }
         }
 
-      fireProgressStateChanged("Watershed stage ...");
-        fireProgressStateChanged(70);
+      fireProgressStateChanged(75, null, "Watershed stage ...");
        
 
         destExtents[0] = xDim;
@@ -3789,7 +3822,8 @@ kernelLoop:
         }
 
         ws.setSeedVector(seeds);
-        ws.setProgressBarVisible(false);
+        linkProgressToAlgorithm(ws);
+        ws.setProgressValues(generateProgressValues(80,95));
         ws.setEnergyImage(distanceImage);
         ws.run();
 
@@ -3808,7 +3842,7 @@ kernelLoop:
          *  setCompleted( true ); returnFlag = true; if ( returnFlag == true ) { return; }
          */
         try {
-            fireProgressStateChanged(90);
+            fireProgressStateChanged(95);
             wsImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
             srcImage.importData(0, imgBuffer, true);
 
@@ -3818,6 +3852,7 @@ kernelLoop:
             distanceImage.disposeLocal();
             wsImage = null;
             distanceImage = null;
+            fireProgressStateChanged(100);
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);

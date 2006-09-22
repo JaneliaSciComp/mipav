@@ -1195,6 +1195,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             pt[j] = p[j];
         }
 
+        System.err.println("ITMax is: " + ITMAX);
+        
         for (iter = 1;; iter++) {
             fireProgressStateChanged(100 * iter / ITMAX);
             fp = fret;
@@ -3365,7 +3367,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
 
         constructLog();
 
-        fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
+        fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization ...");
         
 
         srcImage.calcMinMax();

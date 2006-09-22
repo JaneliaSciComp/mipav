@@ -221,7 +221,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             displayError("Algorithm Morphology25D: Out of memory");
             setCompleted(false);
             // 
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+            
 
             return;
         }
@@ -422,7 +422,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             if (threadStopped) {
                 setCompleted(false);
                 // 
-                fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                
                 
                 finalize();
 
@@ -434,7 +434,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
             // 
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+            
 
             return;
         }
@@ -497,6 +497,8 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
         constructLog();
 
+        int [] progressValues = getProgressValues();
+        
         switch (algorithm) {
 
             case ERODE:
@@ -508,12 +510,18 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                 break;
 
             case CLOSE:
+            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
+                		generateProgressValue(progressValues[0], progressValues[1], 100));
                 erode(false, iterationsE);
                 break;
 
             case OPEN:
+            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
                 erode(true, iterationsE);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
+                		generateProgressValue(progressValues[0], progressValues[1], 100));
                 dilate(false, iterationsD);
                 break;
 
@@ -673,7 +681,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         if (threadStopped) {
             setCompleted(false);
             // 
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+            
             
             finalize();
 
@@ -701,41 +709,15 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         int imageLength = xDim * yDim * zDim;
 
         short[] tempBuffer;
-/*
-        try {
+        
 
-            if  {
-                fireProgressStateChanged("Skeletonize image ...");
-            }
-
-            if  {
-                fireProgressStateChanged(0);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
-*/
         for (pix = 0; pix < imageLength; pix++) {
             processBuffer[pix] = 0;
         }
 
         for (int i = 0; (i < zDim) && !threadStopped; i++) {
-/*
-            try {
-                fireProgressStateChanged("Skeletonizing Slice " + (i + 1));
-                fireProgressStateChanged(Math.round(((float) i) / ((float) zDim) * 100));
-            } catch (NullPointerException npe) {
-
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                      Preferences.DEBUG_ALGORITHM);
-                }
-            }
-*/
+        	fireProgressStateChanged(Math.round(((float) i) / ((float) zDim) * 100), null, 
+        			"Skeletonizing Slice " + (i + 1));
             do {
                 pixelsRemoved = thin(pass++, i, table);
                 tempBuffer = imgBuffer;
@@ -762,7 +744,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             if (threadStopped) {
                 setCompleted(false);
                 // 
-                fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+                
                 
                 finalize();
 
@@ -774,7 +756,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
             // 
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+            
 
             return;
         }
@@ -933,7 +915,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
             // 
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+            
 
             return;
         }
@@ -975,14 +957,8 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         int stepY = kDim * xDim;
         short[] tempBuffer;
 
-/*        if  {
-            fireProgressStateChanged("Eroding image ...");
-        }
-
-        if  {
-            fireProgressStateChanged(0);
-        }
-*/
+        fireProgressStateChanged("Eroding image ...");
+        
         int mod = (iters * sliceLength * zDim) / 20; // mod is 5 percent of length
 
         for (pix = 0; pix < imgLength; pix++) {
@@ -996,20 +972,10 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
                 for (pix = offsetZ; (pix < (offsetZ + sliceLength)) && !threadStopped; pix++) {
 
-//                    try {
-
-//                        if (((((c * offsetZ) + pix) % mod) == 0) && isProgressBarVisible()) {
-//                            fireProgressStateChanged(Math.round((pix + 1 + (c * offsetZ)) /
-//                                                                   (iters * (float) sliceLength * zDim) * 100),
-//                                                    runningInSeparateThread);
-//                        }
-//                    } catch (NullPointerException npe) {
-
-//                        if (threadStopped) {
-//                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-//                                              Preferences.DEBUG_ALGORITHM);
-//                        }
-//                    }
+                        if (((((c * offsetZ) + pix) % mod) == 0)) {
+                            fireProgressStateChanged(Math.round((pix + 1 + (c * offsetZ)) /
+                                                                   (iters * (float) sliceLength * zDim) * 100));
+                        }
 
                     if (entireImage || mask.get(pix)) {
                         value = imgBuffer[pix];
@@ -1093,7 +1059,7 @@ kernelLoop:
             displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
             // 
-            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
+            
 
             return;
         }

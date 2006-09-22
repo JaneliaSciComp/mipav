@@ -734,6 +734,33 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     /**
+     * Helper function used when calling subroutines of an algorithm to find an adjusted
+     * progress based on a percentage of the passed in min and max
+     * The user can store the original min and max progressvalues, and then use the stored ones
+     * to set the min and max progress values so that every subroutine called THINKS that it is
+     * running on a 0->100 scale 
+     * 
+     * see AlgorithmMorphology3D for examples of usage (where there are many subroutines called within
+     * different functions, so each subroutine needs to act as if it is on a 0->100 scale)
+     * @param minProgress the min progress value
+     * @param maxProgress the max progress value
+     * @param percentage the percentage that a function's subroutine will cover
+     * @return the adjusted progress value
+     */
+    public int generateProgressValue(int minProgress, int maxProgress, int percentage) {
+    	return (minProgress + MipavMath.round((maxProgress - minProgress) * percentage /100f));
+    	
+    }
+    
+    /**
+     * Gets the current stored min and max progress values
+     * @return int [] { currentMin, currentMax}
+     */
+    public int [] getProgressValues() {
+    	return new int [] { minProgressValue, maxProgressValue };
+    }
+    
+    /**
      * Returns the min progress value
      * @return min progress value
      */

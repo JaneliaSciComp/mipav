@@ -193,6 +193,8 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
         int datalen = srcImage.getSliceSize();
         float[] imageData;
 
+        fireProgressStateChanged("Running local normalization ...");
+        
         if (srcImage.getNDims() == 3) {
             datalen *= srcImage.getExtents()[2];
         } else if (srcImage.getNDims() == 4) {
@@ -230,7 +232,7 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
                 return;
             }
         }
-
+        
         if (tempImage[1] == null) {
             tempImage[1] = (ModelImage) tempImage[0].clone();
         }
@@ -240,6 +242,10 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
         // don't set to a new Thread just yet.  let run serially.
         // (ie., in current Thread):
         unsharper.setRunningInSeparateThread(runningInSeparateThread);
+        
+        linkProgressToAlgorithm(unsharper);
+        unsharper.setProgressValues(generateProgressValues(5, 50));
+        
         unsharper.run();
 
         // if the algorithm failed:
@@ -261,6 +267,10 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
         // don't set to a new Thread just yet.  let run serially.
         // (ie., in current Thread):
         FFTer.setRunningInSeparateThread(runningInSeparateThread);
+        
+        linkProgressToAlgorithm(FFTer);
+        FFTer.setProgressValues(generateProgressValues(50, 90));
+        
         FFTer.run();
 
         // if the algorithm failed:
@@ -272,8 +282,11 @@ public class AlgorithmLocalNormalization extends AlgorithmBase {
             return;
         }
 
+        
         normalize(); // note, this is not a properly nice Thread method.
 
+        fireProgressStateChanged(100);
+        
         //        for testing: we don't need these when normalize runs:
         //        tempImage[0].disposeLocal();
         //        tempImage[1].disposeLocal();
