@@ -26,7 +26,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
-public class JDialogDeleteObjects extends JDialogScriptableBase implements AlgorithmInterface{
+public class JDialogDeleteObjects extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -54,6 +54,9 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
     private int max, min;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
@@ -67,8 +70,6 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -100,54 +101,11 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
-    /**
-     * {@inheritDoc}
-     */
-    public void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
-        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("min_object_size", min));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_object_size", max));
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    public void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) && (image.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-        
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        
-        setMinimumSize(scriptParameters.getParams().getInt("min_objectSize"));
-        setMaximumSize(scriptParameters.getParams().getInt("max_object_size"));
-    }
-
-    /**
-     * Store the algorithm's result image (if one has been created).
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     * 
-     * @param event event that triggers function
+     *
+     * @param  event  event that triggers function
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -174,6 +132,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
      * @param  algorithm  algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -285,7 +244,30 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        setMinimumSize(scriptParameters.getParams().getInt("min_object_size"));
+        setMaximumSize(scriptParameters.getParams().getInt("max_object_size"));
+    }
+
     /**
      * Accessor that sets the maximum size for objects to delete.
      *
@@ -302,6 +284,18 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
      */
     public void setMinimumSize(int s) {
         min = s;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_object_size", min));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_object_size", max));
     }
 
     /**
@@ -343,7 +337,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                     deleteAlgo2D.addListener(this);
 
                     createProgressBar(image.getImageName(), deleteAlgo2D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -354,7 +348,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                       
+
                         deleteAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -388,7 +382,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                     deleteAlgo2D.addListener(this);
 
                     createProgressBar(image.getImageName(), deleteAlgo2D);
-                    
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -413,7 +407,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                       
+
                         deleteAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -453,7 +447,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                     deleteAlgo3D.addListener(this);
 
                     createProgressBar(image.getImageName(), deleteAlgo3D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -464,7 +458,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                       
+
                         deleteAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -497,7 +491,7 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                     deleteAlgo3D.addListener(this);
 
                     createProgressBar(image.getImageName(), deleteAlgo3D);
-                    
+
                     // Hide dialog
                     setVisible(false);
 
@@ -530,6 +524,16 @@ public class JDialogDeleteObjects extends JDialogScriptableBase implements Algor
                     return;
                 }
             }
+        }
+    }
+
+    /**
+     * Store the algorithm's result image (if one has been created).
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 

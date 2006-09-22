@@ -1443,8 +1443,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogEntropyMinimization(this, getActiveImage());
         } else if (command.equals("MRICorrection")) {
             new JDialogMRIShadingCorrection(this, getActiveImage());
-        } else if (command.equals("nonparametric")) {
-            new JDialogNonparametricSegmentation(this, getActiveImage());
         } else if (command.equals("graphBasedSeg")) {
             new JDialogGraphBasedSegmentation(this, getActiveImage());
         } else if (command.equals("evalSeg")) {
@@ -1511,10 +1509,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogImageMath(this, getActiveImage());
         } else if (command.equals("matchImages")) {
             new JDialogMatchImages(this, getActiveImage());
-        } else if (command.equals("Plot surface")) {
-
-            // JDialogPlotSurface  plotSur =
-            new JDialogPlotSurface(this, getActiveImage(), zSlice);
         } else if (command.equals("InverseOrder")) {
             new JDialogInverseOrder(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("performRAHE")) {
@@ -1617,8 +1611,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogDilate(this, getActiveImage());
         } else if (command.equals("Erode")) {
             new JDialogErode(this, getActiveImage());
-        } else if (command.equals("Skeletonize")) {
-            new JDialogSkeletonize(this, getActiveImage());
         } else if (command.equals("Skeletonize3D")) {
             new JDialogSkeletonize3D(this, getActiveImage());
         } else if (command.equals("SkelGeom3D")) {
@@ -1654,8 +1646,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogAdaptiveNR(this, getActiveImage());
         } else if (command.equals("adaptivePathSmooth")) {
             new JDialogAdaptivePathSmooth(this, getActiveImage());
-        } else if (command.equals("adaptiveSmooth")) {
-            new JDialogAdaptiveSmooth(this, getActiveImage());
         } else if (command.equals("NLNR")) {
 
             if (getActiveImage().getType() == ModelStorageBase.BOOLEAN) {
@@ -1667,8 +1657,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogRandomizeSliceOrder(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("ReplaceValue")) {
             new JDialogReplaceValue(this, getActiveImage());
-        } else if (command.equals("StereoDepth")) {
-            new JDialogStereoDepth(this, getActiveImage());
         } else if (command.equals("Haralick")) {
 
             if (getActiveImage().getType() == ModelStorageBase.UBYTE) {
