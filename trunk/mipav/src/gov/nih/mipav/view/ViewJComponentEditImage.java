@@ -1992,65 +1992,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     } // else if (winLevelSet && ((xS != oldXS) || (yS != oldYS)))
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
             } // if (mode == DEFAULT))
-            if (imageActive.getOrigin()[0] != 0 || imageActive.getOrigin()[1] != 0
-                || imageActive.getOrigin()[2] != 0) {
-
-                fileInfo = imageActive.getFileInfo()[slice];
-                String[] values = setScannerPosition(fileInfo, xS, yS, slice);
-
-                if (values != null) {
-
-                    if (imageActive.isColorImage()) {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
-                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
-                            + "  G:  "
-                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
-                            + "  B:  "
-                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3])
-                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
-                    }
-                    else {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
-                            + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS])
-                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
-                    }
-
-                    frame.setMessageText(str);
-                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                }
-                else {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
-                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
-                    frame.setMessageText(str);
-                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                }
-            }
-            else {
-                if (imageActive.isColorImage() == true) {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
-                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
-                        + "  G:  "
-                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
-                        + "  B:  "
-                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
-                    frame.setMessageText(str);
-                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                }
-                else {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
-                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
-                    frame.setMessageText(str);
-                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                }
-            }
         }
         catch (ArrayIndexOutOfBoundsException error) {
             str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1);
@@ -2060,6 +2001,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
 
+        setPixelInformationAtLocation(xS, yS);
 
 
         if (mode == DROPPER_PAINT) {
@@ -7033,42 +6975,80 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         try {
 
-            if ((imageActive.getFileInfo(0).getOrigin()[0] != 0) || (imageActive.getFileInfo(0).getOrigin()[1] != 0) ||
-                    (imageActive.getFileInfo(0).getOrigin()[2] != 0)) {
-                FileInfoBase fileInfo = imageActive.getFileInfo()[slice];
-                String[] values = setScannerPosition(fileInfo, xS, yS, slice);
+            
+            String str;
+            if (imageActive.getOrigin()[0] != 0 || imageActive.getOrigin()[1] != 0
+                    || (imageActive.getNDims() > 2 && imageActive.getOrigin()[2] != 0)) {
 
-                if (values != null) {
-                    frame.setMessageText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS) + 1) +
-                                         "  Intensity:  " +
-                                         String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]) +
-                                         " Position: " + values[0] + " " + values[1] + " " + values[2]);
-                } else {
-                    frame.setMessageText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS + 1)) +
-                                         "  Intensity:  " +
-                                         String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]));
+            	FileInfoBase fileInfo = imageActive.getFileInfo()[slice];
+            	String[] values = setScannerPosition(fileInfo, xS, yS, slice);
+
+            	if (values != null) {
+                        if (imageActive.isColorImage()) {
+                            str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
+                                + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
+                                + "  G:  "
+                                + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
+                                + "  B:  "
+                                + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3])
+                                + " Position: " + values[0] + " " + values[1] + " " + values[2];
+                        }
+                        else {
+                            str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                                + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS])
+                                + " Position: " + values[0] + " " + values[1] + " " + values[2];
+                        }
+
+                        frame.setMessageText(str);
+                  //      if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                 //           frame.getUserInterface().setDataText("\n" + str);
+                 //       }
+                    }
+                    else {
+                    	if (imageActive.isColorImage()) {
+                    		str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
+                            + "  G:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
+                            + "  B:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
+                    	} else {
+                    		str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                            + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
+                    	}
+                    	
+                        
+                        frame.setMessageText(str);
+                   //     if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                   //         frame.getUserInterface().setDataText("\n" + str);
+                   //     }
+                    }
                 }
-
-            } else {
-
-                if (imageActive.isColorImage() == true) {
-                    frame.setMessageText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS + 1)) +
-                                         "  R:  " +
-                                         String.valueOf(imageBufferActive[(4 *
-                                                                               ((yS * imageActive.getExtents()[0]) +
-                                                                                    xS)) + 1]) + "  G:  " +
-                                         String.valueOf(imageBufferActive[(4 *
-                                                                               ((yS * imageActive.getExtents()[0]) +
-                                                                                    xS)) + 2]) + "  B:  " +
-                                         String.valueOf(imageBufferActive[(4 *
-                                                                               ((yS * imageActive.getExtents()[0]) +
-                                                                                    xS)) + 3]));
-                } else {
-                    frame.setMessageText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS + 1)) +
-                                         "  Intensity:  " +
-                                         String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]));
+                else {
+                    if (imageActive.isColorImage() == true) {
+                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
+                            + "  G:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
+                            + "  B:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
+                        frame.setMessageText(str);
+                   //     if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                   //         frame.getUserInterface().setDataText("\n" + str);
+                   //     }
+                    }
+                    else {
+                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                            + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
+                        frame.setMessageText(str);
+                  //      if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                  //          frame.getUserInterface().setDataText("\n" + str);
+                  //     }
+                    }
                 }
-            }
+            
+            
+            
         } catch (ArrayIndexOutOfBoundsException error) {
             frame.setMessageText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS + 1)));
         }
