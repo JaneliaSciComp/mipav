@@ -321,7 +321,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected JLabel scannerLabelZ;
 
     /** DOCUMENT ME! */
-    protected JScrollPane[] scrollPane = new JScrollPane[MAX_TRI_IMAGES];
+    //protected JScrollPane[] scrollPane = new JScrollPane[MAX_TRI_IMAGES];
+	// made public for use by visualization plug-ins (PLB)
+    public JScrollPane[] scrollPane = new JScrollPane[MAX_TRI_IMAGES];
 
     /** Flag for showing the Talairach grid on the component images. */
     protected boolean showTalairachGrid = false;
@@ -339,10 +341,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected JToggleButton traverseButton;
 
     /** DOCUMENT ME! */
-    protected ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[MAX_TRI_IMAGES];
+    //protected ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[MAX_TRI_IMAGES];
+	// made public for use by visualization plug-ins (PLB)
+    public ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[MAX_TRI_IMAGES];
 
     /** DOCUMENT ME! */
-    protected JPanel[] triImagePanel = new JPanel[MAX_TRI_IMAGES];
+    //protected JPanel[] triImagePanel = new JPanel[MAX_TRI_IMAGES];
+	// made public for use by visualization plug-ins (PLB)
+    public JPanel[] triImagePanel = new JPanel[MAX_TRI_IMAGES];
 
     /** Time slice that this image is on. */
     protected int tSlice;
@@ -2947,6 +2953,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             triImage.setResolutions(1, 1);
         }
 
+		// MedIC Hack
+		edu.jhmi.rad.medic.CbOverlayPanel overlay = new edu.jhmi.rad.medic.CbOverlayPanel();
+		triImage.add(overlay);
+		
         return triImage;
     }
 
