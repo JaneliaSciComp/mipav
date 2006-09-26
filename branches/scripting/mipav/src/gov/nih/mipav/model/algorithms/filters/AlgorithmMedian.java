@@ -2054,7 +2054,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                     ++initialIndex; // next initial index
                     a += initialIndex; // keep the pixel location up with color indexed to
 
-                    if ((numberOfSlices > 1) && (pBarVisible == true)) { // 3D image     update progressBar
+                    if ((numberOfSlices > 1) ) { // 3D image     update progressBar
 
                         fireProgressStateChanged( ((float) (currentSlice + (pass * numberOfSlices)) /
                                 (iterations * numberOfSlices)), null, null);
@@ -2619,8 +2619,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
                 for (pass = 0; (pass < iterations) && !threadStopped; pass++) {
 
-                    if (pBarVisible == true) {
-
+                    
                         if (initialIndex == 1) {
                             fireProgressStateChanged(-1, null, "Filtering red channel (pass " + String.valueOf(pass + 1) + " of " +
                                     iterations + ") ...");
@@ -2632,7 +2631,6 @@ public class AlgorithmMedian extends AlgorithmBase {
                             fireProgressStateChanged(-1, null, "Filtering blue channel (pass " + String.valueOf(pass + 1) + " of " +
                                     iterations + ") ...");
                         }
-                    }
 
                     // if we needed to filter the image, we dropped through the selection to filter the
                     // color given by int initialIndex

@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -27,7 +29,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmWatershed
  */
-public class JDialogWatershed extends JDialogBase implements AlgorithmInterface {
+public class JDialogWatershed extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -120,6 +122,12 @@ public class JDialogWatershed extends JDialogBase implements AlgorithmInterface 
         init();
     }
 
+    /**
+     * Empty constructor for scripting
+     *
+     */
+    public JDialogWatershed() {}
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -129,7 +137,7 @@ public class JDialogWatershed extends JDialogBase implements AlgorithmInterface 
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-        String tmpStr;
+        
 
         if (source == buttonEnergyInput) {
 
@@ -150,164 +158,210 @@ public class JDialogWatershed extends JDialogBase implements AlgorithmInterface 
                 return;
             }
         } else if (source == OKButton) {
-
-            if (choiceCheckBox.isSelected() == true) {
-
-                try {
-                    FileIO fileIO = new FileIO();
-                    gmImage = fileIO.readImage(gmFileName, gmDirectory, false, null);
-
-                    if (compareDimensions(gmImage, image) == false) {
-                        MipavUtil.displayError("Images of different dimensions");
-
-                        return;
-                    }
-
-                    if (gmImage == null) {
-                        return;
-                    }
-                } catch (OutOfMemoryError e) {
-                    MipavUtil.displayError("Out of memory!");
-
-                    return;
-                }
-            } else {
-                gmImage = null; // This will force the watershed algorithm to
-
-                // calculate the gradient magnitude of the image.
-            }
-
-            tmpStr = textGaussX.getText();
-
-            if (testParameter(tmpStr, 0.5, 5.0)) {
-                scaleX = Float.valueOf(tmpStr).floatValue();
-            } else {
-                textGaussX.requestFocus();
-                textGaussX.selectAll();
-
-                return;
-            }
-
-            tmpStr = textGaussY.getText();
-
-            if (testParameter(tmpStr, 0.5, 5.0)) {
-                scaleY = Float.valueOf(tmpStr).floatValue();
-            } else {
-                textGaussY.requestFocus();
-                textGaussY.selectAll();
-
-                return;
-            }
-
-            tmpStr = textGaussZ.getText();
-
-            if (testParameter(tmpStr, 0.0, 5.0)) {
-                scaleZ = Float.valueOf(tmpStr).floatValue();
-            } else {
-                textGaussZ.requestFocus();
-                textGaussZ.selectAll();
-
-                return;
-            }
-
-            // Apply normalization if requested!
-            if (resolutionCheckbox.isSelected()) {
-                scaleZ = scaleZ * normFactor;
-            }
-
-            if (image.getNDims() == 2) { // source image is 2D
-
-                int[] destExtents = new int[2];
-                destExtents[0] = image.getExtents()[0]; // X dim
-                destExtents[1] = image.getExtents()[1]; // Y dim
-
-                float[] sigmas = new float[2];
-                sigmas[0] = scaleX; // set standard deviations (sigma) in X and Y
-                sigmas[1] = scaleY;
-
-                try {
-
-                    // Make result image of unsigned type
-                    resultImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed",
-                                                 ((ViewJFrameBase) (parentFrame)).getUserInterface());
-
-                    // Make algorithm
-                    watershedAlgo = new AlgorithmWatershed(resultImage, image, gmImage, sigmas, null);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    watershedAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), watershedAlgo);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast.
-                    if (watershedAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog watershed: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up memory of result image
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            } else if (image.getNDims() == 3) {
-                int[] destExtents = new int[3];
-                destExtents[0] = image.getExtents()[0];
-                destExtents[1] = image.getExtents()[1];
-                destExtents[2] = image.getExtents()[2];
-
-                float[] sigmas = new float[3];
-                sigmas[0] = scaleX;
-                sigmas[1] = scaleY;
-                sigmas[2] = scaleZ; // normalized - scaleZ * resolutionX/resolutionZ; !!!!!!!
-
-                try {
-
-                    // Make result image of unsigned type
-                    resultImage = new ModelImage(ModelImage.USHORT, destExtents, " Waterhshed",
-                                                 ((ViewJFrameBase) (parentFrame)).getUserInterface());
-
-                    // Make algorithm
-                    watershedAlgo = new AlgorithmWatershed(resultImage, image, gmImage, sigmas, null);
-
-                    // This is very important. Adding this object as a listener allows the algorithm to
-                    // notify this object when it has completed of failed. See algorithm performed event.
-                    // This is made possible by implementing AlgorithmedPerformed interface
-                    watershedAlgo.addListener(this);
-
-                    createProgressBar(image.getImageName(), watershedAlgo);
-                    
-                    // Hide dialog
-                    setVisible(false);
-
-                    // Start the thread as a low priority because we wish to still have user interface work fast
-                    if (watershedAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog watershed: unable to allocate enough memory");
-
-                    if (resultImage != null) {
-                        resultImage.disposeLocal(); // Clean up image memory
-                        resultImage = null;
-                    }
-
-                    return;
-                }
-            }
+        	if (setVariables()) {
+        		callAlgorithm();
+        	}
         } else if (source == cancelButton) {
             dispose();
         }
     }
 
+    private boolean setVariables() {
+    	String tmpStr;
+    	if (choiceCheckBox.isSelected() == true) {
+
+            try {
+                FileIO fileIO = new FileIO();
+                gmImage = fileIO.readImage(gmFileName, gmDirectory, false, null);
+
+                if (compareDimensions(gmImage, image) == false) {
+                    MipavUtil.displayError("Images of different dimensions");
+
+                    return false;
+                }
+
+                if (gmImage == null) {
+                	return false;
+                }
+            } catch (OutOfMemoryError e) {
+                MipavUtil.displayError("Out of memory!");
+
+                return false;
+            }
+        } else {
+            gmImage = null; // This will force the watershed algorithm to
+
+            // calculate the gradient magnitude of the image.
+        }
+
+        tmpStr = textGaussX.getText();
+
+        if (testParameter(tmpStr, 0.5, 5.0)) {
+            scaleX = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussX.requestFocus();
+            textGaussX.selectAll();
+
+            return false;
+        }
+
+        tmpStr = textGaussY.getText();
+
+        if (testParameter(tmpStr, 0.5, 5.0)) {
+            scaleY = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussY.requestFocus();
+            textGaussY.selectAll();
+
+            return false;
+        }
+
+        tmpStr = textGaussZ.getText();
+
+        if (testParameter(tmpStr, 0.0, 5.0)) {
+            scaleZ = Float.valueOf(tmpStr).floatValue();
+        } else {
+            textGaussZ.requestFocus();
+            textGaussZ.selectAll();
+
+            return false;
+        }
+
+        // Apply normalization if requested!
+        if (resolutionCheckbox.isSelected()) {
+            scaleZ = scaleZ * normFactor;
+        }
+
+        
+        return true;
+    }
+    
+    public void callAlgorithm() {
+    	if (image.getNDims() == 2) { // source image is 2D
+
+            int[] destExtents = new int[2];
+            destExtents[0] = image.getExtents()[0]; // X dim
+            destExtents[1] = image.getExtents()[1]; // Y dim
+
+            float[] sigmas = new float[2];
+            sigmas[0] = scaleX; // set standard deviations (sigma) in X and Y
+            sigmas[1] = scaleY;
+
+            try {
+
+                // Make result image of unsigned type
+                resultImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed",
+                                             ((ViewJFrameBase) (parentFrame)).getUserInterface());
+
+                // Make algorithm
+                watershedAlgo = new AlgorithmWatershed(resultImage, image, gmImage, sigmas, null);
+
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog watershed: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up memory of result image
+                    resultImage = null;
+                }
+
+                return;
+            }
+        } else if (image.getNDims() == 3) {
+            int[] destExtents = new int[3];
+            destExtents[0] = image.getExtents()[0];
+            destExtents[1] = image.getExtents()[1];
+            destExtents[2] = image.getExtents()[2];
+
+            float[] sigmas = new float[3];
+            sigmas[0] = scaleX;
+            sigmas[1] = scaleY;
+            sigmas[2] = scaleZ; // normalized - scaleZ * resolutionX/resolutionZ; !!!!!!!
+
+            try {
+
+                // Make result image of unsigned type
+                resultImage = new ModelImage(ModelImage.USHORT, destExtents, " Watershed",
+                                             ((ViewJFrameBase) (parentFrame)).getUserInterface());
+
+                // Make algorithm
+                watershedAlgo = new AlgorithmWatershed(resultImage, image, gmImage, sigmas, null);
+            } catch (OutOfMemoryError x) {
+                MipavUtil.displayError("Dialog watershed: unable to allocate enough memory");
+
+                if (resultImage != null) {
+                    resultImage.disposeLocal(); // Clean up image memory
+                    resultImage = null;
+                }
+
+                return;
+            }
+    
+        }
+//    	 This is very important. Adding this object as a listener allows the algorithm to
+        // notify this object when it has completed of failed. See algorithm performed event.
+        // This is made possible by implementing AlgorithmedPerformed interface
+        watershedAlgo.addListener(this);
+
+//      Hide dialog
+        setVisible(false);
+        createProgressBar(image.getImageName(), watershedAlgo);
+        
+//    	 Start the thread as a low priority because we wish to still have user interface work fast
+        if (isRunInSeparateThread()) {
+        	if (watershedAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+        		MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+        	watershedAlgo.run();
+        }
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+
+        try {
+        	gmImage = scriptParameters.retrieveImage("gmImage");
+        } catch (Exception e) { //nothing, this image is not necessary
+        }
+        
+        
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+
+        scaleX = scriptParameters.getParams().getFloat("scaleX");
+        scaleY = scriptParameters.getParams().getFloat("scaleY");
+        if (image.getNDims() == 3) {
+        	scaleZ = scriptParameters.getParams().getFloat("scaleZ");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        if (gmImage != null) {
+        	scriptParameters.storeImage(gmImage, "gmImage");
+        }
+        scriptParameters.storeOutputImageParams(resultImage, true);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleX", scaleX));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("scaleY", scaleY));
+        if (image.getNDims() == 3) {
+        	scriptParameters.getParams().put(ParameterFactory.newParameter("scaleZ", scaleZ));
+        }
+    }
+    
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************
@@ -320,6 +374,7 @@ public class JDialogWatershed extends JDialogBase implements AlgorithmInterface 
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmWatershed) {
+        	System.err.println("finished algorithm");
             image.clearMask();
 
             if ((watershedAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -334,6 +389,7 @@ public class JDialogWatershed extends JDialogBase implements AlgorithmInterface 
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
+                insertScriptLine();
             } else if (resultImage == null) {
 
                 // These next lines set the titles in all frames where the source image is displayed to

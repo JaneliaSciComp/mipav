@@ -22,17 +22,7 @@ import gov.nih.mipav.MipavMath;
  */
 public abstract class AlgorithmBase extends Thread implements ActionListener, WindowListener {
 
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /** Show standard progress bar with cancel. */
-    public static final int STANDARD = 0;
-
-    /** Show progress bar without a cancel button. */
-    public static final int NO_CANCEL = 1;
-
-    /** Do no show progress bar. */
-    public static final int NO_PROGRESS = 2;
-
+ 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /**
@@ -66,12 +56,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     /** Mask indicating which voxels to process. If true process voxel else skip. */
     protected BitSet mask = null;
 
-    /** Flag indicating if a whether of not the progress bar is visible. */
-    protected boolean pBarVisible = true;
-
-    /** Progress bar object. */
-   // protected ViewJProgressBar progressBar;
-
     /** Source image. */
     protected ModelImage srcImage;
 
@@ -80,9 +64,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
     /** Elapsed time (in milliseconds) -- time it took for algorithm to run. */
     private double elapsedTime = 0;
-
-    /** If true, keep do not dispose of progress bar when finalize() is called. */
-    private boolean keepProgressBar = false;
 
     /**
      * Vector list of AlgorithmInterface objects. When the algorithm has been stopped or completed, all listeners in
@@ -149,7 +130,12 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     //~ Methods --------------------------------------------------------------------------------------------------------
 
 
-    public void actionPerformed(ActionEvent e) { }
+    public void actionPerformed(ActionEvent e) {
+    	System.err.println("action performed!");
+    	if (e.getActionCommand().equalsIgnoreCase("cancel")) {
+    		setThreadStopped(true);
+    	}
+    }
     
     /**
      * Actually runs the algorithm. Implemented by inheriting algorithms.
@@ -229,10 +215,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         srcImage = null;
         mask = null;
 
-        if (keepProgressBar == false) {
-            
-        }
-
         try {
             super.finalize();
         } catch (Throwable er) { }
@@ -289,15 +271,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      */
     public boolean isImage25D() {
         return image25D;
-    }
-
-    /**
-     * If false (default state) the progress bar is disposed in the finalized method.
-     *
-     * @return  boolean The state of the keepProgressBar flag.
-     */
-    public boolean isKeepProgressBar() {
-        return keepProgressBar;
     }
 
     /**
@@ -408,16 +381,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     }
 
     /**
-     * Sets the state of the keepProgressBar flag. If false (default state) the progress bar is disposed in the
-     * finalized method.
-     *
-     * @param  flag  The state of the keepProgressBar flag.
-     */
-    public void setKeepProgressBar(boolean flag) {
-        this.keepProgressBar = flag;
-    }
-
-    /**
      * Sets the mask (BitSet object).
      *
      * @param  imageMask  BitSet object indicating which voxels to process
@@ -434,7 +397,18 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     private int getProgressFromInt(int percentage) {
         return MipavMath.round(minProgressValue + ((percentage / 100.0) * (maxProgressValue - minProgressValue)));
     }
-        
+        	
+    /**
+     * Helper function to link the currently listening progress bar with an algorithm created within
+     * an algorithm.  This function should only be called when the other algorithm is expected to
+     * update the progress bar seamlessly.  It should be called in conjuction with AlgorithmBase's
+     * setProgressValues() so that the sub-algorithm will have know the min and max progress values.
+     * 
+     * Generally this will be called with the following lines:
+     * linkProgressToAlgorithm(theSubAlgorithm);
+     * theSubAlgorithm.setProgressValues(generateProgressValues(currentProgressOfAlgorithm, desiredMaxProgressOfSubAlgorithm));
+     * @param baseAlgo the subalgorithm created within current algorithm
+     */
     protected void linkProgressToAlgorithm(AlgorithmBase baseAlgo) {
         ProgressChangeListener[] listeners = this.getProgressChangeListeners();
         if (listeners != null) {

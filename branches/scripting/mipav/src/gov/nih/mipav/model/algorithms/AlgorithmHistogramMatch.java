@@ -192,19 +192,10 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
                 for (colour = 0; (colour < valuesPerPixel) && !threadStopped; colour++) { // for each color
 
-                    try {
-
-                        if (pBarVisible) {
-                            fireProgressStateChanged((int) (((float) (colour) / valuesPerPixel) * 100));
-                            fireProgressStateChanged("Processing colour " + Integer.toString(colour));
-                        }
-                    } catch (NullPointerException npe) {
-
-                        if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
-                        }
-                    }
+                 
+                	fireProgressStateChanged((int) (((float) (colour) / valuesPerPixel) * 100));
+                	fireProgressStateChanged("Processing colour " + Integer.toString(colour));
+             
 
                     srcImage.exportRGBData(colour, 0, length, buffer); // get the slice
                     baseImage.exportRGBData(colour, 0, baseLength, baseBuffer);
@@ -317,20 +308,10 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
                 for (colour = 0; (colour < valuesPerPixel) && !threadStopped; colour++) { // for each color
 
-                    try {
-
-                        if (pBarVisible) {
-                            fireProgressStateChanged((int) (((float) (colour) / valuesPerPixel) * 100));
-                            fireProgressStateChanged("Processing colour " + Integer.toString(colour));
-                        }
-                    } catch (NullPointerException npe) {
-
-                        if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
-                        }
-                    }
-
+                
+                	fireProgressStateChanged((int) (((float) (colour) / valuesPerPixel) * 100));
+                	fireProgressStateChanged("Processing colour " + Integer.toString(colour));
+           
                     srcImage.exportRGBData(colour, 0, length, buffer); // grab the slice
                     baseImage.exportRGBData(colour, 0, baseLength, baseBuffer);
 

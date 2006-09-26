@@ -601,6 +601,8 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
         getContentPane().add(mainPanel);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
+        
+        setVisible(true);
     }
 
     /**

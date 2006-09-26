@@ -231,8 +231,10 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         processBuffer = null;
         imgBuffer = null;
         srcImage = null;
-        objects.removeAllElements();
-        objects = null;
+        if (objects != null) {
+        	objects.removeAllElements();
+        	objects = null;
+        }
         super.finalize();
     }
 
@@ -2626,9 +2628,7 @@ kernelLoop:
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            
             finalize();
-
             return;
         }
 
@@ -2650,6 +2650,11 @@ kernelLoop:
         
         try {
         	deleteObjects(min, max, true);
+        	if (threadStopped) {
+                setCompleted(false);
+                finalize();
+                return;
+            }
         	srcImage.exportData(0, volSize, imgBuffer);
         } catch (IOException error) {
         	displayError("Algorithm Morphology3D.particleAnalysis: Image(s) locked");
@@ -2662,7 +2667,12 @@ kernelLoop:
         		generateProgressValue(progressValues[0], progressValues[1], 90));
                 
         ultimateErode(true); // forms list of points (one point per object, hopefully)
-
+        if (threadStopped) {
+            setCompleted(false);
+            finalize();
+            return;
+        }
+        
         //reset progress min & max
         setProgressValues(progressValues);
         
@@ -2838,6 +2848,13 @@ kernelLoop:
         setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 95), 
         		generateProgressValue(progressValues[0], progressValues[1], 100));
         deleteObjects(min, max, false);
+        if (threadStopped) {
+            setCompleted(false);
+            finalize();
+            return;
+        }
+        
+        setCompleted(true);
         
     }
 

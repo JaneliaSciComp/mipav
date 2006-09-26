@@ -347,7 +347,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase implements 
                 saveDefaults();
             }
 
-            if (reg25.isCompleted()) {
+            if (algorithm.isCompleted()) {
                 matchImage.clearMask();
 
 
