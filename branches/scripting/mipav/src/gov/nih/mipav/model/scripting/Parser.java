@@ -181,11 +181,8 @@ public class Parser {
                 try {
                     scriptAction.scriptRun(parsedLine.getParameterTable());
                 } catch (Exception e) {
-                    String message = "\n\n" + e.getClass().getName() + "\n";
-
-                    for (int i = 0; i < e.getStackTrace().length; i++) {
-                        message += "\t" + e.getStackTrace()[i] + "\n";
-                    }
+                    String message = "\n\n" + e.getClass().getName() +
+                                     "\n\n(see console or debugging window output for details)";
 
                     ParserException exception = new ParserException(scriptFile, parser.getCurrentLineNumber(), message);
                     exception.initCause(e);

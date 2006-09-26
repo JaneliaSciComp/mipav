@@ -119,6 +119,14 @@ public abstract class JDialogScriptableBase extends JDialogBase implements Scrip
             } catch (ParserException pe) {
                 MipavUtil.displayError("Error encountered recording " + action + " scriptline:\n" + pe);
                 pe.printStackTrace();
+
+                String message = "script recorder:\tScript error:\t" + pe.getClass().getName() + "\n";
+
+                for (int i = 0; i < pe.getStackTrace().length; i++) {
+                    message += "\t" + pe.getStackTrace()[i] + "\n";
+                }
+
+                Preferences.debug(message, Preferences.DEBUG_SCRIPTING);
             }
         }
     }
