@@ -328,74 +328,6 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     public ModelImage[] getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_result_images", resultNumber));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("window_size", windowSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("offset_distance", offsetDistance));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_north_south_dir", ns));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_NE_SW_dir", nesw));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_east_west_dir", ew));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_SE_NW_dir", senw));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_invariant_dir", invariantDir));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_contrast", contrast));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_dissimilarity", dissimilarity));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_homogeneity", homogeneity));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_inverse_order_1", inverseOrder1));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_ASM", asm));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_energy", energy));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_max_probability", maxProbability));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_entropy", entropy));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_mean", mean));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_variance", variance));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_standard_deviation", standardDeviation));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_correlation", correlation));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
-        
-        setWindowSize(scriptParameters.getParams().getInt("window_size"));
-        setOffsetDistance(scriptParameters.getParams().getInt("offset_distance"));
-        setNS(scriptParameters.getParams().getBoolean("do_calc_north_south_dir"));
-        setNESW(scriptParameters.getParams().getBoolean("do_calc_NE_SW_dir"));
-        setEW(scriptParameters.getParams().getBoolean("do_calc_east_west_dir"));
-        setSENW(scriptParameters.getParams().getBoolean("do_calc_SE_NW_dir"));
-        setInvariant(scriptParameters.getParams().getBoolean("do_calc_invariant_dir"));
-        setContrast(scriptParameters.getParams().getBoolean("do_calc_contrast"));
-        setDissimilarity(scriptParameters.getParams().getBoolean("do_calc_dissimilarity"));
-        setHomogeneity(scriptParameters.getParams().getBoolean("do_calc_homogeneity"));
-        setInverseOrder1(scriptParameters.getParams().getBoolean("do_inverse_order_1"));
-        setASM(scriptParameters.getParams().getBoolean("do_calc_ASM"));
-        setEnergy(scriptParameters.getParams().getBoolean("do_calc_energy"));
-        setMaxProbability(scriptParameters.getParams().getBoolean("do_calc_max_probability"));
-        setEntropy(scriptParameters.getParams().getBoolean("do_calc_entropy"));
-        setMean(scriptParameters.getParams().getBoolean("do_calc_mean"));
-        setVariance(scriptParameters.getParams().getBoolean("do_calc_variance"));
-        setStandardDeviation(scriptParameters.getParams().getBoolean("do_calc_standard_deviation"));
-        setCorrelation(scriptParameters.getParams().getBoolean("do_calc_correlation"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        for (int i = 0; i < resultNumber; i++) {
-            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
-        }
-    }
 
     /**
      * Loads the default settings from Preferences to set up the dialog.
@@ -774,6 +706,184 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
     }
 
     /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        setWindowSize(scriptParameters.getParams().getInt("window_size"));
+        setOffsetDistance(scriptParameters.getParams().getInt("offset_distance"));
+        setNS(scriptParameters.getParams().getBoolean("do_calc_north_south_dir"));
+        setNESW(scriptParameters.getParams().getBoolean("do_calc_NE_SW_dir"));
+        setEW(scriptParameters.getParams().getBoolean("do_calc_east_west_dir"));
+        setSENW(scriptParameters.getParams().getBoolean("do_calc_SE_NW_dir"));
+        setInvariant(scriptParameters.getParams().getBoolean("do_calc_invariant_dir"));
+        setContrast(scriptParameters.getParams().getBoolean("do_calc_contrast"));
+        setDissimilarity(scriptParameters.getParams().getBoolean("do_calc_dissimilarity"));
+        setHomogeneity(scriptParameters.getParams().getBoolean("do_calc_homogeneity"));
+        setInverseOrder1(scriptParameters.getParams().getBoolean("do_inverse_order_1"));
+        setASM(scriptParameters.getParams().getBoolean("do_calc_ASM"));
+        setEnergy(scriptParameters.getParams().getBoolean("do_calc_energy"));
+        setMaxProbability(scriptParameters.getParams().getBoolean("do_calc_max_probability"));
+        setEntropy(scriptParameters.getParams().getBoolean("do_calc_entropy"));
+        setMean(scriptParameters.getParams().getBoolean("do_calc_mean"));
+        setVariance(scriptParameters.getParams().getBoolean("do_calc_variance"));
+        setStandardDeviation(scriptParameters.getParams().getBoolean("do_calc_standard_deviation"));
+        setCorrelation(scriptParameters.getParams().getBoolean("do_calc_correlation"));
+
+        if ((windowSize % 2) == 0) {
+            throw new ParameterException("window_size", "Window size must not be even");
+        }
+
+        if (windowSize > image.getExtents()[0]) {
+            throw new ParameterException("window_size",
+                                         "Window size must not excced image width of " + image.getExtents()[0]);
+        }
+
+        if (windowSize > image.getExtents()[1]) {
+            throw new ParameterException("window_size",
+                                         "Window size must not excced image height of " + image.getExtents()[1]);
+        }
+
+        numDirections = getNumDirections();
+        numOperators = getNumOperators();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("window_size", windowSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("offset_distance", offsetDistance));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_north_south_dir", ns));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_NE_SW_dir", nesw));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_east_west_dir", ew));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_SE_NW_dir", senw));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_invariant_dir", invariantDir));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_contrast", contrast));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_dissimilarity", dissimilarity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_homogeneity", homogeneity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_inverse_order_1", inverseOrder1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_ASM", asm));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_energy", energy));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_max_probability", maxProbability));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_entropy", entropy));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_mean", mean));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_variance", variance));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_standard_deviation",
+                                                                       standardDeviation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_calc_correlation", correlation));
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int getNumDirections() {
+        int numDirs = 0;
+
+        if (ns) {
+            numDirs++;
+        }
+
+        if (nesw) {
+            numDirs++;
+        }
+
+        if (ew) {
+            numDirs++;
+        }
+
+        if (senw) {
+            numDirs++;
+        }
+
+        if (invariantDir) {
+            numDirs++;
+        }
+
+        return numDirs;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private int getNumOperators() {
+        int numOps = 0;
+
+        if (contrast) {
+            numOps++;
+        }
+
+        if (dissimilarity) {
+            numOps++;
+        }
+
+        if (homogeneity) {
+            numOps++;
+        }
+
+        if (inverseOrder1) {
+            numOps++;
+        }
+
+        if (asm) {
+            numOps++;
+        }
+
+        if (energy) {
+            numOps++;
+        }
+
+        if (maxProbability) {
+            numOps++;
+        }
+
+        if (entropy) {
+            numOps++;
+        }
+
+        if (mean) {
+            numOps++;
+        }
+
+        if (variance) {
+            numOps++;
+        }
+
+        if (standardDeviation) {
+            numOps++;
+        }
+
+        if (correlation) {
+            numOps++;
+        }
+
+        return numOps;
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -1043,33 +1153,15 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
         ns = nsCheckBox.isSelected();
 
-        if (ns) {
-            numDirections++;
-        }
-
         nesw = neswCheckBox.isSelected();
-
-        if (nesw) {
-            numDirections++;
-        }
 
         ew = ewCheckBox.isSelected();
 
-        if (ew) {
-            numDirections++;
-        }
-
         senw = senwCheckBox.isSelected();
-
-        if (senw) {
-            numDirections++;
-        }
 
         invariantDir = invariantCheckBox.isSelected();
 
-        if (invariantDir) {
-            numDirections++;
-        }
+        numDirections = getNumDirections();
 
         if (numDirections == 0) {
             MipavUtil.displayError("At least one direction must be checked");
@@ -1079,75 +1171,29 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
         contrast = contrastCheckBox.isSelected();
 
-        if (contrast) {
-            numOperators++;
-        }
-
         dissimilarity = dissimilarityCheckBox.isSelected();
-
-        if (dissimilarity) {
-            numOperators++;
-        }
 
         homogeneity = homogeneityCheckBox.isSelected();
 
-        if (homogeneity) {
-            numOperators++;
-        }
-
         inverseOrder1 = inverseOrder1CheckBox.isSelected();
-
-        if (inverseOrder1) {
-            numOperators++;
-        }
 
         asm = asmCheckBox.isSelected();
 
-        if (asm) {
-            numOperators++;
-        }
-
         energy = energyCheckBox.isSelected();
-
-        if (energy) {
-            numOperators++;
-        }
 
         maxProbability = maxProbabilityCheckBox.isSelected();
 
-        if (maxProbability) {
-            numOperators++;
-        }
-
         entropy = entropyCheckBox.isSelected();
-
-        if (entropy) {
-            numOperators++;
-        }
 
         mean = meanCheckBox.isSelected();
 
-        if (mean) {
-            numOperators++;
-        }
-
         variance = varianceCheckBox.isSelected();
-
-        if (variance) {
-            numOperators++;
-        }
 
         standardDeviation = standardDeviationCheckBox.isSelected();
 
-        if (standardDeviation) {
-            numOperators++;
-        }
-
         correlation = correlationCheckBox.isSelected();
 
-        if (correlation) {
-            numOperators++;
-        }
+        numOperators = getNumOperators();
 
         if (numOperators == 0) {
             MipavUtil.displayError("At least 1 texture operator must be selected");
@@ -1157,5 +1203,4 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
 
         return true;
     }
-
 }

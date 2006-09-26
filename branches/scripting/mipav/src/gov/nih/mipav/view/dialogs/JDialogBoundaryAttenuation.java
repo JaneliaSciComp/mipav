@@ -3,8 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +22,8 @@ import javax.swing.*;
  *
  * @author  Evan McCreedy
  */
-public class JDialogBoundaryAttenuation extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogBoundaryAttenuation extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -97,50 +98,6 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase implements
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException{
-        scriptParameters.storeInputImage(srcImage);
-        scriptParameters.storeOutputImageParams(destImage, true);
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_attenuation", maxAttenuation));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_erosions", numErosions));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams(){
-        srcImage = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = srcImage.getParentFrame();
-        
-        if (srcImage.getNDims() != 3) {
-            MipavUtil.displayError("The Boundary Attenuation algorithm can only be applied to 3D images.");
-            dispose();
-
-            return;
-        }
-
-        if (srcImage.getVOIs().size() == 0) {
-            MipavUtil.displayError("The Boundary Attenuation algorithm requires at least one VOI within the image.");
-            dispose();
-
-            return;
-        }
-        
-        maxAttenuation = scriptParameters.getParams().getFloat("max_attenuation");
-        numErosions = scriptParameters.getParams().getInt("num_erosions");
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(destImage);
-    }
-    
     /**
      * Handle action events from the GUI.
      *
@@ -239,7 +196,7 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase implements
     protected void callAlgorithm() {
         setVisible(false);
 
-        
+
         attenuationAlgo = new AlgorithmBoundaryAttenuation(srcImage, numErosions, maxAttenuation);
         attenuationAlgo.addListener(this);
         createProgressBar(srcImage.getImageName(), attenuationAlgo);
@@ -253,6 +210,50 @@ public class JDialogBoundaryAttenuation extends JDialogScriptableBase implements
         } else {
             attenuationAlgo.run();
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(destImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = srcImage.getParentFrame();
+
+        if (srcImage.getNDims() != 3) {
+            MipavUtil.displayError("The Boundary Attenuation algorithm can only be applied to 3D images.");
+            dispose();
+
+            return;
+        }
+
+        if (srcImage.getVOIs().size() == 0) {
+            MipavUtil.displayError("The Boundary Attenuation algorithm requires at least one VOI within the image.");
+            dispose();
+
+            return;
+        }
+
+        maxAttenuation = scriptParameters.getParams().getFloat("max_attenuation");
+        numErosions = scriptParameters.getParams().getInt("num_erosions");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        AlgorithmParameters.storeImageInRecorder(destImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_attenuation", maxAttenuation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_erosions", numErosions));
     }
 
     /**

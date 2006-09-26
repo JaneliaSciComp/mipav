@@ -7,10 +7,14 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
+
 import gov.nih.mipav.view.*;
+
 import java.awt.*;
 import java.awt.event.*;
+
 import java.util.*;
+
 import javax.swing.*;
 
 
@@ -33,10 +37,10 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    double min;
-    
-    /** DOCUMENT ME! */
     double max;
+
+    /** DOCUMENT ME! */
+    double min;
 
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
@@ -109,12 +113,13 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
         setMinMax();
         init();
     }
-    
+
     /**
      * Creates a new JDialogMask object.
      *
      * @param  im           The image to process.
-     * @param  interactive  Whether the algorithm should be started immediately (usually false if calling this constructor).
+     * @param  interactive  Whether the algorithm should be started immediately (usually false if calling this
+     *                      constructor).
      * @param  pol          Whether to mask inside the VOIs (false == mask outside VOIs).
      */
     public JDialogMask(ModelImage im, boolean interactive, boolean pol) {
@@ -164,18 +169,21 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmMask) {
             image.clearMask();
 
             if ((maskAlgo.isCompleted() == true) && (resultImage != null)) {
+
                 // copy over the file info from the original image, was just copying the data over before.
                 // now the new image is "of the same image type" as the original
                 FileInfoBase fileInfo;
+
                 for (int i = 0; i < image.getFileInfo().length; i++) {
                     fileInfo = (FileInfoBase) (image.getFileInfo(i).cloneItself());
                     resultImage.setFileInfo(fileInfo, i);
                 }
-                
+
                 resultImage.clearMask();
 
                 // The algorithm has completed and produced a new image to be displayed.
@@ -196,7 +204,8 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame)
+                                                                                        (imageFrames.elementAt(i)));
                     }
                 }
 
@@ -223,69 +232,12 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
     }
 
     /**
-     * method is meant to be used when the algorithm needs to be performed non-interactively, hence the hardcoding of
-     * the variables.
-     *
-     * @param  pol  DOCUMENT ME!
-     */
-    protected void callAlgorithmNonInteractive(boolean pol) {
-        displayLoc = NEW;
-        polarity = pol;
-        value = 0;
-        callAlgorithm();
-    }
-
-    /**
      * Accessor that returns the image.
      *
      * @return  The result image.
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_fill_interior", polarity));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value_or_red_if_color", value));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value_green", valueG));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value_blue", valueB));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        setMinMax();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setPolarity(scriptParameters.getParams().getBoolean("do_fill_interior"));
-        setValue(scriptParameters.getParams().getFloat("fill_value_or_red_if_color"));
-        setValueG(scriptParameters.getParams().getFloat("fill_value_green"));
-        setValueB(scriptParameters.getParams().getFloat("fill_value_blue"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 
     /**
@@ -367,7 +319,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 maskAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), maskAlgo);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -378,6 +330,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
+
                     if (!userInterface.isAppFrameVisible()) {
                         maskAlgo.setProgressBarVisible(false);
                     }
@@ -410,9 +363,9 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 maskAlgo.addListener(this);
-                
+
                 createProgressBar(image.getImageName(), maskAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -437,6 +390,7 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
+
                     if (!userInterface.isAppFrameVisible()) {
                         maskAlgo.setProgressBarVisible(false);
                     }
@@ -449,6 +403,64 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                 return;
             }
         }
+    }
+
+    /**
+     * method is meant to be used when the algorithm needs to be performed non-interactively, hence the hardcoding of
+     * the variables.
+     *
+     * @param  pol  DOCUMENT ME!
+     */
+    protected void callAlgorithmNonInteractive(boolean pol) {
+        displayLoc = REPLACE;
+        polarity = pol;
+        value = 0;
+        callAlgorithm();
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        setMinMax();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setPolarity(scriptParameters.getParams().getBoolean("do_fill_interior"));
+        setValue(scriptParameters.getParams().getFloat("fill_value_or_red_if_color"));
+        setValueG(scriptParameters.getParams().getFloat("fill_value_green"));
+        setValueB(scriptParameters.getParams().getFloat("fill_value_blue"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_fill_interior", polarity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value_or_red_if_color", value));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value_green", valueG));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value_blue", valueB));
     }
 
     /**

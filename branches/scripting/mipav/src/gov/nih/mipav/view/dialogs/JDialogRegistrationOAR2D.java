@@ -1140,8 +1140,9 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         scriptParameters.storeInputImage(matchImage);
         scriptParameters.storeImage(refImage, "reference_image");
 
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
+
         if (weighted) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
             scriptParameters.storeImage(inputWeightImage, "input_weight_image");
             scriptParameters.storeImage(refWeightImage, "reference_weight_image");
         }

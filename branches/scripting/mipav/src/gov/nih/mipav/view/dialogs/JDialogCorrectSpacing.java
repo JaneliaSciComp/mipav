@@ -23,7 +23,6 @@ import javax.swing.*;
  * will have the same slice thickness and the image volume will be to proper scale. When spacing < thickness: set
  * thickness = spacing. Only works for DICOM or XML files, since they include the sliceSpacing field.
  */
-
 public class JDialogCorrectSpacing extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -60,9 +59,6 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
     /** DOCUMENT ME! */
     private String[] titles;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -79,7 +75,6 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
     public JDialogCorrectSpacing(JFrame parent, ModelImage image) {
         super(parent, false);
         this.image = image;
-        userInterface = ViewUserInterface.getReference();
         setVisible(false);
 
         fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
@@ -279,7 +274,6 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();

@@ -2,42 +2,53 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.structures.*;
+
 import java.util.*;
 
 
 /**
- * @author Nathan Pollack -- Contractor (SSAI)
- * @version 0.1 May 24, 2006
- * @see JDialogRunScriptController
- * @see JDialogRunScriptView
+ * @author   Nathan Pollack -- Contractor (SSAI)
+ * @version  0.1 May 24, 2006
+ * @see      JDialogRunScriptController
+ * @see      JDialogRunScriptView
  */
 public class JDialogRunScriptModel extends Observable {
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
     private Vector availableImageList;
 
-    private String[] scriptImageVars;
-
+    /** DOCUMENT ME! */
     private int[] numberOfRequiredVOIsForScriptImages;
 
+    /** DOCUMENT ME! */
     private String scriptFile;
 
+    /** DOCUMENT ME! */
+    private String[] scriptImageLabels;
+
+    /** DOCUMENT ME! */
+    private String[] scriptImageVars;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new JDialogRunScriptModel object.
+     */
     public JDialogRunScriptModel() {
         availableImageList = new Vector(0);
     }
 
-    public void addVOI(String voiName, String voiLocation, int scriptModelImageVectorIndex) {
-        ScriptImage scriptImage = (ScriptImage) this.getAvailableImageList().get(scriptModelImageVectorIndex);
-        scriptImage.addScriptVOI(new ScriptVOI(voiName, voiLocation));
-        setChanged();
-        notifyObservers();
-    }
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
-    public void addToAvailableImageList(String imageName, String imageLocation, int[] extents, VOIVector VOIs) {
-        availableImageList.add(new ScriptImage(imageName, imageLocation, extents, VOIs));
-        setChanged();
-        notifyObservers();
-    }
-    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  updateItem  DOCUMENT ME!
+     */
     public void addToAvailableImageList(ModelImage updateItem) {
+
         if (updateItem instanceof ModelImage) {
             availableImageList.add(new ScriptImage((ModelImage) updateItem));
             setChanged();
@@ -45,56 +56,156 @@ public class JDialogRunScriptModel extends Observable {
         }
     }
 
-    public boolean isImage(String name) {
-        if (getScriptImage(name) != null) {
-            return true;
-        }
-        return false;
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  imageName      DOCUMENT ME!
+     * @param  imageLocation  DOCUMENT ME!
+     * @param  extents        DOCUMENT ME!
+     * @param  VOIs           DOCUMENT ME!
+     */
+    public void addToAvailableImageList(String imageName, String imageLocation, int[] extents, VOIVector VOIs) {
+        availableImageList.add(new ScriptImage(imageName, imageLocation, extents, VOIs));
+        setChanged();
+        notifyObservers();
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  voiName                      DOCUMENT ME!
+     * @param  voiLocation                  DOCUMENT ME!
+     * @param  scriptModelImageVectorIndex  DOCUMENT ME!
+     */
+    public void addVOI(String voiName, String voiLocation, int scriptModelImageVectorIndex) {
+        ScriptImage scriptImage = (ScriptImage) this.getAvailableImageList().get(scriptModelImageVectorIndex);
+        scriptImage.addScriptVOI(new ScriptVOI(voiName, voiLocation));
+        setChanged();
+        notifyObservers();
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public Vector getAvailableImageList() {
+        return availableImageList;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public int[] getNumberOfRequiredVOIsForScriptImages() {
+        return numberOfRequiredVOIsForScriptImages;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public String getScriptFile() {
+        return scriptFile;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   name  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
     public ScriptImage getScriptImage(String name) {
         ScriptImage image = null;
         Object[] imageListArr = getAvailableImageList().toArray();
-        for (int i = 0; i < imageListArr.length; i++ ) {
+
+        for (int i = 0; i < imageListArr.length; i++) {
+
             if (((ScriptImage) imageListArr[i]).getImageName().equalsIgnoreCase(name) ||
                     ((ScriptImage) imageListArr[i]).getFileLocation().equalsIgnoreCase(name)) {
                 return (ScriptImage) imageListArr[i];
             }
         }
+
         return image;
     }
 
-    public Vector getAvailableImageList() {
-        return availableImageList;
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public String[] getScriptImageLabels() {
+        return scriptImageLabels;
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
     public String[] getScriptImageVars() {
         return scriptImageVars;
     }
 
-    public void setScriptImageVars(String[] imagePlaceHolders) {
-        this.scriptImageVars = imagePlaceHolders;
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   name  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean isImage(String name) {
+
+        if (getScriptImage(name) != null) {
+            return true;
+        }
+
+        return false;
     }
 
-    public int[] getNumberOfRequiredVOIsForScriptImages() {
-        return numberOfRequiredVOIsForScriptImages;
-    }
-
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  numberOfVOIs  DOCUMENT ME!
+     */
     public void setNumberOfRequiredVOIsForScriptImages(int[] numberOfVOIs) {
         this.numberOfRequiredVOIsForScriptImages = numberOfVOIs;
     }
 
-    public String getScriptFile() {
-        return scriptFile;
-    }
-
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  scriptFile  DOCUMENT ME!
+     */
     public void setScriptFile(String scriptFile) {
         this.scriptFile = scriptFile;
     }
-    
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  imageLabels  DOCUMENT ME!
+     */
+    public void setScriptImageVarLabels(String[] imageLabels) {
+        this.scriptImageLabels = imageLabels;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  imagePlaceHolders  DOCUMENT ME!
+     */
+    public void setScriptImageVars(String[] imagePlaceHolders) {
+        this.scriptImageVars = imagePlaceHolders;
+    }
+
     /*
      * public Vector getUnSavedVOIs() { return unSavedVOIs; }
-     * 
+     *
      * public void setUnSavedVOIs(Vector unSavedVOIs) { this.unSavedVOIs = unSavedVOIs; }
      */
 }

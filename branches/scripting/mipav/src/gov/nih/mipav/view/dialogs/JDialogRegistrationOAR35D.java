@@ -336,10 +336,9 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
                  * resultImage.getFileInfo()[0].setFileName(name + ".avi"); resultImage.clearMask();
                  * matchImage.clearMask();
                  *
-                 * if (resultImage != null) { try { imageFrame = new ViewJFrameImage(resultImage, null,
-                 *               new Dimension(610, 200), UI); } catch (OutOfMemoryError error) {
-                 * MipavUtil.displayError("Out of memory: unable to open new frame"); } } else {
-                 * MipavUtil.displayError("Result Image is null"); }
+                 * if (resultImage != null) { try { imageFrame = new ViewJFrameImage(resultImage, null,              new
+                 * Dimension(610, 200), UI); } catch (OutOfMemoryError error) { MipavUtil.displayError("Out of memory:
+                 * unable to open new frame"); } } else { MipavUtil.displayError("Result Image is null"); }
                  */
                 if (doGraph) {
                     rot = reg35.getRot();
@@ -424,84 +423,7 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
             System.gc();
         }
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(matchImage);
-        
-        if (weighted) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
-            scriptParameters.storeImage(inputWeightImage, "input_weight_image");
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", rotateBegin));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", rotateEnd));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", coarseRate));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate", fineRate));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("registration_reference_type", registerTo));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("reference_volume_num", refImageNum));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_graph_transform", doGraph));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        matchImage = scriptParameters.retrieveInputImage();
-        UI = matchImage.getUserInterface();
-        parentFrame = matchImage.getParentFrame();
 
-        if (matchImage.isColorImage()) {
-            doColor = true;
-        } else {
-            doColor = false;
-        }
-
-        setWeighted(scriptParameters.getParams().getBoolean("do_use_weight_images"));
-
-        if (weighted) {
-            setInputWeightImage(scriptParameters.retrieveImage("input_weight_image"));
-        }
-
-        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
-        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
-        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
-        
-        setCoarseBegin(scriptParameters.getParams().getFloat("rotate_begin"));
-        setCoarseEnd(scriptParameters.getParams().getFloat("rotate_end"));
-        setCoarseRate(scriptParameters.getParams().getFloat("coarse_rate"));
-        setFineRate(scriptParameters.getParams().getFloat("fine_rate"));
-
-        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
-
-        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
-        setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
-        
-        setBracketBound(scriptParameters.getParams().getInt("bracket_bound"));
-        setMaxIterations(scriptParameters.getParams().getInt("max_iterations"));
-        setNumMinima(scriptParameters.getParams().getInt("num_minima"));
-        
-        setRegisterTo(scriptParameters.getParams().getInt("registration_reference_type"));
-        setRefImageNum(scriptParameters.getParams().getInt("reference_volume_num"));
-        setGraphCheckBox(scriptParameters.getParams().getBoolean("do_graph_transform"));
-        
-        if (refImageNum == 0) {
-            setRefImageNum((int) (matchImage.getExtents()[3] / 2) + 1);
-        }
-    }
-    
     /**
      * Changes the interpolation box to enabled or disabled depending on if the transform box is checked or not.
      *
@@ -735,6 +657,166 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
     }
 
     /**
+     * Calls the algorithm with the set-up parameters.
+     */
+    protected void callAlgorithm() {
+        BitSet mask = null;
+
+        if (voisOnly) {
+            float[] matchRes = new float[] {
+                                   matchImage.getFileInfo(0).getResolutions()[0],
+                                   matchImage.getFileInfo(0).getResolutions()[1],
+                                   matchImage.getFileInfo(0).getResolutions()[2],
+                                   matchImage.getFileInfo(0).getResolutions()[3]
+                               };
+
+            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match",
+                                              matchImage.getUserInterface());
+
+            inputWeightImage.getFileInfo(0).setResolutions(matchRes);
+            // make new input image based on the VOIs. pass those new image to the registration algorithm
+
+            mask = matchImage.generateVOIMask();
+
+            int matchImageSize = matchImage.getSliceSize() * matchImage.getExtents()[2];
+
+            for (int j = 0; j < matchImage.getExtents()[3]; j++) {
+
+                for (int i = 0; i < matchImageSize; i++) {
+
+                    if (!mask.get(i)) {
+                        inputWeightImage.set((j * matchImageSize) + i, 0);
+                    } else {
+                        inputWeightImage.set((j * matchImageSize) + i, 1);
+                    }
+                }
+            }
+
+            weighted = true;
+
+        } // if (voisOnly)
+
+        if (weighted) {
+            reg35 = new AlgorithmRegOAR35D(matchImage, inputWeightImage, cost, DOF, interp, interp2, registerTo,
+                                           refImageNum, rotateBegin, rotateEnd, coarseRate, fineRate, doGraph,
+                                           doSubsample, fastMode, bracketBound, maxIterations, numMinima);
+        } else {
+
+            reg35 = new AlgorithmRegOAR35D(matchImage, cost, DOF, interp, interp2, registerTo, refImageNum, rotateBegin,
+                                           rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode,
+                                           bracketBound, maxIterations, numMinima);
+
+            if (useOutsideReferenceVolume) {
+
+                if (!reg35.setReferenceVolume(refVolume)) {
+                    MipavUtil.displayError("Reference volume does not have same extents as input image");
+                }
+            }
+
+        }
+
+        // Start the thread as a low priority because we wish to still have user interface work fast.
+        reg35.addListener(this);
+
+        createProgressBar(matchImage.getImageName(), reg35);
+
+        // Hide dialog
+        setVisible(false);
+
+        if (isScript) {
+
+            if (!UI.isAppFrameVisible()) {
+                reg35.setProgressBarVisible(false);
+            }
+
+            reg35.run();
+        } else {
+
+            if (reg35.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        matchImage = scriptParameters.retrieveInputImage();
+        UI = matchImage.getUserInterface();
+        parentFrame = matchImage.getParentFrame();
+
+        if (matchImage.isColorImage()) {
+            doColor = true;
+        } else {
+            doColor = false;
+        }
+
+        setWeighted(scriptParameters.getParams().getBoolean("do_use_weight_images"));
+
+        if (weighted) {
+            setInputWeightImage(scriptParameters.retrieveImage("input_weight_image"));
+        }
+
+        setDOF(scriptParameters.getParams().getInt("degrees_of_freedom"));
+        setInterp(scriptParameters.getParams().getInt("initial_interpolation_type"));
+        setCostChoice(scriptParameters.getParams().getInt("cost_function_type"));
+
+        setCoarseBegin(scriptParameters.getParams().getFloat("rotate_begin"));
+        setCoarseEnd(scriptParameters.getParams().getFloat("rotate_end"));
+        setCoarseRate(scriptParameters.getParams().getFloat("coarse_rate"));
+        setFineRate(scriptParameters.getParams().getFloat("fine_rate"));
+
+        setInterp2(scriptParameters.getParams().getInt("final_interpolation_type"));
+
+        setSubsample(scriptParameters.getParams().getBoolean("do_subsample"));
+        setFastMode(scriptParameters.getParams().getBoolean("do_use_fast_mode"));
+
+        setBracketBound(scriptParameters.getParams().getInt("bracket_bound"));
+        setMaxIterations(scriptParameters.getParams().getInt("max_iterations"));
+        setNumMinima(scriptParameters.getParams().getInt("num_minima"));
+
+        setRegisterTo(scriptParameters.getParams().getInt("registration_reference_type"));
+        setRefImageNum(scriptParameters.getParams().getInt("reference_volume_num"));
+        setGraphCheckBox(scriptParameters.getParams().getBoolean("do_graph_transform"));
+
+        if (refImageNum == 0) {
+            setRefImageNum((int) (matchImage.getExtents()[3] / 2) + 1);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(matchImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_weight_images", weighted));
+
+        if (weighted) {
+            scriptParameters.storeImage(inputWeightImage, "input_weight_image");
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("degrees_of_freedom", DOF));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("initial_interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("final_interpolation_type", interp2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_function_type", cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_begin", rotateBegin));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rotate_end", rotateEnd));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("coarse_rate", coarseRate));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("fine_rate", fineRate));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", doSubsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_fast_mode", fastMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bracket_bound", bracketBound));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_minima", numMinima));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("registration_reference_type", registerTo));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("reference_volume_num", refImageNum));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_graph_transform", doGraph));
+    }
+
+    /**
      * Build advanced settings dialog. Returns JDialog.
      *
      * @param   bracketBound  DOCUMENT ME!
@@ -842,87 +924,6 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         advancedDialog.setVisible(true);
 
         return advancedDialog;
-    }
-
-    /**
-     * Calls the algorithm with the set-up parameters.
-     */
-    protected void callAlgorithm() {
-        BitSet mask = null;
-
-        if (voisOnly) {
-            float[] matchRes = new float[] {
-                                   matchImage.getFileInfo(0).getResolutions()[0],
-                                   matchImage.getFileInfo(0).getResolutions()[1],
-                                   matchImage.getFileInfo(0).getResolutions()[2],
-                                   matchImage.getFileInfo(0).getResolutions()[3]
-                               };
-
-            inputWeightImage = new ModelImage(ModelStorageBase.BYTE, matchImage.getExtents(), "VOI match",
-                                              matchImage.getUserInterface());
-
-            inputWeightImage.getFileInfo(0).setResolutions(matchRes);
-            // make new input image based on the VOIs. pass those new image to the registration algorithm
-
-            mask = matchImage.generateVOIMask();
-
-            int matchImageSize = matchImage.getSliceSize() * matchImage.getExtents()[2];
-
-            for (int j = 0; j < matchImage.getExtents()[3]; j++) {
-
-                for (int i = 0; i < matchImageSize; i++) {
-
-                    if (!mask.get(i)) {
-                        inputWeightImage.set((j * matchImageSize) + i, 0);
-                    } else {
-                        inputWeightImage.set((j * matchImageSize) + i, 1);
-                    }
-                }
-            }
-
-            weighted = true;
-
-        } // if (voisOnly)
-
-        if (weighted) {
-            reg35 = new AlgorithmRegOAR35D(matchImage, inputWeightImage, cost, DOF, interp, interp2, registerTo,
-                                           refImageNum, rotateBegin, rotateEnd, coarseRate, fineRate, doGraph,
-                                           doSubsample, fastMode, bracketBound, maxIterations, numMinima);
-        } else {
-
-            reg35 = new AlgorithmRegOAR35D(matchImage, cost, DOF, interp, interp2, registerTo, refImageNum, rotateBegin,
-                                           rotateEnd, coarseRate, fineRate, doGraph, doSubsample, fastMode,
-                                           bracketBound, maxIterations, numMinima);
-
-            if (useOutsideReferenceVolume) {
-
-                if (!reg35.setReferenceVolume(refVolume)) {
-                    MipavUtil.displayError("Reference volume does not have same extents as input image");
-                }
-            }
-
-        }
-
-        // Start the thread as a low priority because we wish to still have user interface work fast.
-        reg35.addListener(this);
-
-        createProgressBar(matchImage.getImageName(), reg35);
-        
-        // Hide dialog
-        setVisible(false);
-
-        if (isScript) {
-            if (!UI.isAppFrameVisible()) {
-                reg35.setProgressBarVisible(false);
-            }
-
-            reg35.run();
-        } else {
-
-            if (reg35.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        }
     }
 
     /**

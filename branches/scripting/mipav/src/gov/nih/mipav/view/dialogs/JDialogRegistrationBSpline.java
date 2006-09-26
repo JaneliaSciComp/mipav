@@ -320,92 +320,6 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
         dispose();
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(m_kImageSrc);
-        scriptParameters.storeImage(m_kImageTrg, "reference_image");
-
-        scriptParameters.getParams().put(ParameterFactory.newParameter("is_ref_img_a_src_img_slice", isRefImageSourceSlice()));
-        if (isRefImageSourceSlice()) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("ref_slice_in_src_img", m_iTargetSlice));
-        } else {
-            scriptParameters.storeOutputImageParams(m_kImageReg, true);
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_measure", m_kRegMeasure.getClass().getName()));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("num_passes", (m_kOptionsPass2 == null) ? 1 : 2));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("pass_options_1", m_kOptionsPass1.toString(" ")));
-        if (m_kOptionsPass2 != null) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("pass_options_2", m_kOptionsPass2.toString(" ")));
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_deformation_image", m_bCreateDeformationImage));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        m_kImageSrc = scriptParameters.retrieveInputImage();
-        userSetRefImage(scriptParameters.retrieveImage("reference_image"));
-        
-        m_kUI = m_kImageSrc.getUserInterface();
-        parentFrame = m_kImageSrc.getParentFrame();
-        m_akNamesCompatibleTargetImages = getNamesCompatibleTargetImages(m_kImageSrc);
-        
-        if (scriptParameters.getParams().getBoolean("is_ref_img_a_src_img_slice")) {
-            m_iTargetSlice = scriptParameters.getParams().getInt("ref_slice_in_src_img");
-            userSetRefImage(m_kImageSrc);
-        } else {
-            m_iTargetSlice = -1;
-        }
-        
-        // get cost function
-        String kCostMeasureName = scriptParameters.getParams().getString("cost_measure");
-        try {
-            Class kCostMeasureClass = Class.forName(kCostMeasureName);
-            m_kRegMeasure = (RegistrationMeasure) kCostMeasureClass.newInstance();
-        } catch (ClassNotFoundException cnfe) {
-            throw new ParameterException("cost_measure", "Unable to find cost measure class: " + kCostMeasureName);
-        } catch (InstantiationException ie) {
-            throw new ParameterException("cost_measure", "Unable to instantiate cost measure class: " + kCostMeasureName);
-        } catch (IllegalAccessException iae) {
-            throw new ParameterException("cost_measure", "Access denied while trying to instantiate cost measure class: " + kCostMeasureName);
-        }
-        
-        // get the options for each pass
-        int iNumPasses = scriptParameters.getParams().getInt("num_passes");
-        m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
-        try {
-            m_kOptionsPass1.setFromString(scriptParameters.getParams().getString("pass_options_1"), " ");
-        } catch (TokenizerException te) {
-            throw new ParameterException("pass_options_1", "There is a problem with the options for the first pass.");
-        }
-
-        if (2 == iNumPasses) {
-            m_kOptionsPass2 = new AlgorithmRegBSpline.Options();
-            try {
-                m_kOptionsPass2.setFromString(scriptParameters.getParams().getString("pass_options_2"), " ");
-            } catch (TokenizerException te) {
-                throw new ParameterException("pass_options_2", "There is a problem with the options for the second pass.");
-            }
-        } else {
-            m_kOptionsPass2 = null;
-        }
-
-        // get whether or not to create the deformation image
-        m_bCreateDeformationImage = scriptParameters.getParams().getBoolean("do_create_deformation_image");
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(m_kImageReg);
-    }
 
     /**
      * Implementation of JDialogBase abstract method. Method to handle item events.
@@ -524,7 +438,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         m_kAlgorithmReg.addListener(this);
 
         createProgressBar(m_kImageSrc.getImageName(), m_kAlgorithmReg);
-        
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have
@@ -533,12 +447,114 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
+
             if (!m_kUI.isAppFrameVisible()) {
                 m_kAlgorithmReg.setProgressBarVisible(false);
             }
 
             m_kAlgorithmReg.run();
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(m_kImageReg);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        m_kImageSrc = scriptParameters.retrieveInputImage();
+        userSetRefImage(scriptParameters.retrieveImage("reference_image"));
+
+        m_kUI = m_kImageSrc.getUserInterface();
+        parentFrame = m_kImageSrc.getParentFrame();
+        m_akNamesCompatibleTargetImages = getNamesCompatibleTargetImages(m_kImageSrc);
+
+        if (scriptParameters.getParams().getBoolean("is_ref_img_a_src_img_slice")) {
+            m_iTargetSlice = scriptParameters.getParams().getInt("ref_slice_in_src_img");
+            userSetRefImage(m_kImageSrc);
+        } else {
+            m_iTargetSlice = -1;
+        }
+
+        // get cost function
+        String kCostMeasureName = scriptParameters.getParams().getString("cost_measure");
+
+        try {
+            Class kCostMeasureClass = Class.forName(kCostMeasureName);
+            m_kRegMeasure = (RegistrationMeasure) kCostMeasureClass.newInstance();
+        } catch (ClassNotFoundException cnfe) {
+            throw new ParameterException("cost_measure", "Unable to find cost measure class: " + kCostMeasureName);
+        } catch (InstantiationException ie) {
+            throw new ParameterException("cost_measure",
+                                         "Unable to instantiate cost measure class: " + kCostMeasureName);
+        } catch (IllegalAccessException iae) {
+            throw new ParameterException("cost_measure",
+                                         "Access denied while trying to instantiate cost measure class: " +
+                                         kCostMeasureName);
+        }
+
+        // get the options for each pass
+        int iNumPasses = scriptParameters.getParams().getInt("num_passes");
+        m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
+
+        try {
+            m_kOptionsPass1.setFromString(scriptParameters.getParams().getString("pass_options_1"), " ");
+        } catch (TokenizerException te) {
+            throw new ParameterException("pass_options_1", "There is a problem with the options for the first pass.");
+        }
+
+        if (2 == iNumPasses) {
+            m_kOptionsPass2 = new AlgorithmRegBSpline.Options();
+
+            try {
+                m_kOptionsPass2.setFromString(scriptParameters.getParams().getString("pass_options_2"), " ");
+            } catch (TokenizerException te) {
+                throw new ParameterException("pass_options_2",
+                                             "There is a problem with the options for the second pass.");
+            }
+        } else {
+            m_kOptionsPass2 = null;
+        }
+
+        // get whether or not to create the deformation image
+        m_bCreateDeformationImage = scriptParameters.getParams().getBoolean("do_create_deformation_image");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(m_kImageSrc);
+        scriptParameters.storeImage(m_kImageTrg, "reference_image");
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_ref_img_a_src_img_slice",
+                                                                       isRefImageSourceSlice()));
+
+        if (isRefImageSourceSlice()) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("ref_slice_in_src_img", m_iTargetSlice));
+        } else {
+            AlgorithmParameters.storeImageInRecorder(m_kImageReg);
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_measure",
+                                                                       m_kRegMeasure.getClass().getName()));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_passes",
+                                                                       (m_kOptionsPass2 == null) ? 1 : 2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pass_options_1",
+                                                                       m_kOptionsPass1.toString(" ")));
+
+        if (m_kOptionsPass2 != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("pass_options_2",
+                                                                           m_kOptionsPass2.toString(" ")));
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_deformation_image",
+                                                                       m_bCreateDeformationImage));
     }
 
     /**

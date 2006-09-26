@@ -224,7 +224,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
             xcosmEMAlgo.addListener(this);
 
             createProgressBar(originalImage.getImageName(), xcosmEMAlgo);
-            
+
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -290,7 +290,7 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(originalImage);
         scriptParameters.storeImage(psfImage, "psf_image");
-        scriptParameters.storeOutputImageParams(resultImage, true);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("window_lower_limit", windowLowerLimit));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_estimate_decay", estimateDecay));

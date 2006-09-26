@@ -128,20 +128,10 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
             resultImage = convert3Dto4DAlgo.getResultImage();
 
             if ((convert3Dto4DAlgo.isCompleted() == true) && (resultImage != null)) {
-                resultImage.setImageName(imageName);
-
-                Dimension parentLocation;
-
-                if (parentFrame != null) {
-                    parentLocation = new Dimension(parentFrame.getLocationOnScreen().x,
-                                                   parentFrame.getLocationOnScreen().y);
-                } else {
-                    parentLocation = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2,
-                                                   Toolkit.getDefaultToolkit().getScreenSize().height / 2);
-                }
+                resultImage.setImageName(imageName + "_4D");
 
                 try {
-                    new ViewJFrameImage(resultImage, null, parentLocation);
+                    new ViewJFrameImage(resultImage, null, ViewUserInterface.getReference().getNewFrameLocation());
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -155,11 +145,6 @@ public class JDialogConvert3Dto4D extends JDialogScriptableBase implements Algor
 
         if (algorithm.isCompleted()) {
             insertScriptLine();
-        }
-
-        if ((parentFrame != null) && (ScriptRecorder.getReference().getRecorderStatus() != ScriptRecorder.RECORDING)) {
-            ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
-            ((ViewJFrameBase) (parentFrame)).close();
         }
 
         convert3Dto4DAlgo.finalize();

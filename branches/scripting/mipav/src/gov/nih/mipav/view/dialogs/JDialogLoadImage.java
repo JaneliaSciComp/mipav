@@ -207,7 +207,7 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
         AlgorithmLoadB algoLoad = new AlgorithmLoadB();
         algoLoad.addListener(this);
         createProgressBar(image.getImageName(), algoLoad);
-        
+
         algoLoad.run();
     }
 
@@ -275,7 +275,7 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
             scriptParameters.getParams().put(ParameterFactory.newParameter("data_type", dataType));
         }
 
-        scriptParameters.storeOutputImageParams(resultImage, true);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("load_type", loadType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doOrigins));

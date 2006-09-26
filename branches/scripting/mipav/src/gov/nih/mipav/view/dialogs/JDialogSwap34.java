@@ -3,8 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -156,7 +155,7 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
             swap34Algo.addListener(this);
 
             createProgressBar(image.getImageName(), swap34Algo);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -166,6 +165,7 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     swap34Algo.setProgressBarVisible(false);
                 }
@@ -198,9 +198,8 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
     /**
      * {@inheritDoc}
      */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, true);
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
     }
 
     /**
@@ -210,16 +209,17 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
         image = scriptParameters.retrieveInputImage();
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
-        
+
         imageName = image.getImageName();
         setModal(false);
         doClose = false;
     }
-   
+
     /**
      * {@inheritDoc}
      */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(resultImage);
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
     }
 }

@@ -43,7 +43,7 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
 
-    //private ModelImage featureImage = null;
+    // private ModelImage featureImage = null;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -142,6 +142,7 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmGraphBasedSegmentation) {
             image.clearMask();
 
@@ -219,46 +220,6 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("sigma", sigma));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("min_component_size", minComponentSize));
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setSigma(scriptParameters.getParams().getFloat("sigma"));
-        setThreshold(scriptParameters.getParams().getFloat("threshold"));
-        setMinComponentSize(scriptParameters.getParams().getInt("min_component_size"));
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
 
     /**
      * Loads the default settings from Preferences to set up the dialog.
@@ -291,7 +252,6 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
         }
     }
 
-
     /**
      * Saves the default settings into the Preferences file.
      */
@@ -301,7 +261,7 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
         // System.err.println(defaultsString);
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
-    
+
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
      */
@@ -373,7 +333,7 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
                 segAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), segAlgo);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -410,7 +370,7 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
                 segAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), segAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -430,6 +390,47 @@ public class JDialogGraphBasedSegmentation extends JDialogScriptableBase
             }
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setSigma(scriptParameters.getParams().getFloat("sigma"));
+        setThreshold(scriptParameters.getParams().getFloat("threshold"));
+        setMinComponentSize(scriptParameters.getParams().getInt("min_component_size"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("sigma", sigma));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("min_component_size", minComponentSize));
     }
 
     /**

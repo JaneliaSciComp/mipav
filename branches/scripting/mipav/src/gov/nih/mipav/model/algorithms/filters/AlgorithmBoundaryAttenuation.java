@@ -71,10 +71,11 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         srcImage = srcImg;
         this.numErosions = numErosions;
         this.maxAttenuation = maxAttenuation;
+
         // find vois, extract to mask
         maskImage = new ModelImage(ModelStorageBase.SHORT, srcImg.getExtents(), srcImg.getImageName() + "_attenu_mask");
 
-        
+
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -103,16 +104,15 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
      * Start the algorithm.
      */
     public void runAlgorithm() {
-        
+
         fireProgressStateChanged(0, srcImage.getImageName(), "Boundary Attenuation ...");
-        
-        
+
+
         AlgorithmMask maskAlgo = new AlgorithmMask(maskImage, srcImage, 1, true, true);
         maskAlgo.setProgressValues(generateProgressValues(0, 5));
         linkProgressToAlgorithm(maskAlgo);
         maskAlgo.run();
 
-       
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -124,8 +124,8 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         makeKernel(AlgorithmMorphology3D.CONNECTED6);
 
         attenuationBuffer = new float[xDim * yDim * zDim];
-        
-        //randomly setting this to be a percent change (progress of 35....so from 5 to 40)
+
+        // randomly setting this to be a percent change (progress of 35....so from 5 to 40)
         erode(maskImage, numErosions);
 
         if (threadStopped) {
@@ -138,15 +138,15 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
         float startPercent = .4f;
         float percentChange = .1f;
-        
+
         int totalPercent = 10;
         int mod = attenuationBuffer.length / totalPercent;
 
         for (int i = 0; i < attenuationBuffer.length; i++) {
 
             if ((i % mod) == 0) {
-                fireProgressStateChanged(( startPercent + (float)(i/attenuationBuffer.length) * percentChange), 
-                        srcImage.getImageName(), "Filling object interior ...");
+                fireProgressStateChanged((startPercent + ((float) (i / attenuationBuffer.length) * percentChange)),
+                                         srcImage.getImageName(), "Filling object interior ...");
             }
 
             if ((attenuationBuffer[i] == 0) && (maskImage.getFloat(i) == 1)) {
@@ -174,9 +174,10 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         }
 
         float[] sigmas = new float[] { 2.0f, 2.0f, 2.0f * (xRes / zRes) };
-        //start percentage now @ 50... will go to 70%
-        AlgorithmGaussianBlurSep blurAlgo = new AlgorithmGaussianBlurSep(tmpImg, null, sigmas, false, false);
-        blurAlgo.setProgressValues(generateProgressValues(50,70));
+
+        // start percentage now @ 50... will go to 70%
+        AlgorithmGaussianBlurSep blurAlgo = new AlgorithmGaussianBlurSep(null, tmpImg, sigmas, false, false);
+        blurAlgo.setProgressValues(generateProgressValues(50, 70));
         blurAlgo.setMask(srcImage.generateVOIMask());
         linkProgressToAlgorithm(blurAlgo);
         blurAlgo.run();
@@ -188,10 +189,8 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
             return;
         }
 
+        fireProgressStateChanged((70), srcImage.getImageName(), "Attenuating image ...");
 
-        fireProgressStateChanged((70), 
-                srcImage.getImageName(), "Attenuating image ...");
-        
         // combine attenuation buffer with srcImage and put into destImage
         try {
             tmpImg.exportData(0, attenuationBuffer.length, attenuationBuffer);
@@ -210,11 +209,9 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
             return;
         }
 
-        fireProgressStateChanged((75), 
-                srcImage.getImageName(), "Attenuating image ...");
-        
+        fireProgressStateChanged((75), srcImage.getImageName(), "Attenuating image ...");
 
-        
+
         startPercent = .75f;
         percentChange = .2f;
         totalPercent = 10;
@@ -223,8 +220,8 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         for (int i = 0; i < attenuationBuffer.length; i++) {
 
             if ((i % mod) == 0) {
-                fireProgressStateChanged(( startPercent + (float)(i/attenuationBuffer.length) * percentChange), 
-                        srcImage.getImageName(), "Attenuating image ...");
+                fireProgressStateChanged((startPercent + ((float) (i / attenuationBuffer.length) * percentChange)),
+                                         srcImage.getImageName(), "Attenuating image ...");
             }
 
             if (attenuationBuffer[i] == 0) {
@@ -297,10 +294,10 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         short[] processBuffer;
         short[] imgBuffer;
 
-        
+
         float startPercent = .05f;
         float percentChange = .35f;
-        
+
         try {
             processBuffer = new short[imgSize];
             imgBuffer = new short[imgSize];
@@ -313,6 +310,7 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         } catch (OutOfMemoryError error) {
             displayError("BoundaryAttenuation: Out of memory");
             setCompleted(false);
+
             return;
         }
 
@@ -323,9 +321,9 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         for (curIter = 0; (curIter < iterations) && !threadStopped; curIter++) {
             linearAttenuation = maxAttenuation + (linearStep * curIter);
 
-            fireProgressStateChanged(( startPercent + (float)(curIter/iterations) * percentChange ), 
-                    srcImage.getImageName(), "Eroding image ...");
-            
+            fireProgressStateChanged((startPercent + ((float) (curIter / iterations) * percentChange)),
+                                     srcImage.getImageName(), "Eroding image ...");
+
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
 
                 value = imgBuffer[pix];

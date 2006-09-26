@@ -312,9 +312,9 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             subsetAlgo.addListener(this);
-            
+
             createProgressBar(image.getImageName(), subsetAlgo);
-            
+
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -370,7 +370,7 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, true);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
 
         scriptParameters.getParams().put(ParameterFactory.newParameter("remove_dim", removeDim));
         scriptParameters.getParams().put(ParameterFactory.newParameter("slice_num", sliceNum));
