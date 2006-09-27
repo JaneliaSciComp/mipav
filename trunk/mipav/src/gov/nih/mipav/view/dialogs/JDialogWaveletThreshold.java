@@ -42,6 +42,10 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     public static final int SOFT = 2;
+    
+    public static final int NONNEGATIVE_GARROTE = 3;
+    
+    public static final int SCAD = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -74,6 +78,10 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private JRadioButton soft;
+    
+    private JRadioButton garrote;
+    
+    private JRadioButton scad;
 
     /** DOCUMENT ME! */
     private JTextField textThreshold;
@@ -674,14 +682,31 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
         soft.setFont(serif12);
         soft.addActionListener(this);
         thresholdGroup.add(soft);
-        gbc.gridx = 1;
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         paramPanel.add(soft, gbc);
+        
+        garrote = new JRadioButton("Nonnegative garrote", true);
+        garrote.setFont(serif12);
+        garrote.addActionListener(this);
+        thresholdGroup.add(garrote);
+        gbc.gridx = 0;
+        gbc.gridy = 4;
+        paramPanel.add(garrote, gbc);
+        
+        scad = new JRadioButton("SCAD", true);
+        scad.setFont(serif12);
+        scad.addActionListener(this);
+        thresholdGroup.add(scad);
+        gbc.gridx = 0;
+        gbc.gridy = 5;
+        paramPanel.add(scad, gbc);
 
         waveletCheckBox = new JCheckBox("Display log magnitude wavelet image");
         waveletCheckBox.setFont(serif12);
         waveletCheckBox.setSelected(false);
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 6;
         gbc.gridwidth = 2;
         paramPanel.add(waveletCheckBox, gbc);
 
@@ -750,8 +775,12 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
 
         if (hard.isSelected()) {
             thresholdType = HARD;
-        } else {
+        } else if (soft.isSelected()){
             thresholdType = SOFT;
+        } else if (garrote.isSelected()) {
+            thresholdType = NONNEGATIVE_GARROTE;
+        } else {
+            thresholdType = SCAD;
         }
 
         tmpStr = textThreshold.getText();
