@@ -483,7 +483,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
     protected void writeLog() {
 
         // write to the history area
-        if (Preferences.is(Preferences.PREF_LOG) && completed) {
+        if (Preferences.is(Preferences.PREF_LOG) && isCompleted()) {
 
             if (destImage != null) {
 

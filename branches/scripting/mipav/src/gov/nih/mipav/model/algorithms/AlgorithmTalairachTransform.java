@@ -304,7 +304,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
      */
     private void closingLog() {
 
-        if (completed == true) {
+        if (isCompleted()) {
             historyString = new String("# Talairach Transform (Completed successfully!)\n");
         } else {
             historyString = new String("# Talairach Transform (Algorithm failed!)\n");
