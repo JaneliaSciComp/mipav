@@ -686,7 +686,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
         gbc.gridy = 3;
         paramPanel.add(soft, gbc);
         
-        garrote = new JRadioButton("Nonnegative garrote", true);
+        garrote = new JRadioButton("Nonnegative garrote", false);
         garrote.setFont(serif12);
         garrote.addActionListener(this);
         thresholdGroup.add(garrote);
@@ -694,7 +694,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
         gbc.gridy = 4;
         paramPanel.add(garrote, gbc);
         
-        scad = new JRadioButton("SCAD", true);
+        scad = new JRadioButton("SCAD", false);
         scad.setFont(serif12);
         scad.addActionListener(this);
         thresholdGroup.add(scad);
