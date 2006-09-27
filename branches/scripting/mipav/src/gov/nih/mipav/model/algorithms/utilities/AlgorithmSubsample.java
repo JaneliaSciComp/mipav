@@ -79,7 +79,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         if (processIndep && (srcImage.getExtents()[2] != resultExtents[2])) {
             MipavUtil.displayError("Cannot perform 2.5D subsampling and change the number of slices");
             threadStopped = true;
-            completed = false;
+            setCompleted(false);
 
             return;
         }

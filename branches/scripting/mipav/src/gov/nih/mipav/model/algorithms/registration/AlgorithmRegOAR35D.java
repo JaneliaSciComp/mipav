@@ -953,7 +953,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             transform.run();
 
             if (transform.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -992,7 +992,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             transform.run();
 
             if (transform.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1116,7 +1116,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 transform.run();
 
                 if (transform.isCompleted() == false) {
-                    completed = false;
+                    setCompleted(false);
                     finalize();
 
                     return;
@@ -2291,7 +2291,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         
         disposeLocal();
         finalize();
-        completed = true;
+        setCompleted(true);
     }
 
     /**

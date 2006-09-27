@@ -616,7 +616,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             resultImage = (ModelImage) image.clone(imgName + "_brain");
             resultImage.importData(0, imgData, true);
         } catch (IOException ioe) {
-            completed = false;
+            setCompleted(false);
             finalize();
 
             return;

@@ -947,7 +947,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             blur.run();
 
             if (blur.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -980,7 +980,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             blur2.run();
 
             if (blur2.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -998,7 +998,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             if (transform.isCompleted() == false) {
                 transform.finalize();
                 transform = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1043,7 +1043,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             if (transform.isCompleted() == false) {
                 transform.finalize();
                 transform = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1093,7 +1093,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             if (transform2.isCompleted() == false) {
                 transform2.finalize();
                 transform2 = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1143,7 +1143,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
             if (transform2.isCompleted() == false) {
                 transform2.finalize();
                 transform2 = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1430,7 +1430,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
 
         disposeLocal();
         finalize();
-        completed = true;
+        setCompleted(true);
     }
 
     /**
@@ -1676,7 +1676,7 @@ public class AlgorithmRegOAR2D extends AlgorithmBase {
         powell.disposeLocal();
         disposeLocal();
         finalize();
-        completed = true;
+        setCompleted(true);
     }
 
     /**

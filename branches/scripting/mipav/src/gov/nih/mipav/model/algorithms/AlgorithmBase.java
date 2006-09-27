@@ -36,7 +36,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     protected boolean runningInSeparateThread = false;
 
     /** This flag will be set to true when the algorithm has completed. */
-    protected boolean completed = false;
+    private boolean completed = false;
 
     /** Destination flag indicating if a destination (result) image is generated. */
     protected boolean destFlag = false;
@@ -540,13 +540,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
 
         return imagePositionCoords;
-    }
-
-    /**
-     * Disposes of progress bar.
-     */
-    protected void disposeProgressBar() {
-
     }
 
     /**

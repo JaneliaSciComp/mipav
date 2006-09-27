@@ -1028,7 +1028,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         if (refImage.getNDims() != 3) {
             MipavUtil.displayError("" + refImage.getNDims() + "D registration not supported.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -1036,7 +1036,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
         if (inputImage.getNDims() != 3) {
             MipavUtil.displayError("" + inputImage.getNDims() + "D registration not supported.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -1149,7 +1149,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Out of memory in AlgorithmOAR3D.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -1228,7 +1228,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             blur.run();
 
             if (blur.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1266,7 +1266,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             blur2.run();
 
             if (blur2.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1287,7 +1287,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             if (transform.isCompleted() == false) {
                 transform.finalize();
                 transform = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1341,7 +1341,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             if (transform.isCompleted() == false) {
                 transform.finalize();
                 transform = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1391,7 +1391,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             if (transform2.isCompleted() == false) {
                 transform2.finalize();
                 transform2 = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1448,7 +1448,7 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
             if (transform2.isCompleted() == false) {
                 transform2.finalize();
                 transform2 = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1952,9 +1952,11 @@ public class AlgorithmConstrainedOAR3D extends AlgorithmBase {
 
         answer.matrix.invert();
 
+        
         disposeLocal();
         finalize();
-        completed = true;
+        setCompleted(true);
+        
     }
 
     /**

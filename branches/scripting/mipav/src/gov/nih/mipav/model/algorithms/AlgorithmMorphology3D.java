@@ -273,24 +273,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         int imgSize = sliceSize * zDim;
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Finding Edges ...");
-        /*
-                try {
-        
-                    if  {
-                        progressBar.setMessage("Finding Edges ...");
-                    }
-        
-                    if  {
-                        fireProgressStateChanged(0);
-                    }
-                } catch (NullPointerException npe) {
-        
-                    if (threadStopped) {
-                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                          Preferences.DEBUG_ALGORITHM);
-                    }
-                }
-        */
+     
         try {
             tempBuffer = new short[imgBuffer.length];
         } catch (OutOfMemoryError e) {

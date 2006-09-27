@@ -356,7 +356,7 @@ public class AlgorithmTranscode extends AlgorithmBase implements ControllerListe
         iml = null;
         oml = null;
         
-        this.completed = true;
+        this.setCompleted(true);
     }
 
     /**

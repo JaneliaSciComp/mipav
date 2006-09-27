@@ -192,7 +192,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         if (srcImage.getNDims() != 4) {
             MipavUtil.displayError("" + srcImage.getNDims() + "D registration not supported.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -247,13 +247,13 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         } catch (IOException error) {
             MipavUtil.displayError("AlgorithmTSOAR: I/O error while constructing algorithm.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("AlgorithmTSOAR: Memory error while constructing algorithm.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -486,7 +486,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Out of memory in AlgorithmTSOAR.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -504,7 +504,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             transform.run();
 
             if (transform.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -592,7 +592,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
         if (threadStopped) {
             
-            completed = false;
+            setCompleted(false);
             finalize();
 
             return;
@@ -607,7 +607,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         time = System.currentTimeMillis();
 
         if (threadStopped) {
-            completed = false;
+            setCompleted(false);
             
 
             return;
@@ -627,7 +627,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         time = System.currentTimeMillis();
 
         if (threadStopped) {
-            completed = false;
+            setCompleted(false);
             
 
             return;
@@ -647,7 +647,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         time = System.currentTimeMillis();
 
         if (threadStopped) {
-            completed = false;
+            setCompleted(false);
             
 
             return;
@@ -668,7 +668,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             Preferences.debug(" Level 1  min = " + ((float) time / 60000.0f) + "\n");
 
             if (threadStopped) {
-                completed = false;
+                setCompleted(false);
                 
 
                 return;
@@ -698,7 +698,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
         fireProgressStateChanged(100);
         
-        completed = true;
+        setCompleted(true);
     }
 
     /**
@@ -1014,7 +1014,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 imageInput.importData(0, buffer, true);
             } catch (IOException error) {
                 MipavUtil.displayError("I/O Error while registering.");
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return null;
@@ -1029,7 +1029,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 transform.run();
 
                 if (transform.isCompleted() == false) {
-                    completed = false;
+                    setCompleted(false);
                     finalize();
 
                     return null;
@@ -1111,7 +1111,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 imageInput.importData(0, buffer, true);
             } catch (IOException error) {
                 MipavUtil.displayError("I/O Error while registering.");
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return null;
@@ -1126,7 +1126,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 transform.run();
 
                 if (transform.isCompleted() == false) {
-                    completed = false;
+                    setCompleted(false);
                     finalize();
 
                     return null;
