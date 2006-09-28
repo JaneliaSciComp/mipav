@@ -6940,9 +6940,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     /**
      * Exports data based on the mapping from ModelImage space to Patient
      * space. The mapping parameters are passed in as the axisOrder and
-     * axisFlip arrays. This function replaces many hard-coded exportDataXXX
-     * functions. It will be upgraded when the axisOrder and axisFlip
-     * parameters are further isolated from the rendering code.
+     * axisFlip arrays.
      * @param axisOrder -- the mapping of ModelImage space volume axes to Patient space axes
      * @param axisFlip -- the mapping of ModelImage space volume axes to Patient space axes (invert flags)
      * @param tSlice -- for 4D volumes
@@ -6984,6 +6982,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
         int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
 
+        double real, imaginary, mag;
         float[] fReturn = null;
 
         /* loop over the 2D image (values) we're writing into */
@@ -7046,6 +7045,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     values[(j * iBound + i) * 4 + 1] = getFloat(index * 4 + 1);
                     values[(j * iBound + i) * 4 + 2] = getFloat(index * 4 + 2);
                     values[(j * iBound + i) * 4 + 3] = getFloat(index * 4 + 3);
+                }
+                /* if complex: */
+                else if ( bufferType == COMPLEX )
+                {
+                    real = getFloat(index * 2);
+                    imaginary = getFloat(index * 2 + 1);
+
+                    if (logMagDisp == true) {
+                        mag = Math.sqrt((real * real) + (imaginary * imaginary));
+                        values[j * iBound + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
+                    } else {
+                        values[j * iBound + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                    }
                 }
                 /* not color: */
                 else

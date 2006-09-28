@@ -1572,6 +1572,15 @@ public class JPanelHistoRGB
         }
     }
 
+    /**
+     * Accessor that indicates which image is active:
+     * @return displayMode = IMAGE_A or IMAGE_B
+     */
+    public int getDisplayMode()
+    {
+        return displayMode;
+    }
+
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**

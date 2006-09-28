@@ -506,9 +506,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             yS = (int)pt.y;
             zS = (int)pt.z;
             int origDir = image.getImageOrientation();
-			if (origDir == ViewJComponentBase.AXIAL) sliceDir = XY;
-			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = XZ;
-			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = XZ;
+			if (origDir == FileInfoBase.AXIAL) sliceDir = XY;
+			else if (origDir == FileInfoBase.CORONAL) sliceDir = XZ;
+			else if  (origDir == FileInfoBase.SAGITTAL) sliceDir = XZ;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))) {
             // triplanar image : XZ panel
             /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
@@ -527,9 +527,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             yS = (int)pt.y;
             zS = (int)pt.z;
 			int origDir = image.getImageOrientation();
-			if (origDir == ViewJComponentBase.AXIAL) sliceDir = XZ;
-			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = XY;
-			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = ZY;
+			if (origDir == FileInfoBase.AXIAL) sliceDir = XZ;
+			else if (origDir == FileInfoBase.CORONAL) sliceDir = XY;
+			else if  (origDir == FileInfoBase.SAGITTAL) sliceDir = ZY;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))) {
             // triplanar image : ZY panel
             /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
@@ -548,9 +548,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             yS = (int)pt.y;
             zS = (int)pt.z;
 			int origDir = image.getImageOrientation();
-			if (origDir == ViewJComponentBase.AXIAL) sliceDir = ZY;
-			else if (origDir == ViewJComponentBase.CORONAL) sliceDir = ZY;
-			else if  (origDir == ViewJComponentBase.SAGITTAL) sliceDir = XY;
+			if (origDir == FileInfoBase.AXIAL) sliceDir = ZY;
+			else if (origDir == FileInfoBase.CORONAL) sliceDir = ZY;
+			else if  (origDir == FileInfoBase.SAGITTAL) sliceDir = XY;
         }
 
         Preferences.debug("<" + xS + ", " + yS + ", " + zS + " :" + sliceDir + ">", Preferences.DEBUG_MINOR);
@@ -666,7 +666,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         }
 
     }
-	
+
 	/** Handle the key typed event */
     public void keyTyped(KeyEvent e) {
 		String key = Character.toString(e.getKeyChar());
@@ -685,7 +685,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
     /** Handle the key released event */
     public void keyReleased(KeyEvent e) {
     }
-   
+
 
     /**
      * 3D images: 18-neighborhood.
@@ -1560,7 +1560,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
      */
     private void dilateImage() {
 		System.out.println("dilate");
-		
+
         if (image == null) {
             System.gc();
             MipavUtil.displayError("image not found");

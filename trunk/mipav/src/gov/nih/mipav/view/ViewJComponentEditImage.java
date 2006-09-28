@@ -181,9 +181,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** DOCUMENT ME! */
     protected float lessR = 10;
 
-    /** DOCUMENT ME! */
-    protected float level, window;
-
     /** Flag for displaying logMag. */
     protected boolean logMagDisplay = false;
 
@@ -193,9 +190,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** Lookup table for image B. */
     protected ModelLUT LUTb;
 
-    /** Remapped LUT buffer. */
-    protected int[] lutBufferRemapped = null;
-
     /** DOCUMENT ME! */
     protected JDialogMagnificationControls magSettings;
 
@@ -204,12 +198,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** DOCUMENT ME! */
     protected int[] maxExtents = new int[2];
-
-    /** DOCUMENT ME! */
-    protected float minImageWin, maxImageWin;
-
-    /** DOCUMENT ME! */
-    protected float minWin, maxWin;
 
     /** used to describe the cursor mode. */
     protected int mode;
@@ -235,26 +223,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** Keep track of state of shift for mouse Pressed events. */
     protected boolean mousePressIsShiftDown = false;
 
-    /** DOCUMENT ME! */
-    protected int oldXS = 0;
-
-    /** DOCUMENT ME! */
-    protected int oldYS = 0;
-
     /** for the use of the user-notifier. */
     protected boolean onTop = false;
 
     /** DOCUMENT ME! */
-    protected int orientation = NA;
-
-    /** DOCUMENT ME! */
-    protected int OUT_OF_BOUNDS = -9999;
-
-    /** DOCUMENT ME! */
-    protected int lastMouseX = OUT_OF_BOUNDS; // used by the repaintPaintBrushCursorFast method
-
-    /** DOCUMENT ME! */
-    protected int lastMouseY = OUT_OF_BOUNDS; // used by the repaintPaintBrushCursorFast method
+    protected int orientation = FileInfoBase.UNKNOWN_ORIENT;
 
     /** DOCUMENT ME! */
     protected BitSet paintBitmap;
@@ -344,12 +317,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     protected int timeSlice = 0;
 
     /** DOCUMENT ME! */
-    protected int timeSliceA = 0;
-
-    /** DOCUMENT ME! */
-    protected int timeSliceB = 0;
-
-    /** DOCUMENT ME! */
     protected Color toppedColor = ACTIVE_IMAGE_COLOR;
 
     /** DOCUMENT ME! */
@@ -376,20 +343,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** X coord of seed point. */
     protected short xPG;
 
-    /** DOCUMENT ME! */
-    protected float[] xWin = new float[4];
-
     /** Y coord of seed point. */
     protected short yPG;
 
-    /** DOCUMENT ME! */
-    protected float[] yWin = new float[4];
-
     /** Z coord of seed point. */
     protected short zPG;
-
-    /** DOCUMENT ME! */
-    protected float[] zWin = new float[4];
 
     /** DOCUMENT ME! */
     private Image cleanImageB = null;
@@ -399,12 +357,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * to be created upon every repaint. should be initialized to a negative number
      */
     private int lastWinRegionSlice = -1;
-
-    /** DOCUMENT ME! */
-    private MemoryImageSource memImageA = null;
-
-    /** DOCUMENT ME! */
-    private MemoryImageSource memImageB = null;
 
     /** DOCUMENT ME! */
     private Image offscreenImage = null;
@@ -430,6 +382,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     protected VOIHandler voiHandler = null;
 
 
+    /** PatientSlice contains all the Patient Coordinate system view-specific
+     * data for rendering this component: */
+    protected PatientSlice m_kPatientSlice;
+
+    /** window / level mouse control: */
+    private WindowLevel m_kWinLevel;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -452,7 +411,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                                    ModelImage _imageB, ModelLUT _LUTb, float[] imgBufferB, int[] pixelBuffer,
                                    float zoom, int[] extents, boolean logMagDisplay, int _orientation )
     {
-        super( _orientation, _imageA );
+        super( _imageA.getWidth( _orientation ), _imageA.getHeight( _orientation ), _imageA );
 
         frame = _frame;
         imageA = _imageA;
@@ -464,8 +423,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         LUTa = _LUTa;
         LUTb = _LUTb;
-
-        lutBufferRemapped = new int[1];
 
         showSliceNumber = (imageA.getNDims() > 2) && !(this instanceof ViewJComponentTriImage);
 
@@ -559,6 +516,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         maxExtents[0] = imageDim.width;
         maxExtents[1] = imageDim.height;
+
+        /* create the slice renderer for this orientation: */
+        m_kPatientSlice = new PatientSlice( imageA, LUTa,
+                                            imageB, LUTb,
+                                            orientation );
+        m_kPatientSlice.setBuffers( imageBufferA, imageBufferB );
+        /* create the WindowLevel controller: */
+        m_kWinLevel = new WindowLevel();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1047,7 +1012,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  flag  if true garbage collector should be called.
      */
     public void disposeLocal(boolean flag) {
-        lutBufferRemapped = null;
         imageBufferA = null;
         imageBufferB = null;
         pixBuffer = null;
@@ -1632,7 +1596,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  mouseEvent  event that triggers function; contains click count
      */
     public void mouseClicked(MouseEvent mouseEvent) {
-        int xS, yS;
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -1685,10 +1648,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         ViewVOIVector VOIs = imageActive.getVOIs();
         int nVOI = VOIs.size();
-        FileInfoBase fileInfo;
         int xS, yS;
         int distX, distY;
-        int xDim, yDim;
         int zDim = 1;
         Color dropperColor;
         float[] lineX = new float[2];
@@ -1696,16 +1657,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         float[] lineZ = new float[2];
         float[] position;
         float[] intensity;
-        String str;
         int sliceNum;
-        int windowChange, levelChange;
         int sliceSize;
-        float minR;
-        float maxR;
-        float minG;
-        float maxG;
-        float minB;
-        float maxB;
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -1716,8 +1669,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
 
-        xDim = imageActive.getExtents()[0];
-        yDim = imageActive.getExtents()[1];
+        int xDim = imageActive.getExtents()[0];
+        int yDim = imageActive.getExtents()[1];
         sliceSize = xDim * yDim;
         if (imageActive.getNDims() >= 3) {
             zDim = imageActive.getExtents()[2];
@@ -1726,283 +1679,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-        try {
-            if (mode == DEFAULT) {
-                if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
-                    // Dragging the mouse with the right mouse button pressed
-                    // increases the window when going from left to right.
-                    // Dragging the mouse with the right mouse button pressed
-                    // increases the level when going from down to up.
-                    setCursor(MipavUtil.winLevelCursor);
-                    if (!winLevelSet) {
-                        winLevelSet = true;
-
-                        if (imageActive.isColorImage()) {
-                            if (imageActive.getType() == ModelStorageBase.ARGB) {
-                                minImageWin = 0;
-                                maxImageWin = 255;
-                            }
-                            else {
-                                minImageWin = (float) imageActive.getMin();
-                                maxImageWin = (float) imageActive.getMax();
-                            }
-
-                            // THIS IS (one of) THE CULPRIT(s).  ADJUST THE FOLLOWING TO
-                            // SET THE TRANSFER FUNCTION CORRECTLY (to current state)!!
-                            // Set LUT min max values;
-                            minR = Float.MAX_VALUE;
-                            maxR = -Float.MAX_VALUE;
-                            minG = Float.MAX_VALUE;
-                            maxG = -Float.MAX_VALUE;
-                            minB = Float.MAX_VALUE;
-                            maxB = -Float.MAX_VALUE;
-                            for (i = 0; i < sliceSize; i++) {
-                                if (imageBufferActive[4 * i + 1] > maxR) {
-                                    maxR = imageBufferActive[4 * i + 1];
-                                }
-                                if (imageBufferActive[4 * i + 1] < minR) {
-                                    minR = imageBufferActive[4 * i + 1];
-                                }
-                                if (imageBufferActive[4 * i + 2] > maxG) {
-                                    maxG = imageBufferActive[4 * i + 2];
-                                }
-                                if (imageBufferActive[4 * i + 2] < minG) {
-                                    minG = imageBufferActive[4 * i + 2];
-                                }
-                                if (imageBufferActive[4 * i + 3] > maxB) {
-                                    maxB = imageBufferActive[4 * i + 3];
-                                }
-                                if (imageBufferActive[4 * i + 3] < minB) {
-                                    minB = imageBufferActive[4 * i + 3];
-                                }
-                            } // for (i = 0; i < sliceSize; i++)
-                            minWin = Math.min(minR, minG);
-                            minWin = Math.min(minWin, minB);
-                            maxWin = Math.max(maxR, maxG);
-                            maxWin = Math.max(maxWin, maxB);
-                            if (imageActive.getType() == ModelStorageBase.ARGB) {
-                                xWin[1] = minWin;
-                                xWin[2] = maxWin;
-                            }
-                            else {
-                                xWin[1] = minWin * 255 / maxWin;
-                                xWin[2] = 255;
-                            }
-                            xWin[0] = 0;
-                            yWin[0] = 255;
-                            zWin[0] = 0;
-                            yWin[1] = 255;
-                            zWin[1] = 0;
-                            yWin[2] = 0;
-                            zWin[2] = 0;
-                            xWin[3] = 255;
-                            yWin[3] = 0;
-                            zWin[3] = 0;
-                            if (imageA == imageActive) {
-                                RGBTA.getRedFunction().importArrays(xWin, yWin, 4);
-                                RGBTA.getGreenFunction().importArrays(xWin, yWin, 4);
-                                RGBTA.getBlueFunction().importArrays(xWin, yWin, 4);
-                                RGBTA.makeRGB( -1);
-                                imageA.notifyImageDisplayListeners(false, (int) (alphaBlend * 100),
-                                    RGBTA);
-                            }
-                            else {
-                                RGBTB.getRedFunction().importArrays(xWin, yWin, 4);
-                                RGBTB.getGreenFunction().importArrays(xWin, yWin, 4);
-                                RGBTB.getBlueFunction().importArrays(xWin, yWin, 4);
-                                RGBTB.makeRGB( -1);
-                                imageB.notifyImageDisplayListeners(false, (int) (alphaBlend * 100),
-                                    RGBTB);
-                            }
-                        } // if (imageActive.isColorImage())
-                        else { // imageActive black and white
-                            if (imageActive.getType() == ModelStorageBase.UBYTE) {
-                                minImageWin = 0;
-                                maxImageWin = 255;
-                            }
-                            else if (imageActive.getType() ==
-                                     ModelStorageBase.BYTE) {
-                                minImageWin = -128;
-                                maxImageWin = 127;
-                            }
-                            else {
-                                minImageWin = (float) imageActive.getMin();
-                                maxImageWin = (float) imageActive.getMax();
-                            }
-
-                            minWin = Float.MAX_VALUE;
-                            maxWin = -Float.MAX_VALUE;
-                            for (i = 0; i < imageBufferActive.length; i++) {
-                                if (imageBufferActive[i] > maxWin) {
-                                    maxWin = imageBufferActive[i];
-                                }
-                                if (imageBufferActive[i] < minWin) {
-                                    minWin = imageBufferActive[i];
-                                }
-                            }
-
-                            // THIS IS (one of) THE CULPRIT(s).  ADJUST THE FOLLOWING TO
-                            // SET THE TRANSFER FUNCTION CORRECTLY (to current state)!!
-                            // Set LUT min max values;
-                            xWin[0] = minImageWin;
-                            yWin[0] = 255;
-                            zWin[0] = 0;
-                            xWin[1] = minWin;
-                            yWin[1] = 255;
-                            zWin[1] = 0;
-                            xWin[2] = maxWin;
-                            yWin[2] = 0;
-                            zWin[2] = 0;
-                            xWin[3] = maxImageWin;
-                            yWin[3] = 0;
-                            zWin[3] = 0;
-                            if (imageA == imageActive) {
-                                LUTa.getTransferFunction().importArrays(xWin, yWin, 4);
-                                imageActive.notifyImageDisplayListeners(LUTa, false);
-                            }
-                            else {
-                                LUTb.getTransferFunction().importArrays(xWin, yWin, 4);
-                                imageActive.notifyImageDisplayListeners(LUTb, false);
-                            }
-                        } // else imageActive black and white
-                        level = (xWin[1] + xWin[2]) / 2.0f;
-                        window = xWin[2] - xWin[1];
-                        oldXS = xS;
-                        oldYS = yS;
-                    } // if (!winLevelSet)
-                    else if (winLevelSet && ( (xS != oldXS) || (yS != oldYS))) {
-
-                        // update the transfer function so the on-screen image
-                        // (modelImage/viewJFrameImage) updates for the user
-                        if (imageActive.isColorImage()) {
-                            windowChange = xS - oldXS;
-                            window = window +
-                                windowChange * 4 * 255.0f / (xDim - 1);
-                            if (window > 2 * 255.0f) {
-                                window = 2 * 255.0f;
-                            }
-                            else if (window < 1) {
-                                window = 1;
-                            }
-                            levelChange = oldYS - yS;
-                            level = level + levelChange * 2 * 255.0f / (yDim - 1);
-                            if (level > 255.0f) {
-                                level = 255.0f;
-                            }
-                            else if (level < 0.0f) {
-                                level = 0.0f;
-                            }
-
-                            xWin[2] = level + window / 2;
-                            if (xWin[2] > 255.0f) {
-                                yWin[2] = 255.0f * (xWin[2] - 255.0f) / window;
-                                xWin[2] = 255.0f;
-                            }
-                            else {
-                                yWin[2] = 0.0f;
-                            }
-
-                            xWin[1] = level - window / 2;
-                            if (xWin[1] < 0.0f) {
-                                yWin[1] = 255.0f + 255.0f * xWin[1] / window;
-                                xWin[1] = 0.0f;
-                            }
-                            else {
-                                yWin[1] = 255.0f;
-                            }
-
-                            if (imageA == imageActive) {
-                                RGBTA.getRedFunction().importArrays(xWin, yWin, 4);
-                                RGBTA.getGreenFunction().importArrays(xWin, yWin, 4);
-                                RGBTA.getBlueFunction().importArrays(xWin, yWin, 4);
-                                RGBTA.makeRGB( -1);
-                                imageA.notifyImageDisplayListeners(false, (int) (alphaBlend * 100),
-                                    RGBTA);
-                                if (imageA.getHistoRGBFrame() != null) {
-                                    imageA.getHistoRGBFrame().update();
-                                }
-                            }
-                            else {
-                                RGBTB.getRedFunction().importArrays(xWin, yWin, 4);
-                                RGBTB.getGreenFunction().importArrays(xWin, yWin, 4);
-                                RGBTB.getBlueFunction().importArrays(xWin, yWin, 4);
-                                RGBTB.makeRGB( -1);
-                                imageB.notifyImageDisplayListeners(false, (int) (alphaBlend * 100),
-                                    RGBTB);
-                                if (imageB.getHistoRGBFrame() != null) {
-                                    imageB.getHistoRGBFrame().update();
-                                }
-                            }
-                        } //  if (imageActive.isColorImage())
-                        else { // imageActive black and white
-                            windowChange = xS - oldXS;
-                            window = window +
-                                windowChange * 4 * (maxImageWin - minImageWin) / (xDim - 1);
-                            if (window > 2 * (maxImageWin - minImageWin)) {
-                                window = 2 * (maxImageWin - minImageWin);
-                            }
-                            else if (window < 1) {
-                                window = 1;
-                            }
-                            levelChange = oldYS - yS;
-                            level = level +
-                                levelChange * 2 * (maxImageWin - minImageWin) / (yDim - 1);
-                            if (level > maxImageWin) {
-                                level = maxImageWin;
-                            }
-                            else if (level < minImageWin) {
-                                level = minImageWin;
-                            }
-
-                            xWin[2] = level + window / 2;
-                            if (xWin[2] > maxImageWin) {
-                                yWin[2] = 255.0f * (xWin[2] - maxImageWin) / window;
-                                xWin[2] = maxImageWin;
-                            }
-                            else {
-                                yWin[2] = 0.0f;
-                            }
-
-                            xWin[1] = level - window / 2;
-                            if (xWin[1] < minImageWin) {
-                                yWin[1] = 255.0f - 255.0f * (minImageWin - xWin[1]) / window;
-                                xWin[1] = minImageWin;
-                            }
-                            else {
-                                yWin[1] = 255.0f;
-                            }
-
-                            if (imageA == imageActive) {
-                                LUTa.getTransferFunction().importArrays(xWin, yWin, 4);
-                                imageActive.notifyImageDisplayListeners(LUTa, false);
-                                if (imageA.getHistoLUTFrame() != null) {
-                                    imageA.getHistoLUTFrame().update();
-                                }
-                            }
-                            else {
-                                LUTb.getTransferFunction().importArrays(xWin, yWin, 4);
-                                imageActive.notifyImageDisplayListeners(LUTb, false);
-                                if (imageB.getHistoLUTFrame() != null) {
-                                    imageB.getHistoLUTFrame().update();
-                                }
-                            }
-                        } // imageActive black and white
-                        oldXS = xS;
-                        oldYS = yS;
-                    } // else if (winLevelSet && ((xS != oldXS) || (yS != oldYS)))
-                } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
-            } // if (mode == DEFAULT))
-        }
-        catch (ArrayIndexOutOfBoundsException error) {
-            str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1);
-            frame.setMessageText(str);
-            if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                frame.getUserInterface().setDataText("\n" + str);
-            }
-        }
-
-        setPixelInformationAtLocation(xS, yS);
-
+        processDefaultMouseDrag( mouseEvent, xS, yS );
 
         if (mode == DROPPER_PAINT) {
             if (imageActive.isColorImage() == true) {
@@ -2027,6 +1704,118 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
+
+    protected void processDefaultMouseDrag( MouseEvent mouseEvent, int xS, int yS )
+    {
+        int xDim = imageActive.getExtents()[0];
+        int yDim = imageActive.getExtents()[1];
+        String str;
+
+        try {
+            if (mode == DEFAULT) {
+                if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
+                    // Dragging the mouse with the right mouse button pressed
+                    // increases the window when going from left to right.
+                    // Dragging the mouse with the right mouse button pressed
+                    // increases the level when going from down to up.
+                    m_kWinLevel.setAlpha( alphaBlend );
+                    float fX = xS/(float)xDim;
+                    float fY = yS/(float)yDim;
+
+                    if ( imageActive.isColorImage() )
+                    {
+                        if ( imageActive == imageA )
+                        {
+                            m_kWinLevel.updateWinLevel( fX, fY, !winLevelSet, RGBTA, imageActive);
+                        }
+                        else
+                        {
+                            m_kWinLevel.updateWinLevel( fX, fY, !winLevelSet, RGBTB, imageActive);
+                        }
+                    }
+                    else
+                    {
+                        if ( imageActive == imageA )
+                        {
+                            m_kWinLevel.updateWinLevel( fX, fY, !winLevelSet, LUTa, imageActive);
+                        }
+                        else
+                        {
+                            m_kWinLevel.updateWinLevel( fX, fY, !winLevelSet, LUTb, imageActive);
+                        }
+                    }
+                    if (!winLevelSet) {
+                        setCursor(MipavUtil.winLevelCursor);
+                        winLevelSet = true;
+                    }
+                } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
+            } // if (mode == DEFAULT))
+            if (imageActive.getOrigin()[0] != 0 || imageActive.getOrigin()[1] != 0
+                || imageActive.getOrigin()[2] != 0) {
+
+                String[] values = setScannerPosition( xS, yS, slice );
+                if (values != null) {
+
+                    if (imageActive.isColorImage()) {
+                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
+                            + "  G:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
+                            + "  B:  "
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3])
+                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
+                    }
+                    else {
+                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                            + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS])
+                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
+                    }
+
+                    frame.setMessageText(str);
+                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                        frame.getUserInterface().setDataText("\n" + str);
+                    }
+                }
+                else {
+                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
+                    frame.setMessageText(str);
+                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                        frame.getUserInterface().setDataText("\n" + str);
+                    }
+                }
+            }
+            else {
+                if (imageActive.isColorImage() == true) {
+                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
+                        + "  G:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
+                        + "  B:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
+                    frame.setMessageText(str);
+                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                        frame.getUserInterface().setDataText("\n" + str);
+                    }
+                }
+                else {
+                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
+                    frame.setMessageText(str);
+                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                        frame.getUserInterface().setDataText("\n" + str);
+                    }
+                }
+            }
+        }
+        catch (ArrayIndexOutOfBoundsException error) {
+            str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1);
+            frame.setMessageText(str);
+            if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
+                frame.getUserInterface().setDataText("\n" + str);
+            }
+        }
+    }
 
     /**
      * Unchanged.
@@ -2062,8 +1851,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      *  @param mouseEvent   event that triggered the function
      */
     public void mouseMoved(MouseEvent mouseEvent) {
-//System.err.println("vjcomp mouse moved, mode: " + mode);
-
         int xS, yS;
 
         Graphics g = getGraphics();
@@ -2161,12 +1948,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  mouseEvent  event that triggered function
      */
     public void mousePressed(MouseEvent mouseEvent) {
-        int xS, yS;
-        int x, y;
-        Color dropperColor;
-        float[] lineX = null;
-        float[] lineY = null;
-        float[] lineZ = null;
         float[] position;
         float[] intensity;
         ViewJFrameGraph lineGraph;
@@ -2193,8 +1974,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         if ((mode == ZOOMING_IN) || (mode == ZOOMING_OUT)) {
-            xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-            yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+            int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
+            int yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
 
             ((ViewJFrameImage) frame).updateFrame(getZoomMagnitudeX(mouseEvent.getButton() == MouseEvent.BUTTON3),
                                                   getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3), xS,
@@ -2209,74 +1990,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
 
         try {
-            lineX = new float[2];
-            lineY = new float[2];
-            lineZ = new float[2];
-
-            xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-            yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
-
-            x = mouseEvent.getX();
-            y = mouseEvent.getY();
-
-            if ((xS < 0) || (xS >= imageActive.getExtents()[0]) || (yS < 0) || (yS >= imageActive.getExtents()[1])) {
-                return;
-            }
-
-            if (mode == DROPPER_PAINT) {
-
-                if (imageActive.isColorImage() == true) {
-                    dropperColor = new Color((int)
-                                                 imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1],
-                                             (int)
-                                                 imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2],
-                                             (int)
-                                                 imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
-                    frame.getControls().getTools().setPaintColor(dropperColor);
-                } else {
-                    intensityDropper = imageBufferActive[(yS * imageActive.getExtents()[0]) + xS];
-                    frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
-                }
-            }
-
-            if (mode == ERASER_PAINT) {
-                performPaint(mouseEvent, true);
-                imageActive.notifyImageDisplayListeners();
-            } else if (mode == PAINT_VOI) {
-
-                // backup paintBitmap to paintBitmapBU
-                paintBitmapBU.clear();
-
-                int length = paintBitmap.length();
-
-                for (int b = 0; b < length; b++) {
-
-                    if (paintBitmap.get(b)) {
-                        paintBitmapBU.set(b);
-                    }
-                }
-
-                xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-                yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
-
-                performPaint(mouseEvent, mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK);
-                imageActive.notifyImageDisplayListeners();
-            }
-
-            if ((mode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
-
-                if ((magSettings != null) && !magSettings.isVisible()) {
-                    magSettings.setWidthText((int) (frame.getSize().width * 0.25));
-                    magSettings.setVisible(true);
-                }
-            }
-
+            mousePressedPaint( mouseEvent );
             if ((mode == WIN_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
                 String newValue = JOptionPane.showInputDialog(frame, "Enter new size for windowed region:",
                                                               String.valueOf(windowedRegionSize));
-
                 try {
-
                     if (newValue != null) {
                         windowedRegionSize = Integer.parseInt(newValue);
                     }
@@ -2291,8 +2009,67 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             return;
         }
-
     }
+
+    protected void mousePressedPaint( MouseEvent mouseEvent )
+    {
+        int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
+        int yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+
+        int x = mouseEvent.getX();
+        int y = mouseEvent.getY();
+
+        if ((xS < 0) || (xS >= imageActive.getExtents()[0]) ||
+            (yS < 0) || (yS >= imageActive.getExtents()[1])) {
+            return;
+        }
+
+        if (mode == DROPPER_PAINT) {
+
+            if (imageActive.isColorImage() == true) {
+                Color dropperColor = new Color((int)
+                                               imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1],
+                                               (int)
+                                               imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2],
+                                               (int)
+                                               imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]);
+                frame.getControls().getTools().setPaintColor(dropperColor);
+            } else {
+                intensityDropper = imageBufferActive[(yS * imageActive.getExtents()[0]) + xS];
+                frame.getControls().getTools().setIntensityPaintName(String.valueOf((int) (intensityDropper)));
+            }
+        }
+        if (mode == ERASER_PAINT) {
+            performPaint(mouseEvent, true);
+            imageActive.notifyImageDisplayListeners();
+        } else if (mode == PAINT_VOI) {
+                // backup paintBitmap to paintBitmapBU
+            paintBitmapBU.clear();
+
+            int length = paintBitmap.length();
+
+            for (int b = 0; b < length; b++) {
+
+                if (paintBitmap.get(b)) {
+                    paintBitmapBU.set(b);
+                }
+            }
+
+            xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
+            yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+
+            performPaint(mouseEvent, mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK);
+            imageActive.notifyImageDisplayListeners();
+        }
+        if ((mode == MAG_REGION) && (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK)) {
+
+            if ((magSettings != null) && !magSettings.isVisible()) {
+                magSettings.setWidthText((int) (frame.getSize().width * 0.25));
+                magSettings.setVisible(true);
+            }
+        }
+    }
+
 
     /**
      *  A mouse event.  This function sets up and draws
@@ -3360,6 +3137,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             paintBitmap.or(seedPaintBitmap);
         }
 
+        if (growDialog != null) {
+            growDialog.notifyPaintListeners(true, false, paintBitmap);
+        }
+
         imageActive.notifyImageDisplayListeners(null, true);
         setCursor(cursor);
     }
@@ -4169,6 +3950,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         cleanImageBufferA = pixBuff;
         cleanImageBufferB = pixBuffB;
         imageBufferActive = imageBufferA;
+        m_kPatientSlice.setBuffers( imgBufferA, imgBufferB );
     }
 
     /**
@@ -4191,603 +3973,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-    /**
-     * For generating the display of 1 or 2 RGB images - sets the buffers and the java image.
-     *
-     * @param   tSlice     t (time) slice to show
-     * @param   zSlice     z slice to show
-     * @param   forceShow  forces this method to import image and recalculate java image
-     *
-     * @return  boolean to indicate if the show was successful
-     */
-    public boolean setColorPaintBuffers(int tSlice, int zSlice, boolean forceShow) {
-        // Note that alphaBlending is applied with 1 component taken as zero if both components are not present -for
-        // example, if either imageA or imageB but not both has red, then the red component is alphaBlended with zero.
-
-        int i, j;
-        int bufferSize;
-        int ind4, index;
-        int Ra, Ga, Ba, Rb, Gb, Bb;
-        int imageSize;
-        int pixValue;
-        float redMapped, greenMapped, blueMapped;
-        int[] RGBIndexBufferA = null;
-        int[] RGBIndexBufferB = null;
-        int xDim, yDim, zDim;
-        float maxColorA = 255;
-        float maxColorB = 255;
-        float normColorB = 1;
-        float normColorA = 1;
-        float offsetAR = 0.0f;
-        float offsetAG = 0.0f;
-        float offsetAB = 0.0f;
-        float offsetBR = 0.0f;
-        float offsetBG = 0.0f;
-        float offsetBB = 0.0f;
-
-        if ((orientation == AXIAL) || (orientation == NA)) {
-            bufferSize = imageExtents[0] * imageExtents[1] * 4;
-            imageSize = imageExtents[0] * imageExtents[1];
-        } else if (orientation == CORONAL) {
-            bufferSize = imageExtents[0] * imageExtents[2] * 4;
-            imageSize = imageExtents[0] * imageExtents[2];
-        } else { // orientation == ZY
-            bufferSize = imageExtents[2] * imageExtents[1] * 4;
-            imageSize = imageExtents[2] * imageExtents[1];
-        }
-
-        xDim = imageExtents[0];
-        yDim = imageExtents[1];
-        zDim = 1;
-
-        if (imageA.getNDims() >= 3) {
-            zDim = imageExtents[2];
-        }
-
-        if (imageA.getType() == ModelStorageBase.ARGB_USHORT) {
-            maxColorA = (float) imageA.getMaxR();
-            maxColorA = Math.max((float) imageA.getMaxG(), maxColorA);
-            maxColorA = Math.max((float) imageA.getMaxB(), maxColorA);
-        } else if (imageA.getType() == ModelStorageBase.ARGB_FLOAT) {
-
-            if (imageA.getMinR() < 0.0) {
-                maxColorA = (float) (imageA.getMaxR() - imageA.getMinR());
-                offsetAR = (float) (-imageA.getMinR());
-            } else {
-                maxColorA = (float) imageA.getMaxR();
-            }
-
-            if (imageA.getMinG() < 0.0) {
-                maxColorA = Math.max((float) (imageA.getMaxG() - imageA.getMinG()), maxColorA);
-                offsetAG = (float) (-imageA.getMinG());
-            } else {
-                maxColorA = Math.max((float) imageA.getMaxG(), maxColorA);
-            }
-
-            if (imageA.getMinB() < 0.0) {
-                maxColorA = Math.max((float) (imageA.getMaxB() - imageA.getMinB()), maxColorA);
-                offsetAB = (float) (-imageA.getMinB());
-            } else {
-                maxColorA = Math.max((float) imageA.getMaxB(), maxColorA);
-            }
-        }
-
-        normColorA = 255 / maxColorA;
-
-        if ((imageB != null) && (imageB.getType() == ModelStorageBase.ARGB_USHORT)) {
-            maxColorB = (float) imageB.getMaxR();
-            maxColorB = Math.max((float) imageB.getMaxG(), maxColorB);
-            maxColorB = Math.max((float) imageB.getMaxB(), maxColorB);
-        }
-
-        if ((imageB != null) && (imageB.getType() == ModelStorageBase.ARGB_FLOAT)) {
-
-            if (imageB.getMinR() < 0.0) {
-                maxColorB = (float) (imageB.getMaxR() - imageB.getMinR());
-                offsetBR = (float) (-imageB.getMinR());
-            } else {
-                maxColorB = (float) imageB.getMaxR();
-            }
-
-            if (imageB.getMinG() < 0.0) {
-                maxColorB = Math.max((float) (imageB.getMaxG() - imageB.getMinG()), maxColorB);
-                offsetBG = (float) (-imageB.getMinG());
-            } else {
-                maxColorB = Math.max((float) imageB.getMaxG(), maxColorB);
-            }
-
-            if (imageB.getMinB() < 0.0) {
-                maxColorB = Math.max((float) (imageB.getMaxB() - imageB.getMinB()), maxColorB);
-                offsetBB = (float) (-imageB.getMinB());
-            } else {
-                maxColorB = Math.max((float) imageB.getMaxB(), maxColorB);
-            }
-        }
-
-        normColorB = 255 / maxColorB;
-
-        if (RGBTA != null) {
-            RGBIndexBufferA = RGBTA.exportIndexedRGB();
-        }
-
-        if ((imageB != null) && (RGBTB != null)) {
-            RGBIndexBufferB = RGBTB.exportIndexedRGB();
-        }
-
-        if ((orientation == AXIAL) || (orientation == NA)) {
-
-            if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                slice = zSlice;
-                timeSlice = tSlice;
-
-                if (imageA.getNDims() < 4) {
-                    timeSliceA = 0;
-                } else {
-                    timeSliceA = timeSlice;
-                }
-
-                if ((imageB != null) && (imageB.getNDims() < 4)) {
-                    timeSliceB = 0;
-                } else {
-                    timeSliceB = timeSlice;
-                }
-
-                int zDimSlices = 0;
-
-                if (imageA.getNDims() >= 3) {
-                    zDimSlices = imageExtents[2];
-                }
-
-                try {
-                    imageA.exportData((timeSliceA * zDimSlices * bufferSize) + (slice * bufferSize), bufferSize,
-                                      imageBufferA);
-
-                    if (imageB != null) {
-                        imageB.exportData((timeSliceB * zDimSlices * bufferSize) + (slice * bufferSize), bufferSize,
-                                          imageBufferB);
-                    }
-                } catch (IOException error) {
-                    MipavUtil.displayError("" + error);
-
-                    return false;
-                }
-
-                if (useRedThreshold && useGreenThreshold) {
-
-                    for (index = 0, j = 0; j < imageSize; index += 4, j++) {
-
-                        if ((imageBufferA[index + 1] < threshold1) || (imageBufferA[index + 2] < threshold2)) {
-                            imageBufferA[index + 1] = 0;
-                            imageBufferA[index + 2] = 0;
-                            imageBufferA[index + 3] = 0;
-                        }
-                    }
-                } // if (useRedThreshold && useGreenThreshold)
-                else if (useRedThreshold && useBlueThreshold) {
-
-                    for (index = 0, j = 0; j < imageSize; index += 4, j++) {
-
-                        if ((imageBufferA[index + 1] < threshold1) || (imageBufferA[index + 3] < threshold2)) {
-                            imageBufferA[index + 1] = 0;
-                            imageBufferA[index + 2] = 0;
-                            imageBufferA[index + 3] = 0;
-                        }
-                    }
-                } // else if (useRedThreshold && useBlueThreshold)
-                else if (useGreenThreshold && useBlueThreshold) {
-
-                    for (index = 0, j = 0; j < imageSize; index += 4, j++) {
-
-                        if ((imageBufferA[index + 2] < threshold1) || (imageBufferA[index + 3] < threshold2)) {
-                            imageBufferA[index + 1] = 0;
-                            imageBufferA[index + 2] = 0;
-                            imageBufferA[index + 3] = 0;
-                        }
-                    }
-                } // else if (useGreenThreshold && useBlueThreshold)
-            } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
-
-            if (imageB == null) {
-
-                for (index = 0, j = 0; j < imageSize; index += 4, j++) {
-
-                    if (RGBTA != null) {
-
-                        if (RGBTA.getROn()) {
-                            redMapped = (RGBIndexBufferA[(int) ((imageBufferA[index + 1] + offsetAR) * normColorA)] &
-                                             0x00ff0000) >> 16;
-                        } else {
-                            redMapped = 0;
-                        }
-
-                        if (RGBTA.getGOn()) {
-                            greenMapped = (RGBIndexBufferA[(int) ((imageBufferA[index + 2] + offsetAG) * normColorA)] &
-                                               0x0000ff00) >> 8;
-                        } else {
-                            greenMapped = 0;
-                        }
-
-                        if (RGBTA.getBOn()) {
-                            blueMapped = (RGBIndexBufferA[(int) ((imageBufferA[index + 3] + offsetAB) * normColorA)] &
-                                              0x000000ff);
-                        } else {
-                            blueMapped = 0;
-                        }
-                    } // end of if (RGBTA != null)
-                    else {
-                        redMapped = (imageBufferA[index + 1] + offsetAR) * normColorA;
-                        greenMapped = (imageBufferA[index + 2] + offsetAG) * normColorA;
-                        blueMapped = (imageBufferA[index + 3] + offsetAB) * normColorA;
-                    }
-
-                    pixValue = 0xff000000 |
-                                   (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
-                    cleanImageBufferA[j] = pixValue;
-
-                } // end of for (index=0, j=0; j < imageSize; index += 4, j++)
-            } // end of if (imageB == null )
-            else { // imageB != null
-
-                for (index = 0, j = 0; j < imageSize; index += 4, j++) {
-
-                    if ((RGBTA != null) && (RGBTB != null)) {
-
-                        if (RGBTA.getROn()) {
-                            Ra = (RGBIndexBufferA[(int) ((imageBufferA[index + 1] + offsetAR) * normColorA)] &
-                                      0x00ff0000) >> 16;
-                        } else {
-                            Ra = 0;
-                        }
-
-                        if (RGBTA.getGOn()) {
-                            Ga = (RGBIndexBufferA[(int) ((imageBufferA[index + 2] + offsetAG) * normColorA)] &
-                                      0x0000ff00) >> 8;
-                        } else {
-                            Ga = 0;
-                        }
-
-                        if (RGBTA.getBOn()) {
-                            Ba = (RGBIndexBufferA[(int) ((imageBufferA[index + 3] + offsetAB) * normColorA)] &
-                                      0x000000ff);
-                        } else {
-                            Ba = 0;
-                        }
-
-                        if (RGBTB.getROn()) {
-                            Rb = (RGBIndexBufferB[(int) ((imageBufferB[index + 1] + offsetBR) * normColorB)] &
-                                      0x00ff0000) >> 16;
-                        } else {
-                            Rb = 0;
-                        }
-
-                        if (RGBTB.getGOn()) {
-                            Gb = (RGBIndexBufferB[(int) ((imageBufferB[index + 2] + offsetBG) * normColorB)] &
-                                      0x0000ff00) >> 8;
-                        } else {
-                            Gb = 0;
-                        }
-
-                        if (RGBTB.getBOn()) {
-                            Bb = (RGBIndexBufferB[(int) ((imageBufferB[index + 3] + offsetBB) * normColorB)] &
-                                      0x000000ff);
-                        } else {
-                            Bb = 0;
-                        }
-                    } else {
-                        Ra = (int) ((imageBufferA[index + 1] + offsetAR) * normColorA);
-                        Ga = (int) ((imageBufferA[index + 2] + offsetAG) * normColorA);
-                        Ba = (int) ((imageBufferA[index + 3] + offsetAB) * normColorA);
-
-                        Rb = (int) ((imageBufferB[index + 1] + offsetBR) * normColorB);
-                        Gb = (int) ((imageBufferB[index + 2] + offsetBG) * normColorB);
-                        Bb = (int) ((imageBufferB[index + 3] + offsetBB) * normColorB);
-                    }
-
-                    pixValue = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                    cleanImageBufferA[j] = pixValue;
-                    cleanImageBufferB[j] = 0xff000000 | (Rb << 16) | (Gb << 8) | Bb;
-
-                } // end of for (index=0, j=0; j < imageSize; index += 4, j++)
-            } // end of else for imageB != null
-        } // end of if ((orientation == XY) || (orientation == NA))
-        else if (orientation == CORONAL) {
-
-            if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                slice = zSlice;
-                timeSlice = tSlice;
-
-                if (imageA.getNDims() < 4) {
-                    timeSliceA = 0;
-                } else {
-                    timeSliceA = timeSlice;
-                }
-
-                if ((imageB != null) && (imageB.getNDims() < 4)) {
-                    timeSliceB = 0;
-                } else {
-                    timeSliceB = timeSlice;
-                }
-
-                try {
-                    imageA.exportRGBSliceXZ(timeSliceA, slice, imageBufferA);
-
-                    if (imageB != null) {
-                        imageB.exportRGBSliceXZ(timeSliceB, slice, imageBufferB);
-                    }
-                } catch (IOException error) {
-                    MipavUtil.displayError("" + error);
-
-                    return false;
-                }
-            } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
-
-            if (imageB == null) {
-
-                for (j = 0; j < zDim; j++) {
-
-                    for (i = 0; i < xDim; i++) {
-                        ind4 = i + (xDim * j);
-                        index = 4 * ind4;
-
-                        if (RGBTA != null) {
-
-                            if (RGBTA.getROn()) {
-                                redMapped = (RGBIndexBufferA[(int) ((imageBufferA[index + 1] + offsetAR) * normColorA)] &
-                                                 0x00ff0000) >> 16;
-                            } else {
-                                redMapped = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                greenMapped = (RGBIndexBufferA[(int) ((imageBufferA[index + 2] + offsetAG) * normColorA)] &
-                                                   0x0000ff00) >> 8;
-                            } else {
-                                greenMapped = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                blueMapped = (RGBIndexBufferA[(int) ((imageBufferA[index + 3] + offsetAB) * normColorA)] &
-                                                  0x000000ff);
-                            } else {
-                                blueMapped = 0;
-                            }
-                        } // end of if (RGBTA != null)
-                        else {
-                            redMapped = (imageBufferA[index + 1] + offsetAR) * normColorA;
-                            greenMapped = (imageBufferA[index + 2] + offsetAG) * normColorA;
-                            blueMapped = (imageBufferA[index + 3] + offsetAB) * normColorA;
-                        }
-
-                        pixValue = 0xff000000 |
-                                       (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
-                        cleanImageBufferA[ind4] = pixValue;
-
-                    } // end of for (i = 0; i < xDim; i++)
-                } // end of for (j = 0; j < zDim; j++)
-            } // end of if (imageB == null )
-            else { // imageB != null
-
-                for (j = 0; j < zDim; j++) {
-
-                    for (i = 0; i < xDim; i++) {
-                        ind4 = i + (xDim * j);
-                        index = 4 * ind4;
-
-                        if ((RGBTA != null) && (RGBTB != null)) {
-
-                            if (RGBTA.getROn()) {
-                                Ra = (RGBIndexBufferA[(int) ((imageBufferA[index + 1] + offsetAR) * normColorA)] &
-                                          0x00ff0000) >> 16;
-                            } else {
-                                Ra = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                Ga = (RGBIndexBufferA[(int) ((imageBufferA[index + 2] + offsetAG) * normColorA)] &
-                                          0x0000ff00) >> 8;
-                            } else {
-                                Ga = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                Ba = (RGBIndexBufferA[(int) ((imageBufferA[index + 3] + offsetAB) * normColorA)] &
-                                          0x000000ff);
-                            } else {
-                                Ba = 0;
-                            }
-
-                            if (RGBTB.getROn()) {
-                                Rb = (RGBIndexBufferB[(int) ((imageBufferB[index + 1] + offsetBR) * normColorB)] &
-                                          0x00ff0000) >> 16;
-                            } else {
-                                Rb = 0;
-                            }
-
-                            if (RGBTB.getGOn()) {
-                                Gb = (RGBIndexBufferB[(int) ((imageBufferB[index + 2] + offsetBG) * normColorB)] &
-                                          0x0000ff00) >> 8;
-                            } else {
-                                Gb = 0;
-                            }
-
-                            if (RGBTB.getBOn()) {
-                                Bb = (RGBIndexBufferB[(int) ((imageBufferB[index + 3] + offsetBB) * normColorB)] &
-                                          0x000000ff);
-                            } else {
-                                Bb = 0;
-                            }
-                        } else {
-                            Ra = (int) ((imageBufferA[index + 1] + offsetAR) * normColorA);
-                            Ga = (int) ((imageBufferA[index + 2] + offsetAG) * normColorA);
-                            Ba = (int) ((imageBufferA[index + 3] + offsetAB) * normColorA);
-
-                            Rb = (int) ((imageBufferB[index + 1] + offsetBR) * normColorB);
-                            Gb = (int) ((imageBufferB[index + 2] + offsetBG) * normColorB);
-                            Bb = (int) ((imageBufferB[index + 3] + offsetBB) * normColorB);
-                        }
-
-                        pixValue = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                        cleanImageBufferA[ind4] = pixValue;
-                        cleanImageBufferB[ind4] = 0xff000000 | (Rb << 16) | (Gb << 8) | Bb;
-
-                    } // end of for (i = 0; i < xDim; i++)
-                } // end of for (j = 0; j < zDim; j++)
-            } // end of else for imageB != null
-        } // end of else if (orientation == XZ)
-        else { // for orientation == ZY
-
-            if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                slice = zSlice;
-                timeSlice = tSlice;
-
-                if (imageA.getNDims() < 4) {
-                    timeSliceA = 0;
-                } else {
-                    timeSliceA = timeSlice;
-                }
-
-                if ((imageB != null) && (imageB.getNDims() < 4)) {
-                    timeSliceB = 0;
-                } else {
-                    timeSliceB = timeSlice;
-                }
-
-                try {
-                    imageA.exportRGBSliceZY(timeSliceA, slice, imageBufferA);
-
-                    if (imageB != null) {
-                        imageB.exportRGBSliceZY(timeSliceB, slice, imageBufferB);
-                    }
-                } catch (IOException error) {
-                    MipavUtil.displayError("" + error);
-
-                    return false;
-                }
-            } // end of if ( slice != zSlice || timeSlice !=   || forceShow == true)
-
-            if (imageB == null) {
-
-                for (j = 0; j < yDim; j++) {
-
-                    for (i = 0; i < zDim; i++) {
-                        ind4 = (j * zDim) + i;
-                        index = 4 * ind4;
-
-                        if (RGBTA != null) {
-
-                            if (RGBTA.getROn()) {
-                                redMapped = (RGBIndexBufferA[(int) ((imageBufferA[index + 1] + offsetAR) * normColorA)] &
-                                                 0x00ff0000) >> 16;
-                            } else {
-                                redMapped = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                greenMapped = (RGBIndexBufferA[(int) ((imageBufferA[index + 2] + offsetAG) * normColorA)] &
-                                                   0x0000ff00) >> 8;
-                            } else {
-                                greenMapped = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                blueMapped = (RGBIndexBufferA[(int) ((imageBufferA[index + 3] + offsetAB) * normColorA)] &
-                                                  0x000000ff);
-                            } else {
-                                blueMapped = 0;
-                            }
-                        } // end of if (RGBTA != null)
-                        else {
-                            redMapped = (imageBufferA[index + 1] + offsetAR) * normColorA;
-                            greenMapped = (imageBufferA[index + 2] + offsetAG) * normColorA;
-                            blueMapped = (imageBufferA[index + 3] + offsetAB) * normColorA;
-                        }
-
-                        pixValue = 0xff000000 |
-                                       (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
-
-                        cleanImageBufferA[ind4] = pixValue;
-
-                    } // end of for (i = 0; i < zDim; i++)
-                } // end of for (j = 0; j < yDim; j++)
-            } // end of if (imageB == null )
-            else { // imageB != null
-
-                for (j = 0; j < yDim; j++) {
-
-                    for (i = 0; i < zDim; i++) {
-                        ind4 = (j * zDim) + i;
-                        index = 4 * ind4;
-
-                        if ((RGBTA != null) && (RGBTB != null)) {
-
-                            if (RGBTA.getROn()) {
-                                Ra = (RGBIndexBufferA[(int) ((imageBufferA[index + 1] + offsetAR) * normColorA)] &
-                                          0x00ff0000) >> 16;
-                            } else {
-                                Ra = 0;
-                            }
-
-                            if (RGBTA.getGOn()) {
-                                Ga = (RGBIndexBufferA[(int) ((imageBufferA[index + 2] + offsetAG) * normColorA)] &
-                                          0x0000ff00) >> 8;
-                            } else {
-                                Ga = 0;
-                            }
-
-                            if (RGBTA.getBOn()) {
-                                Ba = (RGBIndexBufferA[(int) ((imageBufferA[index + 3] + offsetAB) * normColorA)] &
-                                          0x000000ff);
-                            } else {
-                                Ba = 0;
-                            }
-
-                            if (RGBTB.getROn()) {
-                                Rb = (RGBIndexBufferB[(int) ((imageBufferB[index + 1] + offsetBR) * normColorB)] &
-                                          0x00ff0000) >> 16;
-                            } else {
-                                Rb = 0;
-                            }
-
-                            if (RGBTB.getGOn()) {
-                                Gb = (RGBIndexBufferB[(int) ((imageBufferB[index + 2] + offsetBG) * normColorB)] &
-                                          0x0000ff00) >> 8;
-                            } else {
-                                Gb = 0;
-                            }
-
-                            if (RGBTB.getBOn()) {
-                                Bb = (RGBIndexBufferB[(int) ((imageBufferB[index + 3] + offsetBB) * normColorB)] &
-                                          0x000000ff);
-                            } else {
-                                Bb = 0;
-                            }
-                        } else {
-                            Ra = (int) ((imageBufferA[index + 1] + offsetAR) * normColorA);
-                            Ga = (int) ((imageBufferA[index + 2] + offsetAG) * normColorA);
-                            Ba = (int) ((imageBufferA[index + 3] + offsetAB) * normColorA);
-
-                            Rb = (int) ((imageBufferB[index + 1] + offsetBR) * normColorB);
-                            Gb = (int) ((imageBufferB[index + 2] + offsetBG) * normColorB);
-                            Bb = (int) ((imageBufferB[index + 3] + offsetBB) * normColorB);
-                        }
-
-                        pixValue = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                        cleanImageBufferA[ind4] = pixValue;
-                        cleanImageBufferB[ind4] = 0xff000000 | (Rb << 16) | (Gb << 8) | Bb;
-
-                    } // end of for (i = 0; i < zDim; i++)
-                } // end of for (j = 0; j < yDim; j++)
-            } // end of else for imageB != null
-        } // end of else for orientation == ZY
-
-        // If these cleanBuffer are removed, 3D color image slices will not change
-        // in the screen display as the slice slider moves
-        // after a replace function has been performed on a color image.
-        cleanBuffer(IMAGE_A);
-        cleanBuffer(IMAGE_B);
-
-        return true;
-    }
 
     /**
      * Changes the Crosshair cursor to be either the default crosshair or a pre-existing gif.
@@ -4883,6 +4068,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setImageA(ModelImage image) {
         imageA = image;
+        m_kPatientSlice.setImageA(image);
         setZoom(1, 1); // sets zoom
     }
 
@@ -4893,7 +4079,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setImageB(ModelImage image) {
         imageB = image;
-
+        m_kPatientSlice.setImageB(image);
         if (imageB == null) {
 
             // remove checker boarding
@@ -4995,6 +4181,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setLUTa(ModelLUT LUT) {
         LUTa = LUT;
+        m_kPatientSlice.setLUTa( LUT );
     }
 
     /**
@@ -5004,6 +4191,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setLUTb(ModelLUT LUT) {
         LUTb = LUT;
+        m_kPatientSlice.setLUTb( LUT );
     }
 
     /**
@@ -5116,16 +4304,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         this.moreR = val;
     }
 
-    /**
-     * Sets the orientation of the image.
-     *
-     * @param  _orientation  orientaiton of image slice to be displayed
-     */
-    public void setOrientation(int _orientation) {
-        orientation = _orientation;
-    }
-
-
 
     /**
      * If true do not getMask on a setActiveImage command so as to keep the mask from the old active image.
@@ -5143,381 +4321,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setPaintBrushSize(int paintBrushSize) {
         this.paintBrushSize = paintBrushSize;
-    }
-
-    /**
-     * Sets the paint buffers and the Java image to be displayed.
-     *
-     * @param   tSlice     t (time) slice to show
-     * @param   zSlice     z slice to show
-     * @param   _LUTa      LUTa - to change to new LUT for imageA else null
-     * @param   _LUTb      LUTb - to change to new LUT for imageB else null
-     * @param   forceShow  forces this method to import image and recalculate java image
-     *
-     * @return  boolean to indicate if the show was successful
-     */
-    public boolean setPaintBuffers(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow) {
-        float imageMinA = 0;
-        int xDim, yDim, zDim;
-        int bufferSize;
-        int lutHeightA = 0;
-        int index = 0;
-        float[][] RGB_LUTa = null, RGB_LUTb = null;
-        int[][] iRGB_LUTa = null, iRGB_LUTb = null;
-        int Ra, Ga, Ba;
-        int indexA, indexB;
-        int pix = 0;
-        int i, j;
-
-        if (imageA == null) {
-            return false;
-        }
-
-        if ((LUTa == null) && (_LUTb == null)) {
-            return false;
-        }
-
-        if (_LUTa != null) {
-            LUTa = _LUTa;
-        }
-
-        if ((imageB != null) && (_LUTb != null)) {
-            LUTb = _LUTb;
-        }
-
-        lutHeightA = LUTa.getExtents()[1];
-
-        // System.err.println("SHOW IN VJCOMP\n" + LUTa.toString());
-
-        xDim = imageExtents[0];
-        yDim = imageExtents[1];
-        zDim = 1;
-
-        if (imageA.getNDims() >= 3) {
-            zDim = imageExtents[2];
-        }
-
-        if (lutHeightA != lutBufferRemapped.length) {
-
-            try {
-                lutBufferRemapped = new int[lutHeightA];
-            } catch (OutOfMemoryError error) {
-                System.gc();
-                MipavUtil.displayError("Out of memory: ComponentEditImage.show");
-
-                return false;
-            }
-        }
-
-        if (imageB == null) {
-            LUTa.exportIndexedLUT(lutBufferRemapped);
-            // lutBufferRemapped = LUTa.exportIndexedLUT_Remove();
-        }
-
-        if ((orientation == AXIAL) || (orientation == NA)) {
-            bufferSize = xDim * yDim;
-        } else if (orientation == CORONAL) {
-            bufferSize = xDim * zDim;
-        } else { // orientation == ZY
-            bufferSize = zDim * yDim;
-        }
-
-        if (imageB != null) {
-            RGB_LUTa = LUTa.exportRGB_LUT(true);
-            RGB_LUTb = LUTb.exportRGB_LUT(true);
-            iRGB_LUTa = new int[3][RGB_LUTa[0].length];
-            iRGB_LUTb = new int[3][RGB_LUTb[0].length];
-
-            for (int c = 0; c < RGB_LUTa[0].length; c++) {
-                iRGB_LUTa[0][c] = (int) (RGB_LUTa[0][c] + 0.5f);
-                iRGB_LUTb[0][c] = (int) (RGB_LUTb[0][c] + 0.5f);
-                iRGB_LUTa[1][c] = (int) (RGB_LUTa[1][c] + 0.5f);
-                iRGB_LUTb[1][c] = (int) (RGB_LUTb[1][c] + 0.5f);
-                iRGB_LUTa[2][c] = (int) (RGB_LUTa[2][c] + 0.5f);
-                iRGB_LUTb[2][c] = (int) (RGB_LUTb[2][c] + 0.5f);
-            }
-        }
-
-        if ((orientation == AXIAL) || (orientation == NA)) {
-
-            if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                slice = zSlice;
-                timeSlice = tSlice;
-
-                if (imageA.getNDims() < 4) {
-                    timeSliceA = 0;
-                } else {
-                    timeSliceA = timeSlice;
-                }
-
-                if ((imageB != null) && (imageB.getNDims() < 4)) {
-                    timeSliceB = 0;
-                } else {
-                    timeSliceB = timeSlice;
-                }
-
-                int zDimSlices = 0;
-
-                if (imageA.getNDims() >= 3) {
-                    zDimSlices = imageExtents[2];
-                }
-
-                try {
-
-                    if (imageA.getType() == ModelStorageBase.COMPLEX) {
-                        imageA.exportComplexSliceXY((timeSliceA * zDimSlices) + slice, imageBufferA,
-                                                    imageA.getLogMagDisplay());
-                    } else {
-                        imageA.exportSliceXY((timeSliceA * zDimSlices) + slice, imageBufferA);
-                    }
-
-                    if (imageB != null) {
-
-                        if (imageB.getType() == ModelStorageBase.COMPLEX) {
-                            imageB.exportComplexSliceXY((timeSliceB * zDimSlices) + slice, imageBufferB,
-                                                        imageA.getLogMagDisplay());
-                        } else {
-                            imageB.exportSliceXY((timeSliceB * zDimSlices) + slice, imageBufferB);
-                        }
-                    }
-
-                    if (hasThreshold1 || hasThreshold2) {
-                        imageColocalize.exportSliceXY((timeSliceA * zDimSlices) + slice, imageBufferColocalize);
-                    }
-                } catch (IOException error) {
-                    Preferences.debug("IOException in ViewJComponentEditImage:setPaintBuffers " + error);
-
-                    return false;
-                }
-            } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
-
-            if (hasThreshold1) {
-
-                for (i = 0; i < imageBufferA.length; i++) {
-
-                    if ((imageBufferA[i] < threshold1) || (imageBufferColocalize[i] < threshold2)) {
-                        imageBufferA[i] = imageMinA;
-                    }
-                }
-            } // if (hasThreshold1)
-            else if (hasThreshold2) {
-
-                for (i = 0; i < imageBufferA.length; i++) {
-
-                    if ((imageBufferColocalize[i] < threshold1) || (imageBufferA[i] < threshold2)) {
-                        imageBufferA[i] = imageMinA;
-                    }
-                }
-            } // else if (hasThreshold2)
-
-            if (imageB == null) {
-                pix = 0;
-
-                TransferFunction tf_imgA = LUTa.getTransferFunction();
-
-                for (index = 0; index < bufferSize; index++) {
-                    pix = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                    cleanImageBufferA[index] = lutBufferRemapped[pix];
-                } // end of for (index=0; index < bufferSize; index++)
-            } // end of if (imageB == null)
-            else { // imageB != null
-                indexA = indexB = 0;
-
-                TransferFunction tf_imgA = LUTa.getTransferFunction();
-                TransferFunction tf_imgB = LUTb.getTransferFunction();
-
-                for (index = 0; index < bufferSize; index++) {
-                    indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                    indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[index], 256) + 0.5f);
-
-                    Ra = iRGB_LUTa[0][indexA];
-                    Ga = iRGB_LUTa[1][indexA];
-                    Ba = iRGB_LUTa[2][indexA];
-
-                    pix = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                    cleanImageBufferA[index] = pix;
-                    cleanImageBufferB[index] = (0xff000000) | ((int) (RGB_LUTb[0][indexB]) << 16) |
-                                                   ((int) (RGB_LUTb[1][indexB]) << 8) | (int) (RGB_LUTb[2][indexB]);
-                } // end of for (index=0; index < bufferSize; index++)
-            } // end of else for imageB != null
-        } // end of if ((orientation == XY) || (orientation == NA))
-        else if (orientation == CORONAL) {
-
-            if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                slice = zSlice;
-                timeSlice = tSlice;
-
-                if (imageA.getNDims() < 4) {
-                    timeSliceA = 0;
-                } else {
-                    timeSliceA = timeSlice;
-                }
-
-                if ((imageB != null) && (imageB.getNDims() < 4)) {
-                    timeSliceB = 0;
-                } else {
-                    timeSliceB = timeSlice;
-                }
-
-                try {
-
-                    if (imageA.getType() == ModelStorageBase.COMPLEX) {
-                        imageA.exportComplexSliceXZ(timeSliceA, slice, imageBufferA, imageA.getLogMagDisplay());
-                    } else {
-                        imageA.exportSliceXZ(timeSliceA, slice, imageBufferA);
-                    }
-
-                    if (imageB != null) {
-
-                        if (imageB.getType() == ModelStorageBase.COMPLEX) {
-                            imageB.exportComplexSliceXZ(timeSliceB, slice, imageBufferB, imageA.getLogMagDisplay());
-                        } else {
-                            imageB.exportSliceXZ(timeSliceB, slice, imageBufferB);
-                        }
-                    }
-                } catch (IOException error) {
-                    Preferences.debug("IOException in ViewJComponentEditImage:setPaintBuffers (else if orientation == XZ)"); // Need to fix this
-
-                    return false;
-                }
-            } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
-
-            if (imageB == null) {
-                pix = 0;
-
-                TransferFunction tf_imgA = LUTa.getTransferFunction();
-
-                for (j = 0; j < zDim; j++) {
-
-                    for (i = 0; i < xDim; i++) {
-                        index = i + (xDim * j);
-                        pix = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                        cleanImageBufferA[index] = lutBufferRemapped[pix];
-                    } // end of for (i = 0; i < xDim; i++)
-                } // end of for (j = 0; j < zDim; j++)
-            } // end of if (imageB == null)
-            else { // imageB != null
-                indexA = indexB = 0;
-
-                TransferFunction tf_imgA = LUTa.getTransferFunction();
-                TransferFunction tf_imgB = LUTb.getTransferFunction();
-
-                try {
-
-                    for (j = 0; j < zDim; j++) {
-
-                        for (i = 0; i < xDim; i++) {
-                            index = i + (xDim * j);
-                            indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                            indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[index], 256) + 0.5f);
-
-                            Ra = iRGB_LUTa[0][indexA];
-                            Ga = iRGB_LUTa[1][indexA];
-                            Ba = iRGB_LUTa[2][indexA];
-
-                            pix = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-
-                            cleanImageBufferA[index] = pix;
-                            cleanImageBufferB[index] = (0xff000000) | ((int) (RGB_LUTb[0][indexB]) << 16) |
-                                                           ((int) (RGB_LUTb[1][indexB]) << 8) |
-                                                           (int) (RGB_LUTb[2][indexB]);
-                        } // end of for (i = 0; i < xDim; i++)
-                    } // end of for (j = 0; j < zDim; j++)
-                } catch (Exception e) {
-                    System.out.println("indexA == " + indexA);
-                    System.out.println("index == " + index);
-                    System.out.println("pix == " + pix);
-                    e.printStackTrace();
-                }
-            } // end of else for imageB != null
-        } // end of else if (orientation == XZ)
-        else { // orientation == ZY
-
-            if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-                slice = zSlice;
-                timeSlice = tSlice;
-
-                if (imageA.getNDims() < 4) {
-                    timeSliceA = 0;
-                } else {
-                    timeSliceA = timeSlice;
-                }
-
-                if ((imageB != null) && (imageB.getNDims() < 4)) {
-                    timeSliceB = 0;
-                } else {
-                    timeSliceB = timeSlice;
-                }
-
-                try {
-
-                    if (imageA.getType() == ModelStorageBase.COMPLEX) {
-                        imageA.exportComplexSliceZY(timeSliceA, slice, imageBufferA, imageA.getLogMagDisplay());
-                    } else {
-                        imageA.exportSliceZY(timeSliceA, slice, imageBufferA);
-                    }
-
-                    if (imageB != null) {
-
-                        if (imageB.getType() == ModelStorageBase.COMPLEX) {
-                            imageB.exportComplexSliceZY(timeSliceB, slice, imageBufferB, imageA.getLogMagDisplay());
-                        } else {
-                            imageB.exportSliceZY(timeSliceB, slice, imageBufferB);
-                        }
-                    }
-                } catch (IOException error) {
-                    Preferences.debug("" + error); // Need to fix this
-
-                    return false;
-                }
-            } // end of if ( slice != zSlice || timeSlice != tSlice || forceShow == true)
-
-            if (imageB == null) {
-                pix = 0;
-
-                TransferFunction tf_imgA = LUTa.getTransferFunction();
-
-                for (j = 0; j < yDim; j++) {
-
-                    for (i = 0; i < zDim; i++) {
-                        index = (j * zDim) + i;
-                        pix = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                        cleanImageBufferA[index] = lutBufferRemapped[pix];
-                    } // end of for (i = 0; i < zDim; i++)
-                } // end of for (j = 0; j < yDim; j++)
-            } // end of if (imageB == null)
-            else { // imageB != null
-
-                indexA = indexB = 0;
-
-                TransferFunction tf_imgA = LUTa.getTransferFunction();
-                TransferFunction tf_imgB = LUTb.getTransferFunction();
-
-                for (j = 0; j < yDim; j++) {
-
-                    for (i = 0; i < zDim; i++) {
-                        index = (j * zDim) + i;
-
-                        indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                        indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[index], 256) + 0.5f);
-
-                        Ra = iRGB_LUTa[0][indexA];
-                        Ga = iRGB_LUTa[1][indexA];
-                        Ba = iRGB_LUTa[2][indexA];
-
-                        pix = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                        cleanImageBufferA[index] = pix;
-                        cleanImageBufferB[index] = (0xff000000) | ((int) (RGB_LUTb[0][indexB]) << 16) |
-                                                       ((int) (RGB_LUTb[1][indexB]) << 8) | (int) (RGB_LUTb[2][indexB]);
-                    } // end of for (i = 0; i < zDim; i++)
-                } // end of for (j = 0; j < yDim; j++)
-            } // end of else for imageB != null
-        } // end of else for orientation == ZY
-
-        cleanBuffer(IMAGE_A);
-        cleanBuffer(IMAGE_B);
-
-        return true;
     }
 
     /**
@@ -5554,6 +4357,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setRGBTA(ModelRGB RGBT) {
         RGBTA = RGBT;
+        m_kPatientSlice.setRGBTA(RGBT);
     }
 
     /**
@@ -5563,6 +4367,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setRGBTB(ModelRGB RGBT) {
         RGBTB = RGBT;
+        m_kPatientSlice.setRGBTB(RGBT);
     }
 
     /**
@@ -5576,35 +4381,31 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      *
      * @return  An array of strings that represent patient position.
      */
-    public String[] setScannerPosition(FileInfoBase fileInfo, int x, int y, int zSlice) {
-
+    public String[] setScannerPosition( int x, int y, int zSlice )
+    {
         DecimalFormat nf = new DecimalFormat("#####0.0##");
+        Point3Df kOut = new Point3Df();
+        MipavCoordinateSystems.getScannerCoordinates( new Point3Df( x, y, zSlice ), kOut, imageActive );
         float[] tCoord = new float[3];
+        tCoord[0] = kOut.x;
+        tCoord[1] = kOut.y;
+        tCoord[2] = kOut.z;
+
+        String[] labels = { "P-A: ", "R-L: ", "S-I: " };
         String[] strs = new String[3];
-
-        // Get the voxel coordinate in from mouse events in image space
-        int z = zSlice;
-
-        imageActive.getScannerCoordLPS(x, y, z, tCoord);
-
-        if (tCoord[0] < 0) {
-            strs[0] = "R: " + String.valueOf(nf.format(-tCoord[0]));
-        } else {
-            strs[0] = "L: " + String.valueOf(nf.format(tCoord[0]));
+        for ( int i = 0; i < 3; i++ )
+        {
+            if (tCoord[i] < 0)
+            {
+                strs[i] = new String( labels[i].charAt(2) + ": " +
+                                      String.valueOf(nf.format(-tCoord[i])));
+            }
+            else
+            {
+                strs[i] = new String( labels[i].charAt(0) + ": " +
+                                      String.valueOf(nf.format(tCoord[i])));
+            }
         }
-
-        if (tCoord[1] < 0) {
-            strs[1] = "A: " + String.valueOf(nf.format(-tCoord[1]));
-        } else {
-            strs[1] = "P: " + String.valueOf(nf.format(tCoord[1]));
-        }
-
-        if (tCoord[2] < 0) {
-            strs[2] = "I: " + String.valueOf(nf.format(-tCoord[2]));
-        } else {
-            strs[2] = "S: " + String.valueOf(nf.format(tCoord[2]));
-        }
-
         return strs;
     }
 
@@ -5642,6 +4443,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void setSlice(int _slice) {
         slice = _slice;
+        m_kPatientSlice.updateSlice(slice);
     }
 
     /**
@@ -5705,7 +4507,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * For generating the display of 1 or 2 RGB images.
+     * For generating the display of 1 or 2 images.
      *
      * @param   tSlice     t (time) slice to show
      * @param   zSlice     z slice to show
@@ -5713,27 +4515,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      *
      * @return  boolean to indicate if the show was successful
      */
-    public boolean show(int tSlice, int zSlice, boolean forceShow) {
-
-        if (setColorPaintBuffers(tSlice, zSlice, forceShow)) {
-
-            if (showSliceNumber) {
-
-                if (stringOverride == null) {
-                    setSliceString(String.valueOf(zSlice + 1));
-                } else {
-                    setSliceString(stringOverride);
-                }
-            } else {
-                setSliceString("");
-            }
-
-            paintComponent(getGraphics());
-
-            return true;
-        } else {
-            return false;
-        }
+    public boolean show(int tSlice, int zSlice, boolean forceShow)
+    {
+        return show( tSlice, zSlice, null, null, forceShow, interpMode );
     }
 
     /**
@@ -5754,19 +4538,21 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             setInterpolationMode(interpMode);
         }
 
-        if (imageA.isColorImage()) {
+        m_kPatientSlice.setLUTa( _LUTa );
+        m_kPatientSlice.setLUTb( _LUTb );
+        m_kPatientSlice.updateSlice( zSlice );
+        if ( m_kPatientSlice.showUsingOrientation( tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, 0, false ) )
+        {
+            cleanImageB = null;
+            cleanBuffer(IMAGE_A);
+            cleanBuffer(IMAGE_B);
 
-            // call the show method for displaying RGB images
-            return (show(tSlice, zSlice, forceShow));
-        }
-
-        if (setPaintBuffers(tSlice, zSlice, _LUTa, _LUTb, forceShow)) {
+            slice = zSlice;
             setSliceString(String.valueOf(slice + 1));
-
             paintComponent(getGraphics());
-
             return true;
-        } else {
+        }
+        else {
             return false;
         }
     } // end of show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow)
@@ -6974,14 +5760,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void setPixelInformationAtLocation(int xS, int yS) {
 
         try {
-
-            
             String str;
             if (imageActive.getOrigin()[0] != 0 || imageActive.getOrigin()[1] != 0
                     || (imageActive.getNDims() > 2 && imageActive.getOrigin()[2] != 0)) {
-
-            	FileInfoBase fileInfo = imageActive.getFileInfo()[slice];
-            	String[] values = setScannerPosition(fileInfo, xS, yS, slice);
+                String[] values = setScannerPosition( xS, yS, slice );
 
             	if (values != null) {
                         if (imageActive.isColorImage()) {

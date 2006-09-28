@@ -73,10 +73,8 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     private static JProgressBar rendererProgressBar;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** Labels for the current position in Scanner Position coordinates: */
-    protected JLabel scannerLabel = null;
-    protected JLabel[] scannerLabelVals = new JLabel[3];
+    /* Panel containing the position labels: */
+    JPanel panelLabels = new JPanel();
 
     /** Labels for the current position in PatientSlice coordinates: */
     protected JLabel patientSliceLabel = null;
@@ -85,13 +83,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     /** Labels for the current position in 3D ModelView coordinates: */
     protected JLabel modelViewLabel = null;
     protected JLabel[] modelViewLabelVals = new JLabel[3];
-
-    /** Labels for the current position in data array index coordinates: */
-    protected JLabel absoluteLabel = null;
-    protected JLabel[] absoluteLabelVals = new JLabel[4];
-
-    /** DOCUMENT ME! */
-    private JPanel panelLabels;
 
     /** Configuration param, which will pass down to each render's constructor. */
     protected GraphicsConfiguration config;
@@ -374,9 +365,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
     /** For each render, use the vector to store the currently active tabs. */
     private Vector surTabVector = new Vector();
-
-    /** The main tabbed pane in the volume view frame. */
-    private JTabbedPane tabbedPane;
 
     /** Toolbar builder reference. */
     private ViewToolBarBuilder toolbarBuilder;
@@ -853,13 +841,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * The label panel of the x, y, z slider position.
      */
     public void buildLabelPanel() {
-        scannerLabel = new JLabel( "Scanner Position" );
-        scannerLabel.setForeground( Color.black );
-        scannerLabel.setFont(MipavUtil.font14B);
-        scannerLabelVals[0] = new JLabel( "A-P: " );
-        scannerLabelVals[1] = new JLabel( "L-R: " );
-        scannerLabelVals[2] = new JLabel( "S-I: " );
-
+        super.buildLabelPanel( );
         patientSliceLabel = new JLabel( "Patient Slice Position" );
         patientSliceLabel.setForeground( Color.black );
         patientSliceLabel.setFont(MipavUtil.font14B);
@@ -874,36 +856,17 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         modelViewLabelVals[1] = new JLabel( "Y: " );
         modelViewLabelVals[2] = new JLabel( "Z: " );
 
-        absoluteLabel = new JLabel( "Absolute" );
-        absoluteLabel.setForeground( Color.black );
-        absoluteLabel.setFont(MipavUtil.font14B);
-        absoluteLabelVals[0] = new JLabel( "X: " );
-        absoluteLabelVals[1] = new JLabel( "Y: " );
-        absoluteLabelVals[2] = new JLabel( "Z: " );
-        absoluteLabelVals[3] = new JLabel( "1D index: " );
-
         for ( int i = 0; i < 3; i++ )
         {
-            scannerLabelVals[i].setForeground( Color.black );
-            scannerLabelVals[i].setFont(MipavUtil.font12B);
-
             patientSliceLabelVals[i].setForeground( Color.black );
             patientSliceLabelVals[i].setFont(MipavUtil.font12B);
 
             modelViewLabelVals[i].setForeground( Color.black );
             modelViewLabelVals[i].setFont(MipavUtil.font12B);
-
-            absoluteLabelVals[i].setForeground( Color.black );
-            absoluteLabelVals[i].setFont(MipavUtil.font12B);
         }
-        absoluteLabelVals[3].setForeground( Color.black );
-        absoluteLabelVals[3].setFont(MipavUtil.font12B);
 
-
-        JPanel scannerPanel = new JPanel(new GridBagLayout());
         JPanel patientSlicePanel = new JPanel(new GridBagLayout());
         JPanel modelViewPanel = new JPanel(new GridBagLayout());
-        JPanel absolutePanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.WEST;
@@ -913,27 +876,19 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
 
-        scannerPanel.add( scannerLabel, gbc2);
         patientSlicePanel.add( patientSliceLabel, gbc2);
         modelViewPanel.add( modelViewLabel, gbc2);
-        absolutePanel.add( absoluteLabel, gbc2);
 
         gbc2.gridy++;
-        scannerPanel.add( new JLabel(), gbc2);
         patientSlicePanel.add( new JLabel(), gbc2);
         modelViewPanel.add( new JLabel(), gbc2);
-        absolutePanel.add( new JLabel(), gbc2);
 
         for ( int i = 0; i < 3; i++ )
         {
             gbc2.gridy++;
-            scannerPanel.add( scannerLabelVals[i], gbc2);
             patientSlicePanel.add( patientSliceLabelVals[i], gbc2);
             modelViewPanel.add( modelViewLabelVals[i], gbc2);
-            absolutePanel.add( absoluteLabelVals[i], gbc2);
         }
-        gbc2.gridy++;
-        absolutePanel.add( absoluteLabelVals[3], gbc2);
 
         JRadioButton radiologicalView = new JRadioButton( "Radiological View" );
         radiologicalView.setSelected( true );
@@ -952,25 +907,24 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         viewPanel.add( radiologicalView );
         viewPanel.add( neurologicalView );
 
-        JPanel panelLabelsScanner = new JPanel();
-        panelLabelsScanner.setLayout(new GridLayout( 2, 2 ));
-        panelLabelsScanner.setBorder( JPanelRendererBase.buildTitledBorder("Scanner Coordinates") );
-        panelLabelsScanner.add( scannerPanel );
-        panelLabelsScanner.add( absolutePanel );
-        panelLabelsScanner.add( viewPanel );
-
         JPanel panelLabelsModel = new JPanel();
         panelLabelsModel.setLayout(new GridLayout( 1, 2 ));
         panelLabelsModel.setBorder( JPanelRendererBase.buildTitledBorder("Rendering Coordinates") );
         panelLabelsModel.add( modelViewPanel );
         panelLabelsModel.add( patientSlicePanel );
 
-        panelLabels = new JPanel();
-        panelLabels.setLayout(new GridLayout( 2, 1 ));
+        JPanel panelLabelsScanner = new JPanel();
+        panelLabelsScanner.setLayout(new GridLayout( 1, 2 ));
+        panelLabelsScanner.setBorder( JPanelRendererBase.buildTitledBorder("Scanner Coordinates") );
+        panelLabelsScanner.add( scannerPanel );
+        panelLabelsScanner.add( absolutePanel );
+
+        panelLabels.setLayout(new GridLayout( 3, 1 ));
         panelLabels.add( panelLabelsScanner );
+        panelLabels.add( viewPanel );
         panelLabels.add( panelLabelsModel );
 
-        tabbedPane.addTab("Positions", null, panelLabels);
+        tabbedPane.addTab( "Positions", null, panelLabels );
     }
 
     /**
@@ -1214,17 +1168,17 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                                                      imageA, LUTa,
                                                      imageB, LUTb,
                                                      config,
-                                                     ViewJComponentBase.AXIAL, false);
+                                                     FileInfoBase.AXIAL, false);
                 m_akPlaneRender[1] = new PlaneRender(this,
                                                      imageA, LUTa,
                                                      imageB, LUTb,
                                                      config,
-                                                     ViewJComponentBase.SAGITTAL, false);
+                                                     FileInfoBase.SAGITTAL, false);
                 m_akPlaneRender[2] = new PlaneRender(this,
                                                      imageA, LUTa,
                                                      imageB, LUTb,
                                                      config,
-                                                     ViewJComponentBase.CORONAL, false);
+                                                     FileInfoBase.CORONAL, false);
             }
 
             if (isShearWarpEnable) {
@@ -1687,6 +1641,27 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     }
 
     /**
+     * Returns which image is active in the HistoRGB -- either imageA or
+     * imageB. Called by the PlaneRenderer object to determine which LUT to
+     * update based on dragging the right-mouse in the PlaneRender window:
+     *
+     * @return  ModelImage, either imageA or imageB, depending on which is selected in the HistoLUT
+     */
+    public ModelImage getHistoRGBActiveImage() {
+
+        if (panelHistoRGB != null) {
+
+            if (panelHistoRGB.getDisplayMode() == JPanelHistoRGB.IMAGE_A) {
+                return imageA;
+            } else {
+                return imageB;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Get the image A reference.
      *
      * @return  imageA model image A reference.
@@ -1722,6 +1697,16 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     public JPanelHistoLUT getLUTDialog() {
         return panelHistoLUT;
     }
+
+    /**
+     * Get the RGB panel (only should be used with color images).
+     *
+     * @return  the histo RGB panel
+     */
+    public JPanelHistoRGB getRGBDialog() {
+        return panelHistoRGB;
+    }
+
 
     /**
      * Return the rfa probe panel.
@@ -2403,7 +2388,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     }
 
     /**
-     * Sets the position labels. 
+     * Sets the position labels.
      * @param position, the slice positions in FileCoordinates.
      */
     public void setPositionLabels( Point3Df position)
@@ -2419,63 +2404,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     }
 
     /*
-     * Sets the Scanner position label.
-     * @param position, the slice positions in FileCoordinates.
-     */
-    private void setScannerPosition( Point3Df position )
-    {
-        DecimalFormat nf = new DecimalFormat("#####0.0##");
-        Point3Df axial = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( position, axial, imageA, FileInfoBase.AXIAL );
-        float[] axialRes = imageA.getResolutions( 0, FileInfoBase.AXIAL );
-        float[] axialOrigin = imageA.getOrigin( 0, FileInfoBase.AXIAL );
-        int[] axialExtents = imageA.getExtents( FileInfoBase.AXIAL );
-
-        Point3Df coronal = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( position, coronal, imageA, FileInfoBase.CORONAL );
-        float[] coronalRes = imageA.getResolutions( 0, FileInfoBase.CORONAL );
-        float[] coronalOrigin = imageA.getOrigin( 0, FileInfoBase.CORONAL );
-        int[] coronalExtents = imageA.getExtents( FileInfoBase.CORONAL );
-
-        Point3Df sagittal = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( position, sagittal, imageA, FileInfoBase.SAGITTAL );
-        float[] sagittalRes = imageA.getResolutions( 0, FileInfoBase.SAGITTAL );
-        float[] sagittalOrigin = imageA.getOrigin( 0, FileInfoBase.SAGITTAL );
-        int[] sagittalExtents = imageA.getExtents( FileInfoBase.SAGITTAL );
-
-        float[] origin = { coronalOrigin[2], sagittalOrigin[2], axialOrigin[2] };
-        float[] tCoord = new float[3];
-        tCoord[0] = coronal.z * coronalRes[2] + coronalOrigin[2];
-        tCoord[1] = sagittal.z * sagittalRes[2] + sagittalOrigin[2];
-        tCoord[2] = axial.z * axialRes[2] + axialOrigin[2];
-
-        String[] labels = new String[3];
-        labels[0] = new String( "P-A: " );
-        labels[1] = new String( "R-L: " );
-        labels[2] = new String( "S-I: " );
-
-        for ( int i = 0; i < 3; i++ )
-        {
-            if (tCoord[i] < 0)
-            {
-                scannerLabelVals[i].setText( labels[i] +
-                                             labels[i].charAt(2) + ": " +
-                                             String.valueOf(nf.format(-tCoord[i])));
-            }
-            else
-            {
-                scannerLabelVals[i].setText( labels[i] +
-                                             labels[i].charAt(0) + ": " +
-                                             String.valueOf(nf.format(tCoord[i])));
-            }
-        }
-    }
-
-    /*
      * Sets the PatientSlice position label.
      * @param position, the slice positions in FileCoordinates.
      */
-    private void setPatientSlicePosition( Point3Df position ) 
+    private void setPatientSlicePosition( Point3Df position )
     {
         Point3Df axial = new Point3Df();
         MipavCoordinateSystems.FileToPatient( position, axial, imageA, FileInfoBase.AXIAL );
@@ -2499,31 +2431,10 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     {
         Point3Df screen = new Point3Df();
         surRender.ModelToScreen( position, screen );
-        
+
         modelViewLabelVals[0].setText( "X: " + screen.x );
         modelViewLabelVals[1].setText( "Y: " + screen.y  );
         modelViewLabelVals[2].setText( "Z: " + screen.z  );
-    }
-
-    /*
-     * Sets the Absolute position label.
-     * @param position, the slice positions in FileCoordinates.
-     */
-    private void setAbsPositionLabels( Point3Df position )
-    {
-        absoluteLabelVals[0].setText( "X: " + (int)position.x );
-        absoluteLabelVals[1].setText( "Y: " + (int)position.y  );
-        absoluteLabelVals[2].setText( "Z: " + (int)position.z  );
-        int[] dimExtents = imageA.getExtents();
-        int index =
-            (int)((position.z * dimExtents[0] * dimExtents[1]) + 
-                  (position.y * dimExtents[0]) + 
-                  position.x);
-        
-        int iBuffFactor = imageA.isColorImage() ? 4 : 1;
-        absoluteLabelVals[3].setText( "1D index: " +
-                                        index + " = " +
-                                        imageA.getFloat( index * iBuffFactor ) );
     }
 
 

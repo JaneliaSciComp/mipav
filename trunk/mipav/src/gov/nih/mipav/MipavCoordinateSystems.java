@@ -49,7 +49,7 @@ public class MipavCoordinateSystems
         int[] axialOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.AXIAL );
         int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.CORONAL );
         int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.SAGITTAL );
-        
+
         float[] modelPoint = new float[3];
         modelPoint[ axialOrder[2] ] = pIn.x;
         modelPoint[ coronalOrder[2] ] = pIn.y;
@@ -212,11 +212,7 @@ public class MipavCoordinateSystems
      */
     public static final boolean[] getAxisFlip( ModelStorageBase image, int iOrientation )
     {
-        boolean[] abAxisFlip = new boolean[3];
-        abAxisFlip[0] = false;
-        abAxisFlip[1] = false;
-        abAxisFlip[2] = false;
-
+        boolean[] abAxisFlip = { false, false, false };
         int[] aiAxisOrientation = getAxisOrientation( image );
 
         if ( (aiAxisOrientation != null) &&
@@ -268,7 +264,9 @@ public class MipavCoordinateSystems
             }
         }
 
-        if ( image.getRadiologicalView() && (iOrientation != FileInfoBase.SAGITTAL) )
+        if ( image.getRadiologicalView() &&
+             (iOrientation != FileInfoBase.SAGITTAL) &&
+             (iOrientation != FileInfoBase.UNKNOWN_ORIENT) )
         {
             abAxisFlip[0] = !abAxisFlip[0];
         }
@@ -361,6 +359,31 @@ public class MipavCoordinateSystems
         return aiAxisOrder;
     }
 
+    /** Translates the input point into model scanner coordinates, based on the input image, kImage.
+     * @param kInput, the input point in FileCoordinates
+     * @param kOutput, the transformed point in ScannerCoordinates
+     * @param kImage, the image for which the point is being transformed.
+     */
+    public static final void getScannerCoordinates( Point3Df kInput, Point3Df kOutput, ModelStorageBase kImage )
+    {
+        Point3Df kAxial = new Point3Df();
+        MipavCoordinateSystems.FileToPatient( kInput, kAxial, kImage, FileInfoBase.AXIAL );
+        float[] afAxialRes = kImage.getResolutions( 0, FileInfoBase.AXIAL );
+        float[] afAxialOrigin = kImage.getOrigin( 0, FileInfoBase.AXIAL );
 
+        Point3Df kCoronal = new Point3Df();
+        MipavCoordinateSystems.FileToPatient( kInput, kCoronal, kImage, FileInfoBase.CORONAL );
+        float[] afCoronalRes = kImage.getResolutions( 0, FileInfoBase.CORONAL );
+        float[] afCoronalOrigin = kImage.getOrigin( 0, FileInfoBase.CORONAL );
+
+        Point3Df kSagittal = new Point3Df();
+        MipavCoordinateSystems.FileToPatient( kInput, kSagittal, kImage, FileInfoBase.SAGITTAL );
+        float[] afSagittalRes = kImage.getResolutions( 0, FileInfoBase.SAGITTAL );
+        float[] afSagittalOrigin = kImage.getOrigin( 0, FileInfoBase.SAGITTAL );
+        
+        kOutput.x = kCoronal.z * afCoronalRes[2] + afCoronalOrigin[2];
+        kOutput.y = kSagittal.z * afSagittalRes[2] + afSagittalOrigin[2];
+        kOutput.z = kAxial.z * afAxialRes[2] + afAxialOrigin[2];
+    }
 
 }

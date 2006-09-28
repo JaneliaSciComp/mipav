@@ -1,6 +1,6 @@
 package gov.nih.mipav.view;
 
-
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
@@ -78,7 +78,7 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
      * @param  _parent  Frame that called this
      */
     public ViewJComponentPreviewImage(ModelImage _image, int[] extents, PreviewImageContainer _parent) {
-        super(NA, _image);
+        super( extents[0], extents[1], _image);
         image = _image;
         imageSize = extents[0] * extents[1];
 

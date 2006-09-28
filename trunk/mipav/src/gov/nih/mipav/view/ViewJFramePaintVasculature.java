@@ -1,6 +1,6 @@
 package gov.nih.mipav.view;
 
-
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
@@ -1072,7 +1072,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
 
         // init component image
         componentImage = new ViewJComponentEditImage(this, mipImage, LUTa, mipBuffer, null, null, null, pixBuffer, zoom,
-                                                     extents, logMagDisplay, ViewJComponentEditImage.NA );
+                                                     extents, logMagDisplay, FileInfoBase.UNKNOWN_ORIENT );
 
         componentImage.setBuffers(mipBuffer, null, pixBuffer, null);
         componentImage.resetLUTs();

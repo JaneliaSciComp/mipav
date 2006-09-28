@@ -1052,7 +1052,7 @@ public class FileIO {
             case FileBase.ANALYZE:
                 suffix = ".img";
                 break;
-                
+
             case FileBase.MGH:
                 // Uses .mgh for uncompressed storage
                 // Uses .mgz or .mgh.gz for compressed storage
@@ -1130,7 +1130,7 @@ public class FileIO {
             case FileBase.GE_GENESIS:
                 suffix = ".sig";
                 break;
-                
+
             case FileBase.GE_SIGNA4X:
                 suffix = ".gedno";
                 break;
@@ -2147,7 +2147,7 @@ public class FileIO {
                         ((FileInfoDicom) image.getFileInfo(0)).getResolutions()[2] = sliceDifference;
 
                         for (int m = 0; m < (nImages - 1); m++) {
-                            ((FileInfoDicom) image.getFileInfo(m)).getResolutions()[2] = 
+                            ((FileInfoDicom) image.getFileInfo(m)).getResolutions()[2] =
                                 Float.parseFloat((String)((FileDicomTag)((FileInfoDicom)image.getFileInfo(m + 1)).getTagsList().get("0020,1041"))
                                                                                                                   .getValue(true)) -
                                                                                          Float.parseFloat((String)
@@ -2406,7 +2406,7 @@ public class FileIO {
                 case FileBase.ANALYZE:
                     image = readAnalyze(fileName, fileDir, one);
                     break;
-                    
+
                 case FileBase.MGH:
                     image = readMGH(fileName, fileDir, one);
                     break;
@@ -2414,7 +2414,7 @@ public class FileIO {
                 case FileBase.NIFTI:
                     image = readNIFTI(fileName, fileDir, one);
                     break;
-                    
+
                 case FileBase.NRRD:
                     image = readNRRD(fileName, fileDir, one);
                     break;
@@ -2503,7 +2503,7 @@ public class FileIO {
                 case FileBase.GE_GENESIS:
                     image = readGEGenesis5X(fileName, fileDir);
                     break;
-                    
+
                 case FileBase.GE_SIGNA4X:
                     image = readGESigna4X(fileName, fileDir);
                     break;
@@ -3076,12 +3076,12 @@ public class FileIO {
                 }
 
                 break;
-                
+
             case FileBase.MGH:
                 if (!writeMGH(image, options)) {
                     return;
                 }
-                
+
                 break;
 
             case FileBase.DICOM:
@@ -4645,7 +4645,7 @@ public class FileIO {
         return image;
 
     }
-    
+
     /**
      * Reads in a GE Signa 4x type file.
      *
@@ -4769,7 +4769,7 @@ public class FileIO {
             return null;
         }
 
-        
+
         nImages = fileList.length;
 
         // loop through files, place them in image array
@@ -4839,7 +4839,7 @@ public class FileIO {
 
                                 break;
                         } // switch (myFileInfo.getImageOrientation())
-                        
+
 
                         if (myFileInfo0 != null) {
                             image.setFileInfo(myFileInfo0, 0);
@@ -4854,7 +4854,7 @@ public class FileIO {
                     myFileInfo.setExtents(extents);
                     myFileInfo.setOrigin(((FileInfoGESigna4X) (myFileInfo)).getOriginAtSlice(imageFile.getImageNumber() -
                                                                                              1));
-                    
+
                     image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
                     image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
                 } // if (fileList[i] != null)
@@ -4892,7 +4892,7 @@ public class FileIO {
                 return null;
             }
         } // for (i = 0; i < nImages; i++)
-        
+
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
         progressBar.dispose();
@@ -5148,7 +5148,7 @@ public class FileIO {
                 return null;
             }
         } // for (i = 0; i < nImages; i++)
-        
+
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
         progressBar.dispose();
@@ -6016,7 +6016,7 @@ public class FileIO {
 
             return null;
         }
-        
+
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
         progressBar.dispose();
@@ -6356,7 +6356,7 @@ public class FileIO {
         return image;
 
     }
-    
+
     /**
      * Reads a MGH file by calling the read method of the file. if so, calls that method instead.
      *
@@ -6757,7 +6757,7 @@ public class FileIO {
         return image;
 
     }
-    
+
     /**
      * Reads a NRRD file by calling the read method of the file. if so, calls that method instead.
      *
@@ -6813,7 +6813,7 @@ public class FileIO {
 
         return image;
     }
-    
+
     /**
      * Reads in a single GE Signa 4x type file.
      *
@@ -7329,7 +7329,7 @@ public class FileIO {
             float[] resols = new float[3];
             resols[0] = fileInfo.getResolutions()[0];
             resols[1] = fileInfo.getResolutions()[1];
-            resols[2] = fileInfo.getResolutions()[2]; 
+            resols[2] = fileInfo.getResolutions()[2];
             fileInfo.setResolutions(resols);
         }
 
@@ -7370,7 +7370,7 @@ public class FileIO {
         }
 
         for (int m = 0; m < nImages; m++) {
-            
+
             try {
                 imageFile = new FileRaw(fileList[m], fileDir, fileInfo, true, FileBase.READ);
                 progressBar.updateValue((int) (((float) m / (float) nImages) * 100.0f), false);
@@ -8762,7 +8762,7 @@ public class FileIO {
             }
 
             myFileInfo.setDataType(image.getType());
- 
+
             Object obj = null;
             float slLoc = 0;
             float xLocOrig = 0;
@@ -8772,24 +8772,24 @@ public class FileIO {
             float yLoc = 0;
             float zLoc = 0;
             String [] origins;
-            
+
             FileDicomTag tag = myFileInfo.getTag("0020,1041");
-            
-            if (tag != null) { 
+
+            if (tag != null) {
                 obj = tag.getValue(false);
             }
-            if (obj != null) { 
+            if (obj != null) {
                 slLoc = Float.valueOf((String)obj).floatValue();
             }
-            
+
             float sliceResolution = myFileInfo.getResolutions()[2];
-            
+
             if (image.getExtents().length > 2) { // This sets the fileinfo to the same for all slices !!
                 FileInfoBase[] fBase = new FileInfoBase[image.getExtents()[2]];
-                
+
                 if ( myFileInfo.getTag("0020,0032") != null) {
                     tag = myFileInfo.getTag("0020,0032");
-                    if (tag != null) { 
+                    if (tag != null) {
                         obj = tag.getValue(false);
                     }
                     if (obj != null) {
@@ -8803,12 +8803,12 @@ public class FileIO {
                         yLoc = 0;
                         zLoc = 0;
                     }
-                        
+
                     xLocOrig = xLoc;
                     yLocOrig = yLoc;
                     zLocOrig = zLoc;
                 }
-                
+
                 // see if the original dicom a minc was created from was part of a larger volume.  if so, preserve the instance number it had
                 int baseInstanceNumber = -1;
                 if (image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
@@ -8821,21 +8821,21 @@ public class FileIO {
                         options.setRecalculateInstanceNumber(false);
                     }
                 }
-                
-                for (int k = 0; k < image.getExtents()[2]; k++) { 
+
+                for (int k = 0; k < image.getExtents()[2]; k++) {
 
                     // System.err.println("FileIO k = " + k);
                     fBase[k] = (FileInfoBase) myFileInfo.clone();
-                    
+
                     // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
-                    ((FileInfoDicom)(fBase[k])).setValue("0020,1041", Float.toString(slLoc), Float.toString(slLoc).length()); 
+                    ((FileInfoDicom)(fBase[k])).setValue("0020,1041", Float.toString(slLoc), Float.toString(slLoc).length());
                     slLoc += sliceResolution;
-                    
-                    String tmpStr = new String (Float.toString(xLoc) + "\\" + 
+
+                    String tmpStr = new String (Float.toString(xLoc) + "\\" +
                             Float.toString(yLoc) + "\\" +
                             Float.toString(zLoc) );
                     ((FileInfoDicom)(fBase[k])).setValue("0020,0032", tmpStr, tmpStr.length());
-                        
+
                     if( image.getFileInfo()[0].getImageOrientation() == FileInfoBase.AXIAL ){
                         if (zLocOrig <= 0 ){
                             zLoc += sliceResolution;
@@ -8868,7 +8868,7 @@ public class FileIO {
                             zLoc -= sliceResolution;
                         }
                     }
-                    
+
                     if (baseInstanceNumber != -1) {
                         String instanceStr = "" + (baseInstanceNumber + k);
                         ((FileInfoDicom)(fBase[k])).setValue("0020,0013", instanceStr, instanceStr.length());
@@ -8980,7 +8980,7 @@ public class FileIO {
 
         return true;
     }
-    
+
     /**
      * Writes a MGH or MGZ file to store the image.
      *
@@ -9134,18 +9134,7 @@ public class FileIO {
 
         for (int i = beginSlice; i <= endSlice; i++) {
 
-            if (image.isColorImage()) {
-                ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().setColorPaintBuffers(0,
-                                                                                                                          i,
-                                                                                                                          true);
-            } else {
-                ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().setPaintBuffers(0,
-                                                                                                                     i,
-                                                                                                                     null,
-                                                                                                                     null,
-                                                                                                                     true);
-            }
-
+            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().show(0,i,true);
             Image im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
 
             if ((i < 9) && (endSlice != beginSlice)) {

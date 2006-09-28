@@ -1,7 +1,7 @@
 package gov.nih.mipav.view;
 
-
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
@@ -1516,7 +1516,7 @@ public class ViewJComponentColocalizationRegression extends ViewJComponentBase
                 }
 
                 lineVOI.drawSelf(zoomX, zoomY, resX, resY, 0, 0, destImage.getFileInfo(0).getResolutions(),
-                                 destImage.getFileInfo(0).getUnitsOfMeasure(), 0, NA, g);
+                                 destImage.getFileInfo(0).getUnitsOfMeasure(), 0, FileInfoBase.UNKNOWN_ORIENT, g);
 
                 pt = pointVOI.exportPoint();
                 xPos = (int) Math.round(pt.x * zoomX * resX);

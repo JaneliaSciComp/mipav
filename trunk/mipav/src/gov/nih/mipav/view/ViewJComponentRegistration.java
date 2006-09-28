@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.dialogs.*;
 import gov.nih.mipav.view.icons.*;
@@ -89,7 +90,7 @@ public class ViewJComponentRegistration extends ViewJComponentBase implements Mo
     protected Cursor moveCursor = new Cursor(Cursor.MOVE_CURSOR);
 
     /** DOCUMENT ME! */
-    protected int orientation = NA;
+    protected int orientation = FileInfoBase.UNKNOWN_ORIENT;
 
     /** DOCUMENT ME! */
     protected Cursor pointCursor = new Cursor(Cursor.NE_RESIZE_CURSOR);
@@ -1676,7 +1677,7 @@ public class ViewJComponentRegistration extends ViewJComponentBase implements Mo
 
                 if (useDualVOIs) {
 
-                    if (orientation == NA) {
+                    if (orientation == FileInfoBase.UNKNOWN_ORIENT) {
                         setActiveImage(IMAGE_B);
                         VOIs = imageB.getVOIs();
                         nVOI = VOIs.size();
@@ -1708,7 +1709,7 @@ public class ViewJComponentRegistration extends ViewJComponentBase implements Mo
                 } else {
                     VOIs = imageActive.getVOIs();
 
-                    if (orientation == NA) {
+                    if (orientation == FileInfoBase.UNKNOWN_ORIENT) {
                         nVOI = VOIs.size();
 
                         if (slice != -99) {
@@ -2276,25 +2277,25 @@ public class ViewJComponentRegistration extends ViewJComponentBase implements Mo
                 // imageA.exportData((timeSlice*zDimSlices*bufferSize + zSlice*bufferSize), bufferSize, imageBufferA);
                 // if (imageB != null) {    imageB.exportData((timeSlice*zDimSlices * bufferSize + zSlice*bufferSize),
                 // bufferSize, imageBufferB); }
-                if ((orientation == AXIAL) || (orientation == NA)) {
+                if ((orientation == FileInfoBase.AXIAL) || (orientation == FileInfoBase.UNKNOWN_ORIENT)) {
                     imageA.exportData((timeSlice * zDimSlices * bufferSize) + (slice * bufferSize), bufferSize,
                                       imageBufferA);
-                } else if (orientation == SAGITTAL) {
+                } else if (orientation == FileInfoBase.SAGITTAL) {
 
                     // Fix exportSliceZY ... to handle color !!!!!!!!
                     imageA.exportRGBSliceZY(timeSlice, slice, imageBufferA);
-                } else if (orientation == CORONAL) {
+                } else if (orientation == FileInfoBase.CORONAL) {
                     imageA.exportRGBSliceXZ(timeSlice, slice, imageBufferA);
                 }
 
                 if (imageB != null) {
 
-                    if ((orientation == AXIAL) || (orientation == NA)) {
+                    if ((orientation == FileInfoBase.AXIAL) || (orientation == FileInfoBase.UNKNOWN_ORIENT)) {
                         imageB.exportData((timeSlice * zDimSlices * bufferSize) + (slice * bufferSize), bufferSize,
                                           imageBufferB);
-                    } else if (orientation == SAGITTAL) {
+                    } else if (orientation == FileInfoBase.SAGITTAL) {
                         imageB.exportRGBSliceZY(timeSlice, slice, imageBufferB);
-                    } else if (orientation == CORONAL) {
+                    } else if (orientation == FileInfoBase.CORONAL) {
                         imageB.exportRGBSliceXZ(timeSlice, slice, imageBufferB);
                     }
                 }
@@ -2704,12 +2705,12 @@ public class ViewJComponentRegistration extends ViewJComponentBase implements Mo
 
                 if (imageA.getType() == ModelStorageBase.COMPLEX) {
                     imageA.exportComplexSliceXY((timeSlice * zDimSlices) + slice, imageBufferA, logMagDisplay);
-                } else if ((orientation == AXIAL) || (orientation == NA)) {
+                } else if ((orientation == FileInfoBase.AXIAL) || (orientation == FileInfoBase.UNKNOWN_ORIENT)) {
                     imageA.exportSliceXY((timeSlice * zDimSlices) + slice, imageBufferA);
-                } else if (orientation == SAGITTAL) {
+                } else if (orientation == FileInfoBase.SAGITTAL) {
 
                     imageA.exportSliceZY(timeSlice, zSlice, imageBufferA);
-                } else if (orientation == CORONAL) {
+                } else if (orientation == FileInfoBase.CORONAL) {
                     imageA.exportSliceXZ(timeSlice, zSlice, imageBufferA);
                 }
 
@@ -2717,11 +2718,11 @@ public class ViewJComponentRegistration extends ViewJComponentBase implements Mo
 
                     if (imageB.getType() == ModelStorageBase.COMPLEX) {
                         imageB.exportComplexSliceXY((timeSlice * zDimSlices) + slice, imageBufferB, logMagDisplay);
-                    } else if ((orientation == AXIAL) || (orientation == NA)) {
+                    } else if ((orientation == FileInfoBase.AXIAL) || (orientation == FileInfoBase.UNKNOWN_ORIENT)) {
                         imageB.exportSliceXY((timeSlice * zDimSlices) + slice, imageBufferB);
-                    } else if (orientation == SAGITTAL) {
+                    } else if (orientation == FileInfoBase.SAGITTAL) {
                         imageB.exportSliceZY(timeSlice, slice, imageBufferB);
-                    } else if (orientation == CORONAL) {
+                    } else if (orientation == FileInfoBase.CORONAL) {
                         imageB.exportSliceXZ(timeSlice, slice, imageBufferB);
                     }
                 }

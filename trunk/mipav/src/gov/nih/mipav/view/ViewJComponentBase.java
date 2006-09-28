@@ -1,19 +1,11 @@
 package gov.nih.mipav.view;
 
-
 import gov.nih.mipav.*;
-
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
 import java.awt.image.*;
-
-import java.text.*;
-
 import javax.swing.*;
-import javax.swing.event.*;
-
 
 /**
  * Abstract class used for displaying images in the program MIPAV.
@@ -51,28 +43,6 @@ public abstract class ViewJComponentBase extends JComponent {
 
     /** DOCUMENT ME! */
     public static final int NEAREST_BOTH = 6;
-
-    /** MipavCoordinateSystems upgrade: TODO: refactor AXIAL, SAGITTAL,
-     * CORONAL constant defintions into one place so that all refs are
-     * consistent: */
-    /** DOCUMENT ME! */
-    //public static final int AXIAL = 0;
-    //FileInfoBase.AXIAL = 0
-    public static final int AXIAL = FileInfoBase.AXIAL;
-
-    /** DOCUMENT ME! */
-    //public static final int SAGITTAL = 1;
-    //FileInfoBase.SAGITTAL = 2
-    public static final int SAGITTAL = FileInfoBase.SAGITTAL;
-
-    /** DOCUMENT ME! */
-    //public static final int CORONAL = 2;
-    //FileInfoBase.CORONAL = 1
-    public static final int CORONAL = FileInfoBase.CORONAL;
-
-    /** DOCUMENT ME! */
-    //public static final int NA = 3;
-    public static final int NA = FileInfoBase.UNKNOWN_ORIENT;
 
     /** DOCUMENT ME! */
     public static final int IMAGE_A = 0;
@@ -212,6 +182,9 @@ public abstract class ViewJComponentBase extends JComponent {
     protected MemoryImageSource memImage = null;
 
     /** DOCUMENT ME! */
+    protected MemoryImageSource memImageA = null;
+
+    /** DOCUMENT ME! */
     protected MemoryImageSource memImageB = null;
 
     /**
@@ -239,23 +212,13 @@ public abstract class ViewJComponentBase extends JComponent {
     protected float zoomY = 1;
 
     /** DOCUMENT ME! */
-    private short[] imDataB;
+    protected int OUT_OF_BOUNDS = -9999;
 
     /** DOCUMENT ME! */
-    private short[] imDataG;
+    protected int lastMouseX = OUT_OF_BOUNDS; // used by the repaintPaintBrushCursorFast method
 
     /** DOCUMENT ME! */
-    private short[] imDataR;
-
-    /** DOCUMENT ME! */
-    private int[] imgData; // here for posterity...these arrays are used in the smooth image method, which we may or
-                           // may not use in the future
-
-    /** DOCUMENT ME! */
-    private int[] imgDataB;
-
-    /** DOCUMENT ME! */
-    private int xOld, yOld;
+    protected int lastMouseY = OUT_OF_BOUNDS; // used by the repaintPaintBrushCursorFast method
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
     /**
@@ -274,15 +237,12 @@ public abstract class ViewJComponentBase extends JComponent {
     /**
      * creates object of size defined by width & height.
      *
-     * @param orientation the Patient-Coordinates orientation from which to
-     * view the data
+     * @param extents, the image width and height
      * @param _imageA, the image that this ViewJComponentBase is a view of
      */
-    public ViewJComponentBase( int orientation, ModelImage _imageA ) {
+    public ViewJComponentBase( int width, int height, ModelImage _imageA ) {
         img = null;
-        /* MipavCoordinateSystems upgrade TODO: */
-        imageDim = new Dimension( _imageA.getWidth( orientation ),
-                                  _imageA.getHeight( orientation ) );
+        imageDim = new Dimension( width, height );
         sliceString = "0";
         setSize(imageDim.width, imageDim.height);
         setDoubleBuffered(false);
@@ -317,9 +277,6 @@ public abstract class ViewJComponentBase extends JComponent {
         memImageB = null;
         textColor = null;
         sliceString = null;
-        imgData = null;
-        imgDataB = null;
-        imDataR = imDataG = imDataB = null;
     }
 
     /**
@@ -348,7 +305,7 @@ public abstract class ViewJComponentBase extends JComponent {
      * @return  the x coordinate of the last mouse event
      */
     public int getLastMouseX() {
-        return xOld;
+        return lastMouseX;
     }
 
     /**
@@ -357,7 +314,7 @@ public abstract class ViewJComponentBase extends JComponent {
      * @return  the y coordinate of the last mouse event
      */
     public int getLastMouseY() {
-        return yOld;
+        return lastMouseY;
     }
 
     /**
@@ -617,13 +574,13 @@ public abstract class ViewJComponentBase extends JComponent {
             return;
         }
 
-        if ((xNew == xOld) && (yNew == yOld)) {
+        if ((xNew == lastMouseX) && (yNew == lastMouseY)) {
             return;
         }
 
-        if ((xOld == 0) && (yOld == 0)) {
-            xOld = xNew;
-            yOld = yNew;
+        if ((lastMouseX == 0) && (lastMouseY == 0)) {
+            lastMouseX = xNew;
+            lastMouseY = yNew;
 
             return;
         }
@@ -652,8 +609,8 @@ public abstract class ViewJComponentBase extends JComponent {
         g.setColor(Color.red.darker());
         g.drawRect(xNew0, yNew0, width - 1, height - 1);
 
-        xOld = xNew0;
-        yOld = yNew0;
+        lastMouseX = xNew0;
+        lastMouseY = yNew0;
     }
 
     /**
@@ -813,277 +770,5 @@ public abstract class ViewJComponentBase extends JComponent {
     protected void finalize() throws Throwable {
         disposeLocal();
         super.finalize();
-    }
-
-    /**
-     * smoothImage - here for posterity. the smoothing is now done by the graphics hardware in ViewJComponentEditImage's
-     * paintComponent method
-     *
-     * @param  inData  DOCUMENT ME!
-     */
-    private void smoothImage(int[] inData) {
-
-        int i, j, index;
-        int rgb;
-        int xDim = imageDim.width;
-        int yDim = imageDim.height;
-        int xDim1 = imageDim.width - 1;
-        int yDim1 = imageDim.height - 1;
-        int zoomXDim = Math.round(xDim * zoomX * resolutionX);
-        int zoomYDim = Math.round(yDim * zoomY * resolutionY);
-        int imgLength = xDim * yDim;
-        float xfNew, yfNew;
-        int intX, intY;
-        float x1, x2;
-        float dx, dy, dy1, diff;
-        int position, position1, positionXDim, positionXDimp1;
-        int red, green, blue;
-
-        if (inData == null) {
-            return;
-        }
-
-        try {
-
-            if ((imgData == null) || (imDataR == null) || (imDataG == null) || (imDataB == null) ||
-                    ((Math.round(zoomX * imageDim.width * resolutionX) *
-                          Math.round(zoomY * imageDim.height * resolutionY)) != imgData.length)) {
-                imgData = null;
-                imDataR = imDataG = imDataB = null;
-                System.gc();
-                imgData = new int[Math.round(zoomX * imageDim.width * resolutionX) *
-                              Math.round(zoomY * imageDim.height * resolutionY)];
-                imDataR = new short[imageDim.width * imageDim.height];
-                imDataG = new short[imageDim.width * imageDim.height];
-                imDataB = new short[imageDim.width * imageDim.height];
-            }
-        } catch (OutOfMemoryError error) {
-
-            // add error message
-            return;
-        }
-
-        for (i = 0; i < imgLength; i++) {
-            rgb = inData[i];
-            imDataR[i] = (short) ((rgb >> 16) & 0xff);
-            imDataG[i] = (short) ((rgb >> 8) & 0xff);
-            imDataB[i] = (short) (rgb & 0xff);
-        }
-
-        int rP = 0, gP = 0, bP = 0;
-
-        if (this instanceof ViewJComponentEditImage) {
-            rP = ((ViewJComponentEditImage) this).frame.getControls().getTools().getPaintColor().getRed();
-            gP = ((ViewJComponentEditImage) this).frame.getControls().getTools().getPaintColor().getGreen();
-            bP = ((ViewJComponentEditImage) this).frame.getControls().getTools().getPaintColor().getBlue();
-        }
-
-        int endX = zoomXDim;
-        int endY = zoomYDim;
-        float scaleX = 1 / (zoomX * resolutionX);
-        float scaleY = 1 / (zoomY * resolutionY);
-        int offset = Math.round((zoomY * resolutionY * zoomXDim * 0.5f) + (zoomX * resolutionX * 0.5f));
-
-        if (((zoomX * resolutionX) != 1) || ((zoomY * resolutionY) != 1)) {
-
-            for (j = 0; j < endY; j++) {
-                index = (j * zoomXDim) + offset;
-                yfNew = j * scaleY;
-
-                for (i = 0; i < endX; i++) {
-                    xfNew = i * scaleX;
-
-                    if ((xfNew < xDim1) && (yfNew < yDim1)) {
-                        intX = (int) xfNew;
-                        intY = (int) yfNew;
-
-                        dx = xfNew - intX;
-                        dy = yfNew - intY;
-                        dy1 = 1 - dy;
-                        diff = 1 - dx;
-                        position = (intY * xDim) + intX;
-                        position1 = position + 1;
-                        positionXDim = position + xDim;
-                        positionXDimp1 = positionXDim + 1;
-
-                        x1 = (diff * imDataR[position]) + (dx * imDataR[position1]);
-                        x2 = (diff * imDataR[positionXDim]) + (dx * imDataR[positionXDimp1]);
-
-                        red = (int) ((dy1 * x1) + (dy * x2));
-
-                        x1 = (diff * imDataG[position]) + (dx * imDataG[position1]);
-                        x2 = (diff * imDataG[positionXDim]) + (dx * imDataG[positionXDimp1]);
-
-                        green = (int) ((dy1 * x1) + (dy * x2));
-
-                        x1 = (diff * imDataB[position]) + (dx * imDataB[position1]);
-                        x2 = (diff * imDataB[positionXDim]) + (dx * imDataB[positionXDimp1]);
-
-                        blue = (int) ((dy1 * x1) + (dy * x2));
-                        imgData[index] = (0xff000000) | (red << 16) | (green << 8) | blue;
-
-                        if ((imDataR[position] == rP) && (imDataG[position] == gP) && (imDataB[position] == bP)) {
-                            red = rP;
-                            green = gP;
-                            blue = bP;
-                            imgData[index - offset] = (0xff000000) | (red << 16) | (green << 8) | blue;
-                        }
-                    }
-
-                    index++;
-                }
-            }
-        } else {
-
-            for (i = 0; i < imgLength; i++) {
-                imgData[i] = inData[i];
-            }
-        }
-
-        if ((memImage == null) || (img == null) || ((img.getWidth(null) * img.getHeight(null)) != imgData.length)) {
-            memImage = new MemoryImageSource(zoomXDim, zoomYDim, imgData, 0, zoomXDim);
-            img = createImage(memImage);
-        } else {
-            memImage.newPixels(imgData, ColorModel.getRGBdefault(), 0,
-                               Math.round(imageDim.width * zoomX * resolutionX));
-            img.flush();
-        }
-
-    }
-
-    /**
-     * smoothImage - here for posterity. the smoothing is now done by the graphics hardware in ViewJComponentEditImage's
-     * paintComponent method
-     *
-     * @param  inData  DOCUMENT ME!
-     */
-    private void smoothImageB(int[] inData) {
-        int i, j, index;
-        int rgb;
-        int xDim = imageDim.width;
-        int yDim = imageDim.height;
-        int xDim1 = imageDim.width - 1;
-        int yDim1 = imageDim.height - 1;
-        int zoomXDim = Math.round(xDim * zoomX * resolutionX);
-        int zoomYDim = Math.round(yDim * zoomY * resolutionY);
-        int imgLength = xDim * yDim;
-        float xfNew, yfNew;
-        int intX, intY;
-        float x1, x2;
-        float dx, dy, dy1, diff;
-        int position, position1, positionXDim, positionXDimp1;
-        int red, green, blue;
-
-        if (inData == null) {
-            return;
-        }
-
-        try {
-
-            if ((imgDataB == null) || (imDataR == null) || (imDataG == null) || (imDataB == null) ||
-                    ((Math.round(zoomX * imageDim.width * resolutionX) *
-                          Math.round(zoomY * imageDim.height * resolutionY)) != imgDataB.length)) {
-
-                imgDataB = null;
-                imDataR = imDataG = imDataB = null;
-                System.gc();
-                imgDataB = new int[Math.round(zoomX * imageDim.width * resolutionX) *
-                               Math.round(zoomY * imageDim.height * resolutionY)];
-                imDataR = new short[imageDim.width * imageDim.height];
-                imDataG = new short[imageDim.width * imageDim.height];
-                imDataB = new short[imageDim.width * imageDim.height];
-            }
-        } catch (OutOfMemoryError error) {
-
-            // add error message
-            return;
-        }
-
-        for (i = 0; i < imgLength; i++) {
-            rgb = inData[i];
-            imDataR[i] = (short) ((rgb >> 16) & 0xff);
-            imDataG[i] = (short) ((rgb >> 8) & 0xff);
-            imDataB[i] = (short) (rgb & 0xff);
-        }
-
-        int rP = 0, gP = 0, bP = 0;
-
-        if (this instanceof ViewJComponentEditImage) {
-            rP = ((ViewJComponentEditImage) this).frame.getControls().getTools().getPaintColor().getRed();
-            gP = ((ViewJComponentEditImage) this).frame.getControls().getTools().getPaintColor().getGreen();
-            bP = ((ViewJComponentEditImage) this).frame.getControls().getTools().getPaintColor().getBlue();
-        }
-
-        int endX = zoomXDim;
-        int endY = zoomYDim;
-        float scaleX = 1 / (zoomX * resolutionX);
-        float scaleY = 1 / (zoomY * resolutionY);
-        int offset = Math.round((zoomY * resolutionY * zoomXDim * 0.5f) + (zoomX * resolutionX * 0.5f));
-
-        if (((zoomX * resolutionX) != 1) || ((zoomY * resolutionY) != 1)) {
-
-            for (j = 0; j < endY; j++) {
-                index = (j * zoomXDim) + offset;
-                yfNew = j * scaleY;
-
-                for (i = 0; i < endX; i++) {
-                    xfNew = i * scaleX;
-
-                    if ((xfNew < xDim1) && (yfNew < yDim1)) {
-                        intX = (int) xfNew;
-                        intY = (int) yfNew;
-
-                        dx = xfNew - intX;
-                        dy = yfNew - intY;
-                        dy1 = 1 - dy;
-                        diff = 1 - dx;
-                        position = (intY * xDim) + intX;
-                        position1 = position + 1;
-                        positionXDim = position + xDim;
-                        positionXDimp1 = positionXDim + 1;
-
-                        x1 = (diff * imDataR[position]) + (dx * imDataR[position1]);
-                        x2 = (diff * imDataR[positionXDim]) + (dx * imDataR[positionXDimp1]);
-
-                        red = (int) ((dy1 * x1) + (dy * x2));
-
-                        x1 = (diff * imDataG[position]) + (dx * imDataG[position1]);
-                        x2 = (diff * imDataG[positionXDim]) + (dx * imDataG[positionXDimp1]);
-
-                        green = (int) ((dy1 * x1) + (dy * x2));
-
-                        x1 = (diff * imDataB[position]) + (dx * imDataB[position1]);
-                        x2 = (diff * imDataB[positionXDim]) + (dx * imDataB[positionXDimp1]);
-
-                        blue = (int) ((dy1 * x1) + (dy * x2));
-
-                        imgDataB[index] = (0xff000000) | (red << 16) | (green << 8) | blue;
-
-                        if ((imDataR[position] == rP) && (imDataG[position] == gP) && (imDataB[position] == bP)) {
-                            red = rP;
-                            green = gP;
-                            blue = bP;
-                            imgDataB[index - offset] = (0xff000000) | (red << 16) | (green << 8) | blue;
-                        }
-                    }
-
-                    index++;
-                }
-            }
-        } else {
-
-            for (i = 0; i < imgLength; i++) {
-                imgDataB[i] = inData[i];
-            }
-        }
-
-        if ((memImageB == null) || (imgB == null) || ((img.getWidth(null) * img.getHeight(null)) != imgDataB.length)) {
-            memImageB = new MemoryImageSource(zoomXDim, zoomYDim, imgDataB, 0, zoomXDim);
-            imgB = createImage(memImageB);
-        } else {
-            memImageB.newPixels(imgDataB, ColorModel.getRGBdefault(), 0,
-                                Math.round(imageDim.width * zoomX * resolutionX));
-            imgB.flush();
-        }
     }
 }

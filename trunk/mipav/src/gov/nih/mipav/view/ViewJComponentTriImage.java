@@ -212,7 +212,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     private VOI voiProtractor = null;
 
     /** color of the crosshairs. */
-    private Color xColor, yColor, zColor;
+    private Color[] xColor = { Color.yellow, Color.yellow, Color.green };
+    private Color[] yColor = { Color.green,  Color.red,    Color.red };
+    private Color[] zColor = { Color.red,    Color.green,  Color.yellow };
 
     /** imageActive extents in the local (Patient) coordinate system: */
     private int[] localImageExtents = new int[3];
@@ -228,10 +230,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
     /** Screen Scale factor in x,y = zoomX * resolutionsX, zoomY * resolutionsY */
     private Point2Df m_kScreenScale = new Point2Df();
-
-    /** PatientSlice contains all the Patient Coordinate system view-specific
-     * data for rendering this component: */
-    private PatientSlice m_kPatientSlice;
 
     /** Crop Bounding Box Colors: */
     private Color[] cropColor = { Color.red, Color.green, Color.yellow };
@@ -321,54 +319,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         removeMouseWheelListener(this); // remove listener from superclass
         addMouseWheelListener((ViewJComponentTriImage) this);
-
-        if (orientation == AXIAL)
-        {
-            xColor = Color.yellow;
-            yColor = Color.green;
-            zColor = Color.red;
-        }
-        else if (orientation == CORONAL)
-        {
-            xColor = Color.yellow;
-            yColor = Color.red;
-            zColor = Color.green;
-        }
-        else // SAGITTAL
-        {
-            xColor = Color.green;
-            yColor = Color.red;
-            zColor = Color.yellow;
-        }
-
-        /* create the slice renderer for this triComponentOrientation: */
-        m_kPatientSlice = new PatientSlice( imageA, LUTa,
-                                            imageB, LUTb,
-                                            triComponentOrientation );
-        m_kPatientSlice.setBuffers( imageBufferA, imageBufferB );
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
-    /**
-     * Sets the RGB table for ARGB image A.
-     *
-     * @param  RGBT  RGB table
-     */
-    public void setRGBTA(ModelRGB RGBT)
-    {
-        m_kPatientSlice.setRGBTA(RGBT);
-    }
-
-    /**
-     * Sets the RGB table for ARGB image B.
-     *
-     * @param  RGBT  RGB table
-     */
-    public void setRGBTB(ModelRGB RGBT)
-    {
-        m_kPatientSlice.setRGBTB(RGBT);
-    }
 
     /**
      * DOCUMENT ME!
@@ -407,7 +360,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             talVoxelLabelText = new StringBuffer(5);
         }
 
-        if (triComponentOrientation == AXIAL) {
+        if (triComponentOrientation == FileInfoBase.AXIAL) {
             final String[] verticalIndexArray = new String[] { "d", "c", "b", "a", "a", "b", "c", "d" };
             final String[] horizontalIndexArray = new String[] { "A", "B", "C", "D", "E", "F", "G", "H", "I" };
 
@@ -434,7 +387,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             } else {
                 talVoxelLabelText.replace(2, 3, "L");
             }
-        } else if (triComponentOrientation == SAGITTAL) {
+        } else if (triComponentOrientation == FileInfoBase.SAGITTAL) {
             final String[] verticalIndexArray = new String[] { "A", "B", "C", "D", "E", "F", "G", "H", "I" };
             final String[] horizontalIndexArray = new String[] {
                                                       "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
@@ -707,20 +660,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
 
     /**
-     * The frame in which the image(s) is displayed, allocates the memory and uses this method to pass the references to
-     * the buffers.
-     *
-     * @param  imgBufferA  storage buffer used to display image A
-     * @param  imgBufferB  storage buffer used to display image B
-     * @param  pixBuff     storage buffer used to build a displayable image
-     * @param  pixBuffB    storage buffer used to build a displayable imageB for the window
-     */
-    public void setBuffers(float[] imgBufferA, float[] imgBufferB, int[] pixBuff, int[] pixBuffB) {
-        super.setBuffers( imgBufferA, imgBufferB, pixBuff, pixBuffB );
-        m_kPatientSlice.setBuffers( imgBufferA, imgBufferB );
-    }
-
-    /**
      * sets the screen scale variable when setResolutions is called:
      * @param rX, new resolution in X
      * @param rY, new resolution in Y
@@ -779,7 +718,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @return  the x crosshair color
      */
     public Color getXSliceHairColor() {
-        return xColor;
+        return xColor[triComponentOrientation];
     }
 
     /**
@@ -788,7 +727,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @return  the y crosshair color
      */
     public Color getYSliceHairColor() {
-        return yColor;
+        return yColor[triComponentOrientation];
     }
 
     /**
@@ -797,7 +736,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @return  the z crosshair color
      */
     public Color getZSliceHairColor() {
-        return zColor;
+        return zColor[triComponentOrientation];
     }
 
     /**
@@ -918,8 +857,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         int distX, distY;
         int nVOI;
 
-        if ((mouseEvent.getX() < 0) || (mouseEvent.getY() < 0) || (mouseEvent.getX() > getWidth()) ||
-                (mouseEvent.getY() > getHeight())) {
+        if ((mouseEvent.getX() < 0) || (mouseEvent.getY() < 0) ||
+            (mouseEvent.getX() > getWidth()) || (mouseEvent.getY() > getHeight()))
+        {
             return;
         }
 
@@ -927,41 +867,21 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
-        int xS = getScaledX(mouseEvent.getX());
-        int yS = getScaledY(mouseEvent.getY());
-        float xfS = (float) (mouseEvent.getX() / (getZoomX() * resolutionX));
-        float yfS = (float) (mouseEvent.getY() / (getZoomY() * resolutionY));
-
-        if (xS < 0) {
-            xS = 0;
-        }
-
-        if (yS < 0) {
-            yS = 0;
-        }
-
-        if (xS > (imageDim.width - 1)) {
-            xS = imageDim.width - 1;
-        }
-
-        if (yS > (imageDim.height - 1)) {
-            yS = imageDim.height - 1;
-        }
+        int xS = Math.max( getScaledX(mouseEvent.getX()), 0 );
+        int yS = Math.max( getScaledY(mouseEvent.getY()), 0 );
+        xS = Math.min( xS, imageDim.width - 1 );
+        yS = Math.min( yS, imageDim.height - 1 );
 
         if (moveLineEndpoint) // if user is dragging the intensityLineEndpoint
         {
-
             if ((intensityLine != null) && intensityLine.isVisible()) {
                 intensityLine.rubberbandVOI(xS, yS, slice, imageDim.width, imageDim.height, false);
                 repaint();
             }
-
             return;
         }
-
         if (moveLine) // if user is moving the intensityLine
         {
-
             if ((intensityLine != null) && intensityLine.isVisible()) {
                 distX = xS - anchorPt.x; // distance from original to cursor
                 distY = yS - anchorPt.y;
@@ -975,16 +895,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
                 anchorPt.x = xS;
                 anchorPt.y = yS;
-
                 repaint();
             }
-
             return;
         }
-
         if (dragCenterPt) // if user is moving the center point
         {
-
             if (doCenter) {
                 setCursor(MipavUtil.blankCursor);
 
@@ -1001,7 +917,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 return;
             }
         }
-
         if ((mode == DEFAULT) || (mode == MOVE_VOIPOINT) || (mode == PROTRACTOR)) {
 
             if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0) {
@@ -1780,7 +1695,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         }
 
         /* MipavCoordinateSystems upgrade: TODO: */
-        if (triComponentOrientation == AXIAL) {
+        if (triComponentOrientation == FileInfoBase.AXIAL) {
 
             if (showTalairachGrid) {
                 drawTalairachGrid_AXIAL(offscreenGraphics2d);
@@ -1789,7 +1704,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             }
 
         } // end of if (triComponentOrientation == AXIAL)
-        else if (triComponentOrientation == CORONAL) {
+        else if (triComponentOrientation == FileInfoBase.CORONAL) {
 
             if (showTalairachGrid) {
                 drawTalairachGrid_CORONAL(offscreenGraphics2d);
@@ -1798,7 +1713,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             }
 
         } // end of else if (triComponentOrientation == CORONAL)
-        else if (triComponentOrientation == SAGITTAL) {
+        else if (triComponentOrientation == FileInfoBase.SAGITTAL) {
 
             if (showTalairachGrid) {
                 drawTalairachGrid_SAGITTAL(offscreenGraphics2d);
@@ -2027,7 +1942,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  c  the new crosshair color
      */
     public void setXSliceHairColor(Color c) {
-        xColor = c;
+        xColor[triComponentOrientation] = c;
     }
 
     /**
@@ -2036,7 +1951,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  c  the new crosshair color
      */
     public void setYSliceHairColor(Color c) {
-        yColor = c;
+        yColor[triComponentOrientation] = c;
     }
 
     /**
@@ -2045,7 +1960,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  c  the new crosshair color
      */
     public void setZSliceHairColor(Color c) {
-        zColor = c;
+        zColor[triComponentOrientation] = c;
     }
 
     /**
@@ -2083,7 +1998,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     private boolean showUsingOrientation(int tSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow,
                                          int _interpMode ) {
 
-        m_kPatientSlice.showUsingOrientation( tSlice, cleanImageBufferA, cleanImageBufferB, false, false, 0, false );
+        m_kPatientSlice.setLUTa( _LUTa );
+        m_kPatientSlice.setLUTb( _LUTb );
+        m_kPatientSlice.showUsingOrientation( tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, 0, false );
 
         if (_interpMode > -1) {
             setInterpolationMode(_interpMode);
@@ -2238,9 +2155,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      */
     private void drawAxes(Graphics2D offscreenGraphics2d)
     {
-        if ( !hasOrientation || (triComponentOrientation == ViewJComponentBase.AXIAL))
+        if ( !hasOrientation || (triComponentOrientation == FileInfoBase.AXIAL))
         {
-            offscreenGraphics2d.setColor(xColor);
+            offscreenGraphics2d.setColor(xColor[triComponentOrientation]);
             offscreenGraphics2d.drawString( axisLabels[triComponentOrientation][0], 45, 15);
             offscreenGraphics2d.drawLine(10, 9, 39, 9);
             offscreenGraphics2d.drawLine(10, 10, 40, 10);
@@ -2248,7 +2165,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             offscreenGraphics2d.drawLine(35, 5, 40, 10);
             offscreenGraphics2d.drawLine(35, 15, 40, 10);
 
-            offscreenGraphics2d.setColor(yColor);
+            offscreenGraphics2d.setColor(yColor[triComponentOrientation]);
             offscreenGraphics2d.drawString( axisLabels[triComponentOrientation][1], 10, 55);
             offscreenGraphics2d.drawLine(9, 10, 9, 39);
             offscreenGraphics2d.drawLine(10, 10, 10, 40);
@@ -2258,7 +2175,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         }
         else
         {
-            offscreenGraphics2d.setColor(xColor);
+            offscreenGraphics2d.setColor(xColor[triComponentOrientation]);
 
             int componentHeight = getSize().height;
             offscreenGraphics2d.drawString( axisLabels[triComponentOrientation][0], 45, componentHeight - 6);
@@ -2268,7 +2185,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             offscreenGraphics2d.drawLine(35, componentHeight - 16, 40, componentHeight - 11);
             offscreenGraphics2d.drawLine(35, componentHeight - 6, 40, componentHeight - 11);
 
-            offscreenGraphics2d.setColor(yColor);
+            offscreenGraphics2d.setColor(yColor[triComponentOrientation]);
             offscreenGraphics2d.drawString( axisLabels[triComponentOrientation][1], 10, componentHeight - 46);
             offscreenGraphics2d.drawLine(9, componentHeight - 11, 9, componentHeight - 40);
             offscreenGraphics2d.drawLine(10, componentHeight - 11, 10, componentHeight - 41);
@@ -2325,11 +2242,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         // This snaps the crosshair to the voxel boundary
         Point2Df pt = crosshairPt;
 
-        offscreenGraphics2d.setColor(xColor);
+        offscreenGraphics2d.setColor(xColor[triComponentOrientation]);
         offscreenGraphics2d.drawLine((int)pt.x, 0, (int)pt.x, (int)pt.y - 10);
         offscreenGraphics2d.drawLine((int)pt.x, getSize().height, (int)pt.x, (int)pt.y + 10);
 
-        offscreenGraphics2d.setColor(yColor);
+        offscreenGraphics2d.setColor(yColor[triComponentOrientation]);
         offscreenGraphics2d.drawLine(0, (int)pt.y, (int)pt.x - 10, (int)pt.y);
         offscreenGraphics2d.drawLine(getSize().width, (int)pt.y, (int)pt.x + 10, (int)pt.y);
     }
@@ -2358,16 +2275,16 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         Point2Df pt = crosshairPt;
 
         // border
-        offscreenGraphics2d.setColor(zColor);
+        offscreenGraphics2d.setColor(zColor[triComponentOrientation]);
         offscreenGraphics2d.drawRect(0, 0, getSize().width - 1, getSize().height - 1);
 
         // x stubs
-        offscreenGraphics2d.setColor(xColor);
+        offscreenGraphics2d.setColor(xColor[triComponentOrientation]);
         offscreenGraphics2d.drawLine((int)pt.x, 0, (int)pt.x, 10);
         offscreenGraphics2d.drawLine((int)pt.x, getSize().height, (int)pt.x, getSize().height - 10);
 
         // y stubs
-        offscreenGraphics2d.setColor(yColor);
+        offscreenGraphics2d.setColor(yColor[triComponentOrientation]);
         offscreenGraphics2d.drawLine(0, (int)pt.y, 10, (int)pt.y);
         offscreenGraphics2d.drawLine(getSize().width, (int)pt.y, getSize().width - 10, (int)pt.y);
     }
