@@ -19,6 +19,44 @@ public class Parser {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Returns an array of the actions in which external images are used in a given script.
+     *
+     * @param   scriptFile  The full path to the script file on disk which should be parsed.
+     *
+     * @return  An array of the names of script actions which use each external image parameter in the given script in
+     *          the same order as getImageVarsUsedInScript().
+     *
+     * @throws  ParserException  If a problem is encountered while parsing the script.
+     */
+    public static final String[] getActionsForImagesUsedInScript(String scriptFile) throws ParserException {
+        Vector imageActionList = new Vector();
+        ParserEngine parser = new ParserEngine(scriptFile, true);
+
+        while (parser.hasMoreLinesToParse()) {
+            ParsedActionLine parsedLine = parser.parseNextLine();
+
+            if (parsedLine != null) {
+                Parameter[] params = parsedLine.getParameterTable().getParameters();
+
+                for (int i = 0; i < params.length; i++) {
+
+                    if (params[i].getType() == Parameter.PARAM_EXTERNAL_IMAGE) {
+                        imageActionList.add(parsedLine.getAction());
+                    }
+                }
+            }
+        }
+
+        String[] imageActions = new String[imageActionList.size()];
+
+        for (int i = 0; i < imageActions.length; i++) {
+            imageActions[i] = (String) imageActionList.elementAt(i);
+        }
+
+        return imageActions;
+    }
+
+    /**
      * Returns an array of image parameters labels used in a given script.
      *
      * @param   scriptFile  The full path to the script file on disk which should be parsed.

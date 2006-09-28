@@ -126,11 +126,13 @@ public class JDialogRunScriptView implements ActionListener, Observer {
      *
      * @param  imagePlaceHolders  DOCUMENT ME!
      * @param  imageLabels        DOCUMENT ME!
+     * @param  imageActions       DOCUMENT ME!
      * @param  numberofVOIs       DOCUMENT ME!
      */
-    public void addExecuter(String[] imagePlaceHolders, String[] imageLabels, int[] numberofVOIs) {
+    public void addExecuter(String[] imagePlaceHolders, String[] imageLabels, String[] imageActions,
+                            int[] numberofVOIs) {
         int lastNodeIndex = ((DefaultTreeModel) tree.getModel()).getChildCount(this.getTreeRoot());
-        ScriptTreeNode newNode = createNewExecuter(imagePlaceHolders, imageLabels, numberofVOIs);
+        ScriptTreeNode newNode = createNewExecuter(imagePlaceHolders, imageLabels, imageActions, numberofVOIs);
         ((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, this.getTreeRoot(), lastNodeIndex);
         expandAll(tree, new TreePath(newNode.getPath()), true);
         frame.getContentPane().repaint();
@@ -167,12 +169,14 @@ public class JDialogRunScriptView implements ActionListener, Observer {
      *
      * @param  imagePlaceHolders  DOCUMENT ME!
      * @param  imageLabels        DOCUMENT ME!
+     * @param  imageActions       DOCUMENT ME!
      * @param  numberofVOIs       DOCUMENT ME!
      */
-    public void createScriptTree(String[] imagePlaceHolders, String[] imageLabels, int[] numberofVOIs) {
+    public void createScriptTree(String[] imagePlaceHolders, String[] imageLabels, String[] imageActions,
+                                 int[] numberofVOIs) {
         root = new ScriptTreeNode("root", ROOTNODE);
         tree = new JTree(root);
-        root.add(createNewExecuter(imagePlaceHolders, imageLabels, numberofVOIs));
+        root.add(createNewExecuter(imagePlaceHolders, imageLabels, imageActions, numberofVOIs));
         ((DefaultTreeModel) tree.getModel()).reload();
         expandAll(tree, true);
         tree.addMouseListener(listener);
@@ -530,11 +534,13 @@ public class JDialogRunScriptView implements ActionListener, Observer {
      *
      * @param   imagePlaceHolders  DOCUMENT ME!
      * @param   imageLabels        DOCUMENT ME!
+     * @param   imageActions       DOCUMENT ME!
      * @param   numberofVOIs       DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
      */
-    private ScriptTreeNode createNewExecuter(String[] imagePlaceHolders, String[] imageLabels, int[] numberofVOIs) {
+    private ScriptTreeNode createNewExecuter(String[] imagePlaceHolders, String[] imageLabels, String[] imageActions,
+                                             int[] numberofVOIs) {
         ScriptTreeNode newNode = new ScriptTreeNode("Script Executer", this.SCRIPTNODE);
         this.numberOfExecuters++;
 
@@ -543,7 +549,8 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         imageNodes = new ScriptTreeNode[imagePlaceHolders.length];
 
         for (int i = 0; i < imagePlaceHolders.length; i++) {
-            imageNodes[i] = new ScriptTreeNode(imagePlaceHolders[i] + " (" + imageLabels[i] + ")", this.IMAGENODE);
+            imageNodes[i] = new ScriptTreeNode(imagePlaceHolders[i] + " (" + imageActions[i] + " -- " + imageLabels[i] +
+                                               ")", this.IMAGENODE);
             newNode.add(imageNodes[i]);
 
             for (int j = 0; j < numberofVOIs[i]; j++) {
@@ -559,7 +566,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
      * DOCUMENT ME!
      */
     private void displayView() {
-        createScriptTree(model.getScriptImageVars(), model.getScriptImageLabels(),
+        createScriptTree(model.getScriptImageVars(), model.getScriptImageLabels(), model.getScriptImageActions(),
                          model.getNumberOfRequiredVOIsForScriptImages());
 
         String[] listName = { "Images List", "VOIs from above image List" };

@@ -26,6 +26,9 @@ public class JDialogRunScriptModel extends Observable {
     private String scriptFile;
 
     /** DOCUMENT ME! */
+    private String[] scriptImageActions;
+
+    /** DOCUMENT ME! */
     private String[] scriptImageLabels;
 
     /** DOCUMENT ME! */
@@ -138,6 +141,15 @@ public class JDialogRunScriptModel extends Observable {
      *
      * @return  DOCUMENT ME!
      */
+    public String[] getScriptImageActions() {
+        return scriptImageActions;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
     public String[] getScriptImageLabels() {
         return scriptImageLabels;
     }
@@ -183,6 +195,15 @@ public class JDialogRunScriptModel extends Observable {
      */
     public void setScriptFile(String scriptFile) {
         this.scriptFile = scriptFile;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  imageActions  DOCUMENT ME!
+     */
+    public void setScriptImageVarActions(String[] imageActions) {
+        this.scriptImageActions = imageActions;
     }
 
     /**

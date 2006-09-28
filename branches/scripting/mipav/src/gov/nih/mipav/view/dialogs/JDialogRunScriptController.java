@@ -61,7 +61,7 @@ public class JDialogRunScriptController implements ActionListener {
         String command = e.getActionCommand();
 
         if (command.equalsIgnoreCase("Add new script executer")) {
-            view.addExecuter(model.getScriptImageVars(), model.getScriptImageLabels(),
+            view.addExecuter(model.getScriptImageVars(), model.getScriptImageLabels(), model.getScriptImageActions(),
                              model.getNumberOfRequiredVOIsForScriptImages());
         } else if (command.equalsIgnoreCase("Run script")) {
             runScript();
@@ -407,8 +407,11 @@ public class JDialogRunScriptController implements ActionListener {
     private void populateInitialScriptTree(String scriptFile) {
 
         try {
+
+            // this is pretty inefficient, but it works..
             model.setScriptImageVars(Parser.getImageVarsUsedInScript(scriptFile));
             model.setScriptImageVarLabels(Parser.getImageLabelsUsedInScript(scriptFile));
+            model.setScriptImageVarActions(Parser.getActionsForImagesUsedInScript(scriptFile));
 
             int[] numberOfVOIs = new int[model.getScriptImageVars().length];
 
