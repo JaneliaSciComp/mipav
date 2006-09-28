@@ -698,7 +698,7 @@ public class VOIHandler extends JComponent
                             }
 
                         } else if (VOIs.VOIAt(i).getCurveType() == VOI.LINE) {
-                            
+
                             if (VOIs.VOIAt(i).getContourGraph() != null) {
                                 graphLineVOI(i, 0);
                                 break;
@@ -1219,7 +1219,7 @@ public class VOIHandler extends JComponent
     public void mousePressed(MouseEvent mouseEvent) {
         int xS, yS;
         int x, y;
-       
+
         int i, j;
         int nVOI;
         ViewVOIVector VOIs;
@@ -1330,9 +1330,9 @@ public class VOIHandler extends JComponent
                                                 (compImage.getActiveImage().getFileInfo(0).getOrigin()[1] != 0) ||
                                                 (compImage.getActiveImage().getFileInfo(0).getOrigin()[2] != 0)) {
                                             FileInfoBase fileInfo = compImage.getActiveImage().getFileInfo()[compImage.getSlice()];
-                                            String[] startValues = compImage.setScannerPosition(fileInfo, (int) startPt.x,
+                                            String[] startValues = compImage.setScannerPosition((int) startPt.x,
                                                                                       (int) startPt.y, compImage.getSlice());
-                                            String[] endValues = compImage.setScannerPosition(fileInfo, (int) endPt.x,
+                                            String[] endValues = compImage.setScannerPosition((int) endPt.x,
                                                                                     (int) endPt.y, compImage.getSlice());
 
                                             if ((startValues != null) && (endValues != null)) {
@@ -1370,7 +1370,7 @@ public class VOIHandler extends JComponent
                                     else {
                                         graphLineVOI(i, j);
                                     }
-                                    
+
                                 }
                             }
 
@@ -2793,7 +2793,7 @@ public class VOIHandler extends JComponent
         int m;
 
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
-        
+
         VOIs.VOIAt(voiIndex).exportArrays(lineX, lineY, lineZ, compImage.getSlice(), contourIndex);
 
         if (compImage.getActiveImage().isColorImage() == true) {
@@ -2875,7 +2875,7 @@ public class VOIHandler extends JComponent
             return;
         }
     }
-    
+
     /**
      * Generates and displays a 1D graph of the image intensities underlying the contour of the VOI.
      */
@@ -4213,11 +4213,11 @@ public class VOIHandler extends JComponent
 
                         removeMouseListener(rubber);
                         removeMouseMotionListener(rubber);
-                        compImage.setPaintBuffers(compImage.getTimeSlice(), compImage.getSlice() + 1, null, null, true);
+                        compImage.show( compImage.getTimeSlice(), compImage.getSlice() + 1, null, null, true, compImage.getInterpMode() );
 
                         Polygon gon = rubber.findNextLevelSet(VOIs.VOIAt(i).getLevel(), gons[j]);
 
-                        compImage.setPaintBuffers(compImage.getTimeSlice(), compImage.getSlice() - 1, null, null, true);
+                        compImage.show( compImage.getTimeSlice(), compImage.getSlice() - 1, null, null, true, compImage.getInterpMode() );
 
                         if (gon == null) {
                             MipavUtil.displayError("Active propogation returned no viable contour.\nUse regular propogation.");
@@ -4328,11 +4328,11 @@ public class VOIHandler extends JComponent
 
                         removeMouseListener(rubber);
                         removeMouseMotionListener(rubber);
-                        compImage.setPaintBuffers(compImage.getTimeSlice(), compImage.getSlice() - 1, null, null, true);
+                        compImage.show( compImage.getTimeSlice(), compImage.getSlice() - 1, null, null, true, compImage.getInterpMode() );
 
                         Polygon gon = rubber.findNextLevelSet(VOIs.VOIAt(i).getLevel(), gons[j]);
 
-                        compImage.setPaintBuffers(compImage.getTimeSlice(), compImage.getSlice() + 1, null, null, true);
+                        compImage.show( compImage.getTimeSlice(), compImage.getSlice() + 1, null, null, true, compImage.getInterpMode() );
 
                         if (gon == null) {
                             MipavUtil.displayError("Active propogation returned no viable contour.\nUse regular propogation.");
@@ -4993,7 +4993,7 @@ public class VOIHandler extends JComponent
     public void drawVOIs(Graphics graphics) {
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
 
-        if (compImage.getOrientation() == ViewJComponentEditImage.NA) {
+        if (compImage.getOrientation() == FileInfoBase.UNKNOWN_ORIENT) {
 
             if (VOIs != null) {
                 int nVOI = VOIs.size();

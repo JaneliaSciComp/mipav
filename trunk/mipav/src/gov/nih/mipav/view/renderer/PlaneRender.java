@@ -41,19 +41,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     private static final long serialVersionUID = 2025132936439496099L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /**
-     * Member variables used to adjust the winow and level (contrast and
-     * bringtness) by dragging with the right-mouse button:.
-     */
-    private float[] m_afXWin = new float[4];
-
-    /**
-     * Member variables used to adjust the winow and level (contrast and
-     * bringtness) by dragging with the right-mouse button:.
-     */
-    private float[] m_afYWin = new float[4];
-
     /** The image dimensions in x,y,z:. */
     private int[] m_aiLocalImageExtents;
 
@@ -90,37 +77,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /** The center of the X,Y bar cross hairs, in plane coordinates:. */
     private float m_fCenterX, m_fCenterY, m_fScreenY;
 
-    private ModelLUT m_kActiveLUT;
-
-    /** DOCUMENT ME! */
-    private float m_fLevel;
-
-    /** DOCUMENT ME! */
-    private float m_fMax = Float.MIN_VALUE;
-
-    /** DOCUMENT ME! */
-    private float m_fMaxA = Float.MIN_VALUE;
-
-    /** DOCUMENT ME! */
-    private float m_fMaxB = Float.MIN_VALUE;
-
-    /** DOCUMENT ME! */
-    private float m_fMin = Float.MAX_VALUE;
-
-    /** min and max float values for m_kImageA and m_kImageB:. */
-    private float m_fMinA = Float.MAX_VALUE;
-
-    /** DOCUMENT ME! */
-    private float m_fMinB = Float.MAX_VALUE;
-
-    /** DOCUMENT ME! */
-    private float m_fOldX;
-
-    /** DOCUMENT ME! */
-    private float m_fOldY;
-
-    /** DOCUMENT ME! */
-    private float m_fWindow;
+    private ModelStorageBase m_kActiveLookupTable;
 
     /** The plane coordinate x,y dimensions:. */
     private float m_fX0;
@@ -224,6 +181,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * data for rendering this component: */
     private PatientSlice m_kPatientSlice;
 
+    private WindowLevel m_kWinLevel;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -266,6 +225,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
                                             m_kImageB, kLUTb,
                                             m_iPlaneOrientation );
 
+        m_kWinLevel = new WindowLevel();
 
         /* Create the scene graph and initialize the rendering */
         init();
@@ -287,8 +247,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         m_kImageA = null;
         m_kImageB = null;
 
-        for (int iColor = 0; iColor < 3; iColor++) {
-            m_akColors[iColor] = null;
+        for (int i = 0; i < 3; i++) {
+            m_akColors[i] = null;
         }
 
         m_kLabelX = null;
@@ -328,10 +288,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         if (m_kRFA_BranchGroup != null) {
             m_kRFA_BranchGroup = null;
         }
-
-        m_afXWin = null;
-        m_afYWin = null;
-
     }
 
     /**
@@ -523,7 +479,14 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         /* If the button pressed is the left mouse button turn off the
          * m_bLeftMousePressed flag: */
         if ((kEvent.getButton() == MouseEvent.BUTTON3) && !kEvent.isShiftDown()) {
-            m_kActiveImage.notifyImageDisplayListeners(m_kActiveLUT, false);
+            if ( m_kActiveImage.isColorImage() )
+            {
+                m_kActiveImage.notifyImageDisplayListeners(false, 0, (ModelRGB)m_kActiveLookupTable);
+            }
+            else
+            {
+                m_kActiveImage.notifyImageDisplayListeners((ModelLUT)m_kActiveLookupTable, false);
+            }
             m_bRightMousePressed = false;
             m_bFirstRightDrag = true;
             m_kCanvas.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
@@ -768,6 +731,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * Causes the labels to be redrawn:.
      */
     public void update() {
+        initAxes();
         drawLabels();
         m_kCanvas.paint(m_kCanvas.getGraphics());
     }
@@ -1079,12 +1043,12 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         if (m_bDrawXHairs) {
             Color3f kXSliceHairColor = m_akColors[2];
             Color3f kYSliceHairColor = m_akColors[0];
-            if ( m_iPlaneOrientation == ViewJComponentBase.AXIAL )
+            if ( m_iPlaneOrientation == FileInfoBase.AXIAL )
             {
                 kXSliceHairColor = m_akColors[2];
                 kYSliceHairColor = m_akColors[1];
             }
-            else if ( m_iPlaneOrientation == ViewJComponentBase.SAGITTAL )
+            else if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
             {
                 kXSliceHairColor = m_akColors[1];
                 kYSliceHairColor = m_akColors[0];
@@ -1233,15 +1197,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         /* set the ViewScreenScale based on the transformation: */
         updateViewScreenScale(m_kCurrentTransform);
         initAxes();
-
-        m_fMinA = (float) m_kImageA.getMin();
-        m_fMaxA = (float) m_kImageA.getMax();
-
-        if (m_kImageB != null) {
-            m_fMinB = (float) m_kImageB.getMin();
-            m_fMaxB = (float) m_kImageB.getMax();
-        }
-
     }
 
     /**
@@ -1256,14 +1211,26 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             m_kTextTransformGroup = null;
         }
 
-        Text3D kXText = new Text3D(new Font3D(MipavUtil.courier12B, new FontExtrusion()), m_kLabelX,
+        String kLabelX = new String( m_kLabelX );
+        if ( !m_kImageA.getRadiologicalView() && (m_iPlaneOrientation != FileInfoBase.SAGITTAL) )
+        {
+            if ( !m_bPatientOrientation )
+            {
+                kLabelX = new String( "-X" );
+            }
+            else
+            {
+                kLabelX = new String( "R" );
+            }
+        }
+        Text3D kXText = new Text3D(new Font3D(MipavUtil.courier12B, new FontExtrusion()), kLabelX,
                                    new Point3f(25f, 1f, 0f));
 
         Text3D kYText = new Text3D(new Font3D(MipavUtil.courier12B, new FontExtrusion()), m_kLabelY,
                                    new Point3f(-2f, -25f, 0f));
 
         if ( m_bPatientOrientation &&
-            (m_iPlaneOrientation != ViewJComponentBase.AXIAL) ) {
+            (m_iPlaneOrientation != FileInfoBase.AXIAL) ) {
             kYText.setPosition(new Point3f(-2f, 31f, 0f));
         }
 
@@ -1271,12 +1238,12 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         Color3f kXSliceHairColor = m_akColors[2];
         Color3f kYSliceHairColor = m_akColors[0];
-        if ( m_iPlaneOrientation == ViewJComponentBase.AXIAL )
+        if ( m_iPlaneOrientation == FileInfoBase.AXIAL )
         {
             kXSliceHairColor = m_akColors[2];
             kYSliceHairColor = m_akColors[1];
         }
-        else if ( m_iPlaneOrientation == ViewJComponentBase.SAGITTAL )
+        else if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
         {
             kXSliceHairColor = m_akColors[1];
             kYSliceHairColor = m_akColors[0];
@@ -1308,7 +1275,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         kYGeometry.setColor(3, kYSliceHairColor);
 
         if (m_bPatientOrientation &&
-            (m_iPlaneOrientation != ViewJComponentBase.AXIAL)) {
+            (m_iPlaneOrientation != FileInfoBase.AXIAL)) {
             kYGeometry.setCoordinate(0, new Point3d(2f, 4f, 0.5f));
             kYGeometry.setCoordinate(1, new Point3d(0f, 4f, 0.5f));
             kYGeometry.setCoordinate(2, new Point3d(0f, 22f, 0.5f));
@@ -1327,7 +1294,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         kYTri.setColor(2, kYSliceHairColor);
 
         if (m_bPatientOrientation &&
-            (m_iPlaneOrientation != ViewJComponentBase.AXIAL)) {
+            (m_iPlaneOrientation != FileInfoBase.AXIAL)) {
             kYTri.setCoordinate(0, new Point3d(5f, 22f, 0.5f));
             kYTri.setCoordinate(1, new Point3d(-4f, 22f, 0.5f));
             kYTri.setCoordinate(2, new Point3d(1f, 27f, 0.5f));
@@ -1367,7 +1334,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
 
         if (m_bPatientOrientation &&
-            (m_iPlaneOrientation != ViewJComponentBase.AXIAL)) {
+            (m_iPlaneOrientation != FileInfoBase.AXIAL)) {
             fYTrans = -fYTrans;
         }
 
@@ -1479,13 +1446,72 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         float fX = (afCenter[0] - m_fX0) / m_fXRange;
         float fY = (afCenter[1] - m_fY0) / m_fYRange;
 
-        /* If this is the first time the mouse is dragged after the right
-         * mouse button has been pressed, setup the member variables to change the HistoLUT. This setup happens each
-         * time after the right mouse
-         * button is pressed and relased: */
-        if (m_bFirstRightDrag) {
-            m_bFirstRightDrag = false;
+        System.err.println( fX + " " + fY );
 
+        m_kActiveLookupTable = null;
+
+        /* Get which image is active, either m_kImageA or m_kImageB: */
+        m_kActiveImage = m_kParent.getHistoLUTActiveImage();
+
+        if (m_kActiveImage == null) {
+            m_kActiveImage = m_kParent.getHistoRGBActiveImage();
+        }
+        if (m_kActiveImage == null) {
+            m_kActiveImage = m_kImageA;
+        }
+
+        if ( m_kActiveImage == m_kImageA )
+        {
+            if ( m_kImageA.isColorImage() )
+            {
+                m_kActiveLookupTable = m_kPatientSlice.getRGBTa();
+            }
+            else
+            {
+                m_kActiveLookupTable = m_kPatientSlice.getLUTa();
+            }
+        }
+        else if ( m_kActiveImage == m_kImageB )
+        {
+            if ( m_kImageA.isColorImage() )
+            {
+                m_kActiveLookupTable = m_kPatientSlice.getRGBTb();
+            }
+            else
+            {
+                m_kActiveLookupTable = m_kPatientSlice.getLUTb();
+            }
+        }
+
+
+        if ( m_kWinLevel.updateWinLevel( fX, fY, m_bFirstRightDrag, m_kActiveLookupTable, m_kActiveImage ) )
+        {
+            if ( m_kActiveImage == m_kImageA )
+            {
+                if ( m_kImageA.isColorImage() )
+                {
+                    m_kParent.getRGBDialog().setRGBTA((ModelRGB)m_kActiveLookupTable);
+                    m_kParent.getRGBDialog().update( );
+                }
+                else
+                {
+                    m_kParent.getLUTDialog().setLUTA((ModelLUT)m_kActiveLookupTable);
+                }
+            }
+            else if ( m_kActiveImage == m_kImageB )
+            {
+                if ( m_kImageB.isColorImage() )
+                {
+                    m_kParent.getRGBDialog().setRGBTB((ModelRGB)m_kActiveLookupTable);
+                    m_kParent.getRGBDialog().update( );
+                }
+                else
+                {
+                    m_kParent.getLUTDialog().setLUTB((ModelLUT)m_kActiveLookupTable);
+                }
+            }
+        }
+        if (m_bFirstRightDrag) {
             try {
                 Image kImg = MipavUtil.getIconImage("qkwinlevel.gif");
 
@@ -1495,126 +1521,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
                 /* Set the cursor icon: */
                 m_kCanvas.setCursor(kWinLevelCursor);
             } catch (FileNotFoundException error) { }
-
-            /* Get which LUT is active from the m_kPatientSlice: */
-            m_kActiveLUT = null;
-
-            /* Get which image is active, either m_kImageA or m_kImageB: */
-            m_kActiveImage = m_kParent.getHistoLUTActiveImage();
-
-            if (m_kActiveImage == null) {
-                m_kActiveImage = m_kImageA;
-            }
-
-            if ( m_kActiveImage == m_kImageA )
-            {
-                m_kActiveLUT = m_kPatientSlice.getLUTa();
-                m_fMin = m_fMinA;
-                m_fMax = m_fMaxA;
-            } else if ( m_kActiveImage == m_kImageB )
-            {
-                m_kActiveLUT = m_kPatientSlice.getLUTb();
-                m_fMin = m_fMinB;
-                m_fMax = m_fMaxB;
-            }
-
-            /* Reset the transferline: */
-            if ((m_kActiveImage != null) && (m_kActiveLUT != null)) {
-                m_kActiveLUT.resetTransferLine(m_fMin, m_fMax);
-                m_kActiveLUT.getTransferFunction().exportArrays(m_afXWin, m_afYWin);
-
-                m_afXWin[1] = m_afXWin[0];
-                m_afXWin[2] = m_afXWin[3];
-                m_afYWin[1] = m_afYWin[0];
-                m_afYWin[2] = m_afYWin[3];
-
-                m_kActiveLUT.getTransferFunction().importArrays(m_afXWin, m_afYWin, 4);
-
-                /* Keep track if the mouse position changed: */
-                m_fOldX = fX;
-                m_fOldY = fY;
-            }
-        } /* Dragging has been initialized on the previous call, this changes
-           * the HistoLUT: */
-        else if ((m_kActiveImage != null) && (m_kActiveLUT != null) && ((m_fOldX != fX) || (m_fOldY != fY))) {
-
-            /* Determine the HistoLUT window image size based on the
-             * ModelImage: */
-            float fMinImageWin;
-            float fMaxImageWin;
-
-            if (m_kActiveImage.getType() == ModelStorageBase.UBYTE) {
-                fMinImageWin = 0;
-                fMaxImageWin = 255;
-            } else if (m_kActiveImage.getType() == ModelStorageBase.BYTE) {
-                fMinImageWin = -128;
-                fMaxImageWin = 127;
-            } else {
-                fMinImageWin = m_fMin;
-                fMaxImageWin = m_fMax;
-            }
-
-            /* The new window value is based on the x coordinate position of
-             * the mouse in the PlaneRender window: */
-            m_fWindow = 2.0f * fX * (fMaxImageWin - fMinImageWin);
-
-            if (m_fWindow > (2.0f * (fMaxImageWin - fMinImageWin))) {
-                m_fWindow = 2.0f * (fMaxImageWin - fMinImageWin);
-            } else if (m_fWindow < 0) {
-                m_fWindow = 0;
-            }
-
-            /* The new level value is based on the y coordinate of the mouse
-             * in the PlaneRender window: */
-            m_fLevel = fY * (fMaxImageWin - fMinImageWin);
-
-            if (m_fLevel > fMaxImageWin) {
-                m_fLevel = fMaxImageWin;
-            } else if (m_fLevel < fMinImageWin) {
-                m_fLevel = fMinImageWin;
-            }
-
-            /* The new x positions, and y positions of the middle points on
-             * the transfer line: */
-            m_afXWin[2] = m_fLevel + (m_fWindow / 2.0f);
-            m_afXWin[1] = m_fLevel - (m_fWindow / 2.0f);
-            m_afYWin[2] = m_afYWin[3];
-            m_afYWin[1] = m_afYWin[0];
-
-            if (m_afXWin[2] > fMaxImageWin) {
-                m_afYWin[2] = 255.0f * (m_afXWin[2] - fMaxImageWin) / m_fWindow;
-
-                if (m_afYWin[2] > 255.0f) {
-                    m_afYWin[2] = 255.0f;
-                }
-
-                m_afXWin[2] = fMaxImageWin;
-            }
-
-            if (m_afXWin[1] < fMinImageWin) {
-                m_afYWin[1] = 255.0f - (255.0f * (fMinImageWin - m_afXWin[1]) / m_fWindow);
-
-                if (m_afYWin[1] < 0.0f) {
-                    m_afYWin[1] = 0.0f;
-                }
-
-                m_afXWin[1] = fMinImageWin;
-            }
-
-            /* Update the HistoLUT and the renderers: */
-            m_kActiveLUT.getTransferFunction().importArrays(m_afXWin, m_afYWin, 4);
-            m_kActiveImage.notifyImageDisplayListeners(m_kActiveLUT, false);
-
-            if (m_kActiveLUT == m_kPatientSlice.getLUTa() )
-            {
-                m_kParent.getLUTDialog().setLUTA(m_kActiveLUT);
-            } else {
-                m_kParent.getLUTDialog().setLUTB(m_kActiveLUT);
-            }
-
-            /* Store old change in X,Y positions: */
-            m_fOldX = fX;
-            m_fOldY = fY;
+            m_bFirstRightDrag = false;
         }
     }
 
@@ -1647,31 +1554,31 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             m_fMaxBox = m_fYBox;
         }
 
-        if ( m_kImageA.getImageOrientation() != ViewJComponentBase.NA )
+        if ( m_kImageA.getImageOrientation() != FileInfoBase.UNKNOWN_ORIENT )
         {
-            if ((m_iPlaneOrientation == ViewJComponentBase.AXIAL) ||
-                (m_iPlaneOrientation == ViewJComponentBase.CORONAL)) {
+            if ((m_iPlaneOrientation == FileInfoBase.AXIAL) ||
+                (m_iPlaneOrientation == FileInfoBase.CORONAL)) {
                 m_kLabelX = new String("L");
             } else {
                 m_kLabelX = new String("P");
             }
 
-            if ((m_iPlaneOrientation == ViewJComponentBase.SAGITTAL) ||
-                (m_iPlaneOrientation == ViewJComponentBase.CORONAL)) {
+            if ((m_iPlaneOrientation == FileInfoBase.SAGITTAL) ||
+                (m_iPlaneOrientation == FileInfoBase.CORONAL)) {
                 m_kLabelY = new String("S");
             } else {
-            m_kLabelY = new String("P");
+                m_kLabelY = new String("P");
             }
         }
         else
         {
             m_bPatientOrientation = false;
-            if ( m_iPlaneOrientation == ViewJComponentBase.SAGITTAL )
+            if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
             {
                 m_kLabelX = new String("Y");
                 m_kLabelY = new String("Z");
             }
-            else if ( m_iPlaneOrientation == ViewJComponentBase.CORONAL )
+            else if ( m_iPlaneOrientation == FileInfoBase.CORONAL )
             {
                 m_kLabelX = new String("X");
                 m_kLabelY = new String("Z");
@@ -1773,7 +1680,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             {
                 BufferedImage kBuff = new BufferedImage( m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], BufferedImage.TYPE_INT_ARGB );
                 kBuff.setRGB( 0, 0, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1], iImageBufferA, 0, m_aiLocalImageExtents[0] );
-                
+
                 m_akImageComponent[iZ] = new ImageComponent2D(ImageComponent.FORMAT_RGBA, m_aiLocalImageExtents[0], m_aiLocalImageExtents[1]);
                 m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_IMAGE_WRITE);
                 m_akImageComponent[iZ].setCapability(ImageComponent2D.ALLOW_IMAGE_READ);

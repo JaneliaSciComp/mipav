@@ -3134,11 +3134,11 @@ public class SurfaceRender extends RenderViewBase {
 
         /* Axial, Sagittal, Coronal view of the data: */
         /* Axial: */
-        triSliceImages[0] = new ViewJComponentTriSliceImage( this, imageA, imageB, ViewJComponentBase.AXIAL );
+        triSliceImages[0] = new ViewJComponentTriSliceImage( this, imageA, imageB, FileInfoBase.AXIAL );
         /* Coronal: */
-        triSliceImages[1] = new ViewJComponentTriSliceImage(this, imageA, imageB, ViewJComponentBase.CORONAL );
+        triSliceImages[1] = new ViewJComponentTriSliceImage(this, imageA, imageB, FileInfoBase.CORONAL );
         /* Sagittal*/
-        triSliceImages[2] = new ViewJComponentTriSliceImage( this, imageA, imageB, ViewJComponentBase.SAGITTAL );
+        triSliceImages[2] = new ViewJComponentTriSliceImage( this, imageA, imageB, FileInfoBase.SAGITTAL );
 
         Preferences.debug("Preferred graphics configuration: " + config + "\n");
         canvas = new VolumeCanvas3D(config);

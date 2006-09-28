@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
@@ -2188,7 +2189,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             logMagDisplay = imageA.getLogMagDisplay();
             componentImage = new ViewJComponentRegistration(this, imageA, LUTa, imageBufferA, imageB, LUTb,
                                                             imageBufferB, pixBuffer, 1, newExtents, logMagDisplay,
-                                                            ViewJComponentBase.NA, newAlphaBlend);
+                                                            FileInfoBase.UNKNOWN_ORIENT, newAlphaBlend);
 
             componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB, paintBuffer);
             xRes = image.getResolutions(0)[0];

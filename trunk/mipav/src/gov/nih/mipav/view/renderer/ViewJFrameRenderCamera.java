@@ -1,6 +1,6 @@
 package gov.nih.mipav.view.renderer;
 
-
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -1393,7 +1393,7 @@ public class ViewJFrameRenderCamera extends ViewJFrameBase implements MouseListe
                                                                              (ModelImage) (modelImageVector.elementAt(currentIndex)),
                                                                              LUTa, imageBufferA, imageB, LUTb, null,
                                                                              null, magnification / 100, extents, false,
-                                                                             ViewJComponentEditImage.NA );
+                                                                             FileInfoBase.UNKNOWN_ORIENT );
 
         componentImage.setLocation(borderSize + selectedBorderSize, borderSize + selectedBorderSize);
 

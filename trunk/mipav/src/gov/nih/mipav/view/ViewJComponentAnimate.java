@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
@@ -1051,7 +1052,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
 
                 for (i = nVOI - 1; i >= 0; i--) {
                     VOIs.VOIAt(i).drawSelf(zoomX, zoomY, resX, resY, 0, 0, imageActive.getFileInfo(0).getResolutions(),
-                                           imageActive.getFileInfo(0).getUnitsOfMeasure(), slice, NA, g);
+                                           imageActive.getFileInfo(0).getUnitsOfMeasure(), slice, FileInfoBase.UNKNOWN_ORIENT, g);
                 }
             } // if (img != null)
         } // try

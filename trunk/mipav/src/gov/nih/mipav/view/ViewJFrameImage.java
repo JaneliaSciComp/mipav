@@ -805,7 +805,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         }
           else if (command.equals("EditImageInfo")) {
-        
+
             showEditImageInfo();
         } else if (command.equals("Exit")) {
             userInterface.windowClosing(null);
@@ -5207,7 +5207,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         componentImage = new ViewJComponentEditImage(this, imageA, LUTa, imageBufferA, null, null, imageBufferB,
                                                      pixBuffer, zoom, extents, logMagDisplay,
-                                                     ViewJComponentEditImage.NA );
+                                                     FileInfoBase.UNKNOWN_ORIENT );
 
         componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
 
