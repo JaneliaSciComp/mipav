@@ -3,7 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -32,6 +32,9 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
+    private ModelImage edgeImage;
+
+    /** DOCUMENT ME! */
     private ModelImage image; // source image
 
     /** false = apply algorithm only to VOI regions. */
@@ -44,14 +47,16 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
     private AlgorithmEdgeNMSuppression nmSupAlgo;
 
     /** DOCUMENT ME! */
+    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     private JPanelSigmas sigmaPanel;
-    
-    private JPanelAlgorithmOutputOptions outputPanel;
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -72,51 +77,13 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
         userInterface = ViewUserInterface.getReference();
         init();
     }
-    
+
     //~ Methods --------------------------------------------------------------------------------------------------------
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
-        
-        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
-        
-        scriptParameters.storeSigmas(sigmaPanel);
-        
-        scriptParameters.storeProcess3DAs25D(image25D);
-    }
 
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        sigmaPanel = new JPanelSigmas(image);
-        scriptParameters.setSigmasGUI(sigmaPanel);
-        
-        outputPanel = new JPanelAlgorithmOutputOptions(image);
-        scriptParameters.setOutputOptionsGUI(outputPanel);
-        
-        image25D = scriptParameters.doProcess3DAs25D();
-    }
-
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(getResultImage());
-    }
-    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
-     * 
-     * @param event Event that triggers function.
+     *
+     * @param  event  Event that triggers function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -142,8 +109,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ModelImage edgeImage;
-        
+
         if (algorithm instanceof AlgorithmEdgeNMSuppression) {
             image.clearMask();
 
@@ -179,7 +145,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
         nmSupAlgo = null;
         dispose();
     }
-    
+
     /**
      * Accessor that returns the image.
      *
@@ -249,14 +215,15 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
                 }
 
                 // Make algorithm
-                nmSupAlgo = new AlgorithmEdgeNMSuppression(resultImage, image, sigmas, outputPanel.isProcessWholeImageSet(), image25D);
+                nmSupAlgo = new AlgorithmEdgeNMSuppression(resultImage, image, sigmas,
+                                                           outputPanel.isProcessWholeImageSet(), image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 nmSupAlgo.addListener(this);
                 createProgressBar(image.getImageName(), nmSupAlgo);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -284,6 +251,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
             float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
             try {
+
                 // Make result image of float type
                 resultImage = new ModelImage(ModelImage.FLOAT, destExtents, "EdgeNMSup", userInterface);
                 resultImage.setImageName(name);
@@ -301,7 +269,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
                 }
 
                 // Make algorithm
-                nmSupAlgo = new AlgorithmEdgeNMSuppression(resultImage, image, sigmas, outputPanel.isProcessWholeImageSet(), image25D);
+                nmSupAlgo = new AlgorithmEdgeNMSuppression(resultImage, image, sigmas,
+                                                           outputPanel.isProcessWholeImageSet(), image25D);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed of failed. See algorithm performed event.
@@ -309,7 +278,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
                 nmSupAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), nmSupAlgo);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -336,6 +305,44 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
     }
 
     /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(edgeImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        sigmaPanel = new JPanelSigmas(image);
+        scriptParameters.setSigmasGUI(sigmaPanel);
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        image25D = scriptParameters.doProcess3DAs25D();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(edgeImage, outputPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+
+        scriptParameters.storeSigmas(sigmaPanel);
+
+        scriptParameters.storeProcess3DAs25D(image25D);
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -347,17 +354,18 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
         sigmaPanel = new JPanelSigmas(image);
 
         image25DCheckbox = WidgetFactory.buildCheckBox("Process each slice independently (2.5D)", false, this);
+
         if (image.getNDims() != 3) { // if the source image is 3D then allow
             image25DCheckbox.setEnabled(false);
         }
 
         PanelManager optionsPanelManager = new PanelManager("Options");
         optionsPanelManager.add(image25DCheckbox);
-        
+
         outputPanel = new JPanelAlgorithmOutputOptions(image);
         outputPanel.setOutputImageOptionsEnabled(false);
         outputPanel.setOutputNewImage(true);
-        
+
         PanelManager mainPanelManager = new PanelManager();
         mainPanelManager.add(sigmaPanel);
         mainPanelManager.addOnNextLine(optionsPanelManager.getPanel());
@@ -384,6 +392,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
+
         if (image25DCheckbox.isSelected()) {
             image25D = true;
         }
