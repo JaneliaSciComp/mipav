@@ -917,7 +917,7 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Inverse slice order",
                                                                                            "InverseOrder", 0, null,
                                                                                            false),
-                                                                 menuBuilder.buildMenuItem("Pad with slices", "padding",
+                                                                 menuBuilder.buildMenuItem("	", "padding",
                                                                                            0, null, false),
                                                                  menuBuilder.buildMenuItem("Randomize slice order",
                                                                                            "RandOrder", 0, null,
@@ -1177,7 +1177,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Capture images to new frame", false);
             menuBuilder.setMenuItemEnabled("Haralick texture", false);
             menuBuilder.setMenuItemEnabled("Display pixel similarity cost functions", false);
-            menuBuilder.setMenuItemEnabled("Pad with slices", false);
+            menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
             menuBuilder.setMenuItemEnabled("Circular sector to rectangle", false);
@@ -1212,7 +1212,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Volume renderers", false);
             menuBuilder.setMenuItemEnabled("Insert slice", false);
             menuBuilder.setMenuItemEnabled("Remove slices", false);
-            menuBuilder.setMenuItemEnabled("Pad with slices", false);
+            menuBuilder.setMenuItemEnabled("Pad slices to power of 2", false);
             menuBuilder.setMenuItemEnabled("Remove time volumes", false);
             menuBuilder.setMenuItemEnabled("2.5D total intensity", false);
             menuBuilder.setMenuItemEnabled("2.5D average intensity", false);
@@ -1241,6 +1241,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Skeletonize 3D", false);
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
+            menuBuilder.setMenuItemEnabled("4D tools", false);
         }
 
         if (ModelImage.isColorImage(type)) {
