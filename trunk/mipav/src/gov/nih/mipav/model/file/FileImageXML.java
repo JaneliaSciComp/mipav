@@ -603,7 +603,9 @@ public class FileImageXML extends FileXML {
 
             FileRaw rawFile;
 
-            imageFileName = FileUtility.stripExtension(fileName) + ".raw";
+            if (imageFileName == null) {
+            	imageFileName = FileUtility.stripExtension(fileName) + ".raw";
+            }
             
             rawFile = new FileRaw(imageFileName, fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo,
                                   showProgress, FileBase.READ);

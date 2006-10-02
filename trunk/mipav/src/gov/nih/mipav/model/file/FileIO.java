@@ -8043,7 +8043,8 @@ public class FileIO {
             try {
                 progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
-                imageFile = new FileImageXML(UI, fileList[i], fileDir, false);
+                imageFile.setFileName(fileList[i]);
+                //imageFile = new FileImageXML(UI, fileList[i], fileDir, false);
 
                 TalairachTransformInfo talairach = new TalairachTransformInfo();
                 res = ((FileImageXML) imageFile).readHeader(fileList[i], fileDir, talairach);
