@@ -6958,17 +6958,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
 
         /* Get the loop bounds, based on the coordinate-systems: transformation:  */
-        int iBound = dimExtents[ axisOrder[0] ];
-        int jBound = dimExtents[ axisOrder[1] ];
-        int kBound = dimExtents[ axisOrder[2] ];
+        int iBound = (dimExtents.length > 0 ) ? dimExtents[ axisOrder[0] ] : 1;
+        int jBound = (dimExtents.length > 1 ) ? dimExtents[ axisOrder[1] ] : 1;
+        int kBound = (dimExtents.length > 2 ) ? dimExtents[ axisOrder[2] ] : 1;
 
         /* Get the loop multiplication factors for indexing into the 1D array
          * with 3 index variables: based on the coordinate-systems:
          * transformation:  */
         int[] aiFactors = new int[3];
         aiFactors[0] = 1;
-        aiFactors[1] = dimExtents[0];
-        aiFactors[2] = dimExtents[0] * dimExtents[1];
+        aiFactors[1] = (dimExtents.length > 1 ) ? dimExtents[0] : 1;
+        aiFactors[2] = (dimExtents.length > 2 ) ? dimExtents[0] * dimExtents[1] : 1;
 
         int iFactor = aiFactors[ axisOrder[0] ];
         int jFactor = aiFactors[ axisOrder[1] ];
@@ -6980,7 +6980,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
             kIndex = (kBound - 1) - slice;
         }
 
-        int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+        int tFactor = (dimExtents.length > 2 ) ? dimExtents[0] * dimExtents[1] * dimExtents[2] :
+            (dimExtents.length > 1 ) ? dimExtents[0] * dimExtents[1] : (dimExtents.length > 1 ) ? dimExtents[0] : 1;
 
         double real, imaginary, mag;
         float[] fReturn = null;
@@ -7207,6 +7208,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public int getWidth( int orientation )
     {
+        if ( dimExtents.length < 3 )
+        {
+            return dimExtents[0];
+        }
         int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
         return dimExtents[ aiAxisOrder[0] ];
     }
@@ -7219,6 +7224,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public int getHeight( int orientation )
     {
+        if ( dimExtents.length < 3 )
+        {
+            return dimExtents[1];
+        }
         int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
         return dimExtents[ aiAxisOrder[1] ];
     }
@@ -7241,6 +7250,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
         if ( resTemp[2] < fileInfo[index].getSliceSpacing())
         {
             resTemp[2] = fileInfo[index].getSliceSpacing();
+        }
+        /* Do not reorder the resolutions if this is less than a 3D image: */
+        if ( dimExtents.length < 3 )
+        {
+            return resTemp;
         }
 
         float[] resReturn = new float[3];
@@ -7265,6 +7279,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return null;
         }
         float[] originTemp = fileInfo[index].getOrigin();
+        /* Do not reorder the origin if this is less than a 3D image: */
+        if ( dimExtents.length < 3 )
+        {
+            return originTemp;
+        }
         float[] originReturn = new float[3];
         int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
         boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( this, orientation );
@@ -7294,6 +7313,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
             return null;
         }
         int[] unitsTemp = fileInfo[index].getUnitsOfMeasure();
+        /* Do not reorder the units if this is less than a 3D image: */
+        if ( dimExtents.length < 3 )
+        {
+            return unitsTemp;
+        }
+
         int[] unitsReturn = new int[3];
         int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
         for ( int i = 0; i < 3; i++ )
@@ -7312,6 +7337,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * @return dimExtents[] for the image in Patient Coordinates
      */
     public final int[] getExtents( int orientation ) {
+        /* Do not reorder the extents if this is less than a 3D image: */
+        if ( dimExtents.length < 3 )
+        {
+            return dimExtents;
+        }
+
         int[] extentsReturn = new int[3];
         int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
         for ( int i = 0; i < 3; i++ )
@@ -7321,30 +7352,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return extentsReturn;
     }
 
-    /* MipavCoordinateSystems upgrade TODO: : */
     /**
-     * Get the factors needed to iterate through the image volume in
-     * Patient-Coordinates. Can be multiplied against iterators to retreive
-     * the index into the image volume data.
-     * @param orientation, the Patient-Coordinate view for which the
-     * extents are needed:
-     * @return multiples of dimExtents[] for the image in Patient Coordinates
+     * Get the factors needed to iterate through the image volume. Can be
+     * multiplied against iterators to retreive the index into the image
+     * volume data.
+     * @return multiples of dimExtents[] for the image
      */
-    /**
-     *
-     * @return  the steps needed to iterate along the dimensions of the backing image volume data
-     */
-    public int[] getVolumeIterationFactors( int orientation ) {
-        int[] iterationFactors = { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
-        int[] iterationFactorsReturn = new int[3];
-        int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
-        for ( int i = 0; i < 3; i++ )
-        {
-            iterationFactorsReturn[i] = iterationFactors[ aiAxisOrder[i] ];
-        }
-        return iterationFactorsReturn;
-    }
-
     public int[] getVolumeIterationFactors(  ) {
         return new int[] { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
     }

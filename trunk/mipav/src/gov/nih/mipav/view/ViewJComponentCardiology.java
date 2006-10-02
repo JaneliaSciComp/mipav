@@ -634,43 +634,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             return;
         }
 
-        try {
-
-            // System.out.println("imageActive.getFileInfo(0) = " + imageActive.getFileInfo(0));
-            if ((imageActive.getOrigin()[0] != 0) || (imageActive.getOrigin()[1] != 0) ||
-                    (imageActive.getOrigin()[2] != 0)) {
-                String[] values = setScannerPosition( xS, yS, slice );
-
-                if (values != null) {
-                    frame.setMessageText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  " +
-                                         String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]) +
-                                         " Position: " + values[0] + " " + values[1] + " " + values[2]);
-                } else {
-                    frame.setMessageText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  " +
-                                         String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]));
-                }
-
-            } else {
-
-                if (imageActive.isColorImage() == true) {
-                    frame.setMessageText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  R:  " +
-                                         String.valueOf(imageBufferActive[(4 *
-                                                                               ((yS * imageActive.getExtents()[0]) +
-                                                                                    xS)) + 1]) + "  G:  " +
-                                         String.valueOf(imageBufferActive[(4 *
-                                                                               ((yS * imageActive.getExtents()[0]) +
-                                                                                    xS)) + 2]) + "  B:  " +
-                                         String.valueOf(imageBufferActive[(4 *
-                                                                               ((yS * imageActive.getExtents()[0]) +
-                                                                                    xS)) + 3]));
-                } else {
-                    frame.setMessageText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS) + "  Intensity:  " +
-                                         String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]));
-                }
-            }
-        } catch (ArrayIndexOutOfBoundsException error) {
-            frame.setMessageText("  X: " + String.valueOf(xS) + " Y: " + String.valueOf(yS));
-        }
+        setPixelInformationAtLocation(xS, yS);
 
         if ((mouseEvent.getModifiers() & mouseEvent.BUTTON2_MASK) != 0) {
             ViewJFrameTriImage triFrame = imageActive.getTriImageFrame();

@@ -9,9 +9,12 @@ import java.awt.image.*;
 import java.io.*;
 import javax.vecmath.*;
 
-/* MipavCoordinateSystems upgrade */
 /**
- * Renders Slice data in Patient Coordinates for the following classes:
+ * PatientSlice provides oriented access to the ModelImage data for
+ * rendering. The ModelImage data is written into float[] arrays that are then
+ * used as textures for displaying the data as texture-mapped polygons in the
+ * PlaneRender and ViewJComponentTriSliceImage classes or as Renders Slice
+ * data in Patient Coordinates for the following classes:
  * ViewJComponentTriImage, ViewJComponentTriSliceImage, PlaneRender
  */
 public class PatientSlice 
@@ -21,13 +24,14 @@ public class PatientSlice
     private int slice = 0;
     private float[] imageBufferA;
     private float[] imageBufferB;
+    private ModelImage imageActive;
     private ModelImage imageA;
     private ModelImage imageB;
-    private ModelLUT LUTa;
-    private ModelLUT LUTb;
-    private ModelRGB RGBTA;
+    private ModelLUT LUTa = null;
+    private ModelLUT LUTb = null;
+    private ModelRGB RGBTA = null;
+    private ModelRGB RGBTB = null;
     private int[] m_aiRGBIndexBufferA = null;
-    private ModelRGB RGBTB;
     private int[] m_aiRGBIndexBufferB = null;
 
     private float[] m_afNormColor = { 1, 1 };
@@ -75,13 +79,31 @@ public class PatientSlice
                          ModelImage _imageB, ModelLUT _LUTb,
                          int _orientation )
     {
+        imageActive = _imageA;
         imageA = _imageA;
         imageB = _imageB;
         LUTa = _LUTa;
         LUTb = _LUTb;
-
+        
         orientation = _orientation;
         localImageExtents = imageA.getExtents( orientation );
+        if ( localImageExtents.length < 3 )
+        {
+            int[] temp = new int[3];
+            for ( int i = 0; i < localImageExtents.length; i++ )
+            {
+                temp[i] = localImageExtents[i];
+            }
+            for ( int i = localImageExtents.length; i < 3; i++ )
+            {
+                temp[i] = 0;
+            }
+            localImageExtents = new int[3];
+            for ( int i = 0; i < 3; i++ )
+            {
+                localImageExtents[i] = temp[i];
+            }
+        }
         center();
     }
 
@@ -158,13 +180,13 @@ public class PatientSlice
      */
     public boolean updateSlice( int newSlice )
     {
-        if ( newSlice < 0 )
-        {
-            newSlice = 0;
-        }
         if ( newSlice >= localImageExtents[2] )
         {
             newSlice = localImageExtents[2] - 1;
+        }
+        if ( newSlice < 0 )
+        {
+            newSlice = 0;
         }
         if ( newSlice != m_kPatientPoint.z )
         {
@@ -273,6 +295,11 @@ public class PatientSlice
         this.hasThreshold2 = hasThreshold2;
     }
 
+    public void setActiveImage( ModelImage kImage )
+    {
+        this.imageActive = kImage;
+    }
+
     /**
      * Sets imageA.
      *
@@ -348,6 +375,23 @@ public class PatientSlice
      */
     public ModelLUT getLUTb()
     {
+        return LUTb;
+    }
+
+    public ModelStorageBase getActiveLookupTable()
+    {
+        if ( imageActive == imageA )
+        {
+            if ( imageA.isColorImage() )
+            {
+                return RGBTA;
+            }
+            return LUTa;
+        }
+        else if ( (imageB != null) && (imageB.isColorImage()) )
+        {
+            return RGBTB;
+        }
         return LUTb;
     }
 
