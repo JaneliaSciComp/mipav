@@ -2552,7 +2552,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 windowLevel[1].toFront();
             }
         } else if (command.equals("invertLUT")) {
-
             if (getActiveImage() == imageA) {
                 componentImage.getLUTa().invertLUT();
             } else if (getActiveImage() == imageB) {
@@ -2562,8 +2561,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (getActiveImage().getHistoLUTFrame() != null) {
                 getActiveImage().getHistoLUTFrame().update();
             }
-
-            getActiveImage().notifyImageDisplayListeners(null, false);
+            if (getActiveImage() == imageA) {
+                getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), false);
+            } else {
+                getActiveImage().notifyImageDisplayListeners(componentImage.getLUTb(), false);
+            }
         } else if (command.equals("GrayLUT")) {
 
             if (getActiveImage() == imageA) {
