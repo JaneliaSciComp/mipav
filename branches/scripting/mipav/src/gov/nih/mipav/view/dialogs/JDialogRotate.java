@@ -12,8 +12,6 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.util.*;
-
 
 /**
  * Dialog to call the image rotate. This dialog will not be visible because it does not require user input at this time.
@@ -32,9 +30,6 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private boolean doClose = true;
-
     /** Source image for algorithm. */
     private ModelImage image = null;
 
@@ -46,12 +41,6 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
 
     /** Rotation axis. */
     private int rotateAxis;
-
-    /** Needed to set frames to locked. */
-    private String[] titles;
-
-    /** User interface pointer. */
-    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -72,7 +61,6 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
 
         this.rotateAxis = rotateAxis;
         image = im;
-        userInterface = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -106,17 +94,6 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
                 // The image frames are enabled and then registed to the userinterface.
                 resultImage = rotateAlgo.returnImage();
 
-                Vector imageFrames = image.getImageFrameVector();
-
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
-
-                    if ((((Frame) (imageFrames.elementAt(i))) != parentFrame) && (parentFrame != null)) {
-                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-                }
-
                 Point pt;
 
                 if (parentFrame != null) {
@@ -147,41 +124,12 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
                 }
             } else {
 
-                // These next lines set the titles in all frames where the source image is displayed to
-                // image name so as to indicate that the image is now unlocked!
-                // The image frames are enabled and then registered to the userinterface.
-                Vector imageFrames = image.getImageFrameVector();
-
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
-
-                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                    }
-                }
-
-                if (parentFrame != null) {
-                    userInterface.registerFrame(parentFrame);
-                }
-
                 image.notifyImageDisplayListeners(null, true);
             }
 
             if (rotateAlgo.isCompleted() == true) {
                 insertScriptLine();
-
-                if (doClose && !(ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING)) {
-
-                    if (parentFrame != null) {
-                        userInterface.unregisterFrame(parentFrame);
-                        ((ViewJFrameBase) parentFrame).close();
-                    } else {
-                        ((ViewJFrameImage) image.getParentFrame()).close();
-                    }
-                } // if (doClose)
-
-            } // if (rotateAlgo.isCompleted() == true)
+            }
         }
 
         System.gc();
@@ -209,20 +157,6 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
             // Hide dialog
             setVisible(false);
 
-            // These next lines set the titles in all frames where the source image is displayed to
-            // "locked - " image name so as to indicate that the image is now read/write locked!
-            // The image frames are disabled and then unregisted from the userinterface until the
-            // algorithm has completed.
-            Vector imageFrames = image.getImageFrameVector();
-            titles = new String[imageFrames.size()];
-
-            for (int i = 0; i < imageFrames.size(); i++) {
-                titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
-                ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-            }
-
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -230,11 +164,6 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    rotateAlgo.setProgressBarVisible(false);
-                }
-
                 rotateAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -265,13 +194,8 @@ public class JDialogRotate extends JDialogScriptableBase implements AlgorithmInt
      * {@inheritDoc}
      */
     protected void setGUIFromParams() {
-        doClose = false;
         image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
-
-        // TODO: why do we reg the parent frame?  shouldn't it already be registered?
-        userInterface.regFrame(image.getParentFrame());
 
         String axisn = scriptParameters.getParams().getString("rotation_axis");
         int axis;
