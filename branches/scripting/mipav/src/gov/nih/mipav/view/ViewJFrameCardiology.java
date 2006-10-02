@@ -1884,7 +1884,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
     private void initComponentImage(int[] extents) throws OutOfMemoryError {
 
         componentImage = new ViewJComponentCardiology(this, imageA, LUTa, imageBufferA, pixBuffer, zoom, extents,
-                                                      logMagDisplay, ViewJComponentEditImage.NA );
+                                                      logMagDisplay, FileInfoBase.UNKNOWN_ORIENT );
 
         componentImage.setBuffers(imageBufferA, null, pixBuffer, null);
 

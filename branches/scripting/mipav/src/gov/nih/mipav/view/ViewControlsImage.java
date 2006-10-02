@@ -663,7 +663,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
                 return;
             }
 
-            updateFrames(false, 100 - alphaSlider.getValue());
+            updateFrames(true, 100 - alphaSlider.getValue());
         }
     }
 

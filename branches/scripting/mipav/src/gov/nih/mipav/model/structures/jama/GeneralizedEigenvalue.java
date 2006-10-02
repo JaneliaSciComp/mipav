@@ -1,9 +1,6 @@
 package gov.nih.mipav.model.structures.jama;
 
 
-import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.structures.jama.util.*;
-
 import gov.nih.mipav.view.*;
 
 
@@ -46,12 +43,12 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      * There are basically 2 problems with Java precision. 1.) The Intel Pentium uses 80 bit numbers in floating point
      * registers.  However, Java must round each number back to 64 bits whenever a Java variable is assigned.  There
      * used to be a proposal to introduce a special keyword extendedfp to fully use whatever math the platform had, but
-     * it didn’t get thru.  Apparently the Java designers felt for Java being consistent is more important than being
+     * it didn't get thru.  Apparently the Java designers felt for Java being consistent is more important than being
      * successful. 2.) Java also forbids the use of fused multiply-add (FMA) operations.  This operation computes the
      * quantity ax + y as a single floating-point operation.  Operations of this type are found in many
      * compute-intensive applications, particularly matrix operations. With this instruction, only a single rounding
      * occurs for the two arithmetic operations, yielding a more accurate result in less time than would be required for
-     * two separate operations.  Java’s strict language definition does not permit use of FMAs and thus sacrifices up to
+     * two separate operations.  Java's strict language definition does not permit use of FMAs and thus sacrifices up to
      * 50% of performance on some platforms.
      *
      * The only obvious cure for this problem would be to use the Java BigDecimal class.  However, the use of BigDecimal
@@ -4535,11 +4532,11 @@ loop1:           {
                 // Compute "A"
                 // Control parameters:
                 /*         kmagn  kmode        ktype
-                 *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential
-                 * (none)   = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
+                 *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential (none)
+                 *   = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
                  * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8
-                 *               random symmetric   = 9                      positive definite   = 10
-                 *  diagonally dominant tridiagonal
+                 *       random symmetric   = 9                      positive definite   = 10 diagonally dominant
+                 * tridiagonal
                  */
 
                 if (mtypes <= maxtyp) {
@@ -6539,10 +6536,10 @@ loop1:           {
                 // Compute "A"
                 // Control parameters:
                 /*         kmagn  kmode        ktype
-                 *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential
-                 * (none)   = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
+                 *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential (none)
+                 *   = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
                  * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8
-                 *               random symmetric   = 9                      band symmetric, w/ eigenvalues
+                 *       random symmetric   = 9                      band symmetric, w/ eigenvalues
                  */
 
                 if (mtypes <= maxtyp) {

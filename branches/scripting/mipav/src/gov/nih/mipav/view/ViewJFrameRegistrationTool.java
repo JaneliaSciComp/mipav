@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
@@ -2336,7 +2337,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             // Create the componentImage to be displayed in the blended window (with alpha sliding)
             componentImage = new ViewJComponentRegistration(this, imageA, LUTa, imageBufferA, imageB, LUTb,
                                                             imageBufferB, pixBuffer, 1, newExtents, logMagDisplay,
-                                                            ViewJComponentBase.NA, newAlphaBlend);
+                                                            FileInfoBase.UNKNOWN_ORIENT, newAlphaBlend);
 
             if (imageA.isColorImage()) {
                 componentImage.setRGBTA(RGBa);
@@ -2349,14 +2350,14 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
             // Create the componentImageA which will be the reference image in the dual window
             componentImageA = new ViewJComponentSingleRegistration(this, imageA, LUTa, imageBufferA, pixBufferCompA, 1,
-                                                                   newExtents, logMagDisplay, ViewJComponentBase.NA,
+                                                                   newExtents, logMagDisplay, FileInfoBase.UNKNOWN_ORIENT,
                                                                    true);
 
             componentImageA.setBuffers(imageBufferA, null, pixBufferCompA, null);
 
             // Create the componentImageB which will be the adjusted image in the dual window
             componentImageB = new ViewJComponentSingleRegistration(this, imageB, LUTb, imageBufferB, pixBufferCompA, 1,
-                                                                   newExtents, logMagDisplay, ViewJComponentBase.NA,
+                                                                   newExtents, logMagDisplay, FileInfoBase.UNKNOWN_ORIENT,
                                                                    false);
 
             componentImageB.setBuffers(imageBufferA, null, pixBufferCompB, null);

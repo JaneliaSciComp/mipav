@@ -83,6 +83,9 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
     private boolean do25D = false;
 
     /** DOCUMENT ME! */
+    private boolean doRotateCenter;
+
+    /** DOCUMENT ME! */
     private boolean doTalairach = false;
 
     /** DOCUMENT ME! */
@@ -708,9 +711,13 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 invertCheckbox.setEnabled(false);
                 rotCenter.setEnabled(false);
                 rotOrigin.setEnabled(false);
+                padRadio.setEnabled(false);
+                cropRadio.setEnabled(false);
             } else {
                 rotCenter.setEnabled(true);
                 rotOrigin.setEnabled(true);
+                padRadio.setEnabled(true);
+                cropRadio.setEnabled(true);
             }
         } else if (source == padRadio) {
 
@@ -1099,6 +1106,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
      * Calls the algorithm with the set variables.
      */
     protected void callAlgorithm() {
+        Point3Df center;
 
         if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
             xfrm.invert();
@@ -1126,6 +1134,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                                                doClip, doPad);
             algoTrans.setPadValue(padValue);
             algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+        }
+
+        if (doRotateCenter) { // rotate about center of image
+            center = resampleImage.getImageCentermm();
+            algoTrans.setDoCenter(true);
+            algoTrans.setCenter(center);
         }
 
         // This is very important. Adding this object as a listener allows
@@ -1165,12 +1179,14 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
      */
     protected void setGUIFromParams() {
         image = scriptParameters.retrieveInputImage();
+        resampleImage = image;
         userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
 
         interp = scriptParameters.getParams().getInt("interpolation_type");
         doVOI = scriptParameters.getParams().getBoolean("do_transform_VOIs");
         doClip = scriptParameters.getParams().getBoolean("do_clip_output");
+        doRotateCenter = scriptParameters.getParams().getBoolean("do_rotate_about_center");
         doTalairach = scriptParameters.getParams().getBoolean("do_talairach_transform");
 
         if (doTalairach) {
@@ -1284,6 +1300,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation_type", interp));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_transform_VOIs", doVOI));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_clip_output", doClip));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_rotate_about_center", doRotateCenter));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_talairach_transform", doTalairach));
 
         if (doTalairach) {
@@ -1769,7 +1786,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         cropOrPad = new ButtonGroup();
         cropRadio = new JRadioButton("Retain original image size", true);
         cropRadio.setFont(serif12);
-        cropRadio.setEnabled(true);
+        cropRadio.setEnabled(false);
         cropOrPad.add(cropRadio);
         optionPanel.add(cropRadio);
         cropRadio.addItemListener(this);
@@ -1777,7 +1794,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         padRadio = new JRadioButton("Pad image to include entire original image", false);
         padRadio.setFont(serif12);
-        padRadio.setEnabled(true);
+        padRadio.setEnabled(false);
         cropOrPad.add(padRadio);
         padRadio.addItemListener(this);
         padRadio.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -1849,7 +1866,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         rotationAxisGroup = new ButtonGroup();
         rotOrigin = new JRadioButton("Origin", true);
         rotOrigin.setFont(serif12);
-        rotOrigin.setEnabled(true);
+        rotOrigin.setEnabled(false);
         rotationAxisGroup.add(rotOrigin);
         optionPanel.add(rotOrigin);
         rotOrigin.addItemListener(this);
@@ -1857,7 +1874,7 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
 
         rotCenter = new JRadioButton("Center", false);
         rotCenter.setFont(serif12);
-        rotCenter.setEnabled(true);
+        rotCenter.setEnabled(false);
         rotationAxisGroup.add(rotCenter);
         rotCenter.addItemListener(this);
         // rotCenter.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -2960,7 +2977,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         int iXdim, iYdim, iZdim = 0;
         float iXres, iYres, iZres = 1.f;
         double Tx = 0, Ty = 0, Tz = 0, Rx, Ry, Rz, Sx, Sy, Sz, SKx, SKy, SKz;
-        Point3Df center = null;
         float fovX = 0.f, fovY = 0.f, fovZ = 0.f;
 
         int boxIndex = comboBoxInterp.getSelectedIndex();
@@ -3177,15 +3193,12 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
         }
 
         // TRANSFORMATION MATRIX INFO
-        if (rotCenter.isSelected()) { // rotate about center of image
-            center = resampleImage.getImageCentermm();
-
-            if ((image.getNDims() >= 3) && (!do25D)) {
-                xfrm.setTranslate(center.x, center.y, center.z);
-            } else { // (image.getNDims() == 2) || do25D
-                xfrm.setTranslate(center.x, center.y);
-            }
-        }
+        /*if (rotCenter.isSelected()) { // rotate about center of image
+         *  Note that when rotation around the center is selected, this operation now occurs in
+         * AlgorithmTransform.transform(). center = resampleImage.getImageCentermm();
+         *
+         * if ((image.getNDims() >= 3) && (!do25D)) {     xfrm.setTranslate(center.x, center.y, center.z); } else { //
+         * (image.getNDims() == 2) || do25D     xfrm.setTranslate(center.x, center.y); }}*/
 
         if (fileMatrix.isSelected()) { // read matrix from file
 
@@ -3401,18 +3414,16 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
             Preferences.debug("oRes = " + oXres + ", " + oYres + ", " + oZres);
         }
 
-        if (rotCenter.isSelected()) { // rotate about center of image
-
-            if ((image.getNDims() >= 3) && (!do25D)) {
-                center = image.getImageCentermm();
-                xfrm.setTranslate(-center.x, -center.y, -center.z);
-            } else { // ((image.getNDims() ==2) || (do25D))
-                center = image.getImageCentermm();
-                xfrm.setTranslate(-center.x, -center.y);
-            }
-        }
+        /*if (rotCenter.isSelected()) { // rotate about center of image
+         *  Note that when rotation around the center is selected, this operation now occurs in
+         * AlgorithmTransform.transform(). if ((image.getNDims() >= 3) && (!do25D)) {     center =
+         * image.getImageCentermm();     xfrm.setTranslate(-center.x, -center.y, -center.z); } else { //
+         * ((image.getNDims() ==2) || (do25D))     center = image.getImageCentermm();     xfrm.setTranslate(-center.x,
+         * -center.y); }}*/
 
         Preferences.debug(xfrm + "\n");
+
+        doRotateCenter = rotCenter.isSelected();
 
         return true;
     }

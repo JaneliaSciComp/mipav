@@ -1149,7 +1149,7 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
 
         ViewJComponentEditImage imgComp = new ViewJComponentEditImage(frame, img, imgLUT, imageBuf, null, null, null,
                                                                       pixBuf, imgZoom, extents, img.getLogMagDisplay(),
-                                                                      ViewJComponentEditImage.NA );
+                                                                      FileInfoBase.UNKNOWN_ORIENT );
 
         imgComp.setBuffers(imageBuf, null, pixBuf, null);
 

@@ -7,10 +7,14 @@ import gov.nih.mipav.model.structures.*;
 
 import java.awt.image.*;
 import java.io.*;
+import javax.vecmath.*;
 
-/* MipavCoordinateSystems upgrade */
 /**
- * Renders Slice data in Patient Coordinates for the following classes:
+ * PatientSlice provides oriented access to the ModelImage data for
+ * rendering. The ModelImage data is written into float[] arrays that are then
+ * used as textures for displaying the data as texture-mapped polygons in the
+ * PlaneRender and ViewJComponentTriSliceImage classes or as Renders Slice
+ * data in Patient Coordinates for the following classes:
  * ViewJComponentTriImage, ViewJComponentTriSliceImage, PlaneRender
  */
 public class PatientSlice 
@@ -20,12 +24,30 @@ public class PatientSlice
     private int slice = 0;
     private float[] imageBufferA;
     private float[] imageBufferB;
+    private ModelImage imageActive;
     private ModelImage imageA;
     private ModelImage imageB;
-    private ModelLUT LUTa;
-    private ModelLUT LUTb;
-    private ModelRGB RGBTA;
-    private ModelRGB RGBTB;
+    private ModelLUT LUTa = null;
+    private ModelLUT LUTb = null;
+    private ModelRGB RGBTA = null;
+    private ModelRGB RGBTB = null;
+    private int[] m_aiRGBIndexBufferA = null;
+    private int[] m_aiRGBIndexBufferB = null;
+
+    private float[] m_afNormColor = { 1, 1 };
+    private Color3f[] m_akOffset = { new Color3f( 0.0f, 0.0f, 0.0f ), 
+                                     new Color3f( 0.0f, 0.0f, 0.0f ) };
+
+    private boolean useBlueThreshold = false;
+    private boolean useGreenThreshold = false;
+    private boolean useRedThreshold = false;
+    private float threshold1;
+    private float threshold2;
+    private boolean hasThreshold1 = false;
+    private boolean hasThreshold2 = false;
+    private ModelImage imageColocalize;
+    private float[] imageBufferColocalize;
+
 
     /** This indicates which of the 3 tri-image components we are currently
      * in; either AXIAL, SAGITTAL, or CORONAL. */
@@ -40,29 +62,48 @@ public class PatientSlice
     private Point3Df[] m_kFourCorners = new Point3Df[4];
     private boolean m_bShowDiagonal = false;
 
+    private boolean m_bUpdateImage = true;
+
+    private float[] m_afMask = null;
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      *
      * @param  _imageA                   Model of the image that will be displayed
      * @param  _LUTa                     LUT used to display imageA
-     * @param  imgBufferA                storage buffer used to display imageA
      * @param  _imageB                   Model of the image that will be displayed
      * @param  _LUTb                     LUT used to display imageB
-     * @param  imgBufferB                storage buffer used to display imageB
      * @param  _orientation  display orientation of the image
      */
-    public PatientSlice(ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
-                 ModelImage _imageB, ModelLUT _LUTb, float[] imgBufferB, int _orientation )
+    public PatientSlice( ModelImage _imageA, ModelLUT _LUTa,
+                         ModelImage _imageB, ModelLUT _LUTb,
+                         int _orientation )
     {
+        imageActive = _imageA;
         imageA = _imageA;
         imageB = _imageB;
         LUTa = _LUTa;
         LUTb = _LUTb;
-
+        
         orientation = _orientation;
         localImageExtents = imageA.getExtents( orientation );
-        setBuffers( imgBufferA, imgBufferB );
+        if ( localImageExtents.length < 3 )
+        {
+            int[] temp = new int[3];
+            for ( int i = 0; i < localImageExtents.length; i++ )
+            {
+                temp[i] = localImageExtents[i];
+            }
+            for ( int i = localImageExtents.length; i < 3; i++ )
+            {
+                temp[i] = 0;
+            }
+            localImageExtents = new int[3];
+            for ( int i = 0; i < 3; i++ )
+            {
+                localImageExtents[i] = temp[i];
+            }
+        }
         center();
     }
 
@@ -93,7 +134,12 @@ public class PatientSlice
 
         MipavCoordinateSystems.FileToPatient( m_kFilePoint, m_kPatientPoint,
                                               imageA, orientation );
+        if ( slice == (int)m_kPatientPoint.z )
+        {
+            return;
+        }
         slice = (int)m_kPatientPoint.z;
+        m_bUpdateImage = true;
     }
 
     /**
@@ -116,6 +162,8 @@ public class PatientSlice
      */
     public Point3Df getCenter()
     {
+        MipavCoordinateSystems.PatientToFile( m_kPatientPoint, m_kFilePoint,
+                                              imageA, orientation );
         return new Point3Df( m_kFilePoint.x,
                              m_kFilePoint.y,
                              m_kFilePoint.z );
@@ -132,18 +180,20 @@ public class PatientSlice
      */
     public boolean updateSlice( int newSlice )
     {
-        if ( newSlice < 0 )
-        {
-            newSlice = 0;
-        }
         if ( newSlice >= localImageExtents[2] )
         {
             newSlice = localImageExtents[2] - 1;
         }
+        if ( newSlice < 0 )
+        {
+            newSlice = 0;
+        }
         if ( newSlice != m_kPatientPoint.z )
         {
             m_kPatientPoint.z = newSlice;
+            slice = newSlice;
             MipavCoordinateSystems.PatientToFile( m_kPatientPoint, m_kFilePoint, imageA, orientation );
+            m_bUpdateImage = true;
             return true;
         }
         return false;
@@ -178,10 +228,17 @@ public class PatientSlice
                 }
                 else
                 {
-                     m_kFourCorners[i] = new Point3Df( fourCorners[i].x,
-                                                       fourCorners[i].y,
-                                                       fourCorners[i].z  );
-                     m_bShowDiagonal = true;
+                    if ( m_kFourCorners[i] != null )
+                    {
+                        if ( !m_kFourCorners[i].equals( fourCorners[i] ) )
+                        {
+                            m_bUpdateImage = true;
+                        }
+                    }
+                    m_kFourCorners[i] = new Point3Df( fourCorners[i].x,
+                                                      fourCorners[i].y,
+                                                      fourCorners[i].z  );
+                    m_bShowDiagonal = true;
                 }
             }
         }
@@ -197,6 +254,83 @@ public class PatientSlice
     }
 
     /**
+     * Sets the booleans for using thresholds in showUsingOrientation.
+     *
+     * @param  useRedThreshold    whether to threshold the red paint buffer
+     * @param  useGreenThreshold  whether to threshold the green paint buffer
+     * @param  useBlueThreshold   whether to threshold the blue paint buffer
+     */
+    public void setThresholdColors(boolean useRedThreshold, boolean useGreenThreshold, boolean useBlueThreshold) {
+        this.useRedThreshold = useRedThreshold;
+        this.useGreenThreshold = useGreenThreshold;
+        this.useBlueThreshold = useBlueThreshold;
+    }
+
+    /**
+     * Sets the thresholds.
+     *
+     * @param  threshold1  the first threshold
+     * @param  threshold2  the second threshold
+     */
+    public void setThresholds(float threshold1, float threshold2) {
+        this.threshold1 = threshold1;
+        this.threshold2 = threshold2;
+    }
+
+    /**
+     * Sets the hasThreshold1 for setPaintBuffers.
+     *
+     * @param  hasThreshold1  whether the paint buffer has a threshold1
+     */
+    public void setHasThreshold1(boolean hasThreshold1) {
+        this.hasThreshold1 = hasThreshold1;
+    }
+
+    /**
+     * Sets the hasThreshold2 for setPaintBuffers.
+     *
+     * @param  hasThreshold2  whether the paint buffer has a threshold2
+     */
+    public void setHasThreshold2(boolean hasThreshold2) {
+        this.hasThreshold2 = hasThreshold2;
+    }
+
+    public void setActiveImage( ModelImage kImage )
+    {
+        this.imageActive = kImage;
+    }
+
+    /**
+     * Sets imageA.
+     *
+     * @param  image  imageA
+     */
+    public void setImageA(ModelImage image)
+    {
+        this.imageA = image;
+    }
+
+    /**
+     * Sets imageB.
+     *
+     * @param  image  imageB
+     */
+    public void setImageB(ModelImage image)
+    {
+        this.imageB = image;
+    }
+
+    /**
+     * Sets the colocalize image.
+     *
+     * @param  imageColocalize  the colocalization image
+     */
+    public void setImageColocalize(ModelImage imageColocalize)
+    {
+        this.imageColocalize = imageColocalize;
+    }
+
+    /**
      * Accessor that sets the LUT for image A.
      *
      * @param  LUT  The LUT.
@@ -206,6 +340,7 @@ public class PatientSlice
         if ( LUT != null )
         {
             LUTa = LUT;
+            m_bUpdateImage = true;
         }
     }
 
@@ -219,6 +354,7 @@ public class PatientSlice
         if ( LUT != null )
         {
             LUTb = LUT;
+            m_bUpdateImage = true;
         }
     }
 
@@ -242,6 +378,43 @@ public class PatientSlice
         return LUTb;
     }
 
+    public ModelStorageBase getActiveLookupTable()
+    {
+        if ( imageActive == imageA )
+        {
+            if ( imageA.isColorImage() )
+            {
+                return RGBTA;
+            }
+            return LUTa;
+        }
+        else if ( (imageB != null) && (imageB.isColorImage()) )
+        {
+            return RGBTB;
+        }
+        return LUTb;
+    }
+
+    /**
+     * Accessor that returns the RGBT for image A.
+     *
+     * @return  RGBTA
+     */
+    public ModelRGB getRGBTa()
+    {
+        return RGBTA;
+    }
+
+    /**
+     * Accessor that returns the RGBT for image B.
+     *
+     * @return  RGBTB
+     */
+    public ModelRGB getRGBTb()
+    {
+        return RGBTB;
+    }
+
 
     /**
      * Causes the data to be redrawn with new RGBTA values:
@@ -251,16 +424,69 @@ public class PatientSlice
     public void setRGBTA(ModelRGB RGBT)
     {
         RGBTA = RGBT;
+        if (RGBTA != null)
+        {
+            m_aiRGBIndexBufferA = RGBTA.exportIndexedRGB();
+        }
+        if ( imageA != null )
+        {
+            calcMaxNormColors( imageA, 0 );
+        }
+        m_bUpdateImage = true;
     }
 
     /**
-     * Causes the data to be redrawn with new RGBTA values:
+     * Causes the data to be redrawn with new RGBTB values:
      *
      * @param  RGBT  DOCUMENT ME!
      */
     public void setRGBTB(ModelRGB RGBT)
     {
         RGBTB = RGBT;
+        if ( RGBTB != null )
+        {
+            m_aiRGBIndexBufferB = RGBTB.exportIndexedRGB();
+        }
+        if ( imageB != null )
+        {
+            calcMaxNormColors( imageB, 1 );
+        }
+        m_bUpdateImage = true;
+    }
+
+    private void calcMaxNormColors( ModelImage kImage, int index )
+    {
+        float fMaxColor = 255;
+        if (kImage.getType() == ModelStorageBase.ARGB_USHORT) {
+            fMaxColor = (float) kImage.getMaxR();
+            fMaxColor = Math.max((float) kImage.getMaxG(), fMaxColor);
+            fMaxColor = Math.max((float) kImage.getMaxB(), fMaxColor);
+        } else if (kImage.getType() == ModelStorageBase.ARGB_FLOAT) {
+
+            if (kImage.getMinR() < 0.0) {
+                fMaxColor = (float) (kImage.getMaxR() - kImage.getMinR());
+                m_akOffset[index].x = (float) (-kImage.getMinR());
+            } else {
+                fMaxColor = (float) kImage.getMaxR();
+            }
+
+            if (kImage.getMinG() < 0.0) {
+                fMaxColor = Math.max((float) (kImage.getMaxG() - kImage.getMinG()), fMaxColor);
+                m_akOffset[index].y= (float) (-kImage.getMinG());
+            } else {
+                fMaxColor = Math.max((float) kImage.getMaxG(), fMaxColor);
+            }
+
+            if (kImage.getMinB() < 0.0) {
+                fMaxColor = Math.max((float) (kImage.getMaxB() - kImage.getMinB()), fMaxColor);
+                m_akOffset[index].z = (float) (-kImage.getMinB());
+            } else {
+                fMaxColor = Math.max((float) kImage.getMaxB(), fMaxColor);
+            }
+        }
+
+        m_afNormColor[index] = 255 / fMaxColor;
+
     }
 
 
@@ -283,7 +509,8 @@ public class PatientSlice
      *
      * @return  The orientation, either AXIAL, SAGITTAL, or CORONAL.
      */
-    public int getOrientation() {
+    public int getOrientation()
+    {
         return orientation;
     }
 
@@ -291,245 +518,193 @@ public class PatientSlice
      * For generating the display of 1 or 2 RGB images.
      *
      * @param   tSlice     t (time) slice to show
-     * @return  boolean to indicate if the show was successful
-     */
-    private boolean showUsingOrientation( int[] bufferA, int[] bufferB )
-    {
-        // Note that alphaBlending is applied with 1 component taken as zero if both components are not present -for
-        // example, if either imageA or imageB but not both has red, then the red component is alphaBlended with zero.
-
-
-        float redMapped, greenMapped, blueMapped;
-        int[] RGBIndexBufferA = null;
-        int[] RGBIndexBufferB = null;
-
-        if (RGBTA != null) {
-            RGBIndexBufferA = RGBTA.exportIndexedRGB();
-        }
-
-        if ((imageB != null) && (RGBTB != null)) {
-            RGBIndexBufferB = RGBTB.exportIndexedRGB();
-        }
-
-        if ( imageBufferA == null )
-        {
-            imageBufferA = new float[ localImageExtents[0] * localImageExtents[1] * 4 ];
-        }
-        if ( (imageB != null) && (imageBufferB == null) )
-        {
-            imageBufferB = new float[ localImageExtents[0] * localImageExtents[1] * 4 ];
-        }
-        fillImageBuffer(slice);
-    
-        if (imageB == null) {
-
-            for ( int j = 0; j < localImageExtents[1]; j++ )
-            {
-                for ( int i = 0; i < localImageExtents[0]; i++ )
-                {
-                    int ind4 = (j * localImageExtents[0]) + i;
-                    int index = 4 * ind4;
-
-                    if (RGBTA != null)
-                    {
-                        if (RGBTA.getROn()) {
-                            redMapped = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
-                        } else {
-                            redMapped = 0;
-                        }
-                        if (RGBTA.getGOn()) {
-                            greenMapped = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
-                        } else {
-                            greenMapped = 0;
-                        }
-                        if (RGBTA.getBOn()) {
-                            blueMapped = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
-                        } else {
-                            blueMapped = 0;
-                        }
-                    } 
-                    else {
-                        redMapped = imageBufferA[index + 1];
-                        greenMapped = imageBufferA[index + 2];
-                        blueMapped = imageBufferA[index + 3];
-                    }
-
-                    int pixValue = 0xff000000 |
-                        (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
-                    bufferA[ind4] = pixValue;
-                } 
-            } 
-        } 
-        else
-        {
-            for ( int j = 0; j < localImageExtents[1]; j++ )
-            {
-                for ( int i = 0; i < localImageExtents[0]; i++ )
-                {
-                    int ind4 = (j * localImageExtents[0]) + i;
-                    int index = 4 * ind4;
-
-                    int Ra = 0;
-                    int Rb = 0;
-                    int Ga = 0;
-                    int Gb = 0;
-                    int Ba = 0;
-                    int Bb = 0;
-
-                    if ((RGBTA != null) && (RGBTB != null)) {
-
-                        if (RGBTA.getROn()) {
-                            Ra = (RGBIndexBufferA[(int) imageBufferA[index + 1]] & 0x00ff0000) >> 16;
-                        } 
-
-                        if (RGBTA.getGOn()) {
-                            Rb = (RGBIndexBufferB[(int) imageBufferB[index + 1]] & 0x00ff0000) >> 16;
-                        }
-
-                        if (RGBTA.getBOn()) {
-                            Ga = (RGBIndexBufferA[(int) imageBufferA[index + 2]] & 0x0000ff00) >> 8;
-                        } 
-
-                        if (RGBTB.getROn()) {
-                            Gb = (RGBIndexBufferB[(int) imageBufferB[index + 2]] & 0x0000ff00) >> 8;
-                        }
-
-                        if (RGBTB.getGOn()) {
-                            Ba = (RGBIndexBufferA[(int) imageBufferA[index + 3]] & 0x000000ff);
-                        }
-
-                        if (RGBTB.getBOn()) {
-                            Bb = (RGBIndexBufferB[(int) imageBufferB[index + 3]] & 0x000000ff);
-                        } 
-                    }
-                    else {
-                        Ra = (int) imageBufferA[index + 1];
-                        Rb = (int) imageBufferB[index + 1];
-                        Ga = (int) imageBufferA[index + 2];
-                        Gb = (int) imageBufferB[index + 2];
-                        Ba = (int) imageBufferA[index + 3];
-                        Bb = (int) imageBufferB[index + 3];
-                    }
-
-                    int pixValueA = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                    int pixValueB = 0xff000000 | (Rb << 16) | (Gb << 8) | Bb;
-                    bufferA[ind4] = pixValueA;
-                    bufferB[ind4] = pixValueB;
-                } 
-            } 
-        } 
-        return true;
-    }
-
-
-    /**
-     * For generating the display of 1 or 2 RGB images.
-     *
-     * @param   tSlice     t (time) slice to show
      *
      * @return  boolean to indicate if the show was successful
      */
-    public boolean showUsingOrientation(int tSlice, int[] bufferA, int[] bufferB )
+    public boolean showUsingOrientation(int tSlice, int[] bufferA, int[] bufferB, boolean forceShow,
+                                        boolean bBlend, float fAlpha, boolean bShowMask )
     {
-
-        int lutHeightA = 0;
-        float[][] RGB_LUTa = null, RGB_LUTb = null;
-        int[][] iRGB_LUTa = null, iRGB_LUTb = null;
-        int[] lutBufferRemapped;
-
-        if (imageA.getNDims() < 4) {
-            timeSliceA = 0;
-        } else {
-            timeSliceA = tSlice;
-        }
-        
-        if ((imageB != null) && (imageB.getNDims() < 4)) {
-            timeSliceB = 0;
-        } else {
-            timeSliceB = tSlice;
-        }
-
-        if (imageA.isColorImage() == true) {
-            // call the show method for displaying RGB images
-            return (showUsingOrientation( bufferA, bufferB ));
-        }
-        
-        if ( (imageA == null) || (LUTa == null) )
+        if ( !m_bUpdateImage && !forceShow || (imageA == null) )
         {
             return false;
         }
-        
-        lutHeightA = LUTa.getExtents()[1];
-        lutBufferRemapped = new int[lutHeightA];
-        
-        if (imageB != null) {
-            RGB_LUTa = LUTa.exportRGB_LUT(true);
-            RGB_LUTb = LUTb.exportRGB_LUT(true);
-            iRGB_LUTa = new int[3][RGB_LUTa[0].length];
-            iRGB_LUTb = new int[3][RGB_LUTb[0].length];
+        //System.err.println( "PatientSlice: " + orientation + " " + slice + " " + m_bUpdateImage + " " + forceShow + " " + bBlend);
+
+        timeSliceA = (imageA.getNDims() < 4) ? 0 : tSlice;
+        if ( imageB != null )
+        {
+            timeSliceB = (imageB.getNDims() < 4) ? 0 : tSlice;
+        }
+
+        if (imageA.isColorImage() == true)
+        {
+            Color4f colorMappedA = new Color4f();
+            Color4f colorMappedB = null;
             
-            for (int c = 0; c < RGB_LUTa[0].length; c++) {
-                iRGB_LUTa[0][c] = (int) (RGB_LUTa[0][c] + 0.5f);
-                iRGB_LUTb[0][c] = (int) (RGB_LUTb[0][c] + 0.5f);
-                iRGB_LUTa[1][c] = (int) (RGB_LUTa[1][c] + 0.5f);
-                iRGB_LUTb[1][c] = (int) (RGB_LUTb[1][c] + 0.5f);
-                iRGB_LUTa[2][c] = (int) (RGB_LUTa[2][c] + 0.5f);
-                iRGB_LUTb[2][c] = (int) (RGB_LUTb[2][c] + 0.5f);
+            if (imageB != null)
+            {
+                colorMappedB = new Color4f();
             }
-        } else {
-            LUTa.exportIndexedLUT(lutBufferRemapped);
-        }
-
-        if ( imageBufferA == null )
-        {
-            imageBufferA = new float[ localImageExtents[0] * localImageExtents[1] ];
-        }
-        if ( (imageB != null) && (imageBufferB == null) )
-        {
-            imageBufferB = new float[ localImageExtents[0] * localImageExtents[1] ];
-        }
-        fillImageBuffer(slice);
-
-        if (imageB == null) {
-            TransferFunction tf_imgA = LUTa.getTransferFunction();
+            
+            fillImageBuffer(slice);
+            
             for ( int j = 0; j < localImageExtents[1]; j++ )
             {
                 for ( int i = 0; i < localImageExtents[0]; i++ )
                 {
-                    int index = (j * localImageExtents[0]) + i;
-                    int pixValueA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                    bufferA[index] = lutBufferRemapped[pixValueA];
+                    int ind4 = (j * localImageExtents[0]) + i;
+                    int index = 4 * ind4;
+                    int pixValue;                    
+                    getColorMapped( RGBTA, m_aiRGBIndexBufferA, 0, imageBufferA, index, colorMappedA );
+                    /* Get imageB color and blend if necessary: */
+                    if ( imageB != null )
+                    {
+                        getColorMapped( RGBTB, m_aiRGBIndexBufferB, 1, imageBufferB, index, colorMappedB );
+                        if ( bBlend )
+                        {
+                            colorMappedA.x = fAlpha * colorMappedA.x + (1.0f - fAlpha) * colorMappedB.x;
+                            colorMappedA.y = fAlpha * colorMappedA.y + (1.0f - fAlpha) * colorMappedB.y;
+                            colorMappedA.z = fAlpha * colorMappedA.z + (1.0f - fAlpha) * colorMappedB.z;
+                        }
+                        else
+                        {
+                            pixValue = 0xff000000 |
+                                ((int) (colorMappedB.x) << 16) |
+                                ((int) (colorMappedB.y) <<  8) |
+                                ((int) (colorMappedB.z) );
+                            bufferB[ind4] = pixValue;
+                        }
+                    }
+                    /* Blend in the surface mask if necessary: */
+                    if ( bShowMask && (m_afMask != null) )
+                    {
+                        if ( (m_afMask[index] != 0) &&
+                             ((m_afMask[index + 1] != 0) ||
+                              (m_afMask[index + 2] != 0) ||
+                              (m_afMask[index + 3] != 0)) )
+                        {
+                            colorMappedA.x = m_afMask[index] * m_afMask[index + 1] + (1.0f - m_afMask[index]) * colorMappedA.x;
+                            colorMappedA.y = m_afMask[index] * m_afMask[index + 2] + (1.0f - m_afMask[index]) * colorMappedA.y;
+                            colorMappedA.z = m_afMask[index] * m_afMask[index + 3] + (1.0f - m_afMask[index]) * colorMappedA.z;
+                        }
+                    }
+                    pixValue = 0xff000000 |
+                        ((int) (colorMappedA.x) << 16) |
+                        ((int) (colorMappedA.y) <<  8) |
+                        ((int) (colorMappedA.z) );
+                    bufferA[ind4] = pixValue;
                 } 
             } 
-        } 
-        else if ( imageB != null )
+        }
+        else if ( LUTa != null )
         {
-            TransferFunction tf_imgA = LUTa.getTransferFunction();
-            TransferFunction tf_imgB = LUTb.getTransferFunction();
+            float[][] RGB_LUTa = null;
+            float[][] RGB_LUTb = null;
+            int[] lutBufferRemapped = null;;
             
+            TransferFunction tf_imgA = LUTa.getTransferFunction();
+            TransferFunction tf_imgB = null;
+
+            if (imageB != null)
+            {
+                RGB_LUTa = LUTa.exportRGB_LUT(true);
+                RGB_LUTb = LUTb.exportRGB_LUT(true);
+                tf_imgB = LUTb.getTransferFunction();
+            }
+            else
+            {
+                int lutHeightA = LUTa.getExtents()[1];
+                lutBufferRemapped = new int[lutHeightA];
+                LUTa.exportIndexedLUT(lutBufferRemapped);
+            }
+            
+            fillImageBuffer(slice);
+
+            float imageMinA = (float)Math.min( 0, imageA.getMin() );
+
             for ( int j = 0; j < localImageExtents[1]; j++ )
             {
                 for ( int i = 0; i < localImageExtents[0]; i++ )
                 {
-                    int index = (j * localImageExtents[0]) + i;
-                    
-                    int indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                    int indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[index], 256) + 0.5f);
-                    
-                    int Ra = iRGB_LUTa[0][indexA];
-                    int Ga = iRGB_LUTa[1][indexA];
-                    int Ba = iRGB_LUTa[2][indexA];
-                    
-                    int pixValueA = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                    int pixValueB = (0xff000000) | ((int) (RGB_LUTb[0][indexB]) << 16) |
-                        ((int) (RGB_LUTb[1][indexB]) << 8) |
-                        (int) (RGB_LUTb[2][indexB]);
-                    
-                    bufferA[index] = pixValueA;
-                    bufferB[index] = pixValueB;
+                    int ind4 = (j * localImageExtents[0]) + i;
+                    int index = 4 * ind4;
+
+                    if ( hasThreshold1 )
+                    {
+                        if ((imageBufferA[i] < threshold1) ||
+                            (imageBufferColocalize[i] < threshold2))
+                        {
+                            imageBufferA[i] = imageMinA;
+                        }
+                    }
+                    else if (hasThreshold2)
+                    {
+                        if ((imageBufferColocalize[i] < threshold1) ||
+                            (imageBufferA[i] < threshold2)) {
+                            imageBufferA[i] = imageMinA;
+                        }
+                    }
+
+                    if (imageB == null) {
+                        int pixValueA = (int) (tf_imgA.getRemappedValue(imageBufferA[ind4], 256) + 0.5f);
+                        bufferA[ind4] = lutBufferRemapped[pixValueA];
+                    } 
+                    else 
+                    {
+                        int indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[ind4], 256) + 0.5f);
+                        int indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[ind4], 256) + 0.5f);
+                        
+                        float Ra = RGB_LUTa[0][indexA];
+                        float Ga = RGB_LUTa[1][indexA];
+                        float Ba = RGB_LUTa[2][indexA];
+                        float Rb = RGB_LUTb[0][indexB];
+                        float Gb = RGB_LUTb[1][indexB];
+                        float Bb = RGB_LUTb[2][indexB];
+                        
+                        if ( bBlend )
+                        {
+                            Ra = fAlpha * Ra + (1.0f - fAlpha) * Rb;
+                            Ga = fAlpha * Ga + (1.0f - fAlpha) * Gb;
+                            Ba = fAlpha * Ba + (1.0f - fAlpha) * Bb;
+                        }
+                        else
+                        {
+                            int pixValueB = 0xff000000 | (((int)Rb) << 16) | (((int)Gb) << 8) | ((int)Bb);
+                            bufferB[ind4] = pixValueB;
+                        }
+                        int pixValueA = 0xff000000 | (((int)Ra) << 16) | (((int)Ga) << 8) | ((int)Ba);
+                        bufferA[ind4] = pixValueA;
+                    }
+            
+                    /* Blend in mask: */
+                    if ( bShowMask && (m_afMask != null) )
+                    {
+                        if ( (m_afMask[index] != 0) &&
+                             ((m_afMask[index + 1] != 0) ||
+                              (m_afMask[index + 2] != 0) ||
+                              (m_afMask[index + 3] != 0)) )
+                        {
+                            float alpha = m_afMask[index];
+                            int iMaskRa = (int)(alpha * m_afMask[index + 1]);
+                            int iMaskGa = (int)(alpha * m_afMask[index + 2]);
+                            int iMaskBa = (int)(alpha * m_afMask[index + 3]);
+                            
+                            int iRa = (int)((1 - alpha)*((bufferA[ind4] & 0x00ff0000) >> 16));
+                            int iGa = (int)((1 - alpha)*((bufferA[ind4] & 0x0000ff00) >>  8));
+                            int iBa = (int)((1 - alpha)*((bufferA[ind4] & 0x000000ff)));
+                            
+                            int pixValue = 0xff000000 | ((iMaskRa + iRa) << 16) | ((iMaskGa + iGa) << 8) | (iMaskBa + iBa);
+                            bufferA[ind4] = pixValue;
+                        }
+                    }
                 }
-            } 
+            }
         }
+        else
+        {
+            return false;
+        }
+        m_bUpdateImage = false;
         return true;
     }
 
@@ -567,6 +742,22 @@ public class PatientSlice
     private void fillImageBuffer(int slice)
     {
         try {
+            int buffFactor = imageA.isColorImage() ? 4 : 1;
+            if ( imageBufferA == null )
+            {
+                imageBufferA = new float[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
+            }
+            if ( (imageB != null) && (imageBufferB == null) )
+            {
+                buffFactor = imageB.isColorImage() ? 4 : 1;
+                imageBufferB = new float[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
+            }
+            if ( (imageColocalize != null) && (imageBufferColocalize == null) )
+            {
+                buffFactor = imageColocalize.isColorImage() ? 4 : 1;
+                imageBufferColocalize = new float[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
+            }
+
             if ( m_bShowDiagonal )
             {
                 imageA.exportDiagonal( orientation, timeSliceA, slice, localImageExtents, m_kFourCorners, imageBufferA );
@@ -574,13 +765,24 @@ public class PatientSlice
                 {
                     imageB.exportDiagonal( orientation, timeSliceB, slice, localImageExtents, m_kFourCorners, imageBufferB );
                 }
+                if ( (imageColocalize != null) && (hasThreshold1 || hasThreshold2) )
+                {
+                    imageColocalize.exportDiagonal( orientation, timeSliceA, slice,
+                                                    localImageExtents, m_kFourCorners,
+                                                    imageBufferColocalize );
+                }
             }
             else
             {
-                imageA.export( orientation, timeSliceA, slice, imageBufferA );
+                m_afMask = imageA.export( orientation, timeSliceA, slice, imageBufferA );
                 if (imageB != null)
                 {
                     imageB.export( orientation, timeSliceB, slice, imageBufferB );
+                }
+                if ( (imageColocalize != null) && (hasThreshold1 || hasThreshold2) )
+                {
+                    imageColocalize.export( orientation, timeSliceA, slice,
+                                            imageBufferColocalize );
                 }
             }
         }
@@ -590,4 +792,71 @@ public class PatientSlice
             return;
         }
     }
+    
+    /** Get the color from the RGB lookup table: */
+    private void getColorMapped( ModelRGB modelRGBTA, int[] RGBIndexBuffer, int imageIndex,
+                                 float[] imageBuffer, int index, Color4f colorMapped )
+    {
+
+        colorMapped.x = 0;
+        colorMapped.y = 0;
+        colorMapped.z = 0;
+        colorMapped.w = imageBuffer[index];
+        if ( modelRGBTA != null )
+        {
+            if ( modelRGBTA.getROn() )
+            {
+                colorMapped.x = (RGBIndexBuffer[(int)((imageBuffer[index + 1] + m_akOffset[imageIndex].x) *
+                                                m_afNormColor[imageIndex])] & 0x00ff0000) >> 16;
+            }
+            if ( modelRGBTA.getGOn() )
+            {
+                colorMapped.y = (RGBIndexBuffer[(int)((imageBuffer[index + 2] + m_akOffset[imageIndex].y) *
+                                                m_afNormColor[imageIndex])] &  0x0000ff00) >> 8;
+            }
+            if ( modelRGBTA.getBOn() )
+            {
+                colorMapped.z = (RGBIndexBuffer[(int)((imageBuffer[index + 3] + m_akOffset[imageIndex].z) *
+                                                m_afNormColor[imageIndex])] & 0x000000ff);
+            }
+        } 
+        else
+        {
+            colorMapped.x = (imageBuffer[index + 1] + m_akOffset[imageIndex].x) * m_afNormColor[imageIndex];
+            colorMapped.y = (imageBuffer[index + 2] + m_akOffset[imageIndex].y) * m_afNormColor[imageIndex];
+            colorMapped.z = (imageBuffer[index + 3] + m_akOffset[imageIndex].z) * m_afNormColor[imageIndex];
+        }
+        /* Threshold colors: */
+        if (useRedThreshold && useGreenThreshold)
+        {
+            if ((imageBuffer[index + 1] < threshold1) ||
+                (imageBuffer[index + 2] < threshold2))
+            {
+                colorMapped.x = 0;
+                colorMapped.y = 0;
+                colorMapped.z = 0;
+            }
+        }
+        else if (useRedThreshold && useBlueThreshold)
+        {
+            if ((imageBuffer[index + 1] < threshold1) ||
+                (imageBuffer[index + 3] < threshold2))
+            {
+                colorMapped.x = 0;
+                colorMapped.y = 0;
+                colorMapped.z = 0;
+            }
+        }
+        else if (useGreenThreshold && useBlueThreshold)
+        {
+            if ((imageBuffer[index + 2] < threshold1) ||
+                (imageBuffer[index + 3] < threshold2)) 
+            {
+                colorMapped.x = 0;
+                colorMapped.y = 0;
+                colorMapped.z = 0;
+            }
+        }
+    }
+
 }

@@ -483,7 +483,7 @@ public class SurfaceRender extends RenderViewBase {
         Shape3D shape = new Shape3D(boxSlices[ orientation ], app);
         shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
         shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-        
+
 
         m_kObjBoxSliceProbe_TG[ orientation ].addChild(shape);
         triPlanarViewBG.addChild(objBoxSlices_BG[ orientation ]);
@@ -586,47 +586,6 @@ public class SurfaceRender extends RenderViewBase {
         }
 
         writeImage();
-    }
-
-    /**
-     * Set the surface color in the tri-planer view.
-     *
-     * @param  kColor  color
-     */
-    public void branchSetColor(Color4f kColor) {
-
-        if (parent instanceof ViewJFrameVolumeView) {
-
-            if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).branchSetColor(kColor);
-            }
-        }
-    }
-
-    /**
-     * Tell the surfaceRenderer to add the triangle mesh surface.
-     */
-    public void branchSurfaceAdded() {
-
-        if (parent instanceof ViewJFrameVolumeView) {
-
-            if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).branchSurfaceAdded();
-            }
-        }
-    }
-
-    /**
-     * Tell the surfaceRenderer to remove the triangle mesh surface.
-     */
-    public void branchSurfaceRemoved() {
-
-        if (parent instanceof ViewJFrameVolumeView) {
-
-            if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).branchSurfaceRemoved();
-            }
-        }
     }
 
     /**
@@ -1428,22 +1387,6 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Set the surface color from the JPanelSurface color control.
-     *
-     * @param  iIndex  surface index.
-     * @param  kColor  color
-     */
-    public void setColor(int iIndex, Color4f kColor) {
-
-        if (parent instanceof ViewJFrameVolumeView) {
-
-            if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).setColor(iIndex, kColor);
-            }
-        }
-    }
-
-    /**
      * Set the texture renderer to render in composite mode.
      */
     public void setCompositeMode() {
@@ -1834,6 +1777,7 @@ public class SurfaceRender extends RenderViewBase {
      */
     public void setCenter( Point3Df center )
     {
+
         /* update the sliders: */
         slicePanel.setCenter( (int)center.x, (int)center.y, (int)center.z );
         for ( int i = 0; i < 3; i++ )
@@ -1842,6 +1786,7 @@ public class SurfaceRender extends RenderViewBase {
             triSliceImages[i].setCenter( (int)center.x, (int)center.y, (int)center.z );
         }
         /* re-render: */
+        updateBoxSlicePos( false );
         update3DTriplanar(null, null, true);
     }
 
@@ -1976,35 +1921,6 @@ public class SurfaceRender extends RenderViewBase {
      */
     public void stateChanged(ChangeEvent e) { }
 
-    /**
-     * surfaceAdded: tells the parent frame ViewJFrameVolumeView that a new triangle mesh surface has been added to the
-     * scene.
-     */
-    public void surfaceAdded() {
-
-        if (parent instanceof ViewJFrameVolumeView) {
-
-            if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).surfaceAdded();
-            }
-        }
-    }
-
-    /**
-     * surfaceAdded: tells the parent frame ViewJFrameVolumeView that a triangle mesh surface has been removed from the
-     * scene.
-     *
-     * @param  iIndex  DOCUMENT ME!
-     */
-    public void surfaceRemoved(int iIndex) {
-
-        if (parent instanceof ViewJFrameVolumeView) {
-
-            if (((ViewJFrameVolumeView) parent) != null) {
-                ((ViewJFrameVolumeView) parent).surfaceRemoved(iIndex);
-            }
-        }
-    }
 
     /**
      * Perform some actions required when switching to the slice renderer.
@@ -2161,23 +2077,30 @@ public class SurfaceRender extends RenderViewBase {
         }
         /* update the boxSliceVertices based on probe rotations: */
         transformBoxSlices( m_kProbeTransform );
+
+        boolean bReturn = false;
+        boolean[] bUpdate = { false, false, false };
         for ( int i = 0; i < 3; i++ )
         {
-            if ( triSliceImages[i] == null )
+            if ( triSliceImages[i] != null )
             {
-                return false;
-            }
-
-            if (triSliceImages[i].show(slicePanel.tSlice,
-                                       slicePanel.getSlice( i ),
-                                       LUTa, LUTb, forceShow, boxSliceVertices[i] ) == true)
-            {
-                sliceImageComponent2D[i].set(triSliceImages[i].getImage());
-            } else {
-                return false;
+                if (triSliceImages[i].show(slicePanel.tSlice,
+                                           slicePanel.getSlice( i ),
+                                           LUTa, LUTb, forceShow, boxSliceVertices[i] ) == true)
+                {
+                    bUpdate[i] = true;
+                }
             }
         }
-        return true;
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( bUpdate[i] )
+            {
+                sliceImageComponent2D[i].set(triSliceImages[i].getImage());
+                bReturn = true;
+            }
+        }
+        return bReturn;
     }
 
     /**
@@ -2196,7 +2119,7 @@ public class SurfaceRender extends RenderViewBase {
 
         for ( int j = 0; j < 3; j++ )
         {
-          
+
             inVertices[j] = boxSlices[j].getVertices();
             outVertices[j] = new Point3f[4];
             if ( boxSliceVertices[j] == null )
@@ -2219,7 +2142,7 @@ public class SurfaceRender extends RenderViewBase {
                                boxSliceVertices[j][i] );
             }
         }
-        
+
     }
 
     /** Translate from normalized plane coordinates to Model coordinates:
@@ -2228,41 +2151,41 @@ public class SurfaceRender extends RenderViewBase {
      */
     private void ScreenToModel( Point3Df screen, Point3Df model )
     {
-        model.x = ((screen.x + xBox) / (2.0f * xBox)) * ((float)xDim - 1);
-        model.y = ((screen.y - yBox) / (-2.0f * yBox)) * ((float)yDim - 1);
-        model.z = ((screen.z + zBox) / (2.0f * zBox)) * ((float)zDim - 1);
+        model.x = ((screen.x + xBox) / (2.0f * xBox)) * ((float)xDim-1);
+        model.y = ((screen.y - yBox) / (-2.0f * yBox)) * ((float)yDim-1);
+        model.z = ((screen.z + zBox) / (2.0f * zBox)) * ((float)zDim-1);
     }
 
     /** Translate from Model coordinates to normalized plane coordinates:
      * @param model the input point in Model coordinates
      * @param screen the output point in normalized plane coordinates
      */
-    private void ModelToScreen( Point3Df model, Point3Df screen )
+    public void ModelToScreen( Point3Df model, Point3Df screen )
     {
-        screen.x = (2.0f * xBox) * (model.x / ((float)xDim - 1)) - xBox;
-        screen.y = (-2.0f * yBox) * (model.y / ((float)yDim - 1)) + yBox;
-        screen.z = (2.0f * zBox) * (model.z / ((float)zDim - 1)) - zBox;
+        screen.x = (2.0f * xBox) * (model.x / ((float)xDim-1)) - xBox;
+        screen.y = (-2.0f * yBox) * (model.y / ((float)yDim-1)) + yBox;
+        screen.z = (2.0f * zBox) * (model.z / ((float)zDim-1)) - zBox;
     }
 
 
     /**
      * Update the X, Y, Z box frame positions.
      */
-    public void updateBoxSlicePos( ) {
+    public void updateBoxSlicePos( boolean bParentUpdate  ) {
         /* MipavCoordinateSystems upgrade: this goes in
          * MipavCoordinateSystems.FileToModel: */
         int[] axialOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.AXIAL );
         int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.CORONAL );
         int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.SAGITTAL );
 
-        
+
         float[][] boxPoints = new float[3][];
         for ( int i = 0; i < 3; i++ )
         {
             boxPoints[i] = new float[3];
-            boxPoints[i][0] = xDim;
-            boxPoints[i][1] = yDim;
-            boxPoints[i][2] = zDim;
+            boxPoints[i][0] = xDim-1;
+            boxPoints[i][1] = yDim-1;
+            boxPoints[i][2] = zDim-1;
         }
         boxPoints[0][axialOrder[2]] = slicePanel.getSlice( FileInfoBase.AXIAL );
         boxPoints[1][coronalOrder[2]] = slicePanel.getSlice( FileInfoBase.CORONAL );
@@ -2296,11 +2219,10 @@ public class SurfaceRender extends RenderViewBase {
 
             triSliceImages[i].setCenter( (int)center.x, (int)center.y, (int)center.z );
         }
-        if (parent instanceof ViewJFrameVolumeView) {
-
+        if (parent instanceof ViewJFrameVolumeView && bParentUpdate)
+        {
             if (((ViewJFrameVolumeView) parent) != null) {
                 ((ViewJFrameVolumeView) parent).setSliceFromSurface( center );
-                ((ViewJFrameVolumeView) parent).setAbsPositionLabels();
             }
         }
     }
@@ -2314,7 +2236,7 @@ public class SurfaceRender extends RenderViewBase {
             removeBoxSlice( i );
             addBoxSlice( i );
         }
-        updateBoxSlicePos( );
+        updateBoxSlicePos( true );
     }
 
 
@@ -2453,14 +2375,7 @@ public class SurfaceRender extends RenderViewBase {
      */
     public boolean updateImages() {
 
-        for ( int i = 0; i < 3; i++ )
-        {
-            if ( triSliceImages[i] == null )
-            {
-                return false;
-            }
-        }
-
+        update3DTriplanar(null, null, false);
         updateVolume(null, null, false);
 
         return true;
@@ -3219,11 +3134,11 @@ public class SurfaceRender extends RenderViewBase {
 
         /* Axial, Sagittal, Coronal view of the data: */
         /* Axial: */
-        triSliceImages[0] = new ViewJComponentTriSliceImage( imageA, imageB, ViewJComponentBase.AXIAL);
+        triSliceImages[0] = new ViewJComponentTriSliceImage( this, imageA, imageB, FileInfoBase.AXIAL );
         /* Coronal: */
-        triSliceImages[1] = new ViewJComponentTriSliceImage(imageA, imageB, ViewJComponentBase.CORONAL);
+        triSliceImages[1] = new ViewJComponentTriSliceImage(this, imageA, imageB, FileInfoBase.CORONAL );
         /* Sagittal*/
-        triSliceImages[2] = new ViewJComponentTriSliceImage(imageA, imageB, ViewJComponentBase.SAGITTAL);
+        triSliceImages[2] = new ViewJComponentTriSliceImage( this, imageA, imageB, FileInfoBase.SAGITTAL );
 
         Preferences.debug("Preferred graphics configuration: " + config + "\n");
         canvas = new VolumeCanvas3D(config);
@@ -3440,9 +3355,9 @@ public class SurfaceRender extends RenderViewBase {
         for ( int i = 0; i < 3; i++ )
         {
             boxPoints[i] = new float[3];
-            boxPoints[i][0] = xDim;
-            boxPoints[i][1] = yDim;
-            boxPoints[i][2] = zDim;
+            boxPoints[i][0] = xDim-1;
+            boxPoints[i][1] = yDim-1;
+            boxPoints[i][2] = zDim-1;
         }
         boxPoints[0][axialOrder[2]] = slicePanel.getSlice( FileInfoBase.AXIAL );
         boxPoints[1][coronalOrder[2]] = slicePanel.getSlice( FileInfoBase.CORONAL );

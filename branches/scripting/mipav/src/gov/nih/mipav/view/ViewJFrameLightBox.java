@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
@@ -687,7 +688,7 @@ public class ViewJFrameLightBox extends ViewJFrameBase implements ItemListener {
 
             componentImage[i] = new ViewJComponentEditImage(this, imageA, LUTa, null, imageB, LUTb, null, null,
                                                             magnification / 100, extents, false,
-                                                            ViewJComponentEditImage.NA);
+                                                            FileInfoBase.UNKNOWN_ORIENT);
             componentImage[i].setFrameControls(controls);
             componentImage[i].setLocation(borderSize + selectedBorderSize, borderSize + selectedBorderSize);
 

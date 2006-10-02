@@ -175,46 +175,31 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Maximum number of tri-images! */
     public static final int MAX_TRI_IMAGES = 9;
 
-    /** A constant for which to test in the actionPerformed */
+    /** A constant for which to test in the actionPerformed. */
     protected static final String OLD_LAYOUT = "OldLayout";
 
-    /** A constant for which to test in the actionPerformed */
+    /** A constant for which to test in the actionPerformed. */
     protected static final String PANEL_PLUGIN = "PanelPlugin";
 
-    /** Constant to determine how many pixels would be optimal for the image to be initially zoomed to */
+    /** Constant to determine how many pixels would be optimal for the image to be initially zoomed to. */
     protected static final int DEFAULT_OPTIMAL_ZOOM = 256;
-
-    /**
-     * These constants are used to index into the boundingBoxPoints[] array, and represent the corners of the bounding
-     * box. relative to the image's ORIGINAL orientation
-     */
-    public static final int UPPER_LEFT_FRONT = 0;
-
-    /** DOCUMENT ME! */
-    public static final int UPPER_RIGHT_FRONT = 1;
-
-    /** DOCUMENT ME! */
-    public static final int LOWER_RIGHT_FRONT = 2;
-
-    /** DOCUMENT ME! */
-    public static final int LOWER_LEFT_FRONT = 3;
-
-    /** DOCUMENT ME! */
-    public static final int UPPER_LEFT_BACK = 4;
-
-    /** DOCUMENT ME! */
-    public static final int UPPER_RIGHT_BACK = 5;
-
-    /** DOCUMENT ME! */
-    public static final int LOWER_RIGHT_BACK = 6;
-
-    /** DOCUMENT ME! */
-    public static final int LOWER_LEFT_BACK = 7;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Label heading for the absolute x, y, z values in the image volume. */
-    protected JLabel absLabel;
+    /** DOCUMENT ME! */
+    // protected JScrollPane[] scrollPane = new JScrollPane[MAX_TRI_IMAGES];
+    // made public for use by visualization plug-ins (PLB)
+    public JScrollPane[] scrollPane = new JScrollPane[MAX_TRI_IMAGES];
+
+    /** DOCUMENT ME! */
+    // protected ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[MAX_TRI_IMAGES];
+    // made public for use by visualization plug-ins (PLB)
+    public ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[MAX_TRI_IMAGES];
+
+    /** DOCUMENT ME! */
+    // protected JPanel[] triImagePanel = new JPanel[MAX_TRI_IMAGES];
+    // made public for use by visualization plug-ins (PLB)
+    public JPanel[] triImagePanel = new JPanel[MAX_TRI_IMAGES];
 
     /** DOCUMENT ME! */
     protected JToggleButton[] btnInvisible = new JToggleButton[NUM_INVISIBLE_BUTTONS];
@@ -225,10 +210,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** DOCUMENT ME! */
     protected boolean centerButtonSelected = false;
 
-    /** "Show talairach grid" checkbox */
+    /** "Show talairach grid" checkbox. */
     protected JCheckBox chkShowTalairachGrid;
 
-    /** "Show talairach gridmarkers" checkbox */
+    /** "Show talairach gridmarkers" checkbox. */
     protected JCheckBox chkShowTalairachGridMarkers;
 
     /** Color of the paint. */
@@ -252,7 +237,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** The current values of the absolute position labels. */
     protected Point3D currentAbsolutePositionLabels;
 
-    /** The default hight of the window, if it cannot be calculated */
+    /** The default hight of the window, if it cannot be calculated. */
     protected int defaultPreferredHeight = 1000;
 
     /** Extents of image. */
@@ -268,32 +253,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Image control toolbar. */
     protected JToolBar imageToolBar;
 
-    /** Spinner component for the paint intensity */
+    /** Spinner component for the paint intensity. */
     protected JSpinner intensitySpinner;
-
-    /** Label the absolute x value in the image volume. */
-    protected JTextField labelXPos;
-
-    /** Label the anatomical position x value in the image volume. */
-    protected JTextField labelXRef;
 
     /** Label the Talairach position x value in the image volume. */
     protected JTextField labelXTal;
 
-    /** Label the absolute y value in the image volume. */
-    protected JTextField labelYPos;
-
-    /** Label the anatomical position y value in the image volume. */
-    protected JTextField labelYRef;
-
     /** Label the Talairach position y value in the image volume. */
     protected JTextField labelYTal;
-
-    /** Label the absolute z value in the image volume. */
-    protected JTextField labelZPos;
-
-    /** Label the anatomical position z value in the image volume. */
-    protected JTextField labelZRef;
 
     /** Label the Talairach position z value in the image volume. */
     protected JTextField labelZTal;
@@ -305,6 +272,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected boolean oldLayout = Preferences.is(Preferences.PREF_TRIPLANAR_2X2_LAYOUT); // flag to indicated whether
                                                                                          // or not to use the old
                                                                                          // tri-planar layout
+
     /** Opacity of paint. */
     protected float OPACITY = 0.25f;
 
@@ -317,14 +285,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Panel that holds the toolbars. */
     protected JPanel panelToolbar = new JPanel();
 
-    /** Reference to the parent window */
+    /** Reference to the parent window. */
     protected ViewJFrameImage parentFrame;
 
-    /** Reference to the plug-in panel in the 2x2 (old) layout */
+    /** Reference to the plug-in panel in the 2x2 (old) layout. */
     protected Component pluginPanel;
-
-    /** Label heading for the anatomical position x, y, z values in the image volume. */
-    protected JLabel posLabel;
 
     /** Radio button for selecting image A as active. */
     protected JRadioButton radioImageA;
@@ -337,18 +302,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Resolutions of image. */
     protected float[] resols = new float[3];
-
-    /** DOCUMENT ME! */
-    protected JLabel scannerLabelX;
-
-    /** DOCUMENT ME! */
-    protected JLabel scannerLabelY;
-
-    /** DOCUMENT ME! */
-    protected JLabel scannerLabelZ;
-
-    /** DOCUMENT ME! */
-    protected JScrollPane[] scrollPane = new JScrollPane[MAX_TRI_IMAGES];
 
     /** Flag for showing the Talairach grid on the component images. */
     protected boolean showTalairachGrid = false;
@@ -365,12 +318,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** Button for traversing the images. */
     protected JToggleButton traverseButton;
 
-    /** DOCUMENT ME! */
-    protected ViewJComponentTriImage[] triImage = new ViewJComponentTriImage[MAX_TRI_IMAGES];
-
-    /** DOCUMENT ME! */
-    protected JPanel[] triImagePanel = new JPanel[MAX_TRI_IMAGES];
-
     /** Time slice that this image is on. */
     protected int tSlice;
 
@@ -383,10 +330,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** The point to become center of transformed image. */
     protected int[] volumeCenter = new int[3];
 
-    /** Reference to the volume coordinate frame */
+    /** Reference to the volume coordinate frame. */
     protected VolumePositionFrame volumePositionFrame;
 
-    /** Reference to the volume coordinate panel when it is in the plug-in position */
+    /** Reference to the volume coordinate panel when it is in the plug-in position. */
     protected JPanel volumePositionPanel;
 
     /** Magnification for image. */
@@ -394,9 +341,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JToggleButton addPointToggleButton;
-
-    /** Array of points that specify the corners of the bounding box */
-    private Point3Df[] boundingBoxPoints = new Point3Df[8];
 
     /** DOCUMENT ME! */
     private JToggleButton dropperPaintToggleButton;
@@ -418,6 +362,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JButton tpSplineButton;
+
+    /** Volume Boundary may be changed for cropping the volume. */
+    private CubeBounds volumeBounds;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -468,7 +415,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-
     // ************************************************************************
     // **************************** Action Events *****************************
     // ************************************************************************
@@ -495,20 +441,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             return;
         } else if (command.equals(OLD_LAYOUT)) {
-            oldLayout = !oldLayout;
-
-            Preferences.setProperty(Preferences.PREF_TRIPLANAR_2X2_LAYOUT, String.valueOf(oldLayout));
-
-            float optimalZoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
-
-            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-                if (triImage[i] != null) {
-                    triImage[i].setZoom(optimalZoom, optimalZoom);
-                }
-            }
-
-            updateLayout();
+            setOldLayout(!oldLayout);
         } else if (command.equals(PANEL_PLUGIN)) {
             handlePluginPanelSelection();
 
@@ -548,10 +481,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             chkShowTalairachGrid.setSelected(showTalairachGrid);
             chkShowTalairachGridMarkers.setEnabled(showTalairachGrid);
 
-            if (volumePositionFrame != null) {
-                volumePositionFrame.setShowTalairachGrid(showTalairachGrid);
-            }
-
             menuObj.setMenuItemSelected("ShowXHairs", !showTalairachGrid);
             menuObj.setMenuItemSelected("ShowAxes", !showTalairachGrid);
 
@@ -575,10 +504,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             boolean showGridMarkers = sourceCheckbox.isSelected();
             chkShowTalairachGridMarkers.setSelected(showGridMarkers);
-
-            if (volumePositionFrame != null) {
-                volumePositionFrame.setShowTalairachGridMarkers(showGridMarkers);
-            }
 
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
@@ -625,6 +550,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             triImage[AXIAL_A].eraseAllPaint(false);
 
             imageA.notifyImageDisplayListeners(null, true);
+
             if (imageB != null) {
                 imageB.notifyImageDisplayListeners(null, true);
             }
@@ -656,7 +582,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             btnInvisible[3].setSelected(!centerButtonSelected);
 
             if (centerButtonSelected) {
-                setCenter( extents[0]/2, extents[1]/2, extents[2]/2 );
+                setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
             } else {
 
                 for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -1067,9 +993,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             dialogCrop.setSeparateThread(true);
 
-            int[] xBounds = new int[] { (int)boundingBoxPoints[UPPER_LEFT_FRONT].x, (int)boundingBoxPoints[UPPER_RIGHT_FRONT].x };
-            int[] yBounds = new int[] { (int)boundingBoxPoints[UPPER_LEFT_FRONT].y, (int)boundingBoxPoints[LOWER_LEFT_FRONT].y };
-            int[] zBounds = new int[] { (int)boundingBoxPoints[UPPER_LEFT_FRONT].z, (int)boundingBoxPoints[UPPER_LEFT_BACK].z };
+            int[] xBounds = { volumeBounds.lowX(), volumeBounds.highX() };
+            int[] yBounds = { volumeBounds.lowY(), volumeBounds.highY() };
+            int[] zBounds = { volumeBounds.lowZ(), volumeBounds.highZ() };
 
             dialogCrop.setXBounds(xBounds);
             dialogCrop.setYBounds(yBounds);
@@ -1123,29 +1049,28 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             return;
         } else if (command.equals("PositionFrame")) {
 
-            if (volumePositionFrame != null) {
-                MipavUtil.centerOnScreen(volumePositionFrame);
-                volumePositionFrame.setVisible(true);
-                volumePositionFrame.toFront();
-            } else {
-                volumePositionFrame = new VolumePositionFrame(this);
-
-                // make sure the position frame has the same state as the plug-in
-                // panel's position panel, because logically, it is possible
-                // for both to exist simultaneously (although that would be pointless)
-                volumePositionFrame.labelXPos.setText(labelXPos.getText());
-                volumePositionFrame.labelYPos.setText(labelYPos.getText());
-                volumePositionFrame.labelZPos.setText(labelZPos.getText());
-                volumePositionFrame.labelXRef.setText(labelXRef.getText());
-                volumePositionFrame.labelYRef.setText(labelYRef.getText());
-                volumePositionFrame.labelZRef.setText(labelZRef.getText());
-                volumePositionFrame.labelXTal.setText(labelXTal.getText());
-                volumePositionFrame.labelYTal.setText(labelYTal.getText());
-                volumePositionFrame.labelZTal.setText(labelZTal.getText());
-                volumePositionFrame.setShowTalairachGrid(chkShowTalairachGrid.isSelected());
-                volumePositionFrame.setShowTalairachGridMarkers(chkShowTalairachGridMarkers.isSelected());
-                volumePositionFrame.setVisible(true);
+            if (volumePositionPanel == null) {
+                buildVolumePositionPanel();
             }
+
+            volumePositionFrame = null;
+            volumePositionFrame = new VolumePositionFrame(this, tabbedPane);
+            setOldLayout( false );
+            volumePositionFrame.setVisible(true);
+        } else if (command.equals("RadiologicalView")) {
+            imageA.setRadiologicalView( true );
+            if ( imageB != null )
+            {
+                imageB.setRadiologicalView( true );
+            }
+            updateImages( true );
+        } else if (command.equals("NeurologicalView")) {
+            imageA.setRadiologicalView( false );
+            if ( imageB != null )
+            {
+                imageB.setRadiologicalView( false );
+            }
+            updateImages( true );
         }
 
         this.requestFocusInWindow();
@@ -1234,36 +1159,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
 
-    /* MipavCoordinateSystems upgrade: TODO: */
-    /**
-     * sets the crosshair positions and slices for each of the triImages. The
-     * inputs are in ModelImage Coordinates, and are passed to the triImages
-     * in ModelImage Coordinates. Each triImage converts from ModelImage space
-     * to the local Patient Coordinate space.
-     *
-     * @param i, model space coordinate
-     * @param j, model space coordinate
-     * @param k, model space coordinate
-     */
-    public void setCenter( int i, int j, int k )
-    {
-        i = ( i < 0 ) ? 0 : ( i >= extents[0] ) ? extents[0] - 1 : i;
-        j = ( j < 0 ) ? 0 : ( j >= extents[1] ) ? extents[1] - 1 : j;
-        k = ( k < 0 ) ? 0 : ( k >= extents[2] ) ? extents[2] - 1 : k;
-
-        setVolumeCenter( i, j, k );
-        for (int image = 0; image < MAX_TRI_IMAGES; image++)
-        {
-            if (triImage[image] != null)
-            {
-                triImage[image].setCenter( i, j, k );
-            }
-        }
-        fireCoordinateChange( i, j, k );
-        setPositionLabels( i, j, k );
-        updateImages(true);
-    }
-
     /**
      * Gets the axial position of the slice.
      *
@@ -1274,13 +1169,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
-     * Gets the array of 3D volume space points that represent the 8 corners of the bounding box.
+     * Returns the crop bounding volume as a CubeBounds object.
      *
-     * @return  Point3D[] the array of 3D points
+     * @return  volumeBounds the crop volume
      */
-    public Point3Df[] getBoundingBoxPoints() {
-        return boundingBoxPoints;
+    public CubeBounds getBoundedVolume() {
+        return volumeBounds;
     }
+
 
     /**
      * Sets the x coordinate of the point to be the center of the transformed image.
@@ -1369,9 +1265,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @return  The x location in the slice.
      */
-     public int getSagittalComponentSlice() {
-         return triImage[SAGITTAL_A].getSlice();
-     }
+    public int getSagittalComponentSlice() {
+        return triImage[SAGITTAL_A].getSlice();
+    }
 
     /**
      * Returns an integer which represents the image that is selected. The possible values are ViewJComponentBase.BOTH,
@@ -1553,6 +1449,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         int keyCode = e.getKeyCode();
 
         switch (keyCode) {
+
             case KeyEvent.VK_B:
 
                 // swap the border painting
@@ -1701,11 +1598,62 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
     }
 
+
+    /* MipavCoordinateSystems upgrade: TODO: */
+    /**
+     * sets the crosshair positions and slices for each of the triImages. The inputs are in ModelImage Coordinates, and
+     * are passed to the triImages in ModelImage Coordinates. Each triImage converts from ModelImage space to the local
+     * Patient Coordinate space.
+     *
+     * @param  i  model space coordinate
+     * @param  j  model space coordinate
+     * @param  k  model space coordinate
+     */
+    public void setCenter(int i, int j, int k) {
+        i = (i < 0) ? 0 : ((i >= extents[0]) ? (extents[0] - 1) : i);
+        j = (j < 0) ? 0 : ((j >= extents[1]) ? (extents[1] - 1) : j);
+        k = (k < 0) ? 0 : ((k >= extents[2]) ? (extents[2] - 1) : k);
+
+        setVolumeCenter(i, j, k);
+
+        for (int image = 0; image < MAX_TRI_IMAGES; image++) {
+
+            if (triImage[image] != null) {
+                triImage[image].setCenter(i, j, k);
+            }
+        }
+
+        fireCoordinateChange(i, j, k);
+        setPositionLabels(i, j, k);
+        updateImages(true);
+    }
+
+
     /**
      * Sets the menu and controls (i.e. toolbars) of the main frame! This puts the menus and controls needed to controls
      * the operations of this frame. Different image frames have different menu and controls. Currently unused.
      */
     public void setControls() { }
+
+    /**
+     * Sets the new crop volume in the ViewJComponentTriImage frames and sets the volumeBounds.
+     *
+     * @param  lower  the lower corner of the crop volume in File Coordinates
+     * @param  upper  the upper corner of the crop volume in File Coordinates
+     */
+    public void setCrop(Point3Df lower, Point3Df upper) {
+
+        /* set the crop dimensions for each triImage: */
+        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+            if (triImage[i] != null) {
+                triImage[i].setCrop(lower, upper);
+            }
+        }
+
+        /* set the volumeBounds: */
+        setVolumeBounds(lower, upper);
+    }
 
     /**
      * Sets modes in all images to ViewJComponentBase.DEFAULT.
@@ -1791,12 +1739,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageB.setImageOrder(ModelImage.IMAGE_B);
 
         // tri image objects must be rebuilt with the new image B
-        triImage[AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, ViewJComponentBase.AXIAL);
-        triImage[SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, ViewJComponentBase.SAGITTAL);
-        triImage[CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, ViewJComponentBase.CORONAL);
-        triImage[AXIAL_B] = buildTriImage(imageB, LUTb, null, null, ViewJComponentBase.AXIAL);
-        triImage[CORONAL_B] = buildTriImage(imageB, LUTb, null, null, ViewJComponentBase.CORONAL);
-        triImage[SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, ViewJComponentBase.SAGITTAL);
+        triImage[AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.AXIAL);
+        triImage[SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.SAGITTAL);
+        triImage[CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.CORONAL);
+        triImage[AXIAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.AXIAL);
+        triImage[CORONAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.CORONAL);
+        triImage[SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.SAGITTAL);
 
         imageB.addImageDisplayListener(this);
 
@@ -2022,8 +1970,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  z  the z volume coordinate
      */
     public void setPositionLabels(int x, int y, int z) {
-        setAbsolutePositionLabels(x, y, z);
-        setScannerPositionLabels(x, y, z);
+        setAbsPositionLabels( new Point3Df( x, y, z ));
+        setScannerPosition( new Point3Df( x, y, z ));
 
         if (showTalairachPosition) {
             setTalairachPositionLabels(x, y, z);
@@ -2081,7 +2029,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  z  slice index in the patient
      */
     public void setSlices(int x, int y, int z) {
-        setCenter( x, y, z );
+        setCenter(x, y, z);
     }
 
     /**
@@ -2099,8 +2047,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         inPoint.y = y;
         inPoint.z = z;
 
-        Point3Df outPoint = imageA.toDicom( inPoint );
-        setCenter( (int)outPoint.x, (int)outPoint.y, (int)outPoint.z );
+        Point3Df outPoint = imageA.toDicom(inPoint);
+        setCenter((int) outPoint.x, (int) outPoint.y, (int) outPoint.z);
 
         // x, y, z passed in from ViewJComponentEditImage.mouseReleased() are already in image volume space
         setPositionLabels(x, y, z);
@@ -2114,10 +2062,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void setTalairachVoxelLabelText(String newLabelText) {
         talairachVoxelLabel.setText(newLabelText);
-
-        if (volumePositionFrame != null) {
-            volumePositionFrame.setTalairachVoxelLabel(newLabelText);
-        }
     }
 
     /**
@@ -2188,6 +2132,38 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         volumeCenter[0] = x;
         volumeCenter[1] = y;
         volumeCenter[2] = z;
+    }
+
+    /**
+     * Sets the CubeBounds data member volumeBounds to the crop volume defined
+     * by the lower and upper volume points. The CubeBounds are ordered low to
+     * high and are checked against the volume extents.
+     * @param lower the lower bound in File Coordinates
+     * @param upper the upper bound in File Coordinates
+     */
+    private void setVolumeBounds( Point3Df lower, Point3Df upper )
+    {
+        int[] xBounds = new int[2];
+        xBounds[0] = (int)lower.x <= (int)upper.x ? (int)lower.x : (int)upper.x;
+        xBounds[1] = (int)lower.x <= (int)upper.x ? (int)upper.x : (int)lower.x;
+        xBounds[0] = Math.max( xBounds[0], 0 );
+        xBounds[1] = Math.min( xBounds[1], extents[0] - 1 );
+
+        int[] yBounds = new int[2];
+        yBounds[0] = (int)lower.y <= (int)upper.y ? (int)lower.y : (int)upper.y;
+        yBounds[1] = (int)lower.y <= (int)upper.y ? (int)upper.y : (int)lower.y;
+        yBounds[0] = Math.max( yBounds[0], 0 );
+        yBounds[1] = Math.min( yBounds[1], extents[1] - 1 );
+
+        int[] zBounds = new int[2];
+        zBounds[0] = (int)lower.z <= (int)upper.z ? (int)lower.z : (int)upper.z;
+        zBounds[1] = (int)lower.z <= (int)upper.z ? (int)upper.z : (int)lower.z;
+        zBounds[0] = Math.max( zBounds[0], 0 );
+        zBounds[1] = Math.min( zBounds[1], extents[2] - 1 );
+
+        volumeBounds = new CubeBounds( xBounds[1], xBounds[0],
+                                       yBounds[1], yBounds[0],
+                                       zBounds[1], zBounds[0]  );
     }
 
     /**
@@ -2286,7 +2262,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @return  boolean confirming successful update
      */
     public boolean updateImages() {
-        return updateImages( null, null, true, -1 );
+        return updateImages(null, null, true, -1);
     }
 
     /**
@@ -2296,9 +2272,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @return  boolean confirming successful update
      */
-    public boolean updateImages(boolean forceShow)
-    {
-        return updateImages( null, null, forceShow, -1 );
+    public boolean updateImages(boolean forceShow) {
+        return updateImages(null, null, forceShow, -1);
     }
 
     /**
@@ -2312,15 +2287,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @return  boolean confirming successful update
      */
     public boolean updateImages(ModelLUT LUTa, ModelLUT LUTb, boolean forceShow, int interpMode) {
+
         for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-            if (triImage[i] != null)
-            {
-                if ( triImage[i].show(tSlice, LUTa, LUTb, forceShow, interpMode) == false)
-                {
+
+            if (triImage[i] != null) {
+
+                if (triImage[i].show(tSlice, LUTa, LUTb, forceShow, interpMode) == false) {
                     return false;
                 }
             }
         }
+
         return true;
     }
 
@@ -2329,22 +2306,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @param  triImage  DOCUMENT ME!
      */
-    public void updateImageSubset(ViewJComponentTriImage triImage ) {
+    public void updateImageSubset(ViewJComponentTriImage triImage) {
 
         if ((triImage == this.triImage[AXIAL_A]) || (triImage == this.triImage[CORONAL_A]) ||
                 (triImage == this.triImage[SAGITTAL_A])) {
             this.triImage[AXIAL_A].show(tSlice, null, null, true, -1);
             this.triImage[CORONAL_A].show(tSlice, null, null, true, -1);
             this.triImage[SAGITTAL_A].show(tSlice, null, null, true, -1);
-        }
-        else if ((triImage == this.triImage[AXIAL_B]) || (triImage == this.triImage[CORONAL_B]) ||
-                (triImage == this.triImage[SAGITTAL_B])) {
+        } else if ((triImage == this.triImage[AXIAL_B]) || (triImage == this.triImage[CORONAL_B]) ||
+                       (triImage == this.triImage[SAGITTAL_B])) {
             this.triImage[AXIAL_B].show(tSlice, null, null, true, -1);
             this.triImage[CORONAL_B].show(tSlice, null, null, true, -1);
             this.triImage[SAGITTAL_B].show(tSlice, null, null, true, -1);
-        }
-        else if ((triImage == this.triImage[AXIAL_AB]) || (triImage == this.triImage[CORONAL_AB]) ||
-                (triImage == this.triImage[SAGITTAL_AB])) {
+        } else if ((triImage == this.triImage[AXIAL_AB]) || (triImage == this.triImage[CORONAL_AB]) ||
+                       (triImage == this.triImage[SAGITTAL_AB])) {
             updateImages();
         }
 
@@ -2904,14 +2879,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         if (imageA.getType() == ModelImage.COMPLEX) {
             triImage.setResolutions(1, 1);
-        } else if ((tmpResols[1] > tmpResols[0]) &&
-                       (tmpResols[1] < (50.0f * tmpResols[0])) &&
-                       (units[0] == units[1])) {
+        } else if ((tmpResols[1] > tmpResols[0]) && (tmpResols[1] < (50.0f * tmpResols[0])) && (units[0] == units[1])) {
             axialHeightResFactor = tmpResols[1] / tmpResols[0];
             triImage.setResolutions(1, axialHeightResFactor);
-        } else if ((tmpResols[0] > tmpResols[1]) &&
-                       (tmpResols[0] < (50.0f * tmpResols[1])) &&
-                       (units[0] == units[1])) {
+        } else if ((tmpResols[0] > tmpResols[1]) && (tmpResols[0] < (50.0f * tmpResols[1])) && (units[0] == units[1])) {
             axialWidthResFactor = tmpResols[0] / tmpResols[1];
             triImage.setResolutions(axialWidthResFactor, 1);
         } else if ((tmpResols[0] == tmpResols[1])) {
@@ -2928,38 +2899,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      *
      * @return  JPanel the JPanel that has been constructed
      */
-    protected JPanel buildVolumePositionPanel() {
-        JPanel volumePositionPanel = new JPanel();
-
-        JTabbedPane tabbedPane = new JTabbedPane();
+    protected void buildVolumePositionPanel() {
+        cleanVolumePositionPanel();
+        volumePositionPanel = new JPanel();
 
         GridBagLayout gbLayout = new GridBagLayout();
         GridBagConstraints gbConstraints = new GridBagConstraints();
-        JPanel volumePanel = new JPanel(gbLayout);
-        volumePanel.setBorder(BorderFactory.createTitledBorder("Volume coordinates"));
-
-        gbConstraints.anchor = GridBagConstraints.EAST;
-        volumePanel.add(new JLabel("X: "), gbConstraints);
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        gbConstraints.gridx = 1;
-        volumePanel.add(labelXPos, gbConstraints);
-
-        gbConstraints.gridy = 1;
-        gbConstraints.gridx = 0;
-        gbConstraints.anchor = GridBagConstraints.EAST;
-        volumePanel.add(new JLabel("Y: "), gbConstraints);
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        gbConstraints.gridx = 1;
-        volumePanel.add(labelYPos, gbConstraints);
-
-        gbConstraints.gridy = 2;
-        gbConstraints.gridx = 0;
-        gbConstraints.anchor = GridBagConstraints.EAST;
-        volumePanel.add(new JLabel("Z: "), gbConstraints);
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        gbConstraints.gridx = 1;
-        volumePanel.add(labelZPos, gbConstraints);
-
         gbLayout = new GridBagLayout();
         gbConstraints = new GridBagConstraints();
 
@@ -3021,65 +2966,64 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbSubConstraints.gridx = 1;
         talairachSubPanel.add(talairachVoxelLabel, gbSubConstraints);
 
-        float[] tCoord = new float[3];
-        imageA.getScannerCoordLPS(triImage[AXIAL_A].getActiveImage().getExtents()[0] / 2,
-                                  triImage[AXIAL_A].getActiveImage().getExtents()[1] / 2,
-                                  triImage[AXIAL_A].getActiveImage().getExtents()[2] / 2, tCoord);
-
-        if (tCoord[0] < 0) {
-            scannerLabelX.setText("R: ");
-        } else {
-            scannerLabelX.setText("L: ");
-        }
-
-        if (tCoord[1] < 0) {
-            scannerLabelY.setText("A: ");
-        } else {
-            scannerLabelY.setText("P: ");
-        }
-
-        if (tCoord[2] < 0) {
-            scannerLabelZ.setText("I: ");
-        } else {
-            scannerLabelZ.setText("S: ");
-        }
 
         gbLayout = new GridBagLayout();
         gbConstraints = new GridBagConstraints();
 
-        JPanel scannerPanel = new JPanel(gbLayout);
-        scannerPanel.setBorder(BorderFactory.createTitledBorder("Scanner position"));
-
-        gbConstraints.anchor = GridBagConstraints.EAST;
-        scannerPanel.add(scannerLabelX, gbConstraints);
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        gbConstraints.gridx = 1;
-        scannerPanel.add(labelXRef, gbConstraints);
-
+        /* Panel for switiching between radiological and neurological viewing
+         * conventions: */
+        JPanel viewPanel = new JPanel(gbLayout);
+        viewPanel.setBorder(BorderFactory.createTitledBorder("Viewing Convention"));
+        ButtonGroup displayGroup = new ButtonGroup();
+        /* radiological radio button: */
+        JRadioButton radiologicalView = new JRadioButton();
+        radiologicalView.setSelected(true);
+        radiologicalView.addActionListener(this);
+        radiologicalView.setActionCommand("RadiologicalView");
         gbConstraints.gridx = 0;
-        gbConstraints.gridy = 1;
-        gbConstraints.anchor = GridBagConstraints.EAST;
-        scannerPanel.add(scannerLabelY, gbConstraints);
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        gbConstraints.gridx = 1;
-        scannerPanel.add(labelYRef, gbConstraints);
+        gbConstraints.gridy = 0;
+        viewPanel.add( radiologicalView, gbConstraints );
+        gbConstraints.gridx++;
+        viewPanel.add( new JLabel( "Radiological View" ), gbConstraints );
+        displayGroup.add( radiologicalView );
 
+        /* neurological radio button: */
+        JRadioButton neurologicalView = new JRadioButton();
+        neurologicalView.setSelected(false);
+        neurologicalView.addActionListener(this);
+        neurologicalView.setActionCommand("NeurologicalView");
         gbConstraints.gridx = 0;
-        gbConstraints.gridy = 2;
-        gbConstraints.anchor = GridBagConstraints.EAST;
-        scannerPanel.add(scannerLabelZ, gbConstraints);
-        gbConstraints.anchor = GridBagConstraints.WEST;
-        gbConstraints.gridx = 1;
-        scannerPanel.add(labelZRef, gbConstraints);
+        gbConstraints.gridy++;
+        viewPanel.add( neurologicalView, gbConstraints );
+        gbConstraints.gridx++;
+        viewPanel.add( new JLabel( "Neurological View" ), gbConstraints );
+        displayGroup.add( neurologicalView );
 
-        tabbedPane.add("Volume", volumePanel);
+        tabbedPane = new JTabbedPane();
+        super.buildLabelPanel( );
+
+        tabbedPane.add("Volume", absolutePanel);
         tabbedPane.add("Scanner", scannerPanel);
         tabbedPane.add("Talairach", talairachPanel);
+        tabbedPane.add("View", viewPanel);
 
         volumePositionPanel.setLayout(new GridLayout(1, 1));
         volumePositionPanel.add(tabbedPane);
+    }
 
-        return volumePositionPanel;
+    /** Clears the volumePositionPanel, so it can be recreated when the
+     * volumePositionFrame is closed: */
+    private void cleanVolumePositionPanel()
+    {
+        if ( volumePositionPanel != null )
+        {
+            volumePositionPanel.removeAll();
+            chkShowTalairachGrid = null;
+            chkShowTalairachGridMarkers = null;
+            tabbedPane.removeAll();
+            tabbedPane = null;
+            volumePositionPanel = null;
+        }
     }
 
     /**
@@ -3103,23 +3047,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         buildLUTs();
 
         if (imageB != null) {
-            triImage[AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, ViewJComponentBase.AXIAL);
-            triImage[CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, ViewJComponentBase.CORONAL);
-            triImage[SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, ViewJComponentBase.SAGITTAL);
-            triImage[AXIAL_B] = buildTriImage(imageB, LUTb, null, null, ViewJComponentBase.AXIAL);
-            triImage[CORONAL_B] = buildTriImage(imageB, LUTb, null, null, ViewJComponentBase.CORONAL);
-            triImage[SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, ViewJComponentBase.SAGITTAL);
+            triImage[AXIAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.AXIAL);
+            triImage[CORONAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.CORONAL);
+            triImage[SAGITTAL_AB] = buildTriImage(imageA, LUTa, imageB, LUTb, FileInfoBase.SAGITTAL);
+            triImage[AXIAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.AXIAL);
+            triImage[CORONAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.CORONAL);
+            triImage[SAGITTAL_B] = buildTriImage(imageB, LUTb, null, null, FileInfoBase.SAGITTAL);
         }
 
-        triImage[AXIAL_A] = buildTriImage(imageA, LUTa, null, null, ViewJComponentBase.AXIAL);
-        triImage[SAGITTAL_A] = buildTriImage(imageA, LUTa, null, null, ViewJComponentBase.SAGITTAL);
-        triImage[CORONAL_A] = buildTriImage(imageA, LUTa, null, null, ViewJComponentBase.CORONAL);
+        triImage[AXIAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.AXIAL);
+        triImage[SAGITTAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.SAGITTAL);
+        triImage[CORONAL_A] = buildTriImage(imageA, LUTa, null, null, FileInfoBase.CORONAL);
 
         updateLayout();
 
         tSlice = 0;
-
-        setupBoundingBoxPoints();
 
         zoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
 
@@ -3135,7 +3077,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         /* set the center after the triImage[].setResolutions and
          * triImage[].setZoom calls have been made: */
-        setCenter( extents[0]/2, extents[1]/2, extents[2]/2 );
+        setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
+        setCrop(new Point3Df(0, 0, 0), new Point3Df(extents[0] - 1, extents[1] - 1, extents[2] - 1));
+
 
         setTitle();
 
@@ -3207,7 +3151,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                                                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         if (volumePositionPanel == null) {
-            volumePositionPanel = buildVolumePositionPanel();
+            buildVolumePositionPanel();
         }
 
         JPanel mainPanel = new JPanel(new GridLayout(2, 2, 8, 8));
@@ -3219,10 +3163,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         if (pluginPanel != null) {
             mainPanel.add(pluginPanel);
         } else {
-
-            if (volumePositionFrame != null) {
-                volumePositionFrame.setVisible(true);
-            } else {
+            if ( volumePositionPanel != null ) {
                 mainPanel.add(volumePositionPanel);
             }
         }
@@ -3250,13 +3191,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * Tell coordinate change listeners about a coordinate change (after changing the coordinate to image volume space
      * from the tri-planar space).
      *
-     * @param  x  the x coordinate
-     * @param  y  the y coordinate
-     * @param  z  the z coordinate
+     * @param  i  the x coordinate
+     * @param  j  the y coordinate
+     * @param  k  the z coordinate
      */
-    protected void fireCoordinateChange( int i, int j, int k ) {
+    protected void fireCoordinateChange(int i, int j, int k) {
+
         for (Enumeration e = coordinateListeners.elements(); e.hasMoreElements();) {
-            ((CoordinateChangeListener) e.nextElement()).coordinateChanged( i, j, k );
+            ((CoordinateChangeListener) e.nextElement()).coordinateChanged(i, j, k);
         }
     }
 
@@ -3741,28 +3683,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
-     * Sets the labels which show the absolute position within the image volume.
-     *
-     * @param  x  the x volume coordinate
-     * @param  y  the y volume coordinate
-     * @param  z  the z volume coordinate
-     */
-    protected void setAbsolutePositionLabels(int x, int y, int z) {
-        labelXPos.setText(Integer.toString(x + 1));
-        labelYPos.setText(Integer.toString(y + 1));
-        labelZPos.setText(Integer.toString(z + 1));
-
-        if (volumePositionFrame != null) {
-            volumePositionFrame.labelXPos.setText(Integer.toString(x + 1));
-            volumePositionFrame.labelYPos.setText(Integer.toString(y + 1));
-            volumePositionFrame.labelZPos.setText(Integer.toString(z + 1));
-        }
-    }
-
-    /**
      * DOCUMENT ME!
      *
-     * @param  runningInSeparateThread  DOCUMENT ME!
+     * @param  activeImage  DOCUMENT ME!
      */
     protected void setImageActiveInTriComponents(int activeImage) {
 
@@ -3788,69 +3711,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
 
         }
-    }
-
-    /**
-     * Sets the labels that refer to relative position within the image.
-     *
-     * @param  x  Absolute x value in slice.
-     * @param  y  Absolute y value in slice.
-     * @param  z  Absolute z value in slice.
-     */
-    protected void setScannerPositionLabels(int x, int y, int z) {
-        DecimalFormat nf = new DecimalFormat("#####0.0##");
-        float[] tCoord = new float[3];
-
-        imageA.getScannerCoordLPS(x, y, z, tCoord);
-
-        if (tCoord[0] < 0) {
-            scannerLabelX.setText("R: ");
-            labelXRef.setText(String.valueOf(nf.format(-tCoord[0])));
-
-            if (volumePositionFrame != null) {
-                volumePositionFrame.labelXRef.setText(String.valueOf(nf.format(-tCoord[0])));
-            }
-        } else {
-            scannerLabelX.setText("L: ");
-            labelXRef.setText(String.valueOf(nf.format(tCoord[0])));
-
-            if (volumePositionFrame != null) {
-                volumePositionFrame.labelXRef.setText(String.valueOf(nf.format(tCoord[0])));
-            }
-        }
-
-        if (tCoord[1] < 0) {
-            scannerLabelY.setText("A: ");
-            labelYRef.setText(String.valueOf(nf.format(-tCoord[1])));
-
-            if (volumePositionFrame != null) {
-                volumePositionFrame.labelYRef.setText(String.valueOf(nf.format(-tCoord[1])));
-            }
-        } else {
-            scannerLabelY.setText("P: ");
-            labelYRef.setText(String.valueOf(nf.format(tCoord[1])));
-
-            if (volumePositionFrame != null) {
-                volumePositionFrame.labelYRef.setText(String.valueOf(nf.format(tCoord[1])));
-            }
-        }
-
-        if (tCoord[2] < 0) {
-            scannerLabelZ.setText("I: ");
-            labelZRef.setText(String.valueOf(nf.format(-tCoord[2])));
-
-            if (volumePositionFrame != null) {
-                volumePositionFrame.labelZRef.setText(String.valueOf(nf.format(-tCoord[2])));
-            }
-        } else {
-            scannerLabelZ.setText("S: ");
-            labelZRef.setText(String.valueOf(nf.format(tCoord[2])));
-
-            if (volumePositionFrame != null) {
-                volumePositionFrame.labelZRef.setText(String.valueOf(nf.format(tCoord[2])));
-            }
-        }
-
     }
 
     /**
@@ -3908,21 +3768,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         if ((z >= 0) && (z < triExtents[2])) {
             labelZTal.setText(strZ);
-        }
-
-        if (volumePositionFrame != null) {
-
-            if ((x >= 0) && (x < triExtents[0])) {
-                volumePositionFrame.labelXTal.setText(strX);
-            }
-
-            if ((y >= 0) && (y < triExtents[1])) {
-                volumePositionFrame.labelYTal.setText(strY);
-            }
-
-            if ((z >= 0) && (z < triExtents[2])) {
-                volumePositionFrame.labelZTal.setText(strZ);
-            }
         }
     }
 
@@ -4063,8 +3908,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         scrollPane[CORONAL_A] = new JScrollPane(triImagePanel[CORONAL_A], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
-        volumePositionPanel = buildVolumePositionPanel();
-
         getContentPane().removeAll();
         getContentPane().add(panelToolbar, BorderLayout.NORTH);
 
@@ -4170,63 +4013,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * Convenience method created to simplify configureFrame().
      */
     private void buildLabels() {
-        absLabel = new JLabel("Volume coordinates");
-        absLabel.setToolTipText("Coordinates in 3D image space");
-        absLabel.setForeground(Color.black);
-        absLabel.setFont(MipavUtil.font12B);
-
-        labelXPos = new JTextField("", 5);
-        labelXPos.setForeground(Color.black);
-        labelXPos.setFont(MipavUtil.font12B);
-        labelXPos.setBorder(BorderFactory.createEmptyBorder());
-        labelXPos.setEditable(false);
-
-        labelYPos = new JTextField("", 5);
-        labelYPos.setForeground(Color.black);
-        labelYPos.setFont(MipavUtil.font12B);
-        labelYPos.setBorder(BorderFactory.createEmptyBorder());
-        labelYPos.setEditable(false);
-
-        labelZPos = new JTextField("", 5);
-        labelZPos.setForeground(Color.black);
-        labelZPos.setFont(MipavUtil.font12B);
-        labelZPos.setBorder(BorderFactory.createEmptyBorder());
-        labelZPos.setEditable(false);
-
-        posLabel = new JLabel("Position");
-        posLabel.setForeground(Color.black);
-        posLabel.setFont(MipavUtil.font12B);
-        posLabel.setEnabled(false);
-
-        labelXRef = new JTextField("  X:", 5);
-        labelXRef.setForeground(Color.black);
-        labelXRef.setFont(MipavUtil.font12B);
-        labelXRef.setEnabled(false);
-        labelXRef.setBorder(BorderFactory.createEmptyBorder());
-        labelXRef.setEditable(false);
-
-        labelYRef = new JTextField("  Y:", 5);
-        labelYRef.setForeground(Color.black);
-        labelYRef.setFont(MipavUtil.font12B);
-        labelYRef.setEnabled(false);
-        labelYRef.setBorder(BorderFactory.createEmptyBorder());
-        labelYRef.setEditable(false);
-
-        labelZRef = new JTextField("  Z:", 5);
-        labelZRef.setForeground(Color.black);
-        labelZRef.setFont(MipavUtil.font12B);
-        labelZRef.setEnabled(false);
-        labelZRef.setBorder(BorderFactory.createEmptyBorder());
-        labelZRef.setEditable(false);
-
-        if ((imageA.getFileInfo(0).getOrigin(0) != 0) || (imageA.getFileInfo(0).getOrigin(1) != 0) ||
-                (imageA.getFileInfo(0).getOrigin(2) != 0)) {
-            posLabel.setEnabled(true);
-            labelXRef.setEnabled(true);
-            labelYRef.setEnabled(true);
-            labelZRef.setEnabled(true);
-        }
-
         // talLabel = new JLabel( "Talairach grid coordinates" );
         // talLabel.setForeground( Color.black );
         // talLabel.setFont( MipavUtil.font12B );
@@ -4252,10 +4038,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         labelZTal.setEnabled(showTalairachPosition);
         labelZTal.setBorder(BorderFactory.createEmptyBorder());
         labelZTal.setEditable(false);
-
-        scannerLabelX = new JLabel();
-        scannerLabelY = new JLabel();
-        scannerLabelZ = new JLabel();
 
         talairachVoxelLabel = new JLabel("     "); // must be initialized to 5 empty spaces
     }
@@ -4339,15 +4121,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
              triImage[SAGITTAL_A].getResolutionX());
         float zoomCoronalWidth = desiredWidth /
             (extentsCoronal[0] * triImage[CORONAL_A].getResolutionX());
-        
+
         float optimalZoomWidth = Math.min(zoomAxialWidth, Math.min(zoomSagittalWidth, zoomCoronalWidth));
 
-        float zoomAxialHeight = desiredHeight /
-            (extentsAxial[1] * triImage[AXIAL_A].getResolutionY());
-        float zoomSagittalHeight = desiredHeight /
-            (extentsSagittal[1] * triImage[SAGITTAL_A].getResolutionY());
-        float zoomCoronal = desiredHeight /
-            (extentsCoronal[1] * triImage[CORONAL_A].getResolutionY());
+        float zoomAxialHeight = desiredHeight / (extentsAxial[1] * triImage[AXIAL_A].getResolutionY());
+        float zoomSagittalHeight = desiredHeight / (extentsSagittal[1] * triImage[SAGITTAL_A].getResolutionY());
+        float zoomCoronal = desiredHeight / (extentsCoronal[1] * triImage[CORONAL_A].getResolutionY());
 
         float optimalZoomHeight = Math.min(zoomAxialHeight, Math.min(zoomSagittalHeight, zoomCoronal));
 
@@ -4404,28 +4183,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
     }
 
-    /**
-     * Initialized the bounding box array. This is an array of volume space points that represent the 8 corners of the
-     * tri-planar's bounding box.
-     */
-    private void setupBoundingBoxPoints() {
-        boundingBoxPoints[UPPER_LEFT_FRONT] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.25f),
-                                                          (int) (extents[2] * 0.25f));
-        boundingBoxPoints[UPPER_RIGHT_FRONT] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.25f),
-                                                           (int) (extents[2] * 0.25f));
-        boundingBoxPoints[LOWER_RIGHT_FRONT] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.75f),
-                                                           (int) (extents[2] * 0.25f));
-        boundingBoxPoints[LOWER_LEFT_FRONT] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.75f),
-                                                          (int) (extents[2] * 0.25f));
-        boundingBoxPoints[UPPER_LEFT_BACK] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.25f),
-                                                         (int) (extents[2] * 0.75f));
-        boundingBoxPoints[UPPER_RIGHT_BACK] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.25f),
-                                                          (int) (extents[2] * 0.75f));
-        boundingBoxPoints[LOWER_RIGHT_BACK] = new Point3Df((int) (extents[0] * 0.75f), (int) (extents[1] * 0.75f),
-                                                          (int) (extents[2] * 0.75f));
-        boundingBoxPoints[LOWER_LEFT_BACK] = new Point3Df((int) (extents[0] * 0.25f), (int) (extents[1] * 0.75f),
-                                                         (int) (extents[2] * 0.75f));
-    }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
@@ -4459,4 +4216,35 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
     }
+
+    /** Called when the volumePositionFrame closes, the volumePositionPanel is
+     * again displayed in the window: */
+    public void addTabbedPane()
+    {
+        cleanVolumePositionPanel();
+        volumePositionPanel = null;
+        setOldLayout( true );
+    }
+
+    /** Transition between the 2x2 window layout and 3x1 window layout:
+     * @param bLayout, the new layout, = 2x2 layout when true and 3x1 when false
+     */
+    private void setOldLayout( boolean bLayout )
+    {
+        oldLayout = bLayout;
+        Preferences.setProperty(Preferences.PREF_TRIPLANAR_2X2_LAYOUT, String.valueOf(oldLayout));
+
+        float optimalZoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
+
+        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+            if (triImage[i] != null) {
+                triImage[i].setZoom(optimalZoom, optimalZoom);
+            }
+        }
+        updateLayout();
+    }
+
+
+
 }

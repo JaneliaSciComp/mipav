@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
@@ -8,12 +9,13 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.dialogs.*;
+import gov.nih.mipav.view.renderer.*;
 
 import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-
+import java.text.*;
 import java.util.*;
 
 import javax.swing.*;
@@ -99,6 +101,25 @@ public abstract class ViewJFrameBase extends JFrame
     
     
     private String voiSavedFileName = null;
+
+    /** The main tabbed pane in the volume view frame. */
+    protected JTabbedPane tabbedPane;
+
+    /** JPanel containing the scanner position labels: */
+    protected JPanel scannerPanel = new JPanel(new GridBagLayout());
+    /** JPanel containing the absoulte position labels: */
+    protected JPanel absolutePanel = new JPanel(new GridBagLayout());
+
+    /** Labels for the current scanner position: */
+    protected JLabel scannerLabel = null;
+    /** Labels for the current scanner position values: */
+    protected JLabel[] scannerLabelVals = null;
+
+    /** Labels for the current absolute position: */
+    protected JLabel absoluteLabel = null;
+    /** Labels for the current absolute position values: */
+    protected JLabel[] absoluteLabelVals = null;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -6136,4 +6157,132 @@ public abstract class ViewJFrameBase extends JFrame
             } // for (t = 0; t < tLast; t++)
         } // else doNN
     }
+
+    /**
+     * The label panel of the x, y, z slider position.
+     */
+    public void buildLabelPanel() {
+        if ( scannerLabel != null )
+        {
+            return;
+        }
+        scannerLabel = new JLabel( "Scanner Position" );
+        scannerLabel.setForeground( Color.black );
+        scannerLabel.setFont(MipavUtil.font14B);
+        scannerLabelVals = new JLabel[3];
+        scannerLabelVals[0] = new JLabel( "A-P: " );
+        scannerLabelVals[1] = new JLabel( "L-R: " );
+        scannerLabelVals[2] = new JLabel( "S-I: " );
+
+        absoluteLabel = new JLabel( "Absolute Volume coordinates" );
+        absoluteLabel.setToolTipText("Coordinates in 3D image space");
+        absoluteLabel.setForeground( Color.black );
+        absoluteLabel.setFont(MipavUtil.font14B);
+        absoluteLabelVals = new JLabel[4];
+        absoluteLabelVals[0] = new JLabel( "X: " );
+        absoluteLabelVals[1] = new JLabel( "Y: " );
+        absoluteLabelVals[2] = new JLabel( "Z: " );
+        absoluteLabelVals[3] = new JLabel( "1D index: " );
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            scannerLabelVals[i].setForeground( Color.black );
+            scannerLabelVals[i].setFont(MipavUtil.font12B);
+
+            absoluteLabelVals[i].setForeground( Color.black );
+            absoluteLabelVals[i].setFont(MipavUtil.font12B);
+        }
+        absoluteLabelVals[3].setForeground( Color.black );
+        absoluteLabelVals[3].setFont(MipavUtil.font12B);
+
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.WEST;
+
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.gridwidth = 1;
+        gbc2.gridheight = 1;
+
+        scannerPanel.add( scannerLabel, gbc2);
+        absolutePanel.add( absoluteLabel, gbc2);
+
+        gbc2.gridy++;
+        scannerPanel.add( new JLabel(), gbc2);
+        absolutePanel.add( new JLabel(), gbc2);
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            gbc2.gridy++;
+            scannerPanel.add( scannerLabelVals[i], gbc2);
+            absolutePanel.add( absoluteLabelVals[i], gbc2);
+        }
+        gbc2.gridy++;
+        absolutePanel.add( absoluteLabelVals[3], gbc2);
+    }
+
+    /*
+     * Sets the Scanner position label.
+     * @param position, the slice positions in FileCoordinates.
+     */
+    protected void setScannerPosition( Point3Df position )
+    {
+        if ( scannerLabelVals == null )
+        {
+            return;
+        }
+        DecimalFormat nf = new DecimalFormat("#####0.0##");
+        Point3Df kOut = new Point3Df();
+        MipavCoordinateSystems.getScannerCoordinates( position, kOut, imageA );
+        float[] tCoord = new float[3];
+        tCoord[0] = kOut.x;
+        tCoord[1] = kOut.y;
+        tCoord[2] = kOut.z;
+
+        String[] labels = new String[3];
+        labels[0] = new String( "P-A: " );
+        labels[1] = new String( "R-L: " );
+        labels[2] = new String( "S-I: " );
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            if (tCoord[i] < 0)
+            {
+                scannerLabelVals[i].setText( labels[i] +
+                                             labels[i].charAt(2) + ": " +
+                                             String.valueOf(nf.format(-tCoord[i])));
+            }
+            else
+            {
+                scannerLabelVals[i].setText( labels[i] +
+                                             labels[i].charAt(0) + ": " +
+                                             String.valueOf(nf.format(tCoord[i])));
+            }
+        }
+    }
+
+    /*
+     * Sets the Absolute position label.
+     * @param position, the slice positions in FileCoordinates.
+     */
+    protected void setAbsPositionLabels( Point3Df position )
+    {
+        if ( absoluteLabelVals == null )
+        {
+            return;
+        }
+        absoluteLabelVals[0].setText( "X: " + (int)position.x );
+        absoluteLabelVals[1].setText( "Y: " + (int)position.y  );
+        absoluteLabelVals[2].setText( "Z: " + (int)position.z  );
+        int[] dimExtents = imageA.getExtents();
+        int index =
+            (int)((position.z * dimExtents[0] * dimExtents[1]) +
+                  (position.y * dimExtents[0]) +
+                  position.x);
+
+        int iBuffFactor = imageA.isColorImage() ? 4 : 1;
+        absoluteLabelVals[3].setText( "1D index: " +
+                                        index + " = " +
+                                        imageA.getFloat( index * iBuffFactor ) );
+    }
+
 }

@@ -1,6 +1,5 @@
 package gov.nih.mipav.view.renderer.surfaceview.plotterview;
 
-
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -93,7 +92,7 @@ public class ViewJComponentSurface extends ViewJComponentBase {
      * @param  slice    Slice of 3D image to use, 0 if 2D image.
      */
     public ViewJComponentSurface(RenderViewBase _frame, ModelImage _imageA, ModelLUT _LUTa, int[] extents, int slice) {
-        super(ViewJComponentBase.NA, _imageA);
+        super( extents[0], extents[1], _imageA);
 
         frame = _frame;
         imageA = _imageA;

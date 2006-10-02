@@ -336,9 +336,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** Unknown orientation. */
     public static final int UNKNOWN_ORIENT = 3;
 
-    /** 3D Model-Based orientation. */
-    public static final int MODEL = 4;
-
     /** Array of image orientation strings. */
     private static final String[] imageOrientationStr = { "Axial", "Coronal", "Sagittal", "Unknown" };
 

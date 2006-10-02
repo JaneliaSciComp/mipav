@@ -58,6 +58,9 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
      * DAUB4 and PWT use different default centerings. In spite of the faster speed of DAUB4, the dialog is designed
      * only to call PWT so that the user only sees changes due to the number of coefficients and is not confused by
      * changes in centering.
+     * Reference on NONNEGATIVE_GARROTE and SCAD thresholding:
+     * "Wavelet Estimators in Nonparametric Regression: A Comparative Simulation Study" by Anestis Antoniadis,
+     * Jeremie Bigot, and Theofanis Sapatinas, Journal of Statistical Software, Vol. 6, Issue 6, pp. 1-83, 2001.
      */
     public static final int DAUB4 = 1;
 
@@ -100,6 +103,10 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int SOFT = 2;
+    
+    public static final int NONNEGATIVE_GARROTE = 3;
+    
+    public static final int SCAD = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -292,6 +299,7 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
     public void runAlgorithm() {
         int k;
         int x, y, z;
+        float aCutSquared;
 
         double sig = -1.0;
 
@@ -802,7 +810,6 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                     }
                 }
 
-                System.out.println(belowThreshold + " of the " + aExp.length + " coefficents are below threshold");
                 break;
 
             case SOFT:
@@ -818,9 +825,39 @@ public class AlgorithmWaveletThreshold extends AlgorithmBase {
                     }
                 }
 
-                System.out.println(belowThreshold + " of the " + aExp.length + " coefficents are below threshold");
+                break;
+                
+            case NONNEGATIVE_GARROTE:
+                aCutSquared = aCutoff * aCutoff;
+                for (int i = 0; i < aExp.length; i++) {
+                    if (Math.abs(aExp[i]) < aCutoff) {
+                        aExp[i] = 0.0f;
+                        belowThreshold++;
+                    }
+                    else {
+                        aExp[i] -= aCutSquared/aExp[i];
+                    }
+                }
+                break;
+                
+            case SCAD:
+                for (int i = 0; i < aExp.length; i++) {
+                    if (Math.abs(aExp[i]) < aCutoff) {
+                        aExp[i] = 0.0f;
+                        belowThreshold++;
+                    } else if ((aExp[i] >= aCutoff) && (aExp[i] <= 2*aCutoff)) {
+                        aExp[i] -= aCutoff;
+                    } else if ((aExp[i] <= -aCutoff) && (aExp[i] >= -2*aCutoff)) {
+                        aExp[i] += aCutoff;
+                    } else if ((aExp[i] > 2*aCutoff) && (aExp[i] <= 3.7*aCutoff)) {
+                        aExp[i] = (float)((2.7*aExp[i] - 3.7*aCutoff)/1.7);
+                    } else if ((aExp[i] < -2*aCutoff) && (aExp[i] >= -3.7*aCutoff)) {
+                        aExp[i] = (float)((2.7*aExp[i] + 3.7*aCutoff)/1.7);
+                    }
+                }
                 break;
         } // switch(thresholdType)
+        System.out.println(belowThreshold + " of the " + aExp.length + " coefficents are below threshold");
 
         fireProgressStateChanged("Performing inverse wavelet transform");
         fireProgressStateChanged(60);

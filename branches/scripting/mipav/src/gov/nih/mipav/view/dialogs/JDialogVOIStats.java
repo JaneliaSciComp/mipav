@@ -453,7 +453,6 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         contourTextArea.append("number of points: " + leadBase.size() + "\n");
 
         String [] positions = null;
-        FileInfoBase fInfo = null;
         Point3Df currentPt = null;
         int currentX, currentY, currentZ;
         if (image.getFileInfo(0).getOrigin()[0] != 0 ||
@@ -466,10 +465,8 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                 currentY = (int)currentPt.y;
                 currentZ = (int)currentPt.z;
 
-
-                fInfo = image.getFileInfo( (int)currentPt.z);
                 positions = ((ViewJFrameImage) parentFrame).getComponentImage().
-                            setScannerPosition(fInfo, (int)currentPt.x, (int)currentPt.z, (int)currentPt.z);
+                            setScannerPosition((int)currentPt.x, (int)currentPt.z, (int)currentPt.z);
 
                 if (positions != null) {
                     for (i = 0; i < size; i++) {

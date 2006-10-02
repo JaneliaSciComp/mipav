@@ -1,5 +1,6 @@
 package gov.nih.mipav.view.renderer;
 
+import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
@@ -72,9 +73,16 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     private static JProgressBar rendererProgressBar;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    /* Panel containing the position labels: */
+    JPanel panelLabels = new JPanel();
 
-    /** Labels for the absolute X, Y, and Z values. */
-    protected JLabel absLabel, labelXPos, labelYPos, labelZPos;
+    /** Labels for the current position in PatientSlice coordinates: */
+    protected JLabel patientSliceLabel = null;
+    protected JLabel[] patientSliceLabelVals = new JLabel[3];
+
+    /** Labels for the current position in 3D ModelView coordinates: */
+    protected JLabel modelViewLabel = null;
+    protected JLabel[] modelViewLabelVals = new JLabel[3];
 
     /** Configuration param, which will pass down to each render's constructor. */
     protected GraphicsConfiguration config;
@@ -90,9 +98,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
     /** Panel that holds the toolbars. */
     protected JPanel panelToolbar = new JPanel();
-
-    /** Labels for the positional X, Y, and Z values. */
-    protected JLabel posLabel, labelXRef, labelYRef, labelZRef;
 
     /** Lookup table of the color imageA, B. */
     protected ModelRGB RGBTA = null, RGBTB = null;
@@ -256,9 +261,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     /** RGB control panel of the color image. */
     private JPanelHistoRGB panelHistoRGB;
 
-    /** DOCUMENT ME! */
-    private JPanel panelLabels;
-
     /** Rendering parallel rotation button. */
     private JToggleButton parallelButton;
 
@@ -363,9 +365,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
     /** For each render, use the vector to store the currently active tabs. */
     private Vector surTabVector = new Vector();
-
-    /** The main tabbed pane in the volume view frame. */
-    private JTabbedPane tabbedPane;
 
     /** Toolbar builder reference. */
     private ViewToolBarBuilder toolbarBuilder;
@@ -683,6 +682,24 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             enableTargetPointPicking();
         } else if (command.equals("traverse")) {
             disableTargetPointPicking();
+        } else if ( command.equals("RadiologicalView")) {
+            imageA.setRadiologicalView( true );
+            if ( imageB != null )
+            {
+                imageB.setRadiologicalView( true );
+            }
+            surRender.setCenter( m_akPlaneRender[0].getCenter() );
+            setPositionLabels( surRender.getSlicePanel().getCenter() );
+            updateImages(true);
+        } else if ( command.equals("NeurologicalView")) {
+            imageA.setRadiologicalView( false );
+            if ( imageB != null )
+            {
+                imageB.setRadiologicalView( false );
+            }
+            surRender.setCenter( m_akPlaneRender[0].getCenter() );
+            setPositionLabels( surRender.getSlicePanel().getCenter() );
+            updateImages(true);
         }
 
     }
@@ -736,40 +753,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    /**
-     * Called when the JPanelSurface color button changes.
-     *
-     * @param  kColor  surface color value.
-     */
-    public void branchSetColor(Color4f kColor) {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setBranchColor(kColor);
-        }
-    }
-
-    /**
-     * A surface was added in the JPanelSurface: update the PlaneRender views.
-     */
-    public void branchSurfaceAdded() {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setBranchSurface(surRender.getSurfaceDialog().getMask(),
-                                                     surRender.getSurfaceDialog().getMaskColor(),
-                                                     surRender.getSurfaceDialog().getSurfaceColor());
-        }
-    }
-
-    /**
-     * A surface was removed from the JPanelSurface: update the PlaneRender views.
-     */
-    public void branchSurfaceRemoved() {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].removeBranchSurface();
         }
     }
 
@@ -858,114 +841,90 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * The label panel of the x, y, z slider position.
      */
     public void buildLabelPanel() {
-        panelLabels = new JPanel();
+        super.buildLabelPanel( );
+        patientSliceLabel = new JLabel( "Patient Slice Position" );
+        patientSliceLabel.setForeground( Color.black );
+        patientSliceLabel.setFont(MipavUtil.font14B);
+        patientSliceLabelVals[0] = new JLabel( "sagittal slice: " );
+        patientSliceLabelVals[1] = new JLabel( "coronal slice: " );
+        patientSliceLabelVals[2] = new JLabel( "axial slice: " );
 
-        JLabel xLabel = new JLabel("X:");
-        xLabel.setForeground(Color.black);
-        xLabel.setFont(MipavUtil.font12B);
+        modelViewLabel = new JLabel( "3D Model Position" );
+        modelViewLabel.setForeground( Color.black );
+        modelViewLabel.setFont(MipavUtil.font14B);
+        modelViewLabelVals[0] = new JLabel( "X: " );
+        modelViewLabelVals[1] = new JLabel( "Y: " );
+        modelViewLabelVals[2] = new JLabel( "Z: " );
 
-        JLabel yLabel = new JLabel("Y:");
-        yLabel.setForeground(Color.black);
-        yLabel.setFont(MipavUtil.font12B);
+        for ( int i = 0; i < 3; i++ )
+        {
+            patientSliceLabelVals[i].setForeground( Color.black );
+            patientSliceLabelVals[i].setFont(MipavUtil.font12B);
 
-        JLabel zLabel = new JLabel("Z:");
-        zLabel.setForeground(Color.black);
-        zLabel.setFont(MipavUtil.font12B);
-
-        absLabel = new JLabel("Absolute");
-        absLabel.setForeground(Color.black);
-        absLabel.setFont(MipavUtil.font12B);
-
-        labelXPos = new JLabel();
-        labelXPos.setForeground(Color.black);
-        labelXPos.setFont(MipavUtil.font12B);
-
-        labelYPos = new JLabel();
-        labelYPos.setForeground(Color.black);
-        labelYPos.setFont(MipavUtil.font12B);
-
-        labelZPos = new JLabel();
-        labelZPos.setForeground(Color.black);
-        labelZPos.setFont(MipavUtil.font12B);
-
-        posLabel = new JLabel("Position");
-        posLabel.setForeground(Color.black);
-        posLabel.setFont(MipavUtil.font12B);
-        posLabel.setEnabled(false);
-
-        labelXRef = new JLabel("  X:");
-        labelXRef.setForeground(Color.black);
-        labelXRef.setFont(MipavUtil.font12B);
-        labelXRef.setEnabled(false);
-
-        labelYRef = new JLabel("  Y:");
-        labelYRef.setForeground(Color.black);
-        labelYRef.setFont(MipavUtil.font12B);
-        labelYRef.setEnabled(false);
-
-        labelZRef = new JLabel("  Z:");
-        labelZRef.setForeground(Color.black);
-        labelZRef.setFont(MipavUtil.font12B);
-        labelZRef.setEnabled(false);
-
-        if ((imageA.getFileInfo(0).getOrigin(0) != 0) || (imageA.getFileInfo(0).getOrigin(1) != 0) ||
-                (imageA.getFileInfo(0).getOrigin(2) != 0)) {
-            posLabel.setEnabled(true);
-            labelXRef.setEnabled(true);
-            labelYRef.setEnabled(true);
-            labelZRef.setEnabled(true);
+            modelViewLabelVals[i].setForeground( Color.black );
+            modelViewLabelVals[i].setFont(MipavUtil.font12B);
         }
 
-        JPanel panelOne = new JPanel(new GridBagLayout());
-        JPanel panelTwo = new JPanel(new GridBagLayout());
-        JPanel panelThree = new JPanel(new GridBagLayout());
+        JPanel patientSlicePanel = new JPanel(new GridBagLayout());
+        JPanel modelViewPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.WEST;
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
 
-        // gbc2.weightx = 1;
+        patientSlicePanel.add( patientSliceLabel, gbc2);
+        modelViewPanel.add( modelViewLabel, gbc2);
 
-        gbc2.ipadx = 5;
-        gbc2.insets = new Insets(0, 5, 0, 5);
+        gbc2.gridy++;
+        patientSlicePanel.add( new JLabel(), gbc2);
+        modelViewPanel.add( new JLabel(), gbc2);
 
-        panelOne.add(absLabel, gbc2);
-        gbc2.gridx = 0;
-        gbc2.gridy = 1;
-        panelOne.add(xLabel, gbc2);
-        gbc2.gridx = 1;
-        panelOne.add(labelXPos, gbc2);
+        for ( int i = 0; i < 3; i++ )
+        {
+            gbc2.gridy++;
+            patientSlicePanel.add( patientSliceLabelVals[i], gbc2);
+            modelViewPanel.add( modelViewLabelVals[i], gbc2);
+        }
 
-        gbc2.gridx = 0;
-        gbc2.gridy = 2;
-        panelOne.add(yLabel, gbc2);
-        gbc2.gridx = 1;
-        panelOne.add(labelYPos, gbc2);
+        JRadioButton radiologicalView = new JRadioButton( "Radiological View" );
+        radiologicalView.setSelected( true );
+        radiologicalView.addActionListener( this );
+        radiologicalView.setActionCommand( "RadiologicalView" );
+        JRadioButton neurologicalView = new JRadioButton( "Neurological View" );
+        neurologicalView.setSelected( false );
+        neurologicalView.addActionListener( this );
+        neurologicalView.setActionCommand( "NeurologicalView" );
+        ButtonGroup  dataViewGroup = new ButtonGroup();
+        dataViewGroup.add( radiologicalView );
+        dataViewGroup.add( neurologicalView );
 
-        gbc2.gridx = 0;
-        gbc2.gridy = 3;
-        panelOne.add(zLabel, gbc2);
-        gbc2.gridx = 1;
-        panelOne.add(labelZPos, gbc2);
+        JPanel viewPanel = new JPanel();
+        viewPanel.setLayout( new GridLayout( 2, 1 ) );
+        viewPanel.add( radiologicalView );
+        viewPanel.add( neurologicalView );
 
-        gbc2.gridy = 0;
-        panelTwo.add(posLabel, gbc2);
-        gbc2.gridy = 1;
-        panelTwo.add(labelXRef, gbc2);
-        gbc2.gridy = 2;
-        panelTwo.add(labelYRef, gbc2);
-        gbc2.gridy = 3;
-        panelTwo.add(labelZRef, gbc2);
+        JPanel panelLabelsModel = new JPanel();
+        panelLabelsModel.setLayout(new GridLayout( 1, 2 ));
+        panelLabelsModel.setBorder( JPanelRendererBase.buildTitledBorder("Rendering Coordinates") );
+        panelLabelsModel.add( modelViewPanel );
+        panelLabelsModel.add( patientSlicePanel );
 
-        panelLabels.setLayout(new GridLayout());
-        panelLabels.add(panelOne);
-        panelLabels.add(panelTwo);
-        panelLabels.add(panelThree);
+        JPanel panelLabelsScanner = new JPanel();
+        panelLabelsScanner.setLayout(new GridLayout( 1, 2 ));
+        panelLabelsScanner.setBorder( JPanelRendererBase.buildTitledBorder("Scanner Coordinates") );
+        panelLabelsScanner.add( scannerPanel );
+        panelLabelsScanner.add( absolutePanel );
 
-        tabbedPane.addTab("Positions", null, panelLabels);
+        panelLabels.setLayout(new GridLayout( 3, 1 ));
+        panelLabels.add( panelLabelsScanner );
+        panelLabels.add( viewPanel );
+        panelLabels.add( panelLabelsModel );
+
+        tabbedPane.addTab( "Positions", null, panelLabels );
     }
 
     /**
@@ -1209,17 +1168,17 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                                                      imageA, LUTa,
                                                      imageB, LUTb,
                                                      config,
-                                                     ViewJComponentBase.AXIAL, false);
+                                                     FileInfoBase.AXIAL, false);
                 m_akPlaneRender[1] = new PlaneRender(this,
                                                      imageA, LUTa,
                                                      imageB, LUTb,
                                                      config,
-                                                     ViewJComponentBase.SAGITTAL, false);
+                                                     FileInfoBase.SAGITTAL, false);
                 m_akPlaneRender[2] = new PlaneRender(this,
                                                      imageA, LUTa,
                                                      imageB, LUTb,
                                                      config,
-                                                     ViewJComponentBase.CORONAL, false);
+                                                     FileInfoBase.CORONAL, false);
             }
 
             if (isShearWarpEnable) {
@@ -1281,6 +1240,15 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
         if (isRayCastEnable || isShearWarpEnable || isBrainsurfaceFlattenerEnable) {
             enableDualPanelRender();
+        }
+        if ( imageA.isColorImage() )
+        {
+            setRGBTA(RGBTA);
+            if ( (imageB != null) && imageB.isColorImage() )
+            {
+                setRGBTB(RGBTB);
+            }
+            updateImages(true);
         }
 
         // Toolkit.getDefaultToolkit().setDynamicLayout( false );
@@ -1673,6 +1641,27 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     }
 
     /**
+     * Returns which image is active in the HistoRGB -- either imageA or
+     * imageB. Called by the PlaneRenderer object to determine which LUT to
+     * update based on dragging the right-mouse in the PlaneRender window:
+     *
+     * @return  ModelImage, either imageA or imageB, depending on which is selected in the HistoLUT
+     */
+    public ModelImage getHistoRGBActiveImage() {
+
+        if (panelHistoRGB != null) {
+
+            if (panelHistoRGB.getDisplayMode() == JPanelHistoRGB.IMAGE_A) {
+                return imageA;
+            } else {
+                return imageB;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Get the image A reference.
      *
      * @return  imageA model image A reference.
@@ -1708,6 +1697,16 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     public JPanelHistoLUT getLUTDialog() {
         return panelHistoLUT;
     }
+
+    /**
+     * Get the RGB panel (only should be used with color images).
+     *
+     * @return  the histo RGB panel
+     */
+    public JPanelHistoRGB getRGBDialog() {
+        return panelHistoRGB;
+    }
+
 
     /**
      * Return the rfa probe panel.
@@ -2214,20 +2213,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         }
     }
 
-    /**
-     * Set the absolute position label from the plane render mouse drags and slice panel slider moves.
-     */
-    public void setAbsPositionLabels() {
-    }
-    public void setAbsPositionLabels( float x, float y, float z )
-    {
-        labelXPos.setText("" + (int)x);
-        labelYPos.setText("" + (int)y);
-        labelZPos.setText("" + (int)z);
-
-        setPositionLabels(surRender.getSlicePanel().getXSlice(), surRender.getSlicePanel().getYSlice(),
-                          surRender.getSlicePanel().getZSlice());
-    }
 
     /**
      * Required by the parent super class, do nothing.
@@ -2244,30 +2229,29 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     public void setAlphaBlend(int value) { }
 
 
-    /* MipavCoordinateSystems upgrade: TODO: */
     /**
-     * Sets the PlaneRender z-slice value for the view iView. Called from
-     * PlaneRender.
-     * @param iView, AXIAL, SAGITTAL, or CORONAL
-     * @param fValue, the normalized z-slice value:
-     *
+     * Sets the position of the slices in the SurfaceRender and PlaneRender
+     * objects. Called from the PlaneRender class.
+     * @param center, the new slice positions in FileCoordinates
      */
     public void setSliceFromPlane( Point3Df center )
     {
+        setPositionLabels( center );
         for ( int i = 0; i < 3; i++ )
         {
             m_akPlaneRender[ i ].setCenter( center );
         }
-        setAbsPositionLabels( center.x, center.y, center.z );
         surRender.setCenter( center );
     }
 
     /**
-     * SurfaceRenderer
-     *
+     * Sets the position of the slices in the PlaneRender. Called from the
+     * SurfaceRender class.
+     * @param center, the new slice positions in FileCoordinates
      */
     public void setSliceFromSurface( Point3Df center )
     {
+        setPositionLabels( center );
         if ( m_akPlaneRender == null )
         {
             return;
@@ -2281,19 +2265,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         }
     }
 
-
-    /**
-     * Called when the JPanelSurface color button changes.
-     *
-     * @param  iIndex  surface index
-     * @param  kColor  Color attribute
-     */
-    public void setColor(int iIndex, Color4f kColor) {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setColor(iIndex, kColor);
-        }
-    }
 
     /**
      * Required by the parent super class, do nothing.
@@ -2417,37 +2388,53 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     }
 
     /**
-     * Sets the labels that refer to relative position within the image.
-     *
-     * @param  x  Absolute x value in slice.
-     * @param  y  Absolute y value in slice.
-     * @param  z  Absolute z value in slice.
+     * Sets the position labels.
+     * @param position, the slice positions in FileCoordinates.
      */
-    public void setPositionLabels(int x, int y, int z) {
-
-        DecimalFormat nf = new DecimalFormat("#####0.0##");
-        float[] tCoord = new float[3];
-
-        imageA.getScannerCoordLPS(x, y, z, tCoord);
-
-        if (tCoord[0] < 0) {
-            labelXRef.setText("R: " + String.valueOf(nf.format(-tCoord[0])));
-        } else {
-            labelXRef.setText("L: " + String.valueOf(nf.format(tCoord[0])));
+    public void setPositionLabels( Point3Df position)
+    {
+        if ( scannerLabel == null )
+        {
+            return;
         }
+        setScannerPosition( position );
+        setPatientSlicePosition( position );
+        set3DModelPosition( position );
+        setAbsPositionLabels( position );
+    }
 
-        if (tCoord[1] < 0) {
-            labelYRef.setText("A: " + String.valueOf(nf.format(-tCoord[1])));
-        } else {
-            labelYRef.setText("P: " + String.valueOf(nf.format(tCoord[1])));
-        }
+    /*
+     * Sets the PatientSlice position label.
+     * @param position, the slice positions in FileCoordinates.
+     */
+    private void setPatientSlicePosition( Point3Df position )
+    {
+        Point3Df axial = new Point3Df();
+        MipavCoordinateSystems.FileToPatient( position, axial, imageA, FileInfoBase.AXIAL );
 
-        if (tCoord[2] < 0) {
-            labelZRef.setText("I: " + String.valueOf(nf.format(-tCoord[2])));
-        } else {
-            labelZRef.setText("S: " + String.valueOf(nf.format(tCoord[2])));
-        }
+        Point3Df coronal = new Point3Df();
+        MipavCoordinateSystems.FileToPatient( position, coronal, imageA, FileInfoBase.CORONAL );
 
+        Point3Df sagittal = new Point3Df();
+        MipavCoordinateSystems.FileToPatient( position, sagittal, imageA, FileInfoBase.SAGITTAL );
+
+        patientSliceLabelVals[0].setText( "sagittal slice: " + (int)sagittal.z );
+        patientSliceLabelVals[1].setText( "coronal slice: " + (int)coronal.z );
+        patientSliceLabelVals[2].setText( "axial slice: " + (int)axial.z );
+    }
+
+    /*
+     * Sets the 3DModel position label.
+     * @param position, the slice positions in FileCoordinates.
+     */
+    private void set3DModelPosition( Point3Df position )
+    {
+        Point3Df screen = new Point3Df();
+        surRender.ModelToScreen( position, screen );
+
+        modelViewLabelVals[0].setText( "X: " + screen.x );
+        modelViewLabelVals[1].setText( "Y: " + screen.y  );
+        modelViewLabelVals[2].setText( "Z: " + screen.z  );
     }
 
 
@@ -2592,30 +2579,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     }
 
     /**
-     * A surface was added in the JPanelSurface: update the PlaneRender views.
-     */
-    public void surfaceAdded() {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setSurface(surRender.getSurfaceDialog().getMask(),
-                                               surRender.getSurfaceDialog().getMaskColor(),
-                                               surRender.getSurfaceDialog().getSurfaceColor());
-        }
-    }
-
-    /**
-     * A surface was removed from the JPanelSurface: update the PlaneRender views.
-     *
-     * @param  iIndex  surface index
-     */
-    public void surfaceRemoved(int iIndex) {
-
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].removeSurface(iIndex);
-        }
-    }
-
-    /**
      * Update the tabbed pane when switch view buttons in the View toolbar.
      *
      * @param  command  command of the renderer's view toolbar button click.
@@ -2716,8 +2679,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public boolean updateImages() {
 
-        for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].updateLut(LUTa, LUTb);
+        for (int i = 0; i < 3; i++) {
+            if ( m_akPlaneRender[i] != null )
+            {
+                m_akPlaneRender[i].updateData();
+            }
         }
 
         if (surRender != null) {
@@ -2744,6 +2710,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      */
     public boolean updateImages(boolean forceShow) {
 
+        for (int i = 0; i < 3; i++) {
+            if ( m_akPlaneRender[i] != null )
+            {
+                m_akPlaneRender[i].updateData();
+            }
+        }
         if (surRender != null) {
             surRender.updateImages(forceShow);
         }
@@ -2805,7 +2777,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Causes the PlaneRender objects to update the texture maps when the underlying ModelImage changes.
      */
     public void updateSliceData() {
-
         for (int iPlane = 0; iPlane < 3; iPlane++) {
             m_akPlaneRender[iPlane].updateData();
         }
@@ -3780,14 +3751,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  lut    ModelLUT reference
      */
     private void resetLUTMinMax(ModelImage image, ModelLUT lut) {
-        float[] x = new float[4];
-        float[] y = new float[4];
         int nPts = lut.getTransferFunction().size();
-
+        float[] x = new float[nPts];
+        float[] y = new float[nPts];
         lut.getTransferFunction().exportArrays(x, y);
 
         for (int i = 0; i < nPts; i++) {
-
             if (x[i] < image.getMin()) {
                 x[i] = (float) image.getMin();
             } else if (x[i] > image.getMax()) {

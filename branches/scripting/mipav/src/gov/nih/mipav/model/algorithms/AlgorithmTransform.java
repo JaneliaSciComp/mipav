@@ -147,6 +147,10 @@ public class AlgorithmTransform extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private TransMatrix transMatrix;
+    
+    private boolean doCenter = false;
+    
+    private Point3Df center = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -431,6 +435,24 @@ public class AlgorithmTransform extends AlgorithmBase {
         destImage = new ModelImage(type, extents, name);
         updateFileInfo(srcImage, destImage, destResolutions);
     }
+    
+    /**
+     * 
+     * @param doCenter
+     */
+    public void setDoCenter(boolean doCenter) {
+        this.doCenter = doCenter;
+    }
+    
+    /**
+     * 
+     * @param center
+     */
+    public void setCenter(Point3Df center) {
+        this.center = center;
+    }
+    
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -3691,45 +3713,56 @@ public class AlgorithmTransform extends AlgorithmBase {
                 destImage.setMatrix(transMatrix);
                 destImage.getFileInfo(0).setTransformID(srcImage.getFileInfo(0).getTransformID());
             } else {
-
+                // srcImage Matrix * transMatrix invert * [x y z]transpose
+                // since (transMatrix invert * [x y z]transpose) takes the
+                // destination image to the source image and srcImage Matrix
+                // takes the source image to the axial image.
+                // The translation to the center and away from the center are
+                // not present since these translations are multiplied into
+                // the transformation matrix in AlgorithmTransform.transform()
+                // when rotation around the center is specified in JDialogTransform.
+                transMatrix.invert();
                 if (srcImage.getNDims() > 2) {
-                    newMatrix = new Matrix(4, 4);
-                    newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
-
-                    // System.out.println("newMatrix = " + newMatrix);
-                    // System.out.println("transMatrix matrix = " + transMatrix);
-
                     if (transMatrix.getNCols() == 4) {
-                        newMatrix.timesEquals((Matrix) transMatrix);
-                    } else { // 2.5D processing
-
-                        Matrix Mat3D = new Matrix(4, 4);
-                        Mat3D.setMatrix(0, 2, 0, 2, (Matrix) transMatrix);
-                        Mat3D.set(3, 3, 1.0);
-                        newMatrix.timesEquals(Mat3D);
+                        newMatrix = new Matrix(4, 4);
+                        newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
+                        newMatrix.timesEquals(transMatrix);
                     }
-
+                    else { // 2.5D processing
+                        newMatrix = new Matrix(4, 4);
+                        newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
+                        double array2D[][];
+                        array2D = transMatrix.getMatrix();
+                        Matrix mat3D = new Matrix(4, 4);
+                        mat3D.set(0, 0, array2D[0][0]);
+                        mat3D.set(0, 1, array2D[0][1]);
+                        mat3D.set(0, 2, 0.0);
+                        mat3D.set(0, 3, array2D[0][2]);
+                        mat3D.set(1, 0, array2D[1][0]);
+                        mat3D.set(1, 1, array2D[1][1]);
+                        mat3D.set(1, 2, 0.0);
+                        mat3D.set(1, 3, array2D[1][2]);
+                        mat3D.set(2, 0, array2D[2][0]);
+                        mat3D.set(2, 1, array2D[2][1]);
+                        mat3D.set(2, 2, array2D[2][2]);
+                        mat3D.set(3, 3, 1.0);
+                        newMatrix.timesEquals(mat3D);
+                    }
+                    
                     newTMatrix = new TransMatrix(4);
-                } // if (srcImage.getNDims() > 2)
+                }
                 else { // srcImage.getNDims() == 2
                     newMatrix = new Matrix(3, 3);
-
                     // There is the posibility the for 2D DICOM that the matrix might  be 4x4
                     // If 3 x3 OK to load else the newMatrix is identity
                     if (srcImage.getMatrix().getColumnDimension() == 3) {
                         newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
                     }
-
-                    // newMatrix.print();
-                    // System.out.println("transMatrix matrix = " + transMatrix);
-
-                    if (transMatrix.getNCols() == 3) {
-                        newMatrix.timesEquals((Matrix) transMatrix);
-                    }
-
+                    newMatrix.timesEquals(transMatrix);
                     newTMatrix = new TransMatrix(3);
-                } // srcImage.getNDims() == 2
+                }
 
+                    
                 newTMatrix.setMatrix(newMatrix.getArray());
 
                 destImage.setMatrix(newTMatrix);
@@ -3807,6 +3840,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         // uses inverse transform to transform backwards
         float[][] xfrm = null;
+        TransMatrix trans;
+        TransMatrix xfrmC;
 
         if ((DIM >= 3) && (!do25D)) {
             imgLength = iXdim * iYdim * iZdim;
@@ -3815,7 +3850,32 @@ public class AlgorithmTransform extends AlgorithmBase {
         }
 
         try {
-            xfrm = matrixtoInverseArray(transMatrix);
+            if ((do25D) || (DIM == 2)) {
+                trans = new TransMatrix(3);
+            } else { // (DIM >= 3) && (!do25D)
+                trans = new TransMatrix(4);
+            }
+            trans.setMatrix(transMatrix.getArray());
+            if (doCenter) {
+                if ((do25D) || (DIM == 2)) {
+                    xfrmC = new TransMatrix(3);
+                } else { // (DIM >= 3) && (!do25D)
+                    xfrmC = new TransMatrix(4);
+                }
+                xfrmC.identity();
+                if ((DIM >= 3) && (!do25D)) {
+                    xfrmC.setTranslate(center.x, center.y, center.z);
+                } else { // (DIM == 2) || do25D
+                    xfrmC.setTranslate(center.x, center.y);
+                }
+                trans.setMatrix((xfrmC.times(transMatrix)).getArray());
+                if ((DIM >= 3) && (!do25D)) {
+                    trans.setTranslate(-center.x, -center.y, -center.z);
+                } else { // (DIM == 2) || do25D
+                    trans.setTranslate(-center.x, -center.y);
+                }
+            } // if (doCenter)
+            xfrm = matrixtoInverseArray(trans);
 
             bufferFactor = 1;
 

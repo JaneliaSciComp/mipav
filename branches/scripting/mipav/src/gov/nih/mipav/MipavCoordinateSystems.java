@@ -32,58 +32,32 @@ public class MipavCoordinateSystems
     public static final void FileToModel(Point3Df pIn, Point3Df pOut,
                                          ModelStorageBase image)
     {
-        int[] axisOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.MODEL );
+        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.AXIAL );
+        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.CORONAL );
+        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.SAGITTAL );
 
-        /* The filePoint: */
-        float[] filePoint = new float[3];
-        filePoint[0] = pIn.x;
-        filePoint[1] = pIn.y;
-        filePoint[2] = pIn.z;
+        float[] filePoint = { pIn.x, pIn.y, pIn.z };
 
-        /* transformed file->model point: */
-        float[] modelPoint = new float[3];
-        for ( int i = 0; i < 3; i++ )
-        {
-            modelPoint[i] = filePoint[ axisOrder[i] ];
-        }
-
-        /* assign the transformed point to pOut: */
-        pOut.x = modelPoint[0];
-        pOut.y = modelPoint[1];
-        pOut.z = modelPoint[2];
+        pOut.x = filePoint[ axialOrder[2] ];
+        pOut.y = filePoint[ coronalOrder[2] ];
+        pOut.z = filePoint[ sagittalOrder[2] ];
     }
 
     public static final void ModelToFile(Point3Df pIn, Point3Df pOut,
                                          ModelStorageBase image )
     {
-        /* axisOrder represents the mapping of model space volume axes to patient space axes: */
-        int[] axisOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.MODEL );
+        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.AXIAL );
+        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.CORONAL );
+        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.SAGITTAL );
 
-        /* axisOrderInverse is the inverse axis re-mapping from Patient
-         * Coordinates to Model Coordinates: */
-        int[] axisOrderInverse = new int[3];
-        /* get the inverse mapping: */
-        getAxisOrderInverse( axisOrder, axisOrderInverse );
-
-        /* The modelPoint: */
         float[] modelPoint = new float[3];
-        modelPoint[0] = pIn.x;
-        modelPoint[1] = pIn.y;
-        modelPoint[2] = pIn.z;
+        modelPoint[ axialOrder[2] ] = pIn.x;
+        modelPoint[ coronalOrder[2] ] = pIn.y;
+        modelPoint[ sagittalOrder[2] ] = pIn.z;
 
-        /* transformed filePoint: */
-        float[] filePoint = new float[3];
-        
-        /* then remap the axes: */
-        for ( int i = 0; i < 3; i++ )
-        {
-            filePoint[i] = modelPoint[ axisOrderInverse[i] ];
-        }
-
-        /* assign the transformed point to pOut: */
-        pOut.x = filePoint[0];
-        pOut.y = filePoint[1];
-        pOut.z = filePoint[2];
+        pOut.x = modelPoint[ 0 ];
+        pOut.y = modelPoint[ 1 ];
+        pOut.z = modelPoint[ 2 ];
     }
 
     /** Model to Patient transform. Transforms points that are in model space
@@ -92,10 +66,6 @@ public class MipavCoordinateSystems
     public static final void FileToPatient( Point3Df pIn, Point3Df pOut,
                                             ModelStorageBase image, int orientation )
     {
-        //System.err.println( "TESTING" );
-        //test( image, orientation );
-        //System.err.println( "DONE" );
-
         /* axisOrder represents the mapping of model space volume axes to patient space axes: */
         int[] axisOrder = MipavCoordinateSystems.getAxisOrder( image, orientation );
 
@@ -185,77 +155,6 @@ public class MipavCoordinateSystems
 
     }
 
-    /* Testing Model->Patient and Patient->Model transforms for all permutations of axisOrder and axisFlip: */
-    private static final void test( ModelStorageBase image, int orientation )
-    {
-        test( image, orientation, new int[] { 0, 1, 2 } );
-        test( image, orientation, new int[] { 0, 2, 1 } );
-        test( image, orientation, new int[] { 1, 0, 2 } );
-        test( image, orientation, new int[] { 1, 2, 0 } );
-        test( image, orientation, new int[] { 2, 0, 1 } );
-        test( image, orientation, new int[] { 2, 1, 0 } );
-    }
-
-    /* Testing Model->Patient and Patient->Model transforms for all permutations of axisOrder and axisFlip: */
-    private static final void test( ModelStorageBase image, int orientation, int[] axisOrder )
-    {
-        test( image, orientation, axisOrder, new boolean[] { false, false, false } );
-        test( image, orientation, axisOrder, new boolean[] { false, false, true } );
-        test( image, orientation, axisOrder, new boolean[] { false, true, false } );
-        test( image, orientation, axisOrder, new boolean[] { false, true, true } );
-        test( image, orientation, axisOrder, new boolean[] { true, false, false } );
-        test( image, orientation, axisOrder, new boolean[] { true, false, true } );
-        test( image, orientation, axisOrder, new boolean[] { true, true, false } );
-        test( image, orientation, axisOrder, new boolean[] { true, true, true } );
-    }
-
-
-    /* Testing Model->Patient and Patient->Model transforms for all permutations of axisOrder and axisFlip: */
-    private static final void test(  ModelStorageBase image, int orientation, int[] axisOrder, boolean[] axisFlip )
-    {
-        float[] modelPoint = { 10, 20, 30 };
-        float[] patientPoint = new float[3];
-
-        int[] extents = image.getExtents( orientation );
-
-        int[] axisOrderInverse = new int[3];
-        getAxisOrderInverse( axisOrder, axisOrderInverse );
-
-        // Model -> Patient
-        for ( int i = 0; i < 3; i++ )
-        {
-            patientPoint[i] = modelPoint[ axisOrder[i] ];
-        }
-        for ( int i = 0; i < 3; i++ )
-        {
-            if ( axisFlip[ i ] )
-            {
-                patientPoint[i] = extents[ i ] - patientPoint[ i ] - 1;
-            }
-        }
-
-        // Patient -> Model
-        for ( int i = 0; i < 3; i++ )
-        {
-            if ( axisFlip[ i ] )
-            {
-                patientPoint[i] = extents[ i ] - patientPoint[ i ] - 1;
-            }
-        }
-        float[] newModelPoint = new float[3];
-        for ( int i = 0; i < 3; i++ )
-        {
-            newModelPoint[i] = patientPoint[ axisOrderInverse[i] ];
-        }
-        if ( (modelPoint[0] != newModelPoint[0]) ||
-             (modelPoint[1] != newModelPoint[1]) ||
-             (modelPoint[2] != newModelPoint[2])    )
-        {
-            System.err.println( "TEST FAILED: " + axisOrder[0] + " " + axisOrder[1] + " " + axisOrder[2]
-                                + " " + axisFlip[0] + " " + axisFlip[1] + " " + axisFlip[2] );
-        }
-    }
-
     /* Inverts the input axisOrder so that points can be mapped back from
      * Patient Coordinates to Model Coordinates. The Inverse map is based only
      * on the input axisOrder map. */
@@ -313,16 +212,7 @@ public class MipavCoordinateSystems
      */
     public static final boolean[] getAxisFlip( ModelStorageBase image, int iOrientation )
     {
-        boolean[] abAxisFlip = new boolean[3];
-        abAxisFlip[0] = false;
-        abAxisFlip[1] = false;
-        abAxisFlip[2] = false;
-
-        if (iOrientation == FileInfoBase.MODEL )
-        {
-            return abAxisFlip;
-
-        }
+        boolean[] abAxisFlip = { false, false, false };
         int[] aiAxisOrientation = getAxisOrientation( image );
 
         if ( (aiAxisOrientation != null) &&
@@ -374,6 +264,13 @@ public class MipavCoordinateSystems
             }
         }
 
+        if ( image.getRadiologicalView() &&
+             (iOrientation != FileInfoBase.SAGITTAL) &&
+             (iOrientation != FileInfoBase.UNKNOWN_ORIENT) )
+        {
+            abAxisFlip[0] = !abAxisFlip[0];
+        }
+
         return abAxisFlip;
 
     }
@@ -393,8 +290,7 @@ public class MipavCoordinateSystems
         int[] aiAxisOrientation = getAxisOrientation( image );
 
         if ( (aiAxisOrientation != null)  &&
-             (iOrientation != FileInfoBase.UNKNOWN_ORIENT ) &&
-             (iOrientation != FileInfoBase.MODEL ) )
+             (iOrientation != FileInfoBase.UNKNOWN_ORIENT ) )
         {
             for ( int i = 0; i < 3; i++ )
             {
@@ -441,15 +337,13 @@ public class MipavCoordinateSystems
                 }
             }
         }
-        else if ( (iOrientation == FileInfoBase.SAGITTAL) ||
-                  ((iOrientation == FileInfoBase.MODEL) && (image.getImageOrientation() == FileInfoBase.SAGITTAL)) )
+        else if ( (iOrientation == FileInfoBase.SAGITTAL) )
         {
             aiAxisOrder[0] = 2;
             aiAxisOrder[1] = 1;
             aiAxisOrder[2] = 0;
         }
-        else if ( (iOrientation == FileInfoBase.CORONAL) ||
-                  ((iOrientation == FileInfoBase.MODEL) && (image.getImageOrientation() == FileInfoBase.CORONAL)) )
+        else if ( (iOrientation == FileInfoBase.CORONAL) )
         {
             aiAxisOrder[0] = 0;
             aiAxisOrder[1] = 2;
@@ -465,6 +359,31 @@ public class MipavCoordinateSystems
         return aiAxisOrder;
     }
 
+    /** Translates the input point into model scanner coordinates, based on the input image, kImage.
+     * @param kInput, the input point in FileCoordinates
+     * @param kOutput, the transformed point in ScannerCoordinates
+     * @param kImage, the image for which the point is being transformed.
+     */
+    public static final void getScannerCoordinates( Point3Df kInput, Point3Df kOutput, ModelStorageBase kImage )
+    {
+        Point3Df kAxial = new Point3Df();
+        MipavCoordinateSystems.FileToPatient( kInput, kAxial, kImage, FileInfoBase.AXIAL );
+        float[] afAxialRes = kImage.getResolutions( 0, FileInfoBase.AXIAL );
+        float[] afAxialOrigin = kImage.getOrigin( 0, FileInfoBase.AXIAL );
 
+        Point3Df kCoronal = new Point3Df();
+        MipavCoordinateSystems.FileToPatient( kInput, kCoronal, kImage, FileInfoBase.CORONAL );
+        float[] afCoronalRes = kImage.getResolutions( 0, FileInfoBase.CORONAL );
+        float[] afCoronalOrigin = kImage.getOrigin( 0, FileInfoBase.CORONAL );
+
+        Point3Df kSagittal = new Point3Df();
+        MipavCoordinateSystems.FileToPatient( kInput, kSagittal, kImage, FileInfoBase.SAGITTAL );
+        float[] afSagittalRes = kImage.getResolutions( 0, FileInfoBase.SAGITTAL );
+        float[] afSagittalOrigin = kImage.getOrigin( 0, FileInfoBase.SAGITTAL );
+        
+        kOutput.x = kCoronal.z * afCoronalRes[2] + afCoronalOrigin[2];
+        kOutput.y = kSagittal.z * afSagittalRes[2] + afSagittalOrigin[2];
+        kOutput.z = kAxial.z * afAxialRes[2] + afAxialOrigin[2];
+    }
 
 }

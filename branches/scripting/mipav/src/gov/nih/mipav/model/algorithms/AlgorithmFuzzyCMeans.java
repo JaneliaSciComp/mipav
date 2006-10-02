@@ -83,8 +83,8 @@ import java.util.*;
  * </p>
  *
  * <p>Hard segmentation produces only 1 unsigned byte output image which assigns pixels which do not meet threshold
- * requirements values of 0. The first class is assigned a value of 255/nClass, the second class is assigned a pixel
- * value of 2*255/nClass, and so on. The last class has a value of 255.</p>
+ * requirements values of 0. The first class is assigned a value of 1, the second class is assigned a pixel
+ * value of 2, and so on. The last class has a value of nClass.</p>
  *
  * <p>Fuzzy segmentation produces 1 image of the same type as the source image for every segmentation class. The
  * membership function is scaled so that the minimum membership value scales to the source image minimum value and the
@@ -841,7 +841,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         if (segmentation != FUZZY_ONLY) {
 
             try {
-                int range = 255 / nClass;
 
                 segBuffer = new byte[orgSlice];
 
@@ -857,7 +856,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                             classType = -1;
                         } // if (!objMask.get(x + yStepOut))
                         else {
-                            c = range;
+                            c = 1;
                             classType = 0;
                             dTemp = mems[x + yStepOut];
 
@@ -866,7 +865,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
                                 if (mems[indexM] > dTemp) {
                                     dTemp = mems[indexM];
-                                    c = ((i + 1) * range);
+                                    c = (i + 1);
                                     classType = i;
                                 } // if (mems[indexM] > dtemp)
                             } // for (i = 1; i < nClass; i++)
@@ -888,14 +887,14 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                     String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
 
                     for (i = 0; i < nClass; i++) {
-                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
+                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " +  (i + 1) + " count = " +
                                        classNumber[i] + " area = " + (pixelSize * classNumber[i]) + " square " +
                                        unitsStr + "\n");
                     } // for (i = 0; i < nClass; i++)
                 } else {
 
                     for (i = 0; i < nClass; i++) {
-                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
+                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (i + 1) + " count = " +
                                        classNumber[i] + "\n");
                     } // for (i = 0; i < nClass; i++)
                 } // else
@@ -1310,7 +1309,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             } // if (segmentation != HARD_ONLY)
 
             if (segmentation != FUZZY_ONLY) {
-                int range = 255 / nClass;
 
                 segBuffer = new byte[orgVol];
 
@@ -1329,7 +1327,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                                 classType = -1;
                             } // if (!objMask.get(x + yStepOut))
                             else {
-                                c = range;
+                                c = 1;
                                 classType = 0;
                                 dTemp = mems[x + yStepOut];
 
@@ -1338,7 +1336,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
                                     if (mems[indexM] > dTemp) {
                                         dTemp = mems[indexM];
-                                        c = ((i + 1) * range); // preCalc  temp = 255/nClass
+                                        c = (i + 1);
                                         classType = i;
                                     } // if (mems[indexM] > dtemp)
                                 } // for (i = 1; i < nClass; i++)
@@ -1361,14 +1359,14 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                     String unitsStr = FileInfoBase.getUnitsOfMeasureStr(units[0]);
 
                     for (i = 0; i < nClass; i++) {
-                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
+                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (i + 1) + " count = " +
                                        classNumber[i] + " volume = " + (voxelSize * classNumber[i]) + " cubic " +
                                        unitsStr + "\n");
                     } // for (i = 0; i < nClass; i++)
                 } else {
 
                     for (i = 0; i < nClass; i++) {
-                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (range * (i + 1)) + " count = " +
+                        ViewUserInterface.getReference().setDataText(srcImage.getImageName() + " intensity = " + (i + 1) + " count = " +
                                        classNumber[i] + "\n");
                     } // for (i = 0; i < nClass; i++)
                 }

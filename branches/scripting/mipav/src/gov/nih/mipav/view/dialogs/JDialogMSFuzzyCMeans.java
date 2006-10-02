@@ -17,6 +17,7 @@ import java.io.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
+import javax.swing.filechooser.FileFilter;
 
 
 /**
@@ -1445,6 +1446,8 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.TECH));
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MICROSCOPY));
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MISC));
+            FileFilter currentFileFilter = getFileFilter(chooser, Preferences.getFileFilter());
+            chooser.setFileFilter(currentFileFilter);
 
             chooser.setDialogTitle("Open Image");
 
@@ -1472,6 +1475,24 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
 
             return null;
         }
+    }
+    
+    /**
+     * A private helper function to get the current used FileFilter from JFileChooser.
+     * 
+     * @param chooser
+     * @param index  the index of the choosable file filters.
+     * @return       the current used file filter.
+     */
+    private FileFilter getFileFilter(JFileChooser chooser, int index){
+        FileFilter[] filters = chooser.getChoosableFileFilters();
+        String[] descriptions = ViewImageFileFilter.getDescriptions();
+        for(int i = 0; i < filters.length; i++){
+            if(filters[i].getDescription().equals(descriptions[index])){
+                return filters[i];
+            }
+        }
+        return null;
     }
 
     /**
