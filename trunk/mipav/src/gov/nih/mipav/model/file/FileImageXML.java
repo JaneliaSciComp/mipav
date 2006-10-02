@@ -603,7 +603,9 @@ public class FileImageXML extends FileXML {
 
             FileRaw rawFile;
 
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo,
+            imageFileName = FileUtility.stripExtension(fileName) + ".raw";
+            
+            rawFile = new FileRaw(imageFileName, fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo,
                                   showProgress, FileBase.READ);
             rawFile.readImage(buffer, 0, ((FileInfoImageXML) fileInfo).getDataType());
 
@@ -632,6 +634,16 @@ public class FileImageXML extends FileXML {
         additionalSets = moreSets;
     }
 
+    /**
+     * Accessor to set the file name (used when reading XML multiFile).
+     *
+     * @param  fName  file name of image to read.
+     */
+    public void setFileName(String fName) {
+        fileName = fName;
+    }
+
+    
     /**
      * Sets the model LUT.
      *
