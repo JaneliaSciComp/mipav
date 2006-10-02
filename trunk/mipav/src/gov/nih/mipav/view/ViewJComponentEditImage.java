@@ -9,8 +9,6 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.dialogs.*;
 
-//import static gov.nih.mipav.view.MipavUtil.*;
-
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.image.*;
@@ -130,15 +128,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     protected float fuzzyThreshold = -1;
 
-    /** used when graphing a VOI. */
-    //protected float[] graphImgBuff;
-
-    /** in setPaintBuffers and setPaintBuffers zero out buffer values below threshold. */
-    protected boolean hasThreshold1 = false;
-
-    /** DOCUMENT ME! */
-    protected boolean hasThreshold2 = false;
-
     /** Model for image A. */
     protected ModelImage imageA;
 
@@ -202,9 +191,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** used to describe the cursor mode. */
     protected int mode;
 
-    /** New Text VOI (annotation). */
-    // private VOI newTextVOI = null;
-
     /** Used to "lock" display when an algorithm is in the calculation process. */
     protected boolean modifyFlag = true;
 
@@ -248,8 +234,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     protected int[] pixBufferB = null;
 
     /**
-     * The previous paint brush we were using when the user temporarily changes the paint brush size using keyboard
-     * shortcuts (by pressing 1, 2, 3, 4).
+     * The previous paint brush we were using when the user temporarily
+     * changes the paint brush size using keyboard shortcuts (by pressing 1,
+     * 2, 3, 4).
      */
     protected int previousPaintBrush = -1;
 
@@ -261,9 +248,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** Checkerboard display parameters. */
     protected int rowCheckers = -1; // a negative value indicates no checkerboarding
-
-    /** Rubberband tool for VOIs. */
-   // protected Rubberband rubberband;
 
     /** Used with commitMask(int imagesDone), to save the value. */
     protected float saveValue;
@@ -305,12 +289,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     protected String stringOverride = null;
 
     /** DOCUMENT ME! */
-    protected float threshold1;
-
-    /** DOCUMENT ME! */
-    protected float threshold2;
-
-    /** DOCUMENT ME! */
     protected long time;
 
     /** DOCUMENT ME! */
@@ -318,15 +296,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** DOCUMENT ME! */
     protected Color toppedColor = ACTIVE_IMAGE_COLOR;
-
-    /** DOCUMENT ME! */
-    protected boolean useBlueThreshold = false;
-
-    /** DOCUMENT ME! */
-    protected boolean useGreenThreshold = false;
-
-    /** DOCUMENT ME! */
-    protected boolean useRedThreshold = false;
 
     /** DOCUMENT ME! */
     protected boolean useVOI = false;
@@ -353,8 +322,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     private Image cleanImageB = null;
 
     /**
-     * last slice the image was at when win region was ON. its necessary because otherwise, a new cleanImageB would have
-     * to be created upon every repaint. should be initialized to a negative number
+     * last slice the image was at when win region was ON. its necessary
+     * because otherwise, a new cleanImageB would have to be created upon
+     * every repaint. should be initialized to a negative number
      */
     private int lastWinRegionSlice = -1;
 
@@ -380,7 +350,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * Handles all aspects of VOIs, including mouse responses, movements, VOI graphing etc
      */
     protected VOIHandler voiHandler = null;
-
 
     /** PatientSlice contains all the Patient Coordinate system view-specific
      * data for rendering this component: */
@@ -482,7 +451,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         paintBitmap = imageA.getMask();
         paintBitmapBU = imageA.getMaskBU();
 
-
         imageBufferActive = imageBufferA;
         this.logMagDisplay = logMagDisplay;
 
@@ -495,7 +463,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
        } else {
            voiHandler.setOverlay(Preferences.is(Preferences.PREF_SHOW_IMAGE_OVERLAYS));
        }
-
 
         if ( ! (this instanceof ViewJComponentTriImage)) {
             addMouseListener(voiHandler);
@@ -527,9 +494,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
-
-
     /**
      * Calculates the volume of the painted voxels.
      *
@@ -548,9 +512,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         showRegionInfo(count, str);
     }
-
-
-
 
     /**
      * Loops through the images and displays them.
@@ -1000,12 +961,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
-
-
-
-
-
     /**
      * Sets all variables to null, disposes, and garbage collects.
      *
@@ -1058,8 +1013,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         LUTa = null;
         LUTb = null;
-       // anchorPt = null;
-       // newPtVOI = null;
 
         if (flag == true) {
             super.disposeLocal();
@@ -1170,8 +1123,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public ViewJFrameBase getFrame() {
         return frame;
     }
-
-
 
     /**
      * Returns the imageA.
@@ -1364,38 +1315,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * Determines if a VOI is selected (active).
-     *
-     * @return  true if active VOI is found --- Must add to JDialog base - should return null if nothing selected else
-     *          return VOI selected!!!!
-     */
-    public VOI getSelectedVOI() {
-        int i;
-        int nVOI;
-        ViewVOIVector VOIs = imageActive.getVOIs();
-
-        nVOI = VOIs.size();
-
-        if (nVOI == 0) {
-            return null;
-        }
-
-        for (i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).isActive() == true) {
-                break;
-            }
-        }
-
-        if (i == nVOI) {
-            return null;
-        } // No VOI to delete
-
-        return VOIs.VOIAt(i);
-
-    }
-
-    /**
      * Determines whether to enable the showIntensity checkbox for magnification box.
      *
      * @return  whether to enable showIntensity checkbox
@@ -1412,15 +1331,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         return super.getShowMagIntensityEnabled(g, MAGR_WIDTH, MAGR_HEIGHT, MAGR_MAG, imageActive.getType(),
                                                 getActiveImage().getMin(), getActiveImage().getMax());
 
-    }
-
-    /**
-     * Gets whether the slice number should be displayed at the lower left hand corner of the image.
-     *
-     * @return  whether the slice number will be shown
-     */
-    public boolean getShowSliceNum() {
-        return showSliceNumber;
     }
 
     /**
@@ -1644,21 +1554,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void mouseDragged(MouseEvent mouseEvent) {
         int mouseMods = mouseEvent.getModifiers();
 
-        int i, j, m;
-
-        ViewVOIVector VOIs = imageActive.getVOIs();
-        int nVOI = VOIs.size();
         int xS, yS;
-        int distX, distY;
-        int zDim = 1;
         Color dropperColor;
-        float[] lineX = new float[2];
-        float[] lineY = new float[2];
-        float[] lineZ = new float[2];
-        float[] position;
-        float[] intensity;
-        int sliceNum;
-        int sliceSize;
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -1671,10 +1568,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         int xDim = imageActive.getExtents()[0];
         int yDim = imageActive.getExtents()[1];
-        sliceSize = xDim * yDim;
-        if (imageActive.getNDims() >= 3) {
-            zDim = imageActive.getExtents()[2];
-        }
         if (xS < 0 || xS >= xDim || yS < 0 || yS >= yDim) {
             return;
         }
@@ -1704,7 +1597,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
+    /**
+     * processDefaultMouseDrag performs the mouseDrag operations when in
+     * DEFAULT mode. The default operation when the right mouse button is held
+     * down is the window-level image adjustment, and setting the ModelImage
+     * information at the pixel location. This function in shared with the
+     * deried classes.
+     * @param mouseEvent, the mouse event
+     * @param xS, the mouse x location on screen
+     * @param yS, the mouse y location on screen
+     */
     protected void processDefaultMouseDrag( MouseEvent mouseEvent, int xS, int yS )
     {
         int xDim = imageActive.getExtents()[0];
@@ -1722,91 +1624,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     float fX = xS/(float)xDim;
                     float fY = yS/(float)yDim;
 
-                    if ( imageActive.isColorImage() )
-                    {
-                        if ( imageActive == imageA )
-                        {
-                            m_kWinLevel.updateWinLevel( fX, fY, !winLevelSet, RGBTA, imageActive);
-                        }
-                        else
-                        {
-                            m_kWinLevel.updateWinLevel( fX, fY, !winLevelSet, RGBTB, imageActive);
-                        }
-                    }
-                    else
-                    {
-                        if ( imageActive == imageA )
-                        {
-                            m_kWinLevel.updateWinLevel( fX, fY, !winLevelSet, LUTa, imageActive);
-                        }
-                        else
-                        {
-                            m_kWinLevel.updateWinLevel( fX, fY, !winLevelSet, LUTb, imageActive);
-                        }
-                    }
+                    m_kWinLevel.updateWinLevel( fX, fY, !winLevelSet, m_kPatientSlice.getActiveLookupTable(), imageActive);
                     if (!winLevelSet) {
                         setCursor(MipavUtil.winLevelCursor);
                         winLevelSet = true;
                     }
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
             } // if (mode == DEFAULT))
-            if (imageActive.getOrigin()[0] != 0 || imageActive.getOrigin()[1] != 0
-                || imageActive.getOrigin()[2] != 0) {
-
-                String[] values = setScannerPosition( xS, yS, slice );
-                if (values != null) {
-
-                    if (imageActive.isColorImage()) {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
-                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
-                            + "  G:  "
-                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
-                            + "  B:  "
-                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3])
-                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
-                    }
-                    else {
-                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
-                            + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS])
-                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
-                    }
-
-                    frame.setMessageText(str);
-                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                }
-                else {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
-                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
-                    frame.setMessageText(str);
-                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                }
-            }
-            else {
-                if (imageActive.isColorImage() == true) {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
-                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
-                        + "  G:  "
-                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
-                        + "  B:  "
-                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
-                    frame.setMessageText(str);
-                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                }
-                else {
-                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
-                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
-                    frame.setMessageText(str);
-                    if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                        frame.getUserInterface().setDataText("\n" + str);
-                    }
-                }
-            }
+            setPixelInformationAtLocation( xS, yS );
         }
         catch (ArrayIndexOutOfBoundsException error) {
             str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1);
@@ -1818,7 +1643,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * Unchanged.
+     * Store the lastMouse position.
      *
      * @param  mouseEvent  event
      */
@@ -1870,7 +1695,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             g.dispose();
             return;
         }
-
 
         xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
@@ -1940,7 +1764,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     } //end mouseMoved
 
 
-
     /**
      * A mouse event. Sets the mode of the program depending on the cursor mode. If the mode is move, activates the
      * contour or line and enables the delete button.
@@ -1948,12 +1771,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  mouseEvent  event that triggered function
      */
     public void mousePressed(MouseEvent mouseEvent) {
-        float[] position;
-        float[] intensity;
-        ViewJFrameGraph lineGraph;
-        int i, j, m;
-        int nVOI;
-        ViewVOIVector VOIs;
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -2011,6 +1828,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
+    /**
+     * When a mousePressed event is triggered and the mode is DROPPER_PAINT,
+     * ERASER_PAINT, PAINT_VOI, or MAG_REGION this function is called. It is
+     * shared with the derived classes.
+     * @param mouseEvent, the mouseEvent that triggered this function call.
+     */
     protected void mousePressedPaint( MouseEvent mouseEvent )
     {
         int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
@@ -2043,17 +1866,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             performPaint(mouseEvent, true);
             imageActive.notifyImageDisplayListeners();
         } else if (mode == PAINT_VOI) {
-                // backup paintBitmap to paintBitmapBU
-            paintBitmapBU.clear();
-
-            int length = paintBitmap.length();
-
-            for (int b = 0; b < length; b++) {
-
-                if (paintBitmap.get(b)) {
-                    paintBitmapBU.set(b);
-                }
-            }
+            // backup paintBitmap to paintBitmapBU
+            backupPaintBitmap();
 
             xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
             yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
@@ -2077,9 +1891,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      *  @param mouseEvent   event that triggered function
      */
     public void mouseReleased(MouseEvent mouseEvent) {
-        int i, j, k;
-        int nVOI;
-        ViewVOIVector VOIs = imageActive.getVOIs();
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
@@ -2094,11 +1905,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         int yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
-        int xR = mouseEvent.getX();
-        int yR = mouseEvent.getY();
-
-        int xDim = imageActive.getExtents()[0];
-        int yDim = imageActive.getExtents()[1];
 
         if (xS < 0 || xS >= imageActive.getExtents()[0] || yS < 0 || yS >= imageActive.getExtents()[1]) {
             return;
@@ -2118,28 +1924,17 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
 
-        if (mode == POINT_VOI) {
-
-        } // end of else if (mode == POINT_VOI)
-
-        else if (mode == POLYLINE_SLICE_VOI) {
-
-        }
-        else if (mode == ANNOTATION) {
-
-        }
+        if (mode == POINT_VOI) {}
+        else if (mode == POLYLINE_SLICE_VOI) {}
+        else if (mode == ANNOTATION) {}
         else if (mode == LEVELSET) {}
         else if (mode == RECTANGLE) {}
         else if (mode == RECTANGLE3D) {}
-        else if (mode
-                 == ELLIPSE) {}
+        else if (mode == ELLIPSE) {}
         else if (mode == LINE) {}
         else if (mode == PROTRACTOR) {}
-        else if (mode == NEW_POINT) {
-        }
-        else if (mode == DELETE_POINT) { // impossible for LINE
-
-        }
+        else if (mode == NEW_POINT) {}
+        else if (mode == DELETE_POINT) {}
         else if (mode == PAINT_CAN) {
             xPG = (short) xS;
             yPG = (short) yS;
@@ -2172,22 +1967,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
         else if (mode == QUICK_LUT) {
             int wS, hS;
-            float min = Float.MAX_VALUE;
-            float max = -100000000;
-            float minR = Float.MAX_VALUE;
-            float maxR = -Float.MAX_VALUE;
-            float minG = Float.MAX_VALUE;
-
-            ;
-            float maxG = -Float.MAX_VALUE;
-            float minB = Float.MAX_VALUE;
-            float maxB = -Float.MAX_VALUE;
-
-            float[] x = new float[4];
-            float[] y = new float[4];
-            float[] z = new float[4];
-            Dimension dim = new Dimension(256, 256);
-            float minImage, maxImage;
 
             xS = MipavMath.round(voiHandler.getRubberband().getBounds().x / (getZoomX() * resolutionX));
             yS = MipavMath.round(voiHandler.getRubberband().getBounds().y / (getZoomY() * resolutionY));
@@ -2196,315 +1975,24 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             if (imageA.isColorImage() == false) {
                 if (imageA == imageActive) {
-                    for (j = yS; j < yS + hS; j++) {
-                        for (i = xS; i < xS + wS; i++) {
-                            if (imageBufferA[j * xDim + i] > max) {
-                                max = imageBufferA[j * xDim + i];
-                            }
-                            if (imageBufferA[j * xDim + i] < min) {
-                                min = imageBufferA[j * xDim + i];
-                            }
-                        }
-                    }
-
-                    if (imageA.getType() == ModelStorageBase.UBYTE) {
-                        minImage = 0;
-                        maxImage = 255;
-                    }
-                    else if (imageA.getType() == ModelStorageBase.BYTE) {
-                        minImage = -128;
-                        maxImage = 127;
-                    }
-                    else {
-                        minImage = (float) imageA.getMin();
-                        maxImage = (float) imageA.getMax();
-                    }
-
-                    // Set LUT min max values;
-                    x[0] = minImage;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    x[1] = min;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    x[2] = max;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = maxImage;
-                    y[3] = 0;
-                    z[3] = 0;
-                    LUTa.getTransferFunction().importArrays(x, y, 4);
+                    this.quickLUT( xS, wS, yS, hS, imageBufferA, imageA, LUTa );
+                    imageActive.notifyImageDisplayListeners(LUTa, true);
                 }
                 else if (imageB != null && imageActive == imageB) {
-                    if (imageB.getType() == ModelStorageBase.UBYTE) {
-                        minImage = 0;
-                        maxImage = 255;
-                    }
-                    else if (imageB.getType() == ModelStorageBase.BYTE) {
-                        minImage = -128;
-                        maxImage = 127;
-                    }
-                    else {
-                        minImage = (float) imageB.getMin();
-                        maxImage = (float) imageB.getMax();
-                    }
-                    if (imageBufferB != null) {
-                        min = Float.MAX_VALUE;
-                        max = -100000000;
-                        for (j = yS; j < yS + hS; j++) {
-                            for (i = xS; i < xS + wS; i++) {
-                                if (imageBufferB[j * xDim + i] > max) {
-                                    max = imageBufferB[j * xDim + i];
-                                }
-                                if (imageBufferB[j * xDim + i] < min) {
-                                    min = imageBufferB[j * xDim + i];
-                                }
-                            }
-                        }
-                        x[0] = minImage;
-                        y[0] = dim.height - 1;
-                        z[0] = 0;
-                        x[1] = min;
-                        y[1] = dim.height - 1;
-                        z[1] = 0;
-                        x[2] = max;
-                        y[2] = 0;
-                        z[2] = 0;
-                        x[3] = maxImage;
-                        y[3] = 0;
-                        z[3] = 0;
-                        LUTb.getTransferFunction().importArrays(x, y, 4);
-                    }
+                    this.quickLUT( xS, wS, yS, hS, imageBufferB, imageB, LUTb );
+                    imageActive.notifyImageDisplayListeners(LUTb, true);
                 }
             }
             else { // RGB image
                 if (imageA == imageActive) {
-                    for (j = yS; j < yS + hS; j++) {
-                        for (i = xS; i < xS + wS; i++) {
-                            if (imageBufferA[j * xDim * 4 + i * 4 + 1] > maxR) {
-                                maxR = imageBufferA[j * xDim * 4 + i * 4 + 1];
-                            }
-                            if (imageBufferA[j * xDim * 4 + i * 4 + 1] < minR) {
-                                minR = imageBufferA[j * xDim * 4 + i * 4 + 1];
-                            }
-                            if (imageBufferA[j * xDim * 4 + i * 4 + 2] > maxG) {
-                                maxG = imageBufferA[j * xDim * 4 + i * 4 + 2];
-                            }
-                            if (imageBufferA[j * xDim * 4 + i * 4 + 2] < minG) {
-                                minG = imageBufferA[j * xDim * 4 + i * 4 + 2];
-                            }
-                            if (imageBufferA[j * xDim * 4 + i * 4 + 3] > maxB) {
-                                maxB = imageBufferA[j * xDim * 4 + i * 4 + 3];
-                            }
-                            if (imageBufferA[j * xDim * 4 + i * 4 + 3] < minB) {
-                                minB = imageBufferA[j * xDim * 4 + i * 4 + 3];
-                            }
-                        }
-                    }
-                    max = Math.max(maxR, maxG);
-                    max = Math.max(maxB, max);
-
-                    // Set LUT min max values;
-                    // if (imageA.isColorImage() == true) {
-                    if (imageA.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minR;
-                        x[2] = maxR;
-                    }
-                    else {
-                        x[1] = minR * 255 / max;
-                        x[2] = maxR * 255 / max;
-                    }
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTA.getRedFunction().importArrays(x, y, 4);
-
-                    if (imageA.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minG;
-                        x[2] = maxG;
-                    }
-                    else {
-                        x[1] = minG * 255 / max;
-                        x[2] = maxG * 255 / max;
-                    }
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTA.getGreenFunction().importArrays(x, y, 4);
-
-                    if (imageA.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minB;
-                        x[2] = maxB;
-                    }
-                    else {
-                        x[1] = minB * 255 / max;
-                        x[2] = maxB * 255 / max;
-                    }
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTA.getBlueFunction().importArrays(x, y, 4);
-                    RGBTA.makeRGB( -1);
+                    this.quickRGB( xS, wS, yS, hS, imageBufferA, imageA, RGBTA );
+                    imageActive.notifyImageDisplayListeners(true, 1, RGBTA);
                 }
                 else if (imageBufferB != null && imageB != null && imageB == imageActive) {
-                    minR = Float.MAX_VALUE;
-                    maxR = -Float.MAX_VALUE;
-                    minG = Float.MAX_VALUE;
-                    maxG = -Float.MAX_VALUE;
-                    minB = Float.MAX_VALUE;
-                    maxB = -Float.MAX_VALUE;
-                    for (j = yS; j < yS + hS; j++) {
-                        for (i = xS; i < xS + wS; i++) {
-                            if (imageBufferB[j * xDim * 4 + i * 4 + 1] > maxR) {
-                                maxR = imageBufferB[j * xDim * 4 + i * 4 + 1];
-                            }
-                            if (imageBufferB[j * xDim * 4 + i * 4 + 1] < minR) {
-                                minR = imageBufferB[j * xDim * 4 + i * 4 + 1];
-                            }
-                            if (imageBufferB[j * xDim * 4 + i * 4 + 2] > maxG) {
-                                maxG = imageBufferB[j * xDim * 4 + i * 4 + 2];
-                            }
-                            if (imageBufferB[j * xDim * 4 + i * 4 + 2] < minG) {
-                                minG = imageBufferB[j * xDim * 4 + i * 4 + 2];
-                            }
-                            if (imageBufferB[j * xDim * 4 + i * 4 + 3] > maxB) {
-                                maxB = imageBufferB[j * xDim * 4 + i * 4 + 3];
-                            }
-                            if (imageBufferB[j * xDim * 4 + i * 4 + 3] < minB) {
-                                minB = imageBufferB[j * xDim * 4 + i * 4 + 3];
-                            }
-                        }
-                    }
-                    max = Math.max(maxR, maxG);
-                    max = Math.max(maxB, max);
-
-                    // Set LUT min max values;
-                    if (imageB.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minR;
-                        x[2] = maxR;
-                    }
-                    else {
-                        x[1] = minR * 255 / max;
-                        x[2] = maxR * 255 / max;
-                    }
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTB.getRedFunction().importArrays(x, y, 4);
-                    if (imageB.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minG;
-                        x[2] = maxG;
-                    }
-                    else {
-                        x[1] = minG * 255 / max;
-                        x[2] = maxG * 255 / max;
-                    }
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTB.getGreenFunction().importArrays(x, y, 4);
-                    if (imageB.getType() == ModelStorageBase.ARGB) {
-                        x[1] = minB;
-                        x[2] = maxB;
-                    }
-                    else {
-                        x[1] = minB * 255 / max;
-                        x[2] = maxB * 255 / max;
-                    }
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    y[1] = dim.height - 1;
-                    z[1] = 0;
-                    y[2] = 0;
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    RGBTB.getBlueFunction().importArrays(x, y, 4);
-                    RGBTB.makeRGB( -1);
+                    this.quickRGB( xS, wS, yS, hS, imageBufferB, imageB, RGBTB );
+                    imageActive.notifyImageDisplayListeners(true, 1, RGBTB);
                 }
             }
-
-            if (!imageActive.isColorImage()) {
-                imageA.notifyImageDisplayListeners(LUTa, false);
-                if (imageB != null) {
-                    imageB.notifyImageDisplayListeners(LUTb, false);
-                }
-            }
-            else {
-                imageA.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTA);
-                if (imageB != null) {
-                    imageB.notifyImageDisplayListeners(false, (int) (alphaBlend * 100), RGBTB);
-                }
-            }
-
-            if (imageB == null) {
-                if (imageA.isColorImage()) {
-                    if (imageA.getHistoRGBFrame() != null) {
-                        imageA.getHistoRGBFrame().update();
-                    }
-                }
-                else if (imageA.getHistoLUTFrame() != null) {
-                    if (imageA.getHistoLUTFrame() != null) {
-                        imageA.getHistoLUTFrame().update();
-                    }
-                }
-            }
-            else {
-                if (imageB.isColorImage()) {
-                    if (imageB.getHistoRGBFrame() != null) {
-                        imageB.getHistoRGBFrame().update();
-                    }
-                }
-                else if (imageB.getHistoLUTFrame() != null) {
-                    if (imageB.getHistoLUTFrame() != null) {
-                        imageB.getHistoLUTFrame().update();
-                    }
-                }
-            }
-
             if (mouseEvent.isShiftDown() != true) {
                 setMode(DEFAULT);
             }
@@ -2990,10 +2478,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
-
-
-
     /**
      * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
      * between previously supplied bounds.
@@ -3023,126 +2507,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  click  whether this region grow was initiated by a click on the image
      */
     public void regionGrow(short x, short y, short z, float value, String str, boolean click) {
-        Cursor cursor = getCursor();
-
-        setCursor(MipavUtil.waitCursor);
-
-        int count;
-        BitSet tempBitmap = null;
-
-        if (click) {
-
-            // backup the current paint mask
-            int pEnd = paintBitmap.size();
-
-            for (int p = 0; p < pEnd; p++) {
-
-                if (paintBitmap.get(p)) {
-                    paintBitmapBU.set(p);
-                } else {
-                    paintBitmapBU.clear(p);
-                }
-            }
-
-            // reset the seedPaintBitmask so that we can keep track of points added in the regionGrow for this click
-            if (seedPaintBitmap == null) {
-                seedPaintBitmap = new BitSet();
-            } else {
-                seedPaintBitmap.clear();
-            }
-        } else {
-            tempBitmap = (BitSet) seedPaintBitmap.clone();
-            seedPaintBitmap.clear();
-        }
-
-        if (x != -1) {
-            saveX = x;
-            saveY = y;
-            saveZ = z;
-            saveValue = value;
-        } else {
-            return;
-        }
-
-        if (growDialog != null) {
-            fuzzyThreshold = growDialog.getFuzzyThreshold();
-            useVOI = growDialog.getUseVOI();
-            displayFuzzy = growDialog.getDisplayFuzzy();
-            sizeLimit = growDialog.getMaxSize();
-            maxDistance = growDialog.getMaxDistance();
-            less = growDialog.getLowerBound();
-            more = growDialog.getUpperBound();
-            variableThresholds = growDialog.getVariableThresholds();
-        }
-
-        if ((fuzzyThreshold == -2.0f) || (sizeLimit == -2) || (maxDistance == -2)) {
-            return;
-        }
-
-        try {
-            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(imageActive, 1.0f, 1.0f);
-
-            regionGrowAlgo.setRunningInSeparateThread(false);
-
-            if (imageActive.getType() == ModelStorageBase.BOOLEAN) {
-                less = 0;
-                more = 0;
-                variableThresholds = false;
-            }
-
-            if (imageActive.getNDims() == 2) {
-                count = regionGrowAlgo.regionGrow2D(seedPaintBitmap, new Point(saveX, saveY), fuzzyThreshold, useVOI,
-                                                    displayFuzzy, growDialog, saveValue - less, saveValue + more,
-                                                    sizeLimit, maxDistance, variableThresholds);
-                showRegionInfo(count, str);
-            } else if ((imageActive.getNDims() == 3) || (imageActive.getNDims() == 4)) {
-                CubeBounds regionGrowBounds;
-
-                if ((growDialog instanceof JDialogPaintGrow) && ((JDialogPaintGrow) growDialog).boundsConstrained()) {
-
-                    // constrain bounds to cropping volume
-                    regionGrowBounds = ((ViewJFrameTriImage) frame).getBoundedVolume();
-                } else {
-
-                    // bounds are not constrained by cropping volume, use image extents as bounds
-                    regionGrowBounds = new CubeBounds(imageExtents[0], 0, imageExtents[1], 0, imageExtents[2], 0);
-                }
-
-                count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(saveX, saveY, saveZ), fuzzyThreshold,
-                                                    useVOI, displayFuzzy, growDialog, saveValue - less,
-                                                    saveValue + more, sizeLimit, maxDistance, variableThresholds,
-                                                    timeSlice, regionGrowBounds);
-                showRegionInfo(count, str);
-            }
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
-        }
-
-        if (!click) {
-
-            // add points in the newly grown region which weren't in the old one
-            BitSet diff = (BitSet) seedPaintBitmap.clone();
-
-            diff.andNot(tempBitmap);
-            paintBitmap.or(diff);
-
-            // remove points which were in the old region but aren't in the new one
-            // (and which weren't in the region painted before the last click)
-            diff = (BitSet) seedPaintBitmap.clone();
-            tempBitmap.andNot(diff);
-            tempBitmap.andNot(paintBitmapBU);
-            paintBitmap.xor(tempBitmap);
-        } else {
-            paintBitmap.or(seedPaintBitmap);
-        }
-
-        if (growDialog != null) {
-            growDialog.notifyPaintListeners(true, false, paintBitmap);
-        }
-
-        imageActive.notifyImageDisplayListeners(null, true);
-        setCursor(cursor);
+        this.regionGrow( x, y, z, value, imageActive, str, click );
     }
 
     /**
@@ -3173,16 +2538,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (click) {
 
             // backup the current paint mask
-            int pEnd = paintBitmap.size();
-
-            for (int p = 0; p < pEnd; p++) {
-
-                if (paintBitmap.get(p)) {
-                    paintBitmapBU.set(p);
-                } else {
-                    paintBitmapBU.clear(p);
-                }
-            }
+            backupPaintBitmap();
 
             if (seedPaintBitmap == null) {
                 seedPaintBitmap = new BitSet();
@@ -3303,127 +2659,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void regionGrow(short x, short y, short z, float valueR, float valueG, float valueB, String str,
                            boolean click) {
-        Cursor cursor = getCursor();
-
-        setCursor(MipavUtil.waitCursor);
-
-        int count;
-        BitSet tempBitmap = null;
-
-        if (click) {
-
-            // backup the current paint mask
-            int pEnd = paintBitmap.size();
-
-            for (int p = 0; p < pEnd; p++) {
-
-                if (paintBitmap.get(p)) {
-                    paintBitmapBU.set(p);
-                } else {
-                    paintBitmapBU.clear(p);
-                }
-            }
-
-            // reset the seedPaintBitmask so that we can keep track of points added in the regionGrow for this click
-            if (seedPaintBitmap == null) {
-                seedPaintBitmap = new BitSet();
-            } else {
-                seedPaintBitmap.clear();
-            }
-        } else {
-            tempBitmap = (BitSet) seedPaintBitmap.clone();
-            seedPaintBitmap.clear();
-        }
-
-        if (x != -1) {
-            saveX = x;
-            saveY = y;
-            saveZ = z;
-            saveValueR = valueR;
-            saveValueG = valueG;
-            saveValueB = valueB;
-        } else {
-            return;
-        }
-
-        if (growDialog != null) {
-            fuzzyThreshold = growDialog.getFuzzyThreshold();
-            useVOI = growDialog.getUseVOI();
-            displayFuzzy = growDialog.getDisplayFuzzy();
-            sizeLimit = growDialog.getMaxSize();
-            maxDistance = growDialog.getMaxDistance();
-            lessR = growDialog.getLowerBoundR();
-            moreR = growDialog.getUpperBoundR();
-            lessG = growDialog.getLowerBoundG();
-            moreG = growDialog.getUpperBoundG();
-            lessB = growDialog.getLowerBoundB();
-            moreB = growDialog.getUpperBoundB();
-        }
-
-        if ((fuzzyThreshold == -2.0f) || (sizeLimit == -2) || (maxDistance == -2)) {
-            return;
-        }
-
-        try {
-            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(imageActive, 1.0f, 1.0f);
-
-            regionGrowAlgo.setRunningInSeparateThread(false);
-
-            if (imageActive.getNDims() == 2) {
-                count = regionGrowAlgo.regionGrow2D(seedPaintBitmap, new Point(saveX, saveY), fuzzyThreshold, useVOI,
-                                                    displayFuzzy, growDialog, saveValueR - lessR, saveValueR + moreR,
-                                                    saveValueG - lessG, saveValueG + moreG, saveValueB - lessB,
-                                                    saveValueB + moreB, sizeLimit, maxDistance);
-                showRegionInfo(count, str);
-            } else if ((imageActive.getNDims() == 3) || (imageActive.getNDims() == 4)) {
-                CubeBounds regionGrowBounds;
-
-                if ((growDialog instanceof JDialogPaintGrow) && ((JDialogPaintGrow) growDialog).boundsConstrained()) {
-
-                    // constrain bounds to cropping volume
-                    regionGrowBounds = ((ViewJFrameTriImage) frame).getBoundedVolume();
-                } else {
-
-                    // bounds are not constrained by cropping volume, use image extents as bounds
-                    regionGrowBounds = new CubeBounds(imageExtents[0], 0, imageExtents[1], 0, imageExtents[2], 0);
-                }
-
-                count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(saveX, saveY, saveZ), fuzzyThreshold,
-                                                    useVOI, displayFuzzy, growDialog, saveValueR - lessR,
-                                                    saveValueR + moreR, saveValueG - lessG, saveValueG + moreG,
-                                                    saveValueB - lessB, saveValueB + moreB, sizeLimit, maxDistance,
-                                                    timeSlice, regionGrowBounds);
-                showRegionInfo(count, str);
-            }
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
-        }
-
-        if (!click) {
-
-            // add points in the newly grown region which weren't in the old one
-            BitSet diff = (BitSet) seedPaintBitmap.clone();
-
-            diff.andNot(tempBitmap);
-            paintBitmap.or(diff);
-
-            // remove points which were in the old region but aren't in the new one
-            // (and which weren't in the region painted before the last click)
-            diff = (BitSet) seedPaintBitmap.clone();
-            tempBitmap.andNot(diff);
-            tempBitmap.andNot(paintBitmapBU);
-            paintBitmap.xor(tempBitmap);
-        } else {
-            paintBitmap.or(seedPaintBitmap);
-        }
-
-        if (growDialog != null) {
-            growDialog.notifyPaintListeners(true, false, paintBitmap);
-        }
-
-        imageActive.notifyImageDisplayListeners(null, true);
-        setCursor(cursor);
+        this.regionGrow( x, y, z, valueR, valueG, valueB, imageActive, str, click );
     }
 
     /**
@@ -3457,16 +2693,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         if (click) {
 
             // backup the current paint mask
-            int pEnd = paintBitmap.size();
-
-            for (int p = 0; p < pEnd; p++) {
-
-                if (paintBitmap.get(p)) {
-                    paintBitmapBU.set(p);
-                } else {
-                    paintBitmapBU.clear(p);
-                }
-            }
+            backupPaintBitmap();
 
             if (seedPaintBitmap == null) {
                 seedPaintBitmap = new BitSet();
@@ -3593,211 +2820,25 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
-
     /**
      * Resets the LUTs.
      */
     public void resetLUTs() {
-
         try {
-            float min, max;
-            float[] x = new float[4];
-            float[] y = new float[4];
-            float[] z = new float[4];
-
-            float[] x2 = new float[4];
-            float[] y2 = new float[4];
-            float[] z2 = new float[4];
-
-            float[] x3 = new float[4];
-            float[] y3 = new float[4];
-            float[] z3 = new float[4];
-            Dimension dim = new Dimension(256, 256);
-
             if (imageA.isColorImage() == false) {
-
                 if (imageA == imageActive) {
-
-                    // Set LUT min max values;
-                    if (imageA.getType() == ModelStorageBase.UBYTE) {
-                        min = 0;
-                        max = 255;
-                    } else if (imageA.getType() == ModelStorageBase.BYTE) {
-                        min = -128;
-                        max = 127;
-                    } else {
-                        min = (float) imageA.getMin();
-                        max = (float) imageA.getMax();
-                    }
-
-                    x[0] = min;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    x[1] = (min + ((max - min) / 3.0f));
-                    y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-                    z[1] = 0;
-                    x[2] = (min + ((max - min) * 0.67f));
-                    y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-                    z[2] = 0;
-                    x[3] = max;
-                    y[3] = 0;
-                    z[3] = 0;
-                    LUTa.getTransferFunction().importArrays(x, y, 4);
+                    this.resetLUT( LUTa, imageA );
                 } else if ((imageB != null) && (imageB == imageActive)) {
-
-                    if (imageB.getType() == ModelStorageBase.UBYTE) {
-                        min = 0;
-                        max = 255;
-                    } else if (imageB.getType() == ModelStorageBase.BYTE) {
-                        min = -128;
-                        max = 127;
-                    } else {
-                        min = (float) imageB.getMin();
-                        max = (float) imageB.getMax();
-                    }
-
-                    x2[0] = min;
-                    y2[0] = dim.height - 1;
-                    z2[0] = 0;
-                    x2[1] = (min + ((max - min) / 3.0f));
-                    y2[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-                    z2[1] = 0;
-                    x2[2] = (min + ((max - min) * 0.67f));
-                    y2[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-                    z2[2] = 0;
-                    x2[3] = max;
-                    y2[3] = 0;
-                    z2[3] = 0;
-                    LUTb.getTransferFunction().importArrays(x2, y2, 4);
+                    this.resetLUT( LUTb, imageB );
                 }
             } else { // RGB image
-
-                int[] RGBExtents = new int[2];
-
-                RGBExtents[0] = 4;
-                RGBExtents[1] = 256;
-
                 if (imageA == imageActive) {
-
-                    // Set LUT min max values;
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    x[1] = 255 * 0.333f;
-                    y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-                    z[1] = 0;
-                    x[2] = 255 * 0.667f;
-                    y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    if (RGBTA == null) {
-                        RGBTA = new ModelRGB(RGBExtents);
-                        // imageA.setRGBT(RGBTA);
-                    }
-
-                    RGBTA.getRedFunction().importArrays(x, y, 4);
-
-                    x2[0] = 0;
-                    y2[0] = dim.height - 1;
-                    z2[0] = 0;
-                    x2[1] = 255 * 0.333f;
-                    y2[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-                    z2[1] = 0;
-                    x2[2] = 255 * 0.667f;
-                    y2[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-                    z2[2] = 0;
-                    x2[3] = 255;
-                    y2[3] = 0;
-                    z2[3] = 0;
-                    RGBTA.getGreenFunction().importArrays(x2, y2, 4);
-
-                    x3[0] = 0;
-                    y3[0] = dim.height - 1;
-                    z3[0] = 0;
-                    x3[1] = 255 * 0.333f;
-                    y3[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-                    z3[1] = 0;
-                    x3[2] = 255 * 0.667f;
-                    y3[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-                    z3[2] = 0;
-                    x3[3] = 255;
-                    y3[3] = 0;
-                    z3[3] = 0;
-                    RGBTA.getBlueFunction().importArrays(x3, y3, 4);
-
-                    RGBTA.makeRGB(-1);
-                } else if ((imageBufferB != null) && (imageB != null) && (imageB == imageActive)) {
-
-                    // Set LUT min max values;
-                    x = new float[4];
-                    y = new float[4];
-                    z = new float[4];
-
-                    x2 = new float[4];
-                    y2 = new float[4];
-                    z2 = new float[4];
-
-                    x3 = new float[4];
-                    y3 = new float[4];
-                    z3 = new float[4];
-
-                    x[0] = 0;
-                    y[0] = dim.height - 1;
-                    z[0] = 0;
-                    x[1] = 255 * 0.333f;
-                    y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-                    z[1] = 0;
-                    x[2] = 255 * 0.667f;
-                    y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-                    z[2] = 0;
-                    x[3] = 255;
-                    y[3] = 0;
-                    z[3] = 0;
-
-                    if (RGBTB == null) {
-                        RGBTB = new ModelRGB(RGBExtents);
-                    }
-
-                    RGBTB.getRedFunction().importArrays(x, y, 4);
-
-                    x2[0] = 0;
-                    y2[0] = dim.height - 1;
-                    z2[0] = 0;
-                    x2[1] = 255 * 0.333f;
-                    y2[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-                    z2[1] = 0;
-                    x2[2] = 255 * 0.667f;
-                    y2[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-                    z2[2] = 0;
-                    x2[3] = 255;
-                    y2[3] = 0;
-                    z2[3] = 0;
-                    RGBTB.getGreenFunction().importArrays(x2, y2, 4);
-
-                    x3[0] = 0;
-                    y3[0] = dim.height - 1;
-                    z3[0] = 0;
-                    x3[1] = 255 * 0.333f;
-                    y3[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-                    z3[1] = 0;
-                    x3[2] = 255 * 0.667f;
-                    y3[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-                    z3[2] = 0;
-                    x3[3] = 255;
-                    y3[3] = 0;
-                    z3[3] = 0;
-                    RGBTB.getBlueFunction().importArrays(x3, y3, 4);
-
-                    RGBTB.makeRGB(-1);
+                    this.resetRGB( RGBTA );
+                } else if ((imageB != null) && (imageB == imageActive)) {
+                    this.resetRGB( RGBTB );
                 }
             }
-
             imageA.notifyImageDisplayListeners(null, false);
-
             if (imageB != null) {
                 imageB.notifyImageDisplayListeners(null, false);
             }
@@ -3899,8 +2940,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
-
     /**
      * Sets the active image for drawing VOIs.
      *
@@ -3920,6 +2959,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             imageActive = imageB;
             imageBufferActive = imageBufferB;
         }
+        m_kPatientSlice.setActiveImage( imageActive );
     }
 
     /**
@@ -3973,7 +3013,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-
     /**
      * Changes the Crosshair cursor to be either the default crosshair or a pre-existing gif.
      *
@@ -4021,10 +3060,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         this.fuzzyThreshold = val;
     }
 
-
-
-
-
     /**
      * Sets the RegionGrowDialog for this class (usually used to set it to null).
      *
@@ -4040,7 +3075,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  hasThreshold1  whether the paint buffer has a threshold1
      */
     public void setHasThreshold1(boolean hasThreshold1) {
-        this.hasThreshold1 = hasThreshold1;
+        m_kPatientSlice.setHasThreshold1( hasThreshold1 );
     }
 
     /**
@@ -4049,7 +3084,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  hasThreshold2  whether the paint buffer has a threshold2
      */
     public void setHasThreshold2(boolean hasThreshold2) {
-        this.hasThreshold2 = hasThreshold2;
+        m_kPatientSlice.setHasThreshold2( hasThreshold2 );
     }
 
     /**
@@ -4211,45 +3246,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void setMode(int mode) {
         this.mode = mode;
         voiHandler.setMode(mode);
-
-        switch (mode) {
-
-            case DEFAULT:
-            case PROBE:
-            case SELECT:
-            case POINT_VOI:
-            case RECTANGLE:
-            case ELLIPSE:
-            case RECTANGLE3D:
-            case NEW_VOI:
-            case POLYLINE:
-            case LIVEWIRE:
-            case LEVELSET:
-            case LINE:
-            case PROTRACTOR:
-            case MOVE:
-            case MOVE_POINT:
-            case NEW_POINT:
-            case POLYLINE_SLICE_VOI:
-            case DELETE_POINT:
-            case WAND:
-            case RETRACE:
-            case PAINT_CAN:
-            case PAINT_VASC:
-            case DROPPER_PAINT:
-            case ERASER_PAINT:
-            case MAG_REGION:
-            case WIN_REGION:
-            case QUICK_LUT:
-            case ANNOTATION:
-            case ZOOMING_IN:
-            case ZOOMING_OUT:
-                break;
-
-        }
     }
-
-
 
     /**
      *
@@ -4304,7 +3301,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         this.moreR = val;
     }
 
-
     /**
      * If true do not getMask on a setActiveImage command so as to keep the mask from the old active image.
      *
@@ -4331,8 +3327,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void setPaintMask(BitSet mask) {
         paintBitmap = mask;
     }
-
-
 
     /**
      * Sets the variables used to remember the point where the last region grow was started from.
@@ -4463,9 +3457,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  useBlueThreshold   whether to threshold the blue paint buffer
      */
     public void setThresholdColors(boolean useRedThreshold, boolean useGreenThreshold, boolean useBlueThreshold) {
-        this.useRedThreshold = useRedThreshold;
-        this.useGreenThreshold = useGreenThreshold;
-        this.useBlueThreshold = useBlueThreshold;
+        m_kPatientSlice.setThresholdColors( useRedThreshold, useGreenThreshold, useBlueThreshold);
     }
 
     /**
@@ -4475,8 +3467,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  threshold2  the second threshold
      */
     public void setThresholds(float threshold1, float threshold2) {
-        this.threshold1 = threshold1;
-        this.threshold2 = threshold2;
+        m_kPatientSlice.setThresholds( threshold1, threshold2);
     }
 
     /**
@@ -4665,8 +3656,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             imageActive.notifyImageDisplayListeners(null, true);
         }
     }
-
-
 
     /**
      * Causes the image to update its paint bit mask and redisplay itself.
@@ -4906,53 +3895,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @return  DOCUMENT ME!
      */
     protected float getZoomMagnitudeX(boolean reverse) {
-
-        if (zoomMode == LINEAR) {
-
-            if (mode == ZOOMING_IN) {
-
-                if (reverse) {
-
-                    if (getZoomX() <= 1.0f) {
-                        return getZoomX() * 0.5f; // to prevent zooming to 0
-                    }
-
-                    return getZoomX() - 1.0f;
-                } else {
-                    return getZoomX() + 1.0f;
-                }
-            } else { // mode == ZOOMING_OUT
-
-                if (reverse) {
-                    return getZoomX() + 1.0f;
-                } else {
-
-                    if (getZoomX() <= 1.0f) {
-                        return getZoomX() * 0.5f; // to prevent zooming to 0
-                    }
-
-                    return getZoomX() - 1.0f;
-                }
-
-            }
-        } else { // zoomMode == EXPONENTIAL
-
-            if (mode == ZOOMING_IN) {
-
-                if (reverse) {
-                    return getZoomX() * 0.5f;
-                } else {
-                    return getZoomX() * 2.0f;
-                }
-            } else { // mode == ZOOMING_OUT
-
-                if (reverse) {
-                    return getZoomX() * 2.0f;
-                } else {
-                    return getZoomX() * 0.5f;
-                }
-            }
-        }
+        return getZoomMagnitude( getZoomX(), reverse );
     }
 
     /**
@@ -4963,50 +3906,49 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @return  DOCUMENT ME!
      */
     protected float getZoomMagnitudeY(boolean reverse) {
+        return getZoomMagnitude( getZoomY(), reverse );
+    }
 
+    /**
+     * Returns the magnitude zoom depending on the zoom mode.
+     * @param zoom, the zoom factor (x or y)
+     * @param reverse, for reverse zoom
+     * @return the calculated zoom factor
+     */
+    protected float getZoomMagnitude( float zoom, boolean reverse )
+    {
         if (zoomMode == LINEAR) {
-
             if (mode == ZOOMING_IN) {
-
                 if (reverse) {
-
-                    if (getZoomY() <= 1.0f) {
-                        return getZoomY() * 0.5f; // to prevent zooming to 0
+                    if (zoom <= 1.0f) {
+                        return zoom * 0.5f; // to prevent zooming to 0
                     }
-
-                    return getZoomY() - 1.0f;
+                    return zoom - 1.0f;
                 } else {
-                    return getZoomY() + 1.0f;
+                    return zoom + 1.0f;
                 }
             } else { // mode == ZOOMING_OUT
-
                 if (reverse) {
-                    return getZoomY() + 1.0f;
+                    return zoom + 1.0f;
                 } else {
-
-                    if (getZoomY() <= 1.0f) {
-                        return getZoomY() * 0.5f; // to prevent zooming to 0
+                    if (zoom <= 1.0f) {
+                        return zoom * 0.5f; // to prevent zooming to 0
                     }
-
-                    return getZoomY() - 1.0f;
+                    return zoom - 1.0f;
                 }
-
             }
         } else { // zoomMode == EXPONENTIAL
-
             if (mode == ZOOMING_IN) {
-
                 if (reverse) {
-                    return getZoomY() * 0.5f;
+                    return zoom * 0.5f;
                 } else {
-                    return getZoomY() * 2.0f;
+                    return zoom * 2.0f;
                 }
             } else { // mode == ZOOMING_OUT
-
                 if (reverse) {
-                    return getZoomY() * 2.0f;
+                    return zoom * 2.0f;
                 } else {
-                    return getZoomY() * 0.5f;
+                    return zoom * 0.5f;
                 }
             }
         }
@@ -5544,10 +4486,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         } // for (y = yStart[1]; y < yDim;)
     }
 
-
-
-
-
     /**
      * Repaints the paint brush cursor without repainting the entire image.
      *
@@ -5603,236 +4541,270 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         }
     }
 
-    /**
-     * Sets the overlay data based on data from the DICOM header.
-     *
-     * @param   orient  the image orientation
-     * @param   x       x coordinate
-     * @param   y       y coordinate
-     * @param   z       z coordinate
-     * @param   dim     reconstruction diameter
-     *
-     * @return  returns an array of strings that represent patient position
-     */
-    public String[] setOverlayValues(int orient, long x, long y, long z, int dim) {
-        String up, down, right, left, stable;
-
-        if (orient == FileInfoBase.SAGITTAL) {
-
-            if (y > 0) {
-                left = "A " + String.valueOf(dim - y);
-                right = "P " + String.valueOf(y);
-            } else {
-                left = "A " + String.valueOf(-y);
-                right = "P " + String.valueOf(dim + y);
-            }
-
-            if (z > 0) {
-                up = "S " + String.valueOf(z);
-                down = "I " + String.valueOf(dim - z);
-            } else {
-                up = "S " + String.valueOf(dim + z);
-                down = "I " + String.valueOf(-z);
-            }
-
-            if (x > 0) {
-                stable = "L " + String.valueOf(x);
-            } else {
-                stable = "R " + String.valueOf(-x);
-            }
-        } else if (orient == FileInfoBase.CORONAL) {
-
-            if (x > 0) {
-                right = "L " + String.valueOf(x);
-                left = "R " + String.valueOf(dim - x);
-            } else {
-                right = "L " + String.valueOf(dim + x);
-                left = "R " + String.valueOf(-x);
-            }
-
-            if (z > 0) {
-                up = "S " + String.valueOf(z);
-                down = "I " + String.valueOf(dim - z);
-            } else {
-                up = "S " + String.valueOf(dim + z);
-                down = "I " + String.valueOf(-z);
-            }
-
-            if (y > 0) {
-                stable = "P " + String.valueOf(y);
-            } else {
-                stable = "A " + String.valueOf(-y);
-            }
-        } else if (orient == FileInfoBase.AXIAL) {
-
-            if (y > 0) {
-                down = "P " + String.valueOf(y);
-                up = "A " + String.valueOf(dim - y);
-            } else {
-                down = "P " + String.valueOf(dim + y);
-                up = "A " + String.valueOf(-y);
-            }
-
-            if (x > 0) {
-                right = "L " + String.valueOf(x);
-                left = "R " + String.valueOf(dim - x);
-            } else {
-                right = "L " + String.valueOf(dim + x);
-                left = "R " + String.valueOf(-x);
-            }
-
-            if (z > 0) {
-                stable = "S " + String.valueOf(z);
-            } else {
-                stable = "I " + String.valueOf(-z);
-            }
-        } else {
-            FileInfoDicom fileInfo2;
-
-            if (slice >= 0) {
-                fileInfo2 = (FileInfoDicom) (imageActive.getFileInfo())[slice - 1];
-            } else {
-
-                try {
-                    fileInfo2 = (FileInfoDicom) (imageActive.getFileInfo())[slice + 1];
-                } catch (ArrayIndexOutOfBoundsException e) {
-                    return new String[] { "", "", "", "", "" };
-                }
-            }
-
-            long x2 = MipavMath.round(fileInfo2.xLocation);
-            long y2 = MipavMath.round(fileInfo2.yLocation);
-            long z2 = MipavMath.round(fileInfo2.zLocation);
-
-            if (x == x2) { // this is definitely correct
-
-                if (x > 0) {
-                    right = "L " + String.valueOf(x);
-                    left = "R " + String.valueOf(dim - x);
-                } else {
-                    right = "L " + String.valueOf(dim + x);
-                    left = "R " + String.valueOf(-x);
-                }
-
-                up = "AS";
-                down = "PI";
-                stable = "";
-            } else if (y == y2) { // completely guessing at this
-
-                if (y > 0) {
-                    left = "A " + String.valueOf(dim - y);
-                    right = "P " + String.valueOf(y);
-                } else {
-                    left = "A " + String.valueOf(-y);
-                    right = "P " + String.valueOf(dim + y);
-                }
-
-                up = "RS";
-                down = "LI";
-                stable = "";
-            } else if (z == z2) { // completely guessing at this
-
-                if (z > 0) {
-                    up = "S " + String.valueOf(dim - y);
-                    down = "I " + String.valueOf(y);
-                } else {
-                    up = "S " + String.valueOf(-y);
-                    down = "I " + String.valueOf(dim + y);
-                }
-
-                right = "LA";
-                left = "RP";
-                stable = "";
-            } else {
-                return new String[] { "", "", "", "", "" };
-            }
-        }
-
-        return new String[] { left, right, up, down, stable };
-    }
 
     /**
-     * DOCUMENT ME!
+     * Prints ModelImage information at the mouse location.
      *
-     * @param  xS  DOCUMENT ME!
-     * @param  yS  DOCUMENT ME!
+     * @param  xS  mouse x location
+     * @param  yS  mouse y location
      */
     public void setPixelInformationAtLocation(int xS, int yS) {
 
         try {
             String str;
             if (imageActive.getOrigin()[0] != 0 || imageActive.getOrigin()[1] != 0
-                    || (imageActive.getNDims() > 2 && imageActive.getOrigin()[2] != 0)) {
+                || (imageActive.getNDims() > 2 && imageActive.getOrigin()[2] != 0)) {
                 String[] values = setScannerPosition( xS, yS, slice );
-
+                
             	if (values != null) {
-                        if (imageActive.isColorImage()) {
-                            str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
-                                + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
-                                + "  G:  "
-                                + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
-                                + "  B:  "
-                                + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3])
-                                + " Position: " + values[0] + " " + values[1] + " " + values[2];
-                        }
-                        else {
-                            str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
-                                + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS])
-                                + " Position: " + values[0] + " " + values[1] + " " + values[2];
-                        }
-
-                        frame.setMessageText(str);
-                  //      if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                 //           frame.getUserInterface().setDataText("\n" + str);
-                 //       }
-                    }
-                    else {
-                    	if (imageActive.isColorImage()) {
-                    		str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
+                    if (imageActive.isColorImage()) {
+                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
                             + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
                             + "  G:  "
                             + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
                             + "  B:  "
-                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
-                    	} else {
-                    		str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
-                            + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
-                    	}
-                    	
-                        
-                        frame.setMessageText(str);
-                   //     if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                   //         frame.getUserInterface().setDataText("\n" + str);
-                   //     }
+                            + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3])
+                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
                     }
+                    else {
+                        str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                            + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS])
+                            + " Position: " + values[0] + " " + values[1] + " " + values[2];
+                    }
+                    
+                    frame.setMessageText(str);
                 }
                 else {
-                    if (imageActive.isColorImage() == true) {
+                    if (imageActive.isColorImage()) {
                         str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
                             + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
                             + "  G:  "
                             + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
                             + "  B:  "
                             + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
-                        frame.setMessageText(str);
-                   //     if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                   //         frame.getUserInterface().setDataText("\n" + str);
-                   //     }
-                    }
-                    else {
+                    } else {
                         str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
                             + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
-                        frame.setMessageText(str);
-                  //      if ( (mouseEvent.getModifiers() & MouseEvent.BUTTON2_MASK) != 0) {
-                  //          frame.getUserInterface().setDataText("\n" + str);
-                  //     }
                     }
+                    frame.setMessageText(str);
                 }
-            
-            
-            
+            }
+            else {
+                if (imageActive.isColorImage() == true) {
+                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 1])
+                        + "  G:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 2])
+                        + "  B:  "
+                        + String.valueOf(imageBufferActive[4 * (yS * imageActive.getExtents()[0] + xS) + 3]);
+                    frame.setMessageText(str);
+                }
+                else {
+                    str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  "
+                        + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS]);
+                    frame.setMessageText(str);
+                }
+            }
         } catch (ArrayIndexOutOfBoundsException error) {
             frame.setMessageText("  X: " + String.valueOf((xS + 1)) + " Y: " + String.valueOf((yS + 1)));
         }
     }
+
+    private void quickLUT( int xS, int wS, int yS, int hS,
+                           float[] imageBuffer, ModelImage image, ModelLUT LUT )
+    {
+        int xDim = image.getExtents()[0];
+        int yDim = image.getExtents()[1];
+
+        float min = Float.MAX_VALUE;
+        float max = -100000000;
+        float[] x = new float[4];
+        float[] y = new float[4];
+        float[] z = new float[4];
+        Dimension dim = new Dimension(256, 256);
+        float minImage, maxImage;
+
+        for ( int j = yS; j < yS + hS; j++ )
+        {
+            for ( int i = xS; i < xS + wS; i++ )
+            {
+                if (imageBuffer[j * xDim + i] > max) {
+                    max = imageBuffer[j * xDim + i];
+                }
+                if (imageBuffer[j * xDim + i] < min) {
+                    min = imageBuffer[j * xDim + i];
+                }
+            }
+        }
+        if (image.getType() == ModelStorageBase.UBYTE) {
+            minImage = 0;
+            maxImage = 255;
+        }
+        else if (image.getType() == ModelStorageBase.BYTE) {
+            minImage = -128;
+            maxImage = 127;
+        }
+        else {
+            minImage = (float) image.getMin();
+            maxImage = (float) image.getMax();
+        }
+
+        // Set LUT min max values;
+        x[0] = minImage;
+        x[1] = min;
+        x[2] = max;
+        x[3] = maxImage;
+
+        y[0] = dim.height - 1;
+        y[1] = dim.height - 1;
+        y[2] = 0;
+        y[3] = 0;
+
+
+        LUT.getTransferFunction().importArrays(x, y, 4);
+    }
+
+    private void quickRGB( int xS, int wS, int yS, int hS,
+                           float[] imageBuffer, ModelImage image, ModelRGB RGB )
+    {
+        int xDim = image.getExtents()[0];
+        int yDim = image.getExtents()[1];
+
+        float[] minC = {  Float.MAX_VALUE,  Float.MAX_VALUE,  Float.MAX_VALUE };
+        float[] maxC = { -Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE };
+
+        float min = Float.MAX_VALUE;
+        float max = -100000000;
+        float[][] x = new float[3][4];
+        float[][] y = new float[3][4];
+        float[][] z = new float[3][4];
+        Dimension dim = new Dimension(256, 256);
+        for ( int j = yS; j < yS + hS; j++ )
+        {
+            for ( int i = xS; i < xS + wS; i++ )
+            {
+                for ( int c = 0; c < 3; c++ )
+                {
+                    if (imageBuffer[j * xDim * 4 + i * 4 + c + 1] > maxC[c])
+                    {
+                        maxC[c] = imageBuffer[j * xDim * 4 + i * 4 + c + 1];
+                    }
+                    if (imageBuffer[j * xDim * 4 + i * 4 + c + 1] < minC[c]) {
+                        minC[c] = imageBuffer[j * xDim * 4 + i * 4 + c + 1];
+                    }
+                }
+            }
+        }
+        max = Math.max(maxC[0], maxC[1]);
+        max = Math.max(maxC[2], max);
+
+        for ( int i = 0; i < 3; i++ )
+        {
+            // Set LUT min max values;
+            // if (imageA.isColorImage() == true) {
+            if (image.getType() == ModelStorageBase.ARGB) {
+                x[i][1] = minC[i];
+                x[i][2] = maxC[i];
+            }
+            else {
+                x[i][1] = minC[i] * 255 / max;
+                x[i][2] = maxC[i] * 255 / max;
+            }
+            x[i][0] = 0;
+            x[i][3] = 255;
+
+            y[i][0] = dim.height - 1;
+            y[i][1] = dim.height - 1;
+            y[i][2] = 0;
+            y[i][3] = 0;
+        }
+        RGB.getRedFunction().importArrays(x[0], y[0], 4);
+        RGB.getGreenFunction().importArrays(x[1], y[1], 4);
+        RGB.getBlueFunction().importArrays(x[2], y[2], 4);
+        RGB.makeRGB( -1);
+    }
+
+    private void resetLUT( ModelLUT LUT, ModelImage image )
+    {
+        float min, max;
+        float[] x = new float[4];
+        float[] y = new float[4];
+        float[] z = new float[4];
+        Dimension dim = new Dimension(256, 256);
+
+        // Set LUT min max values;
+        if (image.getType() == ModelStorageBase.UBYTE) {
+            min = 0;
+            max = 255;
+        } else if (image.getType() == ModelStorageBase.BYTE) {
+            min = -128;
+            max = 127;
+        } else {
+            min = (float) image.getMin();
+            max = (float) image.getMax();
+        }
+
+        x[0] = min;
+        y[0] = dim.height - 1;
+
+        x[1] = (min + ((max - min) / 3.0f));
+        y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
+
+        x[2] = (min + ((max - min) * 0.67f));
+        y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
+
+        x[3] = max;
+        y[3] = 0;
+        LUT.getTransferFunction().importArrays(x, y, 4);
+
+    }
+
+    private void resetRGB( ModelRGB RGBT )
+    {
+        float[] x = new float[4];
+        float[] y = new float[4];
+        float[] z = new float[4];
+        Dimension dim = new Dimension(256, 256);
+
+        // Set LUT min max values;
+        x[0] = 0;
+        y[0] = dim.height - 1;
+
+        x[1] = 255 * 0.333f;
+        y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
+
+        x[2] = 255 * 0.667f;
+        y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
+
+        x[3] = 255;
+        y[3] = 0;
+
+        if (RGBT == null) {
+            int[] RGBExtents = new int[2];
+            RGBExtents[0] = 4;
+            RGBExtents[1] = 256;
+            RGBT = new ModelRGB(RGBExtents);
+        }
+        RGBT.getRedFunction().importArrays(x, y, 4);
+        RGBT.getGreenFunction().importArrays(x, y, 4);
+        RGBT.getBlueFunction().importArrays(x, y, 4);
+        RGBT.makeRGB(-1);
+    }
+
+    /**
+     * Backs up the paintBitmap into the paintBitmapBU variable.
+     */
+    private void backupPaintBitmap()
+    {
+        paintBitmapBU.clear();
+        int pEnd = paintBitmap.size();
+        for (int p = 0; p < pEnd; p++) {
+            if (paintBitmap.get(p)) {
+                paintBitmapBU.set(p);
+            } else {
+                paintBitmapBU.clear(p);
+            }
+        }
+    }
+
 }

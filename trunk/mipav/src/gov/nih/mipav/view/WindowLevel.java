@@ -240,7 +240,7 @@ public class WindowLevel
             kRGBT.getBlueFunction().importArrays( afXWin, afYWin, 4 );
         }
         kRGBT.makeRGB( -1 );
-        kImage.notifyImageDisplayListeners( false, (int) (m_fAlpha * 100), kRGBT );
+        kImage.notifyImageDisplayListeners( true, (int) (m_fAlpha * 100), kRGBT );
         if (kImage.getHistoRGBFrame() != null) {
             kImage.getHistoRGBFrame().update();
         }
@@ -250,6 +250,9 @@ public class WindowLevel
     {
         /* Update the HistoLUT and the renderers: */
         kLUT.getTransferFunction().importArrays( afXWin, afYWin, 4 );
-        kImage.notifyImageDisplayListeners( kLUT, false );
+        kImage.notifyImageDisplayListeners( kLUT, true );
+        if (kImage.getHistoLUTFrame() != null) {
+            kImage.getHistoLUTFrame().update();
+        }
     }
 }

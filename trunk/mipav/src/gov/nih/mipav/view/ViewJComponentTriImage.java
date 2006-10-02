@@ -185,9 +185,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     /** Protractor angle, ranging from -180 to 180 degrees. */
     private double theta = 0.0;
 
-    /** This indicates which of the 3 tri-image components we are currently in; either AXIAL, SAGITTAL, or CORONAL. */
-    private int triComponentOrientation;
-
     /** The tri image frame of which this object is a component. */
     private ViewJFrameTriImage triImageFrame;
 
@@ -267,14 +264,14 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  zoom                      initial magnification of the image
      * @param  extents                   initial display dimensions of the image
      * @param  logMagDisplay             display log magnitude of the image
-     * @param  _triComponentOrientation  display orientation of the image
+     * @param  _orientation              display orientation of the image
      */
     public ViewJComponentTriImage(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
                                   ModelImage _imageB, ModelLUT _LUTb, float[] imgBufferB, int[] pixelBuffer, float zoom,
-                                  int[] extents, boolean logMagDisplay, int _triComponentOrientation )
+                                  int[] extents, boolean logMagDisplay, int _orientation )
     {
         super(_frame, _imageA, _LUTa, imgBufferA, _imageB, _LUTb, imgBufferB, pixelBuffer, zoom, extents, logMagDisplay,
-              _triComponentOrientation );
+              _orientation );
 
 
         setZoom(zoom, zoom);
@@ -302,20 +299,18 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         triImageFrame = (ViewJFrameTriImage) frame;
 
-        triComponentOrientation = _triComponentOrientation;
-
         removeMouseListener(voiHandler.getPopupVOI());
         removeMouseListener(voiHandler.getPopupPt());
 
-        res = imageActive.getResolutions( 0, triComponentOrientation );
+        res = imageActive.getResolutions( 0, orientation );
         if ((res[0] == 0.0f) || (res[1] == 0.0f) || (res[2] == 0.0f)) {
             res[0] = 1.0f;
             res[1] = 1.0f;
             res[2] = 1.0f;
         }
-        unitsOfMeasure = imageActive.getUnitsOfMeasure( 0, triComponentOrientation );
+        unitsOfMeasure = imageActive.getUnitsOfMeasure( 0, orientation );
 
-        localImageExtents = imageActive.getExtents( triComponentOrientation );
+        localImageExtents = imageActive.getExtents( orientation );
 
         removeMouseWheelListener(this); // remove listener from superclass
         addMouseWheelListener((ViewJComponentTriImage) this);
@@ -360,7 +355,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             talVoxelLabelText = new StringBuffer(5);
         }
 
-        if (triComponentOrientation == FileInfoBase.AXIAL) {
+        if (orientation == FileInfoBase.AXIAL) {
             final String[] verticalIndexArray = new String[] { "d", "c", "b", "a", "a", "b", "c", "d" };
             final String[] horizontalIndexArray = new String[] { "A", "B", "C", "D", "E", "F", "G", "H", "I" };
 
@@ -387,7 +382,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             } else {
                 talVoxelLabelText.replace(2, 3, "L");
             }
-        } else if (triComponentOrientation == FileInfoBase.SAGITTAL) {
+        } else if (orientation == FileInfoBase.SAGITTAL) {
             final String[] verticalIndexArray = new String[] { "A", "B", "C", "D", "E", "F", "G", "H", "I" };
             final String[] horizontalIndexArray = new String[] {
                                                       "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12",
@@ -563,7 +558,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         m_kPatientSlice.setCenter( i, j, k );
         Point3Df kLocalPoint = new Point3Df();
         MipavCoordinateSystems.FileToPatient( m_kVolumePoint, kLocalPoint,
-                                              imageActive, triComponentOrientation );
+                                              imageActive, orientation );
         slice = (int)kLocalPoint.z;
         crosshairPt.x = kLocalPoint.x * m_kScreenScale.x;
         crosshairPt.y = kLocalPoint.y * m_kScreenScale.y;
@@ -578,7 +573,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     {
         /* convert to Patient coordinates, store in m_kLocalCropLower */
         MipavCoordinateSystems.FileToPatient( lower, m_kLocalCropLower,
-                                              imageActive, triComponentOrientation );
+                                              imageActive, orientation );
 
         /* convert to Screen coordinates, store in cornerCropPt */
         cornerCropPt[0] = new Point2Df( m_kLocalCropLower.x * m_kScreenScale.x,
@@ -586,7 +581,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         /* convert to Patient coordinates, store in m_kLocalCropUpper */
         MipavCoordinateSystems.FileToPatient( upper, m_kLocalCropUpper,
-                                              imageActive, triComponentOrientation );
+                                              imageActive, orientation );
 
         /* convert to Screen coordinates, store in cornerCropPt */
         cornerCropPt[1] = new Point2Df( m_kLocalCropUpper.x * m_kScreenScale.x,
@@ -646,13 +641,13 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         m_kLocalCropLower.y = cornerCropPt[0].y / m_kScreenScale.y;
         Point3Df kFileCropLower = new Point3Df();
         MipavCoordinateSystems.PatientToFile( m_kLocalCropLower, kFileCropLower,
-                                              imageActive, triComponentOrientation );
+                                              imageActive, orientation );
 
         m_kLocalCropUpper.x = cornerCropPt[1].x / m_kScreenScale.x;
         m_kLocalCropUpper.y = cornerCropPt[1].y / m_kScreenScale.y;
         Point3Df kFileCropUpper = new Point3Df();
         MipavCoordinateSystems.PatientToFile( m_kLocalCropUpper, kFileCropUpper,
-                                              imageActive, triComponentOrientation );
+                                              imageActive, orientation );
 
         /* update frame */
         triImageFrame.setCrop( kFileCropLower, kFileCropUpper );
@@ -704,21 +699,12 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     }
 
     /**
-     * This indicates which of the 3 tri-image components we are currently in; either AXIAL, SAGITTAL, or CORONAL.
-     *
-     * @return  The orientation, either AXIAL, SAGITTAL, or CORONAL.
-     */
-    public int getTriComponentOrientation() {
-        return triComponentOrientation;
-    }
-
-    /**
      * Get the color for the crosshairPt.x crosshair.
      *
      * @return  the x crosshair color
      */
     public Color getXSliceHairColor() {
-        return xColor[triComponentOrientation];
+        return xColor[orientation];
     }
 
     /**
@@ -727,7 +713,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @return  the y crosshair color
      */
     public Color getYSliceHairColor() {
-        return yColor[triComponentOrientation];
+        return yColor[orientation];
     }
 
     /**
@@ -736,7 +722,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @return  the z crosshair color
      */
     public Color getZSliceHairColor() {
-        return zColor[triComponentOrientation];
+        return zColor[orientation];
     }
 
     /**
@@ -790,7 +776,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             /* presetHue:  0.0f for first segment red hue, 1/3 for green, 1/6 for blue: */
             float[] presetHue = { 0.0f, 0.3333f, 0.1667f };
             voiProtractor = new VOI((short) imageActive.getVOIs().size(), "protractor.voi",
-                                    localImageExtents[2], VOI.PROTRACTOR, presetHue[ triComponentOrientation ]);
+                                    localImageExtents[2], VOI.PROTRACTOR, presetHue[ orientation ]);
 
             for (j = 0; j < localImageExtents[2]; j++) {
                 x[0] = 3 * imageDim.width / 8;
@@ -909,7 +895,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                            slice);
                 Point3Df volumeMousePoint = new Point3Df();
                 MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
-                                                      imageActive, triComponentOrientation );
+                                                      imageActive, orientation );
                 triImageFrame.setCenter( (int)volumeMousePoint.x, (int)volumeMousePoint.y, (int)volumeMousePoint.z);
 
                 frame.updateImages();
@@ -933,7 +919,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                        mouseEvent.getY()/m_kScreenScale.y,
                                                        slice  );
             MipavCoordinateSystems.PatientToFile( patientMousePoint, m_kVolumePoint,
-                                                  imageActive, triComponentOrientation );
+                                                  imageActive, orientation );
             triImageFrame.setCenter( (int)m_kVolumePoint.x, (int)m_kVolumePoint.y, (int)m_kVolumePoint.z );
 
             if (mode == DEFAULT)
@@ -979,7 +965,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                                    slice  );
                         Point3Df volumeMousePoint = new Point3Df();
                         MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
-                                                              imageActive, triComponentOrientation );
+                                                              imageActive, orientation );
                         found = true;
 
                         // the reason for this k = lastZOrg-1 loop is because the VOI point lies right on
@@ -1076,7 +1062,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             float[] presetHue = { 0.0f, 0.3333f, 0.1667f };
             intensityLine = new VOI((short) imageActive.getVOIs().size(), "xyline.voi",
-                                    localImageExtents[2], VOI.LINE, presetHue[ triComponentOrientation ]);
+                                    localImageExtents[2], VOI.LINE, presetHue[ orientation ]);
 
             for (j = 0; j < localImageExtents[2]; j++) {
                 x[0] = anchorPt.x;
@@ -1149,7 +1135,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     }
 
     /**
-     * Mouse entry handler: tells the parent tri-image frame about the current component triComponentOrientation.
+     * Mouse entry handler: tells the parent tri-image frame about the current component orientation.
      *
      * @param  mouseEvent  event that triggers this function
      */
@@ -1224,7 +1210,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                             slice  );
                 Point3Df volumeMousePoint = new Point3Df();
                 MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
-                                                      imageActive, triComponentOrientation );
+                                                      imageActive, orientation );
 
                 // the "++" here is to make the display 1-based, like the crosshairs, instead of 0-based
                 volumeMousePoint.x++;
@@ -1482,7 +1468,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                        slice );
             Point3Df volumeMousePoint = new Point3Df();
             MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
-                                                  imageActive, triComponentOrientation );
+                                                  imageActive, orientation );
 
             xPG = (short) volumeMousePoint.x;
             yPG = (short) volumeMousePoint.y;
@@ -1510,7 +1496,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                            slice );
                 Point3Df volumeMousePoint = new Point3Df();
                 MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
-                                                      imageActive, triComponentOrientation );
+                                                      imageActive, orientation );
 
                 xOrg = (int)volumeMousePoint.x;
                 yOrg = (int)volumeMousePoint.y;
@@ -1640,7 +1626,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                     slice );
         Point3Df volumeMousePoint = new Point3Df();
         MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint,
-                                              imageActive, triComponentOrientation );
+                                              imageActive, orientation );
         mouseX = (int)volumeMousePoint.x;
         mouseY = (int)volumeMousePoint.y;
 
@@ -1695,7 +1681,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         }
 
         /* MipavCoordinateSystems upgrade: TODO: */
-        if (triComponentOrientation == FileInfoBase.AXIAL) {
+        if (orientation == FileInfoBase.AXIAL) {
 
             if (showTalairachGrid) {
                 drawTalairachGrid_AXIAL(offscreenGraphics2d);
@@ -1703,8 +1689,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 computeTalairachVoxelPosition((int)crosshairPt.x, (int)crosshairPt.y);
             }
 
-        } // end of if (triComponentOrientation == AXIAL)
-        else if (triComponentOrientation == FileInfoBase.CORONAL) {
+        } // end of if (orientation == AXIAL)
+        else if (orientation == FileInfoBase.CORONAL) {
 
             if (showTalairachGrid) {
                 drawTalairachGrid_CORONAL(offscreenGraphics2d);
@@ -1712,15 +1698,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 computeTalairachVoxelPosition((int)crosshairPt.x, (int)crosshairPt.y);
             }
 
-        } // end of else if (triComponentOrientation == CORONAL)
-        else if (triComponentOrientation == FileInfoBase.SAGITTAL) {
+        } // end of else if (orientation == CORONAL)
+        else if (orientation == FileInfoBase.SAGITTAL) {
 
             if (showTalairachGrid) {
                 drawTalairachGrid_SAGITTAL(offscreenGraphics2d);
 
                 computeTalairachVoxelPosition((int)crosshairPt.x, (int)crosshairPt.y);
             } // if (showTalairach)
-        } // end of else if (triComponentOrientation == SAGITTAL)
+        } // end of else if (orientation == SAGITTAL)
 
         drawCrosshairs(offscreenGraphics2d);
 
@@ -1852,7 +1838,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         /* MipavCoordinateSystems upgrade: TODO: */
         Point3Df localPoint = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( pt, localPoint, imageActive, triComponentOrientation );
+        MipavCoordinateSystems.FileToPatient( pt, localPoint, imageActive, orientation );
         x[0] = localPoint.x;
         y[0] = localPoint.y;
         z[0] = localPoint.z;
@@ -1942,7 +1928,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  c  the new crosshair color
      */
     public void setXSliceHairColor(Color c) {
-        xColor[triComponentOrientation] = c;
+        xColor[orientation] = c;
     }
 
     /**
@@ -1951,7 +1937,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  c  the new crosshair color
      */
     public void setYSliceHairColor(Color c) {
-        yColor[triComponentOrientation] = c;
+        yColor[orientation] = c;
     }
 
     /**
@@ -1960,7 +1946,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  c  the new crosshair color
      */
     public void setZSliceHairColor(Color c) {
-        zColor[triComponentOrientation] = c;
+        zColor[orientation] = c;
     }
 
     /**
@@ -2089,7 +2075,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
                 for (int iY = 0; iY < localImageExtents[1]; iY++) {
                     MipavCoordinateSystems.PatientToFile( new Point3Df( iX, iY, slice ), paintPoint,
-                                                          imageActive, triComponentOrientation );
+                                                          imageActive, orientation );
 
                     iIndex = (int)((iterFactors[0] * paintPoint.x) +
                                    (iterFactors[1] * paintPoint.y) +
@@ -2133,7 +2119,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             for (i = iMin; i <= iMax; i++) {
                 Point3Df patientPaintPoint = new Point3Df( i, j, slice );
                 MipavCoordinateSystems.PatientToFile( patientPaintPoint, paintPoint,
-                                                      imageActive, triComponentOrientation );
+                                                      imageActive, orientation );
 
                 index = (int)((iterFactors[0] * paintPoint.x) +
                               (iterFactors[1] * paintPoint.y) +
@@ -2155,18 +2141,18 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      */
     private void drawAxes(Graphics2D offscreenGraphics2d)
     {
-        if ( !hasOrientation || (triComponentOrientation == FileInfoBase.AXIAL))
+        if ( !hasOrientation || (orientation == FileInfoBase.AXIAL))
         {
-            offscreenGraphics2d.setColor(xColor[triComponentOrientation]);
-            offscreenGraphics2d.drawString( axisLabels[triComponentOrientation][0], 45, 15);
+            offscreenGraphics2d.setColor(xColor[orientation]);
+            offscreenGraphics2d.drawString( axisLabels[orientation][0], 45, 15);
             offscreenGraphics2d.drawLine(10, 9, 39, 9);
             offscreenGraphics2d.drawLine(10, 10, 40, 10);
             offscreenGraphics2d.drawLine(10, 11, 39, 11);
             offscreenGraphics2d.drawLine(35, 5, 40, 10);
             offscreenGraphics2d.drawLine(35, 15, 40, 10);
 
-            offscreenGraphics2d.setColor(yColor[triComponentOrientation]);
-            offscreenGraphics2d.drawString( axisLabels[triComponentOrientation][1], 10, 55);
+            offscreenGraphics2d.setColor(yColor[orientation]);
+            offscreenGraphics2d.drawString( axisLabels[orientation][1], 10, 55);
             offscreenGraphics2d.drawLine(9, 10, 9, 39);
             offscreenGraphics2d.drawLine(10, 10, 10, 40);
             offscreenGraphics2d.drawLine(11, 10, 11, 39);
@@ -2175,18 +2161,18 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         }
         else
         {
-            offscreenGraphics2d.setColor(xColor[triComponentOrientation]);
+            offscreenGraphics2d.setColor(xColor[orientation]);
 
             int componentHeight = getSize().height;
-            offscreenGraphics2d.drawString( axisLabels[triComponentOrientation][0], 45, componentHeight - 6);
+            offscreenGraphics2d.drawString( axisLabels[orientation][0], 45, componentHeight - 6);
             offscreenGraphics2d.drawLine(10, componentHeight - 12, 39, componentHeight - 12);
             offscreenGraphics2d.drawLine(10, componentHeight - 11, 40, componentHeight - 11);
             offscreenGraphics2d.drawLine(10, componentHeight - 10, 39, componentHeight - 10);
             offscreenGraphics2d.drawLine(35, componentHeight - 16, 40, componentHeight - 11);
             offscreenGraphics2d.drawLine(35, componentHeight - 6, 40, componentHeight - 11);
 
-            offscreenGraphics2d.setColor(yColor[triComponentOrientation]);
-            offscreenGraphics2d.drawString( axisLabels[triComponentOrientation][1], 10, componentHeight - 46);
+            offscreenGraphics2d.setColor(yColor[orientation]);
+            offscreenGraphics2d.drawString( axisLabels[orientation][1], 10, componentHeight - 46);
             offscreenGraphics2d.drawLine(9, componentHeight - 11, 9, componentHeight - 40);
             offscreenGraphics2d.drawLine(10, componentHeight - 11, 10, componentHeight - 41);
             offscreenGraphics2d.drawLine(11, componentHeight - 11, 11, componentHeight - 40);
@@ -2201,7 +2187,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @param  graphics  the graphics object to draw with
      */
     private void drawBoundingRect(Graphics graphics) {
-        graphics.setColor( cropColor[ triComponentOrientation ] );
+        graphics.setColor( cropColor[ orientation ] );
 
         for ( int i = 0; i < 4; i++ )
         {
@@ -2242,11 +2228,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         // This snaps the crosshair to the voxel boundary
         Point2Df pt = crosshairPt;
 
-        offscreenGraphics2d.setColor(xColor[triComponentOrientation]);
+        offscreenGraphics2d.setColor(xColor[orientation]);
         offscreenGraphics2d.drawLine((int)pt.x, 0, (int)pt.x, (int)pt.y - 10);
         offscreenGraphics2d.drawLine((int)pt.x, getSize().height, (int)pt.x, (int)pt.y + 10);
 
-        offscreenGraphics2d.setColor(yColor[triComponentOrientation]);
+        offscreenGraphics2d.setColor(yColor[orientation]);
         offscreenGraphics2d.drawLine(0, (int)pt.y, (int)pt.x - 10, (int)pt.y);
         offscreenGraphics2d.drawLine(getSize().width, (int)pt.y, (int)pt.x + 10, (int)pt.y);
     }
@@ -2275,16 +2261,16 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         Point2Df pt = crosshairPt;
 
         // border
-        offscreenGraphics2d.setColor(zColor[triComponentOrientation]);
+        offscreenGraphics2d.setColor(zColor[orientation]);
         offscreenGraphics2d.drawRect(0, 0, getSize().width - 1, getSize().height - 1);
 
         // x stubs
-        offscreenGraphics2d.setColor(xColor[triComponentOrientation]);
+        offscreenGraphics2d.setColor(xColor[orientation]);
         offscreenGraphics2d.drawLine((int)pt.x, 0, (int)pt.x, 10);
         offscreenGraphics2d.drawLine((int)pt.x, getSize().height, (int)pt.x, getSize().height - 10);
 
         // y stubs
-        offscreenGraphics2d.setColor(yColor[triComponentOrientation]);
+        offscreenGraphics2d.setColor(yColor[orientation]);
         offscreenGraphics2d.drawLine(0, (int)pt.y, 10, (int)pt.y);
         offscreenGraphics2d.drawLine(getSize().width, (int)pt.y, getSize().width - 10, (int)pt.y);
     }
@@ -2298,7 +2284,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         if (voiProtractor != null) {
             voiProtractor.drawSelf(getZoomX(), getZoomY(), resolutionX, resolutionY, 0f, 0f, res, unitsOfMeasure, slice,
-                                   triComponentOrientation, offscreenGraphics2d);
+                                   orientation, offscreenGraphics2d);
         }
     }
 
@@ -2807,7 +2793,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                             MipavCoordinateSystems.FileToPatient( voiPoints[j],
                                                                   patientPt,
                                                                   imageActive,
-                                                                  triComponentOrientation );
+                                                                  orientation );
 
                             screenPt.x = patientPt.x * m_kScreenScale.x;
                             screenPt.y = patientPt.y * m_kScreenScale.y;
@@ -2840,7 +2826,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             intensityLine.setActive(true);
             ((VOILine) (intensityLine.getCurves()[slice].elementAt(0))).setActive(true);
             intensityLine.drawSelf(getZoomX(), getZoomY(), resolutionX, resolutionY, 0f, 0f, res, unitsOfMeasure, slice,
-                                   triComponentOrientation, offscreenGraphics2d);
+                                   orientation, offscreenGraphics2d);
         }
     }
 
@@ -2916,7 +2902,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                                                            mouseEvent.getY()/m_kScreenScale.y,
                                                            slice );
                 Point3Df volumeMousePoint = new Point3Df();
-                MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint, imageActive, triComponentOrientation );
+                MipavCoordinateSystems.PatientToFile( patientMousePoint, volumeMousePoint, imageActive, orientation );
                 int zOrg = (int)volumeMousePoint.z;
 
                 pt = null;
