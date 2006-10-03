@@ -915,7 +915,7 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Inverse slice order",
                                                                                            "InverseOrder", 0, null,
                                                                                            false),
-                                                                 menuBuilder.buildMenuItem("	", "padding",
+                                                                 menuBuilder.buildMenuItem("Pad slices to power of 2", "padding",
                                                                                            0, null, false),
                                                                  menuBuilder.buildMenuItem("Randomize slice order",
                                                                                            "RandOrder", 0, null,
