@@ -209,6 +209,8 @@ public class JDialogVolViewResample extends JDialogBase {
 
         try {
             init();
+            // if do not need resample, set the resample button text to OK.
+            if ( !forceResample ) OKButton.setText("OK");
         } catch (NoClassDefFoundError error) {
             Preferences.debug("Unable to load volume renderer.  Missing Java3D class. " + error.getMessage() + "\n");
             MipavUtil.displayError("Unable to load volume renderer.  Missing Java3D class.");
@@ -944,6 +946,7 @@ public class JDialogVolViewResample extends JDialogBase {
      */
     private JButton buildResampleButton() {
         OKButton = new JButton("Resample");
+        OKButton.setActionCommand("Resample");
         OKButton.addActionListener(this);
         OKButton.setMinimumSize(MipavUtil.widenButtonSize);
         OKButton.setPreferredSize(MipavUtil.widenButtonSize);
