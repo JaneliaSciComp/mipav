@@ -46,6 +46,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
+        maskImage.disposeLocal();
         maskImage = null;
         super.finalize();
     }
@@ -211,7 +212,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
         String mStr;
         mStr = srcImage.getFileInfo(0).getVolumeUnitsOfMeasureStr();
         srcImage.getUserInterface().setDataText("\n Output from image quantify based on mask. ");
-        srcImage.getUserInterface().setDataText("\n" + " Object \t# of pixles\tTotal Intensity\tVolume(" + mStr +
+        srcImage.getUserInterface().setDataText("\n" + " Object \t# of pixels\tTotal Intensity\tVolume(" + mStr +
                                                 ")\n");
 
         for (i = 1; i < objs.length; i++) {
