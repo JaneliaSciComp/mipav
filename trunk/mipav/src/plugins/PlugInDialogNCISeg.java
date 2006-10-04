@@ -166,6 +166,8 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
             // interface
             nciAlgo.addListener(this);
 
+            createProgressBar(imageA.getImageName(), " ...", nciAlgo);
+            
             // Hide dialog
             setVisible(false);
 

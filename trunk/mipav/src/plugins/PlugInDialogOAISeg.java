@@ -223,6 +223,8 @@ public class PlugInDialogOAISeg extends JDialogBase implements AlgorithmInterfac
                 // This is made possible by implementing AlgorithmedPerformed interface
             	cropImageAlgo.addListener(this);
 
+            	createProgressBar(imageA.getImageName(), " ...", cropImageAlgo);
+            	
                 // Hide dialog
                 setVisible(false);
 

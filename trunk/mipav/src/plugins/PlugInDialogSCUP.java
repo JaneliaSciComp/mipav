@@ -124,6 +124,8 @@ public class PlugInDialogSCUP extends JDialogBase implements AlgorithmInterface 
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             scupAlgo.addListener(this);
+            
+            createProgressBar(imageA.getImageName(), " ...", scupAlgo);
 
             // Hide dialog
             setVisible(false);

@@ -162,6 +162,8 @@ public class PlugInDialogNCI_LiepinshSeg extends JDialogBase implements Algorith
             // This is made possible by implementing AlgorithmedPerformed interface
             eyeAlgo.addListener(this);
 
+            createProgressBar(imageA.getImageName(), " ...", eyeAlgo);
+            
             // Hide dialog
             setVisible(false);
 

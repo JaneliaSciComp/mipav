@@ -156,6 +156,9 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             regionDistAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), " ...", regionDistAlgo);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {

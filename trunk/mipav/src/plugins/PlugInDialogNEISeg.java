@@ -170,6 +170,8 @@ public class PlugInDialogNEISeg extends JDialogBase implements AlgorithmInterfac
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             eyeAlgo.addListener(this);
+            
+            createProgressBar(imageA.getImageName(), " ...", eyeAlgo );
 
             // Hide dialog
             setVisible(false);
