@@ -668,8 +668,8 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             System.out.println("newNode = " + imageNodes[ii]);
 
             for (int j = 1; j < executer.getChildNodes().item(i).getChildNodes().getLength(); j += 2) {
-                voi = new ScriptTreeNode(executer.getChildNodes().item(i).getChildNodes().item(j).getNodeName().replace("__",
-                                                                                                                        " "),
+                voi = new ScriptTreeNode(executer.getChildNodes().item(i).getChildNodes().item(j).getNodeName().replaceAll("__",
+                                                                                                                           " "),
                                          this.VOINODE);
                 imageNodes[ii].add(voi);
             }
