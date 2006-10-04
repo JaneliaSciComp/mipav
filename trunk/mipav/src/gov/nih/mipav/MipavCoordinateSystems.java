@@ -100,9 +100,9 @@ public class MipavCoordinateSystems
             }
         }
         /* assign the transformed point to pOut: */
-        pOut.x = patientPoint[0];
-        pOut.y = patientPoint[1];
-        pOut.z = patientPoint[2];
+        pOut.x = Math.round( patientPoint[0] );
+        pOut.y = Math.round( patientPoint[1] );
+        pOut.z = Math.round( patientPoint[2] );
     }
 
     /** Patient to Model transform. Transforms points that are in patient space
@@ -149,9 +149,9 @@ public class MipavCoordinateSystems
         }
 
         /* assign the transformed point to pOut: */
-        pOut.x = modelPoint[0];
-        pOut.y = modelPoint[1];
-        pOut.z = modelPoint[2];
+        pOut.x = Math.round( modelPoint[0] );
+        pOut.y = Math.round( modelPoint[1] );
+        pOut.z = Math.round( modelPoint[2] );
 
     }
 
