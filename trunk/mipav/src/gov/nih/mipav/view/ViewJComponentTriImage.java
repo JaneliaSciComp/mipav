@@ -5,8 +5,6 @@ import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-//import static gov.nih.mipav.view.MipavUtil.*;
-
 import java.awt.*;
 import java.awt.event.*;
 
@@ -2161,10 +2159,23 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     private void drawAxes(Graphics2D offscreenGraphics2d)
     {
         offscreenGraphics2d.scale( zoomX, zoomY );
+        String labelX = new String( axisLabels[orientation][0] );
+        if ( !imageActive.getRadiologicalView() && (orientation != FileInfoBase.SAGITTAL) )
+        {
+            if ( !hasOrientation )
+            {
+                labelX = new String( "-X" );
+            }
+            else
+            {
+                labelX = new String( "R" );
+            }
+        }
+
         if ( !hasOrientation || (orientation == FileInfoBase.AXIAL))
         {
             offscreenGraphics2d.setColor(xColor[orientation]);
-            offscreenGraphics2d.drawString( axisLabels[orientation][0], 45, 15);
+            offscreenGraphics2d.drawString( labelX, 45, 15);
             offscreenGraphics2d.drawLine(10, 9, 39, 9);
             offscreenGraphics2d.drawLine(10, 10, 40, 10);
             offscreenGraphics2d.drawLine(10, 11, 39, 11);
@@ -2184,7 +2195,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             offscreenGraphics2d.setColor(xColor[orientation]);
 
             int componentHeight = img.getHeight(this);
-            offscreenGraphics2d.drawString( axisLabels[orientation][0], 45, componentHeight - 6);
+            offscreenGraphics2d.drawString( labelX, 45, componentHeight - 6);
             offscreenGraphics2d.drawLine(10, componentHeight - 12, 39, componentHeight - 12);
             offscreenGraphics2d.drawLine(10, componentHeight - 11, 40, componentHeight - 11);
             offscreenGraphics2d.drawLine(10, componentHeight - 10, 39, componentHeight - 10);
