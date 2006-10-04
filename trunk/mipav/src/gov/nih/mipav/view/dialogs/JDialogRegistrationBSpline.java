@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +25,7 @@ import javax.swing.*;
  * source image for 2.5D. The same dialog is presented for 2D and 3D. The dialog is nearly the same for 2.5D except for
  * how the target slice is selected.
  */
-public class JDialogRegistrationBSpline extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRegistrationBSpline extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -141,7 +143,6 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
      */
     public JDialogRegistrationBSpline() { }
 
-
     /**
      * Creates new registration dialog.
      *
@@ -170,15 +171,13 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
      * registration.
      *
      * @param   kImageSrc  ModelImage Reference to the source image.
-     * @param   kUI        ViewUserInterface Reference to the user interface from which the names of framed images can
-     *                     be retrieved.
      *
      * @return  String[] Array of names of compatible images.
      */
-    public static String[] getNamesCompatibleTargetImages(ModelImage kImageSrc, ViewUserInterface kUI) {
+    public static String[] getNamesCompatibleTargetImages(ModelImage kImageSrc) {
 
         // Get the names of all the registered images.
-        Enumeration kRegisteredImageNames = kUI.getRegisteredImageNames();
+        Enumeration kRegisteredImageNames = ViewUserInterface.getReference().getRegisteredImageNames();
         Vector kNamesList = new Vector();
 
         // Find framed target images which can be registered to the specified
@@ -193,11 +192,11 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
             }
 
             // Retrieve image by its name.
-            ModelImage kImage = kUI.getRegisteredImageByName(kName);
+            ModelImage kImage = ViewUserInterface.getReference().getRegisteredImageByName(kName);
 
             // Skip image if it is not in a frame.
             // That must mean it is a temporary image.
-            if (null == kUI.getFrameContainingImage(kImage)) {
+            if (null == ViewUserInterface.getReference().getFrameContainingImage(kImage)) {
                 continue;
             }
 
@@ -310,7 +309,9 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         // Update frame
         m_kImageSrc.notifyImageDisplayListeners(null, true);
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (m_kAlgorithmReg != null) {
             m_kAlgorithmReg.finalize();
@@ -318,59 +319,6 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         }
 
         dispose();
-    }
-
-    /**
-     * Implementation of ScriptableInterface abstract method. If a script is being recorded and the algorithm is done,
-     * add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (m_kUI.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (m_kUI.getScriptDialog().getImgTableVar(m_kImageSrc.getImageName()) == null) {
-
-                    if (m_kUI.getScriptDialog().getActiveImgTableVar(m_kImageSrc.getImageName()) == null) {
-                        m_kUI.getScriptDialog().putActiveVar(m_kImageSrc.getImageName());
-                    }
-                }
-
-                // check to see if the ref image is already in the ImgTable
-                if (m_kUI.getScriptDialog().getImgTableVar(m_kImageTrg.getImageName()) == null) {
-
-                    if (m_kUI.getScriptDialog().getActiveImgTableVar(m_kImageTrg.getImageName()) == null) {
-                        m_kUI.getScriptDialog().putActiveVar(m_kImageTrg.getImageName());
-                    }
-                }
-
-                String line = "RegistrationBSpline " + m_kUI.getScriptDialog().getVar(m_kImageSrc.getImageName()) + " ";
-                line += m_kUI.getScriptDialog().getVar(m_kImageTrg.getImageName()) + " ";
-
-                if (isRefImageSourceSlice()) {
-                    line += String.valueOf(m_iTargetSlice) + " ";
-                } else {
-                    line += m_kUI.getScriptDialog().getVar(m_kImageReg.getImageName()) + " ";
-                }
-
-                line += m_kRegMeasure.getClass().getName() + " ";
-                line += (null == m_kOptionsPass2) ? "1 " : "2 ";
-                line += m_kOptionsPass1.toString(" ") + " ";
-
-                if (null != m_kOptionsPass2) {
-                    line += m_kOptionsPass1.toString(" ") + " ";
-                }
-
-                line += String.valueOf(m_bCreateDeformationImage);
-                // add any more variables you need to store here
-
-                m_kUI.getScriptDialog().append(line);
-            }
-        }
     }
 
     /**
@@ -417,90 +365,9 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
     }
 
     /**
-     * Implementation of ScriptableInterface abstract method. Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String trgImageKey = null;
-
-        // to retrieve an image:
-        // - get it's key
-        // - call parser.getImage( key );
-
-        // for destination images:
-        // - get it's key
-        // - register the image after the algorithm is done (parser.putVariable(key, destImage))
-
-        // Get source image
-        try {
-            srcImageKey = parser.getNextString();
-            m_kImageSrc = parser.getImage(srcImageKey);
-            m_kUI = m_kImageSrc.getUserInterface();
-            parentFrame = m_kImageSrc.getParentFrame();
-            m_akNamesCompatibleTargetImages = getNamesCompatibleTargetImages(m_kImageSrc, m_kUI);
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-
-        // Get target image.
-        // If the target image is indicated by an integer, then that
-        // must be the slice number.  Otherwise, a NumberFormatException
-        // will be thrown and so the String should contain the name
-        // of the image.
-        try {
-            trgImageKey = parser.getNextString();
-
-            try {
-                m_iTargetSlice = Integer.parseInt(trgImageKey, 10);
-                userSetRefImage(m_kImageSrc);
-            } catch (NumberFormatException e) {
-                m_iTargetSlice = -1;
-                userSetRefImage(parser.getImage(trgImageKey));
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-
-            // get cost function
-            String kCostMeasureName = parser.getNextString();
-            Class kCostMeasureClass = Class.forName(kCostMeasureName);
-            m_kRegMeasure = (RegistrationMeasure) kCostMeasureClass.newInstance();
-
-            // get the options for each pass
-            int iNumPasses = parser.getNextInteger();
-            m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
-            m_kOptionsPass1.setFromParser(parser);
-
-            if (2 == iNumPasses) {
-                m_kOptionsPass2 = new AlgorithmRegBSpline.Options();
-                m_kOptionsPass2.setFromParser(parser);
-            } else {
-                m_kOptionsPass2 = null;
-            }
-
-            // get whether or not to create the deformation image
-            m_bCreateDeformationImage = parser.getNextBoolean();
-
-            /// add any more variables you need to retrieve here
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-    }
-
-    /**
      * Runs the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 
@@ -570,6 +437,8 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         // See algorithm performed event. This is made possible by implementing
         m_kAlgorithmReg.addListener(this);
 
+        createProgressBar(m_kImageSrc.getImageName(), m_kAlgorithmReg);
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have
@@ -578,12 +447,114 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
+
             if (!m_kUI.isAppFrameVisible()) {
                 m_kAlgorithmReg.setProgressBarVisible(false);
             }
 
             m_kAlgorithmReg.run();
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(m_kImageReg);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        m_kImageSrc = scriptParameters.retrieveInputImage();
+        userSetRefImage(scriptParameters.retrieveImage("reference_image"));
+
+        m_kUI = m_kImageSrc.getUserInterface();
+        parentFrame = m_kImageSrc.getParentFrame();
+        m_akNamesCompatibleTargetImages = getNamesCompatibleTargetImages(m_kImageSrc);
+
+        if (scriptParameters.getParams().getBoolean("is_ref_img_a_src_img_slice")) {
+            m_iTargetSlice = scriptParameters.getParams().getInt("ref_slice_in_src_img");
+            userSetRefImage(m_kImageSrc);
+        } else {
+            m_iTargetSlice = -1;
+        }
+
+        // get cost function
+        String kCostMeasureName = scriptParameters.getParams().getString("cost_measure");
+
+        try {
+            Class kCostMeasureClass = Class.forName(kCostMeasureName);
+            m_kRegMeasure = (RegistrationMeasure) kCostMeasureClass.newInstance();
+        } catch (ClassNotFoundException cnfe) {
+            throw new ParameterException("cost_measure", "Unable to find cost measure class: " + kCostMeasureName);
+        } catch (InstantiationException ie) {
+            throw new ParameterException("cost_measure",
+                                         "Unable to instantiate cost measure class: " + kCostMeasureName);
+        } catch (IllegalAccessException iae) {
+            throw new ParameterException("cost_measure",
+                                         "Access denied while trying to instantiate cost measure class: " +
+                                         kCostMeasureName);
+        }
+
+        // get the options for each pass
+        int iNumPasses = scriptParameters.getParams().getInt("num_passes");
+        m_kOptionsPass1 = new AlgorithmRegBSpline.Options();
+
+        try {
+            m_kOptionsPass1.setFromString(scriptParameters.getParams().getString("pass_options_1"), " ");
+        } catch (TokenizerException te) {
+            throw new ParameterException("pass_options_1", "There is a problem with the options for the first pass.");
+        }
+
+        if (2 == iNumPasses) {
+            m_kOptionsPass2 = new AlgorithmRegBSpline.Options();
+
+            try {
+                m_kOptionsPass2.setFromString(scriptParameters.getParams().getString("pass_options_2"), " ");
+            } catch (TokenizerException te) {
+                throw new ParameterException("pass_options_2",
+                                             "There is a problem with the options for the second pass.");
+            }
+        } else {
+            m_kOptionsPass2 = null;
+        }
+
+        // get whether or not to create the deformation image
+        m_bCreateDeformationImage = scriptParameters.getParams().getBoolean("do_create_deformation_image");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(m_kImageSrc);
+        scriptParameters.storeImage(m_kImageTrg, "reference_image");
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_ref_img_a_src_img_slice",
+                                                                       isRefImageSourceSlice()));
+
+        if (isRefImageSourceSlice()) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("ref_slice_in_src_img", m_iTargetSlice));
+        } else {
+            AlgorithmParameters.storeImageInRecorder(m_kImageReg);
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost_measure",
+                                                                       m_kRegMeasure.getClass().getName()));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_passes",
+                                                                       (m_kOptionsPass2 == null) ? 1 : 2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("pass_options_1",
+                                                                       m_kOptionsPass1.toString(" ")));
+
+        if (m_kOptionsPass2 != null) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("pass_options_2",
+                                                                           m_kOptionsPass2.toString(" ")));
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_deformation_image",
+                                                                       m_bCreateDeformationImage));
     }
 
     /**
@@ -749,7 +720,7 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.insets = new Insets(0, 2, 0, 2);
         kGBC.gridwidth = 1;
         kGBC.gridheight = 1;
-        kGBC.anchor = kGBC.WEST;
+        kGBC.anchor = GridBagConstraints.WEST;
 
         // Build the general sub 2-column panel.
         JPanel kPanelGeneralSub = new JPanel(new GridBagLayout());
@@ -757,11 +728,11 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 0;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelGeneralSub.add(labelImage, kGBC);
         kGBC.gridx = 1;
         kGBC.weightx = 0;
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
 
         if (isRefImageSourceSlice()) {
 
@@ -772,15 +743,15 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
             kGBC.gridy = 0;
             kGBC.gridx = 0;
             kGBC.weightx = 0.5;
-            kGBC.fill = kGBC.HORIZONTAL;
+            kGBC.fill = GridBagConstraints.HORIZONTAL;
             kPanelTargetSlice.add(m_kRadioSliceAdjacent, kGBC);
             kGBC.gridx = 1;
             kGBC.weightx = 0.25;
-            kGBC.fill = kGBC.HORIZONTAL;
+            kGBC.fill = GridBagConstraints.HORIZONTAL;
             kPanelTargetSlice.add(m_kRadioSliceReference, kGBC);
             kGBC.gridx = 2;
             kGBC.weightx = 0.25;
-            kGBC.fill = kGBC.HORIZONTAL;
+            kGBC.fill = GridBagConstraints.HORIZONTAL;
             kPanelTargetSlice.add(m_kComboBoxTargetSlice, kGBC);
         } else {
             kPanelGeneralSub.add(m_kComboBoxTargetImage, kGBC);
@@ -789,11 +760,11 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 1;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelGeneralSub.add(labelCostFunction, kGBC);
         kGBC.gridx = 1;
         kGBC.weightx = 0;
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kPanelGeneralSub.add(m_kComboBoxCostFunction, kGBC);
 
         // Build the general panel
@@ -803,12 +774,12 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 0;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.BOTH;
+        kGBC.fill = GridBagConstraints.BOTH;
         kPanelGeneral.add(kPanelGeneralSub, kGBC);
         kGBC.gridy = 1;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.BOTH;
+        kGBC.fill = GridBagConstraints.BOTH;
         kPanelGeneral.add(m_kCheckMultiPass, kGBC);
 
         // Build the options panel.
@@ -817,7 +788,7 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kPanelOptions.setBorder(buildTitledBorder("Transformation Options"));
 
         kGBC.gridy = 0;
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kGBC.gridx = 1;
         kGBC.weightx = 0.5;
         kPanelOptions.add(m_kLabelOptionsPass1, kGBC);
@@ -828,9 +799,9 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 1;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelOptions.add(kLabelSubsampleImage, kGBC);
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kGBC.gridx = 1;
         kGBC.weightx = 0;
         kPanelOptions.add(m_kControlsPass1.kCheckSubsample, kGBC);
@@ -841,9 +812,9 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 2;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelOptions.add(kLabelBSplineDegree, kGBC);
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kGBC.gridx = 1;
         kGBC.weightx = 0;
         kPanelOptions.add(m_kControlsPass1.kComboBoxBSplineDegree, kGBC);
@@ -854,9 +825,9 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 3;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelOptions.add(kLabelBSplineNumControlPoints, kGBC);
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kGBC.gridx = 1;
         kGBC.weightx = 0;
         kPanelOptions.add(m_kControlsPass1.kTextBSplineNumControlPoints, kGBC);
@@ -867,9 +838,9 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 4;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelOptions.add(kLabelGradientDescentMinimizeStepSize, kGBC);
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kGBC.gridx = 1;
         kGBC.weightx = 0;
         kPanelOptions.add(m_kControlsPass1.kTextGradientDescentMinimizeStepSize, kGBC);
@@ -880,9 +851,9 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 5;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelOptions.add(kLabelGradientDescentMinimizeMaxSteps, kGBC);
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kGBC.gridx = 1;
         kGBC.weightx = 0;
         kPanelOptions.add(m_kControlsPass1.kTextGradientDescentMinimizeMaxSteps, kGBC);
@@ -896,21 +867,21 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kPanelIterations.setBorder(buildTitledBorder("Iteration Options (one iteration = move each control point once)"));
 
         kGBC.gridy = 0;
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kGBC.gridx = 1;
         kGBC.weightx = 0.5;
         kPanelIterations.add(m_kLabelIterationsPass1, kGBC);
         kGBC.gridx = 2;
         kGBC.weightx = 0.5;
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kPanelIterations.add(m_kLabelIterationsPass2, kGBC);
 
         kGBC.gridy = 1;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelIterations.add(kLabelConvergenceLimit, kGBC);
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kGBC.gridx = 1;
         kGBC.weightx = 0;
         kPanelIterations.add(m_kControlsPass1.kTextConvergenceLimit, kGBC);
@@ -921,9 +892,9 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 2;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelIterations.add(kLabelMaxIterations, kGBC);
-        kGBC.fill = kGBC.HORIZONTAL;
+        kGBC.fill = GridBagConstraints.HORIZONTAL;
         kGBC.gridx = 1;
         kGBC.weightx = 0;
         kPanelIterations.add(m_kControlsPass1.kTextMaxIterations, kGBC);
@@ -938,7 +909,7 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridy = 0;
         kGBC.gridx = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.NONE;
+        kGBC.fill = GridBagConstraints.NONE;
         kPanelResults.add(m_kCheckCreateDeformationImage, kGBC);
 
         JPanel kPanelButton = new JPanel();
@@ -951,7 +922,7 @@ public class JDialogRegistrationBSpline extends JDialogBase implements Algorithm
         kGBC.gridx = 0;
         kGBC.gridy = 0;
         kGBC.weightx = 1;
-        kGBC.fill = kGBC.BOTH;
+        kGBC.fill = GridBagConstraints.BOTH;
         getContentPane().add(kPanelGeneral, kGBC);
         kGBC.gridy = 1;
         getContentPane().add(kPanelOptions, kGBC);

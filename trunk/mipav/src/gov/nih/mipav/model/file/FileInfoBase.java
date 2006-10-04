@@ -6,8 +6,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
-import java.io.File;
-
 
 /**
  * This structure contains the basic information that describes how the image is stored on disk.
@@ -379,7 +377,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     protected int[] axisOrientation = { ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE, ORI_UNKNOWN_TYPE };
 
     /** File name the the image was read from (image extension included - foo.img, foo.dcm ). */
-    /** The file name which includes the path information */
+    /** The file name which includes the path information. */
     protected String fileName;
 
     /** File suffix (ex. "jpg") */
@@ -488,11 +486,13 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param  format     file storage format -- see FileBase.java
      */
     public FileInfoBase(String name, String directory, int format) {
-		if (directory!=null) {
-			fileName = directory + name;
-		} else {
-			fileName = name;
-		}
+
+        if (directory != null) {
+            fileName = directory + name;
+        } else {
+            fileName = name;
+        }
+
         fileFormat = format;
         fileSuffix = FileIO.getSuffixFrom(name);
     }
@@ -507,44 +507,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public abstract void displayAboutInfo(JDialogBase dialog, TransMatrix matrix);
 
-    /**
-     * Returns the number of bytes per pixel based on the data type.
-     *
-     * @param dataType  the data type.
-     * @return          the number of bytes per pixel.
-     */
-    public static int getNumOfBytesPerPixel(int dataType) {
-        switch (dataType) {
-        case ModelStorageBase.BOOLEAN:
-        case ModelStorageBase.BYTE:
-        case ModelStorageBase.UBYTE:
-            return 1;
-        case ModelStorageBase.SHORT:
-        case ModelStorageBase.USHORT:
-            return 2;
-        case ModelStorageBase.INTEGER:
-        case ModelStorageBase.UINTEGER:
-            return 4;
-        case ModelStorageBase.LONG:
-            return 8;
-        case ModelStorageBase.FLOAT:
-            return 4;
-        case ModelStorageBase.DOUBLE:
-            return 8;
-        case ModelStorageBase.ARGB: // 4 * UBYTE(8 bits) = 4 bytes
-            return 4;
-        case ModelStorageBase.ARGB_USHORT: // 4 * USHORT(16 bits) = 8 bytes
-            return 8;
-        case ModelStorageBase.ARGB_FLOAT: // 4 * FLOAT(32 bits) = 16 bytes
-            return 16;
-        case ModelStorageBase.COMPLEX: // 2 * FLOAT(32 bits) = 8 bytes
-            return 8;
-        case ModelStorageBase.DCOMPLEX: // 2 * DOUBLE(64 bits) = 16 bytes
-            return 16;
-        default:
-            throw new IllegalArgumentException("The data type is illegal argument : " + dataType);
-        }
-    }
     /**
      * Helper method to copy important file info type to another file info type.
      *
@@ -632,7 +594,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < axisOrientationStr.length; i++) {
 
                 if (FileInfoBase.getAxisOrientationStr(i).regionMatches(true, 0, s, 0,
-                                                                            FileInfoBase.getAxisOrientationStr(i).length())) {
+                                                                        FileInfoBase.getAxisOrientationStr(i).length())) {
                     return i;
                 }
             }
@@ -713,7 +675,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < 3; i++) {
 
                 if (FileInfoBase.getImageOrientationStr(i).regionMatches(true, 0, s, 0,
-                                                                             FileInfoBase.getImageOrientationStr(i).length())) {
+                                                                         FileInfoBase.getImageOrientationStr(i).length())) {
                     return i;
                 }
             }
@@ -757,7 +719,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < modalityStr.length; i++) {
 
                 if (FileInfoBase.getModalityStr(i).regionMatches(true, 0, s, 0,
-                                                                     FileInfoBase.getModalityStr(i).length())) {
+                                                                 FileInfoBase.getModalityStr(i).length())) {
                     return i;
                 }
             }
@@ -798,6 +760,61 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     } // end getModalityStr()
 
     /**
+     * Returns the number of bytes per pixel based on the data type.
+     *
+     * @param   dataType  the data type.
+     *
+     * @return  the number of bytes per pixel.
+     *
+     * @throws  IllegalArgumentException  DOCUMENT ME!
+     */
+    public static int getNumOfBytesPerPixel(int dataType) {
+
+        switch (dataType) {
+
+            case ModelStorageBase.BOOLEAN:
+            case ModelStorageBase.BYTE:
+            case ModelStorageBase.UBYTE:
+                return 1;
+
+            case ModelStorageBase.SHORT:
+            case ModelStorageBase.USHORT:
+                return 2;
+
+            case ModelStorageBase.INTEGER:
+            case ModelStorageBase.UINTEGER:
+                return 4;
+
+            case ModelStorageBase.LONG:
+                return 8;
+
+            case ModelStorageBase.FLOAT:
+                return 4;
+
+            case ModelStorageBase.DOUBLE:
+                return 8;
+
+            case ModelStorageBase.ARGB: // 4 * UBYTE(8 bits) = 4 bytes
+                return 4;
+
+            case ModelStorageBase.ARGB_USHORT: // 4 * USHORT(16 bits) = 8 bytes
+                return 8;
+
+            case ModelStorageBase.ARGB_FLOAT: // 4 * FLOAT(32 bits) = 16 bytes
+                return 16;
+
+            case ModelStorageBase.COMPLEX: // 2 * FLOAT(32 bits) = 8 bytes
+                return 8;
+
+            case ModelStorageBase.DCOMPLEX: // 2 * DOUBLE(64 bits) = 16 bytes
+                return 16;
+
+            default:
+                throw new IllegalArgumentException("The data type is illegal argument : " + dataType);
+        }
+    }
+
+    /**
      * Returns the transform ID associated with a string.
      *
      * @param   s  String to test
@@ -812,7 +829,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < transformIDStr.length; i++) {
 
                 if (FileInfoBase.getTransformIDStr(i).regionMatches(true, 0, s, 0,
-                                                                        FileInfoBase.getTransformIDStr(i).length())) {
+                                                                    FileInfoBase.getTransformIDStr(i).length())) {
                     return i;
                 }
             }
@@ -894,10 +911,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < allUnits.length; i++) {
 
                 if (FileInfoBase.getUnitsOfMeasureStr(i).regionMatches(true, 0, s, 0,
-                                                                           FileInfoBase.getUnitsOfMeasureStr(i).length())) {
+                                                                       FileInfoBase.getUnitsOfMeasureStr(i).length())) {
                     return i;
                 } else if (FileInfoBase.getUnitsOfMeasureAbbrevStr(i).regionMatches(true, 0, s, 0,
-                                                                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
+                                                                                    FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
                     return i;
                 }
             }
@@ -1488,19 +1505,9 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @return  String that indicates location of the file
      */
     public final String getFileDirectory() {
-        if(fileName == null || fileName.length() == 0){
-            return null;
-        }
-        int index = fileName.lastIndexOf(File.separator);
-        if(index >= 0){
-            return fileName.substring(0, index + 1);
-        }
-        return null;
+        return FileUtility.getFileDirectory(fileName);
     }
 
-    public final void setFileDirectory(String directory){
-        setFileName(directory + FileUtility.getFileName(fileName));
-    }
     /**
      * Returns file format.
      *
@@ -1549,6 +1556,37 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         }
 
         return false;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  float[] LPSOrigin
+     */
+    public float[] getLPSOrigin() {
+        float[] LPSOrigin = new float[3];
+        LPSOrigin[0] = origin[0];
+        LPSOrigin[1] = origin[1];
+        LPSOrigin[2] = origin[2];
+
+        for (int j = 0; j < 3; j++) {
+
+            if ((getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE) ||
+                    (getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE)) {
+                LPSOrigin[0] = getOrigin()[j];
+
+            } else if ((getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE) ||
+                           (getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE)) {
+                LPSOrigin[1] = getOrigin()[j];
+
+            } else if ((getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE) ||
+                           (getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE)) {
+                LPSOrigin[2] = getOrigin()[j];
+
+            }
+        }
+
+        return LPSOrigin;
     }
 
     /**
@@ -1657,35 +1695,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      */
     public float[] getOrigin() {
         return origin;
-    }
-
-    /**
-     *
-     * @return float[] LPSOrigin
-     */
-    public float[] getLPSOrigin() {
-        float LPSOrigin[] = new float[3];
-        LPSOrigin[0] = origin[0];
-        LPSOrigin[1] = origin[1];
-        LPSOrigin[2] = origin[2];
-        for (int j = 0; j < 3; j++) {
-            if (getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE ||
-                getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE){
-                LPSOrigin[0] = getOrigin()[j];
-
-            }
-            else if (getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE ||
-                     getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE){
-                LPSOrigin[1] = getOrigin()[j];
-
-            }
-            else if (getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE ||
-                     getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE){
-                LPSOrigin[2] = getOrigin()[j];
-
-            }
-        }
-        return LPSOrigin;
     }
 
     /**
@@ -1802,13 +1811,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /**
      * Returns the size of the slice image in byte which represented by this object.
-     * @return the size of the slice image in byte which represented by this object.
+     *
+     * @return  the size of the slice image in byte which represented by this object.
      */
-    public int getSize(){
+    public int getSize() {
         int[] extents = this.getExtents();
-        if(extents == null || extents.length < 2){
+
+        if ((extents == null) || (extents.length < 2)) {
             return -1;
         }
+
         int dataType = getDataType();
 
         return extents[0] * extents[1] * getNumOfBytesPerPixel(getDataType());
@@ -1994,6 +2006,15 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     }
 
     /**
+     * DOCUMENT ME!
+     *
+     * @param  directory  DOCUMENT ME!
+     */
+    public final void setFileDirectory(String directory) {
+        setFileName(directory + FileUtility.getFileName(fileName));
+    }
+
+    /**
      * Sets the file format.
      *
      * @param  format  File format
@@ -2008,14 +2029,16 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param  fname  image file name
      */
     public void setFileName(String fname) {
-        if (fname == null || fname.length() == 0) {
+
+        if ((fname == null) || (fname.length() == 0)) {
             fileName = FileUtility.getFileDirectory(fileName);
         } else if (FileUtility.getFileDirectory(fname) == null) {
-			if (FileUtility.getFileDirectory(fileName)==null) {
-				fileName = fname;
-			} else {
-				fileName = FileUtility.getFileDirectory(fileName) + fname;
-			}
+
+            if (FileUtility.getFileDirectory(fileName) == null) {
+                fileName = fname;
+            } else {
+                fileName = FileUtility.getFileDirectory(fileName) + fname;
+            }
         } else {
             fileName = fname;
         }

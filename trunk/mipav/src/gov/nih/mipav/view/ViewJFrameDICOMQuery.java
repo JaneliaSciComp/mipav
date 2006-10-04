@@ -1909,7 +1909,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         listPanel.setBorder(buildTitledBorder("Directory Listing:"));
 
         sendModel.addColumn(columnNames[0]);
-        sendTable.setAutoResizeMode(sendTable.AUTO_RESIZE_ALL_COLUMNS);
+        sendTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         try {
             sendTable.setPreferredScrollableViewportSize(new Dimension(450, 200));
@@ -2287,7 +2287,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 1.0;
         containPanel.add(buildPtInfoPanel(), gbc);
 
-        gbc = setGBC(2, 0, gbc.REMAINDER, gbc.REMAINDER);
+        gbc = setGBC(2, 0, GridBagConstraints.REMAINDER, GridBagConstraints.REMAINDER);
         gbc.fill = GridBagConstraints.NONE;
         gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0.01;
@@ -2299,7 +2299,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         send.setBackground(Color.gray.brighter());
         send.addActionListener(this);
 
-        gbc = setGBC(0, 1, 1, gbc.REMAINDER);
+        gbc = setGBC(0, 1, 1, GridBagConstraints.REMAINDER);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = insets;
@@ -2312,7 +2312,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         move.setBackground(Color.gray.brighter());
         move.addActionListener(this);
 
-        gbc = setGBC(1, 1, 1, gbc.REMAINDER);
+        gbc = setGBC(1, 1, 1, GridBagConstraints.REMAINDER);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = insets;
@@ -2321,7 +2321,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         setEnabled(move, false);
         containPanel.add(move, gbc);
 
-        gbc = setGBC(0, 0, gbc.REMAINDER, 1);
+        gbc = setGBC(0, 0, GridBagConstraints.REMAINDER, 1);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.insets = insets;
@@ -2329,7 +2329,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         gbc.weighty = 1.0;
         rootQueryPanel.add(containPanel, gbc);
 
-        gbc = setGBC(0, 1, gbc.REMAINDER, 2);
+        gbc = setGBC(0, 1, GridBagConstraints.REMAINDER, 2);
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.insets = insets;
@@ -2338,7 +2338,7 @@ public class ViewJFrameDICOMQuery extends JFrame
         subQueryPanel = buildTextPanel();
         rootQueryPanel.add(subQueryPanel, gbc);
 
-        gbc = setGBC(0, 3, gbc.REMAINDER, 1);
+        gbc = setGBC(0, 3, GridBagConstraints.REMAINDER, 1);
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.insets = insets;
@@ -2440,7 +2440,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             serverModel.addColumn(columnNames[i]);
         }
 
-        serverTable.setAutoResizeMode(serverTable.AUTO_RESIZE_ALL_COLUMNS);
+        serverTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         serverTable.getColumn("Default").setMinWidth(50);
         serverTable.getColumn("Default").setMaxWidth(50);
         serverTable.getColumn("AE Title").setMinWidth(75);
@@ -2612,7 +2612,7 @@ public class ViewJFrameDICOMQuery extends JFrame
             storageModel.addColumn(columnNames[i]);
         }
 
-        storageTable.setAutoResizeMode(storageTable.AUTO_RESIZE_ALL_COLUMNS);
+        storageTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         storageTable.getColumn("Default").setMinWidth(50);
         storageTable.getColumn("Default").setMaxWidth(50);
         storageTable.getColumn("AE Title").setMinWidth(150);
@@ -3565,7 +3565,7 @@ public class ViewJFrameDICOMQuery extends JFrame
     private void setColumns() {
 
         TableColumn tableColumn;
-        queryResultTable.setAutoResizeMode(queryResultTable.AUTO_RESIZE_ALL_COLUMNS);
+        queryResultTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
         if (queryLevel == PATIENT_LEVEL) {
 

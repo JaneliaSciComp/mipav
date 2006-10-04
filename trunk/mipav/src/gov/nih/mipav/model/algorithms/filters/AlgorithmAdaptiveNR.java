@@ -295,32 +295,27 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             Cb = new int[length];
             imgBuffer = new int[4 * length];
             srcImage.exportData(0, 4 * length, imgBuffer); // locks and releases lock
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Converting to Y,Cr,Cb ...", 0, 100, true, this,
-                                               this);
+            
+            
+            
+          //  fireProgressStateChanged(srcImage.getImageName(), "Converting to Y,Cr,Cb ...", true, this,
+          //                                     this);
         } catch (IOException error) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptiveNR: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptiveNR:  Out of Memory");
             setCompleted(false);
 
             return;
         }
-
-
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
-
-        progressBar.setMessage("Converting from RGB to YCrCb");
+        
+        
+        fireProgressStateChanged(0, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
         if (threadStopped) {
@@ -339,8 +334,8 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(95, runningInSeparateThread);
-        progressBar.setMessage("Converting fromYCrCb to RGB");
+        fireProgressStateChanged(.95f, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
         if (threadStopped) {
@@ -358,7 +353,6 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptiveNR: destImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
@@ -370,13 +364,12 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptiveNR: srcImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
 
         if (threadStopped) {
             cleanup();
@@ -386,7 +379,7 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -404,31 +397,22 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             length = xDim * yDim;
             imgBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Performing median filter ...", 0, 100, true,
-                                               this, this);
         } catch (IOException error) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptiveNR: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptiveNR:  Out of Memory");
             setCompleted(false);
 
             return;
         }
-
-
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
-
+        
+        fireProgressStateChanged(0, srcImage.getImageName(), "Performing median filter ...");
+        
 
         process(imgBuffer);
 
@@ -447,7 +431,6 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptiveNR: destImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
@@ -459,23 +442,19 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptiveNR: srcImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
         }
-
-        progressBar.updateValue(100, runningInSeparateThread);
-
+        fireProgressStateChanged(100, srcImage.getImageName(), "Performing median filter ...");
+        
         if (threadStopped) {
             cleanup();
             finalize();
 
             return;
         }
-
         cleanup();
-        progressBar.dispose();
         setCompleted(true);
     }
 
@@ -790,7 +769,6 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptiveNR: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         }
@@ -824,8 +802,6 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             data1 = new int[dataLength];
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptiveNR: Out of memory creating data1 " + e);
-            setCompleted(false);
-            disposeProgressBar();
 
             return;
         }
@@ -880,7 +856,6 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptiveNR: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         }
@@ -915,7 +890,6 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptiveNR: Out of memory creating data1 " + e);
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         }
@@ -1214,14 +1188,14 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         radius = radiusY;
         width = xDim;
         height = yDim;
-        progressBar.updateValue(10, runningInSeparateThread);
-        progressBar.setMessage("Performing median filter");
+        
+        fireProgressStateChanged(10, srcImage.getImageName(), "Performing median filter ...");
+        
         medianFilter(fY);
-        progressBar.updateValue(30, runningInSeparateThread);
-        progressBar.setMessage("Creating edge graph");
+        fireProgressStateChanged(30, srcImage.getImageName(), "Creating edge graph ...");
+       
         createEdgeGraph(fY);
-        progressBar.updateValue(50, runningInSeparateThread);
-        progressBar.setMessage("Filtering in Y space");
+        fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
         filterProcessBW();
 
         if (threadStopped) {
@@ -1275,14 +1249,18 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         radius = radiusY;
         width = xDim;
         height = yDim;
-        progressBar.updateValue(10, runningInSeparateThread);
-        progressBar.setMessage("Performing median filter");
+        
+        
+        fireProgressStateChanged(10 , srcImage.getImageName(), "Performing median filter ...");
+       
         medianFilter(fY, fR, fB);
-        progressBar.updateValue(30, runningInSeparateThread);
-        progressBar.setMessage("Creating edge graph");
+        
+        fireProgressStateChanged(30, srcImage.getImageName(), "Creating edge graph ...");
+        
         createEdgeGraph(fY, fR, fB);
-        progressBar.updateValue(50, runningInSeparateThread);
-        progressBar.setMessage("Filtering in Y space");
+        
+        fireProgressStateChanged(50 , srcImage.getImageName(), "Filtering in Y space ...");
+       
         filterProcess();
 
         if (threadStopped) {
@@ -1295,8 +1273,9 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
         if (!reduce) {
             data = Cb;
             radius = radiusCb;
-            progressBar.updateValue(70, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Cb space");
+            fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
+            
+            
             filterProcess();
 
             if (threadStopped) {
@@ -1308,8 +1287,8 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
 
             data = Cr;
             radius = radiusCr;
-            progressBar.updateValue(90, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Cr space");
+            fireProgressStateChanged(90 , srcImage.getImageName(), "Filtering in Cr space ...");
+            
             filterProcess();
 
             if (threadStopped) {
@@ -1356,8 +1335,9 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
             createEdgeGraph(newY, newR, newB);
             data = newB;
             radius = radiusCb / 2.0f;
-            progressBar.updateValue(70, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Cb space");
+            
+            fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
+            
             filterProcess();
 
             if (threadStopped) {
@@ -1369,8 +1349,9 @@ public class AlgorithmAdaptiveNR extends AlgorithmBase {
 
             data = newR;
             radius = radiusCr / 2.0f;
-            progressBar.updateValue(90, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Cr space");
+            
+            fireProgressStateChanged(90, srcImage.getImageName(), "Filtering in Cr space ...");
+            
             filterProcess();
 
             if (threadStopped) {

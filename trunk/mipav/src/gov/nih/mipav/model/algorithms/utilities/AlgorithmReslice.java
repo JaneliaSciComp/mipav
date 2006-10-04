@@ -272,7 +272,7 @@ public class AlgorithmReslice extends AlgorithmBase {
             bufferB = new float[length];
             bufferC = new float[length];
             bufferD = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Forming isotropic dataset ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Forming isotropic dataset ...");
             // r1      = new float[TABLE_SIZE]; r2      = new float[TABLE_SIZE];
         } catch (OutOfMemoryError e) {
             bufferA = null;
@@ -284,7 +284,7 @@ public class AlgorithmReslice extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         // makeTables();
 
@@ -331,8 +331,7 @@ public class AlgorithmReslice extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (i - 2) / (srcImage.getExtents()[2] - 1) * 100),
-                                        runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (i - 2) / (srcImage.getExtents()[2] - 1) * 100));
             }
 
             if (i < srcImage.getExtents()[2]) {
@@ -405,7 +404,7 @@ public class AlgorithmReslice extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -476,7 +475,7 @@ public class AlgorithmReslice extends AlgorithmBase {
 
         try {
             buffer = new float[2 * length]; // allocate array for 2 images
-            buildProgressBar(srcImage.getImageName(), "Forming isotropic dataset ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Forming isotropic dataset ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
 
@@ -490,7 +489,7 @@ public class AlgorithmReslice extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         d = 0;
         pct = 0;
@@ -509,7 +508,7 @@ public class AlgorithmReslice extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (srcImage.getExtents()[2] - 1) * 100));
             }
 
             zRes = srcImage.getFileInfo(i).getResolutions()[2];
@@ -542,7 +541,7 @@ public class AlgorithmReslice extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

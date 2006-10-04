@@ -199,8 +199,8 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
         try {
             constructLog();
 
-            buildProgressBar(srcImage.getImageName(), "Performing Nonparametric segmentation...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Performing Nonparametric segmentation...");
+            
 
             if (useRed) {
                 c1Min = srcImage.getMinR();
@@ -334,7 +334,7 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
             path = new int[nBins];
 
             for (i = 0, x = 0, y = 0; i < nBins; i++) {
-                progressBar.updateValueImmed(i * 100 / (2 * nBins));
+                fireProgressStateChanged(i * 100 / (2 * nBins));
 
                 if (label[i] == 0) {
                     pathIndex = 0;
@@ -487,7 +487,7 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
 
 loop1:
                 for (i = 0; i < labelNum; i++) {
-                    progressBar.updateValueImmed(50 + (i * 100 / (2 * labelNum)));
+                    fireProgressStateChanged(50 + (i * 100 / (2 * labelNum)));
 
                     for (j = 0; j < nPoints; j++) {
 
@@ -558,7 +558,7 @@ loop1:
                 srcImage.importData(0, segBuffer, true);
             }
 
-            disposeProgressBar();
+            
             setCompleted(true);
 
             return;
@@ -568,10 +568,6 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametric segmentation reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -580,10 +576,7 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametricsegmentation reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+         
             setCompleted(false);
 
             return;
@@ -675,8 +668,8 @@ loop1:
         try {
             constructLog();
 
-            buildProgressBar(srcImage.getImageName(), "Performing Nonparametric segmentation...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Performing Nonparametric segmentation...");
+            
 
             redMin = srcImage.getMinR();
             greenMin = srcImage.getMinG();
@@ -807,7 +800,7 @@ loop1:
             path = new int[nBins];
 
             for (i = 0, x = 0, y = 0, z = 0; i < nBins; i++) {
-                progressBar.updateValueImmed(i * 100 / (2 * nBins));
+                fireProgressStateChanged(i * 100 / (2 * nBins));
 
                 if (label[i] == 0) {
                     pathIndex = 0;
@@ -991,7 +984,7 @@ loop1:
 
 loop1:
                 for (i = 0; i < labelNum; i++) {
-                    progressBar.updateValueImmed(50 + (i * 100 / (2 * labelNum)));
+                    fireProgressStateChanged(50 + (i * 100 / (2 * labelNum)));
 
                     for (j = 0; j < nPoints; j++) {
 
@@ -1069,7 +1062,7 @@ loop1:
                 srcImage.importData(0, segBuffer, true);
             }
 
-            disposeProgressBar();
+            
             setCompleted(true);
 
             return;
@@ -1079,10 +1072,7 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametric segmentation reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+           
             setCompleted(false);
 
             return;
@@ -1091,10 +1081,7 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametricsegmentation reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+           
             setCompleted(false);
 
             return;
@@ -1185,8 +1172,8 @@ loop1:
         try {
             constructLog();
 
-            buildProgressBar(srcImage.getImageName(), "Performing Nonparametric segmentation...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Performing Nonparametric segmentation...");
+            
 
             imin = (float) srcImage.getMin();
             imax = (float) srcImage.getMax();
@@ -1312,7 +1299,7 @@ loop1:
             path = new int[nBins];
 
             for (i = 0, x = 0, y = 0; i < nBins; i++) {
-                progressBar.updateValueImmed(i * 100 / (2 * nBins));
+                fireProgressStateChanged(i * 100 / (2 * nBins));
 
                 if (label[i] == 0) {
                     pathIndex = 0;
@@ -1470,7 +1457,7 @@ loop1:
 
 loop1:
                 for (i = 0; i < labelNum; i++) {
-                    progressBar.updateValueImmed(50 + (i * 100 / (2 * labelNum)));
+                    fireProgressStateChanged(50 + (i * 100 / (2 * labelNum)));
 
                     for (j = 0; j < nPoints; j++) {
 
@@ -1551,7 +1538,7 @@ loop1:
                 srcImage.importData(0, segBuffer, true);
             }
 
-            disposeProgressBar();
+            
             setCompleted(true);
 
             return;
@@ -1561,10 +1548,6 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametric segmentation reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -1573,10 +1556,7 @@ loop1:
             System.gc();
             MipavUtil.displayError("Algorithm Nonparametricsegmentation reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+          
             setCompleted(false);
 
             return;

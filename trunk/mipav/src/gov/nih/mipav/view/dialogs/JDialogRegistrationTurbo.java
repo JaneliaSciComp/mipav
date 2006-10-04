@@ -279,7 +279,7 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
     /**
      * Once all the variables have been set, calls the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         System.gc();
 
         try {
@@ -486,6 +486,8 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
         // See algorithm performed event. This is made possible by implementing
         turbo.addListener(this);
 
+        createProgressBar(sourceImage.getImageName(), turbo);
+        
         // These next lines set the titles in all frames where the source image
         // is displayed to "locked - " image name so as to indicate that the image
         // is now read/write locked!  The image frames are disabled and then
@@ -593,8 +595,8 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         automaticPanel.add(automaticCheckBox, gbc);
         gbc.gridy = 1;
         automaticPanel.add(sourceVOICheckBox, gbc);

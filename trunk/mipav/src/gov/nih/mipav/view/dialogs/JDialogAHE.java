@@ -3,9 +3,12 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -27,7 +30,7 @@ import javax.swing.*;
  * @author   parsonsd
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogAHE extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogAHE extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -38,12 +41,6 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
 
     /** DOCUMENT ME! */
     private AlgorithmAHE aheAlgo = null;
-
-    /** DOCUMENT ME! */
-    private boolean blue = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox blueChannel;
 
     /** DOCUMENT ME! */
     private boolean clamp = false;
@@ -61,6 +58,9 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
     private JLabel clampValueLabel;
 
     /** DOCUMENT ME! */
+    private JPanelColorChannels colorPanel;
+
+    /** DOCUMENT ME! */
     private JComboBox comboBoxHeightDiv;
 
     /** DOCUMENT ME! */
@@ -73,28 +73,13 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
     private int displayLoc; // Flag indicating if a new image is to be generated
 
     /** DOCUMENT ME! */
-    private boolean green = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox greenChannel;
-
-    /** DOCUMENT ME! */
     private int heightDivisions; // divide image into number of images (say, into threes)
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private boolean isColorImage = false; // indicates the image is a color image
-
-    /** DOCUMENT ME! */
     private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private boolean red = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox redChannel;
 
     /** DOCUMENT ME! */
     private JRadioButton replaceImage;
@@ -134,32 +119,9 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
             return;
         }
 
-        if (im.isColorImage()) {
-            isColorImage = true;
-        }
-
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAHE(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-
-        if (im.isColorImage()) {
-            isColorImage = true;
-        }
-
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -220,8 +182,6 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmAHE) {
             image.clearMask();
 
@@ -232,7 +192,7 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -267,7 +227,10 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
             }
         }
 
-        insertScriptLine(aheAlgo);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+
         aheAlgo.finalize();
         aheAlgo = null;
         dispose();
@@ -281,103 +244,6 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("AHE " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + clamp + " " + clampValue + " " + heightDivisions +
-                                                           " " + widthDivisions + " " + red + " " + green + " " + blue +
-                                                           "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + clamp + " " + clampValue + " " + heightDivisions +
-                                                           " " + widthDivisions + " " + red + " " + green + " " + blue +
-                                                           "\n");
-                }
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        if (im.isColorImage()) {
-            isColorImage = true;
-        }
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setClampFlag(parser.getNextBoolean());
-            setClampingValue(parser.getNextInteger());
-            setHeightDivisions(parser.getNextInteger());
-            setWidthDivisions(parser.getNextInteger());
-            setRGBChannelFilter(parser.getNextBoolean(), parser.getNextBoolean(), parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -423,21 +289,6 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
     }
 
     /**
-     * RGB images are histogram equalized by 'channel.' That is, each color, red, blue and green, is run independently
-     * of the other two colors. This permits selectively filtering any combination of the three channels instead of
-     * simply trying to handle all three at once. True filters that channel.
-     *
-     * @param  r  DOCUMENT ME!
-     * @param  g  DOCUMENT ME!
-     * @param  b  DOCUMENT ME!
-     */
-    public void setRGBChannelFilter(boolean r, boolean g, boolean b) {
-        red = r;
-        green = g;
-        blue = b;
-    }
-
-    /**
      * Accessor that sets the width divisions.
      *
      * @param  value  Value to set width divisions to.
@@ -447,53 +298,10 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
     }
 
     /**
-     * Takes a text field, and forces the textfield to accept numbers, backspace and delete-key entries.
-     *
-     * @param  txt  Text field to modify.
-     */
-    protected void makeNumericsOnly(JTextField txt) {
-        txt.addKeyListener(new KeyAdapter() { // make the field
-                public void keyTyped(KeyEvent evt) { // not accept letters
-
-                    JTextField t = (JTextField) evt.getComponent();
-                    char ch = evt.getKeyChar();
-
-                    if (((ch < '0') || (ch > '9')) && ((ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE))) {
-
-                        // if is the case that ch is outside the bounds of a number AND it is the case that ch is
-                        // neither a BS or a DE, then... key is not a digit or a deletion char
-                        evt.consume();
-                    }
-                }
-            });
-    }
-
-    /**
-     * Creates the combo-box that allows user to select the number of divisions in the image when building the
-     * histogram.
-     */
-    private void buildDivisionComboBoxes() {
-        JTextField fld;
-        String[] items = new String[] { "1", "2", "3", "4", "5" };
-        comboBoxHeightDiv = new JComboBox(items);
-        comboBoxWidthDiv = new JComboBox(items);
-        comboBoxHeightDiv.setEditable(true);
-        fld = (JTextField) comboBoxHeightDiv.getEditor().getEditorComponent();
-        makeNumericsOnly(fld);
-        fld.setColumns(4);
-        fld.setHorizontalAlignment(JTextField.RIGHT);
-        comboBoxWidthDiv.setEditable(true);
-        fld = (JTextField) comboBoxWidthDiv.getEditor().getEditorComponent();
-        makeNumericsOnly(fld);
-        fld.setColumns(4);
-        fld.setHorizontalAlignment(JTextField.RIGHT);
-    }
-
-    /**
      * Once all the necessary variables are set, call the algorithm based on what type of image this is and whether or
      * not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         String name = makeImageName(image.getImageName(), "_AHE");
         int[] destExtents = new int[image.getNDims()];
@@ -537,7 +345,9 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
 
                 // Make algorithm
                 aheAlgo = new AlgorithmAHE(resultImage, image, heightDivisions, widthDivisions);
-                aheAlgo.setRGBChannelFilter(red, green, blue);
+                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
+                                            colorPanel.isGreenProcessingRequested(),
+                                            colorPanel.isBlueProcessingRequested());
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -548,6 +358,8 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 aheAlgo.addListener(this);
+                createProgressBar(image.getImageName(), aheAlgo);
+                
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {
@@ -557,9 +369,6 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        aheAlgo.setProgressBarVisible(false);
-                    }
 
                     aheAlgo.run();
                 }
@@ -580,7 +389,9 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
                 aheAlgo = new AlgorithmAHE(image, heightDivisions, widthDivisions);
-                aheAlgo.setRGBChannelFilter(red, green, blue);
+                aheAlgo.setRGBChannelFilter(colorPanel.isRedProcessingRequested(),
+                                            colorPanel.isGreenProcessingRequested(),
+                                            colorPanel.isBlueProcessingRequested());
 
                 if (clamp) {
                     aheAlgo.setContrastLimited(true);
@@ -592,6 +403,8 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
                 // This is made possible by implementing AlgorithmedPerformed interface
                 aheAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), aheAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -616,9 +429,6 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        aheAlgo.setProgressBarVisible(false);
-                    }
 
                     aheAlgo.run();
                 }
@@ -628,6 +438,96 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * Takes a text field, and forces the textfield to accept numbers, backspace and delete-key entries.
+     *
+     * @param  txt  Text field to modify.
+     */
+    protected void makeNumericsOnly(JTextField txt) {
+        txt.addKeyListener(new KeyAdapter() { // make the field
+                public void keyTyped(KeyEvent evt) { // not accept letters
+
+                    char ch = evt.getKeyChar();
+
+                    if (((ch < '0') || (ch > '9')) && ((ch != KeyEvent.VK_DELETE) && (ch != KeyEvent.VK_BACK_SPACE))) {
+
+                        // if is the case that ch is outside the bounds of a number AND it is the case that ch is
+                        // neither a BS or a DE, then... key is not a digit or a deletion char
+                        evt.consume();
+                    }
+                }
+            });
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        colorPanel = new JPanelColorChannels(image);
+        scriptParameters.setColorOptionsGUI(colorPanel);
+
+        clamp = scriptParameters.getParams().getBoolean("do_clamping");
+        clampValue = scriptParameters.getParams().getInt("clamp_value");
+        heightDivisions = scriptParameters.getParams().getInt("height_divisions");
+        widthDivisions = scriptParameters.getParams().getInt("width_divisions");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.storeColorOptions(colorPanel);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_clamping", clamp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("clamp_value", clampValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("height_divisions", heightDivisions));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("width_divisions", widthDivisions));
+    }
+
+    /**
+     * Creates the combo-box that allows user to select the number of divisions in the image when building the
+     * histogram.
+     */
+    private void buildDivisionComboBoxes() {
+        JTextField fld;
+        String[] items = new String[] { "1", "2", "3", "4", "5" };
+        comboBoxHeightDiv = new JComboBox(items);
+        comboBoxWidthDiv = new JComboBox(items);
+        comboBoxHeightDiv.setEditable(true);
+        fld = (JTextField) comboBoxHeightDiv.getEditor().getEditorComponent();
+        makeNumericsOnly(fld);
+        fld.setColumns(4);
+        fld.setHorizontalAlignment(JTextField.RIGHT);
+        comboBoxWidthDiv.setEditable(true);
+        fld = (JTextField) comboBoxWidthDiv.getEditor().getEditorComponent();
+        makeNumericsOnly(fld);
+        fld.setColumns(4);
+        fld.setHorizontalAlignment(JTextField.RIGHT);
     }
 
 
@@ -750,40 +650,7 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
         setupBox.add(paramPanel);
 
         // color channel selection goes here...
-        JPanel colorPanel = new JPanel();
-        colorPanel.setLayout(gbl);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.weightx = 0;
-        colorPanel.setForeground(Color.black);
-
-        // set the border ... "color channel Selection"
-        colorPanel.setBorder(buildTitledBorder("Color channel selection"));
-        redChannel = new JCheckBox("Red channel", true);
-        redChannel.setFont(serif12);
-        gbl.setConstraints(redChannel, gbc);
-        colorPanel.add(redChannel);
-
-        greenChannel = new JCheckBox("Green channel", true);
-        greenChannel.setFont(serif12);
-        gbl.setConstraints(greenChannel, gbc);
-        colorPanel.add(greenChannel);
-
-        blueChannel = new JCheckBox("Blue channel", true);
-        blueChannel.setFont(serif12);
-        gbl.setConstraints(blueChannel, gbc);
-        colorPanel.add(blueChannel);
-
-        // if not a color image, block access to the channel switches
-        // since they don't mean anything
-        if (!isColorImage) {
-            redChannel.setEnabled(false);
-            greenChannel.setEnabled(false);
-            blueChannel.setEnabled(false);
-        }
-
-        colorPanel.setToolTipText("Each color channel can be equalized in any combination");
+        colorPanel = new JPanelColorChannels(image);
         setupBox.add(colorPanel);
 
         Box lowerBox = new Box(BoxLayout.X_AXIS);
@@ -851,10 +718,6 @@ public class JDialogAHE extends JDialogBase implements AlgorithmInterface, Scrip
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
         }
-
-        red = redChannel.isEnabled() && redChannel.isSelected();
-        green = greenChannel.isEnabled() && greenChannel.isSelected();
-        blue = blueChannel.isEnabled() && blueChannel.isSelected();
 
         if (clampImage.isSelected()) {
 

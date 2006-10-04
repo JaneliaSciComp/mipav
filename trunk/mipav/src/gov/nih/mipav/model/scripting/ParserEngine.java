@@ -28,7 +28,7 @@ public class ParserEngine {
     private static final Pattern scriptLineRegex = Pattern.compile("^([A-Za-z][\\w_]*)\\s*\\(\\s*(\".+\")*\\s*\\)\\s*$");
 
     /** This regular expression pattern breaks apart an action parameter string into three parts: param label, param data type, and param data. */
-    private static final Pattern paramInfoRegex = Pattern.compile("^([\\w_.-]+)\\s+([\\w_]+)\\s+(.*)$");
+    private static final Pattern paramInfoRegex = Pattern.compile("^([$\\w_.-]+)\\s+([\\w_]+)\\s+(.*)$");
 
     /** The delimiter used to split up a String containing all of the parameters which should be parsed and passed to an action. */
     private static final String paramListDelimiter = "\",\\s*\"";
@@ -37,9 +37,6 @@ public class ParserEngine {
 
     /** The number of the current (or last if not currently parsing) line being parsed (1-based). */
     private int currentScriptLineNumber = 0;
-
-    /** Whether to print debugging output while parsing the script. */
-    private boolean doDebugOutput = false;
 
     /** The path to the script file to be parsed ('-' if the script is already in memory and has no related file). */
     private String scriptFile;
@@ -80,7 +77,7 @@ public class ParserEngine {
             try {
                 scriptReader.close();
             } catch (IOException ioe) {
-                Preferences.debug("Error encountered trying to close script reader: " + scriptFile);
+                Preferences.debug("parserEng:\tError encountered trying to close script reader: " + scriptFile + "\n", Preferences.DEBUG_SCRIPTING);
             }
         }
     }
@@ -126,13 +123,13 @@ public class ParserEngine {
             String str = null;
 
             if ((str = scriptReader.readLine()) != null) {
-                Preferences.debug("Parsing script line number " + currentScriptLineNumber, Preferences.DEBUG_MINOR);
+                Preferences.debug("parserEng:\tParsing script line number " + currentScriptLineNumber + "\n", Preferences.DEBUG_SCRIPTING);
                 str = str.trim();
 
                 if (!str.equals("")) {
                     parsedLine = parseLine(str);
                 } else {
-                    Preferences.debug("\tSkipping empty line.", Preferences.DEBUG_MINOR);
+                    Preferences.debug("parserEng:\t\tSkipping empty line.\n", Preferences.DEBUG_SCRIPTING);
                 }
             }
         } catch (IOException ioe) {
@@ -158,15 +155,6 @@ public class ParserEngine {
         } catch (IOException ioe) {
             throw new ParserException(scriptFile, currentScriptLineNumber, "Error resetting parser: " + ioe.getMessage());
         }
-    }
-
-    /**
-     * Changes whether parser debugging output should be printed.
-     *
-     * @param  flag  Whether parser debugging output should be printed.
-     */
-    public void setDoDebugOutput(boolean flag) {
-        doDebugOutput = flag;
     }
 
     /**
@@ -230,7 +218,7 @@ public class ParserEngine {
 
         // skip comment lines
         if (ParserEngine.isCommentLine(scriptLine)) {
-            Preferences.debug("\tSkipping comment line.", Preferences.DEBUG_MINOR);
+            Preferences.debug("parserEng:\t\tSkipping comment line.\n", Preferences.DEBUG_SCRIPTING);
 
             return null;
         }
@@ -249,7 +237,7 @@ public class ParserEngine {
         actionName = matcher.group(1);
         paramString = matcher.group(2);
 
-        Preferences.debug("\t" + actionName + " -- " + paramString, Preferences.DEBUG_MINOR);
+        Preferences.debug("parserEng:\t\t" + actionName + " -- " + paramString + "\n", Preferences.DEBUG_SCRIPTING);
 
         paramList = parseParameters(paramString);
 
@@ -273,9 +261,9 @@ public class ParserEngine {
         while (matcher.find()) {
 
             if (matcher.groupCount() == 3) {
-                param = ParameterFactory.newParameter(matcher.group(1), matcher.group(2), matcher.group(3));
+                param = ParameterFactory.parseParameter(matcher.group(1), matcher.group(2), matcher.group(3));
 
-                // Preferences.debug(param.convertToString(), Preferences.DEBUG_MINOR);
+                // Preferences.debug(param.convertToString(), Preferences.DEBUG_SCRIPTING);
             } else {
                 throw new ParserException("Error parsing parameter: " + paramInfo);
             }
@@ -299,7 +287,7 @@ public class ParserEngine {
         if (paramString == null) {
 
             // no parameters for algorithm, return empty vector
-            Preferences.debug("\t\tNo parameters found.", Preferences.DEBUG_MINOR);
+            Preferences.debug("parserEng:\t\t\tNo parameters found.\n", Preferences.DEBUG_SCRIPTING);
 
             return paramList;
         }
@@ -316,7 +304,7 @@ public class ParserEngine {
                 params[i] = params[i].substring(0, params[i].length() - 1);
             }
 
-            // Preferences.debug("\t\t" + params[i], Preferences.DEBUG_MINOR);
+            // Preferences.debug("\t\t" + params[i] + "\n", Preferences.DEBUG_SCRIPTING);
 
             Parameter param = parseParameterInfo(params[i]);
             paramList.put(param);

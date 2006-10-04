@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -19,23 +20,28 @@ import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.tree.*;
 
+
 /**
- * Tree of images beneath the given directory. When a user clicks on a filename,
- * a thumbnail of the image appears, along with the header data.
- * 
- * @author Neva Cherniavsky
- * @version 1.0 June 1, 2002
- * @see ViewJComponentPreviewImage
+ * Tree of images beneath the given directory. When a user clicks on a filename, a thumbnail of the image appears, along
+ * with the header data.
+ *
+ * @author   Neva Cherniavsky
+ * @version  1.0 June 1, 2002
+ * @see      ViewJComponentPreviewImage
  */
-public class ViewImageDirectory extends JFrame implements ActionListener,
-        ComponentListener, ItemListener, TreeSelectionListener,
-        TreeExpansionListener, ChangeListener, PreviewImageContainer {
+public class ViewImageDirectory extends JFrame
+        implements ActionListener, ComponentListener, ItemListener, TreeSelectionListener, TreeExpansionListener,
+                   ChangeListener, PreviewImageContainer {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     // ~ Static fields/initializers
     // -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1262294439731204344L;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
 
     // ~ Instance fields
     // ------------------------------------------------------------------------------------------------
@@ -145,24 +151,22 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
     /** DOCUMENT ME! */
     private JCheckBoxMenuItem thumbnailOption;
 
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
     // ~ Constructors
     // ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates new tree of images and sets up file filter. Calls initialization
-     * method.
-     * 
-     * @param dir
-     *            DOCUMENT ME!
-     * @param filter
-     *            Directory to make tree under.
+     * Creates new tree of images and sets up file filter. Calls initialization method.
+     *
+     * @param  dir     DOCUMENT ME!
+     * @param  filter  Directory to make tree under.
      */
     public ViewImageDirectory(String dir, ViewImageFileFilter filter) {
         super();
         userInterface = ViewUserInterface.getReference();
         directory = dir;
-        this.showXMLThumbnail = Preferences
-                .is(Preferences.PREF_SAVE_XML_THUMBNAIL);
+        this.showXMLThumbnail = Preferences.is(Preferences.PREF_SAVE_XML_THUMBNAIL);
 
         if (directory.endsWith(":\\")) {
             int index = directory.lastIndexOf('\\');
@@ -190,55 +194,49 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         try {
             setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
         } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <"
-                    + error.getMessage()
-                    + ">.  Check that this file is available.\n");
+            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                              ">.  Check that this file is available.\n");
         }
 
         this.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent we) {
+                public void windowClosing(WindowEvent we) {
 
-                if (img != null) {
-                    img.dispose(true);
-                    img = null;
-                } else if (thumbnail != null) {
-                    thumbnail.finalize();
-                    thumbnail = null;
+                    if (img != null) {
+                        img.dispose(true);
+                        img = null;
+                    } else if (thumbnail != null) {
+                        thumbnail.finalize();
+                        thumbnail = null;
+                    }
+
                 }
-
-            }
-        });
+            });
 
     }
 
     /**
      * Creates a new ViewImageDirectory object.
-     * 
-     * @deprecated - use ViewImageDirectory(String, ViewImageFileFilter) instead
-     *             Creates new tree of images and sets up file filter. Calls
-     *             initialization method.
-     * 
-     * @param ui
-     *            User interface.
-     * @param dir
-     *            DOCUMENT ME!
-     * @param filter
-     *            Directory to make tree under.
+     *
+     * @deprecated  - use ViewImageDirectory(String, ViewImageFileFilter) instead Creates new tree of images and sets up
+     *              file filter. Calls initialization method.
+     *
+     * @param       ui      User interface.
+     * @param       dir     DOCUMENT ME!
+     * @param       filter  Directory to make tree under.
      */
-    public ViewImageDirectory(ViewUserInterface ui, String dir,
-            ViewImageFileFilter filter) {
+    public ViewImageDirectory(ViewUserInterface ui, String dir, ViewImageFileFilter filter) {
         this(dir, filter);
     }
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     // ~ Methods
     // --------------------------------------------------------------------------------------------------------
 
     /**
-     * Recreates the tree when a new directory is selected; refreshes the tree
-     * when refresh is selected.
-     * 
-     * @param event
-     *            Event that triggered this function.
+     * Recreates the tree when a new directory is selected; refreshes the tree when refresh is selected.
+     *
+     * @param  event  Event that triggered this function.
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
@@ -275,8 +273,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
             }
         } else if (command.equals("ToggleOpenSeparate")) {
             openSeparate = openSeparateOption.isSelected();
-        } else if (command.equals("Open") || command.equals("OpenToSingle")
-                || command.equals("OpenToSeparate")) {
+        } else if (command.equals("Open") || command.equals("OpenToSingle") || command.equals("OpenToSeparate")) {
             int i, j;
             String fileName;
             String newName;
@@ -304,18 +301,13 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
             }
             // if there is only one image selected, open that in a separate
             // frame
-            else if ((selected.length == 1)
-                    && !((ViewFileTreeNode) selected[0].getLastPathComponent())
-                            .isDirectory()) {
+            else if ((selected.length == 1) && !((ViewFileTreeNode) selected[0].getLastPathComponent()).isDirectory()) {
 
-                fileName = ((ViewFileTreeNode) selected[0]
-                        .getLastPathComponent()).getName();
-                directory = ((ViewFileTreeNode) selected[0]
-                        .getLastPathComponent()).getDirectory();
+                fileName = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getName();
+                directory = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getDirectory();
                 io.setPBar(progressPanel);
 
-                ModelImage image = io.readImage(fileName, directory
-                        + File.separatorChar);
+                ModelImage image = io.readImage(fileName, directory + File.separatorChar);
 
                 if (image == null) {
                     return;
@@ -323,10 +315,8 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
                 new ViewJFrameImage(image, io.getModelLUT());
                 progressPanel.getProgressBar().setBorderPainted(false);
-                progressPanel.getProgressBar().setBackground(
-                        this.getBackground());
-                progressPanel.getProgressBar().setForeground(
-                        this.getBackground());
+                progressPanel.getProgressBar().setBackground(this.getBackground());
+                progressPanel.getProgressBar().setForeground(this.getBackground());
 
                 return;
             } else {
@@ -349,12 +339,9 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
                  * Add images from FileIO into hashtable
                  */
                 for (i = 0; i < selected.length; i++) {
-                    newName = ((ViewFileTreeNode) selected[i]
-                            .getLastPathComponent()).getName();
-                    newDir = ((ViewFileTreeNode) selected[i]
-                            .getLastPathComponent()).getDirectory();
-                    newImage = io.readImage(newName, newDir
-                            + File.separatorChar);
+                    newName = ((ViewFileTreeNode) selected[i].getLastPathComponent()).getName();
+                    newDir = ((ViewFileTreeNode) selected[i].getLastPathComponent()).getDirectory();
+                    newImage = io.readImage(newName, newDir + File.separatorChar);
                     table.put(newName, newImage);
                     progress += add;
                     progressPanel.setValueImmed(progress);
@@ -363,24 +350,19 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
                 progressPanel.setValueImmed(100);
 
                 progressPanel.getProgressBar().setBorderPainted(false);
-                progressPanel.getProgressBar().setBackground(
-                        this.getBackground());
-                progressPanel.getProgressBar().setForeground(
-                        this.getBackground());
+                progressPanel.getProgressBar().setBackground(this.getBackground());
+                progressPanel.getProgressBar().setForeground(this.getBackground());
 
                 ModelImage secondImage = null;
 
                 String[] imageNames = new String[selected.length];
 
                 /**
-                 * Continue through the hashtable, getting the image names and
-                 * storing them in an array, sorting them, then matching up any
-                 * images of like dimensions and opening them up into the same
-                 * frame. the names must be sorted so that files with sequel
-                 * number will be placed in the correct order (001, 002, 003
-                 * etc). If the open command is told to openSeparate
-                 * (separately), dimensions will be ignored and each image will
-                 * be placed into a separate frame
+                 * Continue through the hashtable, getting the image names and storing them in an array, sorting them,
+                 * then matching up any images of like dimensions and opening them up into the same frame. the names
+                 * must be sorted so that files with sequel number will be placed in the correct order (001, 002, 003
+                 * etc). If the open command is told to openSeparate (separately), dimensions will be ignored and each
+                 * image will be placed into a separate frame
                  */
                 if (!table.isEmpty()) {
                     Enumeration en = table.keys();
@@ -396,12 +378,9 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
                         }
                     }
 
-                    Vector extractSubsetsVector = FilenameSorter
-                            .extractSubSets(imageNames);
-                    Vector secondarySortVector = FilenameSorter
-                            .secondarySort(extractSubsetsVector);
-                    imageNames = FilenameSorter
-                            .subSetsToArray(secondarySortVector);
+                    Vector extractSubsetsVector = FilenameSorter.extractSubSets(imageNames);
+                    Vector secondarySortVector = FilenameSorter.secondarySort(extractSubsetsVector);
+                    imageNames = FilenameSorter.subSetsToArray(secondarySortVector);
 
                     newImage = (ModelImage) table.get(imageNames[0]);
 
@@ -412,25 +391,20 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
                         matchingImageNames.add(imageNames[0]);
 
                         // go through the rest of the keys in the table
-                        for (j = 1; (j < imageNames.length)
-                                && (imageNames[j] != null); j++) {
+                        for (j = 1; (j < imageNames.length) && (imageNames[j] != null); j++) {
                             secondImage = (ModelImage) table.get(imageNames[j]);
 
                             if (secondImage != null) {
 
-                                if ((newImage.getType() == secondImage
-                                        .getType())
-                                        && (newImage.getExtents().length == secondImage
-                                                .getExtents().length)) {
+                                if ((newImage.getType() == secondImage.getType()) &&
+                                        (newImage.getExtents().length == secondImage.getExtents().length)) {
                                     boolean matches = true;
 
                                     for (i = 0; i < newImage.getExtents().length; i++) {
 
-                                        if ((newImage.getExtents()[i] != secondImage
-                                                .getExtents()[i])
-                                                || (newImage.getResolutions(0)[i] != secondImage
-                                                        .getResolutions(0)[i])
-                                                || (newImage.getExtents().length > 3)) {
+                                        if ((newImage.getExtents()[i] != secondImage.getExtents()[i]) ||
+                                                (newImage.getResolutions(0)[i] != secondImage.getResolutions(0)[i]) ||
+                                                (newImage.getExtents().length > 3)) {
                                             matches = false;
 
                                             break;
@@ -449,8 +423,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
                         }
 
                         /**
-                         * Find the number of matching images (of like
-                         * dimensions, resolutions)
+                         * Find the number of matching images (of like dimensions, resolutions)
                          */
                         int numMatches = matchingImageNames.size();
 
@@ -462,17 +435,16 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
                             new ViewJFrameImage(newImage);
                             matchingImageNames.removeAllElements();
                         } else if (openSeparate == true) // open to separate
-                                                            // frames
+                                                         // frames
                         {
 
                             for (i = 0; i < matchingImageNames.size(); i++) {
-                                ModelImage image = (ModelImage) table
-                                        .remove(matchingImageNames.elementAt(i));
+                                ModelImage image = (ModelImage) table.remove(matchingImageNames.elementAt(i));
 
                                 new ViewJFrameImage(image);
                             }
                         } else { // otherwise concatenate images into a
-                                    // single image (2D->3D, 3D->4D)
+                                 // single image (2D->3D, 3D->4D)
 
                             int[] newExtents = new int[newImage.getExtents().length + 1];
 
@@ -480,17 +452,13 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
                                 newExtents[i] = newImage.getExtents()[i];
                             }
 
-                            newExtents[newExtents.length - 1] = matchingImageNames
-                                    .size();
+                            newExtents[newExtents.length - 1] = matchingImageNames.size();
 
-                            ModelImage concatImage = new ModelImage(newImage
-                                    .getType(), newExtents, newImage
-                                    .getImageName()
-                                    + "_concat", userInterface);
+                            ModelImage concatImage = new ModelImage(newImage.getType(), newExtents,
+                                                                    newImage.getImageName() + "_concat", userInterface);
 
                             if (newImage.isColorImage()) {
-                                bufferLength = 4 * newExtents[0]
-                                        * newExtents[1];
+                                bufferLength = 4 * newExtents[0] * newExtents[1];
                             } else {
                                 bufferLength = newExtents[0] * newExtents[1];
                             }
@@ -509,32 +477,24 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
                             // image
                             for (i = 0; i < matchingImageNames.size(); i++) {
 
-                                newImage = (ModelImage) table
-                                        .remove(matchingImageNames.elementAt(i));
+                                newImage = (ModelImage) table.remove(matchingImageNames.elementAt(i));
 
                                 try {
-                                    newImage
-                                            .exportData(0, bufferLength, buffer);
+                                    newImage.exportData(0, bufferLength, buffer);
                                 } catch (IOException error) {
                                     error.printStackTrace();
-                                    MipavUtil
-                                            .displayError("Error: unable to open image "
-                                                    + i);
-                                    Preferences
-                                            .debug("Error on exportData in ViewImageDirectory");
+                                    MipavUtil.displayError("Error: unable to open image " + i);
+                                    Preferences.debug("Error on exportData in ViewImageDirectory");
 
                                     return;
                                 }
 
                                 try {
-                                    concatImage.importData(i * bufferLength,
-                                            buffer, false);
+                                    concatImage.importData(i * bufferLength, buffer, false);
                                 } catch (IOException error) {
                                     error.printStackTrace();
-                                    MipavUtil
-                                            .displayError("IO error on import into concat images");
-                                    Preferences
-                                            .debug("Error on importData in ViewImageDirectory");
+                                    MipavUtil.displayError("IO error on import into concat images");
+                                    Preferences.debug("Error on importData in ViewImageDirectory");
 
                                     return;
                                 }
@@ -565,28 +525,22 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
     /**
      * Unchanged.
-     * 
-     * @param event
-     *            DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
      */
-    public void componentHidden(ComponentEvent event) {
-    }
+    public void componentHidden(ComponentEvent event) { }
 
     /**
      * Unchanged.
-     * 
-     * @param event
-     *            DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
      */
-    public void componentMoved(ComponentEvent event) {
-    }
+    public void componentMoved(ComponentEvent event) { }
 
     /**
-     * Tells the component image that the size of the image panel has changed,
-     * then repaints the component image.
-     * 
-     * @param event
-     *            Event that triggered this function.
+     * Tells the component image that the size of the image panel has changed, then repaints the component image.
+     *
+     * @param  event  Event that triggered this function.
      */
     public void componentResized(ComponentEvent event) {
 
@@ -595,55 +549,45 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
             if (img != null) {
 
                 if (imagePanel != null) {
-                    img.setImgSize(imagePanel.getBounds().width, imagePanel
-                            .getBounds().height);
+                    img.setImgSize(imagePanel.getBounds().width, imagePanel.getBounds().height);
                 } else {
                     img.setImgSize(400, 200);
                 }
 
                 img.paintComponent(img.getGraphics());
             }
-        } else if (event.getSource().equals(sliderPanel)) {
-        }
+        } else if (event.getSource().equals(sliderPanel)) { }
     }
 
     /**
      * Unchanged.
-     * 
-     * @param event
-     *            DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
      */
-    public void componentShown(ComponentEvent event) {
-    }
+    public void componentShown(ComponentEvent event) { }
 
     /**
-     * Called by the component image to get the real-time size of the panel
-     * before centering.
-     * 
-     * @return The size of the panel.
+     * Called by the component image to get the real-time size of the panel before centering.
+     *
+     * @return  The size of the panel.
      */
     public Dimension getPanelSize() {
-        return new Dimension(imagePanel.getBounds().width, imagePanel
-                .getBounds().height);
+        return new Dimension(imagePanel.getBounds().width, imagePanel.getBounds().height);
     }
 
     /**
-     * Sets border painted or not painted depending on if the button was
-     * selected or deselected.
-     * 
-     * @param event
-     *            Event that triggered this function.
+     * Sets border painted or not painted depending on if the button was selected or deselected.
+     *
+     * @param  event  Event that triggered this function.
      */
     public void itemStateChanged(ItemEvent event) {
-        ((AbstractButton) event.getSource()).setBorderPainted(event
-                .getStateChange() == ItemEvent.SELECTED);
+        ((AbstractButton) event.getSource()).setBorderPainted(event.getStateChange() == ItemEvent.SELECTED);
     }
 
     /**
      * Sets values based on knob along slider.
-     * 
-     * @param e
-     *            Event that triggered this function
+     *
+     * @param  e  Event that triggered this function
      */
     public void stateChanged(ChangeEvent e) {
         Object source = e.getSource();
@@ -654,8 +598,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
             // if the image is not a thumbnail and it is larger than 1024 x 768,
             // do not adjust while sliding
-            if ((img != null) && (img.getImageSize() > 786432)
-                    && brightSlider.getValueIsAdjusting()) {
+            if ((img != null) && (img.getImageSize() > 786432) && brightSlider.getValueIsAdjusting()) {
                 return;
             }
 
@@ -671,8 +614,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
             // if the image is not a thumbnail and it is larger than 1024 x 768,
             // do not adjust while sliding
-            if ((img != null) && (img.getImageSize() > 786432)
-                    && contSlider.getValueIsAdjusting()) {
+            if ((img != null) && (img.getImageSize() > 786432) && contSlider.getValueIsAdjusting()) {
                 return;
             }
 
@@ -688,23 +630,18 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
     /**
      * Unchanged.
-     * 
-     * @param tee
-     *            DOCUMENT ME!
+     *
+     * @param  tee  DOCUMENT ME!
      */
-    public void treeCollapsed(TreeExpansionEvent tee) {
-    }
+    public void treeCollapsed(TreeExpansionEvent tee) { }
 
     /**
-     * Expands tree node in file tree. On expansion, the tree queries the
-     * selected node; if a selected node has had its children previously added,
-     * then no nodes will be added, but the tree will display the previously
-     * added children. Otherwize, the node will add nodes which will be
-     * displayed; each node will be marked as adding only directories as
-     * child-nodes.
-     * 
-     * @param tee
-     *            Event that triggered this function.
+     * Expands tree node in file tree. On expansion, the tree queries the selected node; if a selected node has had its
+     * children previously added, then no nodes will be added, but the tree will display the previously added children.
+     * Otherwize, the node will add nodes which will be displayed; each node will be marked as adding only directories
+     * as child-nodes.
+     *
+     * @param  tee  Event that triggered this function.
      */
     public void treeExpanded(TreeExpansionEvent tee) {
         TreePath path = tee.getPath();
@@ -713,8 +650,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         file = (File) node.getUserObject();
 
         if (!node.isExplored()) {
-            DefaultTreeModel model = (DefaultTreeModel) directoryTree
-                    .getModel();
+            DefaultTreeModel model = (DefaultTreeModel) directoryTree.getModel();
 
             node.explore(imageFilter);
             model.nodeStructureChanged(node);
@@ -722,27 +658,22 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
     }
 
     /**
-     * Re-create the image and header info by reacting to each selection on the
-     * tree. On selection, the image is read in again and constructed, and the
-     * table is cleared and the new header info is posted to the table. Note: no
-     * check has been made to remove child-nodes from a selection when the
-     * parent has been selected.
-     * 
-     * @param e
-     *            Event that triggered this function.
+     * Re-create the image and header info by reacting to each selection on the tree. On selection, the image is read in
+     * again and constructed, and the table is cleared and the new header info is posted to the table. Note: no check
+     * has been made to remove child-nodes from a selection when the parent has been selected.
+     *
+     * @param  e  Event that triggered this function.
      */
     public void valueChanged(TreeSelectionEvent e) {
-        DefaultMutableTreeNode node = (DefaultMutableTreeNode) directoryTree
-                .getLastSelectedPathComponent();
+        DefaultMutableTreeNode node = (DefaultMutableTreeNode) directoryTree.getLastSelectedPathComponent();
 
         if (node == null) {
             return;
         }
 
         if (!((ViewFileTreeNode) node).isDirectory()) {
-            FileInfoBase fileInfo = buildImage(((ViewFileTreeNode) node)
-                    .getName(), ((ViewFileTreeNode) node).getDirectory()
-                    + File.separatorChar);
+            FileInfoBase fileInfo = buildImage(((ViewFileTreeNode) node).getName(),
+                                               ((ViewFileTreeNode) node).getDirectory() + File.separatorChar);
 
             if (fileInfo == null) {
                 return;
@@ -777,8 +708,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
             primaryModel.addRow(info);
 
             info[0] = "Orientation";
-            info[1] = FileInfoBase.getImageOrientationStr(fileInfo
-                    .getImageOrientation());
+            info[1] = FileInfoBase.getImageOrientationStr(fileInfo.getImageOrientation());
             primaryModel.addRow(info);
 
             float[] resolutions;
@@ -793,8 +723,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
                 if (resolutions[i] > 0.0) {
                     info[0] = "Pixel resolution " + i;
-                    info[1] = Float.toString(resolutions[i]) + " "
-                            + FileInfoBase.getUnitsOfMeasureStr(measure[i]);
+                    info[1] = Float.toString(resolutions[i]) + " " + FileInfoBase.getUnitsOfMeasureStr(measure[i]);
                     primaryModel.addRow(info);
                 } // end of if (resolutions[i] > 0.0)
             } // for (i=0; i < 5; i++)
@@ -809,8 +738,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
             if (fileInfo.getFileFormat() == FileBase.DICOM) {
                 otherLabel.setVisible(true);
-                JDialogFileInfoDICOM.showTags(secondaryModel,
-                        (FileInfoDicom) fileInfo, false);
+                JDialogFileInfoDICOM.showTags(secondaryModel, (FileInfoDicom) fileInfo, false);
             }
         }
 
@@ -821,13 +749,11 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
     /**
      * DOCUMENT ME!
-     * 
-     * @param fileName
-     *            String
-     * @param directory
-     *            String
-     * 
-     * @return FileInfoBase
+     *
+     * @param   fileName   String
+     * @param   directory  String
+     *
+     * @return  FileInfoBase
      */
     protected FileInfoBase buildImage(String fileName, String directory) {
 
@@ -843,8 +769,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
             thumbnail.finalize();
         }
 
-        if (showXMLThumbnail
-                && (fileName.endsWith(".xml") || fileName.endsWith(".XML"))) {
+        if (showXMLThumbnail && (fileName.endsWith(".xml") || fileName.endsWith(".XML"))) {
             FileImageXML xmlTemp = io.readXMLThumbnail(fileName, directory);
 
             if (xmlTemp != null) {
@@ -878,8 +803,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
             progressPanel.getProgressBar().setForeground(this.getBackground());
         }
 
-        int[] extents = new int[] { image.getExtents()[0],
-                image.getExtents()[1] };
+        int[] extents = new int[] { image.getExtents()[0], image.getExtents()[1] };
 
         img = new ViewJComponentPreviewImage(image, extents, this);
         img.createImg(0);
@@ -897,11 +821,9 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
     }
 
     /**
-     * Creates the tree that holds the image files and returns the panel
-     * containing the tree.
-     * 
-     * @param directoriesOnly
-     *            DOCUMENT ME!
+     * Creates the tree that holds the image files and returns the panel containing the tree.
+     *
+     * @param  directoriesOnly  DOCUMENT ME!
      */
     protected void buildSourceTreeListing(boolean directoriesOnly) {
 
@@ -910,7 +832,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         ViewFileTreeNode rootNode = null;
 
         if (fs != null) { // fs is null when the set of roots could not be
-                            // determined
+                          // determined
             rootNode = new ViewFileTreeNode(new File(directory), true);
             rootNode.exploreDirectoriesOnly(directoriesOnly);
             fs.add(rootNode);
@@ -918,7 +840,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
             directoryTree = new JTree(fs);
             directoryTree.setRootVisible(false);
         } else { // we can build an empty tree, but it won't mean anything.
-                    // throw error?? FIXME
+                 // throw error?? FIXME
             directoryTree = new JTree();
         }
 
@@ -926,8 +848,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
         treePanel.add(treeScroll, BorderLayout.CENTER);
         treePanel.setPreferredSize(new Dimension(200, 350));
-        directoryTree.getSelectionModel().setSelectionMode(
-                TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
+        directoryTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
         directoryTree.addTreeSelectionListener(this);
         directoryTree.addTreeExpansionListener(this);
 
@@ -935,23 +856,21 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
     }
 
     /**
-     * Builds a titled border with the given title, an etched border, and the
-     * proper font and color.
-     * 
-     * @param title
-     *            Title of the border
-     * 
-     * @return The titled border.
+     * Builds a titled border with the given title, an etched border, and the proper font and color.
+     *
+     * @param   title  Title of the border
+     *
+     * @return  The titled border.
      */
     protected TitledBorder buildTitledBorder(String title) {
-        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT,
-                TitledBorder.CENTER, MipavUtil.font12B, Color.black);
+        return new TitledBorder(new EtchedBorder(), title, TitledBorder.LEFT, TitledBorder.CENTER, MipavUtil.font12B,
+                                Color.black);
     }
 
     /**
      * Builds a toolbar with the same functionality as the menu.
-     * 
-     * @return DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
      */
     protected JPanel buildToolbar() {
         Border pressedBorder = BorderFactory.createLoweredBevelBorder();
@@ -964,8 +883,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         tBar.setBorder(etchedBorder);
         tBar.setBorderPainted(true);
 
-        JButton openButton = new JButton(MipavUtil
-                .getIcon("openintosingle.gif"));
+        JButton openButton = new JButton(MipavUtil.getIcon("openintosingle.gif"));
 
         openButton.addActionListener(this);
         openButton.setToolTipText("Open selected images into single frame");
@@ -978,16 +896,13 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         openButton.setFocusPainted(false);
         tBar.add(openButton);
 
-        JButton openToSeparateButton = new JButton(MipavUtil
-                .getIcon("openintoseparate.gif"));
+        JButton openToSeparateButton = new JButton(MipavUtil.getIcon("openintoseparate.gif"));
         openToSeparateButton.addActionListener(this);
-        openToSeparateButton
-                .setToolTipText("Open selected images into separate frames");
+        openToSeparateButton.setToolTipText("Open selected images into separate frames");
         openToSeparateButton.setActionCommand("OpenToSeparate");
         openToSeparateButton.setBorderPainted(false);
         openToSeparateButton.setRolloverEnabled(true);
-        openToSeparateButton.setRolloverIcon(MipavUtil
-                .getIcon("openintoseparateroll.gif"));
+        openToSeparateButton.setRolloverIcon(MipavUtil.getIcon("openintoseparateroll.gif"));
         openToSeparateButton.setBorder(pressedBorder);
         openToSeparateButton.addItemListener(this);
         openToSeparateButton.setFocusPainted(false);
@@ -1051,8 +966,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         // This is very strange - a JSplit.HORIZONTAL_SPLIT in the
         // constructor is used to create a vertical split in the
         // output.
-        JSplitPane mainPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
-                true, treePanel, buildImagePanel());
+        JSplitPane mainPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, treePanel, buildImagePanel());
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
         pack();
@@ -1063,25 +977,20 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
     /**
      * Initializes GUI components and displays dialog.
-     * 
-     * <p>
-     * For the brightSlider the slider values and the brightness values are
-     * identical. brightness is an offset going from -255 to 255. This is enough
-     * to change all 0 values to 255 and all 255 values to 0. brightness is
-     * added to all contrast scaled red, green, and blue.
-     * 
-     * <p>
-     * However, for the constrastSlider the slider values are different from the
-     * contrast values. The contrast values go from 0.1 to 10.0 while the slider
-     * values go from -200 to 200. contrast =
-     * (float)Math.pow(10.0,contSlider.getValue()/200.0) The original red,
-     * green, and blue are mutliplied by contrast.
+     *
+     * <p>For the brightSlider the slider values and the brightness values are identical. brightness is an offset going
+     * from -255 to 255. This is enough to change all 0 values to 255 and all 255 values to 0. brightness is added to
+     * all contrast scaled red, green, and blue.</p>
+     *
+     * <p>However, for the constrastSlider the slider values are different from the contrast values. The contrast values
+     * go from 0.1 to 10.0 while the slider values go from -200 to 200. contrast =
+     * (float)Math.pow(10.0,contSlider.getValue()/200.0) The original red, green, and blue are mutliplied by contrast.
+     * </p>
      */
     private void buildBrightContPanel() {
         serif12 = MipavUtil.font12;
         serif12B = MipavUtil.font12B;
-        brightSlider = new JSlider(JSlider.HORIZONTAL, -255, 255,
-                origBrightness);
+        brightSlider = new JSlider(JSlider.HORIZONTAL, -255, 255, origBrightness);
 
         brightSlider.setMajorTickSpacing(102);
         brightSlider.setPaintTicks(true);
@@ -1112,7 +1021,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel.add(brightSlider, gbc);
 
@@ -1120,26 +1029,26 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel.add(minimum, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel.add(current, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel.add(maximum, gbc);
         sliderPanel.setBorder(buildTitledBorder("Level"));
 
-        contSlider = new JSlider(JSlider.HORIZONTAL, -200, 200, (int) (Math
-                .round(86.85889638 * Math.log(origContrast))));
+        contSlider = new JSlider(JSlider.HORIZONTAL, -200, 200,
+                                 (int) (Math.round(86.85889638 * Math.log(origContrast))));
 
         contSlider.setMajorTickSpacing(80);
         contSlider.setPaintTicks(true);
@@ -1170,7 +1079,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel2.add(contSlider, gbc);
 
@@ -1178,19 +1087,19 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel2.add(minimum2, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel2.add(current2, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel2.add(maximum2, gbc);
@@ -1202,7 +1111,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
-        gbc2.fill = gbc.BOTH;
+        gbc2.fill = GridBagConstraints.BOTH;
         gbc2.weightx = 1;
         gbc2.gridheight = 2;
         centerPanel.add(sliderPanel2, gbc2);
@@ -1230,10 +1139,9 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
     }
 
     /**
-     * Sets up the image panel and the table that will store basic header info,
-     * and returns the panel containing these.
-     * 
-     * @return The panel containing the image and the header info table.
+     * Sets up the image panel and the table that will store basic header info, and returns the panel containing these.
+     *
+     * @return  The panel containing the image and the header info table.
      */
     private JSplitPane buildImagePanel() {
 
@@ -1263,9 +1171,8 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         primaryModel.addColumn("Name");
         primaryModel.addColumn("Value");
 
-        primaryTable.setAutoResizeMode(primaryTable.AUTO_RESIZE_ALL_COLUMNS);
-        primaryTable
-                .setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        primaryTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        primaryTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         primaryTable.getColumn("Name").setMinWidth(160);
         primaryTable.getColumn("Name").setMaxWidth(500);
         primaryTable.getColumn("Value").setMinWidth(50);
@@ -1283,10 +1190,9 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         secondaryModel.addColumn("Name");
         secondaryModel.addColumn("Value");
 
-        secondaryTable
-                .setAutoResizeMode(secondaryTable.AUTO_RESIZE_ALL_COLUMNS);
-        secondaryTable
-                .setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        secondaryTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
+        secondaryTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+
         secondaryTable.getColumn("Tag").setMinWidth(90);
         secondaryTable.getColumn("Tag").setMaxWidth(90);
         secondaryTable.getColumn("Name").setMinWidth(160);
@@ -1303,9 +1209,8 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         scrollingBox.add(secondaryTable);
 
         try {
-            scrollPane = new JScrollPane(scrollingBox,
-                    JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+            scrollPane = new JScrollPane(scrollingBox, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                         JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setPreferredSize(new Dimension(400, 200));
             scrollPane.setMinimumSize(new Dimension(150, 100));
         } catch (OutOfMemoryError error) {
@@ -1322,12 +1227,10 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         // A HORIZONTAL_SPLIT would be expected here
         // JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,
         // true, imagePanel, tablePanel);
-        imageSliderPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true,
-                imagePanel, brightPanel);
+        imageSliderPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, imagePanel, brightPanel);
         imageSliderPane.setResizeWeight(.9);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true,
-                imageSliderPane, tablePanel);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, true, imageSliderPane, tablePanel);
 
         splitPane.setResizeWeight(.9);
 
@@ -1335,8 +1238,7 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
     }
 
     /**
-     * Builds a small menu with "New directory", "Refresh directory", "Reset
-     * file filter", and "Open image" options.
+     * Builds a small menu with "New directory", "Refresh directory", "Reset file filter", and "Open image" options.
      */
     private void buildMenu() {
         JMenu menu;
@@ -1353,14 +1255,12 @@ public class ViewImageDirectory extends JFrame implements ActionListener,
         itemFilter = new JMenuItem("Reset filter");
         itemOpen = new JMenuItem("Open selected images");
 
-        openSeparateOption = new JCheckBoxMenuItem(
-                "Open each image separately", false);
+        openSeparateOption = new JCheckBoxMenuItem("Open each image separately", false);
         openSeparateOption.setFont(MipavUtil.font12B);
         openSeparateOption.addActionListener(this);
         openSeparateOption.setActionCommand("ToggleOpenSeparate");
 
-        thumbnailOption = new JCheckBoxMenuItem(
-                "Show XML thumbnail if available");
+        thumbnailOption = new JCheckBoxMenuItem("Show XML thumbnail if available");
         thumbnailOption.setFont(MipavUtil.font12B);
         thumbnailOption.setSelected(showXMLThumbnail);
         thumbnailOption.addActionListener(this);

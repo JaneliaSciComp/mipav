@@ -2,7 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -10,25 +9,24 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.util.*;
-
 import javax.swing.*;
 
 
 /**
- * Dialog to get user input signal 1 VOI, optional signal 2 VOI, background VOI, 
- * and number of NMR receivers needed for MRI image SNR calculation.
+ * Dialog to get user input signal 1 VOI, optional signal 2 VOI, background VOI, and number of NMR receivers needed for
+ * MRI image SNR calculation.
  */
 public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
-    //private static final long serialVersionUID;
-
-    
+    private static final long serialVersionUID = 4621550176907564448L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    // private static final long serialVersionUID;
 
     /** DOCUMENT ME! */
     private JRadioButton backgroundButton;
@@ -40,27 +38,31 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
     private ViewJComponentEditImage componentImage;
 
     /** DOCUMENT ME! */
-    private AlgorithmSingleMRIImageSNR snrAlgo = null;
-
-    /** DOCUMENT ME! */
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private JLabel labelReceiver; 
+    private JLabel labelReceiver;
 
     /** DOCUMENT ME! */
     private int nBoundingVOIs;
-  
+
+    /** DOCUMENT ME! */
+    private int numReceivers = 1;
+
+    /** DOCUMENT ME! */
+    private JRadioButton signal2Button;
+
+    /** DOCUMENT ME! */
+    private int signal2Index = -1;
+
     /** DOCUMENT ME! */
     private JRadioButton signalButton;
 
     /** DOCUMENT ME! */
     private int signalIndex = -1;
-    
+
     /** DOCUMENT ME! */
-    private JRadioButton signal2Button;
-    
-    private int signal2Index = -1;
+    private AlgorithmSingleMRIImageSNR snrAlgo = null;
 
     /** DOCUMENT ME! */
     private JTextField textReceiver;
@@ -73,8 +75,6 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
 
     /** DOCUMENT ME! */
     private ViewVOIVector VOIs;
-    
-    private int numReceivers = 1;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -128,8 +128,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         } else if (command.equals("Cancel")) {
             componentImage.getVOIHandler().setPresetHue(-1.0f);
             dispose();
-        } else if ((source == signalButton) || (source == signal2Button) || 
-                   (source == backgroundButton)) {
+        } else if ((source == signalButton) || (source == signal2Button) || (source == backgroundButton)) {
 
             if (signalButton.isSelected()) {
                 componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
@@ -175,7 +174,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         Object source = event.getSource();
     }
 
-    
+
     /**
      * Disposes of error dialog, then frame. Sets cancelled to <code>true</code>.
      *
@@ -190,19 +189,21 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 
             componentImage.getVOIHandler().setPresetHue(-1.0f);
+
             // Make algorithm
-            snrAlgo = new AlgorithmSingleMRIImageSNR(image, signalIndex, signal2Index,
-                                         backgroundIndex, numReceivers);
+            snrAlgo = new AlgorithmSingleMRIImageSNR(image, signalIndex, signal2Index, backgroundIndex, numReceivers);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             snrAlgo.addListener(this);
+
+            createProgressBar(image.getImageName(), snrAlgo);
 
             // Hide dialog
             setVisible(false);
@@ -244,7 +245,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         GridBagConstraints gbc4 = new GridBagConstraints();
         gbc4.gridwidth = 1;
         gbc4.gridheight = 1;
-        gbc4.anchor = gbc4.WEST;
+        gbc4.anchor = GridBagConstraints.WEST;
         gbc4.weightx = 1;
         gbc4.insets = new Insets(3, 3, 3, 3);
         gbc4.fill = GridBagConstraints.HORIZONTAL;
@@ -261,7 +262,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         VOIPanel.add(signalButton, gbc4);
         componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
         componentImage.getVOIHandler().setPresetHue(0.0f); // red
-        
+
         signal2Button = new JRadioButton("Add an optional second signal VOI", false);
         signal2Button.setForeground(Color.green.darker());
         signal2Button.setFont(serif12);
@@ -276,7 +277,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         backgroundButton.addActionListener(this);
         VOIGroup.add(backgroundButton);
         gbc4.gridy = 2;
-        VOIPanel.add(backgroundButton, gbc4);    
+        VOIPanel.add(backgroundButton, gbc4);
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setForeground(Color.black);
@@ -286,7 +287,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
 
         gbc6.gridwidth = 1;
         gbc6.gridheight = 1;
-        gbc6.anchor = gbc6.WEST;
+        gbc6.anchor = GridBagConstraints.WEST;
         gbc6.weightx = 1;
         gbc6.insets = new Insets(3, 3, 3, 3);
         gbc6.fill = GridBagConstraints.HORIZONTAL;
@@ -333,6 +334,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
         if (!testParameter(textReceiver.getText(), 1, 256)) {
             textReceiver.requestFocus();
             textReceiver.selectAll();
+
             return false;
         } else {
             numReceivers = Integer.valueOf(textReceiver.getText()).intValue();
@@ -377,8 +379,7 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
                         return false;
                     }
                 } else {
-                    MipavUtil.displayError("VOI hue = " + hue + " Must be 0 for red " +
-                                           "or 2/3 for blue");
+                    MipavUtil.displayError("VOI hue = " + hue + " Must be 0 for red " + "or 2/3 for blue");
 
                     return false;
                 }
@@ -390,16 +391,14 @@ public class JDialogSingleMRIImageSNR extends JDialogBase implements AlgorithmIn
 
             return false;
         }
-        
+
         if (backgroundIndex == -1) {
             MipavUtil.displayError("Must specify a background VOI");
 
             return false;
         }
 
-        
 
         return true;
     }
-
 }

@@ -178,7 +178,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         backgroundIndex = -1;
 
 
-        buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing FRET bleed thru...");
 
         constructLog();
 
@@ -212,7 +212,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                     } else {
                         MipavUtil.displayError("Cannot have more than 1 background VOI");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -227,7 +227,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         if (activeIndex == -1) {
             MipavUtil.displayError("Must specify an active VOI");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -235,7 +235,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         if (backgroundIndex == -1) {
             MipavUtil.displayError("Must specify a background VOI");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -247,7 +247,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("Out of memory error in AlgorithmFRETBleedThrough");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -267,7 +267,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on srcImage.exportRGBData");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -279,7 +279,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FRETImage.exportRGBData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -291,7 +291,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FRETImage.exportData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -304,7 +304,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FP2Image.exportRGBData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -316,7 +316,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
                 } catch (IOException e) {
                     MipavUtil.displayError("IOException " + e + " on FP2Image.exportData");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -330,7 +330,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on srcImage.exportData");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -340,7 +340,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on FRETImage.exportData");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -350,7 +350,7 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
             } catch (IOException e) {
                 MipavUtil.displayError("IOException " + e + " on FP2Image.exportData");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -548,39 +548,11 @@ public class AlgorithmFRETBleedThrough extends AlgorithmBase {
         FP2Image.disposeLocal();
         FP2Image = null;
 
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
 
         setCompleted(true);
     }
 
-    /**
-     * To create the standard progressBar. Stores in the class-global, progressBar
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Performing FRET bleed thru...", 0, 100,
-                                                   true, this, this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
-    }
-
+   
     /**
      * Constructs a string of the contruction parameters and outputs the string to the messsage frame if the logging
      * procedure is turned on.

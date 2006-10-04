@@ -1899,8 +1899,8 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
 
         fuzzyCheckbox = new JCheckBox("Fuzzy connectedness");
         fuzzyCheckbox.setFont(serif12);
@@ -1944,28 +1944,28 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         fuzzyPanel.add(fuzzyCheckbox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         fuzzyPanel.add(voiCheckbox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         fuzzyPanel.add(fuzzyImageCheckbox, gbc);
 
         JPanel thresholdPanel = new JPanel(new GridBagLayout());
@@ -1976,24 +1976,24 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         thresholdPanel.add(fuzzySlider, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
         thresholdPanel.add(minimumFuzzy, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
         thresholdPanel.add(currentFuzzy, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
         thresholdPanel.add(maximumFuzzy, gbc);
 
@@ -2003,8 +2003,8 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.NORTH;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         fuzzyPanel.add(thresholdPanel, gbc);
 
         return fuzzyPanel;
@@ -2059,8 +2059,8 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
 
         posTextF = new JTextField(10);
         posTextF.setText("  ");
@@ -2181,7 +2181,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
             gbc.gridwidth = 3;
             gbc.weightx = 1;
             gbc.gridheight = 1;
-            gbc.fill = gbc.HORIZONTAL;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
 
             upperPanel.add(upSlider, gbc);
 
@@ -2193,19 +2193,19 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
             gbc.gridy = 1;
             gbc.gridwidth = 1;
             gbc.weightx = 0;
-            gbc.anchor = gbc.WEST;
-            gbc.fill = gbc.NONE;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.fill = GridBagConstraints.NONE;
 
             upperPanel.add(minimumU, gbc);
 
             gbc.gridx = 1;
-            gbc.anchor = gbc.CENTER;
+            gbc.anchor = GridBagConstraints.CENTER;
             gbc.weightx = .5;
 
             upperPanel.add(upperMid, gbc);
 
             gbc.gridx = 2;
-            gbc.anchor = gbc.EAST;
+            gbc.anchor = GridBagConstraints.EAST;
             gbc.weightx = 0;
 
             upperPanel.add(maximumU, gbc);
@@ -2282,7 +2282,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
             gbc.gridwidth = 3;
             gbc.weightx = 1;
             gbc.gridheight = 1;
-            gbc.fill = gbc.HORIZONTAL;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
 
             lowerPanel.add(lowSlider, gbc);
 
@@ -2294,19 +2294,19 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
             gbc.gridy = 1;
             gbc.gridwidth = 1;
             gbc.weightx = 0;
-            gbc.anchor = gbc.WEST;
-            gbc.fill = gbc.NONE;
+            gbc.anchor = GridBagConstraints.WEST;
+            gbc.fill = GridBagConstraints.NONE;
 
             lowerPanel.add(minimumL, gbc);
 
             gbc.gridx = 1;
-            gbc.anchor = gbc.CENTER;
+            gbc.anchor = GridBagConstraints.CENTER;
             gbc.weightx = .5;
 
             lowerPanel.add(lowerMid, gbc);
 
             gbc.gridx = 2;
-            gbc.anchor = gbc.EAST;
+            gbc.anchor = GridBagConstraints.EAST;
             gbc.weightx = 0;
 
             lowerPanel.add(maximumL, gbc);
@@ -2332,7 +2332,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
             gbc.gridwidth = 1;
             gbc.weightx = 1;
             gbc.gridheight = 1;
-            gbc.fill = gbc.NONE;
+            gbc.fill = GridBagConstraints.NONE;
 
             maximumPanel.add(maximumValueButton, gbc);
 
@@ -2482,7 +2482,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridwidth = 3;
                 gbc.weightx = 1;
                 gbc.gridheight = 1;
-                gbc.fill = gbc.HORIZONTAL;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
 
                 upperPanelR.add(upSliderR, gbc);
 
@@ -2494,19 +2494,19 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridy = 1;
                 gbc.gridwidth = 1;
                 gbc.weightx = 0;
-                gbc.anchor = gbc.WEST;
-                gbc.fill = gbc.NONE;
+                gbc.anchor = GridBagConstraints.WEST;
+                gbc.fill = GridBagConstraints.NONE;
 
                 upperPanelR.add(minimumUR, gbc);
 
                 gbc.gridx = 1;
-                gbc.anchor = gbc.CENTER;
+                gbc.anchor = GridBagConstraints.CENTER;
                 gbc.weightx = .5;
 
                 upperPanelR.add(upperMidR, gbc);
 
                 gbc.gridx = 2;
-                gbc.anchor = gbc.EAST;
+                gbc.anchor = GridBagConstraints.EAST;
                 gbc.weightx = 0;
 
                 upperPanelR.add(maximumUR, gbc);
@@ -2583,7 +2583,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridwidth = 3;
                 gbc.weightx = 1;
                 gbc.gridheight = 1;
-                gbc.fill = gbc.HORIZONTAL;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
 
                 lowerPanelR.add(lowSliderR, gbc);
 
@@ -2595,19 +2595,19 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridy = 1;
                 gbc.gridwidth = 1;
                 gbc.weightx = 0;
-                gbc.anchor = gbc.WEST;
-                gbc.fill = gbc.NONE;
+                gbc.anchor = GridBagConstraints.WEST;
+                gbc.fill = GridBagConstraints.NONE;
 
                 lowerPanelR.add(minimumLR, gbc);
 
                 gbc.gridx = 1;
-                gbc.anchor = gbc.CENTER;
+                gbc.anchor = GridBagConstraints.CENTER;
                 gbc.weightx = .5;
 
                 lowerPanelR.add(lowerMidR, gbc);
 
                 gbc.gridx = 2;
-                gbc.anchor = gbc.EAST;
+                gbc.anchor = GridBagConstraints.EAST;
                 gbc.weightx = 0;
 
                 lowerPanelR.add(maximumLR, gbc);
@@ -2702,7 +2702,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridwidth = 3;
                 gbc.weightx = 1;
                 gbc.gridheight = 1;
-                gbc.fill = gbc.HORIZONTAL;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
 
                 upperPanelG.add(upSliderG, gbc);
 
@@ -2714,19 +2714,19 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridy = 1;
                 gbc.gridwidth = 1;
                 gbc.weightx = 0;
-                gbc.anchor = gbc.WEST;
-                gbc.fill = gbc.NONE;
+                gbc.anchor = GridBagConstraints.WEST;
+                gbc.fill = GridBagConstraints.NONE;
 
                 upperPanelG.add(minimumUG, gbc);
 
                 gbc.gridx = 1;
-                gbc.anchor = gbc.CENTER;
+                gbc.anchor = GridBagConstraints.CENTER;
                 gbc.weightx = .5;
 
                 upperPanelG.add(upperMidG, gbc);
 
                 gbc.gridx = 2;
-                gbc.anchor = gbc.EAST;
+                gbc.anchor = GridBagConstraints.EAST;
                 gbc.weightx = 0;
 
                 upperPanelG.add(maximumUG, gbc);
@@ -2803,7 +2803,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridwidth = 3;
                 gbc.weightx = 1;
                 gbc.gridheight = 1;
-                gbc.fill = gbc.HORIZONTAL;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
 
                 lowerPanelG.add(lowSliderG, gbc);
 
@@ -2815,19 +2815,19 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridy = 1;
                 gbc.gridwidth = 1;
                 gbc.weightx = 0;
-                gbc.anchor = gbc.WEST;
-                gbc.fill = gbc.NONE;
+                gbc.anchor = GridBagConstraints.WEST;
+                gbc.fill = GridBagConstraints.NONE;
 
                 lowerPanelG.add(minimumLG, gbc);
 
                 gbc.gridx = 1;
-                gbc.anchor = gbc.CENTER;
+                gbc.anchor = GridBagConstraints.CENTER;
                 gbc.weightx = .5;
 
                 lowerPanelG.add(lowerMidG, gbc);
 
                 gbc.gridx = 2;
-                gbc.anchor = gbc.EAST;
+                gbc.anchor = GridBagConstraints.EAST;
                 gbc.weightx = 0;
 
                 lowerPanelG.add(maximumLG, gbc);
@@ -2922,7 +2922,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridwidth = 3;
                 gbc.weightx = 1;
                 gbc.gridheight = 1;
-                gbc.fill = gbc.HORIZONTAL;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
 
                 upperPanelB.add(upSliderB, gbc);
 
@@ -2934,19 +2934,19 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridy = 1;
                 gbc.gridwidth = 1;
                 gbc.weightx = 0;
-                gbc.anchor = gbc.WEST;
-                gbc.fill = gbc.NONE;
+                gbc.anchor = GridBagConstraints.WEST;
+                gbc.fill = GridBagConstraints.NONE;
 
                 upperPanelB.add(minimumUB, gbc);
 
                 gbc.gridx = 1;
-                gbc.anchor = gbc.CENTER;
+                gbc.anchor = GridBagConstraints.CENTER;
                 gbc.weightx = .5;
 
                 upperPanelB.add(upperMidB, gbc);
 
                 gbc.gridx = 2;
-                gbc.anchor = gbc.EAST;
+                gbc.anchor = GridBagConstraints.EAST;
                 gbc.weightx = 0;
 
                 upperPanelB.add(maximumUB, gbc);
@@ -3023,7 +3023,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridwidth = 3;
                 gbc.weightx = 1;
                 gbc.gridheight = 1;
-                gbc.fill = gbc.HORIZONTAL;
+                gbc.fill = GridBagConstraints.HORIZONTAL;
 
                 lowerPanelB.add(lowSliderB, gbc);
 
@@ -3035,19 +3035,19 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 gbc.gridy = 1;
                 gbc.gridwidth = 1;
                 gbc.weightx = 0;
-                gbc.anchor = gbc.WEST;
-                gbc.fill = gbc.NONE;
+                gbc.anchor = GridBagConstraints.WEST;
+                gbc.fill = GridBagConstraints.NONE;
 
                 lowerPanelB.add(minimumLB, gbc);
 
                 gbc.gridx = 1;
-                gbc.anchor = gbc.CENTER;
+                gbc.anchor = GridBagConstraints.CENTER;
                 gbc.weightx = .5;
 
                 lowerPanelB.add(lowerMidB, gbc);
 
                 gbc.gridx = 2;
-                gbc.anchor = gbc.EAST;
+                gbc.anchor = GridBagConstraints.EAST;
                 gbc.weightx = 0;
 
                 lowerPanelB.add(maximumLB, gbc);
@@ -3165,22 +3165,22 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(sizeCheckbox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(maxSizeLabel, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(maxSizeTextF, gbc);
 
         gbc.gridx = 0;
@@ -3188,19 +3188,19 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(distanceCheckbox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(maxDistLabel, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(maxDistTextF, gbc);
 
         gbc.gridx = 0;
@@ -3208,7 +3208,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         gbc.weightx = 2;
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(constrainBoundsCheckbox, gbc);
 
         gbc.gridy = 5;
@@ -3220,7 +3220,7 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         staticPanel.add(positionPanel, gbc);
         gbc.gridy = yPos++;
 

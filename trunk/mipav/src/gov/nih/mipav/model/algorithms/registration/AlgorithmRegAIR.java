@@ -780,13 +780,12 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         double deltacf;
         double cf = Double.MAX_VALUE;
 
-        progressBar = new ViewJProgressBar(sourceImage.getImageName(), "Registering source image...", 0, 100, true,
-                                           this, this);
+        fireProgressStateChanged(sourceImage.getImageName(), "Registering source image...");
 
         int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
         int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
+        
+        
 
         constructLog();
 
@@ -859,14 +858,14 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         } catch (IOException error) {
             finalize();
             displayError("AlgorithmRegAIR: IOException on sourceImage.exportData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             finalize();
             displayError("AlgorithmRegAIR: Out of memory on sourceImage.exportData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -924,14 +923,14 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         } catch (IOException error) {
             finalize();
             displayError("AlgorithmRegAIR: IOException on targetImage.exportData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             finalize();
             displayError("AlgorithmRegAIR: Out of memory on targetImage.exportData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1233,7 +1232,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         if (sampleFactor < 1) {
             finalize();
             MipavUtil.displayError("sampleFactor cannot be less than 1");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1244,7 +1243,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         if (sampleFactor2 > sampleFactor) {
             finalize();
             MipavUtil.displayError("final sampling cannot be > than initial sampling");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1259,7 +1258,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         if (sfFactor <= 1) {
             finalize();
             MipavUtil.displayError("sampling decrement ratio must be > 1");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1481,7 +1480,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1491,8 +1490,8 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         if ((sourceGaussX != 0.0f) || (sourceGaussY != 0.0f) || (sourceGaussZ != 0.0f)) {
 
             try {
-                progressBar.setMessage("Blurring source Image");
-                progressBar.updateValue(5, runningInSeparateThread);
+                fireProgressStateChanged("Blurring source Image");
+                fireProgressStateChanged(5);
                 sigmas[0] = sourceGaussX;
                 sigmas[1] = sourceGaussY;
                 sigmas[2] = sourceGaussZ;
@@ -1504,7 +1503,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
             } catch (OutOfMemoryError x) {
                 finalize();
                 MipavUtil.displayError("Algorithm Registration Air: unable to allocate enough memory for sourceGaussianImage");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1515,7 +1514,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
             } catch (IOException error) {
                 finalize();
                 displayError("AlgorithmRegAIR: sourceImage is locked after Gaussian blur");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1524,7 +1523,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1533,8 +1532,8 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         if ((targetGaussX != 0.0f) || (targetGaussY != 0.0f) || (targetGaussZ != 0.0f)) {
 
             try {
-                progressBar.setMessage("Blurring target Image");
-                progressBar.updateValue(10, runningInSeparateThread);
+                fireProgressStateChanged("Blurring target Image");
+                fireProgressStateChanged(10);
                 sigmas[0] = targetGaussX;
                 sigmas[1] = targetGaussY;
                 sigmas[2] = targetGaussZ;
@@ -1546,7 +1545,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
             } catch (OutOfMemoryError x) {
                 finalize();
                 MipavUtil.displayError("Algorithm Registration Air: unable to allocate enough memory for targetGaussianImage");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -1557,7 +1556,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
             } catch (IOException error) {
                 finalize();
                 displayError("AlgorithmRegAIR: targetImage is locked after Gaussian blur");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1578,7 +1577,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         } else {
             finalize();
             MipavUtil.displayError("Algorithm Registration Air: No partitions have been allocated");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -1630,7 +1629,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         } catch (OutOfMemoryError x) {
             finalize();
             MipavUtil.displayError("Algorithm Registration Air: unable to allocate enough memory for matrices");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -1638,7 +1637,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1686,8 +1685,8 @@ public class AlgorithmRegAIR extends AlgorithmBase {
                 e[1][1] = targetCubicVoxelY / targetVoxelY;
                 e[2][2] = targetCubicVoxelZ / targetVoxelZ;
                 e[3][3] = 1.0;
-                progressBar.setMessage("Interpolating target image to cubic voxels");
-                progressBar.updateValue(15, runningInSeparateThread);
+                fireProgressStateChanged("Interpolating target image to cubic voxels");
+                fireProgressStateChanged(15);
                 pixel5 = reslicer(targetArray, targetXDim, targetYDim, targetZDim, targetCubicXDim, targetCubicYDim,
                                   targetCubicZDim, e);
 
@@ -1782,8 +1781,8 @@ public class AlgorithmRegAIR extends AlgorithmBase {
                 e[1][1] = sourceCubicVoxelY / sourceVoxelY;
                 e[2][2] = sourceCubicVoxelZ / sourceVoxelZ;
                 e[3][3] = 1.0;
-                progressBar.setMessage("Interpolating source image to cubic voxels");
-                progressBar.updateValue(20, runningInSeparateThread);
+                fireProgressStateChanged("Interpolating source image to cubic voxels");
+                fireProgressStateChanged(20);
                 pixel6 = reslicer(sourceArray, sourceXDim, sourceYDim, sourceZDim, sourceCubicXDim, sourceCubicYDim,
                                   sourceCubicZDim, e);
 
@@ -1898,7 +1897,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         }
 
         /* Iterate until the final sample factor is reached */
-        progressBar.updateValue(30, runningInSeparateThread);
+        fireProgressStateChanged(30);
 
         while (sampleFactor >= sampleFactor2) {
             iters = 0;
@@ -1910,16 +1909,16 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
                 /* Calculate the standard deviation, mean, and derivatives */
                 if (sampleFactor == 27) {
-                    progressBar.updateValue(40, runningInSeparateThread);
+                    fireProgressStateChanged(40);
                 } else if (sampleFactor == 9) {
-                    progressBar.updateValue(50, runningInSeparateThread);
+                    fireProgressStateChanged(50);
                 } else if (sampleFactor == 3) {
-                    progressBar.updateValue(60, runningInSeparateThread);
+                    fireProgressStateChanged(60);
                 } else if (sampleFactor == 1) {
-                    progressBar.updateValue(70, runningInSeparateThread);
+                    fireProgressStateChanged(70);
                 }
 
-                progressBar.setMessage("Iteration # " + (iters + 1) + " at sample factor = " + sampleFactor);
+                fireProgressStateChanged("Iteration # " + (iters + 1) + " at sample factor = " + sampleFactor);
 
                 if (direction == 0) {
 
@@ -2084,7 +2083,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
                     if (!success) {
                         finalize();
                         MipavUtil.displayError("AlgorithmRegAIR: Unsuccessful uvrm");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -2267,7 +2266,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
                     if (!success) {
                         finalize();
                         MipavUtil.displayError("AlgorithmRegAIR: Unsuccessful uvrm");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -2615,7 +2614,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
                             finalize();
                             MipavUtil.displayError("\nWARNING: REGISTRATION TERMINATED DUE TO A HESSIAN MATRIX THAT WAS NOT POSITIVE DEFINITE\n");
                             MipavUtil.displayError("INSPECTION OF RESULTS IS ADVISED\n");
-                            progressBar.dispose();
+                            
                             setCompleted(false);
 
                             return;
@@ -2711,7 +2710,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
             if (threadStopped) {
                 finalize();
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -3046,7 +3045,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         if (es == null) {
             finalize();
             MipavUtil.displayError("AlgorithmRegAIR: Error es is null");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -3054,7 +3053,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
         if (threadStopped) {
             finalize();
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -3084,8 +3083,8 @@ public class AlgorithmRegAIR extends AlgorithmBase {
             targetVoxelZ = (float) pixel_size_s;
         } // if (cubicInterpolation)
 
-        progressBar.updateValue(80, runningInSeparateThread);
-        progressBar.setMessage("Reslicing source image to result image");
+        fireProgressStateChanged(80);
+        fireProgressStateChanged("Reslicing source image to result image");
 
         if ((interpolation == AlgorithmTransform.BILINEAR) || (interpolation == AlgorithmTransform.TRILINEAR)) {
             dataOut = reslicer(sourceArray, sourceXDim, sourceYDim, sourceZDim, targetXDim, targetYDim, targetZDim, es);
@@ -3119,14 +3118,14 @@ public class AlgorithmRegAIR extends AlgorithmBase {
         } catch (IOException error) {
             finalize();
             MipavUtil.displayError("AlgorithmRegAIR: IOException on resultImage" + ".importData(0,dataOut,true)");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             finalize();
             MipavUtil.displayError("AlgorithmRegAIR: Out of memory on resultImage" + ".importData(0,dataOut,true)");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -3153,7 +3152,7 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
         resultResolutions = null;
         targetUnits = null;
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

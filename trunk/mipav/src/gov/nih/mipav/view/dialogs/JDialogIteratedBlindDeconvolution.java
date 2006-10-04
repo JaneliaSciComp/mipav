@@ -5,7 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -16,7 +15,7 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  */
-public class JDialogIteratedBlindDeconvolution extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogIteratedBlindDeconvolution extends JDialogBase implements AlgorithmInterface/*, ScriptableInterface*/ {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -98,8 +97,6 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
      * @param  algorithm  DOCUMENT ME!
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (((algorithm instanceof AlgorithmIteratedBlindDeconvolution) && (ibdAlgor.isCompleted() == true)) &&
                 (resultImage != null)) {
 
@@ -107,13 +104,13 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
             resultImage.clearMask();
 
             try {
-                imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: unable to open new frame");
             }
 
-            insertScriptLine(algorithm);
+            //insertScriptLine(algorithm);
 
             ibdAlgor.finalize();
             ibdAlgor = null;
@@ -125,12 +122,10 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
      * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
      *
      * @param  algo  the algorithm to make an entry for
-     */
+     *
     public void insertScriptLine(AlgorithmBase algo) {
-
         if (algo.isCompleted()) { }
-    }
-
+    }*/
 
     /**
      * Run this algorithm from a script.
@@ -138,7 +133,7 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
      * @param   parser  the script parser we get the state from
      *
      * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
+     *
     public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
         String srcImageKey = null;
         String destImageKey = null;
@@ -166,14 +161,14 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
         setSeparateThread(false);
 
         if (!srcImageKey.equals(destImageKey)) { }
-    }
-
+    }*/
 
     /**
      * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
      * or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
+        
         String name;
         name = makeImageName(originalImage.getImageName(), "_ibd");
 
@@ -188,7 +183,9 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             ibdAlgor.addListener(this);
-
+            createProgressBar(originalImage.getImageName(), ibdAlgor);
+            
+            
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -196,10 +193,7 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!UI.isAppFrameVisible()) {
-                    ibdAlgor.setProgressBarVisible(false);
-                }
-
+              
                 ibdAlgor.run();
             } // end if (runInSeperateThread) {} else {}
 
@@ -242,8 +236,7 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
         textNumberIterations.setFont(serif12);
 
         GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
@@ -278,7 +271,7 @@ public class JDialogIteratedBlindDeconvolution extends JDialogBase implements Al
         gbc.gridx = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
 

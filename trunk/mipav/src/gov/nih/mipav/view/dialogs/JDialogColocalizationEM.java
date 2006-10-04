@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,7 +21,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input Identify colocalized pixels Algorithms are executed in their own thread.
  */
-public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogColocalizationEM extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -282,7 +284,69 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
         }
     }
 
-
+ 
+    
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     * 
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(firstImage);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("resultImage",resultImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("segImage",segImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("firstImage",firstImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bin1",bin1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bin2",bin2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold1",threshold1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold2",threshold2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doOr",doOr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("leftPad",leftPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rightPad",rightPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bottomPad",bottomPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("topPad",topPad));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("useRed",useRed));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("useGreen",useGreen));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("useBlue",useBlue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("entireImage",entireImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("register",register));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cost",cost));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("gaussians",gaussians));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("iterations",iterations));
+     }
+    
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams(){
+            bin1 = scriptParameters.getParams().getInt("bin1");
+            bin2 = scriptParameters.getParams().getInt("bin2");
+            threshold1 = scriptParameters.getParams().getFloat("threshold1");
+            threshold2 = scriptParameters.getParams().getFloat("threshold2");
+            doOr = scriptParameters.getParams().getBoolean("doOr");
+            leftPad = scriptParameters.getParams().getInt("leftPad");
+            rightPad = scriptParameters.getParams().getInt("rightPad");
+            bottomPad = scriptParameters.getParams().getInt("bottomPad");
+            topPad = scriptParameters.getParams().getInt("topPad");
+            useRed = scriptParameters.getParams().getBoolean("useRed");
+            useGreen = scriptParameters.getParams().getBoolean("useGreen");
+            useBlue = scriptParameters.getParams().getBoolean("useBlue");
+            entireImage = scriptParameters.getParams().getBoolean("entireImage");
+            register = scriptParameters.getParams().getBoolean("register");
+            cost = scriptParameters.getParams().getInt("cost");
+            gaussians = scriptParameters.getParams().getInt("gaussians");
+            iterations = scriptParameters.getParams().getInt("iterations");
+    }
+    
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the image table).
+     * Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+     }
+    
     // ************************************************************************
     // ************************** Algorithm Events ****************************
     // ************************************************************************
@@ -294,7 +358,7 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        insertScriptLine(algorithm);
+        insertScriptLine();
         dispose();
     }
 
@@ -316,134 +380,7 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
         return segImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted() == true) {
-
-            if (secondImage != null) {
-
-                if (UI.isScriptRecording()) {
-
-                    // check to see if the first image is already in the ImgTable
-                    if (UI.getScriptDialog().getImgTableVar(firstImage.getImageName()) == null) {
-
-                        if (UI.getScriptDialog().getActiveImgTableVar(firstImage.getImageName()) == null) {
-                            UI.getScriptDialog().putActiveVar(firstImage.getImageName());
-                        }
-                    }
-
-                    // then second
-                    if (UI.getScriptDialog().getImgTableVar(secondImage.getImageName()) == null) {
-
-                        if (UI.getScriptDialog().getActiveImgTableVar(secondImage.getImageName()) == null) {
-                            UI.getScriptDialog().putActiveVar(secondImage.getImageName());
-                        }
-                    }
-
-                    possibleIntValues = firstImage.getMax() - firstImage.getMin() + 1;
-
-                    if (((firstImage.getType() == ModelStorageBase.BYTE) ||
-                             (firstImage.getType() == ModelStorageBase.UBYTE) ||
-                             (firstImage.getType() == ModelStorageBase.SHORT) ||
-                             (firstImage.getType() == ModelStorageBase.USHORT) ||
-                             (firstImage.getType() == ModelStorageBase.INTEGER) ||
-                             (firstImage.getType() == ModelStorageBase.UINTEGER) ||
-                             (firstImage.getType() == ModelStorageBase.LONG)) &&
-                            (bin1 == (int) Math.round(possibleIntValues))) {
-                        bin1Default = true;
-                    } else {
-                        bin1Default = false;
-                    }
-
-                    possibleInt2Values = secondImage.getMax() - secondImage.getMin() + 1;
-
-                    if (((secondImage.getType() == ModelStorageBase.BYTE) ||
-                             (secondImage.getType() == ModelStorageBase.UBYTE) ||
-                             (secondImage.getType() == ModelStorageBase.SHORT) ||
-                             (secondImage.getType() == ModelStorageBase.USHORT) ||
-                             (secondImage.getType() == ModelStorageBase.INTEGER) ||
-                             (secondImage.getType() == ModelStorageBase.UINTEGER) ||
-                             (secondImage.getType() == ModelStorageBase.LONG)) &&
-                            (bin2 == (int) Math.round(possibleInt2Values))) {
-                        bin2Default = true;
-                    } else {
-                        bin2Default = false;
-                    }
-
-                    UI.getScriptDialog().append("ColocalizationEM " +
-                                                UI.getScriptDialog().getVar(firstImage.getImageName()) + " " +
-                                                UI.getScriptDialog().getVar(secondImage.getImageName()) + " ");
-                    UI.getScriptDialog().putVar(resultImage.getImageName());
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " ");
-                    UI.getScriptDialog().putVar(segImage.getImageName());
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(segImage.getImageName()) + " " + bin1 +
-                                                " " + bin2 + " " + bin1Default + " " + bin2Default + " " + threshold1 +
-                                                " " + threshold2 + " " + doOr + " " + leftPad + " " + rightPad + " " +
-                                                bottomPad + " " + topPad + " " + entireImage + " " + register + " " +
-                                                cost + " " + gaussians + " " + iterations + "\n");
-                }
-
-            } else { // if (secondImage != null)
-
-                if (UI.isScriptRecording()) {
-
-                    // check to see if the first image is already in the ImgTable
-                    if (UI.getScriptDialog().getImgTableVar(firstImage.getImageName()) == null) {
-
-                        if (UI.getScriptDialog().getActiveImgTableVar(firstImage.getImageName()) == null) {
-                            UI.getScriptDialog().putActiveVar(firstImage.getImageName());
-                        }
-                    }
-
-                    if (useRed) {
-                        possibleIntValues = firstImage.getMaxR() - firstImage.getMinR() + 1;
-                    } else {
-                        possibleIntValues = firstImage.getMaxG() - firstImage.getMinG() + 1;
-                    }
-
-                    if (useBlue) {
-                        possibleInt2Values = firstImage.getMaxB() - firstImage.getMinB() + 1;
-                    } else {
-                        possibleInt2Values = firstImage.getMaxG() - firstImage.getMinG() + 1;
-                    }
-
-                    if (((firstImage.getType() == ModelStorageBase.ARGB) ||
-                             (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) &&
-                            (bin1 == (int) Math.round(possibleIntValues))) {
-                        bin1Default = true;
-                    } else {
-                        bin1Default = false;
-                    }
-
-                    if (((firstImage.getType() == ModelStorageBase.ARGB) ||
-                             (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) &&
-                            (bin2 == (int) Math.round(possibleInt2Values))) {
-                        bin2Default = true;
-                    } else {
-                        bin2Default = false;
-                    }
-
-                    UI.getScriptDialog().append("ColocalizationEM " +
-                                                UI.getScriptDialog().getVar(firstImage.getImageName()) + " ");
-                    UI.getScriptDialog().putVar(resultImage.getImageName());
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " ");
-                    UI.getScriptDialog().putVar(segImage.getImageName());
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(segImage.getImageName()) + " " + bin1 +
-                                                " " + bin2 + " " + bin1Default + " " + bin2Default + " " + threshold1 +
-                                                " " + threshold2 + " " + doOr + " " + leftPad + " " + rightPad + " " +
-                                                bottomPad + " " + topPad + " " + useRed + " " + useGreen + " " +
-                                                useBlue + " " + entireImage + " " + register + " " + cost + " " +
-                                                gaussians + " " + iterations + "\n");
-                }
-            }
-        } // if (colocalizationAlgo.isCompleted() == true)
-    }
-
+ 
     // ************************* Item Events ****************************
     // *******************************************************************
 
@@ -686,153 +623,7 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
         }
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String image1Key = null;
-        String image2Key = null;
-        String destImageKey = null;
-        String segImageKey = null;
-
-        try {
-            image1Key = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im1 = parser.getImage(image1Key);
-
-        if (!im1.isColorImage()) {
-
-            try {
-                image2Key = parser.getNextString();
-            } catch (Exception e) {
-                throw new IllegalArgumentException();
-            }
-
-            setSecondImage(parser.getImage(image2Key));
-        }
-
-        firstImage = im1;
-        UI = firstImage.getUserInterface();
-        parentFrame = firstImage.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            segImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setBin1(parser.getNextInteger());
-            setBin2(parser.getNextInteger());
-            setBin1Default(parser.getNextBoolean());
-            setBin2Default(parser.getNextBoolean());
-            setThreshold1(parser.getNextFloat());
-            setThreshold2(parser.getNextFloat());
-            setDoOr(parser.getNextBoolean());
-            setLeftPad(parser.getNextInteger());
-            setRightPad(parser.getNextInteger());
-            setBottomPad(parser.getNextInteger());
-            setTopPad(parser.getNextInteger());
-
-            if (firstImage.isColorImage()) {
-                setUseRed(parser.getNextBoolean());
-                setUseGreen(parser.getNextBoolean());
-                setUseBlue(parser.getNextBoolean());
-            }
-
-            setEntireImage(parser.getNextBoolean());
-            setRegister(parser.getNextBoolean());
-            setCost(parser.getNextInteger());
-            setGaussians(parser.getNextInteger());
-            setIterations(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-
-        if (secondImage != null) {
-
-            if (bin1Default) {
-                possibleIntValues = firstImage.getMax() - firstImage.getMin() + 1;
-
-                if ((firstImage.getType() == ModelStorageBase.BYTE) ||
-                        (firstImage.getType() == ModelStorageBase.UBYTE) ||
-                        (firstImage.getType() == ModelStorageBase.SHORT) ||
-                        (firstImage.getType() == ModelStorageBase.USHORT) ||
-                        (firstImage.getType() == ModelStorageBase.INTEGER) ||
-                        (firstImage.getType() == ModelStorageBase.UINTEGER) ||
-                        (firstImage.getType() == ModelStorageBase.LONG)) {
-                    bin1 = (int) Math.round(possibleIntValues);
-                }
-            } // if (bin1Default)
-
-            if (bin2Default) {
-                possibleInt2Values = secondImage.getMax() - secondImage.getMin() + 1;
-
-                if ((secondImage.getType() == ModelStorageBase.BYTE) ||
-                        (secondImage.getType() == ModelStorageBase.UBYTE) ||
-                        (secondImage.getType() == ModelStorageBase.SHORT) ||
-                        (secondImage.getType() == ModelStorageBase.USHORT) ||
-                        (secondImage.getType() == ModelStorageBase.INTEGER) ||
-                        (secondImage.getType() == ModelStorageBase.UINTEGER) ||
-                        (secondImage.getType() == ModelStorageBase.LONG)) {
-                    bin2 = (int) Math.round(possibleInt2Values);
-                }
-            } // if (bin2Default)
-        } else { // secondImage == null
-
-            if (bin1Default) {
-
-                if (useRed) {
-                    possibleIntValues = firstImage.getMaxR() - firstImage.getMinR() + 1;
-                } else {
-                    possibleIntValues = firstImage.getMaxG() - firstImage.getMinG() + 1;
-                }
-
-                if ((firstImage.getType() == ModelStorageBase.ARGB) ||
-                        (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) {
-                    bin1 = (int) Math.round(possibleIntValues);
-                }
-            } // if (bin1Default)
-
-            if (bin2Default) {
-
-                if (useBlue) {
-                    possibleInt2Values = firstImage.getMaxB() - firstImage.getMinB() + 1;
-                } else {
-                    possibleInt2Values = firstImage.getMaxG() - firstImage.getMinG() + 1;
-                }
-
-                if ((firstImage.getType() == ModelStorageBase.ARGB) ||
-                        (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) {
-                    bin2 = (int) Math.round(possibleInt2Values);
-                }
-            } // if (bin2Default)
-        } // else secondImage == null
-
-        callAlgorithm();
-
-        if (!image1Key.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-
-        parser.putVariable(segImageKey, getSegImage().getImageName());
-    }
+ 
 
     /**
      * DOCUMENT ME!
@@ -1032,7 +823,7 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -1069,7 +860,7 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(firstImage.getImageName(), "_hist2Dim");
         String segName = makeImageName(firstImage.getImageName(), "_seg");
 
@@ -1104,6 +895,8 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
             // This is made possible by implementing AlgorithmedPerformed interface
             colocalizationAlgo.addListener(this);
 
+            createProgressBar(firstImage.getImageName(), colocalizationAlgo);
+            
             // Hide dialog
             setVisible(false);
 
@@ -1114,10 +907,6 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!UI.isAppFrameVisible()) {
-                    colocalizationAlgo.setProgressBarVisible(false);
-                }
 
                 colocalizationAlgo.run();
             }
@@ -1346,7 +1135,7 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
                 GridBagConstraints gbc2 = new GridBagConstraints();
                 gbc2.gridwidth = 1;
                 gbc2.gridheight = 1;
-                gbc2.anchor = gbc2.WEST;
+                gbc2.anchor = GridBagConstraints.WEST;
                 gbc2.weightx = 1;
                 gbc2.insets = new Insets(3, 3, 3, 3);
                 gbc2.fill = GridBagConstraints.HORIZONTAL;
@@ -1490,7 +1279,7 @@ public class JDialogColocalizationEM extends JDialogBase implements AlgorithmInt
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;

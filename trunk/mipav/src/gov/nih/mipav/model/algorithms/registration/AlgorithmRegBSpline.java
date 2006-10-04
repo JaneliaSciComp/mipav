@@ -4,6 +4,10 @@ package gov.nih.mipav.model.algorithms.registration;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.MipavUtil;
+
+import java.util.StringTokenizer;
+
 
 /**
  * This is a common base class which provides common methods and data members for all BSpline based registration.
@@ -171,18 +175,21 @@ public abstract class AlgorithmRegBSpline extends AlgorithmBase {
         /**
          * DOCUMENT ME!
          *
-         * @param   kParser  DOCUMENT ME!
+         * @param   kOptions  String containing all of the options.
+         * @param   kDelim    String to separate each parameter.
          *
-         * @throws  Exception  DOCUMENT ME!
+         * @throws  TokenizerException  DOCUMENT ME!
          */
-        public void setFromParser(AlgorithmScriptParser kParser) throws Exception {
-            bSubsample = kParser.getNextBoolean();
-            iBSplineDegree = kParser.getNextInteger();
-            iBSplineNumControlPoints = kParser.getNextInteger();
-            fGradientDescentMinimizeStepSize = kParser.getNextFloat();
-            iGradientDescentMinimizeMaxSteps = kParser.getNextInteger();
-            fConvergenceLimit = kParser.getNextFloat();
-            iMaxIterations = kParser.getNextInteger();
+        public void setFromString(String kOptions, String kDelim) throws TokenizerException {
+            StringTokenizer tok = new StringTokenizer(kOptions, kDelim);
+            
+            bSubsample = MipavUtil.getBoolean(tok);
+            iBSplineDegree = MipavUtil.getInt(tok);
+            iBSplineNumControlPoints = MipavUtil.getInt(tok);
+            fGradientDescentMinimizeStepSize = MipavUtil.getFloat(tok);
+            iGradientDescentMinimizeMaxSteps = MipavUtil.getInt(tok);
+            fConvergenceLimit = MipavUtil.getFloat(tok);
+            iMaxIterations = MipavUtil.getInt(tok);
         }
 
         /**

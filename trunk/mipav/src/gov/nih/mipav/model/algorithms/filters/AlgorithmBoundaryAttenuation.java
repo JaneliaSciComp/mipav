@@ -67,28 +67,15 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
      * @param  maxAttenuation  the maximum amount to reduce the object intensity by (0,1)
      */
     public AlgorithmBoundaryAttenuation(ModelImage srcImg, int numErosions, float maxAttenuation) {
+        super(srcImg, null);
         srcImage = srcImg;
+        this.numErosions = numErosions;
+        this.maxAttenuation = maxAttenuation;
 
         // find vois, extract to mask
         maskImage = new ModelImage(ModelStorageBase.SHORT, srcImg.getExtents(), srcImg.getImageName() + "_attenu_mask");
 
-        AlgorithmMask maskAlgo = new AlgorithmMask(maskImage, srcImg, 1, true, true);
-        maskAlgo.setProgressBarVisible(false);
-        maskAlgo.run();
 
-        this.numErosions = numErosions;
-        this.maxAttenuation = maxAttenuation;
-
-        xDim = srcImg.getExtents()[0];
-        yDim = srcImg.getExtents()[1];
-        zDim = srcImg.getExtents()[2];
-
-        xRes = srcImg.getFileInfo(0).getResolutions()[0];
-        zRes = srcImg.getFileInfo(0).getResolutions()[2];
-
-        makeKernel(AlgorithmMorphology3D.CONNECTED6);
-
-        attenuationBuffer = new float[xDim * yDim * zDim];
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -117,30 +104,49 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
      * Start the algorithm.
      */
     public void runAlgorithm() {
-        buildProgressBar(srcImage.getImageName(), "Boundary Attenuation...", 0, 100);
-        initProgressBar();
 
+        fireProgressStateChanged(0, srcImage.getImageName(), "Boundary Attenuation ...");
+
+
+        AlgorithmMask maskAlgo = new AlgorithmMask(maskImage, srcImage, 1, true, true);
+        maskAlgo.setProgressValues(generateProgressValues(0, 5));
+        linkProgressToAlgorithm(maskAlgo);
+        maskAlgo.run();
+
+
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        zDim = srcImage.getExtents()[2];
+
+        xRes = srcImage.getFileInfo(0).getResolutions()[0];
+        zRes = srcImage.getFileInfo(0).getResolutions()[2];
+
+        makeKernel(AlgorithmMorphology3D.CONNECTED6);
+
+        attenuationBuffer = new float[xDim * yDim * zDim];
+
+        // randomly setting this to be a percent change (progress of 35....so from 5 to 40)
         erode(maskImage, numErosions);
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
             finalize();
 
             return;
         }
 
-        if (isProgressBarVisible()) {
-            progressBar.setMessage("Filling object interior...");
-        }
+
+        float startPercent = .4f;
+        float percentChange = .1f;
 
         int totalPercent = 10;
         int mod = attenuationBuffer.length / totalPercent;
 
         for (int i = 0; i < attenuationBuffer.length; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue(progressBar.getValue() + 1, runningInSeparateThread);
+            if ((i % mod) == 0) {
+                fireProgressStateChanged((startPercent + ((float) (i / attenuationBuffer.length) * percentChange)),
+                                         srcImage.getImageName(), "Filling object interior ...");
             }
 
             if ((attenuationBuffer[i] == 0) && (maskImage.getFloat(i) == 1)) {
@@ -150,14 +156,9 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
             finalize();
 
             return;
-        }
-
-        if (isProgressBarVisible()) {
-            progressBar.setMessage("Blurring attenuation mask...");
         }
 
         // blur attenuation image
@@ -173,26 +174,22 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         }
 
         float[] sigmas = new float[] { 2.0f, 2.0f, 2.0f * (xRes / zRes) };
-        AlgorithmGaussianBlurSep blurAlgo = new AlgorithmGaussianBlurSep(tmpImg, sigmas, false, false);
-        blurAlgo.setProgressBarVisible(false);
-        blurAlgo.setMask(srcImage.generateVOIMask());
-        blurAlgo.run();
 
-        // new ViewJFrameImage( tmpImg, null, srcImage.getUserInterface().getNewFrameLocation(),
-        // srcImage.getUserInterface(), false );
+        // start percentage now @ 50... will go to 70%
+        AlgorithmGaussianBlurSep blurAlgo = new AlgorithmGaussianBlurSep(null, tmpImg, sigmas, false, false);
+        blurAlgo.setProgressValues(generateProgressValues(50, 70));
+        blurAlgo.setMask(srcImage.generateVOIMask());
+        linkProgressToAlgorithm(blurAlgo);
+        blurAlgo.run();
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
             finalize();
 
             return;
         }
 
-        if (isProgressBarVisible()) {
-            progressBar.setMessage("Attenuating image...");
-            progressBar.updateValue(progressBar.getValue() + 40, runningInSeparateThread);
-        }
+        fireProgressStateChanged((70), srcImage.getImageName(), "Attenuating image ...");
 
         // combine attenuation buffer with srcImage and put into destImage
         try {
@@ -207,23 +204,24 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
             finalize();
 
             return;
         }
 
-        if (isProgressBarVisible()) {
-            progressBar.updateValue(progressBar.getValue() + 5, runningInSeparateThread);
-        }
+        fireProgressStateChanged((75), srcImage.getImageName(), "Attenuating image ...");
 
+
+        startPercent = .75f;
+        percentChange = .2f;
         totalPercent = 10;
         mod = attenuationBuffer.length / totalPercent;
 
         for (int i = 0; i < attenuationBuffer.length; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
-                progressBar.updateValue(progressBar.getValue() + 1, runningInSeparateThread);
+            if ((i % mod) == 0) {
+                fireProgressStateChanged((startPercent + ((float) (i / attenuationBuffer.length) * percentChange)),
+                                         srcImage.getImageName(), "Attenuating image ...");
             }
 
             if (attenuationBuffer[i] == 0) {
@@ -235,14 +233,9 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
             finalize();
 
             return;
-        }
-
-        if (isProgressBarVisible()) {
-            progressBar.updateValue(95, runningInSeparateThread);
         }
 
         destImage = new ModelImage(srcImage.getType(), srcImage.getExtents(), srcImage.getImageName() + "_attenuated");
@@ -255,13 +248,9 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
             return;
         }
 
+        fireProgressStateChanged(100, null, null);
         destImage.copyFileTypeInfo(srcImage);
 
-        if (isProgressBarVisible()) {
-            progressBar.updateValue(100, runningInSeparateThread);
-        }
-
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -276,7 +265,6 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
             finalize();
 
             return;
@@ -303,12 +291,12 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         int stepZ = kDimZ * sliceSize;
         int stepY = kDimXY * xDim;
 
-        int totalSize = imgSize * iterations;
-        int tmpSize = 0;
-        int mod = totalSize / 30;
-
         short[] processBuffer;
         short[] imgBuffer;
+
+
+        float startPercent = .05f;
+        float percentChange = .35f;
 
         try {
             processBuffer = new short[imgSize];
@@ -317,33 +305,15 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         } catch (IOException error) {
             displayError("BoundaryAttenuation: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         } catch (OutOfMemoryError error) {
             displayError("BoundaryAttenuation: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         }
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Eroding image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
 
         float linearStep = (1.0f - maxAttenuation) / iterations;
         float linearAttenuation;
@@ -351,22 +321,10 @@ public class AlgorithmBoundaryAttenuation extends AlgorithmBase {
         for (curIter = 0; (curIter < iterations) && !threadStopped; curIter++) {
             linearAttenuation = maxAttenuation + (linearStep * curIter);
 
-            tmpSize = curIter * imgSize;
+            fireProgressStateChanged((startPercent + ((float) (curIter / iterations) * percentChange)),
+                                     srcImage.getImageName(), "Eroding image ...");
 
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
-
-                try {
-
-                    if ((((tmpSize + pix) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (tmpSize + pix) / totalSize * 30), runningInSeparateThread);
-                    }
-                } catch (NullPointerException npe) {
-
-                    if (threadStopped) {
-                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                          Preferences.DEBUG_ALGORITHM);
-                    }
-                }
 
                 value = imgBuffer[pix];
 

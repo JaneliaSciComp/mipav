@@ -61,6 +61,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** DOCUMENT ME! */
     private JCheckBox debugMinorBox;
+    
+    private JCheckBox debugScriptingBox;
 
     /** DOCUMENT ME! */
     private JCheckBox dicomCatcher;
@@ -347,7 +349,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
             Preferences.setDebugLevels(new boolean[] {
                                            debugMinorBox.isSelected(), debugAlgorithmBox.isSelected(),
-                                           debugFileIOBox.isSelected(), debugCommsBox.isSelected()
+                                           debugFileIOBox.isSelected(), debugCommsBox.isSelected(),
+                                           debugScriptingBox.isSelected()
                                        });
 
             Preferences.setProperty(Preferences.PREF_SHOW_OUTPUT, String.valueOf(showOutputWindow.isSelected()));
@@ -906,7 +909,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         debugPanel.setBorder(this.buildTitledBorder("Debug levels"));
 
         GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.anchor = gbc2.NORTHWEST;
+        gbc2.anchor = GridBagConstraints.NORTHWEST;
 
         boolean[] levels = Preferences.getDebugLevels();
 
@@ -925,13 +928,18 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         debugCommsBox = new JCheckBox("Comms");
         debugCommsBox.setFont(MipavUtil.font12);
         debugCommsBox.setSelected(levels[3]);
+        
+        debugScriptingBox = new JCheckBox("Scripting");
+        debugScriptingBox.setFont(MipavUtil.font12);
+        debugScriptingBox.setSelected(levels[4]);
 
         debugPanel.add(debugMinorBox, gbc2);
         debugPanel.add(debugAlgorithmBox, gbc2);
         debugPanel.add(debugFileIOBox, gbc2);
         debugPanel.add(debugCommsBox, gbc2);
+        debugPanel.add(debugScriptingBox, gbc2);
 
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         otherPanel.add(debugPanel, gbc);
     }
 
@@ -1008,8 +1016,6 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             } catch (Exception e) { }
         }
 
-        Color currentColor = Color.black;
-
         // Get all font family names
         GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
         fontNames = ge.getAvailableFontFamilyNames();
@@ -1045,16 +1051,16 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         gbc2.gridx = 0;
         gbc2.gridy = 0;
-        gbc2.fill = gbc.HORIZONTAL;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
         fontPanel.add(fontChooser, gbc2);
 
         gbc2.gridx = 1;
         gbc2.insets = new Insets(0, 5, 0, 0);
-        gbc2.fill = gbc.HORIZONTAL;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
         fontPanel.add(fontSizeField, gbc2);
 
         // gbc.gridy++;
-        // gbc.fill = gbc.BOTH;
+        // gbc.fill = GridBagConstraints;
         otherPanel.add(fontPanel, gbc);
     }
 

@@ -55,7 +55,7 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
      * @param  img25D  Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                 images disregard this flag.
      */
-    public AlgorithmGaussianBlurITK(ModelImage srcImg, float[] sigmas, boolean img25D) {
+    public AlgorithmGaussianBlurITK(ModelImage srcImg, float[] sigmas, boolean img25D ) {
         super(null, srcImg);
 
         this.sigmas = sigmas;
@@ -111,12 +111,12 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
         }
 
         if ((srcImage.getNDims() == 3) && image25D) {
-            buildProgressBar(srcImage.getImageName(), "Blurring slices ...", 0, 100);
+            fireProgressStateChanged(0, null, "Blurring slices ...");
         } else {
-            buildProgressBar(srcImage.getImageName(), "Blurring ...", 0, 100);
+            fireProgressStateChanged(0, null, "Blurring ...");
         }
 
-        initProgressBar();
+        
 
         // Make note of the sample spacing.  The ITK image created will
         // already have the sample spacing applied to it, but Gaussian
@@ -248,10 +248,8 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
-                        if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), runningInSeparateThread);
-                        }
-
+                        fireProgressStateChanged(((float) (iSlice + 1) / iNumSlices), null, null);
+                       
                         if (threadStopped) {
 
                             finalize();
@@ -288,10 +286,8 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
-                        if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), runningInSeparateThread);
-                        }
-
+                        fireProgressStateChanged(((float) (iSlice + 1) / iNumSlices), null, null);
+                        
                         if (threadStopped) {
 
                             finalize();
@@ -334,9 +330,8 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
-                        if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), runningInSeparateThread);
-                        }
+                        fireProgressStateChanged(((float) (iSlice + 1) / iNumSlices), null, null);
+                        
 
                         if (threadStopped) {
 
@@ -363,9 +358,8 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
                     for (int iSlice = 0; iSlice < iNumSlices; iSlice++) {
 
-                        if (isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (iSlice + 1) / iNumSlices * 100), runningInSeparateThread);
-                        }
+                        fireProgressStateChanged(((float) (iSlice + 1) / iNumSlices), null, null);
+                        
 
                         if (threadStopped) {
 
@@ -506,8 +500,6 @@ public class AlgorithmGaussianBlurITK extends AlgorithmBase {
 
             return;
         }
-
-        disposeProgressBar();
 
         constructLog();
         setCompleted(true);

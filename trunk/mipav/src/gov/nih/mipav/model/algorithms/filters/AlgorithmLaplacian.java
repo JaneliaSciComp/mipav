@@ -245,6 +245,8 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             return;
         }
 
+        fireProgressStateChanged(0, null, "Calculation the laplacian ...");
+        
         constructLog();
 
         if (destImage != null) {
@@ -300,7 +302,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             totalLength = length * nImages;
             buffer = new float[length];
             resultBuffer = new float[length * nImages];
-            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -310,7 +311,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -323,15 +324,15 @@ public class AlgorithmLaplacian extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm Laplacian: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                if ((((start + i) % mod) == 0)) {
+                    fireProgressStateChanged(((float) (start + i) / (totalLength - 1)), null, null);
+                  
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -364,7 +365,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -384,7 +384,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -397,14 +396,14 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+            if (((i % mod) == 0)) {
+                fireProgressStateChanged(((float) i / (length - 1)), null, null);
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -436,7 +435,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         }
 
         setCompleted(true);
-        disposeProgressBar();
     }
 
     /**
@@ -464,7 +462,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             length = srcImage.getSliceSize();
             totalLength = length * nImages;
             buffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Laplacian exportData: Out of memory", true);
@@ -473,7 +470,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -483,7 +480,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("Algorithm Gaussian Blur: Image(s) locked");
                 setCompleted(false);
-                disposeProgressBar();
                 destImage.releaseLock();
 
                 return;
@@ -514,8 +510,8 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
-                if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                if ((((start + i) % mod) == 0)) {
+                    fireProgressStateChanged(((float) (start + i) / (totalLength - 1)), null, null);
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -579,7 +575,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             genZeroXMask(buffer);
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -608,7 +603,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Laplacian exportData: Image(s) locked", true);
@@ -621,7 +615,7 @@ public class AlgorithmLaplacian extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -650,8 +644,8 @@ public class AlgorithmLaplacian extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+            if (((i % mod) == 0)) {
+                fireProgressStateChanged(((float) i / (length - 1)), null, null);
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -696,7 +690,6 @@ public class AlgorithmLaplacian extends AlgorithmBase {
         buffer = null;
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
         setCompleted(true);
     }
 

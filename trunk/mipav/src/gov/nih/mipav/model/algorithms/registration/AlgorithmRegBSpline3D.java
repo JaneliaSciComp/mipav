@@ -87,7 +87,7 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
         }
 
         // Setup
-        buildProgressBar(m_kImageSource.getImageName(), "Registering ...", 0, 100);
+        fireProgressStateChanged(m_kImageSource.getImageName(), "Registering ...");
 
         boolean bMultiPass = (null != m_kOptionsPass2);
 
@@ -141,7 +141,7 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
 
         kReg = null;
         disposeLocal();
-        disposeProgressBar();
+        
     }
 
     /**
@@ -187,7 +187,7 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
         try {
 
             // Setup to use the progress bar.
-            initProgressBar();
+            
 
             // The control points along the edge do not move.
             int iNumIterationControlPoints = (kOptions.iBSplineNumControlPoints - 2) *
@@ -226,12 +226,11 @@ public class AlgorithmRegBSpline3D extends AlgorithmRegBSpline {
 
                                 // Update the progress bar.
                                 double dConvergence = (dErrorPrev - kReg.getError()) / dErrorPrev;
-                                progressBar.setMessage(kProgressPrefixString + "Iteration: " +
+                                fireProgressStateChanged(kProgressPrefixString + "Iteration: " +
                                                        Integer.toString(iIteration + 1) + "/" +
                                                        kOptions.iMaxIterations + "  Convergence: " +
                                                        kDecimalFormat.format(dConvergence));
-                                progressBar.updateValue((++iIterationControlPoint) * 100 / iNumIterationControlPoints,
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged((++iIterationControlPoint) * 100 / iNumIterationControlPoints);
 
                                 // Minimize single control point.
                                 kReg.minimizeControlPoint(iControlX, iControlY, iControlZ,

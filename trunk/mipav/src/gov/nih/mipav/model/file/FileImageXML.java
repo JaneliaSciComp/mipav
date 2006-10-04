@@ -7,7 +7,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-// JAXP packages
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 
@@ -111,7 +110,6 @@ public class FileImageXML extends FileXML {
 
     /** Thumbnail data and AWT Image. */
     private Thumbnail thumbnail = null;
-
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -385,9 +383,8 @@ public class FileImageXML extends FileXML {
      * @see        FileRaw
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
-
         ViewJProgressBar progressBar = null;
-        
+
         float[][] resolutions = null;
 
         TalairachTransformInfo talairach = new TalairachTransformInfo();
@@ -400,20 +397,27 @@ public class FileImageXML extends FileXML {
         if (resolutions == null) {
             throw (new IOException("Error parsing XML Header: check debug window."));
         }
-        
+
         // this will happen if the filename attribute in the xml header is not set
-        if (imageFileName == null || !(new File(fileDir + File.separator + imageFileName).exists())) {
-            Preferences.debug("Problem with the XML image data file name: " + fileDir + File.separator + imageFileName, Preferences.DEBUG_FILEIO);
-            
+        if ((imageFileName == null) || !(new File(fileDir + File.separator + imageFileName).exists())) {
+            Preferences.debug("Problem with the XML image data file name: " + fileDir + File.separator + imageFileName,
+                              Preferences.DEBUG_FILEIO);
+
             imageFileName = FileUtility.stripExtension(fileName) + ".raw";
             fileInfo.setImageDataFileName(imageFileName);
         }
 
         // TODO: I don't know that this should ever happen... -- evan
-        if (fileInfo.getFileName() == null || !(new File(fileDir + File.separator + fileInfo.getFileName()).exists())) {
-            Preferences.debug("Problem with the file name stored in the XML file info: " + fileDir + File.separator + fileInfo.getFileName(), Preferences.DEBUG_FILEIO);
-            
+        if ((fileInfo.getFileName() == null) ||
+                !(new File(fileDir + File.separator + fileInfo.getFileName()).exists())) {
+            Preferences.debug("Problem with the file name stored in the XML file info: " + fileDir + File.separator +
+                              fileInfo.getFileName(), Preferences.DEBUG_FILEIO);
+
             fileInfo.setFileName(fileName);
+        }
+
+        if (imageFileName == null) {
+            imageFileName = FileUtility.stripExtension(fileName) + ".raw";
         }
 
         // TODO: I don't know that this should ever happen... -- evan
@@ -466,6 +470,7 @@ public class FileImageXML extends FileXML {
             // imageFileName was parsed from the "image".xml file.
             rawFile = new FileRaw(fileDir + File.separator + readFileName, (FileInfoImageXML) fileInfo, showProgress,
                                   FileBase.READ);
+
             int offset = 0;
 
             if (one) {
@@ -476,14 +481,13 @@ public class FileImageXML extends FileXML {
             }
 
             progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                    UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null,
-                    null);
+                                               UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null, null);
 
             progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
             rawFile.addProgressChangeListener(progressBar);
-            
+
             progressBar.updateValue(0, true);
-            
+
             rawFile.readImage(image, offset);
 
             if (readFileName.indexOf(".img") == (readFileName.length() - 4)) {
@@ -568,7 +572,10 @@ public class FileImageXML extends FileXML {
 
             annotationVector.removeAllElements();
         }
+
         progressBar.dispose();
+        progressBar.dispose();
+
         return image;
     }
 
@@ -604,11 +611,11 @@ public class FileImageXML extends FileXML {
             FileRaw rawFile;
 
             if (imageFileName == null) {
-            	imageFileName = FileUtility.stripExtension(fileName) + ".raw";
+                imageFileName = FileUtility.stripExtension(fileName) + ".raw";
             }
-            
-            rawFile = new FileRaw(imageFileName, fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo,
-                                  showProgress, FileBase.READ);
+
+            rawFile = new FileRaw(imageFileName, fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo, showProgress,
+                                  FileBase.READ);
             rawFile.readImage(buffer, 0, ((FileInfoImageXML) fileInfo).getDataType());
 
             if (fileInfo.getFileName().indexOf(".img") == (fileInfo.getFileName().length() - 4)) {
@@ -645,7 +652,7 @@ public class FileImageXML extends FileXML {
         fileName = fName;
     }
 
-    
+
     /**
      * Sets the model LUT.
      *
@@ -777,11 +784,16 @@ public class FileImageXML extends FileXML {
         bw.newLine();
 
         if (fileName.equals(headerName + ".raw")) {
-            // the xml image reader assumes that if filename is not specified, it is the same as the header file with the .raw extension
+
+            // the xml image reader assumes that if filename is not specified, it is the same as the header file with
+            // the .raw extension
             openTag(bw, "image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" nDimensions=\"" + nDims + "\"", true);
         } else {
+
             // we want to connect the header to a non-default file (e.g., an xml pointing to an analyze .img file)
-            openTag(bw, "image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" filename=\"" + fileName + "\" nDimensions=\"" + nDims + "\"", true);
+            openTag(bw,
+                    "image xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\" filename=\"" + fileName + "\" nDimensions=\"" +
+                    nDims + "\"", true);
         }
 
         openTag(bw, imageStr[0], true);
@@ -1585,7 +1597,7 @@ public class FileImageXML extends FileXML {
         int index;
 
         ViewJProgressBar progressBar = null;
-        
+
         FileInfoBase infoClone = (FileInfoBase) img.getFileInfo(0).clone();
 
         int num = img.getExtents().length;
@@ -1650,14 +1662,13 @@ public class FileImageXML extends FileXML {
             rawFile = new FileRaw(img.getFileInfo(0));
 
             progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                    UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null,
-                    null);
+                                               UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null, null);
 
             progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
             rawFile.addProgressChangeListener(progressBar);
-            
+
             progressBar.updateValue(0, true);
-            
+
             if (img.getNDims() == 3) {
                 rawFile.writeImage3DTo2D(img, options, rawExtension);
                 writeHeader3DTo2D(img, fhName, fileDir, options);
@@ -1685,14 +1696,14 @@ public class FileImageXML extends FileXML {
                 rawFile = new FileRaw(fileName, fileDir, img.getFileInfo(0), showProgress, FileBase.READ_WRITE);
 
                 progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                        UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null,
-                        null);
+                                                   UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null,
+                                                   null);
 
                 progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
                 rawFile.addProgressChangeListener(progressBar);
-                
+
                 progressBar.updateValue(0, true);
-                
+
                 // options.setFileName(rawName);
                 rawFile.writeImage(img, options);
 
@@ -1723,9 +1734,10 @@ public class FileImageXML extends FileXML {
                 throw (error);
             }
         }
+
         // With extents from rawFile
         if (progressBar != null) {
-        	progressBar.dispose();
+            progressBar.dispose();
         }
     }
 
@@ -2980,10 +2992,9 @@ public class FileImageXML extends FileXML {
             if (currentKey.equals("image")) {
 
                 // Note: these don't have to be in this order, should use another method
-                
                 imageFileName = atts.getValue("filename");
                 fileInfo.setImageDataFileName(imageFileName);
-                
+
                 // System.out.println("Image file name: " + imageFileName);
                 nDimensions = Integer.valueOf(atts.getValue("nDimensions")).intValue();
                 Preferences.debug("FileXML: nDimensions = " + TAB + nDimensions + "\n", Preferences.DEBUG_FILEIO);

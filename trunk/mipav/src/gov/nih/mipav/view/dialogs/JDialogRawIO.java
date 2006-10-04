@@ -636,7 +636,7 @@ public class JDialogRawIO extends JDialogBase {
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(5, 5, 5, 5);
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
 
         dim1 = new JLabel("1st");
         dim1.setFont(serif12);
@@ -756,7 +756,7 @@ public class JDialogRawIO extends JDialogBase {
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.gridwidth = 3;
-        gbc.fill = gbc.VERTICAL;
+        gbc.fill = GridBagConstraints.VERTICAL;
         gbc.weighty = 1;
         panelDims.add(new JPanel(), gbc);
 
@@ -832,7 +832,7 @@ public class JDialogRawIO extends JDialogBase {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.weighty = 0;
         gbc.insets = new Insets(3, 5, 3, 5);
 
@@ -872,9 +872,9 @@ public class JDialogRawIO extends JDialogBase {
         panelUnits.add(comboBoxUnitOfMeasure5, gbc);
 
         gbc.weighty = 1;
-        gbc.anchor = gbc.NORTH;
+        gbc.anchor = GridBagConstraints.NORTH;
         gbc.gridy = 5;
-        gbc.fill = gbc.VERTICAL;
+        gbc.fill = GridBagConstraints.VERTICAL;
         panelUnits.add(new JPanel(), gbc);
 
         JPanel buttonPanel = new JPanel();
@@ -886,10 +886,10 @@ public class JDialogRawIO extends JDialogBase {
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = gbc.NORTH;
+        gbc.anchor = GridBagConstraints.NORTH;
         gbc.weighty = 1;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.VERTICAL;
+        gbc.fill = GridBagConstraints.VERTICAL;
         mainPanel.add(panelImageType, gbc);
         gbc.gridx = 1;
         mainPanel.add(panelDims, gbc);
@@ -913,12 +913,12 @@ public class JDialogRawIO extends JDialogBase {
             extractUnitIndeces(Preferences.getProperty("RawImageUnits"));
         } else { // we'll tell the properties that we want to remember these preferences. (use defaults or flag values
                  // here!)
-            Preferences.setProperty("RawImageBigEndianByteOrder", new Boolean(this.DEFAULT_BIG_ENDIAN_BYTE_ORDER).toString());
-            Preferences.setProperty("RawImageDataOffset", new Integer(this.DEFAULT_DATA_OFFSET).toString());
-            Preferences.setProperty("RawImageType", new Integer(this.DEFAULT_IMAGE_TYPE).toString());
-            Preferences.setProperty("RawImageExtents", this.DEFAULT_EXTENTS);
-            Preferences.setProperty("RawImageResolutions", this.DEFAULT_RES);
-            Preferences.setProperty("RawImageUnits", this.DEFAULT_UNIT_INDEX);
+            Preferences.setProperty("RawImageBigEndianByteOrder", new Boolean(DEFAULT_BIG_ENDIAN_BYTE_ORDER).toString());
+            Preferences.setProperty("RawImageDataOffset", new Integer(DEFAULT_DATA_OFFSET).toString());
+            Preferences.setProperty("RawImageType", new Integer(DEFAULT_IMAGE_TYPE).toString());
+            Preferences.setProperty("RawImageExtents", DEFAULT_EXTENTS);
+            Preferences.setProperty("RawImageResolutions", DEFAULT_RES);
+            Preferences.setProperty("RawImageUnits", DEFAULT_UNIT_INDEX);
         }
 
         getContentPane().add(mainPanel);

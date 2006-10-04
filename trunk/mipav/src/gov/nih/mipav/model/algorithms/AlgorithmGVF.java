@@ -334,33 +334,33 @@ public class AlgorithmGVF extends AlgorithmBase {
             vVal = new float[(xDim + 2) * (yDim + 2)];
             gVal = new float[(xDim + 2) * (yDim + 2)];
 
-            buildProgressBar(srcImage.getImageName(), "GVF: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "GVF: Evolving boundary ...");
+            
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
+            
             displayError("Algorithm GVF: Out of memory");
             setCompleted(false);
 
             return;
         }
 
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(0);
 
         contours = srcVOI.getCurves();
-        progressBar.updateValue(30, runningInSeparateThread);
+        fireProgressStateChanged(30);
 
         srcVOI.getBounds(xB, yB, zB);
 
         for (slice = (int) zB[0]; slice <= (float) zB[1]; slice++) {
-            progressBar.updateValue((int) (30 + (((float) slice / (sliceNum - 1)) * 70)), runningInSeparateThread);
+            fireProgressStateChanged((int) (30 + (((float) slice / (sliceNum - 1)) * 70)));
 
             try {
                 srcImage.exportData(slice * length, length, imgBuffer);
             } catch (IOException error) {
                 cleanup();
                 MipavUtil.displayError("AlgorithmGVF: IOException on srcImage");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -380,7 +380,7 @@ public class AlgorithmGVF extends AlgorithmBase {
                     cleanup();
                     MipavUtil.displayError("AlgorithmGVF: IOException on destImage" +
                                            ".importData(slice*length,gvfBuffer,false)");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -417,8 +417,8 @@ public class AlgorithmGVF extends AlgorithmBase {
 
         if (propagationFlag == false) {
             cleanup();
-            progressBar.updateValue(100, runningInSeparateThread);
-            progressBar.dispose();
+            fireProgressStateChanged(100);
+            
             setCompleted(true);
 
             return;
@@ -442,7 +442,7 @@ public class AlgorithmGVF extends AlgorithmBase {
                     cleanup();
                     displayError("Algorithm GVF: Image(s) locked");
                     setCompleted(false);
-                    progressBar.dispose();
+                    
 
                     return;
                 }
@@ -463,7 +463,7 @@ public class AlgorithmGVF extends AlgorithmBase {
                         cleanup();
                         MipavUtil.displayError("AlgorithmGVF: IOException on destImage" +
                                                ".importData(slice*length,gvfBuffer,false)");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -474,7 +474,7 @@ public class AlgorithmGVF extends AlgorithmBase {
                 setPoints(xPoints, yPoints, tempGon);
                 runSnake(xPoints, yPoints, uVal, vVal, resultGon);
                 slicesDone++;
-                progressBar.updateValue(slicesDone * 100 / sliceNum, runningInSeparateThread);
+                fireProgressStateChanged(slicesDone * 100 / sliceNum);
                 nPts = resultGon.npoints;
                 Preferences.debug(" Points = " + nPts);
 
@@ -510,7 +510,7 @@ public class AlgorithmGVF extends AlgorithmBase {
         yPoints = new float[tempGon.npoints + 5];
         resultGon = new Polygon();
         slicesDone = sliceNum - stSlice;
-        progressBar.updateValue(slicesDone * 100 / sliceNum, runningInSeparateThread);
+        fireProgressStateChanged(slicesDone * 100 / sliceNum);
         Preferences.debug("Going down");
 
         if (slice >= 0) {
@@ -523,7 +523,7 @@ public class AlgorithmGVF extends AlgorithmBase {
                     cleanup();
                     displayError("Algorithm GVF: Image(s) locked");
                     setCompleted(false);
-                    progressBar.dispose();
+                    
 
                     return;
                 }
@@ -544,7 +544,7 @@ public class AlgorithmGVF extends AlgorithmBase {
                         cleanup();
                         MipavUtil.displayError("AlgorithmGVF: IOException on destImage" +
                                                ".importData(slice*length,gvfBuffer,false)");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -555,7 +555,7 @@ public class AlgorithmGVF extends AlgorithmBase {
                 setPoints(xPoints, yPoints, tempGon);
                 runSnake(xPoints, yPoints, uVal, vVal, resultGon);
                 slicesDone++;
-                progressBar.updateValue(slicesDone * 100 / sliceNum, runningInSeparateThread);
+                fireProgressStateChanged(slicesDone * 100 / sliceNum);
                 nPts = resultGon.npoints;
 
                 if (nPts < 8) {
@@ -589,8 +589,8 @@ public class AlgorithmGVF extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.updateValue(100, runningInSeparateThread);
-        progressBar.dispose();
+        fireProgressStateChanged(100);
+        
         setCompleted(true);
     }
 
@@ -627,25 +627,25 @@ public class AlgorithmGVF extends AlgorithmBase {
             gVal = new float[(xDim + 2) * (yDim + 2)];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
 
-            buildProgressBar(srcImage.getImageName(), "GVF: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "GVF: Evolving boundary ...");
+            
         } catch (IOException error) {
             cleanup();
-            progressBar.dispose();
+            
             displayError("Algorithm GVF: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
+            
             displayError("Algorithm GVF:  Out of Memory");
             setCompleted(false);
 
             return;
         }
 
-        progressBar.updateValue(25, runningInSeparateThread);
+        fireProgressStateChanged(25);
 
         calcGVF(imgBuffer);
         expGvfBuffer = null;
@@ -665,7 +665,7 @@ public class AlgorithmGVF extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 MipavUtil.displayError("AlgorithmGVF: IOException on destImage" + ".importData(0,gvfBuffer,true)");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -677,7 +677,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
         contours = srcVOI.getCurves();
         nContours = contours[0].size();
-        progressBar.updateValue(30, runningInSeparateThread);
+        fireProgressStateChanged(30);
 
         for (int j = 0; j < nContours; j++) {
 
@@ -696,10 +696,10 @@ public class AlgorithmGVF extends AlgorithmBase {
                 resultVOI.importPolygon(gons[j], 0);
             }
 
-            progressBar.updateValue(30 + (((j / nContours) - 1) * 70), runningInSeparateThread);
+            fireProgressStateChanged(30 + (((j / nContours) - 1) * 70));
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
 
         if (threadStopped) {
             finalize();
@@ -708,7 +708,7 @@ public class AlgorithmGVF extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -740,31 +740,31 @@ public class AlgorithmGVF extends AlgorithmBase {
             wVal = new float[(xDim + 2) * (yDim + 2) * (zDim + 2)];
             gVal = new float[(xDim + 2) * (yDim + 2) * (zDim + 2)];
 
-            buildProgressBar(srcImage.getImageName(), "GVF: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "GVF: Evolving boundary ...");
+            
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
+            
             displayError("Algorithm GVF: Out of memory");
             setCompleted(false);
 
             return;
         }
 
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(0);
 
         try {
             srcImage.exportData(0, length, imgBuffer);
         } catch (IOException error) {
             cleanup();
             MipavUtil.displayError("AlgorithmGVF: IOException on srcImage.exportData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         }
 
-        progressBar.setMessage("Calculating 3D GVF");
+        fireProgressStateChanged("Calculating 3D GVF");
         calcGVF3D(imgBuffer);
 
         if (destFlag == true) {
@@ -778,7 +778,7 @@ public class AlgorithmGVF extends AlgorithmBase {
             } catch (IOException error) {
                 cleanup();
                 MipavUtil.displayError("AlgorithmGVF: IOException on destImage" + ".importData(0,gvfBuffer,true)");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -797,8 +797,8 @@ public class AlgorithmGVF extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.updateValue(100, runningInSeparateThread);
-        progressBar.dispose();
+        fireProgressStateChanged(100);
+        
         setCompleted(true);
     }
 
@@ -1724,7 +1724,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.importData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1741,7 +1741,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.saveImage");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1757,7 +1757,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.importData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1774,7 +1774,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.saveImage");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1790,7 +1790,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.importData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1807,7 +1807,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
             gvfImage = null;
             MipavUtil.displayError("Error on gvfImage.saveImage");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;

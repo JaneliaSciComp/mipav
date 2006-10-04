@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,8 +23,8 @@ import javax.swing.*;
  *
  * @see  AlgorithmAdaptivePathSmooth
  */
-public class JDialogAdaptivePathSmooth extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
+        implements AlgorithmInterface, ScriptableActionInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -145,20 +147,6 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
         setVisible(true);
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAdaptivePathSmooth(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = ViewUserInterface.getReference();
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -179,7 +167,6 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("filtersspatialAdaptivePathSmooth_filters_(spatial)_AdaptivePathSmooth_htm_toc_applying_the_AdaptivePathSmooth");
         }
-
     }
 
     // ************************************************************************
@@ -193,7 +180,6 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
 
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
@@ -209,7 +195,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -242,7 +228,10 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
             }
         }
 
-        insertScriptLine(adaptivePathSmoothAlgo);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+
         adaptivePathSmoothAlgo.finalize();
         adaptivePathSmoothAlgo = null;
         dispose();
@@ -280,43 +269,6 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("AdaptivePathSmooth " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + getParameterString(" "));
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + getParameterString(" "));
-                }
-
-                userInterface.getScriptDialog().append("\n");
-            }
-        }
     }
 
     /**
@@ -367,63 +319,6 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRadiusY(parser.getNextFloat());
-            setRadiusCr(parser.getNextFloat());
-            setRadiusCb(parser.getNextFloat());
-            setThreshold(parser.getNextFloat());
-            setIncludeNeighbors(parser.getNextBoolean());
-            setReduce(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
@@ -508,7 +403,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_AdaptivePathSmooth");
         int[] destExtents;
 
@@ -545,6 +440,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptivePathSmoothAlgo.addListener(this);
+                createProgressBar(image.getImageName(), adaptivePathSmoothAlgo);
 
                 // Hide dialog
                 setVisible(false);
@@ -556,10 +452,6 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptivePathSmoothAlgo.setProgressBarVisible(false);
-                    }
-
                     adaptivePathSmoothAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -585,6 +477,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptivePathSmoothAlgo.addListener(this);
+                createProgressBar(image.getImageName(), adaptivePathSmoothAlgo);
 
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
@@ -610,10 +503,6 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptivePathSmoothAlgo.setProgressBarVisible(false);
-                    }
-
                     adaptivePathSmoothAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -622,6 +511,56 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        radiusY = scriptParameters.getParams().getFloat("radius_Y");
+        radiusCr = scriptParameters.getParams().getFloat("radius_Cr");
+        radiusCb = scriptParameters.getParams().getFloat("radius_Cb");
+        threshold = scriptParameters.getParams().getFloat("threshold");
+        includeNeighbors = scriptParameters.getParams().getBoolean("include_neighbors");
+        reduce = scriptParameters.getParams().getBoolean("do_reduce_dims");
+        image25D = scriptParameters.doProcess3DAs25D();
+    }
+
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Y", radiusY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cr", radiusCr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cb", radiusCb));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("include_neighbors", includeNeighbors));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_reduce_dims", reduce));
+        scriptParameters.storeProcess3DAs25D(image25D);
     }
 
     /**
@@ -640,7 +579,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -655,7 +594,7 @@ public class JDialogAdaptivePathSmooth extends JDialogBase
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
-        gbc2.anchor = gbc.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.weightx = 1;
         gbc2.insets = new Insets(3, 3, 3, 3);
         gbc2.gridx = 0;

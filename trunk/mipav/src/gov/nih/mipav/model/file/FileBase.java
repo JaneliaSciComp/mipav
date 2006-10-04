@@ -2,12 +2,11 @@ package gov.nih.mipav.model.file;
 
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.model.structures.ModelImage;
 
 import java.io.*;
-import javax.swing.event.EventListenerList;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
+
+import javax.swing.event.*;
+
 
 /**
  * FileBase is an abstract class that has many methods that support the reading/writing of files.
@@ -15,7 +14,7 @@ import javax.swing.event.ChangeEvent;
  * @version  0.9 June 30, 1998
  * @see      FileInfoBase
  */
-public abstract class FileBase{
+public abstract class FileBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -151,14 +150,14 @@ public abstract class FileBase{
 
     /** Gatan's Digital Micrograph version 3 file format. */
     public static final int DM3 = 41;
-    
-    /** Nearly raw raster data */
+
+    /** Nearly raw raster data. */
     public static final int NRRD = 42;
-    
-    /** GE Signa 4.x */
+
+    /** GE Signa 4.x. */
     public static final int GE_SIGNA4X = 43;
-    
-    /** MGH/MGZ volume format */
+
+    /** MGH/MGZ volume format. */
     public static final int MGH = 44;
 
     /** Arrary of strings describing the file formats. */
@@ -184,6 +183,12 @@ public abstract class FileBase{
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    /** DOCUMENT ME! */
+    protected int bitsPerPixel;
+
+    /** The file names which are opened. */
+    protected String[] fileNames;
+
     /** Flag indicating if the progress bar should be shown. */
     protected boolean pBarVisible = true;
 
@@ -192,20 +197,16 @@ public abstract class FileBase{
 
     /** Pointer to file to read or write from. */
     protected RandomAccessFile raFile;
-    
-    /**
-     * A list of the ChangeListeners which are interested in the ChangeEvent. 
-     */
-    private EventListenerList listenerList;
-    
+
+    /** DOCUMENT ME! */
     private boolean bigEndian;
-    protected int bitsPerPixel;
-    /**
-     * The file names which are opened.
-     */
-    protected String[] fileNames;
+
+    /** DOCUMENT ME! */
     private int dataType;
-    
+
+    /** A list of the ChangeListeners which are interested in the ChangeEvent. */
+    private EventListenerList listenerList;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -215,11 +216,109 @@ public abstract class FileBase{
         this(null);
     }
 
-    public FileBase(String[] fileNames){
+    /**
+     * Creates a new FileBase object.
+     *
+     * @param  fileNames  DOCUMENT ME!
+     */
+    public FileBase(String[] fileNames) {
         this.fileNames = fileNames;
-        listenerList = new EventListenerList();        
+        listenerList = new EventListenerList();
     }
+
     //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   bigEndian  DOCUMENT ME!
+     * @param   index      DOCUMENT ME!
+     * @param   buffer     DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static float bytesToFloat(boolean bigEndian, int index, byte[] buffer) {
+        int tmpInt;
+
+        if (bigEndian) {
+            tmpInt = (((buffer[index] & 0xff) << 24) | ((buffer[index + 1] & 0xff) << 16) |
+                          ((buffer[index + 2] & 0xff) << 8) | (buffer[index + 3] & 0xff));
+
+            return (Float.intBitsToFloat(tmpInt));
+        } else {
+            tmpInt = (((buffer[index + 3] & 0xff) << 24) | ((buffer[index + 2] & 0xff) << 16) |
+                          ((buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
+
+            return (Float.intBitsToFloat(tmpInt));
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   bigEndian  DOCUMENT ME!
+     * @param   index      DOCUMENT ME!
+     * @param   buffer     DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static int bytesToInt(boolean bigEndian, int index, byte[] buffer) {
+
+        if (bigEndian) {
+            return (((buffer[index] & 0xff) << 24) | ((buffer[index + 1] & 0xff) << 16) |
+                        ((buffer[index + 2] & 0xff) << 8) | (buffer[index + 3] & 0xff));
+        } else {
+            return (((buffer[index + 3] & 0xff) << 24) | ((buffer[index + 2] & 0xff) << 16) |
+                        ((buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   bigEndian  DOCUMENT ME!
+     * @param   index      DOCUMENT ME!
+     * @param   buffer     DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static short bytesToShort(boolean bigEndian, int index, byte[] buffer) {
+
+        if (bigEndian) {
+            return (short) (((buffer[index] & 0xff) << 8) | (buffer[index + 1] & 0xff));
+        } else {
+            return (short) (((buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   data       DOCUMENT ME!
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static byte[] floatToBytes(float data, boolean bigEndian) {
+        int tmpInt;
+
+        tmpInt = Float.floatToIntBits(data);
+
+        return intToBytes(tmpInt, bigEndian);
+    }
+
+    // public abstract String[] getExtensions();
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   dataType  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static int getBitsPerPixel(int dataType) {
+        return 0;
+    }
 
     /**
      * Returns the string for a particular file format.
@@ -242,9 +341,113 @@ public abstract class FileBase{
 
     } // end getFileFormatStr()
 
-//    public abstract String getHeaderFile();
-    
-//    public abstract String[] getImageFiles();
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   data       DOCUMENT ME!
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static byte[] intToBytes(int data, boolean bigEndian) {
+        byte[] buffer = new byte[4];
+
+        if (bigEndian) {
+            buffer[0] = (byte) (data >>> 24);
+            buffer[1] = (byte) (data >>> 16);
+            buffer[2] = (byte) (data >>> 8);
+            buffer[3] = (byte) (data & 0xff);
+        } else {
+            buffer[0] = (byte) (data & 0xff);
+            buffer[1] = (byte) (data >>> 8);
+            buffer[2] = (byte) (data >>> 16);
+            buffer[3] = (byte) (data >>> 24);
+        }
+
+        return buffer;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   data       DOCUMENT ME!
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static byte[] longToBytes(long data, boolean bigEndian) {
+        byte[] buffer = new byte[8];
+
+        if (bigEndian) {
+            buffer[0] = (byte) (data >>> 56);
+            buffer[1] = (byte) (data >>> 48);
+            buffer[2] = (byte) (data >>> 40);
+            buffer[3] = (byte) (data >>> 32);
+            buffer[4] = (byte) (data >>> 24);
+            buffer[5] = (byte) (data >>> 16);
+            buffer[6] = (byte) (data >>> 8);
+            buffer[7] = (byte) (data & 0xff);
+        } else {
+            buffer[0] = (byte) (data & 0xff);
+            buffer[1] = (byte) (data >>> 8);
+            buffer[2] = (byte) (data >>> 16);
+            buffer[3] = (byte) (data >>> 24);
+            buffer[4] = (byte) (data >>> 32);
+            buffer[5] = (byte) (data >>> 40);
+            buffer[6] = (byte) (data >>> 48);
+            buffer[7] = (byte) (data >>> 56);
+        }
+
+        return buffer;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   data       DOCUMENT ME!
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static byte[] shortToBytes(short data, boolean bigEndian) {
+        byte[] buffer = new byte[2];
+
+        if (bigEndian) {
+            buffer[0] = (byte) (data >>> 8);
+            buffer[1] = (byte) (data & 0xff);
+        } else {
+            buffer[0] = (byte) (data & 0xff);
+            buffer[1] = (byte) (data >>> 8);
+        }
+
+        return buffer;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   data   DOCUMENT ME!
+     * @param   index  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static byte[] stringToBytes(String data, int index) {
+        return null;
+    }
+
+    // public abstract String[] getExtensions();
+    /**
+     * Adds the ProgressChangeListener to this FileBase object.
+     *
+     * @param  l  DOCUMENT ME!
+     */
+    public void addProgressChangeListener(ProgressChangeListener l) {
+        listenerList.add(ProgressChangeListener.class, l);
+    }
+
+    //    public abstract String getHeaderFile();
+
+    //    public abstract String[] getImageFiles();
     /**
      * Prepares this class for cleanup.
      */
@@ -261,6 +464,34 @@ public abstract class FileBase{
         }
 
         raFile = null;
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for notification on this event type.
+     *
+     * @param  value  the value of the progress bar.
+     */
+    public void fireProgressStateChanged(int value) {
+        fireProgressStateChanged(value, null, null);
+    }
+
+    /**
+     * Notifies all listeners that have registered interest for notification on this event type.
+     *
+     * @param  value    the value of the progress bar.
+     * @param  title    the title of the progress dialog.
+     * @param  message  the message for that specific progress value.
+     */
+    public void fireProgressStateChanged(int value, String title, String message) {
+        Object[] listeners = listenerList.getListenerList();
+
+        for (int i = listeners.length - 2; i >= 0; i -= 2) {
+
+            if (listeners[i] == ProgressChangeListener.class) {
+                ProgressChangeEvent event = new ProgressChangeEvent(this, value, title, message);
+                ((ProgressChangeListener) listeners[i + 1]).progressStateChanged(event);
+            }
+        }
     }
 
     /**
@@ -332,6 +563,15 @@ public abstract class FileBase{
     }
 
     /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public int getDataType() {
+        return dataType;
+    }
+
+    /**
      * Reads eight unsigned bytes from file.
      *
      * @param      bigEndian  <code>true</code> indicates big endian byte order, <code>false</code> indicates little
@@ -348,16 +588,14 @@ public abstract class FileBase{
         long tmpLong;
 
         if (bigEndian) {
-            tmpLong = (((buffer[0] & 0xffL) << 56) | ((buffer[1] & 0xffL) << 48) |
-                           ((buffer[2] & 0xffL) << 40) | ((buffer[3] & 0xffL) << 32) |
-                           ((buffer[4] & 0xffL) << 24) | ((buffer[5] & 0xffL) << 16) |
+            tmpLong = (((buffer[0] & 0xffL) << 56) | ((buffer[1] & 0xffL) << 48) | ((buffer[2] & 0xffL) << 40) |
+                           ((buffer[3] & 0xffL) << 32) | ((buffer[4] & 0xffL) << 24) | ((buffer[5] & 0xffL) << 16) |
                            ((buffer[6] & 0xffL) << 8) | (buffer[7] & 0xffL));
 
             return (Double.longBitsToDouble(tmpLong));
         } else {
-            tmpLong = (((buffer[7] & 0xffL) << 56) | ((buffer[6] & 0xffL) << 48) |
-                           ((buffer[5] & 0xffL) << 40) | ((buffer[4] & 0xffL) << 32) |
-                           ((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) |
+            tmpLong = (((buffer[7] & 0xffL) << 56) | ((buffer[6] & 0xffL) << 48) | ((buffer[5] & 0xffL) << 40) |
+                           ((buffer[4] & 0xffL) << 32) | ((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) |
                            ((buffer[1] & 0xffL) << 8) | (buffer[0] & 0xffL));
 
             return (Double.longBitsToDouble(tmpLong));
@@ -382,13 +620,13 @@ public abstract class FileBase{
         int tmpInt;
 
         if (bigEndian) {
-            tmpInt = (((buffer[0] & 0xff) << 24) | ((buffer[1] & 0xff) << 16) |
-                          ((buffer[2] & 0xff) << 8) | (buffer[3] & 0xff));
+            tmpInt = (((buffer[0] & 0xff) << 24) | ((buffer[1] & 0xff) << 16) | ((buffer[2] & 0xff) << 8) |
+                          (buffer[3] & 0xff));
 
             return (Float.intBitsToFloat(tmpInt));
         } else {
-            tmpInt = (((buffer[3] & 0xff) << 24) | ((buffer[2] & 0xff) << 16) |
-                          ((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff));
+            tmpInt = (((buffer[3] & 0xff) << 24) | ((buffer[2] & 0xff) << 16) | ((buffer[1] & 0xff) << 8) |
+                          (buffer[0] & 0xff));
 
             return (Float.intBitsToFloat(tmpInt));
         }
@@ -436,16 +674,14 @@ public abstract class FileBase{
         long tmpLong;
 
         if (bigEndian) {
-            tmpLong = (((buffer[0] & 0xffL) << 56) | ((buffer[1] & 0xffL) << 48) |
-                           ((buffer[2] & 0xffL) << 40) | ((buffer[3] & 0xffL) << 32) |
-                           ((buffer[4] & 0xffL) << 24) | ((buffer[5] & 0xffL) << 16) |
+            tmpLong = (((buffer[0] & 0xffL) << 56) | ((buffer[1] & 0xffL) << 48) | ((buffer[2] & 0xffL) << 40) |
+                           ((buffer[3] & 0xffL) << 32) | ((buffer[4] & 0xffL) << 24) | ((buffer[5] & 0xffL) << 16) |
                            ((buffer[6] & 0xffL) << 8) | (buffer[7] & 0xffL));
 
             return (tmpLong);
         } else {
-            tmpLong = (((buffer[7] & 0xffL) << 56) | ((buffer[6] & 0xffL) << 48) |
-                           ((buffer[5] & 0xffL) << 40) | ((buffer[4] & 0xffL) << 32) |
-                           ((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) |
+            tmpLong = (((buffer[7] & 0xffL) << 56) | ((buffer[6] & 0xffL) << 48) | ((buffer[5] & 0xffL) << 40) |
+                           ((buffer[4] & 0xffL) << 32) | ((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) |
                            ((buffer[1] & 0xffL) << 8) | (buffer[0] & 0xffL));
 
             return (tmpLong);
@@ -518,11 +754,11 @@ public abstract class FileBase{
         raFile.readFully(buffer);
 
         if (bigEndian) {
-            return (((buffer[0] & 0xffL) << 24) | ((buffer[1] & 0xffL) << 16) |
-                        ((buffer[2] & 0xffL) << 8) | (buffer[3] & 0xffL)); // Big Endian
+            return (((buffer[0] & 0xffL) << 24) | ((buffer[1] & 0xffL) << 16) | ((buffer[2] & 0xffL) << 8) |
+                        (buffer[3] & 0xffL)); // Big Endian
         } else {
-            return (((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) |
-                        ((buffer[1] & 0xffL) << 8) | (buffer[0] & 0xffL));
+            return (((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) | ((buffer[1] & 0xffL) << 8) |
+                        (buffer[0] & 0xffL));
         }
     }
 
@@ -560,12 +796,219 @@ public abstract class FileBase{
     }
 
     /**
+     * Return true if the byte order is big endian.
+     *
+     * @return  true if the byte order is big endian.
+     */
+    public boolean isBigEndian() {
+        return bigEndian;
+    }
+
+    /**
      * Returns flag that indicates that the progressBar is visible.
      *
      * @return  <code>true</code> if progress bar is visible, <code>false</code> if not visible.
      */
     public boolean isProgressBarVisible() {
         return pBarVisible;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public final double readDouble(boolean bigEndian) throws IOException {
+        byte[] buffer = new byte[8];
+        raFile.readFully(buffer);
+
+        long tmpLong;
+
+        if (bigEndian) {
+            tmpLong = (((buffer[0] & 0xffL) << 56) | ((buffer[1] & 0xffL) << 48) | ((buffer[2] & 0xffL) << 40) |
+                           ((buffer[3] & 0xffL) << 32) | ((buffer[4] & 0xffL) << 24) | ((buffer[5] & 0xffL) << 16) |
+                           ((buffer[6] & 0xffL) << 8) | (buffer[7] & 0xffL));
+
+        } else {
+            tmpLong = (((buffer[7] & 0xffL) << 56) | ((buffer[6] & 0xffL) << 48) | ((buffer[5] & 0xffL) << 40) |
+                           ((buffer[4] & 0xffL) << 32) | ((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) |
+                           ((buffer[1] & 0xffL) << 8) | (buffer[0] & 0xffL));
+
+        }
+
+        return (Double.longBitsToDouble(tmpLong));
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public final float readFloat(boolean bigEndian) throws IOException {
+        byte[] buffer = new byte[4];
+        raFile.readFully(buffer);
+
+        int tmpInt;
+
+        if (bigEndian) {
+            tmpInt = (((buffer[0] & 0xff) << 24) | ((buffer[1] & 0xff) << 16) | ((buffer[2] & 0xff) << 8) |
+                          (buffer[3] & 0xff));
+
+            return (Float.intBitsToFloat(tmpInt));
+        } else {
+            tmpInt = (((buffer[3] & 0xff) << 24) | ((buffer[2] & 0xff) << 16) | ((buffer[1] & 0xff) << 8) |
+                          (buffer[0] & 0xff));
+
+            return (Float.intBitsToFloat(tmpInt));
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public final int readInt(boolean bigEndian) throws IOException {
+        byte[] buffer = new byte[4];
+        raFile.readFully(buffer);
+
+        if (bigEndian) {
+            return (((buffer[0] & 0xff) << 24) | ((buffer[1] & 0xff) << 16) | ((buffer[2] & 0xff) << 8) |
+                        (buffer[3] & 0xff)); // Big Endian
+        } else {
+            return (((buffer[3] & 0xff) << 24) | ((buffer[2] & 0xff) << 16) | ((buffer[1] & 0xff) << 8) |
+                        (buffer[0] & 0xff));
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public final long readLong(boolean bigEndian) throws IOException {
+        byte[] buffer = new byte[8];
+
+        raFile.readFully(buffer);
+
+        long tmpLong;
+
+        if (bigEndian) {
+            tmpLong = (((buffer[0] & 0xffL) << 56) | ((buffer[1] & 0xffL) << 48) | ((buffer[2] & 0xffL) << 40) |
+                           ((buffer[3] & 0xffL) << 32) | ((buffer[4] & 0xffL) << 24) | ((buffer[5] & 0xffL) << 16) |
+                           ((buffer[6] & 0xffL) << 8) | (buffer[7] & 0xffL));
+
+        } else {
+            tmpLong = (((buffer[7] & 0xffL) << 56) | ((buffer[6] & 0xffL) << 48) | ((buffer[5] & 0xffL) << 40) |
+                           ((buffer[4] & 0xffL) << 32) | ((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) |
+                           ((buffer[1] & 0xffL) << 8) | (buffer[0] & 0xffL));
+
+        }
+
+        return (tmpLong);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public final short readShort(boolean bigEndian) throws IOException {
+        short tempShort = 0;
+        byte[] buffer = new byte[2];
+
+        raFile.readFully(buffer);
+
+        if (bigEndian) {
+            tempShort = (short) (((buffer[0] & 0xff) << 8) | (buffer[1] & 0xff));
+        } else {
+            tempShort = (short) (((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff));
+        }
+
+        if ((tempShort & 0x0080) != 0) {
+            tempShort = (short) (tempShort | 0xff00);
+        }
+
+        return tempShort;
+    }
+
+    /**
+     * Reads the length of the characters from the file.
+     *
+     * @param   length  the length of the string
+     *
+     * @return  the string read from the file.
+     *
+     * @throws  IOException  throw IOException if I/O error happens
+     */
+    public final String readString(int length) throws IOException {
+
+        if (length <= 0) {
+            return null;
+        }
+
+        byte[] buffer = new byte[length];
+        raFile.readFully(buffer);
+
+        return new String(buffer);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   bigEndian  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public final int readUnsignedShort(boolean bigEndian) throws IOException {
+        byte[] buffer = new byte[2];
+        raFile.readFully(buffer);
+
+        if (bigEndian) {
+            return (((buffer[0] & 0xff) << 8) | (buffer[1] & 0xff));
+        } else {
+            return (((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff));
+        }
+    }
+
+    /**
+     * Removes the ChangeListener from the FileBase object.
+     *
+     * @param  l  DOCUMENT ME!
+     */
+    public void removeProgressChangeListener(ProgressChangeListener l) {
+        listenerList.remove(ProgressChangeListener.class, l);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  bigEndian  DOCUMENT ME!
+     */
+    public void setBigEndian(boolean bigEndian) {
+        this.bigEndian = bigEndian;
     }
 
     /**
@@ -658,13 +1101,6 @@ public abstract class FileBase{
     }
 
     /**
-     * Return true if the byte order is big endian.
-     * @return true if the byte order is big endian.
-     */
-    public boolean isBigEndian(){
-        return bigEndian;
-    }
-    /**
      * Sets byte buffer with int.
      *
      * @param  buffer  Byte buffers where data is to be stored.
@@ -680,6 +1116,24 @@ public abstract class FileBase{
         for (int c = 0; c < tmpBuffer.length; c++) {
             buffer[i + c] = tmpBuffer[c];
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  dataType  DOCUMENT ME!
+     */
+    public void setDataType(int dataType) {
+        this.dataType = dataType;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  bigEndian  DOCUMENT ME!
+     */
+    public void setEndianess(boolean bigEndian) {
+        this.bigEndian = bigEndian;
     }
 
     /**
@@ -807,371 +1261,5 @@ public abstract class FileBase{
         }
 
         raFile.write(buffer);
-    }
-    
-    // public abstract String[] getExtensions();
-    /**
-     * Adds the ProgressChangeListener to this FileBase object.
-     * 
-     * @param l
-     */
-    public void addProgressChangeListener(ProgressChangeListener l){
-        listenerList.add(ProgressChangeListener.class, l);
-    }
-    
-    /**
-     * Removes the ChangeListener from the FileBase object.
-     * 
-     * @param l
-     */
-    public void removeProgressChangeListener(ProgressChangeListener l){
-        listenerList.remove(ProgressChangeListener.class, l);
-    }
-    
-    /**
-     * Notifies all listeners that have registered interest for notification
-     * on this event type.
-     * 
-     * @param value   the value of the progress bar.
-     * @param title   the title of the progress dialog.
-     * @param message the message for that specific progress value.
-     */
-    public void fireProgressStateChanged(int value, String title, String message){
-        Object[] listeners = listenerList.getListenerList();
-        for(int i = listeners.length-2; i >= 0; i -= 2){
-            if(listeners[i] == ProgressChangeListener.class){
-                ProgressChangeEvent event = new ProgressChangeEvent(this, value, title, message);
-                ((ProgressChangeListener)listeners[i+1]).progressStateChanged(event);
-            }
-        }
-    }
-
-    /**
-     * Notifies all listeners that have registered interest for notification
-     * on this event type.
-     * 
-     * @param value  the value of the progress bar.
-     */
-    public void fireProgressStateChanged(int value){
-        fireProgressStateChanged(value, null, null);
-    }
-
-    /**
-     * 
-     * @param dataType
-     */
-    public static int getBitsPerPixel(int dataType){
-        return 0;
-    }
-
-    public int getDataType(){
-        return dataType;
-    }
-
-    /**
-     * 
-     * @param dataType
-     */
-    public void setDataType(int dataType){
-        this.dataType = dataType;
-    }
-
-    /**
-     * 
-     * @param bigEndian
-     */
-    public void setEndianess(boolean bigEndian){
-        this.bigEndian = bigEndian;
-    }
-
-    public void setBigEndian(boolean bigEndian){
-        this.bigEndian = bigEndian;
-    }
-    /**
-     * 
-     * @param bigEndian
-     * @param index
-     * @param bytes
-     */
-    public static float bytesToFloat(boolean bigEndian, int index, byte[] buffer){
-        int tmpInt;
-
-        if (bigEndian) {
-            tmpInt = (((buffer[index] & 0xff) << 24) | ((buffer[index + 1] & 0xff) << 16) |
-                          ((buffer[index + 2] & 0xff) << 8) | (buffer[index + 3] & 0xff));
-
-            return (Float.intBitsToFloat(tmpInt));
-        } else {
-            tmpInt = (((buffer[index + 3] & 0xff) << 24) | ((buffer[index + 2] & 0xff) << 16) |
-                          ((buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
-
-            return (Float.intBitsToFloat(tmpInt));
-        }
-    }
-
-    /**
-     * 
-     * @param bigEndian
-     * @param index
-     * @param buffer
-     */
-    public static int bytesToInt(boolean bigEndian, int index, byte[] buffer){
-        if (bigEndian) {
-            return (((buffer[index] & 0xff) << 24) | ((buffer[index + 1] & 0xff) << 16) |
-                        ((buffer[index + 2] & 0xff) << 8) | (buffer[index + 3] & 0xff));
-        } else {
-            return (((buffer[index + 3] & 0xff) << 24) | ((buffer[index + 2] & 0xff) << 16) |
-                        ((buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
-        }
-    }
-
-    /**
-     * 
-     * @param bigEndian
-     * @param index
-     * @param buffer
-     */
-    public static short bytesToShort(boolean bigEndian, int index, byte[] buffer){
-        if (bigEndian) {
-            return (short) (((buffer[index] & 0xff) << 8) | (buffer[index + 1] & 0xff));
-        } else {
-            return (short) (((buffer[index + 1] & 0xff) << 8) | (buffer[index] & 0xff));
-        }
-    }
-
-    /**
-     * 
-     * @param data
-     * @param bigEndian
-     */
-    public static byte[] floatToBytes(float data, boolean bigEndian){
-        int tmpInt;
-
-        tmpInt = Float.floatToIntBits(data);
-        return intToBytes(tmpInt, bigEndian);
-    }
-
-    // public abstract String[] getExtensions();
-
-    /**
-     * 
-     * @param data
-     * @param bigEndian
-     */
-    public static byte[] intToBytes(int data, boolean bigEndian){
-        byte[] buffer = new byte[4];
-        if (bigEndian) {
-            buffer[0] = (byte) (data >>> 24);
-            buffer[1] = (byte) (data >>> 16);
-            buffer[2] = (byte) (data >>> 8);
-            buffer[3] = (byte) (data & 0xff);
-        } else {
-            buffer[0] = (byte) (data & 0xff);
-            buffer[1] = (byte) (data >>> 8);
-            buffer[2] = (byte) (data >>> 16);
-            buffer[3] = (byte) (data >>> 24);
-        }
-        return buffer;
-    }
-
-    /**
-     * 
-     * @param data
-     * @param bigEndian
-     */
-    public static byte[] longToBytes(long data, boolean bigEndian){
-        byte[] buffer = new byte[8];
-        if (bigEndian) {
-            buffer[0] = (byte) (data >>> 56);
-            buffer[1] = (byte) (data >>> 48);
-            buffer[2] = (byte) (data >>> 40);
-            buffer[3] = (byte) (data >>> 32);
-            buffer[4] = (byte) (data >>> 24);
-            buffer[5] = (byte) (data >>> 16);
-            buffer[6] = (byte) (data >>> 8);
-            buffer[7] = (byte) (data & 0xff);
-        } else {
-            buffer[0] = (byte) (data & 0xff);
-            buffer[1] = (byte) (data >>> 8);
-            buffer[2] = (byte) (data >>> 16);
-            buffer[3] = (byte) (data >>> 24);
-            buffer[4] = (byte) (data >>> 32);
-            buffer[5] = (byte) (data >>> 40);
-            buffer[6] = (byte) (data >>> 48);
-            buffer[7] = (byte) (data >>> 56);
-        }
-        return buffer;
-    }
-
-    /**
-     * 
-     * @param data
-     * @param bigEndian
-     */
-    public static byte[] shortToBytes(short data, boolean bigEndian){
-        byte[] buffer = new byte[2];
-        if (bigEndian) {
-            buffer[0] = (byte) (data >>> 8);
-            buffer[1] = (byte) (data & 0xff);
-        } else {
-            buffer[0] = (byte) (data & 0xff);
-            buffer[1] = (byte) (data >>> 8);
-        }
-        return buffer;
-    }
-
-    /**
-     * 
-     * @param data
-     * @param index
-     */
-    public static byte[] stringToBytes(String data, int index){
-        return null;
-    }
-
-    /**
-     * 
-     * @param bigEndian
-     */
-    public final double readDouble(boolean bigEndian) throws IOException{
-        byte[] buffer = new byte[8];
-        raFile.readFully(buffer);
-        
-        long tmpLong;
-        if (bigEndian) {
-            tmpLong = (((buffer[0] & 0xffL) << 56) | ((buffer[1] & 0xffL) << 48) |
-                           ((buffer[2] & 0xffL) << 40) | ((buffer[3] & 0xffL) << 32) |
-                           ((buffer[4] & 0xffL) << 24) | ((buffer[5] & 0xffL) << 16) |
-                           ((buffer[6] & 0xffL) << 8) | (buffer[7] & 0xffL));
-
-        } else {
-            tmpLong = (((buffer[7] & 0xffL) << 56) | ((buffer[6] & 0xffL) << 48) |
-                           ((buffer[5] & 0xffL) << 40) | ((buffer[4] & 0xffL) << 32) |
-                           ((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) |
-                           ((buffer[1] & 0xffL) << 8) | (buffer[0] & 0xffL));
-
-        }
-        return (Double.longBitsToDouble(tmpLong));
-    }
-
-    /**
-     * 
-     * @param bigEndian
-     */
-    public final int readInt(boolean bigEndian) throws IOException{
-        byte[] buffer = new byte[4];
-        raFile.readFully(buffer);
-
-        if (bigEndian) {
-            return (((buffer[0] & 0xff) << 24) | ((buffer[1] & 0xff) << 16) | ((buffer[2] & 0xff) << 8) |
-                        (buffer[3] & 0xff)); // Big Endian
-        } else {
-            return (((buffer[3] & 0xff) << 24) | ((buffer[2] & 0xff) << 16) | ((buffer[1] & 0xff) << 8) |
-                        (buffer[0] & 0xff));
-        }
-    }
-
-    /**
-     * 
-     * @param bigEndian
-     */
-    public final float readFloat(boolean bigEndian) throws IOException{
-        byte[] buffer = new byte[4];
-        raFile.readFully(buffer);
-
-        int tmpInt;
-
-        if (bigEndian) {
-            tmpInt = (((buffer[0] & 0xff) << 24) | ((buffer[1] & 0xff) << 16) |
-                          ((buffer[2] & 0xff) << 8) | (buffer[3] & 0xff));
-
-            return (Float.intBitsToFloat(tmpInt));
-        } else {
-            tmpInt = (((buffer[3] & 0xff) << 24) | ((buffer[2] & 0xff) << 16) |
-                          ((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff));
-
-            return (Float.intBitsToFloat(tmpInt));
-        }
-    }
-
-    /**
-     * 
-     * @param bigEndian
-     */
-    public final long readLong(boolean bigEndian) throws IOException{
-        byte[] buffer = new byte[8];
-
-        raFile.readFully(buffer);
-
-        long tmpLong;
-
-        if (bigEndian) {
-            tmpLong = (((buffer[0] & 0xffL) << 56) | ((buffer[1] & 0xffL) << 48) |
-                           ((buffer[2] & 0xffL) << 40) | ((buffer[3] & 0xffL) << 32) |
-                           ((buffer[4] & 0xffL) << 24) | ((buffer[5] & 0xffL) << 16) |
-                           ((buffer[6] & 0xffL) << 8) | (buffer[7] & 0xffL));
-
-        } else {
-            tmpLong = (((buffer[7] & 0xffL) << 56) | ((buffer[6] & 0xffL) << 48) |
-                           ((buffer[5] & 0xffL) << 40) | ((buffer[4] & 0xffL) << 32) |
-                           ((buffer[3] & 0xffL) << 24) | ((buffer[2] & 0xffL) << 16) |
-                           ((buffer[1] & 0xffL) << 8) | (buffer[0] & 0xffL));
-
-        }
-        return (tmpLong);
-    }
-
-    /**
-     * 
-     * @param bigEndian
-     */
-    public final short readShort(boolean bigEndian) throws IOException{
-        short tempShort = 0;
-        byte[] buffer = new byte[2];
-
-        raFile.readFully(buffer);
-
-        if (bigEndian) {
-            tempShort = (short)(((buffer[0] & 0xff) << 8) | (buffer[1] & 0xff));
-        } else {
-            tempShort = (short)(((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff));
-        }
-
-        if ((tempShort & 0x0080) != 0) {
-            tempShort = (short)(tempShort | 0xff00);
-        }
-
-        return tempShort;
-    }
-
-    /**
-     * 
-     * @param bigEndian
-     */
-    public final int readUnsignedShort(boolean bigEndian) throws IOException{
-        byte[] buffer = new byte[2];
-        raFile.readFully(buffer);
-
-        if (bigEndian) {
-            return (((buffer[0] & 0xff) << 8) | (buffer[1] & 0xff));
-        } else {
-            return (((buffer[1] & 0xff) << 8) | (buffer[0] & 0xff));
-        }
-    }
-    
-    /**
-     * Reads the length of the characters from the file.
-     * 
-     * @param length         the length of the string
-     * @return               the string read from the file.
-     * @throws IOException   throw IOException if I/O error happens
-     */
-    public final String readString(int length) throws IOException {
-        if(length <= 0){
-            return null;
-        }
-        byte[] buffer = new byte[length];
-        raFile.readFully(buffer);
-        return new String(buffer);
     }
 }

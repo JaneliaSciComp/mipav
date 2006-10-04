@@ -1,6 +1,8 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.ActionCollectGarbage;
 import gov.nih.mipav.model.structures.*;
 
 import java.awt.*;
@@ -199,10 +201,12 @@ public class ViewJFrameRegisteredImages extends JFrame
         // The constructor below will work if the Delete button is added...:
         // JPanel buttonPan = new JPanel(new GridLayout(3,1));
         // ...other wise, use the following constructor:
-        JPanel buttonPan = new JPanel(new GridLayout(2, 1));
+        JPanel buttonPan = new JPanel(new GridLayout(3, 1));
 
         buttonPan.add(callToFrontbutton);
+        buttonPan.add(callDeletebutton);
         buttonPan.add(callGCbutton);
+        
         this.getContentPane().add(buttonPan, BorderLayout.SOUTH);
 
         surf = new ImageRegistryMonitor(UI);
@@ -251,10 +255,8 @@ public class ViewJFrameRegisteredImages extends JFrame
                 surf.stop(); // should update the display & memory values
             }
 
-            if (UI.isScriptRecording()) {
-                UI.getScriptDialog().append("CollectGarbage\n");
-            }
-        } else if (source == callDeletebutton) { // call the garbage collector
+            ScriptRecorder.getReference().addLine(new ActionCollectGarbage());
+        } else if (source == callDeletebutton) {
 
             // selectedName = get selected item from the list
             String selectedName = (String) imageList.getSelectedValue();

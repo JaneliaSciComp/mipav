@@ -87,19 +87,19 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
                 imageBuffer = new float[volume];
             }
 
-            buildProgressBar(srcImage.getImageName(), "Removing Selected Time Slices...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Removing Selected Time Slices...");
         } catch (OutOfMemoryError e) {
             imageBuffer = null;
             System.gc();
             displayError("Algorithm Remove Time Slices reports: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         T = 0; // start counting the slices of the destination image at the first slice.
 
@@ -107,7 +107,7 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
 
             // let user know something is happening by updating the progressbar
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (t) / (oldTdim - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (t) / (oldTdim - 1) * 100));
             }
 
             // so long as the slice has not been marked for removal, copy it all over.
@@ -153,7 +153,7 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
         destImage.calcMinMax(); // calculate the minimum & maximum intensity values for the destImage-image
 
         // Clean up and let the calling dialog know that algorithm did its job
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

@@ -178,11 +178,11 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
             }
 
             if (padMode == PAD_FRONT) {
-                buildProgressBar(srcImage.getImageName(), "Inserting front slices...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Inserting front slices...");
             } else if (padMode == PAD_BACK) {
-                buildProgressBar(srcImage.getImageName(), "Inserting back slices...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Inserting back slices...");
             } else if (padMode == PAD_HALF) {
-                buildProgressBar(srcImage.getImageName(), "Inserting front and back slices...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Inserting front and back slices...");
             }
         } catch (OutOfMemoryError e) {
             imageBuffer = null;
@@ -192,7 +192,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             tOldOffset = Xdim * Ydim * oldZdim * colorFactor * t;
@@ -203,8 +203,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
 
                 // let user know something is happening by updating the progressbar
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100),
-                                            runningInSeparateThread);
+                    fireProgressStateChanged(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100));
                 }
 
                 if (((z == 0) && (frontSlices > 0)) || ((z == oldZdim) && (backSlices > 0))) {
@@ -263,7 +262,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                     if (threadStopped) {
                         imageBuffer = null;
                         setCompleted(false);
-                        disposeProgressBar();
+                        
                         finalize();
 
                         return;
@@ -436,7 +435,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                 if (threadStopped) {
                     imageBuffer = null;
                     setCompleted(false);
-                    disposeProgressBar();
+                    
                     finalize();
 
                     return;
@@ -514,7 +513,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
         if (threadStopped) {
             imageBuffer = null;
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
@@ -543,7 +542,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
             }
 
             if (isProgressBarVisible()) {
-                progressBar.setMessage("Importing Image Data...");
+                fireProgressStateChanged("Importing Image Data...");
             }
 
             try {
@@ -581,7 +580,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                 displayError("Algorithm Pad With Slices reports: Out of memory getting results.");
                 srcImage.releaseLock();
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             } catch (IOException e2) {
@@ -590,7 +589,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                 displayError(e2.getMessage());
                 srcImage.releaseLock();
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
@@ -605,7 +604,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
         }
 
         // Clean up and let the calling dialog know that algorithm did its job
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

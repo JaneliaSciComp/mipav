@@ -91,10 +91,10 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
     public void runAlgorithm() {
         Vector fileVector = new Vector();
 
-        progressBar = new ViewJProgressBar("DCCIE Conversion", "Searching for images", 0, 100, false, null, null);
-        progressBar.updateValue(0, runningInSeparateThread);
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        progressBar.setVisible(true);
+        fireProgressStateChanged("DCCIE Conversion", "Searching for images");
+        fireProgressStateChanged(0);
+        
+        
 
         addFilesToVector(dirPath, fileVector);
 
@@ -104,25 +104,25 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
 
         if (size > 0) {
             float percentDone = 0;
-            progressBar.updateValue((int) percentDone, runningInSeparateThread);
+            fireProgressStateChanged((int) percentDone);
 
             for (int i = 0; i < size; i++) {
-                progressBar.setMessage("Opening image...");
+                fireProgressStateChanged("Opening image...");
                 runConversion((String) fileVector.elementAt(i));
                 System.gc();
 
                 percentDone += (100.0 / (float) size);
-                progressBar.updateValue((int) percentDone, runningInSeparateThread);
+                fireProgressStateChanged((int) percentDone);
             }
 
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
         } else {
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
             Preferences.debug("No files to convert" + "\n");
         }
 
         fileIO = null;
-        progressBar.setVisible(false);
+        
     }
 
     /**
@@ -235,7 +235,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
 
                 return;
             } else if (inputImage.getNDims() == 2) {
-                progressBar.setMessage("Saving image as tiff...");
+                fireProgressStateChanged("Saving image as tiff...");
                 inputImage.setImageName(fileName);
 
                 String patientID = null;
@@ -352,7 +352,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
                     ModelImage paddedImage = new ModelImage(inputImage.getType(), newExtents, "TEMPImage",
                                                             userInterface);
 
-                    progressBar.setMessage("Adding margins to image...");
+                    fireProgressStateChanged("Adding margins to image...");
 
                     AlgorithmAddMargins algoMarg = null;
 
@@ -386,9 +386,9 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
                     aviFile.setProgressBarVisible(false);
 
                     if (compression != 0) {
-                        progressBar.setMessage("Encoding image as compressed avi...");
+                        fireProgressStateChanged("Encoding image as compressed avi...");
                     } else {
-                        progressBar.setMessage("Saving image as avi...");
+                        fireProgressStateChanged("Saving image as avi...");
                     }
 
                     if (aviFile.writeImage(inputImage, null, lutA, null, null, null, 0, 0, 0, 0, 0,

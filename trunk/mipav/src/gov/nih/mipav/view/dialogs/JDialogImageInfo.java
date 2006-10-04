@@ -500,7 +500,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
     public String matrixFileMenu() {
         String fileName, directory;
         JFileChooser chooser;
-        ViewUserInterface UI = image.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         fileName = null;
 
         // bring up file dialog
@@ -616,7 +616,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
      * @param  fileName  name of the matrix file.
      */
     public void readTransformMatrixFile(String fileName) {
-        ViewUserInterface UI = image.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         JDialogOrientMatrix diaglogMatrix = null;
         TransMatrix matrix = new TransMatrix(DIM + 1);
         matrix.identity();
@@ -836,7 +836,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         JLabel transformIDLabel = new JLabel("Transform ID:");
@@ -953,7 +953,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(5, 5, 5, 5);
@@ -966,7 +966,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
 
             namePanel.add(linkLabel, gbc);
             gbc.gridx = 1;
-            gbc.gridwidth = gbc.REMAINDER;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
 
             JPanel linkedImagePanel = new JPanel();
             linkedImageField = new JTextField(40);
@@ -1006,19 +1006,19 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
 
         namePanel.add(nameLabel, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         namePanel.add(nameText, gbc);
         gbc.gridx = 0;
         gbc.gridy++;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
         namePanel.add(modalityLabel, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         namePanel.add(modalityBox, gbc);
 
@@ -1069,21 +1069,21 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 2;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         orientPanel.add(orientIconLabel, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         orientPanel.add(orientLabel, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         orientPanel.add(orientBox, gbc);
 
@@ -1105,13 +1105,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         orientPanel.add(orientLabelX, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         orientPanel.add(orientationBox1, gbc);
 
@@ -1126,13 +1126,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
         orientPanel.add(orientLabelY, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         orientPanel.add(orientationBox2, gbc);
 
@@ -1147,13 +1147,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
 
         gbc.gridx = 0;
         gbc.gridy = 4;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
         orientPanel.add(orientLabelZ, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         orientPanel.add(orientationBox3, gbc);
 
@@ -1277,7 +1277,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
         labelPanel.add(dim1, gbc);
         gbc.gridy = 1;
@@ -1298,9 +1298,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         gbc.insets = new Insets(5, 5, 5, 5);
         gbc.gridx = 1;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         labelPanel.add(textRes1, gbc);
         gbc.gridy = 1;
         labelPanel.add(textRes2, gbc);
@@ -1317,8 +1317,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.NORTHWEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weighty = 1;
         resolPanel.add(labelPanel, gbc);
         gbc.gridx = 1;
@@ -1411,7 +1411,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
         labelPanel.add(dim1, gbc);
         gbc.gridy = 1;
@@ -1425,9 +1425,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         // labelPanel.add(dim5, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         labelPanel.add(textSt1, gbc);
         gbc.gridy = 1;
         labelPanel.add(textSt2, gbc);
@@ -1442,8 +1442,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.NORTHWEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weighty = 1;
         stPanel.add(labelPanel, gbc);
 
@@ -1522,8 +1522,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(3, 5, 3, 5);
 
         // orig AC

@@ -957,7 +957,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         opacityPanel.setLayout(gbLayout);
         gbConstraints.weightx = 1;
         gbConstraints.weighty = 1;
-        gbConstraints.fill = gbConstraints.BOTH;
+        gbConstraints.fill = GridBagConstraints.BOTH;
         gbConstraints.anchor = GridBagConstraints.NORTH;
         gbLayout.setConstraints(surRender.getVolOpacityPanel().getMainPanel(), gbConstraints);
         opacityPanel.add(surRender.getVolOpacityPanel().getMainPanel());
@@ -3016,7 +3016,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         gbc2.gridy = 0;
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
-        gbc2.anchor = gbc2.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
 
         gbc2.weightx = 1;
         gbc2.weighty = 1;

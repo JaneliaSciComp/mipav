@@ -239,7 +239,6 @@ public class VOI extends ModelSerialCloneable {
         this.watershedID = id;
         this.active = false;
         this.process = true;
-        this.curveType = curveType;
         curves = new Vector[zDim];
         for (int i = 0; i < zDim; i++ ) {
             curves[i] = new Vector();

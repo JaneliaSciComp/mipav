@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,8 +25,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmFrequencyFilter
  */
-public class JDialogFrequencyFilter extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, ItemListener {
+public class JDialogFrequencyFilter extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -65,9 +66,6 @@ public class JDialogFrequencyFilter extends JDialogBase
 
     /** DOCUMENT ME! */
     private int butterworthOrder;
-
-    /** DOCUMENT ME! */
-    private JPanel buttonPanel;
 
     /** DOCUMENT ME! */
     private ButtonGroup constructionGroup;
@@ -151,9 +149,6 @@ public class JDialogFrequencyFilter extends JDialogBase
     private JRadioButton newImage;
 
     /** DOCUMENT ME! */
-    private JPanel optionsPanel;
-
-    /** DOCUMENT ME! */
     private JRadioButton replaceImage;
 
     /** DOCUMENT ME! */
@@ -197,7 +192,7 @@ public class JDialogFrequencyFilter extends JDialogBase
     public JDialogFrequencyFilter(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -279,8 +274,6 @@ public class JDialogFrequencyFilter extends JDialogBase
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmFrequencyFilter) {
 
             if ((algorithm.isCompleted() == true) && (resultImage != null)) {
@@ -292,7 +285,7 @@ public class JDialogFrequencyFilter extends JDialogBase
                 try {
 
                     // resultImage.setImageName("Frequency Filtered image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -309,7 +302,8 @@ public class JDialogFrequencyFilter extends JDialogBase
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame)
+                                                                                        (imageFrames.elementAt(i)));
                     }
                 }
 
@@ -327,7 +321,9 @@ public class JDialogFrequencyFilter extends JDialogBase
                 resultImage = null;
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         FrequencyFilterAlgo.finalize();
@@ -342,102 +338,6 @@ public class JDialogFrequencyFilter extends JDialogBase
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FrequencyFilter " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + image25D + " " + imageCrop + " " + kernelDiameter +
-                                                           " " + filterType + " " + freq1 + " " + freq2 + " " +
-                                                           constructionMethod + " " + butterworthOrder + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + image25D + " " + imageCrop + " " + kernelDiameter +
-                                                           " " + filterType + " " + freq1 + " " + freq2 + " " +
-                                                           constructionMethod + " " + butterworthOrder + "\n");
-                }
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setImage25D(parser.getNextBoolean());
-            setImageCrop(parser.getNextBoolean());
-            setDiameter(parser.getNextInteger());
-            setFilterType(parser.getNextInteger());
-            setFreq1(parser.getNextFloat());
-            setFreq2(parser.getNextFloat());
-            setMethod(parser.getNextInteger());
-            setButterworthOrder(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -531,7 +431,7 @@ public class JDialogFrequencyFilter extends JDialogBase
      * Once all the necessary variables are set, call the Frequency Filter algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         image.setOriginalCropCheckbox(imageCrop);
 
         String name = makeImageName(image.getImageName(), "_freqFilter");
@@ -552,6 +452,7 @@ public class JDialogFrequencyFilter extends JDialogBase
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FrequencyFilterAlgo.addListener(this);
+                createProgressBar(image.getImageName(), FrequencyFilterAlgo);
 
                 // Hide dialog since the algorithm is about to run
                 setVisible(false);
@@ -563,9 +464,6 @@ public class JDialogFrequencyFilter extends JDialogBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        FrequencyFilterAlgo.setProgressBarVisible(false);
-                    }
 
                     FrequencyFilterAlgo.run();
                 }
@@ -594,6 +492,8 @@ public class JDialogFrequencyFilter extends JDialogBase
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FrequencyFilterAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), FrequencyFilterAlgo);
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -618,9 +518,7 @@ public class JDialogFrequencyFilter extends JDialogBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        FrequencyFilterAlgo.setProgressBarVisible(false);
-                    }
+
 
                     FrequencyFilterAlgo.run();
                 }
@@ -630,6 +528,57 @@ public class JDialogFrequencyFilter extends JDialogBase
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setImageCrop(scriptParameters.getParams().getBoolean("do_crop_image"));
+        setDiameter(scriptParameters.getParams().getInt("kernel_diameter"));
+        setFilterType(scriptParameters.getParams().getInt("filter_type"));
+        setFreq1(scriptParameters.getParams().getFloat("freq1"));
+        setFreq2(scriptParameters.getParams().getFloat("freq2"));
+        setMethod(scriptParameters.getParams().getInt("construction_method"));
+        setButterworthOrder(scriptParameters.getParams().getInt("butterworth_order"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.storeProcess3DAs25D(image25D);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_crop_image", imageCrop));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_diameter", kernelDiameter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_type", filterType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq1", freq1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("freq2", freq2));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("construction_method", constructionMethod));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
     }
 
     /**
@@ -781,7 +730,7 @@ public class JDialogFrequencyFilter extends JDialogBase
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 3;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
 
         gbc.gridx = 0;
@@ -910,13 +859,13 @@ public class JDialogFrequencyFilter extends JDialogBase
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         filterPanel.add(lowPass, gbc);
         gbc.gridx = 1;
         filterPanel.add(labelF1, gbc);
         gbc.gridx = 2;
         gbc.weightx = .5;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         filterPanel.add(textF1, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -934,7 +883,7 @@ public class JDialogFrequencyFilter extends JDialogBase
         mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(optionsPanel, gbc);
         gbc.gridy = 1;
         mainPanel.add(constructionPanel, gbc);

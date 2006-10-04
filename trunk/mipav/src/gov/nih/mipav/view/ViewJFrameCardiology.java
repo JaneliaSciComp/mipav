@@ -4,6 +4,8 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
@@ -214,11 +216,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
             }
         }
 
-        if (userInterface.isScriptRecording()) {
-            userInterface.getScriptDialog().append("CloseFrame " +
-                                                   userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                   "\n");
-        }
+        ScriptRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
 
         if ((imageA != null) && (imageA.getHistoLUTFrame() != null)) {
             imageA.getHistoLUTFrame().dispose();
@@ -1886,7 +1884,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
     private void initComponentImage(int[] extents) throws OutOfMemoryError {
 
         componentImage = new ViewJComponentCardiology(this, imageA, LUTa, imageBufferA, pixBuffer, zoom, extents,
-                                                      logMagDisplay, FileInfoBase.UNKNOWN_ORIENT );
+                                                      logMagDisplay, FileInfoBase.UNKNOWN_ORIENT);
 
         componentImage.setBuffers(imageBufferA, null, pixBuffer, null);
 

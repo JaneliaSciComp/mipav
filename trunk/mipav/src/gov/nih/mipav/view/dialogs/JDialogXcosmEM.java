@@ -2,7 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -27,7 +28,7 @@ import javax.swing.*;
  * @author   not attributable
  * @version  1.0
  */
-public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -43,7 +44,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
     int percentIterationsOriginalSize = 100;
 
     /** DOCUMENT ME! */
-    int percentIterationsQuaterSize = 0;
+    int percentIterationsQuarterSize = 0;
 
     /** DOCUMENT ME! */
     AlgorithmXcosmEM xcosmEMAlgo;
@@ -53,9 +54,6 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
 
     /** DOCUMENT ME! */
     private float decayConstant = 1.0f;
-
-    /** DOCUMENT ME! */
-    private long end;
 
     /** DOCUMENT ME! */
     private boolean entireImage = true;
@@ -94,9 +92,6 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private long start;
-
-    /** DOCUMENT ME! */
     private JTextField textBackupNumberIterations;
 
     /** DOCUMENT ME! */
@@ -112,7 +107,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
     private JTextField textPercentIterationsOriginalSize;
 
     /** DOCUMENT ME! */
-    private JTextField textPercentIterationsQuaterSize;
+    private JTextField textpercentIterationsQuarterSize;
 
     /** DOCUMENT ME! */
     private JTextField textTotalNumberIterations;
@@ -124,12 +119,17 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
     private int totalNumberIterations = 100;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI = null;
+    private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
     private int windowLowerLimit = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Empty constructor needed for dynamic instantiation (used during scripting).
+     */
+    public JDialogXcosmEM() { }
 
     /**
      * Creates new dialog.
@@ -141,7 +141,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         super(theParentFrame, true);
 
         originalImage = im;
-        UI = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -174,7 +174,6 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
      * @param  algorithm  DOCUMENT ME!
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
 
         if (((algorithm instanceof AlgorithmXcosmEM) && (xcosmEMAlgo.isCompleted() == true)) && (resultImage != null)) {
 
@@ -182,13 +181,15 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
             resultImage.clearMask();
 
             try {
-                imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: unable to open new frame");
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
 
             xcosmEMAlgo.finalize();
             xcosmEMAlgo = null;
@@ -197,78 +198,115 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
 
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
+     * or not there is a separate destination image.
      */
-    public void insertScriptLine(AlgorithmBase algo) {
+    protected void callAlgorithm() {
+        String name;
+        name = makeImageName(originalImage.getImageName(), "_em");
 
-        if (algo.isCompleted()) {
-            //            if ( userInterface.isScriptRecording() ) {
-            //                //check to see if the match image is already in the ImgTable
-            //                if ( userInterface.getScriptDialog().getImgTableVar( srcImage.getImageName() ) == null ) {
-            //                    if ( userInterface.getScriptDialog().getActiveImgTableVar( srcImage.getImageName() ) == null ) {
-            //                        userInterface.getScriptDialog().putActiveVar( srcImage.getImageName() );
-            //                    }
-            //                }
+        try {
 
-            //                userInterface.getScriptDialog().append(
-            //                        "CoherenceEnhancingDiffusion "
-            //                                + userInterface.getScriptDialog().getVar( srcImage.getImageName() ) + " " );
-            // if (displayLoc == NEW) {
-            //                userInterface.getScriptDialog().putVar( resultImage.getImageName() );
-            //                userInterface.getScriptDialog().append(
-            //                        userInterface.getScriptDialog().getVar( resultImage.getImageName() ) + " " + numIterations + " "
-            //                        + diffusitivityDenom + " " + derivativeScale + " " + gaussianScale + " " + do25D + " "
-            //                        + entireImage + "\n" );
-            // }
-            /*else {
-             * userInterface.getScriptDialog().append(userInterface. getScriptDialog().getVar(image.getImageName()) + "
-             * " + + numIterations + " " + diffusitivityDenom + " " + derivativeScale + " " + gaussianScale + " " +
-             * do25D + "\n"); }*/
-            //            }
-        }
-    }
+            if (originalImage.isColorImage()) {
+                resultImage = new ModelImage(originalImage.getType(), originalImage.getExtents(), name, userInterface);
+            } else {
+                resultImage = new ModelImage(ModelStorageBase.FLOAT, originalImage.getExtents(), name, userInterface);
+            }
 
+            xcosmEMAlgo = new AlgorithmXcosmEM(resultImage, originalImage, psfImage, windowLowerLimit, estimateDecay,
+                                               decayConstant, percentIterationsOriginalSize, percentIterationsHalfSize,
+                                               percentIterationsQuarterSize, totalNumberIterations,
+                                               backupNumberIterations, penaltyIntensity, penaltyValue);
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed or failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            xcosmEMAlgo.addListener(this);
+
+            createProgressBar(originalImage.getImageName(), xcosmEMAlgo);
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (xcosmEMAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+
+                if (!userInterface.isAppFrameVisible()) {
+                    xcosmEMAlgo.setProgressBarVisible(false);
+                }
+
+                xcosmEMAlgo.run();
+            } // end if (isRunInSeparateThread())
+
+        } catch (OutOfMemoryError x) {
+            MipavUtil.displayError("JDialogXcosmEM: unable to allocate enough memory");
+
+            if (resultImage != null) {
+                resultImage.disposeLocal(); // Clean up memory of result image
+                resultImage = null;
+            }
+
+            return;
+        } // end try()=catch()
+
+        dispose();
+    } // end callAlgorithm()
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try { }
-        catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        //        callAlgorithm();
-        if (!srcImageKey.equals(destImageKey)) {
-            //            parser.putVariable( destImageKey, getResultImage().getImageName() );
-        }
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        originalImage = scriptParameters.retrieveInputImage();
+        psfImage = scriptParameters.retrieveImage("psf_image");
+
+        userInterface = originalImage.getUserInterface();
+        parentFrame = originalImage.getParentFrame();
+
+        windowLowerLimit = scriptParameters.getParams().getInt("window_lower_limit");
+        estimateDecay = scriptParameters.getParams().getBoolean("do_estimate_decay");
+        decayConstant = scriptParameters.getParams().getFloat("decay_constant");
+        percentIterationsOriginalSize = scriptParameters.getParams().getInt("percent_iterations_original_size");
+        percentIterationsHalfSize = scriptParameters.getParams().getInt("percent_iterations_half_size");
+        percentIterationsQuarterSize = scriptParameters.getParams().getInt("percent_iterations_quarter_size");
+        totalNumberIterations = scriptParameters.getParams().getInt("total_num_iterations");
+        backupNumberIterations = scriptParameters.getParams().getInt("backup_num_iterations");
+        penaltyIntensity = scriptParameters.getParams().getBoolean("penalty_intensity");
+        penaltyValue = scriptParameters.getParams().getFloat("penalty_value");
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(originalImage);
+        scriptParameters.storeImage(psfImage, "psf_image");
+        AlgorithmParameters.storeImageInRecorder(resultImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("window_lower_limit", windowLowerLimit));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_estimate_decay", estimateDecay));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("decay_constant", decayConstant));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("percent_iterations_original_size",
+                                                                       percentIterationsOriginalSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("percent_iterations_half_size",
+                                                                       percentIterationsHalfSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("percent_iterations_quarter_size",
+                                                                       percentIterationsQuarterSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("total_num_iterations", totalNumberIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("backup_num_iterations",
+                                                                       backupNumberIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("penalty_intensity", penaltyIntensity));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("penalty_value", penaltyValue));
+    }
 
     /**
      * Builds a list of images. Returns combobox. List must be all color or all black and white.
@@ -278,7 +316,6 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
      * @return  Newly created combo box.
      */
     private JComboBox buildComboBox(ModelImage image) {
-        ViewUserInterface UI;
         ModelImage nextImage;
         boolean doAdd;
         int i;
@@ -287,17 +324,17 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
-        Enumeration names = UI.getRegisteredImageNames();
+        Enumeration names = userInterface.getRegisteredImageNames();
 
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
 
             if (!name.equals(image.getImageName())) {
-                nextImage = UI.getRegisteredImageByName(name);
+                nextImage = userInterface.getRegisteredImageByName(name);
 
-                if (UI.getFrameContainingImage(nextImage) != null) {
+                if (userInterface.getFrameContainingImage(nextImage) != null) {
 
                     if ((image.isColorImage() == nextImage.isColorImage()) &&
                             (image.getNDims() == nextImage.getNDims())) {
@@ -321,63 +358,6 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         return comboBox;
     }
 
-
-    /**
-     * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
-     * or not there is a separate destination image.
-     */
-    private void callAlgorithm() {
-        start = System.currentTimeMillis();
-
-        String name;
-        name = makeImageName(originalImage.getImageName(), "_em");
-
-        try {
-
-            if (originalImage.isColorImage()) {
-                resultImage = new ModelImage(originalImage.getType(), originalImage.getExtents(), name, UI);
-            } else {
-                resultImage = new ModelImage(ModelStorageBase.FLOAT, originalImage.getExtents(), name, UI);
-            }
-
-            xcosmEMAlgo = new AlgorithmXcosmEM(resultImage, originalImage, psfImage, windowLowerLimit, estimateDecay,
-                                               decayConstant, percentIterationsOriginalSize, percentIterationsHalfSize,
-                                               percentIterationsQuaterSize, totalNumberIterations,
-                                               backupNumberIterations, penaltyIntensity, penaltyValue);
-
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed or failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            xcosmEMAlgo.addListener(this);
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (xcosmEMAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-                if (!UI.isAppFrameVisible()) {
-                    xcosmEMAlgo.setProgressBarVisible(false);
-                }
-
-                xcosmEMAlgo.run();
-            } // end if (isRunInSeparateThread())
-
-        } catch (OutOfMemoryError x) {
-            MipavUtil.displayError("JDialogXcosmEM: unable to allocate enough memory");
-
-            if (resultImage != null) {
-                resultImage.disposeLocal(); // Clean up memory of result image
-                resultImage = null;
-            }
-
-            return;
-        } // end try()=catch()
-
-        dispose();
-    } // end callAlgorithm()
-
     /**
      * DOCUMENT ME!
      */
@@ -398,7 +378,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         imageComboBox = buildComboBox(originalImage);
         imageComboBox.addItemListener(this);
 
-        UI = originalImage.getUserInterface();
+        userInterface = originalImage.getUserInterface();
 
         String selectedName = (String) imageComboBox.getSelectedItem();
 
@@ -408,7 +388,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
             return;
         }
 
-        psfImage = UI.getRegisteredImageByName(selectedName);
+        psfImage = userInterface.getRegisteredImageByName(selectedName);
 
         // Window lower limit in Z
         JLabel labelWindowLowerLimit = new JLabel("Window lower limit in Z ");
@@ -460,15 +440,15 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         textPercentIterationsHalfSize.setFont(serif12);
 
         // Percent Iterations at Quater Size
-        JLabel labelPercentIterationsQuaterSize = new JLabel("Quater Size Iteration Percentage");
-        labelPercentIterationsQuaterSize.setFont(serif12);
+        JLabel labelpercentIterationsQuarterSize = new JLabel("Quater Size Iteration Percentage");
+        labelpercentIterationsQuarterSize.setFont(serif12);
 
-        textPercentIterationsQuaterSize = new JTextField();
-        textPercentIterationsQuaterSize.setColumns(5);
-        textPercentIterationsQuaterSize.setMaximumSize(labelWindowLowerLimit.getPreferredSize());
-        textPercentIterationsQuaterSize.setHorizontalAlignment(JTextField.RIGHT);
-        textPercentIterationsQuaterSize.setText(Integer.toString(percentIterationsQuaterSize));
-        textPercentIterationsQuaterSize.setFont(serif12);
+        textpercentIterationsQuarterSize = new JTextField();
+        textpercentIterationsQuarterSize.setColumns(5);
+        textpercentIterationsQuarterSize.setMaximumSize(labelWindowLowerLimit.getPreferredSize());
+        textpercentIterationsQuarterSize.setHorizontalAlignment(JTextField.RIGHT);
+        textpercentIterationsQuarterSize.setText(Integer.toString(percentIterationsQuarterSize));
+        textpercentIterationsQuarterSize.setFont(serif12);
 
 
         // Number of Iterations
@@ -497,7 +477,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
@@ -544,9 +524,9 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
 
         gbc.gridy++;
         gbc.gridx = 0;
-        parameterPanel.add(labelPercentIterationsQuaterSize, gbc);
+        parameterPanel.add(labelpercentIterationsQuarterSize, gbc);
         gbc.gridx = 1;
-        parameterPanel.add(textPercentIterationsQuaterSize, gbc);
+        parameterPanel.add(textpercentIterationsQuarterSize, gbc);
 
 
         gbc.gridy++;
@@ -567,13 +547,15 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
 
         radioIntensity = new JRadioButton("Intensity Penalty", penaltyIntensity);
         radioIntensity.setFont(MipavUtil.font12);
-        //        radioIntensity.setActionCommand("EntireImage");
+
+        // radioIntensity.setActionCommand("EntireImage");
         radioIntensity.addActionListener(this);
         penaltyGroup.add(radioIntensity);
 
         radioRoughness = new JRadioButton("Roughness Penalty", !penaltyIntensity);
         radioRoughness.setFont(MipavUtil.font12);
-        //        radioRoughness.setActionCommand("VOIRegion");
+
+        // radioRoughness.setActionCommand("VOIRegion");
         radioRoughness.addActionListener(this);
         penaltyGroup.add(radioRoughness);
 
@@ -625,7 +607,7 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         gbc.gridx = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
 
@@ -650,10 +632,10 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
     private boolean setVariables() {
         String tmpStr;
 
-        UI = originalImage.getUserInterface();
+        userInterface = originalImage.getUserInterface();
 
         String selectedName = (String) imageComboBox.getSelectedItem();
-        psfImage = UI.getRegisteredImageByName(selectedName);
+        psfImage = userInterface.getRegisteredImageByName(selectedName);
 
         if (psfImage == null) {
             return false;
@@ -673,8 +655,8 @@ public class JDialogXcosmEM extends JDialogBase implements AlgorithmInterface, S
         tmpStr = textPercentIterationsHalfSize.getText();
         percentIterationsHalfSize = Integer.parseInt(tmpStr);
 
-        tmpStr = textPercentIterationsQuaterSize.getText();
-        percentIterationsQuaterSize = Integer.parseInt(tmpStr);
+        tmpStr = textpercentIterationsQuarterSize.getText();
+        percentIterationsQuarterSize = Integer.parseInt(tmpStr);
 
         tmpStr = textTotalNumberIterations.getText();
         totalNumberIterations = Integer.parseInt(tmpStr);

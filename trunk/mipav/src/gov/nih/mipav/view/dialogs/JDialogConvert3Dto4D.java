@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,7 +22,7 @@ import javax.swing.*;
  * require user input and to be consistent with the dialog/algorithm paradigm. In should be noted, that the algorithms
  * are executed in their own thread.** replaces image
  */
-public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogConvert3Dto4D extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -37,13 +39,6 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private AlgorithmConvert3Dto4D convert3Dto4DAlgo;
-
-    /**
-     * Script records a closeFrame from the line ((ViewJFrameBase) parentFrame).close(); which calls
-     * ViewJFrameImage.close(). If executing script, don't call close() here or both this close() and the closeFrame
-     * would occur.
-     */
-    private boolean doClose = true;
 
     /** DOCUMENT ME! */
     private ModelImage image = null; // source image
@@ -73,12 +68,6 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
     private JTextField textVolumeLength;
 
     /** DOCUMENT ME! */
-    private String[] titles;
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
     private int volumeLength;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -98,24 +87,7 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
         super(theParentFrame, false);
         image = im;
         imageName = image.getImageName();
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogConvert3Dto4D(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        imageName = image.getImageName();
-        parentFrame = im.getParentFrame();
-        doClose = false;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -151,26 +123,15 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
 
         if (algorithm instanceof AlgorithmConvert3Dto4D) {
             resultImage = convert3Dto4DAlgo.getResultImage();
 
             if ((convert3Dto4DAlgo.isCompleted() == true) && (resultImage != null)) {
-                resultImage.setImageName(imageName);
-
-                Dimension parentLocation;
-
-                if (parentFrame != null) {
-                    parentLocation = new Dimension(parentFrame.getLocationOnScreen().x,
-                                                   parentFrame.getLocationOnScreen().y);
-                } else {
-                    parentLocation = new Dimension(Toolkit.getDefaultToolkit().getScreenSize().width / 2,
-                                                   Toolkit.getDefaultToolkit().getScreenSize().height / 2);
-                }
+                resultImage.setImageName(imageName + "_4D");
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, parentLocation);
+                    new ViewJFrameImage(resultImage, null, ViewUserInterface.getReference().getNewFrameLocation());
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -182,56 +143,13 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
             }
         }
 
-        insertScriptLine(algorithm);
-
-        if ((parentFrame != null) && doClose && !userInterface.isScriptRecording()) {
-            ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
-            ((ViewJFrameBase) (parentFrame)).close();
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
         }
 
         convert3Dto4DAlgo.finalize();
         convert3Dto4DAlgo = null;
         dispose();
-    }
-
-    /**
-     * Runs the algorithm.
-     */
-    public void callAlgorithm() {
-
-        try {
-            System.gc();
-
-            // Make algorithm
-            convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(image, volumeLength, res3, res4, measure3, measure4);
-
-            // This is very important. Adding this object as a listener allows the algorithm to
-            // notify this object when it has completed of failed. See algorithm performed event.
-            // This is made possible by implementing AlgorithmedPerformed interface
-            convert3Dto4DAlgo.addListener(this);
-
-            // Hide dialog
-            setVisible(false);
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (convert3Dto4DAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    convert3Dto4DAlgo.setProgressBarVisible(false);
-                }
-
-                convert3Dto4DAlgo.run();
-            }
-        } catch (OutOfMemoryError x) {
-            System.gc();
-            MipavUtil.displayError("JDialogConvert3Dto4D: unable to allocate enough memory");
-
-            return;
-        }
     }
 
     /**
@@ -243,84 +161,6 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append("Convert3Dto4D " +
-                                                       userInterface.getScriptDialog().getVar(imageName) + " " +
-                                                       userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " " + volumeLength + " " + res3 + " " + res4 + " " + measure3 +
-                                                       " " + measure4 + " " + "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-        doClose = false;
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setVolumeLength(parser.getNextInteger());
-            setResolution3Dim(parser.getNextFloat());
-            setResolution4Dim(parser.getNextFloat());
-            setResolutionUnit3Dim(parser.getNextInteger());
-            setResolutionUnit4Dim(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
 
     /**
      * Accessor that sets the resolution for the 3rd dimension.
@@ -368,6 +208,79 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
     }
 
     /**
+     * Runs the algorithm.
+     */
+    protected void callAlgorithm() {
+
+        try {
+            System.gc();
+
+            // Make algorithm
+            convert3Dto4DAlgo = new AlgorithmConvert3Dto4D(image, volumeLength, res3, res4, measure3, measure4);
+
+            // This is very important. Adding this object as a listener allows the algorithm to
+            // notify this object when it has completed of failed. See algorithm performed event.
+            // This is made possible by implementing AlgorithmedPerformed interface
+            convert3Dto4DAlgo.addListener(this);
+
+            createProgressBar(image.getImageName(), convert3Dto4DAlgo);
+
+            // Hide dialog
+            setVisible(false);
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (convert3Dto4DAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                convert3Dto4DAlgo.run();
+            }
+        } catch (OutOfMemoryError x) {
+            System.gc();
+            MipavUtil.displayError("JDialogConvert3Dto4D: unable to allocate enough memory");
+
+            return;
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        parentFrame = image.getParentFrame();
+
+        volumeLength = scriptParameters.getParams().getInt("volume_length");
+        res3 = scriptParameters.getParams().getFloat("3_dim_resolution");
+        res4 = scriptParameters.getParams().getFloat("4_dim_resolution");
+        measure3 = scriptParameters.getParams().getInt("3_dim_unit");
+        measure4 = scriptParameters.getParams().getInt("4_dim_unit");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("volume_length", volumeLength));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_resolution", res3));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_resolution", res4));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("3_dim_unit", measure3));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("4_dim_unit", measure4));
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -383,7 +296,7 @@ public class JDialogConvert3Dto4D extends JDialogBase implements AlgorithmInterf
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;

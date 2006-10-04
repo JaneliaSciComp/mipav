@@ -4,9 +4,12 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -27,26 +30,17 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmUnsharpMask
  */
-public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogUnsharpMask extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3776616289889677111L;
 
+    /** DOCUMENT ME! */
+    private static final String DELIMITER = ",";
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private final String DELIMITER = ",";
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -58,66 +52,13 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
     private JCheckBox image25DCheckbox;
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
-
-    /** DOCUMENT ME! */
-    private JLabel labelCorrected;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussX;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussY;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussZ;
-
-    /** DOCUMENT ME! */
-    private JLabel labelWeight;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private float normFactor = 1; // normalization factor to adjust for resolution
-
-    /** or if the source image is to be replaced. */
-    private boolean regionFlag; // true = apply algorithm to the whole image
-
-    // false = apply algorithm only to VOI regions
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
-    /** difference between x,y resolutions (in plane) and z resolution (between planes). */
-    private JCheckBox resolutionCheckbox;
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private JPanel scalePanel;
-
-    /** DOCUMENT ME! */
-    private float scaleX;
-
-    /** DOCUMENT ME! */
-    private float scaleY;
-
-    /** DOCUMENT ME! */
-    private float scaleZ;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussX;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussY;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussZ;
+    private JPanelSigmas sigmaPanel;
 
     /** DOCUMENT ME! */
     private JTextField textWeight;
@@ -126,25 +67,13 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private String tmpStr;
-
-    /** DOCUMENT ME! */
     private AlgorithmUnsharpMask unsharpMaskAlgo;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
     private float weight;
-
-    /** DOCUMENT ME! */
-    private JPanel weightPanel;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -162,23 +91,9 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
     public JDialogUnsharpMask(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogUnsharpMask(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -215,8 +130,6 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmUnsharpMask) {
             image.clearMask();
 
@@ -229,7 +142,7 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                 try {
 
                     // resultImage.setImageName("Unsharp mask");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -260,11 +173,11 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                 resultImage.disposeLocal(); // clean up memory
                 resultImage = null;
             }
-        }
-        // Update frame
-        // ((ViewJFrameBase)parentFrame).updateImages(true);
 
-        insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+        }
 
         saveDefaults();
 
@@ -274,69 +187,12 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
-     * focusLost - when the user clicks the mouse out of a text field, resets the neccessary variables.
-     *
-     * @param  event  event that triggers this function
-     */
-    public void focusLost(FocusEvent event) {
-        Object source = event.getSource();
-        float tempNum;
-
-        if (source == textGaussZ) {
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        }
-    }
-
-    /**
      * Accessor that returns the image.
      *
      * @return  the result image
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("UnsharpMask " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + regionFlag + " " + image25D + " " + scaleX + " " +
-                                                           scaleY + " " + scaleZ + " " + weight + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + regionFlag + " " + image25D + " " + scaleX + " " +
-                                                           scaleY + " " + scaleZ + " " + weight + "\n");
-                }
-            }
-        }
     }
 
     // *******************************************************************
@@ -350,29 +206,9 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-        float tempNum;
 
-        if (source == resolutionCheckbox) {
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        } else if (source == image25DCheckbox) {
-
-            if (image25DCheckbox.isSelected()) {
-                resolutionCheckbox.setEnabled(false); // Image is only 2D or 2.5D, thus this checkbox
-                labelGaussZ.setEnabled(false); // is not relevent
-                textGaussZ.setEnabled(false);
-                labelCorrected.setEnabled(false);
-            } else {
-                resolutionCheckbox.setEnabled(true);
-                labelGaussZ.setEnabled(true);
-                textGaussZ.setEnabled(true);
-                labelCorrected.setEnabled(true);
-            }
+        if (source == image25DCheckbox) {
+            sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
     }
 
@@ -387,24 +223,16 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, DELIMITER);
 
-                textGaussX.setText(st.nextToken());
-                textGaussY.setText(st.nextToken());
-                textGaussZ.setText(st.nextToken());
+                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
                 textWeight.setText(st.nextToken());
 
-                if (MipavUtil.getBoolean(st)) {
-                    newImage.setSelected(true);
-                } else {
-                    replaceImage.setSelected(true);
-                }
+                outputPanel.setOutputNewImage(MipavUtil.getBoolean(st));
 
-                if (MipavUtil.getBoolean(st)) {
-                    wholeImage.setSelected(true);
-                } else {
-                    VOIRegions.setSelected(true);
-                }
+                outputPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
 
-                resolutionCheckbox.setSelected(MipavUtil.getBoolean(st));
+                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
             } catch (NoSuchElementException nsee) {
                 return;
@@ -422,86 +250,16 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = scaleX + DELIMITER;
-        defaultsString += scaleY + DELIMITER;
-        defaultsString += textGaussZ.getText() + DELIMITER;
+        String defaultsString = sigmaPanel.getUnnormalized3DSigmas()[0] + DELIMITER;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[1] + DELIMITER;
+        defaultsString += sigmaPanel.getUnnormalized3DSigmas()[2] + DELIMITER;
         defaultsString += textWeight.getText() + DELIMITER;
-        defaultsString += newImage.isSelected() + DELIMITER;
-        defaultsString += wholeImage.isSelected() + DELIMITER;
-        defaultsString += resolutionCheckbox.isSelected() + DELIMITER;
+        defaultsString += outputPanel.isOutputNewImageSet() + DELIMITER;
+        defaultsString += outputPanel.isProcessWholeImageSet() + DELIMITER;
+        defaultsString += sigmaPanel.isResolutionCorrectionEnabled() + DELIMITER;
         defaultsString += image25DCheckbox.isSelected();
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            setScaleX(parser.getNextFloat());
-            setScaleY(parser.getNextFloat());
-            setScaleZ(parser.getNextFloat());
-            setWeight(parser.getNextFloat());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
     }
 
     /**
@@ -514,55 +272,19 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
-    }
-
-    /**
-     * Accessor that sets the x scale.
-     *
-     * @param  scale  Value to set x scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleX(float scale) {
-        scaleX = scale;
-    }
-
-    /**
-     * Accessor that sets the y scale.
-     *
-     * @param  scale  Value to set y scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleY(float scale) {
-        scaleY = scale;
-    }
-
-    /**
-     * Accessor that sets the z scale.
-     *
-     * @param  scale  Value to set z scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleZ(float scale) {
-        scaleZ = scale;
-    }
-
-    /**
      * Accessor that sets the weight.
      *
-     * @param  w  Value to set weight to.
+     * @param  val  Value to set weight to.
      */
-    public void setWeight(float w) {
-        weight = w;
+    public void setWeight(float val) {
+        weight = val;
     }
 
     /**
      * Once all the necessary variables are set, call the UnsharpMark algorithm based on what type of image this is and
      * whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_unsharp");
 
         if (image.getNDims() == 2) { // source image is 2D
@@ -571,11 +293,9 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
 
-            float[] sigmas = new float[2];
-            sigmas[0] = scaleX; // set standard deviations (sigma) in X and Y
-            sigmas[1] = scaleY;
+            float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -593,13 +313,16 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                     }
 
                     // Make algorithm
-                    unsharpMaskAlgo = new AlgorithmUnsharpMask(resultImage, image, sigmas, weight, regionFlag, false);
+                    unsharpMaskAlgo = new AlgorithmUnsharpMask(resultImage, image, sigmas, weight,
+                                                               outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     unsharpMaskAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), unsharpMaskAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -610,6 +333,7 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -632,13 +356,16 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    unsharpMaskAlgo = new AlgorithmUnsharpMask(image, sigmas, weight, regionFlag, false);
+                    unsharpMaskAlgo = new AlgorithmUnsharpMask(image, sigmas, weight,
+                                                               outputPanel.isProcessWholeImageSet(), false);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     unsharpMaskAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), unsharpMaskAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -663,6 +390,7 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -681,12 +409,9 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            float[] sigmas = new float[3];
-            sigmas[0] = scaleX;
-            sigmas[1] = scaleY;
-            sigmas[2] = scaleZ; // normalized  - scaleZ * resolutionX/resolutionZ; !!!!!!!
+            float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -709,8 +434,8 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                     }
 
                     // Make algorithm
-                    unsharpMaskAlgo = new AlgorithmUnsharpMask(resultImage, image, sigmas, weight, regionFlag,
-                                                               image25D);
+                    unsharpMaskAlgo = new AlgorithmUnsharpMask(resultImage, image, sigmas, weight,
+                                                               outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -727,6 +452,7 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -748,7 +474,8 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                 try {
 
                     // Make algorithm
-                    unsharpMaskAlgo = new AlgorithmUnsharpMask(image, sigmas, weight, regionFlag, image25D);
+                    unsharpMaskAlgo = new AlgorithmUnsharpMask(image, sigmas, weight,
+                                                               outputPanel.isProcessWholeImageSet(), image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -779,6 +506,7 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             unsharpMaskAlgo.setProgressBarVisible(false);
                         }
@@ -795,6 +523,48 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
+     * DOCUMENT ME!
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        sigmaPanel = new JPanelSigmas(image);
+        scriptParameters.setSigmasGUI(sigmaPanel);
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        weight = scriptParameters.getParams().getFloat("blurred_image_weight");
+        image25D = scriptParameters.doProcess3DAs25D();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+
+        scriptParameters.storeSigmas(sigmaPanel);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("blurred_image_weight", weight));
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -803,157 +573,38 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
         getContentPane().setLayout(new BorderLayout());
         setTitle("Unsharp Mask");
 
-        JPanel mainPanel;
-        mainPanel = new JPanel();
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-        mainPanel.setLayout(new GridBagLayout());
+        PanelManager mainPanelManager = new PanelManager();
+        mainPanelManager.getPanel().setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.weightx = 1;
-        gbc.insets = new Insets(3, 3, 3, 3);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
+        sigmaPanel = new JPanelSigmas(image);
+        mainPanelManager.add(sigmaPanel);
 
-        scalePanel = new JPanel(new GridLayout(3, 2));
-        scalePanel.setForeground(Color.black);
-        scalePanel.setBorder(buildTitledBorder("Scale of the Gaussian"));
-        mainPanel.add(scalePanel, gbc);
-
-        labelGaussX = createLabel("X Dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussX);
-        textGaussX = createTextField("1.0");
-        scalePanel.add(textGaussX);
-
-        labelGaussY = createLabel("Y Dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussY);
-        textGaussY = createTextField("1.0");
-        scalePanel.add(textGaussY);
-
-        labelGaussZ = createLabel("Z Dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussZ);
-        textGaussZ = createTextField("1.0");
-        scalePanel.add(textGaussZ);
-
-        JPanel resPanel = new JPanel(new BorderLayout());
-        resPanel.setBorder(buildTitledBorder("Resolution options"));
-        resolutionCheckbox = new JCheckBox("Use image resolutions to normalize Z scale.");
-        resolutionCheckbox.setFont(serif12);
-        resPanel.add(resolutionCheckbox, BorderLayout.NORTH);
-        resolutionCheckbox.setSelected(true);
-
+        PanelManager paramPanelManager = new PanelManager("Options");
         image25DCheckbox = new JCheckBox("Process each slice independently (2.5D).");
         image25DCheckbox.setFont(serif12);
-        resPanel.add(image25DCheckbox, BorderLayout.SOUTH);
+        paramPanelManager.add(image25DCheckbox);
         image25DCheckbox.setSelected(false);
         image25DCheckbox.addItemListener(this);
 
-        if (image.getNDims() == 3) { // if the source image is 3D then allow
-            resolutionCheckbox.setEnabled(true); // the user to indicate if it wishes to
-            resolutionCheckbox.addItemListener(this); // use the correction factor
-            textGaussZ.addFocusListener(this);
-            textGaussZ.setEnabled(true);
-        } else {
-            resolutionCheckbox.setEnabled(false); // Image is only 2D, thus this checkbox
-            labelGaussZ.setEnabled(false); // is not relevent
-            textGaussZ.setEnabled(false);
+        if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);
         }
 
-        if (image.getNDims() == 3) { // Source image is 3D, thus show correction factor
+        mainPanelManager.addOnNextLine(paramPanelManager.getPanel());
 
-            int index = image.getExtents()[2] / 2;
-            float xRes = image.getFileInfo(index).getResolutions()[0];
-            float zRes = image.getFileInfo(index).getResolutions()[2];
-            normFactor = xRes / zRes; // Calculate correction factor
-            labelCorrected = new JLabel("      Corrected scale = " +
-                                        String.valueOf(normFactor * Float.valueOf(textGaussZ.getText()).floatValue()));
-            labelCorrected.setForeground(Color.black);
-            labelCorrected.setFont(serif12);
-            resPanel.add(labelCorrected, BorderLayout.CENTER);
-        }
+        PanelManager weightPanelManager = new PanelManager("Weight of blurred image");
 
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        mainPanel.add(resPanel, gbc);
-
-        weightPanel = new JPanel();
-        weightPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-        weightPanel.setLayout(new GridBagLayout());
-
-        GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.gridwidth = 1;
-        gbc2.gridheight = 1;
-        gbc2.anchor = gbc2.WEST;
-        gbc2.weightx = 1;
-        gbc2.insets = new Insets(3, 3, 3, 3);
-        gbc2.gridx = 0;
-        gbc2.gridy = 0;
-        gbc2.fill = GridBagConstraints.HORIZONTAL;
-        weightPanel.setForeground(Color.black);
-        weightPanel.setBorder(buildTitledBorder("Weight of blurred image"));
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        mainPanel.add(weightPanel, gbc);
-
-        gbc2.gridx = 0;
-        gbc2.gridy = 0;
-        labelWeight = createLabel("Image - (k * blurred image) where 0 < k < 1");
-        weightPanel.add(labelWeight, gbc2);
-
-        gbc2.gridx = 1;
-        gbc2.gridy = 0;
+        JLabel labelWeight = createLabel("Image - (k * blurred image) where 0 < k < 1");
+        weightPanelManager.addOnNextLine(labelWeight);
         textWeight = createTextField("0.75");
-        weightPanel.add(textWeight, gbc2);
+        weightPanelManager.add(textWeight);
 
-        JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
-        destinationPanel = new JPanel(new BorderLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-        outputOptPanel.add(destinationPanel);
+        mainPanelManager.addOnNextLine(weightPanelManager.getPanel());
 
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-        destinationPanel.add(newImage, BorderLayout.NORTH);
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        mainPanelManager.addOnNextLine(outputPanel);
 
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-        destinationPanel.add(replaceImage, BorderLayout.CENTER);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
-        imageVOIPanel = new JPanel();
-        imageVOIPanel.setLayout(new BorderLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Process"));
-        outputOptPanel.add(imageVOIPanel);
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-        imageVOIPanel.add(wholeImage, BorderLayout.NORTH);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-        imageVOIPanel.add(VOIRegions, BorderLayout.CENTER);
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        mainPanel.add(outputOptPanel, gbc);
-
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
+        getContentPane().add(mainPanelManager.getPanel(), BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setResizable(true);
@@ -971,56 +622,15 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
 
         System.gc();
 
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
-
         if (image25DCheckbox.isSelected()) {
             image25D = true;
         }
 
-        tmpStr = textGaussX.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleX = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussX.requestFocus();
-            textGaussX.selectAll();
-
+        if (!sigmaPanel.testSigmaValues()) {
             return false;
         }
 
-        tmpStr = textGaussY.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleY = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussY.requestFocus();
-            textGaussY.selectAll();
-
-            return false;
-        }
-
-        tmpStr = textGaussZ.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleZ = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussZ.requestFocus();
-            textGaussZ.selectAll();
-
-            return false;
-        }
-
-        tmpStr = textWeight.getText();
+        String tmpStr = textWeight.getText();
 
         if (testParameter(tmpStr, 0, 0.999)) {
             weight = Float.valueOf(tmpStr).floatValue();
@@ -1029,11 +639,6 @@ public class JDialogUnsharpMask extends JDialogBase implements AlgorithmInterfac
             textWeight.selectAll();
 
             return false;
-        }
-
-        // Apply normalization if requested!
-        if (resolutionCheckbox.isSelected()) {
-            scaleZ = scaleZ * normFactor;
         }
 
         return true;

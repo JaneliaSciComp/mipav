@@ -611,9 +611,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         namesp.setLayout(gbl);
 
         // left side
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = ileft;
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
 
         JLabel imageNameLabel = new JLabel("Anonymous name");
         imageNameLabel.setFont(MipavUtil.font12);
@@ -621,9 +621,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         namesp.add(imageNameLabel, gbc);
 
         // right side
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.insets = iright;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
 
         JLabel sequenceLabel = new JLabel("Sequence beginning");
         sequenceLabel.setFont(MipavUtil.font12);
@@ -631,9 +631,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         namesp.add(sequenceLabel, gbc);
 
         // left side
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = ileft;
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         imageNameText = new JTextField(generateRandString());
         imageNameText.setFont(MipavUtil.font12);
         imageNameText.setForeground(Color.black);
@@ -642,9 +642,9 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
         genericImageName = imageNameText.getText();
 
         // right side
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.insets = iright;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         sequenceText = new JTextField("0");
 
         // sequenceText = makeNumericsOnly();

@@ -420,8 +420,8 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar("Extracting VOI", "VOIExtraction ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Extracting VOI", "VOIExtraction ...");
+        
 
         boolean regVOI = true;
 
@@ -580,13 +580,12 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
                 } // for (x = 0; x < xDim2 && !threadStopped; x++)
             } // for ( y = 0; y < yDim2 && !threadStopped; y++ )
 
-            if (progressBar != null) {
-                progressBar.updateValue(Math.round((z + 1) * 100.0f / zDim), runningInSeparateThread);
-            }
+            fireProgressStateChanged(Math.round((z + 1) * 100.0f / zDim));
+            
         } // end of for (z = 0; z < zDim; z++)
 
         if (threadStopped) {
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -594,10 +593,6 @@ public class AlgorithmVOIExtractionPaint extends AlgorithmBase {
 
         if (regVOI == true) {
             srcImage.registerVOI(addedVOI);
-        }
-
-        if (progressBar != null) {
-            progressBar.dispose();
         }
 
         setCompleted(true);

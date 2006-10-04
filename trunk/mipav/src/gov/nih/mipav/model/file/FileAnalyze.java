@@ -19,9 +19,18 @@ import java.io.*;
  */
 
 public class FileAnalyze extends FileBase {
-    /** The extensions of ANALYZE file */
-    public static final String[] EXTENSIONS = {".hdr", ".img"};
-    
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** The extensions of ANALYZE file. */
+    public static final String[] EXTENSIONS = { ".hdr", ".img" };
+
+    /** The size of the header. */
+    public static final int HEADER_SIZE = 348;
+
+    /** The extent size of the ANALYZE file. */
+    private static final int EXTENTS = 16384;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Storage buffer for the header. */
@@ -45,74 +54,215 @@ public class FileAnalyze extends FileBase {
     /** The image read in from the file. */
     private ModelImage image;
 
-    /** If true show the progress bar. */
-    private boolean showProgress = true;
-
-    /** Reference to the user interface. */
-    private ViewUserInterface UI;
-
-
     /** Voxel offset tag used to read in the image. */
     private float vox_offset = 0.0f;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Constructs new file object.
+     * Creates a new FileAnalyze object.
      *
-     * @param  _UI    User interface.
-     * @param  fName  File name.
-     * @param  fDir   File directory.
-     * @param  show   Flag for showing the progress bar.
+     * @param  fileNames  DOCUMENT ME!
      */
-    public FileAnalyze(ViewUserInterface _UI, String fName, String fDir, boolean show) {
-        UI = _UI;
-        fileName = fName;
-        fileDir = fDir;
-        showProgress = show;
-    }
-
-    public FileAnalyze(String[] fileNames){
+    public FileAnalyze(String[] fileNames) {
         super(fileNames);
     }
+
+    /**
+     * Constructs new file object.
+     *
+     * @param  fName  File name.
+     * @param  fDir   File directory.
+     */
+    public FileAnalyze(String fName, String fDir) {
+        fileName = fName;
+        fileDir = fDir;
+    }
+
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Returns the header file
+     * Returns the complete list of file names according to given file name.
+     *
+     * @param   absolutePath  one file name of ANLYZE.
+     *
+     * @return  the complete list of file names.
      */
-    public String getHeaderFile(){
-        if(fileNames == null || fileNames.length != 2){
+    public static String[] getCompleteFileNameList(String absolutePath) {
+        String[] completeFileNameList = new String[2];
+
+        if (isHeaderFile(absolutePath)) {
+            completeFileNameList[0] = absolutePath;
+            completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[1];
+        } else if (isImageFile(absolutePath)) {
+            completeFileNameList[1] = absolutePath;
+            completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[0];
+        } else {
+            completeFileNameList = null;
+        }
+
+        return completeFileNameList;
+    }
+
+    /**
+     * ======= Returns the header file.
+     *
+     * @param   fileNames  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static String getHeaderFile(String[] fileNames) {
+
+        if ((fileNames == null) || (fileNames.length != 2)) {
             return null;
         }
-        
-        for(int i = 0; i < fileNames.length; i++){
-            if(FileUtility.getExtension(fileNames[i]).equals(EXTENSIONS[0])){
+
+        for (int i = 0; i < fileNames.length; i++) {
+
+            if (FileUtility.getExtension(fileNames[i]).equals(EXTENSIONS[0])) {
                 return fileNames[i];
             }
         }
+
         return null;
     }
-    
+
     /**
-     * Returns the image file list
-     * @return the image file list.
+     * Returns the image file list.
+     *
+     * @param   fileNames  DOCUMENT ME!
+     *
+     * @return  the image file list.
      */
-    public String[] getImageFiles(){
-        if(fileNames == null || fileNames.length != 2){
+    public static String[] getImageFiles(String[] fileNames) {
+
+        if (fileNames == null) {
             return null;
         }
+
         String[] result = new String[1];
-        for(int i = 0; i < fileNames.length; i++){
-            if(FileUtility.getExtension(fileNames[i]).equals(EXTENSIONS[1])){
+
+        for (int i = 0; i < fileNames.length; i++) {
+
+            if (FileUtility.getExtension(fileNames[i]).equals(EXTENSIONS[1])) {
                 result[0] = fileNames[i];
+
                 return result;
             }
         }
+
         return null;
     }
-    
+
     /**
-     * Absolute value of image.
+     * Determines whether this file is ANALYZE file or not based on three fields of the header file: sizeof_hdr, extent
+     * and regular.
+     *
+     * @param   absolutePath  the file name.
+     *
+     * @return  true if the file is ANALYZE file.
+     *
+     * @throws  FileNotFoundException  thrown when the file can't be found.
+     * @throws  IOException            thrown when the I/O error happens.
+     */
+    public static boolean isAnalyze(String absolutePath) throws FileNotFoundException, IOException {
+
+        if ((absolutePath == null) || (absolutePath.length() == 0)) {
+            return false;
+        }
+
+        String[] completeFileNames = getCompleteFileNameList(absolutePath);
+
+        if ((completeFileNames == null) || (completeFileNames.length != 2)) {
+            return false;
+        }
+
+        for (int i = 0; i < completeFileNames.length; i++) {
+            File file = new File(completeFileNames[i]);
+
+            if (!file.exists()) {
+                throw new FileNotFoundException("The file can not be found: " + completeFileNames[i] + "!");
+            }
+        }
+
+        RandomAccessFile raFile = new RandomAccessFile(getHeaderFile(completeFileNames), "r");
+
+        /** Check whether the value of sizeof_hdr field equals to the 348 */
+        byte[] buffer = new byte[4];
+        raFile.readFully(buffer);
+
+        boolean bigEndian = true;
+        int sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
+
+        if (sizeOfHeader != HEADER_SIZE) {
+            bigEndian = false;
+            sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
+
+            if (sizeOfHeader != HEADER_SIZE) {
+                return false;
+            }
+        }
+
+        /** Check whether the value of extents field equals to 16384 */
+        raFile.seek(32);
+        raFile.readFully(buffer);
+
+        int extents = FileBase.bytesToInt(bigEndian, 0, buffer);
+
+        if (extents != EXTENTS) {
+            return false;
+        }
+
+        /** Check whether the value of regular field equals to "r" */
+        raFile.seek(38);
+
+        byte regular = raFile.readByte();
+
+        if (regular == 'r') {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Return true if the file specified by absolutePath is header file of ANALYZE.
+     *
+     * @param   absolutePath  the file name including path information.
+     *
+     * @return  true if the specified file is header file.
+     */
+    public static boolean isHeaderFile(String absolutePath) {
+        String fileName = FileUtility.getFileName(absolutePath);
+        String extension = FileUtility.getExtension(fileName);
+
+        if (extension.equalsIgnoreCase(EXTENSIONS[0])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Return true if the file specified by absolutePath is image file of ANALYZE.
+     *
+     * @param   absolutePath  the file name including path information.
+     *
+     * @return  true if the specified file is image file.
+     */
+    public static boolean isImageFile(String absolutePath) {
+        String fileName = FileUtility.getFileName(absolutePath);
+        String extension = FileUtility.getExtension(fileName);
+
+        if (extension.equalsIgnoreCase(EXTENSIONS[1])) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * >>>>>>> .merge-right.r1074 Absolute value of image.
      *
      * @param   image  Image to take absolute value of.
      *
@@ -169,6 +319,65 @@ public class FileAnalyze extends FileBase {
         } catch (OutOfMemoryError error) {
             throw (error);
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  IOException       DOCUMENT ME!
+     * @throws  OutOfMemoryError  DOCUMENT ME!
+     */
+    public ModelImage createImage() throws IOException, OutOfMemoryError {
+        fileInfo = new FileInfoAnalyze(fileName, fileDir, FileBase.ANALYZE);
+
+        if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
+            throw (new IOException(" Analyze header file error"));
+        }
+
+        int[] extents = null;
+
+        try {
+            image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(),
+                                   ViewUserInterface.getReference());
+        } catch (OutOfMemoryError error) {
+            throw (error);
+        }
+
+        // if vox units defines the units of measure, then use that instead
+        // clones the file info
+        updateUnitsOfMeasure(fileInfo, image);
+        updateStartLocations(image.getFileInfo());
+
+
+        try { // Construct a FileRaw to actually read the image.
+
+            FileRaw rawFile;
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
+
+            int offset = (int) Math.abs(vox_offset);
+
+            rawFile.readImage(image, offset);
+
+            if (vox_offset < 0.0f) {
+                absoluteValue(image);
+            }
+
+            flipTopBottom(image);
+
+        } catch (IOException error) {
+            throw new IOException("FileAnalyze: " + error);
+        } catch (OutOfMemoryError e) {
+            throw (e);
+        }
+
+        /** Initializes the ModelImage object */
+        if (image != null) {
+            image.calcMinMax();
+        }
+
+        return image;
     }
 
     /**
@@ -388,6 +597,52 @@ public class FileAnalyze extends FileBase {
      */
     public FileInfoAnalyze getFileInfo() {
         return fileInfo;
+    }
+
+    /**
+     * <<<<<<< .working Returns the header file.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public String getHeaderFile() {
+
+        if ((fileNames == null) || (fileNames.length != 2)) {
+            return null;
+        }
+
+        for (int i = 0; i < fileNames.length; i++) {
+
+            if (FileUtility.getExtension(fileNames[i]).equals(EXTENSIONS[0])) {
+                return fileNames[i];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Returns the image file list.
+     *
+     * @return  the image file list.
+     */
+    public String[] getImageFiles() {
+
+        if ((fileNames == null) || (fileNames.length != 2)) {
+            return null;
+        }
+
+        String[] result = new String[1];
+
+        for (int i = 0; i < fileNames.length; i++) {
+
+            if (FileUtility.getExtension(fileNames[i]).equals(EXTENSIONS[1])) {
+                result[0] = fileNames[i];
+
+                return result;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -619,7 +874,7 @@ public class FileAnalyze extends FileBase {
         fileInfo.setResolutions(resolutions);
 
         vox_offset = getBufferFloat(bufferImageHeader, 108, endianess);
-        fileInfo.setOffset((int)vox_offset);
+        fileInfo.setOffset((int) vox_offset);
 
         // MIPAV is hacking the analyze format to use the unused
         // variables to store start locations.
@@ -697,9 +952,10 @@ public class FileAnalyze extends FileBase {
                 }
 
                 image = new ModelImage(fileInfo.getDataType(), new int[] { extents[0], extents[1] },
-                                       fileInfo.getFileName(), UI);
+                                       fileInfo.getFileName(), ViewUserInterface.getReference());
             } else {
-                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(), UI);
+                image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileInfo.getFileName(),
+                                       ViewUserInterface.getReference());
             }
         } catch (OutOfMemoryError error) {
             throw (error);
@@ -714,8 +970,7 @@ public class FileAnalyze extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, showProgress,
-                                  FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
             int offset = (int) Math.abs(vox_offset);
 
@@ -784,8 +1039,7 @@ public class FileAnalyze extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, showProgress,
-                                  FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
             int offset = (int) Math.abs(vox_offset);
             rawFile.readImage(buffer, offset, fileInfo.getDataType());
@@ -908,7 +1162,7 @@ public class FileAnalyze extends FileBase {
 
             try {
                 FileRaw rawFile;
-                rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), true, FileBase.READ_WRITE);
+                rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
                 flipTopBottom(image);
                 rawFile.writeImage(image, options);
                 nImagesSaved = rawFile.getNImages();
@@ -1602,6 +1856,4 @@ public class FileAnalyze extends FileBase {
         } // end for loop
 
     }
-
-
 }

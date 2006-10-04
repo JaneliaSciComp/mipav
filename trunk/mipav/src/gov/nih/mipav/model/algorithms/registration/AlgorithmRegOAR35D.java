@@ -875,8 +875,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         constructLog();
         Preferences.debug(getConstructionInfo());
 
-        buildProgressBar("Registering images", "Beginning registration", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Registering images", "Beginning registration");
+        
 
         if (doGraph) {
             rot = new float[3][inputImage.getExtents()[3]];
@@ -946,14 +946,14 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             resample = true;
 
             // 3.5D interpolation
-            progressBar.setMessage("Interpolating input image to obtain equal x, y, and z resolutions");
+            fireProgressStateChanged("Interpolating input image to obtain equal x, y, and z resolutions");
             transform = new AlgorithmTransform(inputImage, new TransMatrix(4), interp, resIso[0], resIso[1], resIso[2],
                                                extentsIso[0], extentsIso[1], extentsIso[2], false, true, false);
             transform.setProgressBarVisible(false);
             transform.run();
 
             if (transform.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -992,7 +992,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             transform.run();
 
             if (transform.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1108,7 +1108,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
                 // 3.5 interpolation
                 resampleW = true;
-                progressBar.setMessage("Performing interpolation on input weight image");
+                fireProgressStateChanged("Performing interpolation on input weight image");
                 transform = new AlgorithmTransform(inputWeight, new TransMatrix(4), interp, resIso[0], resIso[1],
                                                    resIso[2], extentsIso[0], extentsIso[1], extentsIso[2], false, true,
                                                    false);
@@ -1116,7 +1116,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 transform.run();
 
                 if (transform.isCompleted() == false) {
-                    completed = false;
+                    setCompleted(false);
                     finalize();
 
                     return;
@@ -1573,8 +1573,8 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
         }
 
         for (int m = 0; m < endIndex; m++) {
-            progressBar.setMessage("Registering image " + (iNumber + 1));
-            progressBar.updateValue((int) (m / (float) (inputImage.getExtents()[3] - 1) * 100), runningInSeparateThread);
+            fireProgressStateChanged("Registering image " + (iNumber + 1));
+            fireProgressStateChanged((int) (m / (float) (inputImage.getExtents()[3] - 1) * 100));
 
             Preferences.debug(" ***********************Starting Image " + iNumber + "  **************************\n");
             Preferences.debug(" **************************************************************************\n\n");
@@ -1779,7 +1779,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 inputImage.exportData(iNumber * colorFactor * volumeSize, colorFactor * volumeSize, buffer); // locks and releases and lock
             } catch (IOException error) {
                 displayError("AlgorithmOAR35D: Source image is locked");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1793,7 +1793,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 input1.importData(0, buffer, true);
             } catch (IOException error) {
                 displayError("AlgorithmOAR35D: IOException on input1.importData");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1829,7 +1829,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 output_1.exportData(0, colorFactor * iExtents[0] * iExtents[1] * iExtents[2], buffer);
             } catch (IOException error) {
                 displayError("AlgorithmOAR35D: IOException on output_1.exportData");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1851,7 +1851,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 inputImage.importData(iNumber * colorFactor * iExtents[0] * iExtents[1] * iExtents[2], buffer, false);
             } catch (IOException error) {
                 displayError("AlgorithmOAR35D: IOException on inputImage.importData");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1973,7 +1973,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                     output_1.exportData(0, colorFactor * extentsIso[0] * extentsIso[1] * extentsIso[2], bufferA);
                 } catch (IOException error) {
                     displayError("AlgorithmOAR35D: IOException on output_1.exportData to bufferA");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -2029,7 +2029,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                                                inputWeight.getSliceSize() * inputWeight.getExtents()[2], bufferIW);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR35D: inputWeight image is locked");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -2043,7 +2043,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                         inputw_1.importData(0, bufferIW, true);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR35D: IOException on inputW_1.importData");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -2069,7 +2069,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                         output_1.exportData(0, extentsIso[0] * extentsIso[1] * extentsIso[2], bufferW);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR35D: IOException on output_1.exportData");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -2159,7 +2159,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                                                inputWeight.getSliceSize() * inputWeight.getExtents()[2], bufferIW);
                     } catch (IOException error) {
                         displayError("AlgorithmOAR35D: inputWeight image is locked");
-                        progressBar.dispose();
+                        
                         setCompleted(false);
 
                         return;
@@ -2175,7 +2175,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                             inputw_1.importData(0, bufferIW, true);
                         } catch (IOException error) {
                             displayError("AlgorithmOAR35D: IOException on inputW_1.importData");
-                            progressBar.dispose();
+                            
                             setCompleted(false);
 
                             return;
@@ -2201,7 +2201,7 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                             output_1.exportData(0, extentsIso[0] * extentsIso[1] * extentsIso[2], bufferW);
                         } catch (IOException error) {
                             displayError("AlgorithmOAR35D: IOException on output_1.exportData");
-                            progressBar.dispose();
+                            
                             setCompleted(false);
 
                             return;
@@ -2288,10 +2288,10 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
 
         inputImage.calcMinMax();
 
-        progressBar.dispose();
+        
         disposeLocal();
         finalize();
-        completed = true;
+        setCompleted(true);
     }
 
     /**

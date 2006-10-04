@@ -187,9 +187,9 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         // Blur image if necessary (the extraction algorithm does not work on flat surfaces.
         // Therefore blur flat surface to produce a small intensity gradient and then extract
         // a surface.
-        buildProgressBar(srcImage.getImageName(), "Extracting surface ...", 0, 100);
-        initProgressBar();
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(srcImage.getImageName(), "Extracting surface ...");
+        
+        fireProgressStateChanged(0);
 
         if (threadStopped) {
 
@@ -238,14 +238,14 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         if (blurFlag == true) {
 
             try {
-                blurAlgo = new AlgorithmGaussianBlur(maskImage, sigmas, true, false);
+                blurAlgo = new AlgorithmGaussianBlur(null, maskImage, sigmas, true, false);
 
-                progressBar.setMessage("Blurring images");
+                fireProgressStateChanged("Blurring images");
 
-                // progressBar.updateValue(15, separateThread);
+                // fireProgressStateChanged(15, separateThread);
                 blurAlgo.setProgressBarVisible(false);
                 blurAlgo.run();
-                progressBar.updateValue(15, runningInSeparateThread);
+                fireProgressStateChanged(15);
 
                 if (blurAlgo.isCompleted() == false) {
 
@@ -268,7 +268,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 return;
             }
         } else {
-            progressBar.updateValue(15, runningInSeparateThread);
+            fireProgressStateChanged(15);
         }
 
         // Uncomment next line to display blurred maskImage for debugging purposes.
@@ -341,13 +341,13 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                                                                                    fYRes, fZRes, direction,
                                                                                    startLocation, dicomMatrix);
 
-            progressBar.setMessage("Starting surface extraction");
+            fireProgressStateChanged("Starting surface extraction");
 
-            ModelTriangleMesh kMesh = kExtractor.getLevelSurface(level, progressBar);
+            ModelTriangleMesh kMesh = kExtractor.getLevelSurface(level, getProgressChangeListener());
 
             buffer = null;
             System.gc();
-            progressBar.updateValue(50, runningInSeparateThread);
+            fireProgressStateChanged(50);
 
             if (triangleConsistencyMode == ADJ_MODE) {
                 kMesh.getConsistentComponents();
@@ -363,7 +363,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 ModelTriangleMesh[] akComponent = null;
                 int iVMaxQuantity = 0, iTMaxQuantity = 0;
 
-                progressBar.setMessage("Initializing surface.");
+                fireProgressStateChanged("Initializing surface.");
                 akComponent = kMesh.getComponents();
                 kMesh = null;
                 System.gc();
@@ -387,7 +387,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
 
                 ModelClodMesh[] akClod = new ModelClodMesh[akComponent.length];
 
-                progressBar.setMessage("Surface decimation in progress");
+                fireProgressStateChanged("Surface decimation in progress");
 
                 ModelSurfaceDecimator kDecimator = new ModelSurfaceDecimator(iVMaxQuantity, iTMaxQuantity);
 
@@ -395,7 +395,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                     Point3f[] akVertex = akComponent[i].getVertexCopy();
                     int[] aiConnect = akComponent[i].getIndexCopy();
 
-                    kDecimator.decimate(akVertex, aiConnect, progressBar, 50 + (i * 50 / akComponent.length),
+                    kDecimator.decimate(akVertex, aiConnect, getProgressChangeListener(), 50 + (i * 50 / akComponent.length),
                                         akComponent.length * 2);
 
                     akClod[i] = new ModelClodMesh(akVertex, aiConnect, kDecimator.getRecords());
@@ -408,11 +408,11 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 }
 
                 System.gc();
-                progressBar.setMessage("Saving surface");
+                fireProgressStateChanged("Saving surface");
                 ModelClodMesh.save(surfaceFileName, akClod, true, direction, startLocation, box, inverseDicomArray);
             } else {
-                progressBar.updateValue(75, runningInSeparateThread);
-                progressBar.setMessage("Saving surface");
+                fireProgressStateChanged(75);
+                fireProgressStateChanged("Saving surface");
                 kMesh.save(surfaceFileName, true, direction, startLocation, box, inverseDicomArray);
 
             }
@@ -432,7 +432,7 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
         maskImage = null;
         System.gc();
         setCompleted(true);
-        disposeProgressBar();
+        
 
         return;
     }

@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,7 +21,7 @@ import javax.swing.*;
  * Creates the dialog to create a 3D subset image from a 4D image. User selects dimension to be eliminated and the value
  * of that dimension in the 3D subset. Allows only 4D images; 2D or 3D images would not make sense with this operation.
  */
-public class JDialogSubset extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -86,7 +88,6 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
      */
     public JDialogSubset() { }
 
-
     /**
      * Creates new dialog for getting subset.
      *
@@ -96,22 +97,8 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
     public JDialogSubset(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im; // set the image from the arguments to an image in this class
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogSubset(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -156,8 +143,6 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmSubset) {
 
             if ((subsetAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -166,7 +151,7 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
                 try {
 
                     // put the new image into a new frame
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
+                    new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("JDialogSubset reports: out of memory; " + "unable to open a new frame");
                 }
@@ -201,7 +186,9 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
 
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -220,81 +207,6 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Subset " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " " + removeDim + " " + sliceNum + "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setRemoveDim(parser.getNextInteger());
-            setSliceNum(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    /**
      * Accessor that sets the Dimension to remove according to the parameter.
      *
      * @param  dim  Which dimension to remove (either REMOVE_X, REMOVE_Y, REMOVE_Z, REMOVE_T)
@@ -306,17 +218,17 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
     /**
      * Accessor that sets the slice number to be used to the parameter.
      *
-     * @param  n  The slice index number to be use
+     * @param  slice  The slice index number to be use
      */
-    public void setSliceNum(int n) {
-        sliceNum = n;
+    public void setSliceNum(int slice) {
+        sliceNum = slice;
     }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         destExtents = new int[3];
 
@@ -400,6 +312,9 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             subsetAlgo.addListener(this);
+
+            createProgressBar(image.getImageName(), subsetAlgo);
+
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -409,6 +324,7 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     subsetAlgo.setProgressBarVisible(false);
                 }
@@ -427,6 +343,37 @@ public class JDialogSubset extends JDialogBase implements AlgorithmInterface, Sc
 
             return;
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        removeDim = scriptParameters.getParams().getInt("remove_dim");
+        sliceNum = scriptParameters.getParams().getInt("slice_num");
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("remove_dim", removeDim));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("slice_num", sliceNum));
     }
 
     /**

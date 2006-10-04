@@ -85,7 +85,7 @@ public class JDialogVOIExtraction extends JDialogBase implements AlgorithmInterf
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 
@@ -97,6 +97,8 @@ public class JDialogVOIExtraction extends JDialogBase implements AlgorithmInterf
             // This is made possible by implementing AlgorithmedPerformed interface
             VOIExtractionAlgo.addListener(this);
 
+            createProgressBar(imageA.getImageName(), VOIExtractionAlgo);
+            
             // Hide dialog
             setVisible(false);
 

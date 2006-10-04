@@ -77,13 +77,15 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the EdgeLap will be calculated for the whole image if equal to true
      * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                   images disregard this flag.
+     * @param  loThres   used to define the lower threshold to reduce noise (edges) in the laplacian image
+     * @param  hiThres   used to define the upper threshold to reduce noise (edges) in the laplacian image
+     * @param  minProgressValue minimum progress value.
+     * @param  maxProgressValue maximum progess value.
      */
     public AlgorithmEdgeLaplacian(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
                                   boolean img25D) {
         super(destImg, srcImg);
 
-        this.loThres = 0;
-        this.hiThres = 0;
         this.sigmas = sigmas;
         image25D = img25D;
 
@@ -93,7 +95,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             mask = srcImage.generateVOIMask();
         }
     }
-
+    
     /**
      * Creates a new AlgorithmEdgeLaplacian object.
      *
@@ -105,6 +107,8 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
      *                   images disregard this flag.
      * @param  loThres   used to define the lower threshold to reduce noise (edges) in the laplacian image
      * @param  hiThres   used to define the upper threshold to reduce noise (edges) in the laplacian image
+     * @param  minProgressValue minimum progress value.
+     * @param  maxProgressValue maximum progess value.
      */
     public AlgorithmEdgeLaplacian(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
                                   boolean img25D, float loThres, float hiThres) {
@@ -539,7 +543,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             length = srcImage.getSliceSize();
             totalLength = length * nImages;
             buffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Calculating the Edge ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Calculating the Edge ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Edge Lap: Out of memory", true);
@@ -549,7 +553,8 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
 
         int mod = totalLength / 100; // mod is 1 percent of length
 
-        initProgressBar();
+        // initProgressBar();
+        fireProgressStateChanged(0, srcImage.getImageName(), "Calculating the Edge ...");
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -564,8 +569,8 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
 
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
-                if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                if (((start + i) % mod) == 0) {
+                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1)* 100));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -587,9 +592,9 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             genZeroXMask(s, buffer, detectionType);
         }
 
+        fireProgressStateChanged(100);
+        
         if (threadStopped) {
-            finalize();
-
             return;
         }
 
@@ -597,7 +602,6 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -629,7 +633,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             buffer = new float[totalLength];
             sliceBuffer = new float[length];
             srcImage.exportData(0, totalLength, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating Zero X-ings ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Calculating Zero X-ings ...");
         } catch (IOException error) {
             buffer = null;
             sliceBuffer = null;
@@ -644,7 +648,8 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        // initProgressBar();
+        fireProgressStateChanged(0, srcImage.getImageName(), "Calculating Zero X-ings ...");
 
         int mod = totalLength / 100; // mod is 1 percent of length
 
@@ -653,8 +658,8 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
 
             for (i = start; (i < (start + length)) && !threadStopped; i++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) i / (totalLength - 1) * 100), runningInSeparateThread);
+                if ((i % mod) == 0) {
+                    fireProgressStateChanged(Math.round((float) i / (totalLength - 1) * 100));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -678,9 +683,8 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             genZeroXMask(s, sliceBuffer, detectionType);
         }
 
+        fireProgressStateChanged(100);
         if (threadStopped) {
-            finalize();
-
             return;
         }
 
@@ -688,7 +692,6 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
 
-        disposeProgressBar();
         setCompleted(true);
     }
 

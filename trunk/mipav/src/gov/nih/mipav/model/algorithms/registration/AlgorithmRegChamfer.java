@@ -642,9 +642,9 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
      *
      * AlgorithmTransform.transformNearestNeighbor2D(imgBuf, tImgBuf, xfrm, xdim, ydim, xres, yres);
      * volume.importData(sliceIndex, tImgBuf, false);//copy imgBuff back into image System.gc(); } catch (IOException
-     * error) { displayError("Algorithm: Image(s) locked"); setCompleted(false); progressBar.dispose(); return; } catch
+     * error) { displayError("Algorithm: Image(s) locked"); setCompleted(false);  return; } catch
      * (OutOfMemoryError e){ imgBuf = null; System.gc(); displayError("Algorithm: Out of memory"); setCompleted(false);
-     * progressBar.dispose(); return; } volume.calcMinMax(); }*/
+     *  return; } volume.calcMinMax(); }*/
 
     /**
      * InitializePandY p[i][j] = each i is a simplex vertex; each j is a parameter tx, ty, or r y[i] = cost of position
@@ -769,7 +769,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm: Image(s) locked");
             setCompleted(false);
-            progressBar.dispose();
+            
 
             return;
         } catch (OutOfMemoryError e) {
@@ -777,7 +777,7 @@ public class AlgorithmRegChamfer extends AlgorithmBase {
             System.gc();
             displayError("Algorithm: Out of memory");
             setCompleted(false);
-            progressBar.dispose();
+            
 
             return;
         }

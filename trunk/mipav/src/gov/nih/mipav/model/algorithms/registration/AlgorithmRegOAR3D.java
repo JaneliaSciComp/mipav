@@ -973,7 +973,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         if (refImage.getNDims() != 3) {
             MipavUtil.displayError("" + refImage.getNDims() + "D registration not supported.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -981,7 +981,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         if (inputImage.getNDims() != 3) {
             MipavUtil.displayError("" + inputImage.getNDims() + "D registration not supported.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -1033,7 +1033,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Out of memory in AlgorithmOAR3D.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -1112,7 +1112,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             blur.run();
 
             if (blur.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1150,7 +1150,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             blur2.run();
 
             if (blur2.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1171,7 +1171,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             if (transform.isCompleted() == false) {
                 transform.finalize();
                 transform = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1225,7 +1225,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             if (transform.isCompleted() == false) {
                 transform.finalize();
                 transform = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1275,7 +1275,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             if (transform2.isCompleted() == false) {
                 transform2.finalize();
                 transform2 = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1332,7 +1332,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             if (transform2.isCompleted() == false) {
                 transform2.finalize();
                 transform2 = null;
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -1379,8 +1379,8 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             subMinFactor *= 4;
         }
 
-        buildProgressBar("Registering images", "Beginning registration", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Registering images", "Beginning registration");
+        
 
         if (weighted) {
 
@@ -1777,7 +1777,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         disposeLocal();
         finalize();
-        completed = true;
+        setCompleted(true);
     }
 
     /**
@@ -2262,10 +2262,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             powell = new AlgorithmPowellOpt3D(this, cog, 3, cost, initial, getTolerance(3), maxIter, bracketBound);
         }
 
-        progressBar.setMessage("Optimizing at coarse samples");
+        fireProgressStateChanged("Optimizing at coarse samples");
 
         for (int i = 0; (i < coarseNumX) && !threadStopped; i++) {
-            progressBar.updateValue((i + 1) * 10 / coarseNumX, runningInSeparateThread);
+            fireProgressStateChanged((i + 1) * 10 / coarseNumX);
 
             for (int j = 0; (j < coarseNumY) && !threadStopped; j++) {
 
@@ -2289,7 +2289,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         MatrixListItem[][][] matrixList = new MatrixListItem[fineNumX][fineNumY][fineNumZ];
 
-        progressBar.setMessage("Measuring at fine samples");
+        fireProgressStateChanged("Measuring at fine samples");
 
         double[] costs = new double[fineNumX * fineNumY * fineNumZ];
         int index = 0;
@@ -2300,7 +2300,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         System.out.println("coarseNumZ and fineNumZ " + coarseNumZ + " " + fineNumZ);
 
         for (int i = 0; (i < fineNumX) && !threadStopped; i++) {
-            progressBar.updateValue(10 + ((i + 1) * 5 / fineNumX), runningInSeparateThread);
+            fireProgressStateChanged(10 + ((i + 1) * 5 / fineNumX));
 
             for (int j = 0; (j < fineNumY) && !threadStopped; j++) {
 
@@ -2335,10 +2335,10 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             threshold = costs[(int) (0.2 * costs.length)];
         }
 
-        progressBar.setMessage("Optimizing top samples");
+        fireProgressStateChanged("Optimizing top samples");
 
         for (int i = 0; (i < fineNumX) && !threadStopped; i++) {
-            progressBar.updateValue(15 + ((i + 1) * 5 / fineNumX), runningInSeparateThread);
+            fireProgressStateChanged(15 + ((i + 1) * 5 / fineNumX));
 
             for (int j = 0; (j < fineNumY) && !threadStopped; j++) {
 
@@ -2402,7 +2402,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         Vector optMinima = new Vector();
         // Now freely optimizes over rotations:
 
-        progressBar.setMessage("Optimizing minima");
+        fireProgressStateChanged("Optimizing minima");
 
         int count = 0;
         int degree = (DOF < 7) ? DOF : 7;
@@ -2413,7 +2413,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         MatrixListItem item;
 
         for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
-            progressBar.updateValue(20 + ((count + 1) / minima.size() * 5), runningInSeparateThread);
+            fireProgressStateChanged(20 + ((count + 1) / minima.size() * 5));
             powell.setInitialPoint(((MatrixListItem) en.nextElement()).initial);
             powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.run();
@@ -2533,7 +2533,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         powell.setMaxIterations(3);
 
         Vector newMinima = new Vector();
-        progressBar.setMessage("Optimizing new minima");
+        fireProgressStateChanged("Optimizing new minima");
 
         double currentMinimum = 2, powellCost;
         int minimumIndex = 0;
@@ -2541,7 +2541,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         // Recalculating minima at this level, i.e. with images subsampled at level 4.
         for (int i = 0; (i < total) && !threadStopped; i++) { // Loop "total" times.
-            progressBar.updateValue(25 + ((i + 1) * 4 / total), runningInSeparateThread);
+            fireProgressStateChanged(25 + ((i + 1) * 4 / total));
 
             // add i-th mimium to newMinima Vector
             powell.setInitialPoint(((MatrixListItem) minima.elementAt(i)).initial);
@@ -2635,7 +2635,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         Preferences.debug("Removed " + remove + " items outside rotation limits\n");
 
-        progressBar.setMessage("Perturbing minima");
+        fireProgressStateChanged("Perturbing minima");
 
         double fineDeltaX = fineRateX / 2.0;
         double fineDeltaY = fineRateY / 2.0;
@@ -2654,7 +2654,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         for (int j = 0; (j < 7) && !threadStopped; j++) {
 
             for (int i = 0; (i < ((2 * total) - remove)) && !threadStopped; i++) {
-                progressBar.updateValue(29 + ((((j * 2 * total) + i + 1) * 3) / (total * 12)), runningInSeparateThread);
+                fireProgressStateChanged(29 + ((((j * 2 * total) + i + 1) * 3) / (total * 12)));
 
                 // Current "initial" is element for this i.
                 initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
@@ -2728,7 +2728,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             for (int j = 0; (j < 5) && !threadStopped; j++) {
 
                 for (int i = 0; (i < ((2 * total) - remove)) && !threadStopped; i++) {
-                    progressBar.updateValue(32 + ((((j * 2 * total) + i + 1) * 3) / (total * 8)), runningInSeparateThread);
+                    fireProgressStateChanged(32 + ((((j * 2 * total) + i + 1) * 3) / (total * 8)));
                     initial = (double[]) ((MatrixListItem) newMinima.elementAt(i)).initial.clone();
 
                     if (j == 1) {
@@ -2766,7 +2766,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         best4Now = (MatrixListItem) perturbList.elementAt(0);
         Preferences.debug(best4Now.toString());
 
-        progressBar.updateValue(35, runningInSeparateThread);
+        fireProgressStateChanged(35);
         cost.disposeLocal();
         powell.disposeLocal();
 
@@ -2821,12 +2821,13 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         int degree = (DOF < 12) ? DOF : 12;
 
-        progressBar.setMessage("Starting last optimization");
+        fireProgressStateChanged("Starting last optimization");
 
         AlgorithmPowellOpt3D powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, item.initial,
                                                                getTolerance(degree), maxIter, bracketBound);
 
-        powell.setProgressBar(progressBar, 60, 40);
+        linkProgressToAlgorithm(powell);
+        powell.setProgressValues(generateProgressValues(60,100));
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.run();
 
@@ -2838,9 +2839,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         item2 = new MatrixListItem(powell.getCost(), powell.getMatrix(input.xRes), powell.getFinal(input.xRes));
         item2.halfMatrix = powell.getMatrixHalf(input.xRes);
         item2.midsagMatrix = powell.getMatrixMidsagittal(input.xRes);
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
         Preferences.debug("Best answer: \n" + item2 + "\n");
-        progressBar.dispose();
+        
         cost.disposeLocal();
         powell.disposeLocal();
 
@@ -2901,7 +2902,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
         AlgorithmPowellOpt3D powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, item.initial,
                                                                getTolerance(degree), maxIter, bracketBound);
 
-        progressBar.setMessage("Measuring costs of minima");
+        fireProgressStateChanged("Measuring costs of minima");
 
         for (Enumeration en = minima.elements(); en.hasMoreElements() && !threadStopped;) {
             item = ((MatrixListItem) en.nextElement());
@@ -2916,8 +2917,9 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         Collections.sort(minima);
 
-        progressBar.setMessage("Optimizing with " + degree + " DOF");
-        powell.setProgressBar(progressBar, 35, 8);
+        fireProgressStateChanged("Optimizing with " + degree + " DOF");
+        linkProgressToAlgorithm(powell);
+        powell.setProgressValues(generateProgressValues(35,43));
         powell.setInitialPoint(((MatrixListItem) minima.elementAt(0)).initial);
         powell.setRunningInSeparateThread(runningInSeparateThread);
         powell.run();
@@ -2935,11 +2937,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
         if (DOF > 7) {
             degree = 9;
-            progressBar.setMessage("Optimizing with " + degree + " DOF");
-            progressBar.updateValue(43, runningInSeparateThread);
+            fireProgressStateChanged("Optimizing with " + degree + " DOF");
+            fireProgressStateChanged(43);
             powell = new AlgorithmPowellOpt3D(this, cog, degree, cost, item.initial, getTolerance(degree), maxIter,
                                               bracketBound);
-            powell.setProgressBar(progressBar, 43, 8);
+            linkProgressToAlgorithm(powell);
+            powell.setProgressValues(generateProgressValues(43,51));
             powell.setRunningInSeparateThread(runningInSeparateThread);
             powell.run();
 
@@ -2953,11 +2956,12 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
 
             if (DOF > 9) {
                 degree = 12;
-                progressBar.setMessage("Optimizing with " + degree + " DOF");
-                progressBar.updateValue(51, runningInSeparateThread);
+                fireProgressStateChanged("Optimizing with " + degree + " DOF");
+                fireProgressStateChanged(51);
                 powell = new AlgorithmPowellOpt3D(this, cog, 12, cost, item.initial, getTolerance(12), maxIter,
                                                   bracketBound);
-                powell.setProgressBar(progressBar, 51, 9);
+                linkProgressToAlgorithm(powell);
+                powell.setProgressValues(generateProgressValues(51,60));
                 powell.setRunningInSeparateThread(runningInSeparateThread);
                 powell.run();
 
@@ -2972,7 +2976,7 @@ public class AlgorithmRegOAR3D extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(60, runningInSeparateThread);
+        fireProgressStateChanged(60);
         cost.disposeLocal();
         powell.disposeLocal();
 

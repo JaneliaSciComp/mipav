@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -25,8 +27,7 @@ import javax.swing.*;
  * @author   William Gandler
  * @see      AlgorithmFrequencyFilter
  */
-public class JDialogHomomorphicFilter extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, ItemListener {
+public class JDialogHomomorphicFilter extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -67,7 +68,6 @@ public class JDialogHomomorphicFilter extends JDialogBase
 
     /** DOCUMENT ME! */
     private boolean image25D = false;
-
 
     /** DOCUMENT ME! */
     private JCheckBox image25DCheckbox;
@@ -152,22 +152,8 @@ public class JDialogHomomorphicFilter extends JDialogBase
     public JDialogHomomorphicFilter(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogHomomorphicFilter(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -205,8 +191,6 @@ public class JDialogHomomorphicFilter extends JDialogBase
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmFrequencyFilter) {
 
             if ((algorithm.isCompleted() == true) && (resultImage != null)) {
@@ -218,7 +202,7 @@ public class JDialogHomomorphicFilter extends JDialogBase
                 try {
 
                     // resultImage.setImageName("Frequency Filtered image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -235,7 +219,8 @@ public class JDialogHomomorphicFilter extends JDialogBase
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame)
+                                                                                        (imageFrames.elementAt(i)));
                     }
                 }
 
@@ -252,7 +237,9 @@ public class JDialogHomomorphicFilter extends JDialogBase
                 resultImage = null;
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         FrequencyFilterAlgo.finalize();
@@ -268,102 +255,6 @@ public class JDialogHomomorphicFilter extends JDialogBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FrequencyFilter " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + image25D + " " + freq1 + " " + butterworthOrder + " " +
-                                                           lowGain + " " + highGain + " " + lowTruncated + " " +
-                                                           highTruncated + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + image25D + " " + freq1 + " " + butterworthOrder + " " +
-                                                           lowGain + " " + highGain + " " + lowTruncated + " " +
-                                                           highTruncated + "\n");
-                }
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setImage25D(parser.getNextBoolean());
-            setFreq1(parser.getNextFloat());
-            setButterworthOrder(parser.getNextInteger());
-            setLowGain(parser.getNextFloat());
-            setHighGain(parser.getNextFloat());
-            setLowTruncated(parser.getNextFloat());
-            setHighTruncated(parser.getNextFloat());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
 
     /**
      * Accessor that sets the butterworth order.
@@ -448,7 +339,7 @@ public class JDialogHomomorphicFilter extends JDialogBase
      * Once all the necessary variables are set, call the Frequency Filter algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_homomorphic");
 
         if (displayLoc == NEW) {
@@ -468,6 +359,8 @@ public class JDialogHomomorphicFilter extends JDialogBase
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FrequencyFilterAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), FrequencyFilterAlgo);
+
                 // Hide dialog since the algorithm is about to run
                 setVisible(false);
 
@@ -478,10 +371,6 @@ public class JDialogHomomorphicFilter extends JDialogBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        FrequencyFilterAlgo.setProgressBarVisible(false);
-                    }
-
                     FrequencyFilterAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -508,6 +397,8 @@ public class JDialogHomomorphicFilter extends JDialogBase
                 // This is made possible by implementing AlgorithmedPerformed interface
                 FrequencyFilterAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), FrequencyFilterAlgo);
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -532,10 +423,6 @@ public class JDialogHomomorphicFilter extends JDialogBase
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        FrequencyFilterAlgo.setProgressBarVisible(false);
-                    }
-
                     FrequencyFilterAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -544,6 +431,55 @@ public class JDialogHomomorphicFilter extends JDialogBase
                 return;
             }
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setImage25D(scriptParameters.doProcess3DAs25D());
+        setFreq1(scriptParameters.getParams().getFloat("cutoff_freq"));
+        setButterworthOrder(scriptParameters.getParams().getInt("butterworth_order"));
+        setLowGain(scriptParameters.getParams().getFloat("low_freq_gain"));
+        setHighGain(scriptParameters.getParams().getFloat("high_freq_gain"));
+        setLowTruncated(scriptParameters.getParams().getFloat("low_percentage_truncated"));
+        setHighTruncated(scriptParameters.getParams().getFloat("high_percentage_truncated"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.storeProcess3DAs25D(image25D);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("cutoff_freq", freq1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("butterworth_order", butterworthOrder));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("low_freq_gain", lowGain));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("high_freq_gain", highGain));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("low_percentage_truncated", lowTruncated));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("high_percentage_truncated", highTruncated));
     }
 
     /**
@@ -661,7 +597,7 @@ public class JDialogHomomorphicFilter extends JDialogBase
 
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
@@ -699,7 +635,7 @@ public class JDialogHomomorphicFilter extends JDialogBase
         mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(optionsPanel, gbc);
         gbc.gridy = 1;
         mainPanel.add(destinationPanel, gbc);

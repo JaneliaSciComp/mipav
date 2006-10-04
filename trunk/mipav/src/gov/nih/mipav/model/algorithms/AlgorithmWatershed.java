@@ -10,7 +10,8 @@ import gov.nih.mipav.view.*;
 import java.io.*;
 
 import java.util.*;
-
+import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.model.scripting.*;
 
 /**
  * This program applies the watershed algorithm to the image. It assumes that the user has identified the starting
@@ -105,6 +106,8 @@ public class AlgorithmWatershed extends AlgorithmBase {
 
         constructLog();
 
+        fireProgressStateChanged("Watershed ...");
+        
         if (srcImage.getNDims() == 2) {
             calc2D();
         } else if (srcImage.getNDims() > 2) {
@@ -198,9 +201,15 @@ public class AlgorithmWatershed extends AlgorithmBase {
                         energyImage.set(i, max);
                     }
                 }
-
+                boolean wasRecording = ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING;
+                if (wasRecording) {
+                	ScriptRecorder.getReference().pauseRecording();
+                }
                 energyImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_gm",
                                       FileBase.XML, true);
+                if (wasRecording) {
+                	ScriptRecorder.getReference().startRecording();
+                }
             } catch (OutOfMemoryError error) {
 
                 if (energyImage != null) {
@@ -313,8 +322,8 @@ Found:
         int mod = length / 100; // mod is 1 percent of length
 
         try {
-            buildProgressBar(srcImage.getImageName(), "Watershed: Filling regions ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Watershed: Filling regions ...");
+            
         } catch (OutOfMemoryError error) {
 
             if (energyImage != null) {
@@ -333,7 +342,7 @@ Found:
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if (((i % xDim) == 0) || ((i % xDim) == (xDim - 1))) {
@@ -422,7 +431,7 @@ Found:
             System.gc();
             displayError("Watershed: unable to allocate enough memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -563,7 +572,7 @@ Found:
             energyImage = null;
             displayError("Algorithm Watershed2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
@@ -578,7 +587,7 @@ Found:
             System.gc();
             displayError("Algorithm Watershed2D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -637,7 +646,7 @@ Found:
         } catch (IOException error) {
             displayError("Algorithm Morphology2D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -684,7 +693,7 @@ Found:
 
         energyImage.disposeLocal();
         hQueue.dispose();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -715,8 +724,11 @@ Found:
 
                 gradMagAlgo = new AlgorithmGradientMagnitudeSep(energyImage, srcImage, sigmas, true, false);
                 gradMagAlgo.setRunningInSeparateThread(runningInSeparateThread);
+                
+                linkProgressToAlgorithm(gradMagAlgo);
+                gradMagAlgo.setProgressValues(generateProgressValues(0, 50));
+                
                 gradMagAlgo.run();
-
                 if (gradMagAlgo.isCompleted() == false) {
                     setCompleted(false);
                     energyImage.disposeLocal();
@@ -739,9 +751,18 @@ Found:
                         energyImage.set(i, max);
                     }
                 }
-
+                boolean wasRecording = ScriptRecorder.getReference().getRecorderStatus() == ScriptRecorder.RECORDING;
+                
+                if (wasRecording) {
+                	ScriptRecorder.getReference().pauseRecording();
+                }
                 energyImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_gm",
-                                      FileBase.XML, true);
+                        FileBase.XML, true);
+                if (wasRecording) {
+                	ScriptRecorder.getReference().startRecording();
+                }
+                
+                
             } catch (OutOfMemoryError error) {
 
                 if (energyImage != null) {
@@ -760,6 +781,8 @@ Found:
             gradMagAlgo = null;
         }
 
+        fireProgressStateChanged("Watershed ...");
+        
         System.gc();
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -792,9 +815,8 @@ Found:
             System.gc();
             displayError("Watershed: unable to allocate enough memory");
         }
-
+        
         if (seedVector == null) {
-
             try {
                 seedVector = new Vector();
             } catch (OutOfMemoryError error) {
@@ -808,9 +830,11 @@ Found:
                 }
             }
 
+            
+            
+            
             // Find seed points
             for (i = 0; i < nVOI; i++) {
-
                 if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                     contours = VOIs.VOIAt(i).getCurves();
 
@@ -845,6 +869,7 @@ Found:
                         }
                     }
                 }
+                
             }
         }
 
@@ -852,24 +877,11 @@ Found:
         int lastImageIndex = (zDim - 1) * imageLength;
         int temp;
         int mod = length / 100; // mod is 1 percent of length
-
-        try {
-            buildProgressBar(srcImage.getImageName(), "Watershed: Filling regions ...", 0, 100);
-        } catch (OutOfMemoryError error) {
-            energyImage = null;
-            System.gc();
-            displayError("Watershed: unable to allocate enough memory");
-            setCompleted(false);
-
-            return;
-        }
-
-        initProgressBar();
-
+     
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 50), runningInSeparateThread);
+            if (((i % mod) == 0)) {
+                fireProgressStateChanged(50 + Math.round((float) i / (length - 1) * 25));
             }
 
             temp = i % imageLength;
@@ -978,7 +990,7 @@ Found:
             System.gc();
             displayError("Watershed: unable to allocate enough memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -1157,7 +1169,6 @@ Found:
                 // hQueue.add(pixC, energyImage.getFloat(pixC));
             }
         }
-
         if (threadStopped) {
             contours = null;
             finalize();
@@ -1184,7 +1195,7 @@ Found:
             energyImage = null;
             displayError("Algorithm Watershed3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
@@ -1198,16 +1209,15 @@ Found:
             System.gc();
             displayError("Algorithm Watershed3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 50) + 50, runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 25) + 75);
             }
 
             if (destImage.getShort(i) == WSHED) {
@@ -1254,7 +1264,7 @@ Found:
         } catch (IOException error) {
             displayError("Algorithm Watershed3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -1265,7 +1275,6 @@ Found:
                 destImage.setShort(i, (short) 0);
             }
         }
-
         // Make sure all watershed VOIs have there watershed ID -- fixes border voxels
         for (i = 0; i < nVOI; i++) {
 
@@ -1301,7 +1310,7 @@ Found:
         }
 
         setCompleted(true);
-        disposeProgressBar();
+        
         imgBuffer = null;
         System.gc();
     }
@@ -1442,7 +1451,7 @@ Found:
      * destImage.getShort(i);         destImage.setShort(i, (short)(tempInt+5));     } }
      *
      * destImage.calcMinMax(); //        gradMagImage.disposeLocal(); hQueue.dispose(); setCompleted(true);
-     * //progressBar.dispose(); }
+     * // }
      */
 
     /**

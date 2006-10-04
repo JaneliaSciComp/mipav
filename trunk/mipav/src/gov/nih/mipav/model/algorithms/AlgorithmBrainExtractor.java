@@ -366,8 +366,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         imageFactor = 0.1f;
         m_fStiffness = 0.2f;
 
-        buildProgressBar(image.getImageName(), "Extracting brain ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(image.getImageName(), "Extracting brain ...");
+        
 
         if (runOneIter == true) {
             iMaxUpdate = 1;
@@ -380,9 +380,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             if (isProgressBarVisible()) {
 
                 if (secondStageErosion) {
-                    progressBar.updateValue(Math.round((iStep * 100.0f) / 800 * 25), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((iStep * 100.0f) / 800 * 25));
                 } else {
-                    progressBar.updateValue(Math.round((iStep * 100.0f) / 800 * 50), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((iStep * 100.0f) / 800 * 50));
                 }
             }
 
@@ -406,9 +406,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             if (((i % 100) == 0) && isProgressBarVisible()) {
 
                 if (secondStageErosion) {
-                    progressBar.updateValue(Math.round((25 + (((float) (i)) / iMaxUpdate * 25))), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((25 + (((float) (i)) / iMaxUpdate * 25))));
                 } else {
-                    progressBar.updateValue(Math.round((50 + (((float) (i)) / iMaxUpdate * 50))), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((50 + (((float) (i)) / iMaxUpdate * 50))));
                 }
             }
 
@@ -428,7 +428,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             // After the image edge erosion in getInsideVoxels(), the mesh no longer corresponds
             // to the image.  Therefore, use the eroded image to recalculate the mesh.
-            progressBar.setMessage("Recalculating mesh for eroded image");
+            fireProgressStateChanged("Recalculating mesh for eroded image");
             m_iMaxDepth = 7;
             imageFactor = 0.1f;
             m_fStiffness = 0.2f;
@@ -442,7 +442,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             for (int iStep = 1; (iStep <= iMaxStep) && !threadStopped; iStep++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(50 + ((iStep * 100.0f) / 800 * 25)), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round(50 + ((iStep * 100.0f) / 800 * 25)));
                 }
 
                 for (i = 1; i <= iMaxUpdate; i++) {
@@ -467,7 +467,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
                 if (((i % 100) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((75 + (((float) (i)) / iMaxUpdate * 25))), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((75 + (((float) (i)) / iMaxUpdate * 25))));
                 }
 
                 updateMesh();
@@ -491,7 +491,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             System.out.println(" Problem saving mesh.");
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1984,7 +1984,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             // Optionally erode away all values >= median * aboveMedian that are next
             // to a zero background value or to another value already eroded
-            progressBar.setMessage("Performing second stage edge erosion");
+            fireProgressStateChanged("Performing second stage edge erosion");
 
             float median = fMin + (m_iMedianIntensity * (fMax - fMin) / 1023);
             float th = median * aboveMedian;
@@ -2004,7 +2004,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 chk = new boolean[m_iQuantity];
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: Out of memory error creating buffer and chk");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -2014,7 +2014,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 image.exportData(0, m_iQuantity, buffer);
             } catch (IOException er) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: IO error on image export data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -2226,7 +2226,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             } catch (IOException er) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: IO error on image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;

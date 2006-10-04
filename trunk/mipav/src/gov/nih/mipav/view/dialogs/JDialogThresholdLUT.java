@@ -403,32 +403,32 @@ public class JDialogThresholdLUT extends JDialogBase {
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.insets = insets;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optionPanel.add(binaryPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optionPanel.add(threshPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optionPanel.add(rangePanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optionPanel.add(minPanel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         optionPanel.add(maxPanel, gbc);
 
         JPanel buttonPanel = new JPanel();

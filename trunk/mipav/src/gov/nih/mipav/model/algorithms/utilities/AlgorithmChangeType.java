@@ -154,7 +154,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
             length = srcImage.getSliceSize() * colorFactor;
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Changing image to new type", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Changing image to new type");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm ChangeType: Image(s) locked", true);
@@ -172,7 +172,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         imDiff = imMax - imMin;
         newDiff = endRange2 - stRange2;
 
-        initProgressBar();
+        
 
         int mod = length / 100;
 
@@ -180,7 +180,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
@@ -225,7 +225,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
     }
@@ -255,7 +255,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Changing image to new type", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Changing image to new type");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Change type: Image(s) locked", true);
@@ -268,7 +268,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -276,8 +276,8 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((progressBar != null) && ((i % mod) == 0)) {
-                    progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                if ( ((i % mod) == 0)) {
+                    fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
                 if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
@@ -322,7 +322,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
                 for (i = (z * sliceLength); (i < endIndex) && !threadStopped; i++) {
 
                     if ((i % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                     }
 
                     if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
@@ -370,7 +370,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         }
 
         setCompleted(true);
-        disposeProgressBar();
+        
     }
 
     /**
@@ -396,7 +396,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
             length = srcImage.getSliceSize() * colorFactor;
             buffer = new double[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Creating new type image", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Creating new type image");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm ChangeType: Image(s) locked", true);
@@ -409,7 +409,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -421,7 +421,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if ((buffer[i] >= imMin) && (buffer[i] <= imMax)) {
@@ -444,7 +444,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         destImage.releaseLock();
 
         // destImage.notifyImageDisplayListeners(null, true);
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -484,10 +484,10 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
         buffer = new double[length];
 
-        buildProgressBar(srcImage.getImageName(), "Changing new type image", 0, 100);
+        fireProgressStateChanged(srcImage.getImageName(), "Changing new type image");
 
         int mod = length * numSlices / 100;
-        initProgressBar();
+        
 
         for (i = 0; i < numSlices; i++) {
 
@@ -506,8 +506,8 @@ public class AlgorithmChangeType extends AlgorithmBase {
                 for (j = 0; (j < length) && !threadStopped; j++) {
 
                     if (((((i * length) + j) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
-                                                               100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
+                                                               100));
                     }
 
                     if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
@@ -538,8 +538,8 @@ public class AlgorithmChangeType extends AlgorithmBase {
                 for (j = 0; j < length; j++) {
 
                     if (((((i * length) + j) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
-                                                               100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
+                                                               100));
                     }
 
                     if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
@@ -565,7 +565,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         destImage.releaseLock();
 
         // destImage.notifyImageDisplayListeners(null, true);
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

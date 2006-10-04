@@ -1520,9 +1520,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
     void processEM(float[] image, int Inx, int Iny, int Inz, float[] result, int Rx, int Ry, int Rz, float[] psf,
                    int Px, int Py, int Pz, float[] diffr, int lowZ, int highZ) {
 
-        progressBar.setTitle("processEM()");
-
-        float imageSum = imageWeightedSum(image, Inx, Iny, Inx, Iny, Inz);
+                float imageSum = imageWeightedSum(image, Inx, Iny, Inx, Iny, Inz);
 
         // calculate the OTF
         float[] OTF;
@@ -1547,8 +1545,8 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
 
             mesg = "Loop: " + loop + " of " + itMax + " FFT1()";
-            progressBar.setMessage(mesg);
-            progressBar.updateValue((loop * 100) / itMax, runningInSeparateThread);
+            fireProgressStateChanged(mesg);
+            fireProgressStateChanged((loop * 100) / itMax);
             real_fft3d(diffr, Rx, Ry, twoRz, Rx + 2, Ry + 2, 1);
             // saveWASHU(diffr, Rx+2, Ry+2, 2*Rz, "mydiffrJ.wu"); diffr is essentially the same here.  Difference is in
             // the bottom row for all the image planes
@@ -1559,7 +1557,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
 
             mesg = "Loop: " + loop + " of " + itMax + " IFFT1()";
-            progressBar.setMessage(mesg);
+            fireProgressStateChanged(mesg);
             real_fft3d(diffr, Rx, Ry, twoRz, Rx + 2, Ry + 2, -1);
             // saveWASHU(diffr, Rx+2, Ry+2, 2*Rz, "mydiffrJ.wu");
             // output the same to here 1/19/05
@@ -1582,7 +1580,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
 
             // saveWASHU(diffr, Rx+2, Ry+2, 2*Rz, "mydiffrJ.wu");
             mesg = "Loop: " + loop + " of " + itMax + " FFT2()";
-            progressBar.setMessage(mesg);
+            fireProgressStateChanged(mesg);
             real_fft3d(diffr, Rx, Ry, twoRz, Rx + 2, Ry + 2, 1);
             // saveWASHU(diffr, Rx+2, Ry+2, 2*Rz, "mydiffrJ.wu");
             // saveWASHU(OTF, Rx+2, Ry+2, 2*Rz, "myotfJ.wu");
@@ -1593,7 +1591,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
             // saveWASHU(diffr, Rx+2, Ry+2, 2*Rz, "mydiffrJ.wu");
 
             mesg = "Loop: " + loop + " of " + itMax + " IFFT2()";
-            progressBar.setMessage(mesg);
+            fireProgressStateChanged(mesg);
             real_fft3d(diffr, Rx, Ry, twoRz, Rx + 2, Ry + 2, -1);
             // saveWASHU(diffr, Rx+2, Ry+2, 2*Rz, "mydiffrJ.wu");
             // output the same to here 1/31/05
@@ -2288,30 +2286,6 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
     }
 
     /**
-     * Creates the standard progressBar. Stores in the class-global, progressBar.
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Xcosm Expectation Maximization ...", 0,
-                                                   100, true, this, this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-
-                // progressBar.setLocation( xScreen / 2, yScreen / 2 );
-                initProgressBar();
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-            Preferences.debug("AlgorithmXcosmEM: NullPointerException found while building progress bar.",
-                              Preferences.DEBUG_ALGORITHM);
-        }
-    } // end buildProgressBar()
-
-    /**
      * DOCUMENT ME!
      *
      * @throws  Exception  DOCUMENT ME!
@@ -2324,7 +2298,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
      */
     private void run3D() {
 
-        this.buildProgressBar();
+    	 fireProgressStateChanged(srcImage.getImageName(), "Xcosm Expectation Maximization ...");
 
         int iterations = 0;
 
@@ -2386,7 +2360,7 @@ public class AlgorithmXcosmEM extends AlgorithmBase {
         resultImage.calcMinMax();
 
         // The meat is done
-        disposeProgressBar();
+        
 
         if (threadStopped) {
             finalize();

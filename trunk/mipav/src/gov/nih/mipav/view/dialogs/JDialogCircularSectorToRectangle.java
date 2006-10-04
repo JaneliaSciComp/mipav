@@ -2,8 +2,6 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.filters.AlgorithmGaussianBlur;
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -17,19 +15,21 @@ import javax.swing.*;
 
 
 /**
- * Dialog to get user input of 4 bounding sector points and output xDim and yDim of 
- * rectangle created from transformed sector.
+ * Dialog to get user input of 4 bounding sector points and output xDim and yDim of rectangle created from transformed
+ * sector.
  */
-public class JDialogCircularSectorToRectangle extends JDialogBase implements AlgorithmInterface, ItemListener, WindowListener {
+public class JDialogCircularSectorToRectangle extends JDialogBase
+        implements AlgorithmInterface, ItemListener, WindowListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
-    //private static final long serialVersionUID;
-
-    
+    private static final long serialVersionUID = 0L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    int[] extents = new int[2];
 
     /** DOCUMENT ME! */
     private AlgorithmCircularSectorToRectangle cAlgo = null;
@@ -38,24 +38,28 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private JTextField xText;
-    
-    private JTextField yText;
+    private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
-    
+
+    /** DOCUMENT ME! */
     private int xDim;
-    
+
+    /** DOCUMENT ME! */
+    private double[] xSource = new double[4];
+
+    /** DOCUMENT ME! */
+    private JTextField xText;
+
+    /** DOCUMENT ME! */
     private int yDim;
-    
-    private double xSource[] = new double[4];
-    
-    private double ySource[] = new double[4];
-    
-    private ModelImage resultImage = null;
-    
-    int extents[] = new int[2];
+
+    /** DOCUMENT ME! */
+    private double[] ySource = new double[4];
+
+    /** DOCUMENT ME! */
+    private JTextField yText;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -128,7 +132,6 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
 
             if ((cAlgo.isCompleted() == true) && (resultImage != null)) {
 
-                
 
                 resultImage.clearMask();
 
@@ -147,9 +150,9 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
 
             }
 
-            //insertScriptLine(algorithm);
+            // insertScriptLine(algorithm);
         } // if (algorithm instanceof AlgorithmCircularSectorToRectangle)
-        
+
         if (cAlgo != null) {
             cAlgo.finalize();
             cAlgo = null;
@@ -170,7 +173,7 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
         Object source = event.getSource();
     }
 
-    
+
     /**
      * Disposes of error dialog, then frame. Sets cancelled to <code>true</code>.
      *
@@ -192,6 +195,7 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
             extents[1] = yDim;
             resultImage = new ModelImage(image.getType(), extents, name, image.getUserInterface());
             resultImage.setImageName(name);
+
             // Make algorithm
             cAlgo = new AlgorithmCircularSectorToRectangle(resultImage, image, xSource, ySource);
 
@@ -210,10 +214,6 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!UI.isAppFrameVisible()) {
-                    cAlgo.setProgressBarVisible(false);
-                }
 
                 cAlgo.run();
             }
@@ -257,19 +257,19 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
         point1Label.setForeground(Color.black);
         point1Label.setFont(serif12);
         pointPanel.add(point1Label, gbc4);
-        
+
         point2Label = new JLabel("Put point 2 at upper left corner");
         point2Label.setForeground(Color.black);
         point2Label.setFont(serif12);
         gbc4.gridy = 1;
         pointPanel.add(point2Label, gbc4);
-        
+
         point3Label = new JLabel("Put point 3 at lower left corner");
         point3Label.setForeground(Color.black);
         point3Label.setFont(serif12);
         gbc4.gridy = 2;
         pointPanel.add(point3Label, gbc4);
-        
+
         point4Label = new JLabel("Put point 4 at lower right corner");
         point4Label.setForeground(Color.black);
         point4Label.setFont(serif12);
@@ -303,7 +303,7 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
         xText.setEnabled(true);
         gbc6.gridx = 1;
         paramPanel.add(xText, gbc6);
-        
+
         yLabel = new JLabel("Y dimension of output image ");
         yLabel.setForeground(Color.black);
         yLabel.setFont(serif12);
@@ -341,14 +341,16 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
         if (!testParameter(xText.getText(), 5, 1000000)) {
             xText.requestFocus();
             xText.selectAll();
+
             return false;
         } else {
             xDim = Integer.valueOf(xText.getText()).intValue();
         }
-        
+
         if (!testParameter(yText.getText(), 5, 1000000)) {
             yText.requestFocus();
             yText.selectAll();
+
             return false;
         } else {
             yDim = Integer.valueOf(yText.getText()).intValue();
@@ -356,17 +358,20 @@ public class JDialogCircularSectorToRectangle extends JDialogBase implements Alg
 
         curves = image.getVOIs().VOIAt(0).getCurves();
         nPts = curves[0].size();
+
         if (nPts != 4) {
             MipavUtil.displayError("Number of points = " + nPts + " instead of required 4");
+
             return false;
         }
-        
+
         pts = image.getVOIs().VOIAt(0).exportPoints(0);
+
         for (i = 0; i < 4; i++) {
             xSource[i] = pts[i].x;
             ySource[i] = pts[i].y;
         }
+
         return true;
     }
-
 }

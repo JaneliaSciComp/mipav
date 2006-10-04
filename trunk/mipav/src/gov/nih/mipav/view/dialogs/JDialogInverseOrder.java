@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +23,7 @@ import java.util.*;
  * @version  0.1 Nov 17, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogInverseOrder extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogInverseOrder extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -51,7 +52,7 @@ public class JDialogInverseOrder extends JDialogBase implements AlgorithmInterfa
     public JDialogInverseOrder() { }
 
     /**
-     * Creates new dialog.
+     * Runs the algorithm.
      *
      * @param  theParentFrame  parent frame
      * @param  im              source image
@@ -59,34 +60,18 @@ public class JDialogInverseOrder extends JDialogBase implements AlgorithmInterfa
     public JDialogInverseOrder(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogInverseOrder(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Closes dialog box when the OK button is pressed and calls the algorithm.
+     * Does nothing.
      *
      * @param  event  event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -127,45 +112,37 @@ public class JDialogInverseOrder extends JDialogBase implements AlgorithmInterfa
             if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
                 Preferences.debug("\nHave inverted slice order on ");
                 Preferences.debug(image.getImageName() + "\n");
-            } // if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM))
-        } // if (algorithm instanceof AlgorithmInverseOrder)
+            }
+        }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         orderAlgo.finalize();
         orderAlgo = null;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("InverseOrder " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
     }
 
     /**
      * Locks the images, then runs the inverse slice order algorithm.
      */
-    public void run() {
+    public void callAlgorithm() {
 
         try {
             System.gc();
@@ -178,6 +155,8 @@ public class JDialogInverseOrder extends JDialogBase implements AlgorithmInterfa
             // This is made possible by implementing AlgorithmedPerformed interface
             orderAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), orderAlgo);
+            
             // Hide dialog
             setVisible(false);
 
@@ -215,33 +194,7 @@ public class JDialogInverseOrder extends JDialogBase implements AlgorithmInterfa
             return;
         }
     }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        setSeparateThread(false);
-        run();
-    }
-
+    
     /**
      * Does nothing at the moment, no dialog is created.
      */

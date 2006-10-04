@@ -1632,8 +1632,8 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         optionsPanel.add(updateCheckBoxA, gbc);
 
@@ -1717,7 +1717,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = gbc.NORTHWEST;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.insets = leftInsets;
         thresholdPanel.add(upperThreshLabel, gbc);
 
@@ -1754,7 +1754,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         gbc.weighty = 0;
         controlPanel.add(optionsPanel, gbc);
@@ -1764,7 +1764,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
         gbc.gridy = 2;
         gbc.weighty = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         controlPanel.add(thresholdPanel, gbc);
 
         panelA = new JPanel(new BorderLayout());
@@ -1806,8 +1806,8 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
         logCheckBoxB.addItemListener(this);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         optionsPanel.add(updateCheckBoxB, gbc);
 
@@ -1892,7 +1892,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = gbc.NORTHWEST;
+        gbc.anchor = GridBagConstraints.NORTHWEST;
         gbc.insets = leftInsets;
         thresholdPanelB.add(upperThreshLabelB, gbc);
 
@@ -1943,7 +1943,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
         gbc.gridy = 2;
         gbc.weighty = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         controlPanelB.add(thresholdPanelB, gbc);
 
         panelB = new JPanel(new BorderLayout());
@@ -1992,7 +1992,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoARed = new AlgorithmHistogram(histogramARed, offset, imageA, entireFlag);
 
-            histoAlgoARed.setProgressBarVisible(progressFlag);
+           // histoAlgoARed.setProgressBarVisible(progressFlag);
 
             // histoAlgoARed.setSeparateThread(false);
             histoAlgoARed.run();
@@ -2012,7 +2012,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoAGreen = new AlgorithmHistogram(histogramAGreen, offset, imageA, entireFlag);
 
-            histoAlgoAGreen.setProgressBarVisible(progressFlag);
+           // histoAlgoAGreen.setProgressBarVisible(progressFlag);
 
             // histoAlgoAGreen.setSeparateThread(false);
             histoAlgoAGreen.run();
@@ -2032,7 +2032,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoABlue = new AlgorithmHistogram(histogramABlue, offset, imageA, entireFlag);
 
-            histoAlgoABlue.setProgressBarVisible(progressFlag);
+           // histoAlgoABlue.setProgressBarVisible(progressFlag);
 
             // histoAlgoABlue.setSeparateThread(false);
             histoAlgoABlue.run();
@@ -2055,7 +2055,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoBRed = new AlgorithmHistogram(histogramBRed, offset, imageB, entireFlag);
 
-            histoAlgoBRed.setProgressBarVisible(progressFlag);
+         //   histoAlgoBRed.setProgressBarVisible(progressFlag);
 
             // histoAlgoBRed.setSeparateThread(false);
             histoAlgoBRed.run();
@@ -2075,7 +2075,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoBGreen = new AlgorithmHistogram(histogramBGreen, offset, imageB, entireFlag);
 
-            histoAlgoBGreen.setProgressBarVisible(progressFlag);
+            //histoAlgoBGreen.setProgressBarVisible(progressFlag);
 
             // histoAlgoBGreen.setSeparateThread(false);
             histoAlgoBGreen.run();
@@ -2095,7 +2095,7 @@ public class ViewJFrameHistoRGB extends ViewJFrameBase
 
             AlgorithmHistogram histoAlgoBBlue = new AlgorithmHistogram(histogramBBlue, offset, imageB, entireFlag);
 
-            histoAlgoBBlue.setProgressBarVisible(progressFlag);
+         //   histoAlgoBBlue.setProgressBarVisible(progressFlag);
 
             // histoAlgoBBlue.setSeparateThread(false);
             histoAlgoBBlue.run();

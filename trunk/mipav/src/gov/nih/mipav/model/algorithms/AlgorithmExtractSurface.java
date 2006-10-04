@@ -187,9 +187,9 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         // Blur image if necessary (the extraction algorithm does not work on flat surfaces.
         // Therefore blur flat surface to produce a small intensity gradient and then extract
         // a surface.
-        buildProgressBar(srcImage.getImageName(), "Extracting surface ...", 0, 100);
-        initProgressBar();
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(srcImage.getImageName(), "Extracting surface ...");
+        
+        fireProgressStateChanged(0);
 
         if (threadStopped) {
 
@@ -239,14 +239,14 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         if (blurFlag == true) {
 
             try {
-                blurAlgo = new AlgorithmGaussianBlur(maskImage, sigmas, true, false);
+                blurAlgo = new AlgorithmGaussianBlur(null, maskImage, sigmas, true, false);
 
-                progressBar.setMessage("Blurring images");
+                fireProgressStateChanged("Blurring images");
 
-                // progressBar.updateValue(15, runningInSeparateThread);
+                // fireProgressStateChanged(15);
                 blurAlgo.setProgressBarVisible(false);
                 blurAlgo.run();
-                progressBar.updateValue(15, runningInSeparateThread);
+                fireProgressStateChanged(15);
 
                 if (blurAlgo.isCompleted() == false) {
 
@@ -269,7 +269,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                 return;
             }
         } else {
-            progressBar.updateValue(15, runningInSeparateThread);
+            fireProgressStateChanged(15);
         }
 
         // Uncomment next line to display blurred maskImage for debugging purposes.
@@ -366,14 +366,14 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
             buffer = null;
             System.gc();
 
-            progressBar.setMessage("Starting surface extraction");
+            fireProgressStateChanged("Starting surface extraction");
 
             // Next line extracts the surface at the supplied level.
             // kExtractor.flag = true;
-            ModelTriangleMesh kMesh = kExtractor.get((int) level, progressBar);
+            ModelTriangleMesh kMesh = kExtractor.get((int) level, getProgressChangeListener());
 
             buffer2 = null;
-            progressBar.updateValue(50, runningInSeparateThread);
+            fireProgressStateChanged(50);
 
             if (triangleConsistencyMode == ADJ_MODE) {
                 kMesh.getConsistentComponents();
@@ -389,7 +389,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                 ModelTriangleMesh[] akComponent = null;
                 int iVMaxQuantity = 0, iTMaxQuantity = 0;
 
-                progressBar.setMessage("Initializing surface.");
+                fireProgressStateChanged("Initializing surface.");
                 akComponent = kMesh.getComponents();
                 kMesh = null;
                 System.gc();
@@ -413,7 +413,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
                 ModelClodMesh[] akClod = new ModelClodMesh[akComponent.length];
 
-                progressBar.setMessage("Surface decimation in progress");
+                fireProgressStateChanged("Surface decimation in progress");
 
                 ModelSurfaceDecimator kDecimator = new ModelSurfaceDecimator(iVMaxQuantity, iTMaxQuantity);
 
@@ -421,7 +421,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                     Point3f[] akVertex = akComponent[i].getVertexCopy();
                     int[] aiConnect = akComponent[i].getIndexCopy();
 
-                    kDecimator.decimate(akVertex, aiConnect, progressBar, 50 + (i * 50 / akComponent.length),
+                    kDecimator.decimate(akVertex, aiConnect, getProgressChangeListener(), 50 + (i * 50 / akComponent.length),
                                         akComponent.length * 2);
 
                     akClod[i] = new ModelClodMesh(akVertex, aiConnect, kDecimator.getRecords());
@@ -434,11 +434,11 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                 }
 
                 System.gc();
-                progressBar.setMessage("Saving surface");
+                fireProgressStateChanged("Saving surface");
                 ModelClodMesh.save(surfaceFileName, akClod, true, direction, origin, box, inverseDicomArray);
             } else {
-                progressBar.updateValue(75, runningInSeparateThread);
-                progressBar.setMessage("Saving surface");
+                fireProgressStateChanged(75);
+                fireProgressStateChanged("Saving surface");
                 kMesh.save(surfaceFileName, true, direction, origin, box, inverseDicomArray);
 
             }
@@ -456,7 +456,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
         System.gc();
         setCompleted(true);
-        disposeProgressBar();
+        
 
         return;
     }
@@ -514,13 +514,13 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                     }
                 } // (!foundVOI)
 
-                // progressBar.setValue(2, runningInSeparateThread);
+                // progressBar.setValue(2);
                 short[] tempImage = new short[destExtents[0] * destExtents[1] * destExtents[2]];
 
-                // progressBar.setValue(3, runningInSeparateThread);
+                // progressBar.setValue(3);
                 tempImage = srcImage.generateVOIMask(tempImage, i);
 
-                // progressBar.setValue(4, runningInSeparateThread);
+                // progressBar.setValue(4);
                 if (tempImage == null) {
                     MipavUtil.displayError("Error when making mask image from VOI.");
                     VOIs.VOIAt(i).setID(oldID);
@@ -530,7 +530,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
                 VOIs.VOIAt(i).setID(oldID);
 
-                // progressBar.setValue(5, runningInSeparateThread);
+                // progressBar.setValue(5);
                 for (i = 0; i < tempImage.length; i++) {
 
                     if (tempImage[i] > 0) {
@@ -538,13 +538,13 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
                     }
                 }
 
-                // progressBar.setValue(10, runningInSeparateThread);
+                // progressBar.setValue(10);
                 maskImage = new ModelImage(ModelImage.USHORT, destExtents, "Surface image",
                                            srcImage.getUserInterface());
                 maskImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolutions());
                 maskImage.importData(0, tempImage, true);
 
-                // progressBar.setValue(12, runningInSeparateThread);
+                // progressBar.setValue(12);
                 tempImage = null;
                 System.gc();
             } else if (mode == MASK_MODE) {

@@ -233,7 +233,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new double[length];
-            buildProgressBar(srcImage.getImageName(), "Calculating image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             System.gc();
@@ -374,7 +374,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 
@@ -419,8 +419,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                             }
                         } catch (NullPointerException npe) {
 
@@ -499,7 +498,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm ImageMath: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -508,7 +507,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         } // f loop
 
         srcImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -540,7 +539,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new double[length];
             bufferI = new double[length];
-            buildProgressBar(srcImage.getImageName(), "Calculating image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             bufferI = null;
@@ -551,7 +550,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 
@@ -603,8 +602,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                             }
                         } catch (NullPointerException npe) {
 
@@ -761,7 +759,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         } catch (IOException error) {
                             displayError("Algorithm ImageMath: Image(s) locked");
                             setCompleted(false);
-                            disposeProgressBar();
+                            
 
                             return;
                         }
@@ -783,7 +781,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm ImageMath: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -792,7 +790,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         } // f loop
 
         srcImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -820,7 +818,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                 sumAverageBuffer = new double[length];
             }
 
-            buildProgressBar(srcImage.getImageName(), "Calculating image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             System.gc();
@@ -935,7 +933,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 
@@ -971,7 +969,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm ImageMath : Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -981,8 +979,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                             }
                         } catch (NullPointerException npe) {
 
@@ -1065,7 +1062,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         } catch (IOException error) {
                             displayError("Algorithm ImageMath: Destination Image locked");
                             setCompleted(false);
-                            disposeProgressBar();
+                            
 
                             return;
                         }
@@ -1076,7 +1073,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
@@ -1096,14 +1093,14 @@ public class AlgorithmImageMath extends AlgorithmBase {
             } catch (Exception e) {
                 displayError("Algorithm ImageMath: Destination Image locked");
                 setCompleted(false);
-                disposeProgressBar();
+                
 
                 return;
             }
         }
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1130,7 +1127,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new double[length];
             bufferI = new double[length];
-            buildProgressBar(srcImage.getImageName(), "Calculating image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             bufferI = null;
@@ -1141,7 +1138,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 
@@ -1193,8 +1190,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                             }
                         } catch (NullPointerException npe) {
 
@@ -1355,7 +1351,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                             } catch (IOException error) {
                                 displayError("Algorithm ImageMath: Image(s) locked");
                                 setCompleted(false);
-                                disposeProgressBar();
+                                
 
                                 return;
                             }
@@ -1378,7 +1374,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm ImageMath: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -1389,7 +1385,7 @@ public class AlgorithmImageMath extends AlgorithmBase {
         } // f loop
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
 
     }

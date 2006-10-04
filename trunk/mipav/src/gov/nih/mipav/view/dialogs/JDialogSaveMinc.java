@@ -438,15 +438,15 @@ public class JDialogSaveMinc extends JDialogBase {
         }
 
         createLabel("X axis orientation:", layout, setGBC(gbc, 0, 1, 2, 1), panel);
-        createComboBoxX(layout, setGBC(gbc, 2, 1, gbc.REMAINDER, 1), panel);
+        createComboBoxX(layout, setGBC(gbc, 2, 1, GridBagConstraints.REMAINDER, 1), panel);
 
         createLabel("Y axis orientation:", layout, setGBC(gbc, 0, 2, 2, 1), panel);
-        createComboBoxY(layout, setGBC(gbc, 2, 2, gbc.REMAINDER, 1), panel);
+        createComboBoxY(layout, setGBC(gbc, 2, 2, GridBagConstraints.REMAINDER, 1), panel);
 
         createLabel("Z axis orientation:", layout, setGBC(gbc, 0, 3, 2, 1), panel);
-        createComboBoxZ(layout, setGBC(gbc, 2, 3, gbc.REMAINDER, 1), panel);
+        createComboBoxZ(layout, setGBC(gbc, 2, 3, GridBagConstraints.REMAINDER, 1), panel);
 
-        createLabel(" ", layout, setGBC(gbc, 0, 4, gbc.REMAINDER, 1), panel);
+        createLabel(" ", layout, setGBC(gbc, 0, 4, GridBagConstraints.REMAINDER, 1), panel);
 
         createLabel("L/R Start:", layout, setGBC(gbc, 0, 5, 1, 1), panel);
         xStart = setTextField("", layout, setGBC(gbc, 1, 5, 1, 1), panel);
@@ -463,7 +463,7 @@ public class JDialogSaveMinc extends JDialogBase {
         createLabel("  I/S Space:", layout, setGBC(gbc, 2, 7, 1, 1), panel);
         zSpace = setTextField("", layout, setGBC(gbc, 3, 7, 1, 1), panel);
 
-        createLabel(" ", layout, setGBC(gbc, 0, 8, gbc.REMAINDER, 1), panel);
+        createLabel(" ", layout, setGBC(gbc, 0, 8, GridBagConstraints.REMAINDER, 1), panel);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();

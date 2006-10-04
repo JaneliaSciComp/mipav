@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +23,7 @@ import java.util.*;
  * @version  1.0 July 17, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogFlip extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -66,38 +68,17 @@ public class JDialogFlip extends JDialogBase implements AlgorithmInterface, Scri
         setForeground(Color.black);
         this.flipAxis = flipAxis;
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
-    }
-
-    /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
-     *
-     * @param  ui        User interface.
-     * @param  im        Source image.
-     * @param  flipAxis  Axis which image is to be flipped.
-     */
-    public JDialogFlip(ViewUserInterface ui, ModelImage im, int flipAxis) {
-        super();
-
-        setForeground(Color.black);
-        parentFrame = im.getParentFrame();
-        this.flipAxis = flipAxis;
-        image = im;
-        this.userInterface = ui;
+        userInterface = ViewUserInterface.getReference();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Presently only the script function calls this method. When the script sends this dialog the action command, this
-     * method calls run.
+     * Does nothing.
      *
      * @param  event  event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) {}
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -133,7 +114,9 @@ public class JDialogFlip extends JDialogBase implements AlgorithmInterface, Scri
 
             image.notifyImageDisplayListeners(null, true);
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         flipAlgo.finalize();
@@ -157,6 +140,9 @@ public class JDialogFlip extends JDialogBase implements AlgorithmInterface, Scri
             // This is made possible by implementing AlgorithmedPerformed interface
             flipAlgo.addListener(this);
 
+            
+            createProgressBar(image.getImageName(), flipAlgo);
+            
             // Hide dialog
             setVisible(false);
 
@@ -181,10 +167,6 @@ public class JDialogFlip extends JDialogBase implements AlgorithmInterface, Scri
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                //if (!userInterface.isAppFrameVisible()) {
-                    flipAlgo.setProgressBarVisible(false);
-                //}
-
                 flipAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -194,79 +176,35 @@ public class JDialogFlip extends JDialogBase implements AlgorithmInterface, Scri
             return;
         }
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Flip " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (flipAxis == AlgorithmFlip.X_AXIS) {
-                    userInterface.getScriptDialog().append("X\n");
-                } else {
-                    userInterface.getScriptDialog().append("Y\n");
-                }
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        if (flipAxis == AlgorithmFlip.X_AXIS) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("flip_axis", "X"));
+        } else if (flipAxis == AlgorithmFlip.Y_AXIS) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("flip_axis", "Y"));
         }
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setForeground(Color.black);
-        image = im;
-        userInterface = image.getUserInterface();
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
         parentFrame = image.getParentFrame();
-
-        try {
-            String axisn = parser.getNextString();
-
-            if (axisn.equals("X")) {
-                flipAxis = AlgorithmFlip.X_AXIS;
-            } else if (axisn.equals("Y")) {
-                flipAxis = AlgorithmFlip.Y_AXIS;
-            } else {
-                throw new Exception("Illegal axis parameter: " + axisn);
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException(e.getMessage());
+        
+        String axisn = scriptParameters.getParams().getString("flip_axis");
+        if (axisn.equals("X")) {
+            flipAxis = AlgorithmFlip.X_AXIS;
+        } else if (axisn.equals("Y")) {
+            flipAxis = AlgorithmFlip.Y_AXIS;
+        } else {
+            throw new ParameterException("flip_axis", "Illegal axis parameter: " + axisn);
         }
-
-        setSeparateThread(false);
-        callAlgorithm();
     }
-
 }

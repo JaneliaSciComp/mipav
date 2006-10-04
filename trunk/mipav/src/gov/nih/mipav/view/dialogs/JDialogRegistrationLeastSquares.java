@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +23,7 @@ import javax.swing.*;
  * @version  0.1 May 19, 1999
  * @author   Delia McGarry
  */
-public class JDialogRegistrationLeastSquares extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRegistrationLeastSquares extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -86,7 +87,7 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
     public JDialogRegistrationLeastSquares(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         matchImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -231,11 +232,9 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
                 }
 
                 closingLog();
-                insertScriptLine(algorithm);
 
+                insertScriptLine();
             }
-
-
         }
 
         if (!fromOAR3D) {
@@ -271,107 +270,9 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(matchImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(matchImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(matchImage.getImageName());
-                    }
-                }
-
-                // do the same for the reference image
-                if (userInterface.getScriptDialog().getImgTableVar(baseImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(baseImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(baseImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-
-
-                userInterface.getScriptDialog().append("RegistrationLeastSquares ");
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(matchImage.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(baseImage.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       "\n");
-
-
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String image2Key = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-            image2Key = parser.getNextString();
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        matchImage = parser.getImage(srcImageKey);
-
-        baseImage = parser.getImage(image2Key);
-
-        if (matchImage.getNDims() == 2) {
-            DIM = 2;
-        } else if (matchImage.getNDims() == 3) {
-            DIM = 3;
-        }
-
-        userInterface = matchImage.getUserInterface();
-        parentFrame = matchImage.getParentFrame();
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        parser.putVariable(destImageKey, getResultImage().getImageName());
-    }
-
-    /**
-     * Constructs a string indicating if the algorithm completed sucessfully.
-     */
-    protected void closingLog() {
-        String logString;
-
-        if (LSMatch.isCompleted() == true) {
-            logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
-                                   " Completed successfully!" + "\n");
-        } else {
-            logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
-                                   " Algorithm failed!" + "\n");
-        }
-        // Preferences.log(matchImage.getUserInterface(), logString);
-    }
-
-    /**
      * Sets arrays appropriately and calls registration algorithm, running it in it's own thread.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         int nPtsA = 0; // = baseImage.getVOIs().size();
         int nPtsB = 0; // = matchImage.getVOIs().size()
         Point3Df[] tmpptA = null;
@@ -526,6 +427,8 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
         // See algorithm performed event. This is made possible by implementing
         LSMatch.addListener(this);
 
+        createProgressBar(baseImage.getImageName(), LSMatch);
+
         // These next lines set the titles in all frames where the source image
         // is displayed to "locked - " image name so as to indicate that the image
         // is now read/write locked!  The image frames are disabled and then
@@ -551,6 +454,7 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
+
             if (!userInterface.isAppFrameVisible()) {
                 LSMatch.setProgressBarVisible(false);
             }
@@ -559,6 +463,56 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
         }
 
 
+    }
+
+    /**
+     * Constructs a string indicating if the algorithm completed sucessfully.
+     */
+    protected void closingLog() {
+        String logString;
+
+        if (LSMatch.isCompleted() == true) {
+            logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
+                                   " Completed successfully!" + "\n");
+        } else {
+            logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
+                                   " Algorithm failed!" + "\n");
+        }
+        // Preferences.log(matchImage.getUserInterface(), logString);
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        matchImage = scriptParameters.retrieveInputImage();
+        baseImage = scriptParameters.retrieveImage("reference_image");
+
+        if (matchImage.getNDims() == 2) {
+            DIM = 2;
+        } else if (matchImage.getNDims() == 3) {
+            DIM = 3;
+        }
+
+        userInterface = matchImage.getUserInterface();
+        parentFrame = matchImage.getParentFrame();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(matchImage);
+        scriptParameters.storeImage(baseImage, "reference_image");
+
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
     }
 
     /**
@@ -605,10 +559,9 @@ public class JDialogRegistrationLeastSquares extends JDialogBase implements Algo
     private boolean setVariables() {
 
         // assign baseImage to image selected in comboBox
-        ViewUserInterface userInterface = matchImage.getUserInterface();
         String selectedName = (String) comboBoxImage.getSelectedItem();
 
-        baseImage = userInterface.getRegisteredImageByName(selectedName);
+        baseImage = ViewUserInterface.getReference().getRegisteredImageByName(selectedName);
 
         if (matchImage.getNDims() == 2) {
             DIM = 2;

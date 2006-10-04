@@ -2,9 +2,13 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -23,7 +27,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
-public class JDialogClose extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogClose extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -45,15 +49,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
     private JComboBox comboBoxKernel;
 
     /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** DOCUMENT ME! */
     private boolean do25D = false;
 
     /** DOCUMENT ME! */
@@ -61,12 +56,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
 
     /** DOCUMENT ME! */
     private JCheckBox image25D;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
 
     /** or if the source image is to be replaced. */
     private int itersD;
@@ -96,13 +85,7 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
     private JPanel maskPanel;
 
     /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private boolean regionFlag = false;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -121,15 +104,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private float value;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -156,31 +130,8 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogClose(ViewUserInterface UI, ModelImage im) {
-        super();
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -201,7 +152,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
         } else if (command.equals("Cancel")) {
             dispose();
         }
-
     }
 
     // ************************************************************************
@@ -217,8 +167,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -231,7 +179,7 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                 try {
 
                     // resultImage.setImageName("Closed image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -274,7 +222,7 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                 try {
 
                     // resultImage.setImageName("Closed image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -316,7 +264,7 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                 try {
 
                     // resultImage.setImageName("Closed image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -349,7 +297,9 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -380,43 +330,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Close " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + regionFlag + " " + itersD + " " + itersE + " " +
-                                                           kernel + " " + kernelSize + " " + do25D + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + regionFlag + " " + itersD + " " + itersE + " " +
-                                                           kernel + " " + kernelSize + " " + do25D + "\n");
-                }
-            }
-        }
-    }
-
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -442,99 +355,21 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
     }
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setNumDilations(parser.getNextInteger());
-            setNumErosions(parser.getNextInteger());
-            setKernelType(parser.getNextInteger());
-            setKernelSize(parser.getNextFloat());
-            setImage25D(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
      * Process the image in 2.5D.
      *
-     * @param  b  whether to do 2.5D morphology
+     * @param  image25D  whether to do 2.5D morphology
      */
-    public void setImage25D(boolean b) {
-        do25D = b;
+    public void setImage25D(boolean image25D) {
+        do25D = image25D;
     }
 
     /**
      * Accessor that sets the kernel size.
      *
-     * @param  s  the desired kernel size
+     * @param  size  the desired kernel size
      */
-    public void setKernelSize(float s) {
-        kernelSize = s;
+    public void setKernelSize(float size) {
+        kernelSize = size;
     }
 
     /**
@@ -552,55 +387,26 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
     /**
      * Accessor that sets the number of dilations to perform.
      *
-     * @param  n  The number of erosions to do.
+     * @param  iters  The number of erosions to do.
      */
-    public void setNumDilations(int n) {
-        itersD = n;
+    public void setNumDilations(int iters) {
+        itersD = iters;
     }
 
     /**
      * Accessor that sets the number of erosions to perform.
      *
-     * @param  n  The number of erosions to do.
+     * @param  iters  The number of erosions to do.
      */
-    public void setNumErosions(int n) {
-        itersE = n;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
-    }
-
-    /**
-     * buildComboBox.
-     */
-    private void buildComboBox() {
-
-        comboBoxKernel = new JComboBox();
-        comboBoxKernel.setFont(serif12);
-        comboBoxKernel.setBackground(Color.white);
-
-        if (image.getNDims() == 2) {
-            comboBoxKernel.addItem("3x3 -  4 connected");
-            comboBoxKernel.addItem("5x5 - 12 connected");
-            comboBoxKernel.addItem("User sized circle.");
-        } else if (image.getNDims() == 3) {
-            comboBoxKernel.addItem("3x3x3 -  6 connected (2.5D: 4)");
-            comboBoxKernel.addItem("5x5x5 - 24 connected (2.5D: 12)");
-            comboBoxKernel.addItem("User sized sphere.");
-        }
+    public void setNumErosions(int iters) {
+        itersE = iters;
     }
 
     /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_close");
 
         if (image.getNDims() == 2) { // source image is 2D
@@ -609,7 +415,7 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -618,9 +424,9 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // Make algorithm
                     closeAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, kernelSize,
                                                             AlgorithmMorphology2D.CLOSE, itersD, itersE, 0, 0,
-                                                            regionFlag);
+                                                            outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         closeAlgo2D.setMask(image.generateVOIMask());
                     }
 
@@ -629,6 +435,8 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo2D.addListener(this);
+
+                    createProgressBar(image.getImageName(), closeAlgo2D);
 
                     // Hide dialog
                     setVisible(false);
@@ -640,9 +448,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo2D.setProgressBarVisible(false);
-                        }
 
                         closeAlgo2D.run();
                     }
@@ -663,9 +468,9 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     closeAlgo2D = new AlgorithmMorphology2D(image, kernel, kernelSize, AlgorithmMorphology2D.CLOSE,
-                                                            itersD, itersE, 0, 0, regionFlag);
+                                                            itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         closeAlgo2D.setMask(image.generateVOIMask());
                         // closeAlgo2D.setIterations(itersD, itersE);
                     }
@@ -674,6 +479,8 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo2D.addListener(this);
+
+                    createProgressBar(image.getImageName(), closeAlgo2D);
 
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
@@ -699,9 +506,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo2D.setProgressBarVisible(false);
-                        }
 
                         closeAlgo2D.run();
                     }
@@ -717,7 +521,7 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -726,9 +530,9 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // Make algorithm
                     closeAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, kernelSize,
                                                             AlgorithmMorphology3D.CLOSE, itersD, itersE, 0, 0,
-                                                            regionFlag);
+                                                            outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         closeAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -736,6 +540,8 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo3D.addListener(this);
+
+                    createProgressBar(image.getImageName(), closeAlgo3D);
 
                     // Hide dialog
                     setVisible(false);
@@ -747,9 +553,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo3D.setProgressBarVisible(false);
-                        }
 
                         closeAlgo3D.run();
                     }
@@ -769,9 +572,9 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
 
                     // Make algorithm
                     closeAlgo3D = new AlgorithmMorphology3D(image, kernel, kernelSize, AlgorithmMorphology3D.CLOSE,
-                                                            itersD, itersE, 0, 0, regionFlag);
+                                                            itersD, itersE, 0, 0, outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         closeAlgo3D.setMask(image.generateVOIMask());
                     }
 
@@ -779,6 +582,8 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo3D.addListener(this);
+
+                    createProgressBar(image.getImageName(), closeAlgo3D);
 
                     // Hide dialog
                     setVisible(false);
@@ -804,9 +609,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo3D.setProgressBarVisible(false);
-                        }
 
                         closeAlgo3D.run();
                     }
@@ -831,7 +633,7 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                 kernel = AlgorithmMorphology25D.SIZED_CIRCLE;
             }
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
                     resultImage = (ModelImage) image.clone();
@@ -840,9 +642,9 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // Make algorithm
                     closeAlgo25D = new AlgorithmMorphology25D(resultImage, kernel, kernelSize,
                                                               AlgorithmMorphology2D.CLOSE, itersD, itersE, 0, 0,
-                                                              regionFlag);
+                                                              outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         closeAlgo25D.setMask(image.generateVOIMask());
                     }
 
@@ -851,6 +653,8 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo25D.addListener(this);
+
+                    createProgressBar(image.getImageName(), closeAlgo25D);
 
                     // Hide dialog
                     setVisible(false);
@@ -862,9 +666,7 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo25D.setProgressBarVisible(false);
-                        }
+
 
                         closeAlgo25D.run();
                     }
@@ -885,9 +687,10 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     closeAlgo25D = new AlgorithmMorphology25D(image, kernel, kernelSize, AlgorithmMorphology25D.CLOSE,
-                                                              itersD, itersE, 0, 0, regionFlag);
+                                                              itersD, itersE, 0, 0,
+                                                              outputPanel.isProcessWholeImageSet());
 
-                    if (regionFlag == false) {
+                    if (outputPanel.isProcessWholeImageSet() == false) {
                         closeAlgo25D.setMask(image.generateVOIMask());
                         // closeAlgo25D.setIterations(itersD, itersE);
                     }
@@ -896,6 +699,8 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     closeAlgo25D.addListener(this);
+
+                    createProgressBar(image.getImageName(), closeAlgo25D);
 
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
@@ -921,9 +726,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            closeAlgo25D.setProgressBarVisible(false);
-                        }
 
                         closeAlgo25D.run();
                     }
@@ -933,6 +735,77 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
                     return;
                 }
             }
+        }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        do25D = scriptParameters.doProcess3DAs25D();
+        itersD = scriptParameters.getParams().getInt("dilation_iterations");
+        itersE = scriptParameters.getParams().getInt("erosion_iterations");
+        kernel = scriptParameters.getParams().getInt("kernel_type");
+        kernelSize = scriptParameters.getParams().getFloat("kernel_size");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), do25D);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("dilation_iterations", itersD));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("erosion_iterations", itersE));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_type", kernel));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
+    }
+
+    /**
+     * buildComboBox.
+     */
+    private void buildComboBox() {
+
+        comboBoxKernel = new JComboBox();
+        comboBoxKernel.setFont(serif12);
+        comboBoxKernel.setBackground(Color.white);
+
+        if (image.getNDims() == 2) {
+            comboBoxKernel.addItem("3x3 -  4 connected");
+            comboBoxKernel.addItem("5x5 - 12 connected");
+            comboBoxKernel.addItem("User sized circle.");
+        } else if (image.getNDims() == 3) {
+            comboBoxKernel.addItem("3x3x3 -  6 connected (2.5D: 4)");
+            comboBoxKernel.addItem("5x5x5 - 24 connected (2.5D: 12)");
+            comboBoxKernel.addItem("User sized sphere.");
         }
     }
 
@@ -967,7 +840,7 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
         comboBoxKernel.addItemListener(this);
 
         String unitString = null;
-        unitString = new String(image.getFileInfo()[0].sUnits[image.getFileInfo()[0].getUnitsOfMeasure(0)]);
+        unitString = new String(FileInfoBase.sUnits[image.getFileInfo()[0].getUnitsOfMeasure(0)]);
 
         if (image.getNDims() == 2) {
             labelKernelSize = new JLabel("Circle diameter - " + unitString);
@@ -992,102 +865,57 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelNIterD, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textNIterD, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelNIterE, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textNIterE, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelKernel, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(comboBoxKernel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelKernelSize, gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textKernelSize, gbc);
 
-        destinationPanel = new JPanel(new GridBagLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setBounds(10, 42, 120, 25);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.insets = new Insets(0, 0, 0, 0);
-        destinationPanel.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanel.add(replaceImage, gbc);
-
-        imageVOIPanel = new JPanel(new GridBagLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Close"));
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
 
         image25D = new JCheckBox("Process image in 2.5D", false);
         image25D.setFont(serif12);
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        imageVOIPanel.add(wholeImage, gbc);
-        gbc.gridy = 1;
-        imageVOIPanel.add(VOIRegions, gbc);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
-        gbc.gridy = 2;
-        imageVOIPanel.add(image25D, gbc);
+        PanelManager optionsManager = new PanelManager("Options");
+        optionsManager.add(image25D);
 
         if (image.getNDims() == 3) {
             image25D.setEnabled(true);
@@ -1100,14 +928,14 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
         gbc.gridy = 0;
         gbc.gridwidth = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(maskPanel, gbc);
         gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.BOTH;
-        mainPanel.add(destinationPanel, gbc);
+        gbc.fill = GridBagConstraints.BOTH;
+        mainPanel.add(outputPanel, gbc);
         gbc.gridx = 1;
-        mainPanel.add(imageVOIPanel, gbc);
+        mainPanel.add(optionsManager.getPanel(), gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -1130,18 +958,6 @@ public class JDialogClose extends JDialogBase implements AlgorithmInterface, Scr
         System.gc();
 
         String tmpStr;
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
 
         do25D = image25D.isSelected();
 

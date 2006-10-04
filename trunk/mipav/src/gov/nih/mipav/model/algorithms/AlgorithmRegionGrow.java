@@ -1593,7 +1593,6 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
 
         this.paintMask = paintMask;
         this.growDialog = growDialog;
-        progressMode = NO_CANCEL;
 
         int pCtr = 0;
 
@@ -1941,8 +1940,8 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
             else if (srcImage.isColorImage() == false) { // use fuzzy connectedness on
                 // black and white image
 
-                buildProgressBar("Region Grow", "Growing round 1...", 0, 100);
-                initProgressBar();
+                fireProgressStateChanged("Region Grow", "Growing round 1...");
+                
                 fuzzyScene = new int[length];
 
                 for (i = 0; i < length; i++) {
@@ -2083,11 +2082,11 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
                     if (pCtr > 1000000) {
                         pCtr = 0;
                         round++;
-                        progressBar.setMessage("Growing round " + String.valueOf(round) + "...");
+                        fireProgressStateChanged("Growing round " + String.valueOf(round) + "...");
                     }
 
                     if ((pCtr % 250000) == 0) {
-                        progressBar.updateValue(pCtr / 10000, runningInSeparateThread);
+                        fireProgressStateChanged(pCtr / 10000);
                     }
 
                     // System.out.println("stack length = " + stack.length());
@@ -2450,10 +2449,6 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             stack = null;
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             System.gc();
             displayError("Algorithm RegionGrow:  Out of memory");
             setCompleted(false);
@@ -2461,10 +2456,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
             return 0;
         }
 
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
-
+  
         if (displayFuzzy) {
             fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy",
                                         srcImage.getUserInterface());
@@ -2595,8 +2587,6 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
 
         this.paintMask = paintMask;
         this.growDialog = growDialog;
-        progressMode = NO_CANCEL;
-
         int pCtr = 0;
 
         try {
@@ -3067,10 +3057,6 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             stack = null;
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             System.gc();
             displayError("Algorithm RegionGrow:  Out of memory");
             setCompleted(false);
@@ -3078,10 +3064,7 @@ public class AlgorithmRegionGrow extends AlgorithmBase {
             return 0;
         }
 
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
-
+      
         if (displayFuzzy) {
             fuzzyImage = new ModelImage(ModelImage.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_fuzzy",
                                         srcImage.getUserInterface());

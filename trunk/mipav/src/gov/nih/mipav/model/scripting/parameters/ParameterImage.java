@@ -2,7 +2,7 @@ package gov.nih.mipav.model.scripting.parameters;
 
 
 import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.VariableTable;
+import gov.nih.mipav.model.scripting.ScriptRunner;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.ViewJFrameImage;
@@ -58,7 +58,7 @@ public class ParameterImage extends ParameterString {
      * @return  The image assigned to this image placeholder variable.
      */
     public ModelImage getImage() {
-        return VariableTable.getReference().getImage(getValue());
+        return ScriptRunner.getReference().getImage(getValue());
     }
 
     /**

@@ -220,19 +220,20 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology25D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            // 
+            
 
             return;
         }
-
+/*
         try {
 
-            if (progressBar != null) {
-                progressBar.setMessage("Pruning image ...");
+            if  {
+                fireProgressStateChanged("Pruning image ...");
             }
 
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
+            if  {
+                fireProgressStateChanged(0);
             }
         } catch (NullPointerException npe) {
 
@@ -241,12 +242,12 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                                   Preferences.DEBUG_ALGORITHM);
             }
         }
-
+*/
         for (slice = 0; slice < zDim; slice++) {
-
+/*
             try {
-                progressBar.setMessage("Pruning Slice " + (slice + 1));
-                progressBar.updateValue(Math.round(((float) slice) / ((float) zDim) * 100), runningInSeparateThread);
+                fireProgressStateChanged("Pruning Slice " + (slice + 1));
+                fireProgressStateChanged(Math.round(((float) slice) / ((float) zDim) * 100));
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {
@@ -254,7 +255,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                                       Preferences.DEBUG_ALGORITHM);
                 }
             }
-
+*/
             // sets the intensity of border points to 0
             for (pix = (slice * sliceSize); pix < ((slice * sliceSize) + xDim); pix++) {
                 imgBuffer[pix] = 0;
@@ -420,7 +421,9 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+                // 
+                
+                
                 finalize();
 
                 return;
@@ -430,12 +433,13 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            // 
+            
 
             return;
         }
 
-        disposeProgressBar();
+               
         setCompleted(true);
     }
 
@@ -476,7 +480,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             imgBuffer = new short[imgLength];
             processBuffer = new short[imgLength];
             srcImage.exportData(0, imgLength, imgBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Morph25D ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Morph25D ...");
         } catch (IOException error) {
             displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
@@ -489,10 +493,12 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        // initProgressBar();
 
         constructLog();
 
+        int [] progressValues = getProgressValues();
+        
         switch (algorithm) {
 
             case ERODE:
@@ -504,12 +510,18 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                 break;
 
             case CLOSE:
+            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
+                		generateProgressValue(progressValues[0], progressValues[1], 100));
                 erode(false, iterationsE);
                 break;
 
             case OPEN:
+            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
                 erode(true, iterationsE);
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
+                		generateProgressValue(progressValues[0], progressValues[1], 100));
                 dilate(false, iterationsD);
                 break;
 
@@ -668,7 +680,9 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            // 
+            
+            
             finalize();
 
             return;
@@ -695,41 +709,15 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         int imageLength = xDim * yDim * zDim;
 
         short[] tempBuffer;
-
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Skeletonize image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        
 
         for (pix = 0; pix < imageLength; pix++) {
             processBuffer[pix] = 0;
         }
 
         for (int i = 0; (i < zDim) && !threadStopped; i++) {
-
-            try {
-                progressBar.setMessage("Skeletonizing Slice " + (i + 1));
-                progressBar.updateValue(Math.round(((float) i) / ((float) zDim) * 100), runningInSeparateThread);
-            } catch (NullPointerException npe) {
-
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                      Preferences.DEBUG_ALGORITHM);
-                }
-            }
-
+        	fireProgressStateChanged(Math.round(((float) i) / ((float) zDim) * 100), null, 
+        			"Skeletonizing Slice " + (i + 1));
             do {
                 pixelsRemoved = thin(pass++, i, table);
                 tempBuffer = imgBuffer;
@@ -755,7 +743,9 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+                // 
+                
+                
                 finalize();
 
                 return;
@@ -765,12 +755,14 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            // 
+            
 
             return;
         }
 
-        disposeProgressBar();
+      
+        
         setCompleted(true);
     }
 
@@ -816,15 +808,15 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         int halfKDim = kDim / 2;
         int stepY = kDim * xDim;
         short[] tempBuffer;
-
-        if (progressBar != null) {
-            progressBar.setMessage("Dilating image ...");
+/*
+        if  {
+            fireProgressStateChanged("Dilating image ...");
         }
 
-        if (progressBar != null) {
-            progressBar.updateValue(0, runningInSeparateThread);
+        if  {
+            fireProgressStateChanged(0);
         }
-
+*/
         for (pix = 0; pix < imgLength; pix++) {
             processBuffer[pix] = 0;
         }
@@ -837,11 +829,11 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                 offsetZ = curSlice * sliceLength;
 
                 for (pix = offsetZ; (pix < (offsetZ + sliceLength)) && !threadStopped; pix++) {
-
+/*
                     try {
 
                         if (((((c * offsetZ) + pix) % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((pix + 1 + (c * offsetZ)) /
+                            fireProgressStateChanged(Math.round((pix + 1 + (c * offsetZ)) /
                                                                    (iters * (float) sliceLength * zDim) * 100),
                                                     runningInSeparateThread);
                         }
@@ -852,7 +844,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                                               Preferences.DEBUG_ALGORITHM);
                         }
                     }
-
+*/
                     if (entireImage || mask.get(pix)) {
                         value = imgBuffer[pix];
 
@@ -922,12 +914,13 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            // 
+            
 
             return;
         }
 
-        disposeProgressBar();
+     
         setCompleted(true);
     }
 
@@ -964,14 +957,8 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
         int stepY = kDim * xDim;
         short[] tempBuffer;
 
-        if (progressBar != null) {
-            progressBar.setMessage("Eroding image ...");
-        }
-
-        if (progressBar != null) {
-            progressBar.updateValue(0, runningInSeparateThread);
-        }
-
+        fireProgressStateChanged("Eroding image ...");
+        
         int mod = (iters * sliceLength * zDim) / 20; // mod is 5 percent of length
 
         for (pix = 0; pix < imgLength; pix++) {
@@ -985,20 +972,10 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
                 for (pix = offsetZ; (pix < (offsetZ + sliceLength)) && !threadStopped; pix++) {
 
-                    try {
-
-                        if (((((c * offsetZ) + pix) % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((pix + 1 + (c * offsetZ)) /
-                                                                   (iters * (float) sliceLength * zDim) * 100),
-                                                    runningInSeparateThread);
+                        if (((((c * offsetZ) + pix) % mod) == 0)) {
+                            fireProgressStateChanged(Math.round((pix + 1 + (c * offsetZ)) /
+                                                                   (iters * (float) sliceLength * zDim) * 100));
                         }
-                    } catch (NullPointerException npe) {
-
-                        if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
-                        }
-                    }
 
                     if (entireImage || mask.get(pix)) {
                         value = imgBuffer[pix];
@@ -1081,12 +1058,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology25D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            // 
+            
 
             return;
         }
 
-        disposeProgressBar();
+       
         setCompleted(true);
     }
 

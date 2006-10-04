@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +23,7 @@ import javax.swing.*;
  *
  * @see  AlgorithmAdaptiveNR
  */
-public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogAdaptiveNR extends JDialogScriptableBase implements AlgorithmInterface, ScriptableActionInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -127,20 +129,6 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAdaptiveNR(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = ViewUserInterface.getReference();
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -161,7 +149,6 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("10005");
         }
-
     }
 
     // ************************************************************************
@@ -175,7 +162,6 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
 
         if (algorithm instanceof AlgorithmAdaptiveNR) {
             image.clearMask();
@@ -187,7 +173,7 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -220,7 +206,7 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
             }
         }
 
-        insertScriptLine(adaptiveNRAlgo);
+        insertScriptLine();
         adaptiveNRAlgo.finalize();
         adaptiveNRAlgo = null;
         dispose();
@@ -235,96 +221,6 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                String line = "AdaptiveNR " + userInterface.getScriptDialog().getVar(image.getImageName()) + " ";
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    line += userInterface.getScriptDialog().getVar(resultImage.getImageName()) + " " + radiusY + " " +
-                            radiusCr + " " + radiusCb + " " + distWeight + " " + reduce;
-                } else {
-                    line += userInterface.getScriptDialog().getVar(image.getImageName()) + " " + radiusY + " " +
-                            radiusCr + " " + radiusCb + " " + distWeight + " " + reduce;
-                }
-
-                line += "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRadiusY(parser.getNextFloat());
-            setRadiusCr(parser.getNextFloat());
-            setRadiusCb(parser.getNextFloat());
-            setDistWeight(parser.getNextFloat());
-            setReduce(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
 
     /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
@@ -378,8 +274,7 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
     }
 
     /**
-     * Accessor that sets whether or not Cr and Cb are filtered at halved dimensions @ param reduc Value to set reduce
-     * to.
+     * Accessor that sets whether or not Cr and Cb are filtered at halved dimensions.
      *
      * @param  reduc  DOCUMENT ME!
      */
@@ -391,7 +286,7 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_adaptiveNR");
         int[] destExtents;
 
@@ -428,6 +323,8 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveNRAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), adaptiveNRAlgo);
+
                 // Hide dialog
                 setVisible(false);
 
@@ -438,10 +335,6 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptiveNRAlgo.setProgressBarVisible(false);
-                    }
-
                     adaptiveNRAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -467,6 +360,8 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
                 // This is made possible by implementing AlgorithmedPerformed interface
                 adaptiveNRAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), adaptiveNRAlgo);
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -491,10 +386,6 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        adaptiveNRAlgo.setProgressBarVisible(false);
-                    }
-
                     adaptiveNRAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -503,6 +394,51 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
                 return;
             }
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        distWeight = scriptParameters.getParams().getFloat("edge_preservation_strength");
+        radiusCb = scriptParameters.getParams().getFloat("radius_Cb");
+        radiusCr = scriptParameters.getParams().getFloat("radius_Cr");
+        radiusY = scriptParameters.getParams().getFloat("radius_Y");
+        reduce = scriptParameters.getParams().getBoolean("do_reduce_dims");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("edge_preservation_strength", distWeight));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cb", radiusCb));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Cr", radiusCr));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("radius_Y", radiusY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_reduce_dims", reduce));
     }
 
     /**
@@ -521,7 +457,7 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;
@@ -536,7 +472,7 @@ public class JDialogAdaptiveNR extends JDialogBase implements AlgorithmInterface
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.gridwidth = 1;
         gbc2.gridheight = 1;
-        gbc2.anchor = gbc.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.weightx = 1;
         gbc2.insets = new Insets(3, 3, 3, 3);
         gbc2.gridx = 0;

@@ -480,7 +480,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 
@@ -495,6 +495,8 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
             // This is made possible by implementing AlgorithmedPerformed interface
             frapAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), frapAlgo);
+            
             // Hide dialog
             setVisible(false);
 
@@ -505,11 +507,6 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!UI.isAppFrameVisible()) {
-                    frapAlgo.setProgressBarVisible(false);
-                }
-
                 frapAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -545,7 +542,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         GridBagConstraints gbc4 = new GridBagConstraints();
         gbc4.gridwidth = 1;
         gbc4.gridheight = 1;
-        gbc4.anchor = gbc4.WEST;
+        gbc4.anchor = GridBagConstraints.WEST;
         gbc4.weightx = 1;
         gbc4.insets = new Insets(3, 3, 3, 3);
         gbc4.fill = GridBagConstraints.HORIZONTAL;
@@ -648,7 +645,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
                 GridBagConstraints gbc2 = new GridBagConstraints();
                 gbc2.gridwidth = 1;
                 gbc2.gridheight = 1;
-                gbc2.anchor = gbc2.WEST;
+                gbc2.anchor = GridBagConstraints.WEST;
                 gbc2.weightx = 1;
                 gbc2.insets = new Insets(3, 3, 3, 3);
                 gbc2.fill = GridBagConstraints.HORIZONTAL;
@@ -698,7 +695,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         GridBagConstraints gbc3 = new GridBagConstraints();
         gbc3.gridwidth = 1;
         gbc3.gridheight = 1;
-        gbc3.anchor = gbc3.WEST;
+        gbc3.anchor = GridBagConstraints.WEST;
         gbc3.weightx = 1;
         gbc3.insets = new Insets(3, 3, 3, 3);
         gbc3.fill = GridBagConstraints.HORIZONTAL;
@@ -778,7 +775,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -876,7 +873,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
         gbc5.gridwidth = 1;
         gbc5.gridheight = 1;
-        gbc5.anchor = gbc5.WEST;
+        gbc5.anchor = GridBagConstraints.WEST;
         gbc5.weightx = 1;
         gbc5.insets = new Insets(3, 3, 3, 3);
         gbc5.fill = GridBagConstraints.HORIZONTAL;
@@ -964,7 +961,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
 
         gbc6.gridwidth = 1;
         gbc6.gridheight = 1;
-        gbc6.anchor = gbc6.WEST;
+        gbc6.anchor = GridBagConstraints.WEST;
         gbc6.weightx = 1;
         gbc6.insets = new Insets(3, 3, 3, 3);
         gbc6.fill = GridBagConstraints.HORIZONTAL;
@@ -1027,7 +1024,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;

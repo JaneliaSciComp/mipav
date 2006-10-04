@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -28,7 +30,7 @@ import javax.swing.*;
  * <p>The user chooses a value for the margins, with the image minimum the default. If Color, values are chosen for red,
  * green, and blue. A new image or replacement of the old image may be selected.</p>
  */
-public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogAddMargins extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -51,9 +53,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
 
     /** DOCUMENT ME! */
     private int bottomSide;
-
-    /** DOCUMENT ME! */
-    private Double bv = new Double(0.0);
 
     /** DOCUMENT ME! */
     private int colorFactor;
@@ -82,9 +81,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
     // or if the source image is to be replaced
 
     /** DOCUMENT ME! */
-    private Double dv = new Double(0.0);
-
-    /** DOCUMENT ME! */
     private int front;
 
     /** DOCUMENT ME! */
@@ -92,9 +88,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
 
     /** DOCUMENT ME! */
     private double greenValue = 0.0;
-
-    /** DOCUMENT ME! */
-    private Double gv = new Double(0.0);
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -131,18 +124,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
 
     /** DOCUMENT ME! */
     private JTextField rightSideInput;
-
-    /** DOCUMENT ME! */
-    private Double rv = new Double(0.0);
-
-    /** DOCUMENT ME! */
-    private String[] titles; // title of the frame shown when image is NULL
-
-    /** DOCUMENT ME! */
-    private String tmpStr;
-
-    /** DOCUMENT ME! */
-    private JTextField topBottomInput;
 
     /** DOCUMENT ME! */
     private JTextField topInput;
@@ -183,27 +164,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogAddMargins(ViewUserInterface UI, ModelImage im) {
-        super();
-        image = im;
-        parentFrame = image.getParentFrame();
-
-        if (image.isColorImage() == false) {
-            colorFactor = 1;
-        } else {
-            colorFactor = 4;
-        }
-
-        userInterface = UI;
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -237,9 +197,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmAddMargins) {
 
             if ((imageMarginsAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -248,7 +205,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                 try {
 
                     // put the new image into a new frame
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
+                    new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -258,7 +215,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                 image = imageMarginsAlgo.getSrcImage();
 
                 try {
-                    imageFrame = new ViewJFrameImage(image, null, new Dimension(610, 200));
+                    new ViewJFrameImage(image, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -271,10 +228,11 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                 resultImage = null;
                 System.gc();
             }
-
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         imageMarginsAlgo.finalize();
         imageMarginsAlgo = null;
@@ -288,133 +246,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("AddMargins " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " ");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                }
-
-                if (resultImage.getExtents().length == 2) {
-                    userInterface.getScriptDialog().append("" + leftSide + " " + rightSide + " " + topSide + " " +
-                                                           bottomSide + " ");
-                } else {
-                    userInterface.getScriptDialog().append("" + leftSide + " " + rightSide + " " + topSide + " " +
-                                                           bottomSide + " " + front + " " + back + " ");
-                }
-
-                if (colorFactor == 1) {
-                    userInterface.getScriptDialog().append("" + defaultValue + "\n");
-                } else {
-                    userInterface.getScriptDialog().append("" + redValue + " " + greenValue + " " + blueValue + "\n");
-                }
-
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        if (image.isColorImage() == false) {
-            colorFactor = 1;
-        } else {
-            colorFactor = 4;
-        }
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-
-            if (image.getExtents().length == 2) {
-                setLeft(parser.getNextInteger());
-                setRight(parser.getNextInteger());
-                setTop(parser.getNextInteger());
-                setBottom(parser.getNextInteger());
-            } else {
-                setLeft(parser.getNextInteger());
-                setRight(parser.getNextInteger());
-                setTop(parser.getNextInteger());
-                setBottom(parser.getNextInteger());
-                setFront(parser.getNextInteger());
-                setBack(parser.getNextInteger());
-            }
-
-            if (image.isColorImage() == false) {
-                setDefault(parser.getNextDouble());
-            } else {
-                setRed(parser.getNextDouble());
-                setGreen(parser.getNextDouble());
-                setRed(parser.getNextDouble());
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -577,10 +408,74 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
     }
 
     /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("left_side", leftSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("right_side", rightSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("top_side", topSide));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("bottom_side", bottomSide));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("front", front));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("back", back));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value", defaultValue));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("margin_value_rgb", new double[] {redValue, greenValue, blueValue}));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams(){
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        if (image.isColorImage() == false) {
+            colorFactor = 1;
+        } else {
+            colorFactor = 4;
+        }
+        
+        rightSide = scriptParameters.getParams().getInt("right_side");
+        leftSide = scriptParameters.getParams().getInt("left_side");
+        topSide = scriptParameters.getParams().getInt("top_side");
+        bottomSide = scriptParameters.getParams().getInt("bottom_side");
+        
+        front = scriptParameters.getParams().getInt("front");
+        back = scriptParameters.getParams().getInt("back");
+        
+        defaultValue = scriptParameters.getParams().getDouble("margin_value");
+        
+        double[] rgb = scriptParameters.getParams().getList("margin_value_rgb").getAsDoubleArray();
+        redValue = rgb[0];
+        greenValue = rgb[1];
+        blueValue = rgb[2];
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+    
+    /**
      * Once all the necessary variables are set, call the Image Margins algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (displayLoc == NEW) {
             int[] destExtents = null; // length along an axis of the destination image
@@ -612,6 +507,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                     // Listen to the algorithm so we get notified when it is succeeded or failed.
                     // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
                     imageMarginsAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -621,10 +517,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                             MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            imageMarginsAlgo.setProgressBarVisible(false);
-                        }
-
+                      
                         imageMarginsAlgo.run();
                     }
                 } catch (OutOfMemoryError oome) {
@@ -676,6 +569,8 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                     // Listen to the algorithm so we get notified when it is succeeded or failed.
                     // See algorithm performed event.  caused by implementing AlgorithmedPerformed interface
                     imageMarginsAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -685,10 +580,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                             MipavUtil.displayError("AddMargins reports: A thread is already running on this object [addMarginsAlgo]");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            imageMarginsAlgo.setProgressBarVisible(false);
-                        }
-
+                       
                         imageMarginsAlgo.run();
                     }
                 } catch (OutOfMemoryError oome) {
@@ -719,7 +611,8 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                     }
 
                     imageMarginsAlgo.addListener(this);
-
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -741,10 +634,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            imageMarginsAlgo.setProgressBarVisible(false);
-                        }
-
+                    
                         imageMarginsAlgo.run();
                     }
                 } catch (OutOfMemoryError oome) {
@@ -766,7 +656,8 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                     }
 
                     imageMarginsAlgo.addListener(this);
-
+                    createProgressBar(image.getImageName(), imageMarginsAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -788,10 +679,7 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            imageMarginsAlgo.setProgressBarVisible(false);
-                        }
-
+                      
                         imageMarginsAlgo.run();
                     }
                 } catch (OutOfMemoryError oome) {
@@ -1063,7 +951,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
          *
          * cancelButton = buildCancelButton(); OKCancelPanel.add(cancelButton); contentBox.add(OKCancelPanel);
          */
-        JPanel buttonPanel = new JPanel(new FlowLayout());
         contentBox.add(buildButtons());
 
         // if this is a 2D image, turn off slice margins
@@ -1097,12 +984,11 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
             back = Integer.parseInt(backInput.getText()); // in slices
 
             if (colorFactor == 1) {
-                dv = new Double(defaultValueInput.getText()); // why does the compiler not find static double
-                                                              // Double.parseInt()?
+                defaultValue = Double.parseDouble(defaultValueInput.getText());
             } else {
-                rv = new Double(defaultRedInput.getText());
-                gv = new Double(defaultGreenInput.getText());
-                bv = new Double(defaultBlueInput.getText());
+                redValue = Double.parseDouble(defaultRedInput.getText());
+                greenValue = Double.parseDouble(defaultGreenInput.getText());
+                blueValue = Double.parseDouble(defaultBlueInput.getText());
             }
         } catch (NumberFormatException nfe) {
 
@@ -1115,14 +1001,6 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
             return false;
         }
 
-        if (colorFactor == 1) {
-            defaultValue = dv.doubleValue();
-        } else {
-            redValue = rv.doubleValue();
-            greenValue = gv.doubleValue();
-            blueValue = bv.doubleValue();
-        }
-
         if (newImage.isSelected()) {
             displayLoc = NEW;
         } else {
@@ -1131,5 +1009,4 @@ public class JDialogAddMargins extends JDialogBase implements AlgorithmInterface
 
         return true;
     }
-
 }

@@ -84,11 +84,42 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
      * @param  psfImg   DOCUMENT ME!
      */
     public AlgorithmIteratedBlindDeconvolution(ModelImage destImg, ModelImage srcImg, ModelImage psfImg) {
+        super(destImg, srcImg);
         inImage = srcImg;
         psfImage = psfImg;
         outImage = destImg;
+    }
 
-        // get the dimensions and length of the arrays
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Dispose of local variables that may be taking up lots of room.
+     */
+    public void disposeLocal() {
+        inImage = null;
+        psfImage = null;
+        outImage = null;
+        System.gc();
+    }
+
+
+    /**
+     * Prepares this class for destruction.
+     */
+    public void finalize() {
+        disposeLocal();
+        super.finalize();
+    }
+
+    
+    /**
+     * All of this stuff was being done in the constructor...why?
+     * Shoved it in here to have progress bar continuity
+     * (also we shouldn't be running other algorithms within a constructor)
+     *
+     */
+    private void initAlgorithm() {
+//      get the dimensions and length of the arrays
         int numDims = outImage.getNDims();
         int[] exts = outImage.getExtents();
         arrayLength = 1;
@@ -97,6 +128,8 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             arrayLength *= exts[i];
         }
 
+        fireProgressStateChanged(0, null, "Running iterated blind deconvolution ...");
+        
         // allocate the arrays
         try {
             blurredReals = new float[arrayLength];
@@ -145,7 +178,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
         AlgorithmFFT blurredFFT = new AlgorithmFFT(blurredImageSpectrum, inImage, forwardTransformDir, logMagDisplay,
                                                    unequalDim, image25D, imageCrop, kernelDiameter, filterType, freq1,
                                                    freq2, constructionMethod, butterworthOrder);
-        blurredFFT.setProgressBarVisible(false);
         blurredFFT.run();
 
         // fill the blurred arrays with values from the blurredImage
@@ -181,7 +213,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             estimatedImage.importData(0, estimatedReals, true);
         } catch (IOException error) {
             displayError("AlgorithmIteratedBlindDeconvolution: IOException on fOldImage image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -191,7 +223,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             psfReals = psfSpectrumReals = psfSpectrumImags = tmpArray = null;
             System.gc();
             displayError("AlgorithmIteratedBlindDeconvolution: Out of memory on fOldImage image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -219,35 +251,16 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
         psfFFT = new AlgorithmFFT(psfImageSpectrum, psfImage, forwardTransformDir, logMagDisplay, unequalDim, image25D,
                                   imageCrop, kernelDiameter, filterType, freq1, freq2, constructionMethod,
                                   butterworthOrder);
+        fireProgressStateChanged(.1f, null, null);
     }
-
-    //~ Methods --------------------------------------------------------------------------------------------------------
-
-    /**
-     * Dispose of local variables that may be taking up lots of room.
-     */
-    public void disposeLocal() {
-        inImage = null;
-        psfImage = null;
-        outImage = null;
-        System.gc();
-    }
-
-
-    /**
-     * Prepares this class for destruction.
-     */
-    public void finalize() {
-        disposeLocal();
-        super.finalize();
-    }
-
 
     /**
      * DOCUMENT ME!
      */
-    public void run2D() {
+    private void run2D() {
 
+        initAlgorithm();
+        
         float a, b, c, d, denom, blurredMagVal, psfMagVal;
         Complex blurredVal = new Complex();
         Complex estimatedVal = new Complex();
@@ -266,10 +279,13 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
         Complex ONE = new Complex(1.0f);
         int iteration = 0;
 
+        float startPercent = .1f;
+        float percentChange = .9f;
+        
+        
         while (iteration < 200) {
 
             // execute the FFT on the estimated image
-            estimatedFFT.setProgressBarVisible(false);
             estimatedFFT.run();
 
             // fill the estimated arrays with values from the estimatedImageSpectrum
@@ -311,7 +327,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                 psfImageSpectrum.importComplexData(0, psfSpectrumReals, psfSpectrumImags, true, true);
             } catch (IOException error) {
                 displayError("AlgorithmIteratedBlindDeconvolution: IOException on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -321,7 +337,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                 psfReals = psfSpectrumReals = psfSpectrumImags = tmpArray = null;
                 System.gc();
                 displayError("AlgorithmIteratedBlindDeconvolution: Out of memory on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -330,7 +346,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             psfImageSpectrum.calcMinMax();
             psfImageSpectrum.setOriginalMinimum((float) psfImageSpectrum.getMin());
             psfImageSpectrum.setOriginalMaximum((float) psfImageSpectrum.getMax());
-            psfIFFT.setProgressBarVisible(false);
             psfIFFT.run();
 
             // fill the psf arrays with values from the psfImage
@@ -366,7 +381,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                 psfImage.importData(0, psfReals, true);
             } catch (IOException error) {
                 displayError("AlgorithmIteratedBlindDeconvolution: IOException on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -376,7 +391,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                 psfReals = psfSpectrumReals = psfSpectrumImags = tmpArray = null;
                 System.gc();
                 displayError("AlgorithmIteratedBlindDeconvolution: Out of memory on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -385,14 +400,13 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             psfImage.calcMinMax();
             psfImage.setOriginalMinimum((float) psfImage.getMin());
             psfImage.setOriginalMaximum((float) psfImage.getMax());
-            psfFFT.setProgressBarVisible(false);
             psfFFT.run();
 
             try {
                 psfImageSpectrum.exportComplexData(0, arrayLength, psfSpectrumReals, psfSpectrumImags);
             } catch (IOException error) {
                 displayError("AlgorithmIteratedBlindDeconvolution: IOException on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -402,7 +416,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                 psfReals = psfSpectrumReals = psfSpectrumImags = tmpArray = null;
                 System.gc();
                 displayError("AlgorithmIteratedBlindDeconvolution: Out of memory on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -448,7 +462,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                 estimatedImageSpectrum.importComplexData(0, estimatedSpectrumReals, estimatedSpectrumImags, true, true);
             } catch (IOException error) {
                 displayError("AlgorithmIteratedBlindDeconvolution: IOException on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -458,7 +472,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                 psfReals = psfSpectrumReals = psfSpectrumImags = tmpArray = null;
                 System.gc();
                 displayError("AlgorithmIteratedBlindDeconvolution: Out of memory on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -468,7 +482,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             estimatedImageSpectrum.setOriginalMinimum((float) estimatedImageSpectrum.getMin());
             estimatedImageSpectrum.setOriginalMaximum((float) estimatedImageSpectrum.getMax());
 
-            estimatedIFFT.setProgressBarVisible(false);
             estimatedIFFT.run();
 
             // fill the estimated arrays with values from the estimatedImageSpectrum
@@ -502,7 +515,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                 estimatedImage.importData(0, estimatedReals, true);
             } catch (IOException error) {
                 displayError("AlgorithmIteratedBlindDeconvolution: IOException on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -512,7 +525,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
                 psfReals = psfSpectrumReals = psfSpectrumImags = tmpArray = null;
                 System.gc();
                 displayError("AlgorithmIteratedBlindDeconvolution: Out of memory on destination image import data");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -522,6 +535,9 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             estimatedImage.setOriginalMinimum((float) estimatedImage.getMin());
             estimatedImage.setOriginalMaximum((float) estimatedImage.getMax());
 
+            fireProgressStateChanged(startPercent + (percentChange * (iteration / 200f)), 
+                    null, null);
+            
             iteration++;
         } // end while(...)
 
@@ -536,7 +552,7 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             outImage.importData(0, tmpArray, true);
         } catch (IOException error) {
             displayError("AlgorithmIteratedBlindDeconvolution: IOException on destination image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -546,12 +562,14 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             psfReals = psfSpectrumReals = psfSpectrumImags = tmpArray = null;
             System.gc();
             displayError("AlgorithmIteratedBlindDeconvolution: Out of memory on destination image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         }
-
+        
+        fireProgressStateChanged(100, null, null);
+        
     } // end run2D()
 
 
@@ -635,7 +653,6 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
 
         FFTUtility fftUtil;
         fftUtil = new FFTUtility(realData, imagData, 1, exts[0], 1, -1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
 
@@ -647,14 +664,14 @@ public class AlgorithmIteratedBlindDeconvolution extends AlgorithmBase {
             outImage.importData(0, magData, true);
         } catch (IOException error) {
             displayError("AlgorithmIteratedBlindDeconvolution: IOException on fOldImage image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmIteratedBlindDeconvolution: Out of memory on fOldImage image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;

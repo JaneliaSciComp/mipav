@@ -192,7 +192,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         if (srcImage.getNDims() != 4) {
             MipavUtil.displayError("" + srcImage.getNDims() + "D registration not supported.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -247,13 +247,13 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         } catch (IOException error) {
             MipavUtil.displayError("AlgorithmTSOAR: I/O error while constructing algorithm.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         } catch (OutOfMemoryError error) {
             MipavUtil.displayError("AlgorithmTSOAR: Memory error while constructing algorithm.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -364,8 +364,8 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         ModelImage result = (ModelImage) srcImage.clone();
         ModelImage transformed = null;
 
-        buildProgressBar("Registration", "Getting registered image", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Registration", "Getting registered image");
+        
 
         float[] transformBuffer = new float[imageInput.getSize()];
 
@@ -373,14 +373,14 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         imageInput.getFileInfo()[0].setResolutions(volumeResolutions);
 
         for (int i = 0; (i < nVolumes) && !threadStopped; i++) {
-            progressBar.updateValue((i + 1) * 100 / nVolumes, runningInSeparateThread);
+            fireProgressStateChanged((i + 1) * 100 / nVolumes);
 
             try {
                 srcImage.exportData(i * transformBuffer.length, transformBuffer.length, transformBuffer);
                 imageInput.importData(0, transformBuffer, true);
             } catch (IOException error) {
                 MipavUtil.displayError("I/O Error while registering.");
-                disposeProgressBar();
+                
 
                 return null;
             }
@@ -397,7 +397,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
 
                 if (transform.isCompleted() == false) {
                     MipavUtil.displayError("Error while transforming.");
-                    disposeProgressBar();
+                    
 
                     return null;
                 }
@@ -422,7 +422,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 }
             } catch (IOException error) {
                 MipavUtil.displayError("Error while creating registered image in AlgorithmTSOAR.");
-                disposeProgressBar();
+                
 
                 return null;
             }
@@ -438,7 +438,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             transform = null;
         }
 
-        progressBar.dispose();
+        
 
         if (threadStopped) {
             return null;
@@ -466,8 +466,8 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
      * </ol>
      */
     public void runAlgorithm() {
-        buildProgressBar("Registering images", "Beginning registration", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Registering images", "Beginning registration");
+        
 
         float minSample = 1.0f;
 
@@ -486,7 +486,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Out of memory in AlgorithmTSOAR.");
             disposeLocal();
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -504,7 +504,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             transform.run();
 
             if (transform.isCompleted() == false) {
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return;
@@ -591,8 +591,8 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                           "Ref subsampled 4 = " + simpleRefSub4 + "Ref subsampled 8 = " + simpleRefSub8);
 
         if (threadStopped) {
-            progressBar.dispose();
-            completed = false;
+            
+            setCompleted(false);
             finalize();
 
             return;
@@ -607,8 +607,8 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         time = System.currentTimeMillis();
 
         if (threadStopped) {
-            completed = false;
-            progressBar.dispose();
+            setCompleted(false);
+            
 
             return;
         }
@@ -627,8 +627,8 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         time = System.currentTimeMillis();
 
         if (threadStopped) {
-            completed = false;
-            progressBar.dispose();
+            setCompleted(false);
+            
 
             return;
         }
@@ -647,8 +647,8 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         time = System.currentTimeMillis();
 
         if (threadStopped) {
-            completed = false;
-            progressBar.dispose();
+            setCompleted(false);
+            
 
             return;
         }
@@ -668,8 +668,8 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             Preferences.debug(" Level 1  min = " + ((float) time / 60000.0f) + "\n");
 
             if (threadStopped) {
-                completed = false;
-                progressBar.dispose();
+                setCompleted(false);
+                
 
                 return;
             }
@@ -696,9 +696,9 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
-        progressBar.dispose();
-        completed = true;
+        fireProgressStateChanged(100);
+        
+        setCompleted(true);
     }
 
     /**
@@ -972,24 +972,24 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         if (level == 8) {
             offset = 0;
             factor = .8f;
-            progressBar.setMessage("Registering at subsample 8");
+            fireProgressStateChanged("Registering at subsample 8");
         } else if (level == 4) {
             offset = 25;
             factor = .8f;
-            progressBar.setMessage("Registering at subsample 4");
+            fireProgressStateChanged("Registering at subsample 4");
         } else if (level == 2) {
             offset = 50;
             factor = .1f;
-            progressBar.setMessage("Registering at subsample 2");
+            fireProgressStateChanged("Registering at subsample 2");
         } else if (level == 1) {
             offset = 75;
             factor = .1f;
 
             if (normalizedCrossCorrelationSinc) {
                 costChoice = AlgorithmCostFunctions.NORMALIZED_XCORRELATION_SINC;
-                progressBar.setMessage("No subsampling, new cost function");
+                fireProgressStateChanged("No subsampling, new cost function");
             } else {
-                progressBar.setMessage("Registering with no subsampling");
+                fireProgressStateChanged("Registering with no subsampling");
             }
         }
 
@@ -1002,9 +1002,9 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         for (int i = start; (i < nVolumes) && !threadStopped; i++) {
 
             if (reference == true) {
-                progressBar.updateValue(offset + (count * 25 / (nVolumes - 1)), runningInSeparateThread);
+                fireProgressStateChanged(offset + (count * 25 / (nVolumes - 1)));
             } else {
-                progressBar.updateValue(offset + (count * 25 / nVolumes), runningInSeparateThread);
+                fireProgressStateChanged(offset + (count * 25 / nVolumes));
             }
 
             count++;
@@ -1014,7 +1014,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 imageInput.importData(0, buffer, true);
             } catch (IOException error) {
                 MipavUtil.displayError("I/O Error while registering.");
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return null;
@@ -1029,7 +1029,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 transform.run();
 
                 if (transform.isCompleted() == false) {
-                    completed = false;
+                    setCompleted(false);
                     finalize();
 
                     return null;
@@ -1099,9 +1099,9 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
         for (int i = refNum - 1; (i >= 0) && !threadStopped; i--) {
 
             if (reference == true) {
-                progressBar.updateValue(offset + (count * 25 / (nVolumes - 1)), runningInSeparateThread);
+                fireProgressStateChanged(offset + (count * 25 / (nVolumes - 1)));
             } else {
-                progressBar.updateValue(offset + (count * 25 / nVolumes), runningInSeparateThread);
+                fireProgressStateChanged(offset + (count * 25 / nVolumes));
             }
 
             count++;
@@ -1111,7 +1111,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 imageInput.importData(0, buffer, true);
             } catch (IOException error) {
                 MipavUtil.displayError("I/O Error while registering.");
-                completed = false;
+                setCompleted(false);
                 finalize();
 
                 return null;
@@ -1126,7 +1126,7 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 transform.run();
 
                 if (transform.isCompleted() == false) {
-                    completed = false;
+                    setCompleted(false);
                     finalize();
 
                     return null;

@@ -373,7 +373,7 @@ public class JDialogWinLevel extends JDialogBase implements ChangeListener {
         gbc.gridheight = 1;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(3, 3, 3, 3);
         spanel.add(levelMax, gbc);

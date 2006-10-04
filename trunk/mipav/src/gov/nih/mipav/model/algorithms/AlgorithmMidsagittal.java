@@ -134,9 +134,13 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
     private void calc() {
         ModelImage flipImage = (ModelImage) srcImage.clone(srcImage.getImageName() + "_flip");
 
+        fireProgressStateChanged("Flipping image ...");
         // flip
         AlgorithmFlip flipAlgo = new AlgorithmFlip(flipImage, AlgorithmFlip.Y_AXIS);
         flipAlgo.setRunningInSeparateThread(false);
+        fireProgressStateChanged(10);
+   
+        
         flipAlgo.run();
 
         // register
@@ -145,6 +149,10 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
                                                           searchAngle, coarseAngle, fineAngle, -searchAngle,
                                                           searchAngle, coarseAngle, fineAngle, maxOfMin, doSubsample,
                                                           fastMode, bracketBound, baseNumIter, numMinima);
+        
+        linkProgressToAlgorithm(regAlgo);
+        regAlgo.setProgressValues(generateProgressValues(10, 90));
+        
         regAlgo.setRunningInSeparateThread(false);
         regAlgo.run();
 
@@ -160,10 +168,13 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
                                                                   res[1], res[2], ext[0], ext[1], ext[2], false, false,
                                                                   false);
         transformAlgo.setRunningInSeparateThread(false);
+        linkProgressToAlgorithm(transformAlgo);
+        transformAlgo.setProgressValues(generateProgressValues(90,100));
 
         // transformAlgo.setUpdateOriginFlag(true);
         transformAlgo.run();
 
+        fireProgressStateChanged(100);
         destImage = transformAlgo.getTransformedImage();
         destImage.calcMinMax();
         destImage.setImageName(srcImage.getImageName() + "_midsag");

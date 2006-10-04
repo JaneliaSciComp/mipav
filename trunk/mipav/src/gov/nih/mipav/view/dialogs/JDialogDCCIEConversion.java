@@ -180,7 +180,7 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
     /**
      * Method for calling the Dicom to AVI algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         setVisible(false);
 
         Preferences.debug("Using DICOM input directory: " + dirField.getText() + "\n");
@@ -201,6 +201,8 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
 
         algoConvert.addListener(this);
 
+        createProgressBar(dirField.getText(), algoConvert);
+        
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -208,10 +210,7 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!userInterface.isAppFrameVisible()) {
-                algoConvert.setProgressBarVisible(false);
-            }
-
+           
             algoConvert.run();
         }
 
@@ -248,21 +247,21 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 4;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.insets = new Insets(0, 5, 0, 10);
         inputPanel.add(dirField, gbc);
 
         gbc.gridx = 4;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0.0;
         gbc.insets = new Insets(0, 0, 0, 5);
         inputPanel.add(browseButton, gbc);
 
         gbc.gridx = 5;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         inputPanel.add(inputBox, gbc);
 
         aviPanel = new JPanel();
@@ -292,15 +291,15 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         gbc2.gridwidth = 4;
-        gbc2.anchor = gbc2.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.insets = new Insets(0, 5, 0, 10);
-        gbc2.fill = gbc2.HORIZONTAL;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
         gbc2.weightx = 1.0;
         aviPanel.add(aviField, gbc2);
 
         gbc2.gridx = 4;
         gbc2.gridwidth = 1;
-        gbc2.fill = gbc2.NONE;
+        gbc2.fill = GridBagConstraints.NONE;
         gbc2.weightx = 0.0;
         gbc2.insets = new Insets(0, 0, 0, 5);
         aviPanel.add(browseOutputButton, gbc2);
@@ -353,7 +352,7 @@ public class JDialogDCCIEConversion extends JDialogBase implements AlgorithmInte
 
         gbc2.gridx = 0;
         gbc2.gridy = 1;
-        gbc2.anchor = gbc2.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         aviPanel.add(compressionBox, gbc2);
 
         qualityLabel = new JLabel("M-JPEG Quality (0.01 - 1.00):");

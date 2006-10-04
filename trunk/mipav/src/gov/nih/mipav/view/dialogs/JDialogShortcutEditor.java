@@ -352,7 +352,7 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
             userDefinedShortcutModel.addColumn(columnNames[i]);
         }
 
-        defaultShortcutTable.setAutoResizeMode(defaultShortcutTable.AUTO_RESIZE_ALL_COLUMNS);
+        defaultShortcutTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         defaultShortcutTable.setRowSelectionAllowed(false);
         defaultShortcutTable.setColumnSelectionAllowed(false);
         defaultShortcutTable.getColumn("Shortcut").setMinWidth(160);
@@ -364,7 +364,7 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
         defaultShortcutTable.setFont(MipavUtil.defaultMenuFont);
         defaultShortcutTable.setForeground(Color.BLACK);
 
-        userDefinedShortcutTable.setAutoResizeMode(defaultShortcutTable.AUTO_RESIZE_ALL_COLUMNS);
+        userDefinedShortcutTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         userDefinedShortcutTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         userDefinedShortcutTable.getColumn("Shortcut").setMinWidth(160);
         userDefinedShortcutTable.getColumn("Shortcut").setMaxWidth(500);
@@ -560,9 +560,9 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridx = 0;
             gbc.gridy = 0;
-            gbc.anchor = gbc.EAST;
+            gbc.anchor = GridBagConstraints.EAST;
             gbc.weightx = 1;
-            gbc.fill = gbc.BOTH;
+            gbc.fill = GridBagConstraints.BOTH;
             mainPanel.add(ctrlBox, gbc);
 
             gbc.gridy = 1;
@@ -577,7 +577,7 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
             mainPanel.add(charLabel, gbc);
 
             gbc.gridx = 1;
-            gbc.fill = gbc.NONE;
+            gbc.fill = GridBagConstraints.NONE;
             mainPanel.add(charField, gbc);
 
 
@@ -599,7 +599,7 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
             JPanel otherPanel = new JPanel(new GridBagLayout());
             gbc.gridx = 0;
             gbc.gridy = 0;
-            gbc.fill = gbc.BOTH;
+            gbc.fill = GridBagConstraints.BOTH;
             otherPanel.add(functionBox, gbc);
             otherPanel.setBorder(this.buildTitledBorder("Function keys"));
 
@@ -608,7 +608,7 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
 
             gbc.gridx = 0;
             gbc.gridy = 0;
-            gbc.fill = gbc.BOTH;
+            gbc.fill = GridBagConstraints.BOTH;
             gbc.weightx = 1;
             gbc.weighty = 1;
             bothPanel.add(mainPanel, gbc);

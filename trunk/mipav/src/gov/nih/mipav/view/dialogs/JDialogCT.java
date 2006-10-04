@@ -201,7 +201,7 @@ public class JDialogCT extends JDialogBase implements ItemListener {
         GridBagConstraints gbc = new GridBagConstraints();
 
         // gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 0;
         gbc.gridy = 0;
         panelImageType.add(radioAbdomen, gbc);

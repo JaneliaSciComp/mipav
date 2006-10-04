@@ -59,9 +59,6 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
     /** The size of the kernel to use in closings. */
     private float closeKernelSize;
 
-    /** The current step of the bse process we are on. */
-    private int curStep = 0;
-
     /** Whether to use the edge detection algorithm with a separable convolver. */
     private boolean doSeparable;
 
@@ -146,6 +143,7 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
     public AlgorithmBrainSurfaceExtractor(ModelImage srcImg, int fIter, float fKernel, float eKernel, boolean ero25D,
                                           int eroIter, float cKernel, int cIter, boolean showIntermediate,
                                           boolean noHoles, boolean doSep, boolean extractPaint) {
+        super(null, srcImg);
         image = srcImg;
         filterIterations = fIter;
         filterKernel = fKernel;
@@ -199,97 +197,130 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         String imgName = image.getImageName();
 
-        buildProgressBar(imgName, "Extracting brain...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(0);
 
         if (isThreadStopped()) {
-            finalize();
-
             return;
         }
 
+        /* Used to control which ratio should be used */
+        float[] ratios = calculateProgressRatios(filterIterations, doSeparable, fillHolesFlag);
+
         // filter
-        progressBar.setMessage("Filtering image...");
-        progressBar.updateValue(5, runningInSeparateThread);
+        int algorithmIndex = 0;
 
         if (filterIterations > 0) {
             resultImage = new ModelImage(ModelStorageBase.FLOAT, image.getExtents(), imgName + "_temp_results");
 
-            AlgorithmRegularizedIsotropicDiffusion filterAlgo = new AlgorithmRegularizedIsotropicDiffusion(resultImage,
-                                                                                                           image,
-                                                                                                           filterIterations,
-                                                                                                           filterKernel,
-                                                                                                           filterContrast,
-                                                                                                           do25D);
+            int[] progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
+
+            if (progressValueBounds == null) {
+                MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
+                                       " can't be calculated!");
+
+                return;
+            }
+
+            fireProgressStateChanged(progressValueBounds[0], null, "Filtering image ...");
+
+            AlgorithmRegularizedIsotropicDiffusion filterAlgo = null;
+
+            if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
+                filterAlgo = new AlgorithmRegularizedIsotropicDiffusion(resultImage, image, filterIterations,
+                                                                        filterKernel, filterContrast, do25D);
+            } else {
+                filterAlgo = new AlgorithmRegularizedIsotropicDiffusion(resultImage, image, filterIterations,
+                                                                        filterKernel, filterContrast, do25D);
+                linkProgressToAlgorithm(filterAlgo);
+                filterAlgo.setProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
+
+            }
+
             filterAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
-            filterAlgo.setProgressBarVisible(false);
             filterAlgo.addListener(this);
             filterAlgo.run();
-            filterAlgo.finalize();
-            curStep++;
-            progressBar.updateValue(progInc * curStep, runningInSeparateThread);
+
+            fireProgressStateChanged(progressValueBounds[1]);
 
             if (showIntermediateImages) {
                 ModelImage tempImage = (ModelImage) resultImage.clone(imgName + "_filter");
                 tempImage.calcMinMax();
                 new ViewJFrameImage(tempImage);
             }
+
         } else {
             resultImage = (ModelImage) image.clone(imgName + "_temp_results");
         }
 
         if (isThreadStopped()) {
-            finalize();
-
             return;
         }
 
         // edge detection
-        progressBar.setMessage("Detecting edges...");
 
         ModelImage tempEdgeImage = (ModelImage) addPadding(resultImage);
         resultImage.disposeLocal();
         resultImage = (ModelImage) tempEdgeImage.clone(imgName + "_padded");
 
-        AlgorithmBase edgeAlgo;
+        AlgorithmBase edgeAlgo = null;
 
-        if (doSeparable) {
-            AlgorithmEdgeLaplacianSep edgeLapAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage, resultImage,
-                                                                                  edgeSigmas, regionFlag, do25D);
-            edgeLapAlgo.setZeroDetectionType(AlgorithmEdgeLaplacianSep.NEGATIVE_EDGES);
-            edgeLapAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
-            edgeLapAlgo.setProgressBarVisible(false);
-            edgeLapAlgo.addListener(this);
-            edgeLapAlgo.run();
+        int[] progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
 
-            // get rid of filter and laplacian images
-            tempEdgeImage.disposeLocal();
-            resultImage.disposeLocal();
-            edgeAlgo = edgeLapAlgo;
-            resultImage = edgeLapAlgo.getZeroXMask();
-            curStep++;
-            progressBar.updateValue(progInc * curStep, runningInSeparateThread);
-        } else {
-            AlgorithmEdgeLaplacian edgeLapAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas,
-                                                                            regionFlag, do25D);
-            edgeLapAlgo.setZeroDetectionType(AlgorithmEdgeLaplacian.NEGATIVE_EDGES);
-            edgeLapAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
-            edgeLapAlgo.setProgressBarVisible(false);
-            edgeLapAlgo.addListener(this);
-            edgeLapAlgo.run();
+        if (progressValueBounds == null) {
+            MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
+                                   " can't be calculated!");
 
-            // get rid of filter and laplacian images
-            tempEdgeImage.disposeLocal();
-            resultImage.disposeLocal();
-            edgeAlgo = edgeLapAlgo;
-            resultImage = edgeLapAlgo.getZeroXMask();
-            curStep++;
-            progressBar.updateValue(progInc * curStep, runningInSeparateThread);
+            return;
         }
 
-        if (isThreadStopped()) {
-            finalize();
+        fireProgressStateChanged(progressValueBounds[0], null, "Detecting edges ...");
 
+        if (doSeparable) {
+
+            if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
+                edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, 0,
+                                                         0);
+            } else {
+                edgeAlgo = new AlgorithmEdgeLaplacianSep(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, 0,
+                                                         0);
+                edgeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
+                linkProgressToAlgorithm(edgeAlgo);
+            }
+
+            ((AlgorithmEdgeLaplacianSep) edgeAlgo).setZeroDetectionType(AlgorithmEdgeLaplacianSep.NEGATIVE_EDGES);
+            edgeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
+            edgeAlgo.addListener(this);
+            edgeAlgo.run();
+
+            // get rid of filter and laplacian images
+            tempEdgeImage.disposeLocal();
+            resultImage.disposeLocal();
+            resultImage = ((AlgorithmEdgeLaplacianSep) edgeAlgo).getZeroXMask();
+        } else {
+
+            if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
+                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
+            } else {
+                edgeAlgo = new AlgorithmEdgeLaplacian(tempEdgeImage, resultImage, edgeSigmas, regionFlag, do25D, 0, 0);
+                linkProgressToAlgorithm(edgeAlgo);
+                edgeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
+
+            }
+
+            ((AlgorithmEdgeLaplacian) edgeAlgo).setZeroDetectionType(AlgorithmEdgeLaplacian.NEGATIVE_EDGES);
+            edgeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
+            edgeAlgo.addListener(this);
+            edgeAlgo.run();
+
+            // get rid of filter and laplacian images
+            tempEdgeImage.disposeLocal();
+            resultImage.disposeLocal();
+            resultImage = ((AlgorithmEdgeLaplacian) edgeAlgo).getZeroXMask();
+        }
+
+        fireProgressStateChanged(progressValueBounds[1]);
+
+        if (isThreadStopped()) {
             return;
         }
 
@@ -299,30 +330,68 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         paddedImg.disposeLocal();
 
         // invert (want brain to be white for erosion)
-        progressBar.setMessage("Inverting edge mask...");
-
         int x, y;
 
-        for (int i = 0; i < imgSize; i++) {
+        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
 
-            if (resultImage.getUByte(i) > 0) {
-                resultImage.setUByte(i, (short) 0);
-            } else {
-                resultImage.setUByte(i, (short) 1);
+        if (progressValueBounds == null) {
+            MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
+                                   " can't be calculated!");
+
+            return;
+        }
+
+        fireProgressStateChanged(progressValueBounds[0], null, "Inverting edge mask...");
+
+        if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
+
+            for (int i = 0; (i < imgSize) && !threadStopped; i++) {
+
+                if (resultImage.getUByte(i) > 0) {
+                    resultImage.setUByte(i, (short) 0);
+                } else {
+                    resultImage.setUByte(i, (short) 1);
+                }
+
+                x = i % xDim;
+                y = (i % sliceSize) / xDim;
+
+                // edge lap puts a one-pixel border along the edges of the image
+                // slices
+                // if ( x == xDim - 1 || y == yDim - 1 || x == 0 || y == 0 ) {
+                if ((x == (xDim - 1)) || (y == (yDim - 1))) {
+                    resultImage.setUByte(i, (short) 0);
+                }
             }
+        } else {
+            int pixelsPerProgressValue = Math.round((float) imgSize) /
+                                             (progressValueBounds[1] - progressValueBounds[0]);
 
-            x = i % xDim;
-            y = (i % sliceSize) / xDim;
+            for (int i = 0; (i < imgSize) && !threadStopped; i++) {
 
-            // edge lap puts a one-pixel border along the edges of the image slices
-            // if ( x == xDim - 1 || y == yDim - 1 || x == 0 || y == 0 ) {
-            if ((x == (xDim - 1)) || (y == (yDim - 1))) {
-                resultImage.setUByte(i, (short) 0);
+                if ((i % pixelsPerProgressValue) == 0) {
+                    fireProgressStateChanged(progressValueBounds[0] + (i / pixelsPerProgressValue));
+                }
+
+                if (resultImage.getUByte(i) > 0) {
+                    resultImage.setUByte(i, (short) 0);
+                } else {
+                    resultImage.setUByte(i, (short) 1);
+                }
+
+                x = i % xDim;
+                y = (i % sliceSize) / xDim;
+
+                // edge lap puts a one-pixel border along the edges of the image
+                // slices
+                // if ( x == xDim - 1 || y == yDim - 1 || x == 0 || y == 0 ) {
+                if ((x == (xDim - 1)) || (y == (yDim - 1))) {
+                    resultImage.setUByte(i, (short) 0);
+                }
             }
         }
 
-        curStep++;
-        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
+        fireProgressStateChanged(progressValueBounds[1]);
 
         if (isThreadStopped()) {
             finalize();
@@ -337,31 +406,56 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         }
 
         // erode
-        progressBar.setMessage("Eroding edges...");
 
         AlgorithmBase erodeAlgo;
 
-        if (!erosion25D) {
-            int erosionKernel = AlgorithmMorphology3D.CONNECTED6;
-            erodeAlgo = new AlgorithmMorphology3D(resultImage, erosionKernel, 0, AlgorithmMorphology3D.ERODE, 0,
-                                                  erosionIterations, 0, 0, regionFlag);
+        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
+
+        if (progressValueBounds == null) {
+            MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
+                                   " can't be calculated!");
+
+            return;
+        }
+
+        fireProgressStateChanged(progressValueBounds[0], null, "Eroding edges...");
+
+        if ((progressValueBounds[1] - progressValueBounds[0]) < 2) {
+
+            if (!erosion25D) {
+                erodeAlgo = new AlgorithmMorphology3D(resultImage, AlgorithmMorphology3D.CONNECTED6, 0,
+                                                      AlgorithmMorphology3D.ERODE, 0, erosionIterations, 0, 0,
+                                                      regionFlag);
+            } else {
+                erodeAlgo = new AlgorithmMorphology25D(resultImage, AlgorithmMorphology25D.CONNECTED4, 0,
+                                                       AlgorithmMorphology25D.ERODE, 0, erosionIterations, 0, 0,
+                                                       regionFlag);
+            }
         } else {
-            int erosionKernel = AlgorithmMorphology25D.CONNECTED4;
-            erodeAlgo = new AlgorithmMorphology25D(resultImage, erosionKernel, 0, AlgorithmMorphology25D.ERODE, 0,
-                                                   erosionIterations, 0, 0, regionFlag);
+
+            if (!erosion25D) {
+                erodeAlgo = new AlgorithmMorphology3D(resultImage, null, AlgorithmMorphology3D.CONNECTED6, 0,
+                                                      AlgorithmMorphology3D.ERODE, 0, erosionIterations, 0, 0,
+                                                      regionFlag);
+            } else {
+                erodeAlgo = new AlgorithmMorphology25D(resultImage, AlgorithmMorphology25D.CONNECTED4, 0,
+                                                       AlgorithmMorphology25D.ERODE, 0, erosionIterations, 0, 0,
+                                                       regionFlag);
+            }
+
+            erodeAlgo.setProgressValues(generateProgressValues(progressValueBounds[0], progressValueBounds[1]));
+
+            linkProgressToAlgorithm(erodeAlgo);
         }
 
         erodeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
-        erodeAlgo.setProgressBarVisible(false);
         erodeAlgo.addListener(this);
         erodeAlgo.run();
-        erodeAlgo.finalize();
-        curStep++;
-        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
+
+
+        fireProgressStateChanged(progressValueBounds[1]);
 
         if (isThreadStopped()) {
-            finalize();
-
             return;
         }
 
@@ -372,25 +466,28 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         }
 
         // find largest region and remove others
-        progressBar.setMessage("Isolating the brain...");
-
         ModelImage tempMaskImage = (ModelImage) resultImage.clone(imgName + "_temp_mask");
         resultImage.disposeLocal();
         resultImage = findLargestRegion(tempMaskImage);
         tempMaskImage.disposeLocal();
-        curStep++;
-        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
 
         if (isThreadStopped()) {
-            finalize();
-
             return;
         }
 
         // dilate
-        progressBar.setMessage("Dilating the brain mask...");
-
         AlgorithmBase dilateAlgo;
+
+        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
+
+        if (progressValueBounds == null) {
+            MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
+                                   " can't be calculated!");
+
+            return;
+        }
+
+        fireProgressStateChanged(progressValueBounds[0], null, "Dilating the brain mask ...");
 
         if (!erosion25D) {
             int erosionKernel = AlgorithmMorphology3D.CONNECTED6;
@@ -403,16 +500,13 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         }
 
         dilateAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
-        dilateAlgo.setProgressBarVisible(false);
         dilateAlgo.addListener(this);
         dilateAlgo.run();
-        dilateAlgo.finalize();
-        curStep++;
-        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
+
+
+        fireProgressStateChanged(progressValueBounds[1]);
 
         if (isThreadStopped()) {
-            finalize();
-
             return;
         }
 
@@ -423,22 +517,28 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         }
 
         // do a closing on the mask
-        progressBar.setMessage("Closing...");
+        progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
+
+        if (progressValueBounds == null) {
+            MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
+                                   " can't be calculated!");
+
+            return;
+        }
+
+        fireProgressStateChanged(progressValueBounds[0], null, "Closing ...");
 
         AlgorithmMorphology25D closeAlgo = new AlgorithmMorphology25D(resultImage, closeKernel, closeKernelSize,
                                                                       AlgorithmMorphology25D.CLOSE, closeIterations + 1,
                                                                       closeIterations, 0, 0, regionFlag);
         closeAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
-        closeAlgo.setProgressBarVisible(false);
         closeAlgo.addListener(this);
         closeAlgo.run();
-        closeAlgo.finalize();
-        curStep++;
-        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
+
+
+        fireProgressStateChanged(progressValueBounds[1]);
 
         if (isThreadStopped()) {
-            finalize();
-
             return;
         }
 
@@ -450,15 +550,28 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         // fill in interior holes of the mask
         if (fillHolesFlag) {
-            progressBar.setMessage("Filling interior mask holes...");
+
+            // fireProgressStateChanged("Filling interior mask holes...");
+            progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
+
+            if (progressValueBounds == null) {
+                MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
+                                       " can't be calculated!");
+
+                return;
+            }
+
+            fireProgressStateChanged(progressValueBounds[0], null, "Extracting VOI ...");
 
             // create a voi from the mask
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(resultImage);
-            VOIExtractionAlgo.setProgressBarVisible(false);
-            VOIExtractionAlgo.addListener(this);
+
+            // VOIExtractionAlgo.setProgressBarVisible(false);
             VOIExtractionAlgo.addListener(this);
             VOIExtractionAlgo.run();
-            VOIExtractionAlgo.finalize();
+
+
+            fireProgressStateChanged(progressValueBounds[1]);
 
             ViewVOIVector VOIs = resultImage.getVOIs();
             int nVOI = VOIs.size();
@@ -467,29 +580,40 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                 VOIs.VOIAt(i).setAllActive(true);
             }
 
+            progressValueBounds = calculateProgressValueBoundary(algorithmIndex++, ratios, 0, 100);
+
+            if (progressValueBounds == null) {
+                MipavUtil.displayError("The boundary of progress value for the algorithm: " + (algorithmIndex - 1) +
+                                       " can't be calculated!");
+
+                return;
+            }
+
+            fireProgressStateChanged(progressValueBounds[0], null, "Filling interior mask holes ...");
+
             // make a mask from the voi
             AlgorithmMask maskAlgo = new AlgorithmMask(resultImage, 1, true, true);
             maskAlgo.setRunningInSeparateThread(isRunningInSeparateThread());
-            maskAlgo.setProgressBarVisible(false);
+
+            // maskAlgo.setProgressBarVisible(false);
             maskAlgo.addListener(this);
             maskAlgo.run();
-            maskAlgo.finalize();
+
+            fireProgressStateChanged(progressValueBounds[1]);
 
             // get rid of the vois
             resultImage.getVOIs().removeAllElements();
             resultImage.clearMask();
-            curStep++;
-            progressBar.updateValue(progInc * curStep, runningInSeparateThread);
+
+            // fireProgressStateChanged(progInc * curStep);
 
             if (isThreadStopped()) {
-                finalize();
-
                 return;
             }
         }
 
         // mask against original image
-        progressBar.setMessage("Masking original image...");
+        // fireProgressStateChanged("Masking original image...");
 
         float[] maskData = new float[imgSize];
         float[] imgData = new float[imgSize];
@@ -522,14 +646,14 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             resultImage = (ModelImage) image.clone(imgName + "_brain");
             resultImage.importData(0, imgData, true);
         } catch (IOException ioe) {
-            completed = false;
+            setCompleted(false);
             finalize();
 
             return;
         }
 
-        curStep++;
-        progressBar.updateValue(progInc * curStep, runningInSeparateThread);
+        System.out.println("Number of steps in the brain extraction: " + algorithmIndex);
+        fireProgressStateChanged(100);
 
         int orient = image.getFileInfo(0).getImageOrientation();
         int[] axisOrient = image.getFileInfo(0).getAxisOrientation();
@@ -539,10 +663,6 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
             resultImage.getFileInfo(i).setImageOrientation(orient);
             resultImage.getFileInfo(i).setAxisOrientation(axisOrient);
         }
-
-        edgeAlgo.finalize();
-
-        disposeProgressBar();
 
         setCompleted(true);
     }
@@ -781,14 +901,14 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         if (image == null) {
             displayError("Source Image is null");
-            finalize();
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
             return;
         }
 
         if (image.getNDims() != 3) {
             displayError("Source Image must be 3D");
-            finalize();
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
             return;
         }
@@ -803,6 +923,8 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
                 resultImage.disposeLocal(); // Clean up memory of result image
                 resultImage = null;
             }
+
+            fireProgressStateChanged(ViewJProgressBar.PROGRESS_WINDOW_CLOSING);
 
             System.gc();
             MipavUtil.displayError("Brain surface extraction: unable to allocate enough memory");
@@ -886,6 +1008,116 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         sliceAlgo.finalize();
 
         return img;
+    }
+
+    /**
+     * Calculates the progress ratios for different algorithms.
+     *
+     * @param   filterIterations  the iteration number for filter.
+     * @param   doSeparable       flag to indicate whether use separable algorithm or not.
+     * @param   fillHolesFlag     DOCUMENT ME!
+     *
+     * @return  the progress ratios for different algorithms
+     */
+    private float[] calculateProgressRatios(int filterIterations, boolean doSeparable, boolean fillHolesFlag) {
+        float[] ratios;
+
+        if (filterIterations > 0) {
+
+            if (fillHolesFlag) {
+                ratios = new float[8];
+                ratios[0] = 0.3f;
+
+                if (doSeparable) {
+                    ratios[1] = 0.10f;
+                } else {
+                    ratios[1] = 0.10f;
+                }
+
+                ratios[2] = 0.10f;
+                ratios[3] = 0.10f;
+                ratios[4] = 0.10f;
+                ratios[5] = 0.10f;
+                ratios[6] = 0.10f;
+                ratios[7] = 0.10f;
+            } else {
+                ratios = new float[6];
+                ratios[0] = 0.3f;
+
+                if (doSeparable) {
+                    ratios[1] = 0.14f;
+                } else {
+                    ratios[1] = 0.14f;
+                }
+
+                ratios[2] = 0.14f;
+                ratios[3] = 0.14f;
+                ratios[4] = 0.14f;
+                ratios[5] = 0.14f;
+            }
+        } else {
+
+            if (fillHolesFlag) {
+                ratios = new float[7];
+                ratios[0] = 0.1f;
+
+                if (doSeparable) {
+                    ratios[1] = 0.15f;
+                } else {
+                    ratios[1] = 0.15f;
+                }
+
+                ratios[2] = 0.15f;
+                ratios[3] = 0.15f;
+                ratios[4] = 0.15f;
+                ratios[5] = 0.15f;
+                ratios[6] = 0.15f;
+            } else {
+                ratios = new float[5];
+                ratios[0] = 0.2f;
+
+                if (doSeparable) {
+                    ratios[1] = 0.2f;
+                } else {
+                    ratios[1] = 0.2f;
+                }
+
+                ratios[2] = 0.2f;
+                ratios[3] = 0.2f;
+                ratios[4] = 0.2f;
+            }
+        }
+
+        return ratios;
+    }
+
+    /**
+     * Calculates the boundary of progress value which is assigned to the <code>index</code>th algorithm.
+     *
+     * @param   index   the algorithm index
+     * @param   ratios  the ratio array assigned to the algorithms.
+     * @param   min     the minimum progress value available to be distributed
+     * @param   max     the maximum progress value available to be distributed
+     *
+     * @return  the minimum and maximum progress value assigned to the <code>index</code>th algorithm.
+     */
+    private int[] calculateProgressValueBoundary(int index, float[] ratios, int min, int max) {
+
+        if ((ratios == null) || (index < 0) || (index >= ratios.length)) {
+            return null;
+        }
+
+        float accumulatedRatio = 0f;
+
+        for (int i = 0; i < index; i++) {
+            accumulatedRatio += ratios[i];
+        }
+
+        int[] range = new int[2];
+        range[0] = min + Math.round(accumulatedRatio * (max - min));
+        range[1] = min + Math.round((accumulatedRatio + ratios[index]) * (max - min));
+
+        return range;
     }
 
     /**

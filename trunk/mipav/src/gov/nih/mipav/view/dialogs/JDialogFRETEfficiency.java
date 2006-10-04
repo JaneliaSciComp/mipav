@@ -3,15 +3,15 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
 
-import java.io.*;
 import java.io.*;
 
 import javax.swing.*;
@@ -21,8 +21,8 @@ import javax.swing.event.*;
 /**
  * Dialog to get user input, then call the algorithm.
  */
-public class JDialogFRETEfficiency extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, ListSelectionListener {
+public class JDialogFRETEfficiency extends JDialogScriptableBase
+        implements AlgorithmInterface, ListSelectionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -199,7 +199,7 @@ public class JDialogFRETEfficiency extends JDialogBase
         super(theParentFrame, false);
         srcImage = im;
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         if (im.isColorImage()) {
             doColor = true;
@@ -253,8 +253,6 @@ public class JDialogFRETEfficiency extends JDialogBase
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
         Object source = event.getSource();
-
-        int i, j;
 
         if (command.equals("Choose")) {
             FRETImage = open();
@@ -375,81 +373,43 @@ public class JDialogFRETEfficiency extends JDialogBase
                 }
             } // if (efficiencyImage != null)
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
 
             dispose();
         }
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the  srcImage is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FRETEfficiency " +
-                                                       userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                                                       " ");
-
-                // check to see if the  srcImage is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(FRETImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(FRETImage.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(acceptorImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(acceptorImage.getImageName()) +
-                                                       " ");
-
-
-                userInterface.getScriptDialog().append(useRed + " " + useGreen + " " + useBlue + DFPintoFRET + " " +
-                                                       AFPintoFRET + " " + DFPintoAFP + " " + AFPintoDFP + " " +
-                                                       createFDivDImage + " " + createFDivAImage + " " +
-                                                       createEfficiencyImage + "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        scriptParameters.storeImage(FRETImage, "FRET_image");
+        scriptParameters.storeImage(acceptorImage, "acceptor_image");
+        
+        scriptParameters.storeColorOptions(useRed, useGreen, useBlue);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("DFP_into_FRET", DFPintoFRET));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("AFP_into_FRET", AFPintoFRET));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("DFP_into_AFP", DFPintoAFP));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("AFP_into_DFP", AFPintoDFP));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_FRET_donor_image", createFDivDImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_FRET_acceptor_image", createFDivAImage));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_efficiency_image", createEfficiencyImage));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String FRETImageKey = null;
-        String acceptorImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        srcImage = parser.getImage(srcImageKey);
-
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = srcImage.getUserInterface();
+        parentFrame = srcImage.getParentFrame();
+        
+        FRETImage = scriptParameters.retrieveImage("FRET_image");
+        acceptorImage = scriptParameters.retrieveImage("acceptor_image");
+        
         if (srcImage.isColorImage()) {
             doColor = true;
             useRed = true;
@@ -461,48 +421,20 @@ public class JDialogFRETEfficiency extends JDialogBase
             useBlue = false;
             useGreen = false;
         }
-
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-
-        try {
-            FRETImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        FRETImage = parser.getImage(FRETImageKey);
-
-        try {
-            acceptorImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        acceptorImage = parser.getImage(acceptorImageKey);
-
-        try {
-
-            boolean red = parser.getNextBoolean();
-            boolean green = parser.getNextBoolean();
-            boolean blue = parser.getNextBoolean();
-            setRed(red);
-            setBlue(blue);
-            setGreen(green);
-            setDFPintoFRET(parser.getNextFloat());
-            setAFPintoFRET(parser.getNextFloat());
-            setDFPintoAFP(parser.getNextFloat());
-            setAFPintoDFP(parser.getNextFloat());
-            setCreateFDivDImage(parser.getNextBoolean());
-            setCreateFDivAImage(parser.getNextBoolean());
-            setCreateEfficiencyImage(parser.getNextBoolean());
-
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-
+        
+        boolean[] rgb = scriptParameters.getParams().getList(AlgorithmParameters.DO_PROCESS_RGB).getAsBooleanArray();
+        setRed(rgb[0]);
+        setGreen(rgb[1]);
+        setBlue(rgb[2]);
+        
+        setDFPintoFRET(scriptParameters.getParams().getFloat("DFP_into_FRET"));
+        setAFPintoFRET(scriptParameters.getParams().getFloat("AFP_into_FRET"));
+        setDFPintoAFP(scriptParameters.getParams().getFloat("DFP_into_AFP"));
+        setAFPintoDFP(scriptParameters.getParams().getFloat("AFP_into_DFP"));
+        setCreateFDivDImage(scriptParameters.getParams().getBoolean("do_create_FRET_donor_image"));
+        setCreateFDivAImage(scriptParameters.getParams().getBoolean("do_create_FRET_acceptor_image"));
+        setCreateEfficiencyImage(scriptParameters.getParams().getBoolean("do_create_efficiency_image"));
+        
         if (!checkImage(FRETImage)) {
             return;
         }
@@ -510,8 +442,6 @@ public class JDialogFRETEfficiency extends JDialogBase
         if (!checkImage(acceptorImage)) {
             return;
         }
-
-        callAlgorithm();
     }
 
     /**
@@ -619,15 +549,12 @@ public class JDialogFRETEfficiency extends JDialogBase
      *
      * @param  evt  Event that caused this method to fire.
      */
-    public void valueChanged(ListSelectionEvent evt) {
-        JList source = (JList) evt.getSource();
-    }
+    public void valueChanged(ListSelectionEvent evt) {}
 
     /**
      * Once all the necessary variables are set, call AlgorithmFRETEfficiency.
      */
-    private void callAlgorithm() {
-        int i;
+    protected void callAlgorithm() {
         System.gc();
 
         try {
@@ -657,6 +584,7 @@ public class JDialogFRETEfficiency extends JDialogBase
             // This is made possible by implementing AlgorithmedPerformed interface
             feffAlgo.addListener(this);
 
+            createProgressBar(srcImage.getImageName(), feffAlgo);
 
             // Hide dialog
             setVisible(false);
@@ -668,10 +596,6 @@ public class JDialogFRETEfficiency extends JDialogBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    feffAlgo.setProgressBarVisible(false);
-                }
-
                 feffAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -714,11 +638,6 @@ public class JDialogFRETEfficiency extends JDialogBase
         }
 
         if ((srcImage.isColorImage() == false) && (testImage.isColorImage() == true)) {
-
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().removeLine();
-            }
-
             MipavUtil.displayError("Cannot load a color (" + testImage.getImageName() +
                                    ") unless the original file is color.");
 
@@ -726,11 +645,6 @@ public class JDialogFRETEfficiency extends JDialogBase
         }
 
         if (srcImage.getNDims() != testImage.getNDims()) {
-
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().removeLine();
-            }
-
             MipavUtil.displayError("Error! " + srcImage.getImageName() + " is " + srcImage.getNDims() + "D, while " +
                                    testImage.getImageName() + " is " + testImage.getNDims() + "D");
 
@@ -740,11 +654,6 @@ public class JDialogFRETEfficiency extends JDialogBase
         for (int i = 0; i < srcImage.getNDims(); i++) {
 
             if ((testImage != null) && (srcImage.getExtents()[i] != testImage.getExtents()[i])) {
-
-                if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().removeLine();
-                }
-
                 MipavUtil.displayError("Error! For dimension = " + i + " " + srcImage.getImageName() +
                                        " has length = " + srcImage.getExtents()[i] + " while " +
                                        testImage.getImageName() + " has length = " + testImage.getExtents()[i]);
@@ -783,7 +692,7 @@ public class JDialogFRETEfficiency extends JDialogBase
         GridBagConstraints gbc4 = new GridBagConstraints();
         gbc4.gridwidth = 1;
         gbc4.gridheight = 1;
-        gbc4.anchor = gbc4.WEST;
+        gbc4.anchor = GridBagConstraints.WEST;
         gbc4.weightx = 1;
         gbc4.insets = new Insets(3, 3, 3, 3);
         gbc4.fill = GridBagConstraints.HORIZONTAL;
@@ -829,7 +738,7 @@ public class JDialogFRETEfficiency extends JDialogBase
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -839,7 +748,7 @@ public class JDialogFRETEfficiency extends JDialogBase
 
         gbc.gridx = 0;
         gbc.gridy = yPos++;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
         paramPanel.add(namePanel, gbc);
@@ -1080,9 +989,9 @@ public class JDialogFRETEfficiency extends JDialogBase
         outputPanel.add(effImageCheckBox, gbc);
 
         gbc.gridx = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridy = yPos++;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         paramPanel.add(imagePanel, gbc);
         gbc.gridy = yPos++;

@@ -173,6 +173,9 @@ public class Preferences {
 
     /** Constant used to identify debugging level for general output by communications. */
     public static final int DEBUG_COMMS = 3;
+    
+    /** Constant used to identify debugging level for output of scripting system messages. */
+    public static final int DEBUG_SCRIPTING = 4;
 
     /** A list of MIPAV properties. */
     private static Properties mipavProps;
@@ -431,7 +434,7 @@ public class Preferences {
         } else {
             boolean[] levels = getDebugLevels();
 
-            if (levels[0] || levels[1] || levels[2] || levels[3]) {
+            if (levels[0] || levels[1] || levels[2] || levels[3] || levels[4]) {
                 messageFrame.append(string, ViewJFrameMessage.DEBUG);
             }
         }
@@ -513,7 +516,7 @@ public class Preferences {
      * @return  boolean[] debug levels
      */
     public static final boolean[] getDebugLevels() {
-        boolean[] levels = new boolean[4];
+        boolean[] levels = new boolean[5];
 
         String str = Preferences.getProperty("DEBUG");
         StringTokenizer st = new StringTokenizer(str, ",");

@@ -208,6 +208,8 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
 
         constructLog();
 
+        fireProgressStateChanged(0, null, "Running Haralick textures ...");
+        
         calculateHaralick();
     }
 
@@ -258,14 +260,11 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         float glcmASM = 0.0f;
         boolean skip;
 
-        buildProgressBar(srcImage.getImageName(), "Running Haralick textures...", 0, 100);
-        initProgressBar();
 
         try {
             srcImage.exportData(0, sliceSize, sourceBuffer);
         } catch (IOException error) {
             MipavUtil.displayError("AlgorithmHaralickTexture: IOException on srcImage.exportData(0,sliceSize,sourceBuffer)");
-            progressBar.dispose();
             setCompleted(false);
 
             return;
@@ -367,8 +366,9 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
         resultBuffer = new float[resultNumber][sliceSize];
 
         for (y = yStart; (y <= yEnd) && !threadStopped; y++) {
-            progressBar.updateValue((int) ((y - yStart) * (100.0f / (yEnd - yStart))), runningInSeparateThread);
-
+            
+            fireProgressStateChanged(((int) ((y - yStart) * (100.0f / (yEnd - yStart)))), null, null);
+            
             for (x = xStart; x <= xEnd; x++) {
                 pos = x + (y * xDim);
                 doneNS = false;
@@ -706,14 +706,12 @@ public class AlgorithmHaralickTexture extends AlgorithmBase {
             } catch (IOException error) {
                 MipavUtil.displayError("AlgorithmHaralickTexture: IOException on destImage[" + i +
                                        "].importData(0,resultBuffer[" + i + "],true)");
-                progressBar.dispose();
                 setCompleted(false);
 
                 return;
             }
         } // for (i = 0; i < resultNumber; i++)
 
-        progressBar.dispose();
         setCompleted(true);
 
         return;

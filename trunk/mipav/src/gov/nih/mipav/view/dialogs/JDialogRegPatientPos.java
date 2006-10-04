@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -19,7 +21,7 @@ import javax.swing.*;
  * @version  0.1 May 19, 1999
  * @author   Delia McGarry
  */
-public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogRegPatientPos extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -72,20 +74,6 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogRegPatientPos(ViewUserInterface UI, ModelImage im) {
-        super();
-        this.UI = UI;
-        imageB = im;
-        parentFrame = im.getParentFrame();
-    }
-
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -95,7 +83,6 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
      */
     public void actionPerformed(ActionEvent event) {
         Object source = event.getSource();
-        String command = event.getActionCommand();
 
         if (source == OKButton) {
 
@@ -142,7 +129,9 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
                 RegPatPos.getResultImage().disposeLocal(); // clean up memory
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         }
 
         if (RegPatPos != null) {
@@ -160,104 +149,6 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(imageB.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(imageB.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(imageB.getImageName());
-                    }
-                }
-
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(imageA.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(imageA.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(imageA.getImageName());
-                    }
-                }
-
-                UI.getScriptDialog().append("RegPatientPos " + UI.getScriptDialog().getVar(imageB.getImageName()) +
-                                            " " + UI.getScriptDialog().getVar(imageA.getImageName()) + " ");
-                UI.getScriptDialog().putVar(resultImage.getImageName());
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " " + doMatch +
-                                            "\n");
-            }
-        }
-    }
-
-    /**
-     * For scripting, dialog won't show but will set up the variables.
-     *
-     * @param   parser  image to register
-     *
-     * @throws  IllegalArgumentException  DOCUMENT ME!
-     */
-    /*public JDialogRegPatientPos(ModelImage imA, ModelImage imB, boolean match) {
-     *  super(); imageA = imA; imageB = imB; doMatch = match; if (imageA.getNDims() != 3 ) {
-     * MipavUtil.displayError("This algorithm only works for 3D datasets.");     return; }}*/
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String imageAKey = null;
-        String imageBKey = null;
-        String destImageKey = null;
-
-        try {
-            imageBKey = parser.getNextString();
-            imageAKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage imB = parser.getImage(imageBKey);
-        ModelImage imA = parser.getImage(imageAKey);
-
-        imageA = imA;
-        imageB = imB;
-        UI = imageB.getUserInterface();
-        parentFrame = imageB.getParentFrame();
-
-        if (imageB.getNDims() != 3) {
-            MipavUtil.displayError("This algorithm only works for 3D datasets.");
-
-            return;
-        }
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setMatchFlag(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
     }
 
     /**
@@ -281,7 +172,7 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
     /**
      * Calls the algorithm with the set-up parameters.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             RegPatPos = new AlgorithmRegPatientPos(imageA, imageB, doMatch);
@@ -297,6 +188,8 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
         // Start the thread as a low priority because we wish to still have user interface work fast.
         RegPatPos.addListener(this);
 
+        createProgressBar(imageA.getImageName(), RegPatPos);
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -304,6 +197,7 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
+
             if (!UI.isAppFrameVisible()) {
                 RegPatPos.setProgressBarVisible(false);
             }
@@ -311,6 +205,43 @@ public class JDialogRegPatientPos extends JDialogBase implements AlgorithmInterf
             RegPatPos.run();
         }
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageB = scriptParameters.retrieveInputImage();
+        UI = imageB.getUserInterface();
+        parentFrame = imageB.getParentFrame();
+
+        if (imageB.getNDims() != 3) {
+            MipavUtil.displayError("This algorithm only works for 3D datasets.");
+
+            return;
+        }
+
+        imageA = scriptParameters.retrieveImage("reference_image");
+
+        setMatchFlag(scriptParameters.getParams().getBoolean("do_match_origins"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageB);
+        scriptParameters.storeImage(imageA, "reference_image");
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doMatch));
     }
 
     /**

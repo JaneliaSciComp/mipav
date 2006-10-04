@@ -4,9 +4,12 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -23,7 +26,7 @@ import javax.swing.*;
  *
  * @version  1.0; 17 February 2000
  */
-public class JDialogMedian extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -37,9 +40,6 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
     public static final int VECTOR_DIRECTION_FILTER = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    public long start, end;
 
     /** DOCUMENT ME! */
     private boolean blue;
@@ -57,15 +57,6 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
     private JComboBox comboBoxKernelSize;
 
     /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** or if the source image is to be replaced. */
-    private boolean entireImageFlag; // true = apply algorithm to the whole image
-
-    /** DOCUMENT ME! */
     private boolean green;
 
     /** DOCUMENT ME! */
@@ -78,9 +69,6 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
     private boolean image25D = false; // flag indicating if slices should be processed independently
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
     private int iters;
 
     /** DOCUMENT ME! */
@@ -91,9 +79,6 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
 
     /** DOCUMENT ME! */
     private AlgorithmMedian medianAlgo = null;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
 
     /** DOCUMENT ME! */
     private boolean red;
@@ -110,9 +95,6 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
     private JRadioButton componentButton;
     
     private int filterType = COMPONENT_FILTER;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -133,15 +115,11 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
+    
     /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeVolume; //
+    private JRadioButton wholeVolume;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -167,30 +145,8 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogMedian(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-
-        if (im.getType() == ModelImage.BOOLEAN) {
-            MipavUtil.displayError("Source Image must NOT be Boolean");
-            dispose();
-
-            return;
-        }
-
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -275,12 +231,8 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMedian) {
-            end = System.currentTimeMillis();
-            System.err.println("Median Elapsed: " + (end - start));
+            System.err.println("Median Elapsed: " + algorithm.getElapsedTime());
             image.clearMask();
 
             if ((medianAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -292,7 +244,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                 try {
 
                     // resultImage.setImageName("Median: "+image.getImageName());
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -327,7 +279,9 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         medianAlgo.finalize();
         medianAlgo = null;
@@ -342,111 +296,61 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Median " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + entireImageFlag + " " + image25D + " " + iters + " " +
-                                                           stdDev + " " + kernelSize + " " + kernelShape + " " + 
-                                                           filterType + " " + red +
-                                                           " " + green + " " + blue + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + entireImageFlag + " " + image25D + " " + iters + " " +
-                                                           stdDev + " " + kernelSize + " " + kernelShape + " " +
-                                                           filterType + " " + red +
-                                                           " " + green + " " + blue + "\n");
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+        
+        scriptParameters.storeNumIterations(iters);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("std_dev", stdDev));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_filter_type", filterType));
+        scriptParameters.storeColorOptions(red, green, blue);
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if (im.getType() == ModelImage.BOOLEAN) {
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (image.getType() == ModelImage.BOOLEAN) {
             MipavUtil.displayError("Source Image must NOT be Boolean");
             dispose();
 
             return;
         }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setEntireImageFlag(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            setIters(parser.getNextInteger());
-            setStdDev(parser.getNextFloat());
-            setKernelSize(parser.getNextInteger());
-            setKernelShape(parser.getNextInteger());
-            setFilterType(parser.getNextInteger());
-            setRed(parser.getNextBoolean());
-            setGreen(parser.getNextBoolean());
-            setBlue(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        
+        setImage25D(scriptParameters.doProcess3DAs25D());
+        setIters(scriptParameters.getNumIterations());
+        setStdDev(scriptParameters.getParams().getFloat("std_dev"));
+        setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
+        setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
+        setFilterType(scriptParameters.getParams().getInt("rgb_filter_type"));
+        
+        boolean[] rgb = scriptParameters.doProcessRGB();
+        setRed(rgb[0]);
+        setGreen(rgb[1]);
+        setBlue(rgb[2]);
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -457,30 +361,6 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
      */
     public void setBlue(boolean flag) {
         blue = flag;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is processed, <code>false</code> indicates a region.
-     */
-    public void setEntireImageFlag(boolean flag) {
-        entireImageFlag = flag;
     }
 
     /**
@@ -602,15 +482,13 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
      * Once all the necessary variables are set, call the median algorithm based on what type of image this is and
      * whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
-        start = System.currentTimeMillis();
-
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_median");
 
         // stuff to do when working on 2-D images.
         if (image.getNDims() == 2) { // source image is 2D
 
-            if (displayLoc == NEW) { // (2D)
+            if (outputPanel.isOutputNewImageSet()) { // (2D)
 
                 try {
 
@@ -630,7 +508,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     entireImageFlag);
+                                                     outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -639,6 +517,9 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     medianAlgo.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), medianAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -648,10 +529,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            medianAlgo.setProgressBarVisible(false);
-                        }
-
+                       
                         medianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -670,7 +548,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, entireImageFlag);
+                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -679,6 +557,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     medianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), medianAlgo);
 
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
@@ -704,10 +583,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            medianAlgo.setProgressBarVisible(false);
-                        }
-
+                      
                         medianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -718,7 +594,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
             }
         } else if (image.getNDims() == 3) {
 
-            if (displayLoc == NEW) { // (3D)
+            if (outputPanel.isOutputNewImageSet()) { // (3D)
 
                 try {
 
@@ -743,7 +619,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
-                                                     image25D, entireImageFlag);
+                                                     image25D, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -752,6 +628,8 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     medianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), medianAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -761,9 +639,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            medianAlgo.setProgressBarVisible(false);
-                        }
+                     
 
                         medianAlgo.run();
                     }
@@ -783,7 +659,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, image25D,
-                                                     entireImageFlag);
+                                                     outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -792,6 +668,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     medianAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), medianAlgo);
 
                     // Hide dialog
                     setVisible(false);
@@ -817,10 +694,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            medianAlgo.setProgressBarVisible(false);
-                        }
-
+                     
                         medianAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -1029,50 +903,8 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
         colourPanel.setToolTipText("Colour images can be filtered over any combination of colour channels");
         setupBox.add(colourPanel);
 
-        Box lowerBox = new Box(BoxLayout.X_AXIS);
-
-        // destination goes in the left of the lower box
-        JPanel destinationPanel = new JPanel();
-        Box destinationBox = new Box(BoxLayout.Y_AXIS);
-
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage); // add the button to the grouping
-        destinationBox.add(newImage); // add the button to the component
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage); // add the button to the grouping
-        destinationBox.add(replaceImage); // add the button to the component
-        destinationPanel.add(destinationBox);
-
-        lowerBox.add(destinationPanel);
-
-        // filter goes in the right of the lower box
-        JPanel imageVOIPanel = new JPanel();
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Filter"));
-
-        Box imageVOIBox = new Box(BoxLayout.Y_AXIS);
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage); // add the button to the grouping
-        imageVOIBox.add(wholeImage); // add the button to the component
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions); // add the button to the grouping
-        imageVOIBox.add(VOIRegions); // add the button to the component
-
-        imageVOIPanel.add(imageVOIBox); // place the box onto a border
-        lowerBox.add(imageVOIPanel); // place the bordered stuff into the lower box
-
-        setupBox.add(lowerBox); // place lowerBox into the setupBox
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        setupBox.add(outputPanel);
 
         if (image.getNDims() > 2) { // only perform if the image has more than 1 slice
 
@@ -1102,13 +934,6 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
 
         getContentPane().add(setupBox, BorderLayout.CENTER); // put the setupBox into the dialog
 
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setVisible(true);
@@ -1124,19 +949,7 @@ public class JDialogMedian extends JDialogBase implements AlgorithmInterface, Sc
      */
     private boolean setVariables() {
         String tmpStr;
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            entireImageFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            entireImageFlag = false;
-        }
-
+        
         // associate kernel size with selectBox choice.
         this.determineKernelSize();
 

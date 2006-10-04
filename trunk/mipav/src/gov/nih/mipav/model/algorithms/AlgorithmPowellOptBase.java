@@ -75,9 +75,6 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
     /** The maximum number of iterations the optimization allows. */
     protected int maxIterations;
 
-    /** Progress bar that may be set for long optimization runs. */
-    protected ViewJProgressBar myProgressBar = null;
-
     /** Degress of freedom. */
     protected int nDims;
 
@@ -87,13 +84,7 @@ public abstract class AlgorithmPowellOptBase extends AlgorithmBase {
     /** Point that is currently being optimized. */
     protected double[] point;
 
-    /** Where progress is when sent in. */
-    protected int progressBegin;
-
-    /** The max the progress can go to. */
-    protected int progressMax;
-
-    /** Point that was initially passed into function. */
+       /** Point that was initially passed into function. */
     protected double[] start;
 
     /** Array of tolerances for each dimension. */

@@ -195,8 +195,8 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
      * Find face, blur face, commit, or cancel based on which buttons in the dialog are pressed.
      */
     public void anonymizeFace() {
-        buildProgressBar(m_kHeadOriginal.getImageName(), "Anonymize face ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(m_kHeadOriginal.getImageName(), "Anonymize face ...");
+        
 
         if (m_iState == FIND) {
             findFace();
@@ -210,8 +210,8 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
             undoFace();
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
-        progressBar.dispose();
+        fireProgressStateChanged(100);
+        
 
         setCompleted(true);
     }
@@ -470,7 +470,7 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
         m_iFaceFound = 1;
 
         if ((m_iState == DELETE) || (m_iState == OK)) {
-            progressBar.updateValue(50, runningInSeparateThread);
+            fireProgressStateChanged(50);
         }
     }
 
@@ -483,9 +483,9 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
         for (int z = 0; z < m_iZBound; z++) {
 
             if (m_iState == FIND) {
-                progressBar.updateValue(100 * z / m_iZBound, runningInSeparateThread);
+                fireProgressStateChanged(100 * z / m_iZBound);
             } else {
-                progressBar.updateValue(50 * z / m_iZBound, runningInSeparateThread);
+                fireProgressStateChanged(50 * z / m_iZBound);
             }
 
             indexZ = z * sliceSize;
@@ -540,9 +540,9 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
         for (int z = 0; z < m_iZBound; z++) {
 
             if (m_iState == FIND) {
-                progressBar.updateValue(100 * z / m_iZBound, runningInSeparateThread);
+                fireProgressStateChanged(100 * z / m_iZBound);
             } else {
-                progressBar.updateValue(50 * z / m_iZBound, runningInSeparateThread);
+                fireProgressStateChanged(50 * z / m_iZBound);
             }
 
             indexZ = z * sliceSize;
@@ -597,9 +597,9 @@ public class AlgorithmFaceAnonymizer extends AlgorithmBase {
         for (int y = 0; y < m_iYBound; y++) {
 
             if (m_iState == FIND) {
-                progressBar.updateValue(100 * y / m_iYBound, runningInSeparateThread);
+                fireProgressStateChanged(100 * y / m_iYBound);
             } else {
-                progressBar.updateValue(50 * y / m_iYBound, runningInSeparateThread);
+                fireProgressStateChanged(50 * y / m_iYBound);
             }
 
             indexY = y * m_iXBound;

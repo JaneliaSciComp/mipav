@@ -605,7 +605,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                 diff = 1000000;
 
                 if (dir == 1) {
-                    x = x;
+                    // x = x;
                     y = y - 1;
                     map.set(index - xDim);
                     paths(index, 1);
@@ -616,7 +616,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                     paths(index, 2);
                 } else if (dir == 3) {
                     x = x + 1;
-                    y = y;
+                    // y = y;
                     map.set(index + 1);
                     paths(index, 3);
                 } else if (dir == 4) {
@@ -625,7 +625,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                     map.set(index + xDim + 1);
                     paths(index, 4);
                 } else if (dir == 5) {
-                    x = x;
+                    // x = x;
                     y = y + 1;
                     map.set(index + xDim);
                     paths(index, 5);
@@ -636,7 +636,7 @@ public class RubberbandLevelSet implements MouseMotionListener, MouseListener {
                     paths(index, 6);
                 } else if (dir == 7) {
                     x = x - 1;
-                    y = y;
+                    // y = y;
                     map.set(index - 1);
                     paths(index, 7);
                 } else if (dir == 0) {

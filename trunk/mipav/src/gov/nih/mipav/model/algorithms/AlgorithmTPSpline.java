@@ -324,8 +324,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
     public void runAlgorithm() {
 
         try {
-            buildProgressBar(matchImage.getImageName(), "Calculating spline coefficients ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(matchImage.getImageName(), "Calculating spline coefficients ...");
+            
 
             if (z == null) {
                 setupTPSpline2D();
@@ -342,7 +342,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
             return;
         } finally {
-            disposeProgressBar();
+            
         }
     }
 
@@ -1349,8 +1349,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         double U;
         int mod;
 
-        buildProgressBar("Thin plate spline", "Performing base to match grid transformation...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Thin plate spline", "Performing base to match grid transformation...");
+        
 
         if (xWarp.length != yWarp.length) {
             MipavUtil.displayError("tpSpline2D: xWarp array length does not equal yWarp array length");
@@ -1364,7 +1364,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         for (i = 0; i < xWarp.length; i++) {
 
             if ((i % mod) == 0) {
-                progressBar.updateValue((i + 1) * 100 / xWarp.length, runningInSeparateThread);
+                fireProgressStateChanged((i + 1) * 100 / xWarp.length);
             }
 
             result[0][i] = C[N][0] + (C[N + 1][0] * xWarp[i]) + (C[N + 2][0] * yWarp[i]);
@@ -1380,7 +1380,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             }
         }
 
-        progressBar.dispose();
+        
 
         return result;
     }
@@ -1468,8 +1468,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         int tmpb1, tmpb2, tmpb3, tmpb4;
         float tmpa1, tmpa2, tmpa3, tmpa4;
 
-        progressBar.updateValue(0, runningInSeparateThread);
-        progressBar.setMessage("Performing base to match grid transformation...");
+        fireProgressStateChanged(0);
+        fireProgressStateChanged("Performing base to match grid transformation...");
 
         xDimA = baseImage.getExtents()[0];
         yDimA = baseImage.getExtents()[1];
@@ -1514,8 +1514,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
 
         lengthA = xDimA * yDimA;
 
-        progressBar.updateValue(0, runningInSeparateThread);
-        progressBar.setMessage("Performing interpolation into result buffer...");
+        fireProgressStateChanged(0);
+        fireProgressStateChanged("Performing interpolation into result buffer...");
 
         if (matchImage.isColorImage() == false) {
             lengthB = xDimB * yDimB;
@@ -1528,7 +1528,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 resultBuf = null;
                 System.gc();
                 MipavUtil.displayError("AlgorithmTPSpline: Out of memory on imgBuf" + error);
-                disposeProgressBar();
+                
                 finalize();
                 setCompleted(false);
 
@@ -1540,7 +1540,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 try {
                     matchImage.exportData(zNum * lengthB, lengthB, imgBuf);
                 } catch (IOException error) {
-                    disposeProgressBar();
+                    
                     MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
                     finalize();
                     setCompleted(false);
@@ -1555,7 +1555,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 for (i = 0; i < yDimA; i++) {
 
                     if ((i % mod) == 0) {
-                        progressBar.updateValue(((i * 100) + (zNum * yDimA * 100)) / (zDimB * yDimA), runningInSeparateThread);
+                        fireProgressStateChanged(((i * 100) + (zNum * yDimA * 100)) / (zDimB * yDimA));
                     }
 
                     yPos = i * xDimA;
@@ -1625,7 +1625,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 resultBuf = null;
                 System.gc();
                 MipavUtil.displayError("AlgorithmTPSpline: Out of memory error on imgBuf" + error);
-                disposeProgressBar();
+                
                 finalize();
                 setCompleted(false);
 
@@ -1637,7 +1637,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 try {
                     matchImage.exportData(zNum * lengthB, lengthB, imgBuf);
                 } catch (IOException error) {
-                    disposeProgressBar();
+                    
                     MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
                     finalize();
                     setCompleted(false);
@@ -1650,7 +1650,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 for (i = 0; i < yDimA; i++) {
 
                     if ((i % mod) == 0) {
-                        progressBar.updateValue(((i * 100) + (zNum * yDimA * 100)) / (zDimB * yDimA), runningInSeparateThread);
+                        fireProgressStateChanged(((i * 100) + (zNum * yDimA * 100)) / (zDimB * yDimA));
                     }
 
                     yPos = i * xDimA;
@@ -1736,7 +1736,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         try {
             resultImage.importData(0, resultBuf, true);
         } catch (IOException error) {
-            disposeProgressBar();
+            
             MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
             finalize();
             setCompleted(false);
@@ -1744,7 +1744,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
         return;
@@ -1782,8 +1782,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         float tmpa1, tmpa2, tmpa3, tmpa4, tmpa5, tmpa6, tmpa7, tmpa8;
         int index000, index001, index010, index011, index100, index101, index110, index111;
 
-        progressBar.updateValue(0, runningInSeparateThread);
-        progressBar.setMessage("Performing base to match grid transformation...");
+        fireProgressStateChanged(0);
+        fireProgressStateChanged("Performing base to match grid transformation...");
 
         xDimA = baseImage.getExtents()[0];
         yDimA = baseImage.getExtents()[1];
@@ -1819,8 +1819,8 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         sliceSizeA = xDimA * yDimA;
         lengthA = sliceSizeA * zDimA;
 
-        progressBar.updateValue(0, runningInSeparateThread);
-        progressBar.setMessage("Performing interpolation into result buffer...");
+        fireProgressStateChanged(0);
+        fireProgressStateChanged("Performing interpolation into result buffer...");
 
         if (matchImage.isColorImage() == false) {
             sliceSizeB = xDimB * yDimB;
@@ -1834,7 +1834,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 resultBuf = null;
                 System.gc();
                 MipavUtil.displayError("AlgorithmTPSpline: Out of memory on image buffers." + error);
-                disposeProgressBar();
+                
                 finalize();
                 setCompleted(false);
 
@@ -1844,7 +1844,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             try {
                 matchImage.exportData(0, lengthB, imgBuf);
             } catch (IOException error) {
-                disposeProgressBar();
+                
                 MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
                 finalize();
                 setCompleted(false);
@@ -1859,7 +1859,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             for (i = 0; i < zDimA; i++) {
 
                 if ((i % mod) == 0) {
-                    progressBar.updateValue((i + 1) * 100 / zDimA, runningInSeparateThread);
+                    fireProgressStateChanged((i + 1) * 100 / zDimA);
                 }
 
                 zPos = i * sliceSizeA;
@@ -1958,7 +1958,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
                 resultBuf = null;
                 System.gc();
                 MipavUtil.displayError("AlgorithmTPSpline: Out of memory on buffers" + error);
-                disposeProgressBar();
+                
                 finalize();
                 setCompleted(false);
 
@@ -1968,7 +1968,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             try {
                 matchImage.exportData(0, lengthB, imgBuf);
             } catch (IOException error) {
-                disposeProgressBar();
+                
                 MipavUtil.displayError("AlgorithmTPSpline: matchImage locked" + error);
                 finalize();
                 setCompleted(false);
@@ -1981,7 +1981,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             for (i = 0; i < zDimA; i++) {
 
                 if ((i % mod) == 0) {
-                    progressBar.updateValue((i + 1) * 100 / zDimA, runningInSeparateThread);
+                    fireProgressStateChanged((i + 1) * 100 / zDimA);
                 }
 
                 zPos = i * sliceSizeA;
@@ -2113,7 +2113,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
         try {
             resultImage.importData(0, resultBuf, true);
         } catch (IOException error) {
-            disposeProgressBar();
+            
             MipavUtil.displayError("AlgorithmTPSPline: IOException Error on importData into resultImage" + error);
             finalize();
             setCompleted(false);
@@ -2121,7 +2121,7 @@ public class AlgorithmTPSpline extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
         return;

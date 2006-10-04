@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -23,7 +25,7 @@ import javax.swing.*;
  * @version  0.1 Dec 21, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogImageCalculator extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogImageCalculator extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -50,8 +52,8 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
     /** DOCUMENT ME! */
     private int displayLoc = NEW;
 
-    /** DOCUMENT ME! */
-    private ModelImage imageA; // source image
+    /** source image */
+    private ModelImage imageA;
 
     /** DOCUMENT ME! */
     private ModelImage imageB;
@@ -77,8 +79,8 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
     /** DOCUMENT ME! */
     private JRadioButton radioReplace;
 
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
+    /** result image */
+    private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -103,23 +105,8 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
         super(theParentFrame, true);
         imageA = im;
         isColor = im.isColorImage();
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogImageCalculator(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        imageA = im;
-        isColor = im.isColorImage();
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -160,9 +147,6 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmImageCalculator) {
 
             if ((mathAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -171,7 +155,7 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
                 updateFileInfo(imageA, resultImage);
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -206,7 +190,9 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         // Update frame
         mathAlgo.finalize();
@@ -222,51 +208,48 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-                adOpString = mathAlgo.getAdvFunction();
-
-                // check to see if the  imageA is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageA.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageA.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageA.getImageName());
-                    }
-                }
-
-                // check to see if the  imageA is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageB.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageB.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageB.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ImageCalculator " +
-                                                       userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(imageB.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + opType + " " + clipMode + " " + adOpString + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                           " " + opType + " " + clipMode + " " + adOpString + "\n");
-
-                }
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        scriptParameters.storeInputImage(imageB);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("operator_type", opType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type_clip_mode", clipMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("advanced_op_string", adOpString));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage(1);
+        userInterface = imageA.getUserInterface();
+        parentFrame = imageA.getParentFrame();
+        isColor = imageA.isColorImage();
+        
+        setImageB(scriptParameters.retrieveInputImage(2));
+        
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        setOperator(scriptParameters.getParams().getInt("operator_type"));
+        setClipMode(scriptParameters.getParams().getInt("data_type_clip_mode"));
+        setAdOpString(scriptParameters.getParams().getString("advanced_op_string"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -307,63 +290,6 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
             } else if (comboBoxOperator.getSelectedIndex() == 10) {
                 opType = AlgorithmImageCalculator.XOR;
             }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String image1Key = null;
-        String image2Key = null;
-        String destImageKey = null;
-
-        try {
-            image1Key = parser.getNextString();
-            image2Key = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im1 = parser.getImage(image1Key);
-        ModelImage im2 = parser.getImage(image2Key);
-
-        imageA = im1;
-        isColor = im1.isColorImage();
-        setImageB(im2);
-        userInterface = imageA.getUserInterface();
-        parentFrame = imageA.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (image1Key.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setOperator(parser.getNextInteger());
-            setClipMode(parser.getNextInteger());
-            setAdOpString(parser.getNextString());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!image1Key.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
         }
     }
 
@@ -474,7 +400,7 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         System.gc();
 
         int i;
@@ -498,6 +424,8 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mathAlgo.addListener(this);
 
+                    createProgressBar(imageA.getImageName(), mathAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -539,6 +467,8 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
                     // This is made possible by implementing AlgorithmedPerformed interface
                     mathAlgo.addListener(this);
 
+                    createProgressBar(imageA.getImageName(), mathAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -641,7 +571,7 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
         gbc.gridy = 0;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(5, 5, 5, 5);
         inputPanel.add(labelUse, gbc);
@@ -651,24 +581,24 @@ public class JDialogImageCalculator extends JDialogBase implements AlgorithmInte
         gbc.gridy = 1;
         inputPanel.add(labelOperator, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         inputPanel.add(comboBoxOperator, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         inputPanel.add(labelImageB, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         inputPanel.add(comboBoxImage, gbc);
 
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.insets = new Insets(0, 0, 0, 0);
         inputPanel.add(radioClip, gbc);
         gbc.gridy = 4;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         inputPanel.add(radioPromote, gbc);
 
         JPanel outputPanel = new JPanel(new GridBagLayout());

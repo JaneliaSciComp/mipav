@@ -144,17 +144,17 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
             }
 
             if (sliceType == WEIGHTED_AVERAGE) {
-                buildProgressBar(srcImage.getImageName(), "Inserting Weighted Averaged Slice...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Inserting Weighted Averaged Slice...");
             } else if (sliceType == AVERAGE) {
-                buildProgressBar(srcImage.getImageName(), "Inserting Averaged Slice...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Inserting Averaged Slice...");
             } else if (sliceType == BLANK) {
-                buildProgressBar(srcImage.getImageName(), "Inserting Blank Slice...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Inserting Blank Slice...");
             } else if (sliceType == ORIGINAL) {
-                buildProgressBar(srcImage.getImageName(), "Inserting Original Slice...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Inserting Original Slice...");
             } else if (sliceType == ADJACENT_DOWN) {
-                buildProgressBar(srcImage.getImageName(), "Copying previous slice...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Copying previous slice...");
             } else if (sliceType == ADJACENT_UP) {
-                buildProgressBar(srcImage.getImageName(), "Copying next slice...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Copying next slice...");
             }
         } catch (OutOfMemoryError e) {
             imageBuffer = null;
@@ -164,7 +164,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
             tOldOffset = Xdim * Ydim * oldZdim * colorFactor * t;
@@ -175,8 +175,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
 
                 // let user know something is happening by updating the progressbar
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100),
-                                            runningInSeparateThread);
+                    fireProgressStateChanged(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100));
                 }
 
                 if (z == insertSlice) {
@@ -526,7 +525,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         imageBuffer = null;
                         imageBuffer2 = null;
                         setCompleted(false);
-                        disposeProgressBar();
+                        
                         finalize();
 
                         return;
@@ -729,7 +728,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                     imageBuffer = null;
                     imageBuffer2 = null;
                     setCompleted(false);
-                    disposeProgressBar();
+                    
                     finalize();
 
                     return;
@@ -808,7 +807,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
             imageBuffer = null;
             imageBuffer2 = null;
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
@@ -817,7 +816,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
         destImage.calcMinMax(); // calculate the minimum & maximum intensity values for the destImage-image
 
         // Clean up and let the calling dialog know that algorithm did its job
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

@@ -7,10 +7,7 @@ import java.awt.event.*;
 import java.io.*;
 
 import javax.swing.*;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ChangeEvent;
 
-import gov.nih.mipav.model.file.*;
 
 /**
  * Progress bar used everywhere for displaying to the user how long the current process is going to take. The progress
@@ -30,12 +27,19 @@ import gov.nih.mipav.model.file.*;
  * @version  0.1 Oct 19, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class ViewJProgressBar extends JFrame implements ActionListener, ProgressBarInterface, ProgressChangeListener {
+public class ViewJProgressBar extends JFrame
+        implements ActionListener, ProgressBarInterface, ProgressChangeListener, WindowListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -4893646677987678693L;
+
+    /** DOCUMENT ME! */
+    public static final int PROGRESS_VALUE_UNCHANGED = -1;
+
+    /** DOCUMENT ME! */
+    public static final int PROGRESS_WINDOW_CLOSING = -2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -58,6 +62,19 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
     private String title;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new ViewJProgressBar object.
+     *
+     * @param  _title      DOCUMENT ME!
+     * @param  msg         DOCUMENT ME!
+     * @param  min         DOCUMENT ME!
+     * @param  max         DOCUMENT ME!
+     * @param  cancelFlag  DOCUMENT ME!
+     */
+    public ViewJProgressBar(String _title, String msg, int min, int max, boolean cancelFlag) {
+        this(_title, msg, min, max, cancelFlag, null, null);
+    }
 
     /**
      * Creates a new progress bar with the given title, message, and min and max. The percentage is initially set to
@@ -146,6 +163,7 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
         if (windowListener != null) {
             addWindowListener(windowListener);
         } else {
+            addWindowListener(this);
 
             // Note: this doesn't get triggered when called from the same Thread
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -169,6 +187,18 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
 
         if (e.getSource() == cancelButton) {
             dispose();
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  l  DOCUMENT ME!
+     */
+    public void addActionListener(ActionListener l) {
+
+        if (cancelButton != null) {
+            cancelButton.addActionListener(l);
         }
     }
 
@@ -228,6 +258,50 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
     }
 
     /**
+     * Implementation of the ProgressChangeListener interface.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void progressStateChanged(ProgressChangeEvent e) {
+        int value = e.getValue();
+
+        if (value == PROGRESS_WINDOW_CLOSING) {
+            dispose();
+
+            return;
+        }
+
+        String t = e.getTitle();
+
+        if ((t != null) && (t.length() > 0)) {
+            setTitle(t);
+        }
+
+        String m = e.getMessage();
+
+        if ((m != null) && (m.length() > 0)) {
+            setMessage(m);
+        }
+
+        /** Put this in here so you can change the message without updating the value */
+        if (value != PROGRESS_VALUE_UNCHANGED) {
+            updateValue(value);
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  l  DOCUMENT ME!
+     */
+    public void removeActionListener(ActionListener l) {
+
+        if (cancelButton != null) {
+            cancelButton.removeActionListener(l);
+        }
+    }
+
+    /**
      * Enable or disable the progress bar indeterminate mode.
      *
      * @param  flag  boolean
@@ -261,6 +335,19 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
      */
     public void setTitle(String _title) {
         title = _title;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  visible  DOCUMENT ME!
+     */
+    public void setVisible(boolean visible) {
+        super.setVisible(visible);
+
+        if (visible) {
+            this.requestFocus();
+        }
     }
 
     /**
@@ -313,19 +400,62 @@ public class ViewJProgressBar extends JFrame implements ActionListener, Progress
         super.setTitle(title + "   " + String.valueOf(value) + "%");
         update(this.getGraphics());
     }
-    
+
     /**
-     * Implementation of the ProgressChangeListener interface.
+     * Do nothing.
+     *
+     * @param  event  the window activated event
      */
-    public void progressStateChanged(ProgressChangeEvent e){
-        String t = e.getTitle();
-        if(t != null && title.length() > 0){
-            setTitle(t);
-        }
-        String m = e.getMessage();
-        if(m != null && m.length() > 0){
-            setMessage(m);
-        }
-        updateValue(e.getValue());
+    public void windowActivated(WindowEvent event) { }
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window closed event
+     */
+    public void windowClosed(WindowEvent event) { }
+
+    /**
+     * Dispose the progress window.
+     *
+     * @param  event  event that triggered function
+     */
+    public void windowClosing(WindowEvent event) {
+        System.err.println("disposing");
+        dispose();
     }
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window deactivated event
+     */
+    public void windowDeactivated(WindowEvent event) { }
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window deiconified event
+     */
+    public void windowDeiconified(WindowEvent event) { }
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window iconified event
+     */
+    public void windowIconified(WindowEvent event) { }
+
+    /**
+     * **** Window Event Listener.*****
+     *
+     * @param  event  DOCUMENT ME!
+     */
+
+    /**
+     * Do nothing.
+     *
+     * @param  event  the window opened event
+     */
+    public void windowOpened(WindowEvent event) { }
 }

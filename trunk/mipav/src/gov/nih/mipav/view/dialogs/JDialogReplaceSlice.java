@@ -66,7 +66,7 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
     public JDialogReplaceSlice(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im; // set the image from the arguments to an image in this class
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         setTitle("Replace slice");
 
         if (im.getExtents().length != 3) {
@@ -124,7 +124,7 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         sliceImage = userInterface.getRegisteredImageByName((String) sliceBox.getSelectedItem());
 
@@ -132,6 +132,8 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
 
         algo.addListener(this);
 
+        createProgressBar(image.getImageName(), algo);
+        
         setVisible(false);
         algo.run();
     }
@@ -183,7 +185,7 @@ public class JDialogReplaceSlice extends JDialogBase implements AlgorithmInterfa
         mainPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         JLabel imageLabel = new JLabel("Slice image: ");
         imageLabel.setFont(MipavUtil.font12);

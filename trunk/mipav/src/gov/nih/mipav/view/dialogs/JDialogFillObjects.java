@@ -3,6 +3,7 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -18,7 +19,7 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  */
-public class JDialogFillObjects extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogFillObjects extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -106,7 +107,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -138,9 +139,6 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        /** frame that hold the result image */
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -150,7 +148,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(ubyteImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(ubyteImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -190,7 +188,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(ubyteImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(ubyteImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -223,8 +221,9 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
             }
         }
 
-        insertScriptLine(algorithm);
-
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
     }
 
     /**
@@ -237,86 +236,9 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
-     * Records (if scripting) the scripting commands.
-     *
-     * @param  algo  AlgorithmBase the algorithm performed
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("FillObjects " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       "\n");
-
-
-            }
-        }
-
-    }
-
-    /**
-     * Runs the algorithm from the script parser.
-     *
-     * @param   parser  AlgorithmScriptParser the parser
-     *
-     * @throws  IllegalArgumentException  DOCUMENT ME!
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        displayLoc = NEW;
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
-    }
-
-    /**
      * When OK button is clicked, this method is invoked.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         int kernel = 0;
         String name = makeImageName(image.getImageName(), "_FillObjects");
@@ -357,6 +279,8 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
                     // This is made possible by implementing AlgorithmedPerformed interface
                     idObjectsAlgo2D.addListener(this);
 
+                    createProgressBar(image.getImageName(), idObjectsAlgo2D);
+
                     // Hide dialog
                     setVisible(false);
 
@@ -367,10 +291,6 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            idObjectsAlgo2D.setProgressBarVisible(false);
-                        }
-
                         idObjectsAlgo2D.run();
                     }
                     // new ViewJFrameImage( tempImage, null, new Dimension( 300, 300 ), tempImage.getUserInterface(),
@@ -420,8 +340,8 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
                  * ).setTitle( "Locked: " + titles[i] ); ( (Frame) ( imageFrames.elementAt( i ) ) ).setEnabled( false );
                  * userInterface.unregisterFrame( (Frame) ( imageFrames.elementAt( i ) ) ); }
                  *
-                 * if ( isRunInSeparateThread() ) { // Start the thread as a low priority because we wish to still have user
-                 * interface. if ( idObjectsAlgo2D.startMethod( Thread.MIN_PRIORITY ) == false ) {
+                 * if ( isRunInSeparateThread() ) { // Start the thread as a low priority because we wish to still have
+                 * user interface. if ( idObjectsAlgo2D.startMethod( Thread.MIN_PRIORITY ) == false ) {
                  * MipavUtil.displayError( "A thread is already running on this object" ); } } else {
                  * idObjectsAlgo2D.setActiveImage( isActiveImage ); if ( !userInterface.isAppFrameVisible() ) {
                  * idObjectsAlgo2D.setProgressBarVisible( false ); } idObjectsAlgo2D.run(); } } catch ( OutOfMemoryError
@@ -465,6 +385,8 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
                     // This is made possible by implementing AlgorithmedPerformed interface
                     idObjectsAlgo3D.addListener(this);
 
+                    createProgressBar(image.getImageName(), idObjectsAlgo3D);
+
                     // Hide dialog
                     setVisible(false);
 
@@ -475,10 +397,6 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            idObjectsAlgo3D.setProgressBarVisible(false);
-                        }
-
                         idObjectsAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -521,6 +439,40 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
 
     }
 
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        displayLoc = NEW;
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+    }
+
 
     /**
      * Initial control panel.
@@ -547,7 +499,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         // destinationPanel.add(replaceImage, gbc);
@@ -572,7 +524,7 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
         gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         imageVOIPanel.add(wholeImage, gbc);
         gbc.gridy = 1;
         imageVOIPanel.add(VOIRegions, gbc);
@@ -620,8 +572,6 @@ public class JDialogFillObjects extends JDialogBase implements AlgorithmInterfac
      */
     private boolean setVariables() {
         System.gc();
-
-        String tmpStr;
 
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;

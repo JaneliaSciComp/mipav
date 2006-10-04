@@ -22,9 +22,12 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
-    //private static final long serialVersionUID;
+    private static final long serialVersionUID = -2992719068907961685L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    // private static final long serialVersionUID;
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxCostFunct;
@@ -45,19 +48,10 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
     private boolean createRegImage = false;
 
     /** DOCUMENT ME! */
-    private JRadioButton signalButton;
-
-    /** DOCUMENT ME! */
-    private int signalIndex = -1;
-    
-    private int signalImage = 1;
-
-
-    /** DOCUMENT ME! */
-    private AlgorithmTwoMRIImagesSNR snrAlgo = null;
-
-    /** DOCUMENT ME! */
     private ModelImage image; // image1
+
+    /** DOCUMENT ME! */
+    private ModelImage image2;
 
     /** DOCUMENT ME! */
     private JComboBox imageComboBox;
@@ -69,9 +63,6 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
     private int nBoundingVOIs;
 
     /** DOCUMENT ME! */
-    private ModelImage image2;
-
-    /** DOCUMENT ME! */
     private JCheckBox regCheckBox;
 
     /** DOCUMENT ME! */
@@ -81,23 +72,35 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
     private JRadioButton signal2Button;
 
     /** DOCUMENT ME! */
-    private int signal2Index = -1;
-    
     private int signal2Image = 1;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
+    private int signal2Index = -1;
 
-    
+    /** DOCUMENT ME! */
+    private JRadioButton signalButton;
+
+    /** DOCUMENT ME! */
+    private int signalImage = 1;
+
+    /** DOCUMENT ME! */
+    private int signalIndex = -1;
+
+
+    /** DOCUMENT ME! */
+    private AlgorithmTwoMRIImagesSNR snrAlgo = null;
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface UI;
 
     /** DOCUMENT ME! */
     private ButtonGroup VOIGroup;
 
     /** DOCUMENT ME! */
     private ViewVOIVector VOIs; // from image
-    
-    private ViewVOIVector VOIs2; // from image 2
 
+    /** DOCUMENT ME! */
+    private ViewVOIVector VOIs2; // from image 2
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -111,7 +114,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         super(theParentFrame, false);
         image = im;
         componentImage = ((ViewJFrameImage) theParentFrame).getComponentImage();
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
         init();
     }
 
@@ -256,7 +259,6 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         this.register = register;
     }
 
-    
 
     /**
      * Disposes of error dialog, then frame. Sets cancelled to <code>true</code>.
@@ -289,7 +291,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -333,14 +335,15 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
             componentImage.getVOIHandler().setPresetHue(-1.0f);
             // Make algorithm
 
-            snrAlgo = new AlgorithmTwoMRIImagesSNR(image, image2, signalIndex, signalImage,
-                                                   signal2Index, register, cost,
-                                                   createRegImage);
+            snrAlgo = new AlgorithmTwoMRIImagesSNR(image, image2, signalIndex, signalImage, signal2Index, register,
+                                                   cost, createRegImage);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             snrAlgo.addListener(this);
+
+            createProgressBar(image.getImageName(), snrAlgo);
 
             // Hide dialog
             setVisible(false);
@@ -390,7 +393,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         GridBagConstraints gbc5 = new GridBagConstraints();
         gbc5.gridwidth = 1;
         gbc5.gridheight = 1;
-        gbc5.anchor = gbc5.WEST;
+        gbc5.anchor = GridBagConstraints.WEST;
         gbc5.weightx = 1;
         gbc5.insets = new Insets(3, 3, 3, 3);
         gbc5.fill = GridBagConstraints.HORIZONTAL;
@@ -422,7 +425,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
 
         image2 = UI.getRegisteredImageByName(secondName);
         componentImage2 = image2.getParentFrame().getComponentImage();
-        
+
 
         VOIPanel = new JPanel(new GridBagLayout());
         VOIPanel.setBorder(buildTitledBorder("Select signal VOIs"));
@@ -430,7 +433,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         GridBagConstraints gbc4 = new GridBagConstraints();
         gbc4.gridwidth = 1;
         gbc4.gridheight = 1;
-        gbc4.anchor = gbc4.WEST;
+        gbc4.anchor = GridBagConstraints.WEST;
         gbc4.weightx = 1;
         gbc4.insets = new Insets(3, 3, 3, 3);
         gbc4.fill = GridBagConstraints.HORIZONTAL;
@@ -451,7 +454,6 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         componentImage.setMode(ViewJComponentEditImage.NEW_VOI);
         componentImage.getVOIHandler().setPresetHue(0.0f); // red
 
-        
 
         signal2Button = new JRadioButton("Add an optional second signal VOI", false);
         signal2Button.setForeground(Color.green.darker());
@@ -461,14 +463,13 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         gbc4.gridy = 2;
         VOIPanel.add(signal2Button, gbc4);
 
-        
 
         imagePanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc3 = new GridBagConstraints();
         gbc3.gridwidth = 1;
         gbc3.gridheight = 1;
-        gbc3.anchor = gbc3.WEST;
+        gbc3.anchor = GridBagConstraints.WEST;
         gbc3.weightx = 1;
         gbc3.insets = new Insets(3, 3, 3, 3);
         gbc3.fill = GridBagConstraints.HORIZONTAL;
@@ -478,15 +479,11 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         gbc3.gridy = 1;
         imagePanel.add(VOIPanel, gbc3);
 
-        
-
-        
-
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -557,6 +554,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         float[] hsb;
         float hue;
         nBoundingVOIs = 0;
+
         int zDim;
         boolean signalCurveFound;
 
@@ -569,7 +567,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
 
         VOIs = image.getVOIs();
         VOIs2 = image2.getVOIs();
-        
+
 
         nVOIs = VOIs.size();
         nVOIs2 = VOIs2.size();
@@ -609,7 +607,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
                 }
             }
         } // for (i = 0; i < nVOIs; i++)
-        
+
         for (i = 0; i < nVOIs2; i++) {
 
             if ((VOIs2.VOIAt(i).getCurveType() == VOI.CONTOUR) || (VOIs2.VOIAt(i).getCurveType() == VOI.POLYLINE)) {
@@ -651,34 +649,39 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
 
             return false;
         }
-        
+
         if (signalImage != signal2Image) {
             MipavUtil.displayError("Must take both VOIs from the same image");
-            
+
             return false;
         }
-        
+
         zDim = 1;
+
         if (image.getNDims() > 2) {
             zDim = image.getExtents()[2];
         }
+
         signalCurveFound = false;
-        for (i = 0; i < zDim && !signalCurveFound; i++) {
+
+        for (i = 0; (i < zDim) && !signalCurveFound; i++) {
+
             if (signalImage == 1) {
+
                 if (VOIs.VOIAt(signalIndex).getCurves()[i].size() > 0) {
                     signalCurveFound = true;
                 }
-            }
-            else {
+            } else {
+
                 if (VOIs2.VOIAt(signalIndex).getCurves()[i].size() > 0) {
                     signalCurveFound = true;
                 }
             }
         } // for (i = 0; i < zDim && !signalCurveFound; i++)
-        
+
         if (!signalCurveFound) {
             MipavUtil.displayError("Signal VOI has no curves");
-            
+
             return false;
         } // if (!signalCurveFound)
 
@@ -710,10 +713,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
 
         createRegImage = createRegCheckBox.isSelected();
 
-        
-
 
         return true;
     }
-
 }

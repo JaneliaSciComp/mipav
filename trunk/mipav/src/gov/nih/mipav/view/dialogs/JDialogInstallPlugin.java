@@ -339,14 +339,14 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         gbc.gridheight = 1;
         gbc.insets = insets;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
 
         mainPanel.add(browseButton, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(textName, gbc);
 
         JPanel buttonPanel = new JPanel();
