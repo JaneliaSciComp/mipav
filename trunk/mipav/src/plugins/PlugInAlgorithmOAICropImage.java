@@ -175,7 +175,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         for (j = 0; j < zDim; j++) {
 
             try {
-                progressBar.updateValue(Math.round(10 + (30 * j / zDim)), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(10 + (30 * j / zDim)));
 
                 SegmentedImg.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
                 Mask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer1);
@@ -390,7 +390,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
     public void finalize() {
         disposeLocal();
         super.finalize();
-        progressBar.dispose();
+        
     }
 
 
@@ -507,8 +507,8 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        buildProgressBar("OAI Thigh Seg. 6/29/06", "Initializing...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("OAI Thigh Seg. 6/29/06", "Initializing...");
+        
 
         try {
             patientID = (String)
@@ -535,15 +535,15 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
 
         // --------------- STEP 1: Obtaining Background Mask --------------------
         // A) FUZZY C Means SEGMENTATION with 3 classes
-        progressBar.updateValue(5, runningInSeparateThread);
-        progressBar.setMessage("Fuzzy C-Means");
+        fireProgressStateChanged(5);
+        fireProgressStateChanged("Fuzzy C-Means");
         nClasses = 3;
         HardSeg = HardFuzzy(srcImage, nClasses);
         // PFH        ShowImage(HardSeg, "3 class seg");
 
         // B) BOUNDARY CORRECTION (which works only with hard fuzzy data)
-        progressBar.updateValue(15, runningInSeparateThread);
-        progressBar.setMessage("Boundary Correction");
+        fireProgressStateChanged(15);
+        fireProgressStateChanged("Boundary Correction");
         obMask = boundaryCorrect(HardSeg);
         // PFH        ShowImage(obMask, "outer boundary mask");
 
@@ -564,8 +564,8 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         }
 
         // ----------------------STEP 2: THIGH SEPARATION -----------------------
-        progressBar.updateValue(25, runningInSeparateThread);
-        progressBar.setMessage("Image Cropping");
+        fireProgressStateChanged(25);
+        fireProgressStateChanged("Image Cropping");
 
         // CROP VOI
 
@@ -596,7 +596,7 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         for (j = 0; j < zDim; j++) {
 
             try {
-                progressBar.updateValue(Math.round(40 + (30 * j / zDim)), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(40 + (30 * j / zDim)));
                 obMask.exportData((j * imgBuffer.length), imgBuffer.length, imgBuffer);
 
                 for (y = 5; y < (yDim - 5); y++) {
@@ -741,26 +741,26 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         // ShowImage(srcImage,"srcImage");
 
         crop(destImageA, srcImage, xbound, ybound, zbound);
-        progressBar.updateValue(85, runningInSeparateThread);
+        fireProgressStateChanged(85);
         // ShowImage(destImageA,"destImageA");
 
         // System.out.println("used obMask voi to crop ISN'd imageA");
         crop(destImageB, srcImage, xbound1, ybound, zbound);
-        progressBar.updateValue(90, runningInSeparateThread);
+        fireProgressStateChanged(90);
         // ShowImage(destImageB,"destImageA");
 
         // System.out.println("used obMask voi to crop ISN'd imageB");
         crop(obMaskA, obMask, xbound, ybound, zbound);
-        progressBar.updateValue(95, runningInSeparateThread);
+        fireProgressStateChanged(95);
 
         // System.out.println("used obMask voi to crop ISN'd imageA");
         crop(obMaskB, obMask, xbound1, ybound, zbound);
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
 
         // set the first part to being done, and return to the listening dialog
         setCompleted(true);
         finalize();
-        disposeProgressBar();
+        
     }
 
     /**

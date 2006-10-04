@@ -240,7 +240,7 @@ public class PlugInAlgorithmNCISeg extends AlgorithmBase {
         srcImage.getUserInterface().setDataText("\tAverage: " + average + "\n");
 
 
-        disposeProgressBar();
+        
 
         destBuffer = null;
         srcBuffer = null;

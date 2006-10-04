@@ -76,11 +76,6 @@ public class PlugInAlgorithmAbsoluteValue extends AlgorithmBase {
             z = srcImage.getExtents()[2];
         }
 
-        buildProgressBar(srcImage.getImageName(), "Calculating absolute intensities ...", 0, 100);
-
-        initProgressBar();
-
-
         for (i = 0; i < z; i++) {
 
             try {
@@ -92,9 +87,9 @@ public class PlugInAlgorithmAbsoluteValue extends AlgorithmBase {
 
                 srcImage.importData((i * imgBuffer.length), imgBuffer, false);
 
-                if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) ((i + 1.0) / z) * 100), runningInSeparateThread);
-                }
+              
+                fireProgressStateChanged(Math.round((float) ((i + 1.0) / z) * 100));
+                
             } catch (IOException ex) {
                 System.err.println("error exporting data from srcImage in AlgorithmAbsoluteValue");
             }
@@ -102,8 +97,6 @@ public class PlugInAlgorithmAbsoluteValue extends AlgorithmBase {
 
         srcImage.calcMinMax();
         srcImage.notifyImageDisplayListeners();
-
-        disposeProgressBar();
 
         setCompleted(true);
     }

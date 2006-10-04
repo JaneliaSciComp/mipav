@@ -61,9 +61,6 @@ public class PlugInAlgorithmBrainStatistics extends AlgorithmBase {
         int i;
         boolean calcLowHigh = false;
 
-        buildProgressBar("Histogram", "Calculating histogram data...", 0, 100);
-        initProgressBar();
-
         switch (brainImage.getType()) {
 
             case ModelStorageBase.BYTE:
@@ -166,9 +163,8 @@ public class PlugInAlgorithmBrainStatistics extends AlgorithmBase {
                 } // if (calcLowHigh)
             }
 
-            if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (z + 1) / zStop * 100), runningInSeparateThread);
-            }
+            fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
+           
         }
 
         brainImage.releaseLock();
@@ -217,7 +213,7 @@ public class PlugInAlgorithmBrainStatistics extends AlgorithmBase {
         UI.setDataText(dataString);
         UI.setGlobalDataText(dataString);
 
-        disposeProgressBar();
+        
         setCompleted(true);
         imgBuffer = null;
         histoBuffer = null;

@@ -158,8 +158,8 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Processing image ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Processing image ...");
+        
         VOIs = srcImage.getVOIs();
         nVOIs = VOIs.size();
         shortMask = new short[length];
@@ -169,8 +169,8 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         }
 
         for (i = 0; i < nVOIs; i++) {
-            progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-            progressBar.updateValueImmed(100 * i / nVOIs);
+            fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+            fireProgressStateChanged(100 * i / nVOIs);
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 shortMask = srcImage.generateVOIMask(shortMask, i);
@@ -234,7 +234,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
             } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
         } // for (i = 0; i < nVOIs; i++)
 
-        progressBar.updateValueImmed(100);
+        fireProgressStateChanged(100);
 
         if (threadStopped) {
             finalize();
@@ -242,7 +242,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -316,8 +316,8 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Processing image ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Processing image ...");
+        
         VOIs = srcImage.getVOIs();
         nVOIs = VOIs.size();
         shortMask = new short[totLength];
@@ -327,8 +327,8 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
         }
 
         for (i = 0; i < nVOIs; i++) {
-            progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-            progressBar.updateValueImmed(100 * i / nVOIs);
+            fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+            fireProgressStateChanged(100 * i / nVOIs);
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 shortMask = srcImage.generateVOIMask(shortMask, i);
@@ -403,7 +403,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
             } // if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR)
         } // for (i = 0; i < nVOIs; i++)
 
-        progressBar.updateValueImmed(100);
+        fireProgressStateChanged(100);
 
         if (threadStopped) {
             finalize();
@@ -411,7 +411,7 @@ public class PlugInAlgorithmObjectDistanceKruhlak extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

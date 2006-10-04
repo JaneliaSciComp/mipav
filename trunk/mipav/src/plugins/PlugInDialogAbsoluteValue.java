@@ -130,6 +130,8 @@ public class PlugInDialogAbsoluteValue extends JDialogBase implements AlgorithmI
         // This is made possible by implementing AlgorithmedPerformed interface
         absAlgo.addListener(this);
 
+        this.createProgressBar(imageA.getImageName(), "Calculating absolute intensities ...", absAlgo);
+        
         // Hide dialog
         setVisible(false);
 

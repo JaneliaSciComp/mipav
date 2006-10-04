@@ -202,6 +202,10 @@ public class PlugInDialogCreateVolume extends JDialogBase implements AlgorithmIn
             createVolumeAlgo = new PlugInAlgorithmCreateVolume(image, resultImage, currentPos, TNI, numPos, numRepIm,
                                                                numBlank);
             createVolumeAlgo.addListener(this);
+            
+            //no progress updates in plugin? (didnt see any fireProgressStateChanged())
+           // createProgressBar(image.getImageName(), "Calculating brain statistics ...", createVolumeAlgo);
+            
             setVisible(false); // Hide dialog
             setSeparateThread(false);
 

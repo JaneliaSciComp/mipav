@@ -159,8 +159,8 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
         float[] bufferDest_RGB;
         float[] bufferDest_HSB_Hue;
         float[] bufferDest_final;
-        buildProgressBar("NEI segmentation", "Calculating VOI Means...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Calculating VOI Means...");
+        
 
         int xDim = srcImage.getExtents()[0];
 
@@ -198,8 +198,8 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
         float avgRed = 0f, avgGreen = 0f, avgBlue = 0f;
         float avgHue = 0f, avgSaturation = 0f, avgBrightness = 0f;
         int fxDim = 4 * xDim;
-        progressBar.setMessage("Segmenting image...");
-        progressBar.updateValue(70, runningInSeparateThread);
+        fireProgressStateChanged("Segmenting image...");
+        fireProgressStateChanged(70);
 
         float[] hsb = new float[3];
         boolean includeRGB;
@@ -209,7 +209,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
         for (i = 0, id = 0; i < lengthIn; i += 4, id += 4) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (i) / (lengthIn) * 40) + 70, runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (i) / (lengthIn) * 40) + 70);
             }
 
             avgHue = 0f;
@@ -297,7 +297,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
 
         if (threadStopped) {
             buffer = null;
@@ -318,7 +318,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Eye Segmentation: Output Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -333,7 +333,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
                                                 "\n");
         srcImage.getUserInterface().setDataText(" Number of punctate pixels in 2-out-of-3 (voting) method: " +
                                                 numPixels[3] + "\n\n");
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

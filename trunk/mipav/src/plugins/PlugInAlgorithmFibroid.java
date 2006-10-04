@@ -122,8 +122,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
             unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
         }
 
-        buildProgressBar(srcImage.getImageName(), "Measuring ellipsoid diameters ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Measuring ellipsoid diameters ...");
+        
 
         fileInfo = srcImage.getFileInfo();
 
@@ -223,8 +223,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-                progressBar.updateValueImmed(100 * (i + 1) / nVOIs);
+                fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+                fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
                 contours = VOIs.VOIAt(i).getCurves();
@@ -265,8 +265,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-                progressBar.updateValueImmed(100 * (i + 1) / nVOIs);
+                fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+                fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
                 contours = VOIs.VOIAt(i).getCurves();
@@ -320,7 +320,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         srcImage.getUserInterface().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory + File.separator +
                                                                                     voiName);
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -410,8 +410,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
             unitsString3D = FileInfoBase.getUnitsOfMeasureStr(xUnits);
         }
 
-        buildProgressBar(srcImage.getImageName(), "Measuring ellipsoid diameters ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Measuring ellipsoid diameters ...");
+        
 
         fileInfo = srcImage.getFileInfo();
 
@@ -511,8 +511,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-                progressBar.updateValueImmed(100 * (i + 1) / nVOIs);
+                fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+                fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
                 contours = VOIs.VOIAt(i).getCurves();
@@ -764,8 +764,8 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         for (i = 0; i < nVOIs; i++) {
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
-                progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-                progressBar.updateValueImmed(100 * (i + 1) / nVOIs);
+                fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+                fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
                 contours = VOIs.VOIAt(i).getCurves();
@@ -913,7 +913,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                                                                                     voiName);
 
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

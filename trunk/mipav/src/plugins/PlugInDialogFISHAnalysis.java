@@ -124,9 +124,9 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
             if (regionDistAlgo.isCompleted() == true) {
 
                 if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().append("FISHAnalysis " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + "\n");
+       //             userInterface.getScriptDialog().append("FISHAnalysis " +
+        //                                                   userInterface.getScriptDialog().getVar(image.getImageName()) +
+        //                                                   " " + "\n");
                 }
             }
 

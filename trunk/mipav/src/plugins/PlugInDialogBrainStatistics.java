@@ -69,6 +69,7 @@ public class PlugInDialogBrainStatistics extends JDialogBase implements Algorith
      */
     protected void callAlgorithm() {
         brainAlgo = new PlugInAlgorithmBrainStatistics(image);
+        createProgressBar(image.getImageName(), "Calculating brain statistics ...", brainAlgo);
         brainAlgo.run();
     }
 }

@@ -11,8 +11,7 @@ import javax.swing.*;
 
 
 public class PlugInDialogProcessICG extends JDialogBase implements
-        AlgorithmInterface,
-        ScriptableInterface {
+        AlgorithmInterface {
 
     private PlugInAlgorithmProcessICG icgAlgo;
     private ModelImage image = null; // source image
@@ -71,25 +70,25 @@ public class PlugInDialogProcessICG extends JDialogBase implements
      * @param parser the script parser we get the state from
      * @throws IllegalArgumentException if there is something wrong with the arguments in the script
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws
+    public void scriptRun() throws
             IllegalArgumentException {
         String srcImageKey = null;
         String destImageKey = null;
 
         try {
-            srcImageKey = parser.getNextString();
+     //       srcImageKey = parser.getNextString();
         } catch (Exception e) {
             throw new IllegalArgumentException();
         }
-        ModelImage im = parser.getImage(srcImageKey);
+     ///   ModelImage im = parser.getImage(srcImageKey);
 
-        image = im;
+  //      image = im;
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
         // the result image
         try {
-            destImageKey = parser.getNextString();
+    //        destImageKey = parser.getNextString();
         } catch (Exception e) {
             throw new IllegalArgumentException();
         }
@@ -98,7 +97,7 @@ public class PlugInDialogProcessICG extends JDialogBase implements
         setSeparateThread(false);
         callAlgorithm();
         if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        //    parser.putVariable(destImageKey, getResultImage().getImageName());
         }
     }
 
@@ -110,27 +109,27 @@ public class PlugInDialogProcessICG extends JDialogBase implements
         if (algo.isCompleted()) {
             if (userInterface.isScriptRecording()) {
                 //check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.
-                        getImageName()) == null) {
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(
-                            image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.
-                                getImageName());
+        //        if (userInterface.getScriptDialog().getImgTableVar(image.
+        //                getImageName()) == null) {
+        //            if (userInterface.getScriptDialog().getActiveImgTableVar(
+        //                    image.getImageName()) == null) {
+        //                userInterface.getScriptDialog().putActiveVar(image.
+        //                        getImageName());
                     }
                 }
 
-                userInterface.getScriptDialog().append(
-                        "PlugInDialogProcessICG " +
-                        userInterface.getScriptDialog().
-                        getVar(image.getImageName()) +
-                        " ");
+//                userInterface.getScriptDialog().append(
+  //                      "PlugInDialogProcessICG " +
+    //                    userInterface.getScriptDialog().
+      //                  getVar(image.getImageName()) +
+        //                " ");
 
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.
-                        getScriptDialog().getVar(resultImage.getImageName()) +
-                        "\n");
-            }
-        }
+          //      userInterface.getScriptDialog().putVar(resultImage.getImageName());
+            //    userInterface.getScriptDialog().append(userInterface.
+              //          getScriptDialog().getVar(resultImage.getImageName()) +
+                //        "\n");
+        //    }
+      //  }
     }
 
     public void itemStateChanged(ItemEvent e) {

@@ -23,7 +23,7 @@ import javax.swing.*;
  *           <p>$Logfile: /mipav/src/plugins/PlugInDialogRegionDistance.java $ $Revision: 21 $ $Date: 1/25/06 4:59p $
  *           </p>
  */
-public class PlugInDialogRegionDistance extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class PlugInDialogRegionDistance extends JDialogBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -260,16 +260,16 @@ public class PlugInDialogRegionDistance extends JDialogBase implements Algorithm
             if (userInterface.isScriptRecording()) {
 
                 // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
+       //         if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
 
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
+       //             if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
+      //                  userInterface.getScriptDialog().putActiveVar(image.getImageName());
+    //                }
+    //            }
 
-                userInterface.getScriptDialog().append("PlugInDialogRegionDistance " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " + getParameterString(" ") + "\n");
+    //            userInterface.getScriptDialog().append("PlugInDialogRegionDistance " +
+    //                                                   userInterface.getScriptDialog().getVar(image.getImageName()) +
+    //                                                   " " + getParameterString(" ") + "\n");
             }
         }
     }
@@ -281,19 +281,19 @@ public class PlugInDialogRegionDistance extends JDialogBase implements Algorithm
      *
      * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
+    public void scriptRun() throws IllegalArgumentException {
         String srcImageKey = null;
 
         try {
-            srcImageKey = parser.getNextString();
+     //       srcImageKey = parser.getNextString();
         } catch (Exception e) {
             throw new IllegalArgumentException();
         }
 
-        ModelImage im = parser.getImage(srcImageKey);
+     //   ModelImage im = parser.getImage(srcImageKey);
 
         setForeground(Color.black);
-        image = im;
+    //    image = im;
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
 
@@ -305,14 +305,14 @@ public class PlugInDialogRegionDistance extends JDialogBase implements Algorithm
         }
 
         try {
-            setRedMin(parser.getNextInteger());
-            setRedFraction(parser.getNextFloat());
-            setRedNumber(parser.getNextInteger());
-            setGreenMin(parser.getNextInteger());
-            setGreenFraction(parser.getNextFloat());
-            setGreenNumber(parser.getNextInteger());
-            setBlueMin(parser.getNextInteger());
-            setIters(parser.getNextInteger());
+   //         setRedMin(parser.getNextInteger());
+   //         setRedFraction(parser.getNextFloat());
+   //         setRedNumber(parser.getNextInteger());
+   //         setGreenMin(parser.getNextInteger());
+   //         setGreenFraction(parser.getNextFloat());
+  //          setGreenNumber(parser.getNextInteger());
+  //          setBlueMin(parser.getNextInteger());
+ //           setIters(parser.getNextInteger());
         } catch (Exception e) {
             throw new IllegalArgumentException(e.getMessage());
         }

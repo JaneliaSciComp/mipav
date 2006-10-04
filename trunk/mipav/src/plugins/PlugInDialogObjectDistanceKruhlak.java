@@ -175,10 +175,10 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
             if (objectDistAlgo.isCompleted() == true) {
 
                 if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().append("ObjectDistanceKruhlak " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + useRed + " " + useGreen + " " + useBlue + " " +
-                                                           threshold1 + " " + threshold2 + "\n");
+           //         userInterface.getScriptDialog().append("ObjectDistanceKruhlak " +
+           //                                                userInterface.getScriptDialog().getVar(image.getImageName()) +
+          //                                                 " " + useRed + " " + useGreen + " " + useBlue + " " +
+           //                                                threshold1 + " " + threshold2 + "\n");
                 }
             }
 
