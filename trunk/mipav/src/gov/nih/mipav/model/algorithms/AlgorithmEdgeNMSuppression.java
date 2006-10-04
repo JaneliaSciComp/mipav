@@ -300,6 +300,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         GxyData = null;
         GxzData = null;
         GyzData = null;
+        GzzData = null;
         GxxxData = null;
         GxxyData = null;
         GxyyData = null;
@@ -312,6 +313,10 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         GzzzData = null;
         destImage = null;
         srcImage = null;
+        kExtents = null;
+        sigmas = null;
+        zXMask.disposeLocal();
+        zXMask = null;
         super.finalize();
     }
 
