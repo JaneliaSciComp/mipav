@@ -480,9 +480,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             nOrientations = 3;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Denoising BLS_GSM...", 0, 100);
-
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "DenoisingBLS_GSM...");
 
         constructLog();
         
@@ -520,7 +518,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             im = null;
             System.gc();
             displayError("AlgorithmDenoisingBLS_GSM: Out of memory creating a");
-            progressBar.dispose();
             setCompleted(false);
 
             return;
@@ -530,7 +527,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             srcImage.exportData(0, arrayLength, im);
         } catch (IOException error) {
             displayError("AlgorithmDenoisingBLS_GSM: Source image is locked");
-            progressBar.dispose();
             setCompleted(false);
 
             return;
@@ -595,7 +591,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 corImage.exportData(0, arrayLength, corArray);
             } catch (IOException error) {
                 displayError("AlgorithmDenoisingBLS_GSM: corImage is locked");
-                progressBar.dispose();
                 setCompleted(false);
                 return;
             }
@@ -741,7 +736,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (repres1 == STEERABLE_PYRAMID) {
             imD = decompReconst(im, imx, imy, delta);  
             if (error == 1) {
-                progressBar.dispose();
                 setCompleted(false);
                 return;   
             }
@@ -801,7 +795,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             aArray = null;
             System.gc();
             displayError("AlgorithmWaveletThreshold: Out of memory creating a");
-            progressBar.dispose();
             setCompleted(false);
 
             return;
@@ -811,7 +804,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             srcImage.exportData(0, arrayLength, aArray);
         } catch (IOException error) {
             displayError("AlgorithmWaveletThreshold: Source image is locked");
-            progressBar.dispose();
             setCompleted(false);
 
             return;
@@ -854,7 +846,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             aExp = null;
             System.gc();
             displayError("AlgorithmWaveletThreshold: Out of memory creating aExp");
-            progressBar.dispose();
             setCompleted(false);
 
             return;
@@ -1181,8 +1172,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             // }
         } // else if (nDims == 3)
 
-        progressBar.setMessage("Performing forward wavelet transform");
-        progressBar.updateValue(20, runningInSeparateThread);
         transformDir = FORWARD;
         wtn(aExp);
 
@@ -1196,7 +1185,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 aLog = null;
                 System.gc();
                 displayError("AlgorithmWaveletThreshold: Out of memory creating aLog");
-                progressBar.dispose();
                 setCompleted(false);
 
                 return;
@@ -1210,15 +1198,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 waveletImage.importData(0, aLog, true);
             } catch (IOException error) {
                 displayError("AlgorithmWaveletThreshold: IOException on wavelet image import data");
-                progressBar.dispose();
                 setCompleted(false);
 
                 return;
             }
         } // if (doWaveletImage)
 
-        progressBar.setMessage("Zeroing coefficients below cutoff");
-        progressBar.updateValue(50, runningInSeparateThread);
         aMax = -Float.MAX_VALUE;
 
         for (i = 0; i < aExp.length; i++) {
@@ -1291,8 +1276,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         } // switch(thresholdType)
         System.out.println(belowThreshold + " of the " + aExp.length + " coefficents are below threshold");
 
-        progressBar.setMessage("Performing inverse wavelet transform");
-        progressBar.updateValue(60, runningInSeparateThread);
         transformDir = INVERSE;
         wtn(aExp);
 
@@ -1398,16 +1381,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
         }
 
-        progressBar.setMessage("Importing noise filtered image");
-        progressBar.updateValue(90, runningInSeparateThread);
-
         if (destImage != null) {
 
             try {
                 destImage.importData(0, aArray, true);
             } catch (IOException error) {
                 displayError("AlgorithmWaveletThreshold: IOException on destination image import data");
-                progressBar.dispose();
                 setCompleted(false);
 
                 return;
@@ -1418,7 +1397,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 srcImage.importData(0, aArray, true);
             } catch (IOException error) {
                 displayError("AlgorithmWaveletThreshold: IOException on source image import data");
-                progressBar.dispose();
                 setCompleted(false);
 
                 return;
@@ -1428,7 +1406,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
         setCompleted(true);
 
-        progressBar.dispose();
     }
     
     /**
@@ -1634,13 +1611,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
-
                 return;
             }
 
@@ -1689,11 +1660,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
@@ -1804,11 +1770,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
@@ -2189,11 +2150,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
@@ -2244,11 +2200,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
@@ -2359,11 +2310,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
@@ -2734,7 +2680,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
         if (n < 4) {
             MipavUtil.displayError("Length of daub4 array must be at least 4");
-            progressBar.dispose();
             setCompleted(false);
 
             return;
@@ -2784,7 +2729,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
         if (n < 4) {
             MipavUtil.displayError("Length of pwt array must be at least 4");
-            progressBar.dispose();
             setCompleted(false);
 
             return;
@@ -2852,7 +2796,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
         if (len < 4) {
             MipavUtil.displayError("Length of wt1 array must be at least 4");
-            progressBar.dispose();
             setCompleted(false);
 
             return;
