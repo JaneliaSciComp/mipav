@@ -272,6 +272,8 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
                 // stdDev, regionFlag);
                 ctSegAlgo = new PlugInAlgorithmCT_MD(resultImage, image);
 
+                createProgressBar(image.getImageName(), "CT segmentations ...", ctSegAlgo);
+                
                 System.out.println("Dialog fatL = " + fatLVal + " fatH = " + fatHVal);
                 ctSegAlgo.fatL = fatLVal;
                 ctSegAlgo.fatH = fatHVal;

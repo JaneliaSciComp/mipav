@@ -117,6 +117,8 @@ public class PlugInDialogISN extends JDialogBase implements AlgorithmInterface {
             // This is made possible by implementing AlgorithmedPerformed interface
             isnAlgo.addListener(this);
 
+            createProgressBar(imageA.getImageName(), " ...", isnAlgo);
+            
             // Hide dialog
             setVisible(false);
 

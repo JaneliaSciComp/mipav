@@ -251,6 +251,9 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             objectDistAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), " ...",objectDistAlgo);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {

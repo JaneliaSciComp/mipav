@@ -253,6 +253,9 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             suvAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), " ...", suvAlgo);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {

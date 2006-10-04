@@ -126,6 +126,9 @@ public class PlugInDialogFibroid extends JDialogBase implements AlgorithmInterfa
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             fibroidAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), " ...", fibroidAlgo);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {

@@ -159,6 +159,9 @@ public class PlugInDialogOCT extends JDialogBase implements AlgorithmInterface {
                 // This is made possible by implementing AlgorithmedPerformed
                 // interface
                 thicknessAlgo.addListener(this);
+                
+                createProgressBar(image.getImageName(), " ...", thicknessAlgo);
+                
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {

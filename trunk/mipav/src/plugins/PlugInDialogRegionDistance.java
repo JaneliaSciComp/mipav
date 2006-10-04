@@ -412,6 +412,8 @@ public class PlugInDialogRegionDistance extends JDialogBase implements Algorithm
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             regionDistAlgo.addListener(this);
+            createProgressBar(image.getImageName(), " ...", regionDistAlgo );
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {

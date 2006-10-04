@@ -239,6 +239,9 @@ public class PlugInDialogProcessICG extends JDialogBase implements
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             icgAlgo.addListener(this);
+            
+            createProgressBar(image.getImageName(), " ...", icgAlgo);
+            
             // Hide dialog
             setVisible(false);
 
