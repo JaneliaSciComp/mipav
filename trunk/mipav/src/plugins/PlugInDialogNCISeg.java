@@ -1,4 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -13,7 +15,7 @@ import javax.swing.*;
 /**
  * NCI segmentation dialog.
  */
-public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterface {
+public class PlugInDialogNCISeg extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -89,6 +91,39 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+    	imageA = scriptParameters.retrieveInputImage();
+
+        userInterface = imageA.getUserInterface();
+        parentFrame = imageA.getParentFrame();
+        
+        doBrown = scriptParameters.getParams().getBoolean("doBrown");
+        threshold = scriptParameters.getParams().getFloat("threshold");
+        diffThreshold = scriptParameters.getParams().getFloat("diffThreshold");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doBrown", doBrown));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("diffThreshold", diffThreshold));
+    }
+    
+    /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
      * @param  event  Event that triggers function.
@@ -139,6 +174,9 @@ public class PlugInDialogNCISeg extends JDialogBase implements AlgorithmInterfac
                 // displayed.
 
                 new ViewJFrameImage(resultImage);
+            }
+            if (algorithm.isCompleted()) {
+            	insertScriptLine();
             }
         }
     }

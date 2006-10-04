@@ -1,3 +1,5 @@
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.view.*;
@@ -10,7 +12,7 @@ import java.awt.*;
 
 
 public class PlugInDialogRemoveBlinks
-    extends JDialogBase implements AlgorithmInterface {
+    extends JDialogScriptableBase implements AlgorithmInterface {
 
     private PlugInAlgorithmRemoveBlinks icgAlgo;
     private ModelImage image = null; // source image
@@ -47,80 +49,31 @@ public class PlugInDialogRemoveBlinks
 
     public PlugInDialogRemoveBlinks() { }
 
+    
     /**
-     * Run this algorithm from a script.
-     * @param parser the script parser we get the state from
-     * @throws IllegalArgumentException if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun() throws IllegalArgumentException
-    {
-        String srcImageKey = null;
-        String destImageKey = null;
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
 
-        try
-        {
-    //        srcImageKey = parser.getNextString();
-        }
-        catch (Exception e)
-        {
-            throw new IllegalArgumentException();
-        }
- //       ModelImage im = parser.getImage(srcImageKey);
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+    	image = scriptParameters.retrieveInputImage();
 
-    //    image = im;
         userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
-
-        // the result image
-        try
-        {
-   //         destImageKey = parser.getNextString();
-        }
-        catch (Exception e)
-        {
-            throw new IllegalArgumentException();
-        }
-
-        //setActiveImage(parser.isActiveImage());
-        setSeparateThread(false);
-        callAlgorithm();
-        if (!srcImageKey.equals(destImageKey))
-        {
-      //      parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     * @param algo the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo)
-    {
-        if (algo.isCompleted())
-        {
-            if (userInterface.isScriptRecording())
-            {
-                //check to see if the match image is already in the ImgTable
-         //       if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null)
-          ////      {
-         //           if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null)
-         //           {
-         //               userInterface.getScriptDialog().putActiveVar(image.getImageName());
-         //           }
-        //        }
-
-        //        userInterface.getScriptDialog().append("PlugInDialogRemoveBlinks " +
-        //            userInterface.getScriptDialog().
-       //             getVar(image.getImageName()) +
-       //             " ");
-
-      //          userInterface.getScriptDialog().putVar(resultImage.getImageName());
-      //          userInterface.getScriptDialog().append(userInterface.
-      //              getScriptDialog().getVar(resultImage.getImageName()) + "\n");
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
     }
-
 
     /**
      *  Closes dialog box when the OK button is pressed and calls the algorithm.
@@ -202,11 +155,8 @@ public class PlugInDialogRemoveBlinks
                if (icgAlgo.isCompleted() == true) {
 
                    resultImage = icgAlgo.getResultImage();
-
-                   insertScriptLine(icgAlgo);
-
                    new ViewJFrameImage(icgAlgo.getResultImage());
-
+                   insertScriptLine();
                }
            }
        }
