@@ -127,12 +127,12 @@ public class PlugInDialogNCI_LiepinshSeg extends JDialogBase implements Algorith
         if (eyeAlgo.isCompleted() == true) {
 
             if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().append("NCI " +
-                                                       userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       "\n");
+     //           userInterface.getScriptDialog().append("NCI " +
+   //                                                    userInterface.getScriptDialog().getVar(imageA.getImageName()) +
+    //                                                   " ");
+   //             userInterface.getScriptDialog().putVar(resultImage.getImageName());
+   //             userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
+    //                                                   "\n");
             }
         }
 

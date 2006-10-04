@@ -434,10 +434,10 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Processing image ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Processing image ...");
+        
 
-        progressBar.setMessage("Creating blue image");
+        fireProgressStateChanged("Creating blue image");
         grayImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gray",
                                    srcImage.getUserInterface());
         fileInfo = grayImage.getFileInfo()[0];
@@ -455,12 +455,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         }
 
         // Segment into 2 values
-        progressBar.setMessage("Performing FuzzyCMeans Segmentation on blue");
+        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on blue");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(5);
+            fireProgressStateChanged(5);
         } else {
-            progressBar.updateValueImmed(2);
+            fireProgressStateChanged(2);
         }
 
         nClasses = 2;
@@ -494,12 +494,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         fcmAlgo = null;
 
         // Now convert the min and max to 0 and 1
-        progressBar.setMessage("Setting segmented blue values to 0 and 1");
+        fireProgressStateChanged("Setting segmented blue values to 0 and 1");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(20);
+            fireProgressStateChanged(20);
         } else {
-            progressBar.updateValueImmed(6);
+            fireProgressStateChanged(6);
         }
 
         grayImage.calcMinMax();
@@ -516,12 +516,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         thresholdAlgo = null;
 
         // Remove all inappropriate holes in blue nuclei
-        progressBar.setMessage("Removing holes from blue nuclei");
+        fireProgressStateChanged("Removing holes from blue nuclei");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(23);
+            fireProgressStateChanged(23);
         } else {
-            progressBar.updateValueImmed(7);
+            fireProgressStateChanged(7);
         }
 
         fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
@@ -532,12 +532,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         fillHolesAlgo2D = null;
 
         // Smooth with a morphological opening followed by a closing
-        progressBar.setMessage("Opening blue segmented image");
+        fireProgressStateChanged("Opening blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(25);
+            fireProgressStateChanged(25);
         } else {
-            progressBar.updateValueImmed(8);
+            fireProgressStateChanged(8);
         }
 
         kernel = AlgorithmMorphology2D.CONNECTED4;
@@ -554,12 +554,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         openAlgo.finalize();
         openAlgo = null;
 
-        progressBar.setMessage("Closing blue segmented image");
+        fireProgressStateChanged("Closing blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(30);
+            fireProgressStateChanged(30);
         } else {
-            progressBar.updateValueImmed(10);
+            fireProgressStateChanged(10);
         }
 
         method = AlgorithmMorphology2D.CLOSE;
@@ -581,12 +581,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Eroding blue segmented image");
+        fireProgressStateChanged("Eroding blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(35);
+            fireProgressStateChanged(35);
         } else {
-            progressBar.updateValueImmed(12);
+            fireProgressStateChanged(12);
         }
 
         kernel = AlgorithmMorphology2D.CONNECTED4;
@@ -602,12 +602,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         // Put the object IDs in IDArray and the corresponding boundaries
         // in boundaryArray
-        progressBar.setMessage("IDing objects in blue segmented image");
+        fireProgressStateChanged("IDing objects in blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(45);
+            fireProgressStateChanged(45);
         } else {
-            progressBar.updateValueImmed(15);
+            fireProgressStateChanged(15);
         }
 
         kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
@@ -626,12 +626,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         grayImage.calcMinMax();
         numObjects = (int) grayImage.getMax();
 
-        progressBar.setMessage("Dilating IDed objects in blue segmented image");
+        fireProgressStateChanged("Dilating IDed objects in blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(55);
+            fireProgressStateChanged(55);
         } else {
-            progressBar.updateValueImmed(18);
+            fireProgressStateChanged(18);
         }
 
         kernel = AlgorithmMorphology2D.CONNECTED4;
@@ -657,12 +657,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Zeroing overgrowth of dilated objects");
+        fireProgressStateChanged("Zeroing overgrowth of dilated objects");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(65);
+            fireProgressStateChanged(65);
         } else {
-            progressBar.updateValueImmed(22);
+            fireProgressStateChanged(22);
         }
 
         // byteBuffer contains the smoothed blue objects before erosion
@@ -675,12 +675,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         }
 
         edgeObjects = numObjects;
-        progressBar.setMessage("Removing blue objects touching edges");
+        fireProgressStateChanged("Removing blue objects touching edges");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(70);
+            fireProgressStateChanged(70);
         } else {
-            progressBar.updateValueImmed(23);
+            fireProgressStateChanged(23);
         }
 
         for (id = 1; id <= numObjects; id++) {
@@ -717,7 +717,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         if (numObjects == 0) {
             MipavUtil.displayError(edgeObjects + " blue objects touched edges");
             MipavUtil.displayError("No blue objects that do not touch edges");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -748,8 +748,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         if (nVOIs == 0) {
 
             if (redNumber > 0) {
-                progressBar.setMessage("Creating red image");
-                progressBar.updateValueImmed(30);
+                fireProgressStateChanged("Creating red image");
+                fireProgressStateChanged(30);
 
                 // grayImage is ModelStorageBase.UBYTE
                 grayImage.reallocate(ModelStorageBase.FLOAT);
@@ -763,8 +763,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     return;
                 }
 
-                progressBar.setMessage("Performing median filter on red");
-                progressBar.updateValueImmed(31);
+                fireProgressStateChanged("Performing median filter on red");
+                fireProgressStateChanged(31);
                 medianIters = 1;
                 kernelSize = 3;
                 kernelShape = AlgorithmMedian.SQUARE_KERNEL;
@@ -776,8 +776,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 algoMedian.finalize();
                 algoMedian = null;
 
-                progressBar.setMessage("Getting histogram info on red");
-                progressBar.updateValueImmed(32);
+                fireProgressStateChanged("Getting histogram info on red");
+                fireProgressStateChanged(32);
                 bins = 256;
                 algoHist = new AlgorithmHistogram(grayImage, bins);
                 algoHist.setProgressBarVisible(false);
@@ -810,8 +810,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 cropBackground = true;
 
                 // Segment red into 3 values
-                progressBar.setMessage("Performing FuzzyCMeans Segmentation on red");
-                progressBar.updateValueImmed(33);
+                fireProgressStateChanged("Performing FuzzyCMeans Segmentation on red");
+                fireProgressStateChanged(33);
                 nClasses = 3;
                 nPyramid = 4;
                 oneJacobiIter = 1;
@@ -855,8 +855,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 // new Dimension(600, 300), srcImage.getUserInterface());
 
                 // Now convert the red min and max to 0 and 1
-                progressBar.setMessage("Setting segmented red values to 0 and 1");
-                progressBar.updateValueImmed(35);
+                fireProgressStateChanged("Setting segmented red values to 0 and 1");
+                fireProgressStateChanged(35);
                 grayImage.calcMinMax();
                 max = (float) grayImage.getMax();
                 thresholds[0] = max;
@@ -871,8 +871,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholdAlgo = null;
 
                 // Remove all inappropriate holes in red VOIs
-                progressBar.setMessage("Removing holes from red VOIs");
-                progressBar.updateValueImmed(37);
+                fireProgressStateChanged("Removing holes from red VOIs");
+                fireProgressStateChanged(37);
                 fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0,
                                                             0, wholeImage);
                 fillHolesAlgo2D.setProgressBarVisible(false);
@@ -881,8 +881,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fillHolesAlgo2D = null;
 
                 // Smooth red with a morphological opening followed by a closing
-                progressBar.setMessage("Opening red segmented image");
-                progressBar.updateValueImmed(40);
+                fireProgressStateChanged("Opening red segmented image");
+                fireProgressStateChanged(40);
                 kernel = AlgorithmMorphology2D.CONNECTED4;
                 circleDiameter = 1.0f;
                 method = AlgorithmMorphology2D.OPEN;
@@ -897,8 +897,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 openAlgo.finalize();
                 openAlgo = null;
 
-                progressBar.setMessage("Closing red segmented image");
-                progressBar.updateValueImmed(42);
+                fireProgressStateChanged("Closing red segmented image");
+                fireProgressStateChanged(42);
                 method = AlgorithmMorphology2D.CLOSE;
                 closeAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                       itersErosion, numPruningPixels, edgingType, wholeImage);
@@ -908,8 +908,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 closeAlgo = null;
 
                 // Put the red VOI IDs in redIDArray
-                progressBar.setMessage("IDing objects in red segmented image");
-                progressBar.updateValueImmed(44);
+                fireProgressStateChanged("IDing objects in red segmented image");
+                fireProgressStateChanged(44);
                 kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
                 circleDiameter = 0.0f;
                 method = AlgorithmMorphology2D.ID_OBJECTS;
@@ -1046,8 +1046,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             } // if (redNumber > 0)
 
             if (greenNumber > 0) {
-                progressBar.setMessage("Creating green image");
-                progressBar.updateValueImmed(46);
+                fireProgressStateChanged("Creating green image");
+                fireProgressStateChanged(46);
 
                 // grayImage is ModelStorageBase.UBYTE
                 grayImage.reallocate(ModelStorageBase.FLOAT);
@@ -1061,8 +1061,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     return;
                 }
 
-                progressBar.setMessage("Performing median filter on green");
-                progressBar.updateValueImmed(47);
+                fireProgressStateChanged("Performing median filter on green");
+                fireProgressStateChanged(47);
                 medianIters = 1;
                 kernelSize = 3;
                 kernelShape = AlgorithmMedian.SQUARE_KERNEL;
@@ -1074,8 +1074,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 algoMedian.finalize();
                 algoMedian = null;
 
-                progressBar.setMessage("Getting histogram info on green");
-                progressBar.updateValueImmed(48);
+                fireProgressStateChanged("Getting histogram info on green");
+                fireProgressStateChanged(48);
                 bins = 256;
                 algoHist = new AlgorithmHistogram(grayImage, bins);
                 algoHist.setProgressBarVisible(false);
@@ -1109,8 +1109,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
 
                 // Segment green into 3 values
-                progressBar.setMessage("Performing FuzzyCMeans Segmentation on green");
-                progressBar.updateValueImmed(49);
+                fireProgressStateChanged("Performing FuzzyCMeans Segmentation on green");
+                fireProgressStateChanged(49);
                 nClasses = 3;
                 nPyramid = 4;
                 oneJacobiIter = 1;
@@ -1151,8 +1151,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fcmAlgo = null;
 
                 // Now convert the green min and max to 0 and 1
-                progressBar.setMessage("Setting segmented green values to 0 and 1");
-                progressBar.updateValueImmed(50);
+                fireProgressStateChanged("Setting segmented green values to 0 and 1");
+                fireProgressStateChanged(50);
                 grayImage.calcMinMax();
                 max = (float) grayImage.getMax();
                 thresholds[0] = max;
@@ -1167,8 +1167,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholdAlgo = null;
 
                 // Remove all inappropriate holes in green VOIs
-                progressBar.setMessage("Removing holes from green VOIs");
-                progressBar.updateValueImmed(52);
+                fireProgressStateChanged("Removing holes from green VOIs");
+                fireProgressStateChanged(52);
                 fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0,
                                                             0, wholeImage);
                 fillHolesAlgo2D.setProgressBarVisible(false);
@@ -1177,8 +1177,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fillHolesAlgo2D = null;
 
                 // Smooth green with a morphological opening followed by a closing
-                progressBar.setMessage("Opening green segmented image");
-                progressBar.updateValueImmed(54);
+                fireProgressStateChanged("Opening green segmented image");
+                fireProgressStateChanged(54);
                 kernel = AlgorithmMorphology2D.CONNECTED4;
                 circleDiameter = 1.0f;
                 method = AlgorithmMorphology2D.OPEN;
@@ -1193,8 +1193,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 openAlgo.finalize();
                 openAlgo = null;
 
-                progressBar.setMessage("Closing green segmented image");
-                progressBar.updateValueImmed(56);
+                fireProgressStateChanged("Closing green segmented image");
+                fireProgressStateChanged(56);
                 method = AlgorithmMorphology2D.CLOSE;
                 closeAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                       itersErosion, numPruningPixels, edgingType, wholeImage);
@@ -1204,8 +1204,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 closeAlgo = null;
 
                 // Put the green VOI IDs in greenIDArray
-                progressBar.setMessage("IDing objects in green segmented image");
-                progressBar.updateValueImmed(58);
+                fireProgressStateChanged("IDing objects in green segmented image");
+                fireProgressStateChanged(58);
                 kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
                 circleDiameter = 0.0f;
                 method = AlgorithmMorphology2D.ID_OBJECTS;
@@ -1343,8 +1343,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                 // Sort the red objects within each nucleus.
                 // Create no more than redNumber red objects within each nucleus.
-                progressBar.setMessage("Sorting red objects by intensity count");
-                progressBar.updateValueImmed(60);
+                fireProgressStateChanged("Sorting red objects by intensity count");
+                fireProgressStateChanged(60);
                 redIntensityTotal = new float[numRedObjects];
                 redXCenter = new float[numRedObjects];
                 redYCenter = new float[numRedObjects];
@@ -1411,8 +1411,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                 // Sort the green objects within each nucleus.
                 // Create no more than greenNumber green objects within each nucleus.
-                progressBar.setMessage("Sorting green objects by intensity count");
-                progressBar.updateValueImmed(62);
+                fireProgressStateChanged("Sorting green objects by intensity count");
+                fireProgressStateChanged(62);
                 greenIntensityTotal = new float[numGreenObjects];
                 greenXCenter = new float[numGreenObjects];
                 greenYCenter = new float[numGreenObjects];
@@ -1531,8 +1531,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     return;
                 }
 
-                progressBar.setMessage("Extracting VOIs from red image");
-                progressBar.updateValueImmed(73);
+                fireProgressStateChanged("Extracting VOIs from red image");
+                fireProgressStateChanged(73);
                 algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
                 algoVOIExtraction.setProgressBarVisible(false);
                 algoVOIExtraction.setColorTable(colorTable);
@@ -1584,8 +1584,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     return;
                 }
 
-                progressBar.setMessage("Extracting VOIs from green image");
-                progressBar.updateValueImmed(74);
+                fireProgressStateChanged("Extracting VOIs from green image");
+                fireProgressStateChanged(74);
                 algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
                 algoVOIExtraction.setProgressBarVisible(false);
                 algoVOIExtraction.setColorTable(colorTable);
@@ -1620,8 +1620,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         voiCount = new int[nVOIs];
 
         for (i = 0; i < nVOIs; i++) {
-            progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-            progressBar.updateValueImmed(75 + (10 * (i + 1) / nVOIs));
+            fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+            fireProgressStateChanged(75 + (10 * (i + 1) / nVOIs));
             VOIs.VOIAt(i).setOnlyID((short) i);
             voiName = VOIs.VOIAt(i).getName();
 
@@ -1743,12 +1743,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         blueCountTotal = new float[numObjects];
 
         for (id = 1; id <= numObjects; id++) {
-            progressBar.setMessage("Processing object " + id + " of " + numObjects + " in blue segmented image");
+            fireProgressStateChanged("Processing object " + id + " of " + numObjects + " in blue segmented image");
 
             if (nVOIs > 0) {
-                progressBar.updateValueImmed(85 + (id * 10 / numObjects));
+                fireProgressStateChanged(85 + (id * 10 / numObjects));
             } else {
-                progressBar.updateValueImmed(25 + (id * 3 / numObjects));
+                fireProgressStateChanged(25 + (id * 3 / numObjects));
             }
 
             Arrays.fill(byteBuffer, (byte) 0);
@@ -2113,7 +2113,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -2365,14 +2365,14 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             nVOIs = 0;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Processing image ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Processing image ...");
+        
 
         try {
             sliceLength = xDim * yDim;
             totLength = sliceLength * zDim;
             buffer = new float[totLength];
-            progressBar.setMessage("Creating blue image");
+            fireProgressStateChanged("Creating blue image");
             srcImage.exportRGBData(3, 0, totLength, buffer); // locks and releases lock
         } catch (IOException error) {
             buffer = null;
@@ -2406,12 +2406,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         }
 
         // Segment into 2 values
-        progressBar.setMessage("Performing FuzzyCMeans Segmentation on blue");
+        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on blue");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(5);
+            fireProgressStateChanged(5);
         } else {
-            progressBar.updateValueImmed(2);
+            fireProgressStateChanged(2);
         }
 
         nClasses = 2;
@@ -2446,12 +2446,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         System.gc();
 
         // Now convert the min and max to 0 and 1
-        progressBar.setMessage("Setting segmented blue values to 0 and 1");
+        fireProgressStateChanged("Setting segmented blue values to 0 and 1");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(20);
+            fireProgressStateChanged(20);
         } else {
-            progressBar.updateValueImmed(6);
+            fireProgressStateChanged(6);
         }
 
         grayImage.calcMinMax();
@@ -2473,12 +2473,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         System.gc();
 
         // Do a slice by slice hole filling operation on the blue image
-        progressBar.setMessage("Slice by slice hole filling on blue segmented image");
+        fireProgressStateChanged("Slice by slice hole filling on blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(23);
+            fireProgressStateChanged(23);
         } else {
-            progressBar.updateValueImmed(7);
+            fireProgressStateChanged(7);
         }
 
         extents2D[0] = srcImage.getExtents()[0];
@@ -2550,12 +2550,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         // new Dimension(600, 300), srcImage.getUserInterface());
 
         // Smooth with a morphological opening followed by a closing
-        progressBar.setMessage("Opening blue segmented image");
+        fireProgressStateChanged("Opening blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(25);
+            fireProgressStateChanged(25);
         } else {
-            progressBar.updateValueImmed(8);
+            fireProgressStateChanged(8);
         }
 
         kernel = AlgorithmMorphology3D.CONNECTED6;
@@ -2575,12 +2575,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
         // new Dimension(600, 300), srcImage.getUserInterface());
 
-        progressBar.setMessage("Closing blue segmented image");
+        fireProgressStateChanged("Closing blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(30);
+            fireProgressStateChanged(30);
         } else {
-            progressBar.updateValueImmed(10);
+            fireProgressStateChanged(10);
         }
 
         method = AlgorithmMorphology3D.CLOSE;
@@ -2603,12 +2603,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Eroding blue segmented image");
+        fireProgressStateChanged("Eroding blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(35);
+            fireProgressStateChanged(35);
         } else {
-            progressBar.updateValueImmed(12);
+            fireProgressStateChanged(12);
         }
 
         kernel = AlgorithmMorphology3D.CONNECTED6;
@@ -2625,12 +2625,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
         // new Dimension(600, 300), srcImage.getUserInterface());
 
-        progressBar.setMessage("IDing objects in blue segmented image");
+        fireProgressStateChanged("IDing objects in blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(45);
+            fireProgressStateChanged(45);
         } else {
-            progressBar.updateValueImmed(15);
+            fireProgressStateChanged(15);
         }
 
         kernel = AlgorithmMorphology3D.SIZED_SPHERE;
@@ -2653,12 +2653,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         // new Dimension(600, 300), srcImage.getUserInterface());
         numObjects = (int) grayImage.getMax();
 
-        progressBar.setMessage("Dilating IDed objects in blue segmented image");
+        fireProgressStateChanged("Dilating IDed objects in blue segmented image");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(55);
+            fireProgressStateChanged(55);
         } else {
-            progressBar.updateValueImmed(18);
+            fireProgressStateChanged(18);
         }
 
         kernel = AlgorithmMorphology3D.CONNECTED6;
@@ -2687,12 +2687,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         System.out.println("Number of Objects = " + numObjects);
 
-        progressBar.setMessage("Zeroing overgrowth of dilated objects");
+        fireProgressStateChanged("Zeroing overgrowth of dilated objects");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(65);
+            fireProgressStateChanged(65);
         } else {
-            progressBar.updateValueImmed(22);
+            fireProgressStateChanged(22);
         }
 
         // byteBuffer contains the smoothed blue objects before erosion
@@ -2712,12 +2712,12 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
          * srcImage.getUserInterface());*/
 
         edgeObjects = numObjects;
-        progressBar.setMessage("Removing blue objects touching edges");
+        fireProgressStateChanged("Removing blue objects touching edges");
 
         if (nVOIs > 0) {
-            progressBar.updateValueImmed(70);
+            fireProgressStateChanged(70);
         } else {
-            progressBar.updateValueImmed(23);
+            fireProgressStateChanged(23);
         }
 
         for (id = 1; id <= numObjects; id++) {
@@ -2759,7 +2759,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         if (numObjects == 0) {
             MipavUtil.displayError(edgeObjects + " blue objects touched edges");
             MipavUtil.displayError("No blue objects that do not touch edges");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -2789,11 +2789,11 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         if (nVOIs == 0) {
 
             if (redNumber > 0) {
-                progressBar.setMessage("Creating red image");
+                fireProgressStateChanged("Creating red image");
 
                 // grayImage is ModelStorageBase.UBYTE
                 grayImage.reallocate(ModelStorageBase.FLOAT);
-                progressBar.updateValueImmed(30);
+                fireProgressStateChanged(30);
 
                 try {
                     grayImage.importData(0, buffer, true);
@@ -2804,8 +2804,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     return;
                 }
 
-                progressBar.setMessage("Performing median filter on red");
-                progressBar.updateValueImmed(31);
+                fireProgressStateChanged("Performing median filter on red");
+                fireProgressStateChanged(31);
                 medianIters = 1;
                 kernelSize = 3;
                 kernelShape = AlgorithmMedian.CUBE_KERNEL;
@@ -2822,8 +2822,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
                 // new Dimension(600, 300), srcImage.getUserInterface());
 
-                progressBar.setMessage("Getting histogram info on red");
-                progressBar.updateValueImmed(32);
+                fireProgressStateChanged("Getting histogram info on red");
+                fireProgressStateChanged(32);
                 bins = 256;
                 algoHist = new AlgorithmHistogram(grayImage, bins);
                 algoHist.setProgressBarVisible(false);
@@ -2856,8 +2856,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 cropBackground = true;
 
                 // Segment red into 3 values
-                progressBar.setMessage("Performing FuzzyCMeans Segmentation on red");
-                progressBar.updateValueImmed(33);
+                fireProgressStateChanged("Performing FuzzyCMeans Segmentation on red");
+                fireProgressStateChanged(33);
                 nClasses = 3;
                 nPyramid = 4;
                 oneJacobiIter = 1;
@@ -2902,8 +2902,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 // new Dimension(600, 300), srcImage.getUserInterface());
 
                 // Now convert the red min and max to 0 and 1
-                progressBar.setMessage("Setting segmented red values to 0 and 1");
-                progressBar.updateValueImmed(35);
+                fireProgressStateChanged("Setting segmented red values to 0 and 1");
+                fireProgressStateChanged(35);
                 grayImage.calcMinMax();
                 max = (float) grayImage.getMax();
                 thresholds[0] = max;
@@ -2918,8 +2918,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholdAlgo = null;
 
                 // Remove all inappropriate holes in red VOIs
-                progressBar.setMessage("Removing holes from red VOIs");
-                progressBar.updateValueImmed(37);
+                fireProgressStateChanged("Removing holes from red VOIs");
+                fireProgressStateChanged(37);
                 fillHolesAlgo3D = new AlgorithmMorphology3D(grayImage, 0, 0, AlgorithmMorphology3D.FILL_HOLES, 0, 0, 0,
                                                             0, wholeImage);
                 fillHolesAlgo3D.setProgressBarVisible(false);
@@ -2928,8 +2928,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fillHolesAlgo3D = null;
 
                 // Smooth red with a morphological opening followed by a closing
-                progressBar.setMessage("Opening red segmented image");
-                progressBar.updateValueImmed(40);
+                fireProgressStateChanged("Opening red segmented image");
+                fireProgressStateChanged(40);
                 kernel = AlgorithmMorphology3D.CONNECTED6;
                 sphereDiameter = 1.0f;
                 method = AlgorithmMorphology3D.OPEN;
@@ -2944,8 +2944,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 openAlgo.finalize();
                 openAlgo = null;
 
-                progressBar.setMessage("Closing red segmented image");
-                progressBar.updateValueImmed(42);
+                fireProgressStateChanged("Closing red segmented image");
+                fireProgressStateChanged(42);
                 method = AlgorithmMorphology3D.CLOSE;
                 closeAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                       itersErosion, numPruningPixels, edgingType, wholeImage);
@@ -2955,8 +2955,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 closeAlgo = null;
 
                 // Put the red VOI IDs in redIDArray
-                progressBar.setMessage("IDing objects in red segmented image");
-                progressBar.updateValueImmed(44);
+                fireProgressStateChanged("IDing objects in red segmented image");
+                fireProgressStateChanged(44);
                 kernel = AlgorithmMorphology3D.SIZED_SPHERE;
                 sphereDiameter = 0.0f;
                 method = AlgorithmMorphology3D.ID_OBJECTS;
@@ -3095,8 +3095,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             } // if (redNumber > 0)
 
             if (greenNumber > 0) {
-                progressBar.setMessage("Creating green image");
-                progressBar.updateValueImmed(46);
+                fireProgressStateChanged("Creating green image");
+                fireProgressStateChanged(46);
 
                 // grayImage is ModelStorageBase.UBYTE
                 grayImage.reallocate(ModelStorageBase.FLOAT);
@@ -3110,8 +3110,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     return;
                 }
 
-                progressBar.setMessage("Performing median filter on green");
-                progressBar.updateValueImmed(47);
+                fireProgressStateChanged("Performing median filter on green");
+                fireProgressStateChanged(47);
                 medianIters = 1;
                 kernelSize = 3;
                 kernelShape = AlgorithmMedian.CUBE_KERNEL;
@@ -3126,8 +3126,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 algoMedian = null;
                 System.gc();
 
-                progressBar.setMessage("Getting histogram info on green");
-                progressBar.updateValueImmed(48);
+                fireProgressStateChanged("Getting histogram info on green");
+                fireProgressStateChanged(48);
                 bins = 256;
                 algoHist = new AlgorithmHistogram(grayImage, bins);
                 algoHist.setProgressBarVisible(false);
@@ -3160,8 +3160,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 cropBackground = true;
 
                 // Segment green into 3 values
-                progressBar.setMessage("Performing FuzzyCMeans Segmentation on green");
-                progressBar.updateValueImmed(49);
+                fireProgressStateChanged("Performing FuzzyCMeans Segmentation on green");
+                fireProgressStateChanged(49);
                 nClasses = 3;
                 nPyramid = 4;
                 oneJacobiIter = 1;
@@ -3206,8 +3206,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 // new Dimension(600, 300), srcImage.getUserInterface());
 
                 // Now convert the green min and max to 0 and 1
-                progressBar.setMessage("Setting segmented green values to 0 and 1");
-                progressBar.updateValueImmed(50);
+                fireProgressStateChanged("Setting segmented green values to 0 and 1");
+                fireProgressStateChanged(50);
                 grayImage.calcMinMax();
                 max = (float) grayImage.getMax();
                 thresholds[0] = max;
@@ -3223,8 +3223,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 System.gc();
 
                 // Remove all inappropriate holes in green VOIs
-                progressBar.setMessage("Removing holes from green VOIs");
-                progressBar.updateValueImmed(52);
+                fireProgressStateChanged("Removing holes from green VOIs");
+                fireProgressStateChanged(52);
                 fillHolesAlgo3D = new AlgorithmMorphology3D(grayImage, 0, 0, AlgorithmMorphology3D.FILL_HOLES, 0, 0, 0,
                                                             0, wholeImage);
                 fillHolesAlgo3D.setProgressBarVisible(false);
@@ -3234,8 +3234,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 System.gc();
 
                 // Smooth green with a morphological opening followed by a closing
-                progressBar.setMessage("Opening green segmented image");
-                progressBar.updateValueImmed(54);
+                fireProgressStateChanged("Opening green segmented image");
+                fireProgressStateChanged(54);
                 kernel = AlgorithmMorphology3D.CONNECTED6;
                 sphereDiameter = 1.0f;
                 method = AlgorithmMorphology3D.OPEN;
@@ -3250,8 +3250,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 openAlgo.finalize();
                 openAlgo = null;
 
-                progressBar.setMessage("Closing green segmented image");
-                progressBar.updateValueImmed(56);
+                fireProgressStateChanged("Closing green segmented image");
+                fireProgressStateChanged(56);
                 method = AlgorithmMorphology3D.CLOSE;
                 closeAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                       itersErosion, numPruningPixels, edgingType, wholeImage);
@@ -3262,8 +3262,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 System.gc();
 
                 // Put the green VOI IDs in greenIDArray
-                progressBar.setMessage("IDing objects in green segmented image");
-                progressBar.updateValueImmed(58);
+                fireProgressStateChanged("IDing objects in green segmented image");
+                fireProgressStateChanged(58);
                 kernel = AlgorithmMorphology3D.SIZED_SPHERE;
                 sphereDiameter = 0.0f;
                 method = AlgorithmMorphology3D.ID_OBJECTS;
@@ -3402,8 +3402,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                 // Sort the red objects within each nucleus.
                 // Create no more than redNumber red objects within each nucleus.
-                progressBar.setMessage("Sorting red objects by intensity count");
-                progressBar.updateValueImmed(60);
+                fireProgressStateChanged("Sorting red objects by intensity count");
+                fireProgressStateChanged(60);
                 redIntensityTotal = new float[numRedObjects];
                 redXCenter = new float[numRedObjects];
                 redYCenter = new float[numRedObjects];
@@ -3511,9 +3511,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 sortedGreenZCenter = new float[numObjects][greenNumber];
 
                 for (j = 1; j <= numGreenObjects; j++) {
-                    progressBar.setMessage("Sorting green object " + j + " of " + numGreenObjects +
+                    fireProgressStateChanged("Sorting green object " + j + " of " + numGreenObjects +
                                            " by intensity count");
-                    progressBar.updateValueImmed(62 + (10 * j / numGreenObjects));
+                    fireProgressStateChanged(62 + (10 * j / numGreenObjects));
 
                     for (x = 0, y = 0, z = 0, i = 0; i < totLength; i++) {
 
@@ -3656,8 +3656,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     return;
                 }
 
-                progressBar.setMessage("Extracting VOIs from red image");
-                progressBar.updateValueImmed(73);
+                fireProgressStateChanged("Extracting VOIs from red image");
+                fireProgressStateChanged(73);
                 algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
                 algoVOIExtraction.setProgressBarVisible(false);
                 algoVOIExtraction.setColorTable(colorTable);
@@ -3717,8 +3717,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     return;
                 }
 
-                progressBar.setMessage("Extracting VOIs from green image");
-                progressBar.updateValueImmed(74);
+                fireProgressStateChanged("Extracting VOIs from green image");
+                fireProgressStateChanged(74);
                 algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
                 algoVOIExtraction.setProgressBarVisible(false);
                 algoVOIExtraction.setColorTable(colorTable);
@@ -3759,8 +3759,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         voiCount = new int[nVOIs];
 
         for (i = 0; i < nVOIs; i++) {
-            progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-            progressBar.updateValueImmed(75 + (10 * (i + 1) / nVOIs));
+            fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+            fireProgressStateChanged(75 + (10 * (i + 1) / nVOIs));
             VOIs.VOIAt(i).setOnlyID((short) i);
             voiName = VOIs.VOIAt(i).getName();
 
@@ -3887,7 +3887,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         } // for (i = 0; i < nVOIs; i++)
 
         // Ellipse fitting blue objects with first and second moments
-        progressBar.setMessage("Ellipse fitting with moments");
+        fireProgressStateChanged("Ellipse fitting with moments");
         volume = new int[numObjects];
         cx = new double[numObjects];
         cy = new double[numObjects];
@@ -4037,8 +4037,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         // nucleusVoxel = new boolean[numObjects][totLength];
         for (id = 1; id <= numObjects; id++) {
-            progressBar.setMessage("Processing object " + id + " of " + numObjects + " in blue segmented image");
-            progressBar.updateValue(85 + (id * 10 / numObjects), runningInSeparateThread);
+            fireProgressStateChanged("Processing object " + id + " of " + numObjects + " in blue segmented image");
+            fireProgressStateChanged(85 + (id * 10 / numObjects));
 
             Arrays.fill(byteBuffer, (byte) 0);
             xCenter[id - 1] = 0.0f;
@@ -4518,7 +4518,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

@@ -128,7 +128,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         }
 
         int mod = length / 100; // mod is 1 percent of length
-        initProgressBar();
+        
 
         // Fat:  -190 to -30
         // Low density muscle:  0 to 30
@@ -147,7 +147,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         for (int i = 0; (i < length) && !threadStopped; i++) {
 
             if (isProgressBarVisible() && (((i) % mod) == 0)) {
-                progressBar.updateValue(Math.round((float) (i) / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (i) / (length - 1) * 100));
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -214,7 +214,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
             totLength = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[totLength];
             srcImage.exportData(0, totLength, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Processing image ...", 0, 100);
+            fireProgressStateChanged("Processing image ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm CT_MD: source image locked", true);
@@ -230,7 +230,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
         int totFat = 0;
         int totLdMuscle = 0;
         int totHdMuscle = 0;
-        initProgressBar();
+        
 
         for (int i = 0; (i < srcImage.getExtents()[2]) && !threadStopped; i++) {
             int fat = 0;
@@ -238,7 +238,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
             int hdMuscle = 0;
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (i) / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (i) / (srcImage.getExtents()[2] - 1) * 100));
             }
 
             for (int j = 0; (j < imgLength) && !threadStopped; j++) {
@@ -308,7 +308,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
                                                               ViewJFrameMessage.DATA);
 
         destImage.calcMinMax();
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

@@ -194,8 +194,8 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         double tau;
         ViewVOIVector VOIs = null;
         int nVOIs;
-        buildProgressBar(srcImage.getImageName(), "Measuring SUVs ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Measuring SUVs ...");
+        
         fileInfo = srcImage.getFileInfo();
 
         if (fileInfo[0] instanceof FileInfoDicom) {
@@ -410,7 +410,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         } catch (OutOfMemoryError err) {
             MipavUtil.displayError("Cannot allocate buffer array");
             buffer = null;
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -420,7 +420,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
             srcImage.exportData(0, sliceSize, buffer);
         } catch (IOException e) {
             MipavUtil.displayError("Error on srcImage.exportData(0,sliceSize,buffer)");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -436,8 +436,8 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
                 voiNumber = 0;
                 minimum = Float.MAX_VALUE;
                 maximum = -Float.MAX_VALUE;
-                progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-                progressBar.updateValueImmed(100 * (i + 1) / nVOIs);
+                fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+                fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
                 mask = VOIs.VOIAt(i).createBinaryMask(xDim, yDim, 0);
@@ -527,7 +527,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
 
         srcImage.getUserInterface().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory + File.separator +
                                                                                     voiName);
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -590,8 +590,8 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         int nContours;
         BitSet mask;
         ViewUserInterface UI = srcImage.getUserInterface();
-        buildProgressBar(srcImage.getImageName(), "Measuring SUVs ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Measuring SUVs ...");
+        
         fileInfo = srcImage.getFileInfo();
 
         if (fileInfo[0] instanceof FileInfoDicom) {
@@ -806,7 +806,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
         } catch (OutOfMemoryError err) {
             MipavUtil.displayError("Cannot allocate buffer array");
             buffer = null;
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -816,7 +816,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
             srcImage.exportData(0, volSize, buffer);
         } catch (IOException e) {
             MipavUtil.displayError("Error on srcImage.exportData(0,volSize,buffer)");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -832,8 +832,8 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
                 totalMinimum = Float.MAX_VALUE;
                 totalMaximum = -Float.MAX_VALUE;
                 totalSum = 0.0f;
-                progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-                progressBar.updateValueImmed(100 * (i + 1) / nVOIs);
+                fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+                fireProgressStateChanged(100 * (i + 1) / nVOIs);
                 UI.setDataText("VOI ID = " + VOIs.VOIAt(i).getID() + "\n");
                 dataString += "VOI ID = " + VOIs.VOIAt(i).getID() + "\n";
                 contours = VOIs.VOIAt(i).getCurves();
@@ -1001,7 +1001,7 @@ public class PlugInAlgorithmSUV_PET extends AlgorithmBase {
 
         srcImage.getUserInterface().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory + File.separator +
                                                                                     voiName);
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

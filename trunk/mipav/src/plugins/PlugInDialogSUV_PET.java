@@ -226,8 +226,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
             if (suvAlgo.isCompleted() == true) {
 
                 if (UI.isScriptRecording()) {
-                    UI.getScriptDialog().append("SUV_PET " + UI.getScriptDialog().getVar(image.getImageName()) + " " +
-                                                "\n");
+       //             UI.getScriptDialog().append("SUV_PET " + UI.getScriptDialog().getVar(image.getImageName()) + " " +
+       //                                         "\n");
                 }
             }
 

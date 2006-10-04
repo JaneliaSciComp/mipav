@@ -117,7 +117,7 @@ public class PlugInAlgorithmNCI_LiepinshSeg extends AlgorithmBase {
             lengthOut = xDim * yDim;
             buffer = new float[lengthIn];
             bufferDest = new float[srcImage.getSliceSize()];
-            buildProgressBar(srcImage.getImageName(), "Processing image ...", 0, 100);
+            fireProgressStateChanged("Processing image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             bufferDest = null;
@@ -128,7 +128,7 @@ public class PlugInAlgorithmNCI_LiepinshSeg extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = lengthOut / 20;
 
@@ -178,8 +178,7 @@ public class PlugInAlgorithmNCI_LiepinshSeg extends AlgorithmBase {
                             maskCnt++;
 
                             if (((id % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (i + offsetIn) / (totalLength - 1) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (i + offsetIn) / (totalLength - 1) * 100));
                             }
 
                             if ((buffer[i + 3] > buffer[i + 2]) && (buffer[i + 3] > buffer[i + 1])) {
@@ -262,7 +261,7 @@ public class PlugInAlgorithmNCI_LiepinshSeg extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm NCI_Liepinsh: Output Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -279,7 +278,7 @@ public class PlugInAlgorithmNCI_LiepinshSeg extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

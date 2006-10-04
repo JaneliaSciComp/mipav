@@ -221,28 +221,28 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         }
 
         int mod = length / 100; // mod is 1 percent of length
-        buildProgressBar(srcImage.getImageName(), "Processing image ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Processing image ...");
+        
 
-        progressBar.setMessage("Creating blue image");
+        fireProgressStateChanged("Creating blue image");
         blueImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_blue",
                                    srcImage.getUserInterface());
         fileInfo = blueImage.getFileInfo()[0];
         fileInfo.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
         blueImage.setFileInfo(fileInfo, 0);
-        progressBar.updateValueImmed(5);
+        fireProgressStateChanged(5);
 
-        progressBar.setMessage("Creating green image");
+        fireProgressStateChanged("Creating green image");
         greenImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_green",
                                     srcImage.getUserInterface());
         fileInfoG = greenImage.getFileInfo()[0];
         fileInfoG.setResolutions(srcImage.getFileInfo()[0].getResolutions());
         fileInfoG.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
         greenImage.setFileInfo(fileInfoG, 0);
-        progressBar.updateValueImmed(10);
+        fireProgressStateChanged(10);
 
-        progressBar.setMessage("Creating red image");
+        fireProgressStateChanged("Creating red image");
         redImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_red",
                                   srcImage.getUserInterface());
         fileInfoR = redImage.getFileInfo()[0];
@@ -282,8 +282,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         bufferR = null;
 
         // Segment into 2 values
-        progressBar.setMessage("Performing FuzzyCMeans Segmentation on blue");
-        progressBar.updateValueImmed(15);
+        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on blue");
+        fireProgressStateChanged(15);
         blueSegImage = new ModelImage[1];
         blueSegImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(),
                                          blueImage.getImageName() + "_seg", srcImage.getUserInterface());
@@ -324,8 +324,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
 
         // Segment Green into 2 values
-        progressBar.setMessage("Performing FuzzyCMeans Segmentation on green");
-        progressBar.updateValueImmed(20);
+        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on green");
+        fireProgressStateChanged(20);
         greenSegImage = new ModelImage[1];
         greenSegImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(),
                                           greenImage.getImageName() + "_seg", srcImage.getUserInterface());
@@ -365,8 +365,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         greenImage = null;
 
         // Segment Red into 2 values
-        progressBar.setMessage("Performing FuzzyCMeans Segmentation on red");
-        progressBar.updateValueImmed(25);
+        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on red");
+        fireProgressStateChanged(25);
         redSegImage = new ModelImage[1];
         redSegImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(), redImage.getImageName() + "_seg",
                                         srcImage.getUserInterface());
@@ -417,8 +417,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
          */
 
         // extract the VOI from the segmented green image
-        progressBar.setMessage("Extracting green-labelled FISH signals");
-        progressBar.updateValueImmed(30);
+        fireProgressStateChanged("Extracting green-labelled FISH signals");
+        fireProgressStateChanged(30);
         algoVOIExtraction = new AlgorithmVOIExtraction(greenSegImage[0]);
         algoVOIExtraction.setProgressBarVisible(false);
         algoVOIExtraction.run();
@@ -426,8 +426,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         algoVOIExtraction = null;
 
         // extract the VOI from the segmented red image
-        progressBar.setMessage("Extracting red-labelled FISH signals");
-        progressBar.updateValueImmed(35);
+        fireProgressStateChanged("Extracting red-labelled FISH signals");
+        fireProgressStateChanged(35);
 
         algoVOIExtraction = new AlgorithmVOIExtraction(redSegImage[0]);
         algoVOIExtraction.setProgressBarVisible(false);
@@ -539,8 +539,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         srcImage.ungroupVOIs();
 
         // Now convert the min and max to 0 and 1
-        progressBar.setMessage("Setting segmented blue values to 0 and 1");
-        progressBar.updateValueImmed(40);
+        fireProgressStateChanged("Setting segmented blue values to 0 and 1");
+        fireProgressStateChanged(40);
         blueSegImage[0].calcMinMax();
         max = (float) blueSegImage[0].getMax();
         thresholds = new float[2];
@@ -556,8 +556,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         thresholdAlgo = null;
 
         // Smooth with a morphological opening followed by a closing
-        progressBar.setMessage("Opening blue segmented image");
-        progressBar.updateValueImmed(45);
+        fireProgressStateChanged("Opening blue segmented image");
+        fireProgressStateChanged(45);
         kernel = AlgorithmMorphology2D.CONNECTED4;
         circleDiameter = 1.0f;
         method = AlgorithmMorphology2D.OPEN;
@@ -572,8 +572,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         openAlgo.finalize();
         openAlgo = null;
 
-        progressBar.setMessage("Closing blue segmented image");
-        progressBar.updateValueImmed(50);
+        fireProgressStateChanged("Closing blue segmented image");
+        fireProgressStateChanged(50);
         method = AlgorithmMorphology2D.CLOSE;
         closeAlgo = new AlgorithmMorphology2D(blueSegImage[0], kernel, circleDiameter, method, itersDilation,
                                               itersErosion, numPruningPixels, edgingType, wholeImage);
@@ -584,8 +584,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
         // Remove all inappropriate holes in cells
         // If not 4 connected to a edge black pixel, then convert to white
-        progressBar.setMessage("Removing holes from blue image cells");
-        progressBar.updateValueImmed(60);
+        fireProgressStateChanged("Removing holes from blue image cells");
+        fireProgressStateChanged(60);
         byteBuffer = new byte[length];
 
         try {
@@ -662,8 +662,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
         // Put the object IDs in IDArray and the corresponding boundaries
         // in boundaryArray
-        progressBar.setMessage("IDing objects in blue segmented image");
-        progressBar.updateValueImmed(70);
+        fireProgressStateChanged("IDing objects in blue segmented image");
+        fireProgressStateChanged(70);
         kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
         circleDiameter = 0.0f;
         method = AlgorithmMorphology2D.ID_OBJECTS;
@@ -706,8 +706,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         itersDilation = 1;
 
         for (id = 1; id <= numObjects; id++) {
-            progressBar.setMessage("Processing object " + id + " of " + numObjects + " in blue segmented image");
-            progressBar.updateValueImmed(75 + (id * 10 / numObjects));
+            fireProgressStateChanged("Processing object " + id + " of " + numObjects + " in blue segmented image");
+            fireProgressStateChanged(75 + (id * 10 / numObjects));
 
             for (j = 0; j < length; j++) {
                 byteBuffer[j] = 0;
@@ -819,8 +819,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         UI.setDataText("\n--------------------------------------------------------\n");
 
         for (i = 0; i < nVOIs; i++) {
-            progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-            progressBar.updateValueImmed(80 + (10 * (i + 1) / nVOIs));
+            fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+            fireProgressStateChanged(80 + (10 * (i + 1) / nVOIs));
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 shortMask = srcImage.generateVOIMask(shortMask, i);
@@ -1004,7 +1004,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
 
         // find the properties of the segmented VOI
-        algoVOIProps = new AlgorithmVOIProps(blueSegImage[0], null, false, 0);
+        algoVOIProps = new AlgorithmVOIProps(blueSegImage[0], AlgorithmVOIProps.PROCESS_PER_VOI, 0);
         algoVOIProps.setProgressBarVisible(false);
         algoVOIProps.run();
         UI.setDataText("\n--------------------------------------------------------");
@@ -1086,10 +1086,10 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Job Completed");
-        progressBar.updateValueImmed(100);
+        fireProgressStateChanged("Job Completed");
+        fireProgressStateChanged(100);
 
-        progressBar.dispose();
+        
         setCompleted(true);
         /*
          * // trying the VOI from AlgorithmMorphology2D short ts = 99; String tSt = new String("Try_VOI");
@@ -1199,14 +1199,14 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             unitsString = FileInfoBase.getUnitsOfMeasureStr(xUnits);
         }
 
-        buildProgressBar(srcImage.getImageName(), "Processing image ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Processing image ...");
+        
 
         try {
             sliceLength = xDim * yDim;
             totLength = sliceLength * zDim;
             buffer = new float[totLength];
-            progressBar.setMessage("Creating blue image");
+            fireProgressStateChanged("Creating blue image");
             srcImage.exportRGBData(3, 0, totLength, buffer); // locks and releases lock
         } catch (IOException error) {
             buffer = null;
@@ -1242,8 +1242,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         buffer = null;
 
         // Segment into 2 values
-        progressBar.setMessage("Performing FuzzyCMeans Segmentation on blue");
-        progressBar.updateValueImmed(5);
+        fireProgressStateChanged("Performing FuzzyCMeans Segmentation on blue");
+        fireProgressStateChanged(5);
         blueSegImage = new ModelImage[1];
         blueSegImage[0] = new ModelImage(ModelStorageBase.UBYTE, srcImage.getExtents(),
                                          blueImage.getImageName() + "_seg", srcImage.getUserInterface());
@@ -1286,8 +1286,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         blueImage = null;
 
         // Now convert the min and max to 0 and 1
-        progressBar.setMessage("Setting segmented blue values to 0 and 1");
-        progressBar.updateValueImmed(30);
+        fireProgressStateChanged("Setting segmented blue values to 0 and 1");
+        fireProgressStateChanged(30);
         blueSegImage[0].calcMinMax();
         max = (float) blueSegImage[0].getMax();
         thresholds = new float[2];
@@ -1307,8 +1307,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         thresholdAlgo = null;
 
         // Smooth with a morphological opening followed by a closing
-        progressBar.setMessage("Opening blue segmented image");
-        progressBar.updateValueImmed(40);
+        fireProgressStateChanged("Opening blue segmented image");
+        fireProgressStateChanged(40);
         kernel = AlgorithmMorphology3D.CONNECTED6;
         sphereDiameter = 1.0f;
         method = AlgorithmMorphology3D.OPEN;
@@ -1327,8 +1327,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         // new Dimension(600, 300), srcImage.getUserInterface());
 
 
-        progressBar.setMessage("Closing blue segmented image");
-        progressBar.updateValueImmed(50);
+        fireProgressStateChanged("Closing blue segmented image");
+        fireProgressStateChanged(50);
         method = AlgorithmMorphology3D.CLOSE;
         closeAlgo = new AlgorithmMorphology3D(blueSegImage[0], kernel, sphereDiameter, method, itersDilation,
                                               itersErosion, numPruningPixels, edgingType, wholeImage);
@@ -1342,8 +1342,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
         // Remove all inappropriate holes in cells
         // If not 6 connected to a edge black pixel, then convert to white
-        progressBar.setMessage("Removing holes from blue image cells");
-        progressBar.updateValueImmed(60);
+        fireProgressStateChanged("Removing holes from blue image cells");
+        fireProgressStateChanged(60);
         byteBuffer = new byte[totLength];
 
         try {
@@ -1435,8 +1435,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         // ViewJFrameImage testFrame = new ViewJFrameImage(blueSegImage[0], null,
         // new Dimension(600, 300), srcImage.getUserInterface());
 
-        progressBar.setMessage("IDing objects in blue segmented image");
-        progressBar.updateValueImmed(70);
+        fireProgressStateChanged("IDing objects in blue segmented image");
+        fireProgressStateChanged(70);
         kernel = AlgorithmMorphology3D.SIZED_SPHERE;
         sphereDiameter = 0.0f;
         method = AlgorithmMorphology3D.ID_OBJECTS;
@@ -1487,8 +1487,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         itersDilation = 1;
 
         for (id = 1; id <= numObjects; id++) {
-            progressBar.setMessage("Processing object " + id + " of " + numObjects + " in blue segmented image");
-            progressBar.updateValue(75 + (id * 10 / numObjects), runningInSeparateThread);
+            fireProgressStateChanged("Processing object " + id + " of " + numObjects + " in blue segmented image");
+            fireProgressStateChanged(75 + (id * 10 / numObjects));
 
             for (j = 0; j < totLength; j++) {
                 byteBuffer[j] = 0;
@@ -1607,8 +1607,8 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         idCount = new int[numObjects];
 
         for (i = 0; i < nVOIs; i++) {
-            progressBar.setMessage("Processing VOI " + (i + 1) + " of " + nVOIs);
-            progressBar.updateValueImmed(85 + (10 * (i + 1) / nVOIs));
+            fireProgressStateChanged("Processing VOI " + (i + 1) + " of " + nVOIs);
+            fireProgressStateChanged(85 + (10 * (i + 1) / nVOIs));
 
             if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
                 shortMask = srcImage.generateVOIMask(shortMask, i);
@@ -1768,7 +1768,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

@@ -323,7 +323,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
     public ModelImage extractBone(ModelImage boneMarrow, ModelImage inputThigh) {
         float mrBoneThreshold = 0;
         int cnt = 0;
-        progressBar.setMessage("Extracting bone");
+        fireProgressStateChanged("Extracting bone");
 
         ModelImage bone = new ModelImage(boneMarrow.getType(), boneMarrow.getExtents(), "boneImg", null);
 
@@ -467,7 +467,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
     public void finalize() {
         disposeLocal();
         super.finalize();
-        progressBar.dispose();
+        
     }
 
     /**
@@ -545,7 +545,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      * @return  --output Hard Fuzzy segmentation of srcImage into nClasses classes.
      */
     public ModelImage HardFuzzy(ModelImage srcImage, int nClasses) {
-        progressBar.setMessage("Calculating " + nClasses + " class Hard Fuzzy Segmentation.");
+        fireProgressStateChanged("Calculating " + nClasses + " class Hard Fuzzy Segmentation.");
 
         float[] centroid_array = new float[nClasses];
         getCentroid(centroid_array, srcImage, nClasses);
@@ -615,7 +615,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      * @param  srcImage  --source image with intensity inhomogeneities between slices
      */
     public void ISN(ModelImage srcImage) {
-        progressBar.setMessage("Executing ISN");
+        fireProgressStateChanged("Executing ISN");
 
         PlugInAlgorithmISN isnAlgo = null;
         isnAlgo = new PlugInAlgorithmISN(srcImage, srcImage);
@@ -737,7 +737,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      * @return  --outputs binary mask with 1 where VOI is.
      */
     public ModelImage makeVOI(ModelImage destImage1) {
-        progressBar.setMessage("Converting VOI to Mask");
+        fireProgressStateChanged("Converting VOI to Mask");
 
         return destImage1.generateBinaryImage(false, false);
     }
@@ -751,7 +751,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      * @param  bundleImage  --image with labeled background, interstitial fat, subcutaneous fat, muscle
      */
     public void mergeImages(ModelImage mergedImage, ModelImage BoneImage, ModelImage bundleImage) {
-        progressBar.setMessage("Merging Processed Thigh Images");
+        fireProgressStateChanged("Merging Processed Thigh Images");
         convert(bundleImage, BoneImage, bundleImage, BONE, BONE);
         convert(mergedImage, BoneImage, bundleImage, BONE_MARROW, BONE_MARROW);
 
@@ -767,7 +767,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      * @return  DOCUMENT ME!
      */
     public ModelImage N3(ModelImage srcImage1) {
-        progressBar.setMessage("Executing N3 on image");
+        fireProgressStateChanged("Executing N3 on image");
 
         ModelImage fieldImage = new ModelImage(srcImage1.getType(), srcImage1.getExtents(), "fieldImage",
                                                srcImage1.getUserInterface());
@@ -821,11 +821,11 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      * @param  thighInputImage  DOCUMENT ME!
      */
     public void processBoneAndMarrow(ModelImage destImage, ModelImage CMeansSeg, ModelImage thighInputImage) {
-        progressBar.setMessage("Processing Bone and Marrow");
+        fireProgressStateChanged("Processing Bone and Marrow");
 
         // PFH         ShowImage(CMeansSeg, "Segmented Image");
 
-        progressBar.setMessage("Locating Bone Marrow");
+        fireProgressStateChanged("Locating Bone Marrow");
 
         ModelImage boneMarrow = extractedBoneMarrow(CMeansSeg);
         // boneMarrow is a binary image containing only the bone marrow
@@ -865,7 +865,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         // PFH          ShowImage(Hard4Classes, "hard segmentation");
         // ShowImage(obMask,"obMask");
         //          ShowImage(voiMask,"voiMask");
-        progressBar.setMessage("Processing bundle fat");
+        fireProgressStateChanged("Processing bundle fat");
 
         ModelImage fatImage = (ModelImage) Hard4Classes.clone();
 
@@ -908,8 +908,8 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        buildProgressBar("OAI Thigh Seg. 6/29/06", "Processing images...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("OAI Thigh Seg. 6/29/06", "Processing images...");
+        
 
         xDim = 1;
         yDim = 1;
@@ -958,7 +958,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             // voiMask: binary image where 1's are inside the VOI otherwise values are 0's used in processHardFat(),
             // should probably be made later!! PFH            ShowImage(voiMask, "voi  mask");
 
-            progressBar.updateValue((50 * (aa - 1)) + 4, runningInSeparateThread);
+            fireProgressStateChanged((50 * (aa - 1)) + 4);
 
 
             // STEP 2: ISN and N3 inside VOI
@@ -966,7 +966,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             // processedImage is right/left thigh image after ISN
             // PFH            ShowImage(processedImage, "ISN");
 
-            progressBar.updateValue((50 * (aa - 1)) + 9, runningInSeparateThread);
+            fireProgressStateChanged((50 * (aa - 1)) + 9);
 
             // should take this out since we decided to segment only N3 processed images!!
             // remove the check box from the dialog (PlugInDialogPipeline) also
@@ -979,7 +979,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                 // ViewJFrameImage dif = new ViewJFrameImage(destImage2);
             }
 
-            progressBar.updateValue((50 * (aa - 1)) + 30, runningInSeparateThread);
+            fireProgressStateChanged((50 * (aa - 1)) + 30);
 
 
             // STEP 3: FUZZY SEGMENT ENTIRE IMAGE
@@ -988,7 +988,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
             // HardSeg1 image contains 4 different label values  63 for background and bone  126 muscle  189 fat 1 (Bone
             // Marrow)  252 fat 2 (Bone Marrow) PFH            ShowImage(HardSeg1,"4 class hard fuzzy segmentation");
 
-            progressBar.updateValue((50 * (aa - 1)) + 18, runningInSeparateThread);
+            fireProgressStateChanged((50 * (aa - 1)) + 18);
 
 
             // STEP 4: ISOLATE BONE AND MARROW
@@ -1007,7 +1007,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                         //(and if bone continuous fill with bone marrow)
             //            ModelImage boneSeg = processBone(HardSeg1);
             // PFH            ShowImage(boneSeg, "isolated bone");
-                        progressBar.updateValue(50 * (aa - 1) + 27, runningInSeparateThread);
+                        fireProgressStateChanged(50 * (aa - 1) + 27);
 
                         ModelImage boneSeg = new ModelImage(HardSeg1.getType(), HardSeg1.getExtents(), "Bone Seg Image",
                                 HardSeg1.getUserInterface());
@@ -1015,7 +1015,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                         //(and if bone nonexistant, create thin artifical bone around bone marrow)
                         if(continuousBone == false){
                             processBoneAndMarrow(boneSeg, HardSeg1);                //ShowImage(destImage3a,"bone with bone marrow");
-                            progressBar.updateValue(50 * (aa - 1) + 36, runningInSeparateThread);
+                            fireProgressStateChanged(50 * (aa - 1) + 36);
                         }
                         processedImage.disposeLocal();
                         processedImage = null;
@@ -1023,7 +1023,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
             // STEP 6: PROCESS FAT
             ModelImage fatSeg = processHardFat(HardSeg1); // ShowImage(destImage3b, "bundle cleanedup fat image");
-            progressBar.updateValue((50 * (aa - 1)) + 46, runningInSeparateThread);
+            fireProgressStateChanged((50 * (aa - 1)) + 46);
             HardSeg1.disposeLocal();
             HardSeg1 = null;
             voiMask.disposeLocal();
@@ -1034,7 +1034,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
             // STEP 7: MERGING PROCESSED THIGH IMAGES
             mergeImages(fatSeg, boneSeg, fatSeg); // ShowImage(destImage3b, "after 'merge'");
-            progressBar.updateValue((50 * (aa - 1)) + 50, runningInSeparateThread);
+            fireProgressStateChanged((50 * (aa - 1)) + 50);
             boneSeg.disposeLocal();
             boneSeg = null;
 
@@ -1175,12 +1175,12 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                                             "BoneMarrow\t\t" + (boneMarrowIntensityTotal / boneMarrowCountTotal));
             }
 
-            progressBar.updateValue(50 * aa, runningInSeparateThread);
+            fireProgressStateChanged(50 * aa);
         }
 
         System.out.println("thigh cleanup done --destImage");
         setCompleted(true);
-        disposeProgressBar();
+        
 
     }
 

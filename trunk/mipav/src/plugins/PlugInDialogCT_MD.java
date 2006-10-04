@@ -219,11 +219,11 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
 
         if (ctSegAlgo.isCompleted() == true) {
 
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().append("Flow " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " + correctionVal + "\n");
-            }
+         //   if (userInterface.isScriptRecording()) {
+         //       userInterface.getScriptDialog().append("Flow " +
+         //                                              userInterface.getScriptDialog().getVar(image.getImageName()) +
+        //                                               " " + correctionVal + "\n");
+         //   }
         }
 
         dispose();

@@ -85,7 +85,7 @@ public class PlugInAlgorithmRemoveBlinks
             averages = new double[numSlices];
             sliceMax = new double[numSlices];
             removedSlices = new boolean[numSlices];
-            buildProgressBar(srcImage.getImageName(), "Locating blinks ...", 0, 100);
+            fireProgressStateChanged("Locating blinks ...");
         }
         catch (OutOfMemoryError e) {
             buffer = null;
@@ -95,7 +95,7 @@ public class PlugInAlgorithmRemoveBlinks
             return;
         }
 
-        initProgressBar();
+        
 
 
         double mod = 100.0 / numSlices;
@@ -114,7 +114,7 @@ public class PlugInAlgorithmRemoveBlinks
                     }
                 }
                 averages[i] /= length;
-                progressBar.updateValue((int)((i+1) * mod));
+                fireProgressStateChanged((int)((i+1) * mod));
             }
             catch (IOException ex) {
                 System.err.println(ex.toString());
@@ -194,7 +194,7 @@ public class PlugInAlgorithmRemoveBlinks
             }
         }
 
-        disposeProgressBar();
+        
 
         if (doRemove) {
             //determine the extents for the new movie
