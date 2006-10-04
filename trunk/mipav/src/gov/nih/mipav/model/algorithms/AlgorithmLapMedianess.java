@@ -273,9 +273,9 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             sBuffer = new byte[length * nImages];
 
             if (srcImage != null) {
-                buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Calculating the Laplacian ...");
             } else {
-                buildProgressBar("Medialness", "Calculating the Laplacian ...", 0, 100);
+                fireProgressStateChanged("Medialness", "Calculating the Laplacian ...");
             }
         } catch (OutOfMemoryError e) {
             buffer = null;
@@ -286,7 +286,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return null;
         }
 
-        initProgressBar();
+        
 
         try {
 
@@ -310,7 +310,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             makeKernels2D(sigs);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (s) / 8 * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (s) / 8 * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -325,7 +325,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             }
         }
 
-        disposeProgressBar();
+        
 
         return resultBuffer;
     }
@@ -346,7 +346,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Laplacian ...");
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -359,14 +359,14 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -397,7 +397,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         }
 
         setCompleted(true);
-        disposeProgressBar();
+        
     }
 
     /**
@@ -428,9 +428,9 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             sBuffer = new byte[length];
 
             if (srcImage != null) {
-                buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
+                fireProgressStateChanged(srcImage.getImageName(), "Calculating the Laplacian ...");
             } else {
-                buildProgressBar("Medialness", "Calculating the Laplacian ...", 0, 100);
+                fireProgressStateChanged("Medialness", "Calculating the Laplacian ...");
             }
         } catch (OutOfMemoryError e) {
             buffer = null;
@@ -441,7 +441,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return null;
         }
 
-        initProgressBar();
+        
 
         try {
 
@@ -466,7 +466,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             makeKernels3D(sigs);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (s) / 8 * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (s) / 8 * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -487,7 +487,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             }
         }
 
-        disposeProgressBar();
+        
 
         return resultBuffer;
     }
@@ -510,7 +510,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             totalLength = length * nImages;
             buffer = new float[length];
             resultBuffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Laplacian ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -519,14 +519,14 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         try {
             srcImage.exportData(0, length, buffer); // locks and releases lock
         } catch (IOException error) {
             displayError("Algorithm Gaussian Blur: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+            
             destImage.releaseLock();
 
             return;
@@ -540,7 +540,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             makeKernels2D(sigs);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) (s) / 8 * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) (s) / 8 * 100));
             }
 
             for (i = 0; (i < length) && !threadStopped; i++) {
@@ -566,7 +566,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -594,7 +594,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating the Laplacian ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating the Laplacian ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm Laplacian exportData: Image(s) locked", true);
@@ -607,7 +607,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -639,7 +639,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -683,7 +683,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

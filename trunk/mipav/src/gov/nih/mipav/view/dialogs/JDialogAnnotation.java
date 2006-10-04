@@ -102,7 +102,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         this.slice = slice;
         this.isRegistered = isRegistered;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init("Annotation");
 
 
@@ -262,8 +262,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 2;
         gbc.insets = new Insets(0, 5, 0, 5);
         gbc.gridwidth = 2;

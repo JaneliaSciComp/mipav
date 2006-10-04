@@ -530,8 +530,8 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                 doComplex = true;
             }
 
-            buildProgressBar("Image Calculator", "Calculating image ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged("Image Calculator", "Calculating image ...");
+            
         } catch (OutOfMemoryError e) {
             bufferA = null;
             bufferB = null;
@@ -909,8 +909,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                             }
                         } catch (NullPointerException npe) {
 
@@ -1009,7 +1008,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     if (OK == false) {
                                         displayError("Algorithm ImageCalculator: Illegal operator expression");
                                         setCompleted(false);
-                                        disposeProgressBar();
+                                        
                                         setThreadStopped(true);
 
                                         return;
@@ -1086,7 +1085,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     } catch (IOException error) {
                         displayError("Algorithm ImageCalculator: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
                         setThreadStopped(true);
 
                         return;
@@ -1107,7 +1106,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             srcImageA.calcMinMax();
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1156,7 +1155,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                 doComplex = true;
             }
 
-            buildProgressBar("Image Calculator", "Calculating image ...", 0, 100);
+            fireProgressStateChanged("Image Calculator", "Calculating image ...");
         } catch (OutOfMemoryError e) {
             bufferA = null;
             System.gc();
@@ -1448,7 +1447,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 
@@ -1521,8 +1520,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                             }
                         } catch (NullPointerException npe) {
 
@@ -1623,7 +1621,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                                     if (OK == false) {
                                         displayError("Algorithm ImageCalculator: Illegal operator expression");
                                         setCompleted(false);
-                                        disposeProgressBar();
+                                        
                                         setThreadStopped(true);
 
                                         return;
@@ -1703,7 +1701,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
                     } catch (IOException error) {
                         displayError("Algorithm ImageCalculator: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
                         setThreadStopped(true);
 
                         return;
@@ -1740,7 +1738,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
             destImage.calcMinMax();
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

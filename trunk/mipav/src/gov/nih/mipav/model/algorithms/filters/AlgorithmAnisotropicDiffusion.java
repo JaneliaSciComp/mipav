@@ -222,7 +222,6 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             resultBuffer = new float[length];
             finalBuffer = new float[totalLength];
             gmBuffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Diffusing image ...", 0, 100);
         } catch (OutOfMemoryError e) {
             imgBuffer = null;
             resultBuffer = null;
@@ -233,8 +232,9 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
 
+        fireProgressStateChanged(0, srcImage.getImageName(), "Diffusing image ...");
+        
         for (s = 0; s < nImages; s++) {
             start = s * length;
 
@@ -252,10 +252,9 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
             for (n = 0; (n < iterations) && !threadStopped; n++) {
 
-                if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) ((s * iterations) + n) / ((nImages * iterations) - 1) *
-                                                           100), runningInSeparateThread);
-                }
+                fireProgressStateChanged(((float) ((s * iterations) + n) / ((nImages * iterations) - 1)), 
+                        srcImage.getImageName(), "Diffusing image ...");
+                
 
                 // Normalize GM !!
                 for (i = 0, gmMax = 0, gmMin = Float.MAX_VALUE; i < length; i++) {
@@ -322,7 +321,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        fireProgressStateChanged(100, srcImage.getImageName(), "Diffusing image ...");
         setCompleted(true);
     }
 
@@ -348,7 +347,6 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             resultBuffer = new float[length];
             gmBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Diffusing image ...", 0, 100);
         } catch (IOException error) {
             imgBuffer = null;
             resultBuffer = null;
@@ -365,21 +363,22 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+       // initProgressBar();
 
+        fireProgressStateChanged(0, srcImage.getImageName(), "Diffusing image ...");
+        
         for (n = 0; (n < iterations) && !threadStopped; n++) {
 
             // Normalize GM !!
             for (i = 0, gmMax = 0, gmMin = Float.MAX_VALUE; i < length; i++) {
 
-                if (isProgressBarVisible()) {
                     int s = i / offset;
-
+                    
                     if ((i % offset) == 0) {
-                        progressBar.updateValue(Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
-                                                Math.round(100 * ((float) (n)) / iterations), runningInSeparateThread);
+                        fireProgressStateChanged((Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
+                                Math.round(100 * ((float) (n)) / iterations)), 
+                                srcImage.getImageName(), "Diffusing image ...");
                     }
-                }
 
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -404,16 +403,18 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if (isProgressBarVisible()) {
                     int s = i / offset;
 
                     if ((i % offset) == 0) {
-                        progressBar.updateValue(Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
-                                                Math.round(100 * ((float) (n)) / iterations) +
-                                                Math.round((float) (50.0) / (iterations)), runningInSeparateThread);
+                        
+                        fireProgressStateChanged((Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
+                                Math.round(100 * ((float) (n)) / iterations) +
+                                Math.round((float) (50.0) / (iterations))), 
+                                srcImage.getImageName(), "Diffusing image ...");
+                        
                     }
 
-                }
+               
 
                 if ((entireImage == true) || mask.get(i)) {
 
@@ -462,7 +463,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        fireProgressStateChanged(100, srcImage.getImageName(), "Diffusing image ...");
         setCompleted(true);
     }
 
@@ -489,7 +490,6 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             resultBuffer = new float[length * srcImage.getExtents()[2]];
             img3DBuffer = new float[length * srcImage.getExtents()[2]];
             srcImage.exportData(0, length * srcImage.getExtents()[2], img3DBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Diffusing image ...", 0, 100);
         } catch (IOException error) {
             imgBuffer = null;
             resultBuffer = null;
@@ -507,14 +507,14 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
             return;
         }
-
-        initProgressBar();
+        
+        fireProgressStateChanged(0, srcImage.getImageName(), "Diffusing image ...");
+        
 
         for (n = 0; (n < iterations) && !threadStopped; n++) {
 
-            if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) n / (iterations - 1) * 100), runningInSeparateThread);
-            }
+            fireProgressStateChanged(((float) n / (iterations - 1)), srcImage.getImageName(), "Diffusing image ...");
+            
 
             for (z = 0; z < srcImage.getExtents()[2]; z++) {
                 offset = z * length;
@@ -580,8 +580,8 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
             return;
         }
-
-        disposeProgressBar();
+        
+        fireProgressStateChanged(100, srcImage.getImageName(), "Diffusing image ...");
         setCompleted(true);
     }
 
@@ -594,7 +594,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
     private void calcStoreInDest2D(int nImages) {
 
         int i, n, s;
-        int length, totalLength;
+        int length;
         int start;
         float[] imgBuffer;
         float[] tempBuffer;
@@ -606,11 +606,9 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
         try {
             length = srcImage.getSliceSize();
-            totalLength = length * nImages;
             imgBuffer = new float[length];
             resultBuffer = new float[length];
             gmBuffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Diffusing image ...", 0, 100);
         } catch (OutOfMemoryError e) {
             imgBuffer = null;
             resultBuffer = null;
@@ -620,7 +618,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        fireProgressStateChanged(0, srcImage.getImageName(), "Diffusing image ...");
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -638,10 +636,9 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
             for (n = 0; (n < iterations) && !threadStopped; n++) {
 
-                if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) ((s * iterations) + n) / ((nImages * iterations) - 1) *
-                                                           100), runningInSeparateThread);
-                }
+                fireProgressStateChanged(((float) ((s * iterations) + n) / ((nImages * iterations) - 1)),
+                            srcImage.getImageName(), "Diffusing image ...");
+                    
                 // Normalize GM !!
 
                 for (i = 0, gmMax = 0, gmMin = Float.MAX_VALUE; i < length; i++) {
@@ -698,6 +695,8 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         tempBuffer = null;
         System.gc();
 
+        fireProgressStateChanged(100, srcImage.getImageName(), "Diffusing image ...");
+        
         if (threadStopped) {
             finalize();
 
@@ -705,7 +704,6 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -731,7 +729,6 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             resultBuffer = new float[length];
             gmBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Diffusing image ...", 0, 100);
         } catch (IOException error) {
             imgBuffer = null;
             resultBuffer = null;
@@ -748,21 +745,21 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        fireProgressStateChanged(0, srcImage.getImageName(), "Diffusing image ...");
 
         for (n = 0; (n < iterations) && !threadStopped; n++) {
 
             // Normalize GM !!
             for (i = 0, gmMax = 0, gmMin = Float.MAX_VALUE; i < length; i++) {
 
-                if (isProgressBarVisible()) {
                     int s = i / offset;
-
+                 
                     if ((i % offset) == 0) {
-                        progressBar.updateValue(Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
-                                                Math.round(100 * ((float) (n)) / iterations), runningInSeparateThread);
+                        fireProgressStateChanged((Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
+                                Math.round(100 * ((float) (n)) / iterations)), 
+                                srcImage.getImageName(), "Diffusing image ...");
                     }
-                }
+                
 
                 if ((entireImage == true) || mask.get(i)) {
                     ix = AlgorithmConvolver.convolve3DPt(i, srcImage.getExtents(), imgBuffer, kExtents, GxData);
@@ -781,15 +778,15 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if (isProgressBarVisible()) {
-                    int s = i / offset;
+                int s = i / offset;
 
-                    if ((i % offset) == 0) {
-                        progressBar.updateValue(Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
-                                                Math.round(100 * ((float) (n)) / iterations) +
-                                                Math.round((float) (50.0) / (iterations)), runningInSeparateThread);
-                    }
-
+                if ((i % offset) == 0) {
+                    fireProgressStateChanged((Math.round((float) (50.0 * s) / (iterations * srcImage.getExtents()[2])) +
+                            Math.round(100 * ((float) (n)) / iterations) +
+                            Math.round((float) (50.0) / (iterations))), 
+                            srcImage.getImageName(), "Diffusing image ...");
+                        
+                    
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -824,6 +821,7 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
         try {
             destImage.importData(0, imgBuffer, true);
         } catch (IOException error) {
+            setCompleted(false);
             imgBuffer = null;
             resultBuffer = null;
             gmBuffer = null;
@@ -832,7 +830,8 @@ public class AlgorithmAnisotropicDiffusion extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        fireProgressStateChanged(100, srcImage.getImageName(), "Diffusing image ...");
+        
         setCompleted(true);
     }
 

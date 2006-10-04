@@ -228,7 +228,7 @@ public class JDialogHistogramLUT extends JDialogBase implements AlgorithmInterfa
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
         imageVOIPanel.add(wholeImage, gbc);
 

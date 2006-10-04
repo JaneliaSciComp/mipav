@@ -1057,7 +1057,7 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
 
         if (mode == POINT_VOI) {
 
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ((mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
 
                 if (isNewVoiNeeded(VOI.POINT)) { // create new VOI
                     VOI newPtVOI = null;

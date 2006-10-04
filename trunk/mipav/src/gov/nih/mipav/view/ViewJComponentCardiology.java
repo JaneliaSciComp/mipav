@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -9,8 +10,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-
-import java.text.*;
 
 import java.util.*;
 
@@ -69,27 +68,28 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
     /**
      * Constructor: ImageA and ImageB are expected to be of the same dimensionality !!
      *
-     * @param  _frame             frame where image(s) will be displayed
-     * @param  _imageA            Model of the image that will be displayed
-     * @param  _LUTa              LUT used to display imageA
-     * @param  imgBufferA         storage buffer used to display image A
-     * @param  pixelBuffer        storage buffer used to build a displayable image
-     * @param  zoom               initial magnification of image
-     * @param  extents            initial display dimensions of the image
-     * @param  logMagDisplay      display log magnitude of image
-     * @param  _orientation       orientation of the image
+     * @param  _frame         frame where image(s) will be displayed
+     * @param  _imageA        Model of the image that will be displayed
+     * @param  _LUTa          LUT used to display imageA
+     * @param  imgBufferA     storage buffer used to display image A
+     * @param  pixelBuffer    storage buffer used to build a displayable image
+     * @param  zoom           initial magnification of image
+     * @param  extents        initial display dimensions of the image
+     * @param  logMagDisplay  display log magnitude of image
+     * @param  _orientation   orientation of the image
      */
     public ViewJComponentCardiology(ViewJFrameBase _frame, ModelImage _imageA, ModelLUT _LUTa, float[] imgBufferA,
                                     int[] pixelBuffer, float zoom, int[] extents, boolean logMagDisplay,
-                                    int _orientation )
-    {
-        super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay, _orientation );
+                                    int _orientation) {
+        super(_frame, _imageA, _LUTa, imgBufferA, null, null, null, pixelBuffer, zoom, extents, logMagDisplay,
+              _orientation);
 
         removeMouseListener(voiHandler.getPopupPt());
         removeMouseListener(voiHandler.getPopupVOI());
         voiHandler.getPopupPt().setEnabled(false);
         voiHandler.getPopupVOI().setEnabled(false);
-      //  getVOIHandler().removeVOIUpdateListener(getVOIHandler().getVOIDialog());
+
+        // getVOIHandler().removeVOIUpdateListener(getVOIHandler().getVOIDialog());
         popupCard = new ViewJPopupCardiologyVOI(this);
     }
 
@@ -101,7 +101,6 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-
     /**
      * DOCUMENT ME!
      */
@@ -112,7 +111,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
         int sliceSize = imageActive.getSliceSize();
 
-        float [] imageGraphBuffer = new float[sliceSize];
+        float[] imageGraphBuffer = new float[sliceSize];
 
 
         try {
@@ -130,10 +129,10 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 System.err.println(i + " entire section: " + avgIntensities[0] + ", infarction: " + avgIntensities[1]);
 
                 //        System.err.println("i: " + cardioVOI.calcAverageIntensity(voiHandler.getImageGraphBuffer(), i,
-                // imageActive.getExtents()[0],
-                // imageActive.getUserInterface()));
+                // imageActive.getExtents()[0], imageActive.getUserInterface()));
             }
         }
+
         voiHandler.setImageGraphBuffer(imageGraphBuffer);
     }
 
@@ -178,6 +177,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
      * @param  flag  if true garbage collector should be called.
      */
     public void disposeLocal(boolean flag) {
+
         if (flag == true) {
             super.disposeLocal();
         }
@@ -186,9 +186,8 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
     /**
      * Erases all paint.
      */
-    public void eraseAllPaint()
-    {
-        super.eraseAllPaint( false );
+    public void eraseAllPaint() {
+        super.eraseAllPaint(false);
     }
 
 
@@ -214,7 +213,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
      * @param  mouseEvent  event that triggers function; contains click count
      */
     public void mouseClicked(MouseEvent mouseEvent) {
-        super.mouseClicked( mouseEvent );
+        super.mouseClicked(mouseEvent);
 
         // xS = Math.round( mouseEvent.getX() / (getZoomX() * resolutionX)); // zoomed x.  Used as cursor x
         // yS = Math.round( mouseEvent.getY() / (getZoomY() * resolutionY)); // zoomed y.  Used as cursor y
@@ -231,7 +230,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             // System.out.println("Deactivating all VOIs");
 
             voiHandler.selectAllVOIs(false);
-           // voiHandler.setLastPointVOI_ID(-1); // next mouseClick will deactivate point VOI unless reselected
+            // voiHandler.setLastPointVOI_ID(-1); // next mouseClick will deactivate point VOI unless reselected
 
             imageActive.notifyImageDisplayListeners();
         }
@@ -248,10 +247,8 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
      * @param  mouseEvent  event that triggered function
      */
     public void mouseDragged(MouseEvent mouseEvent) {
-        if ((pixBuffer == null) ||
-            (imageBufferActive == null) ||
-            (modifyFlag == false))
-        {
+
+        if ((pixBuffer == null) || (imageBufferActive == null) || (modifyFlag == false)) {
             return;
         }
 
@@ -266,10 +263,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         }
 
         // System.err.println("Dragging");
-        processDefaultMouseDrag( mouseEvent, xS, yS );
+        processDefaultMouseDrag(mouseEvent, xS, yS);
 
         ViewVOIVector VOIs = imageActive.getVOIs();
         int nVOI = VOIs.size();
+
         if ((mode == MOVE_INTERSECTION_POINT) || (mode == MOVE_POINT)) {
 
             if ((nVOI == 1) && (VOIs.VOIAt(0).getCurveType() == VOI.CARDIOLOGY)) {
@@ -333,6 +331,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
         int nVOI = 0;
         ViewVOIVector VOIs = imageActive.getVOIs(); // Get the VOIs from the active image.
+
         if (VOIs != null) {
             nVOI = VOIs.size();
 
@@ -389,14 +388,15 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         }
 
         Vector[] curves;
-        for ( int i = 0; i < nVOI; i++) {
+
+        for (int i = 0; i < nVOI; i++) {
             int curveType = VOIs.VOIAt(i).getCurveType();
 
             if ((curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE) || (curveType == VOI.PROTRACTOR) ||
                     (curveType == VOI.LINE) || (curveType == VOI.ANNOTATION)) {
                 curves = ((VOI) (VOIs.elementAt(i))).getCurves();
 
-                for ( int j = 0; j < curves[slice].size(); j++) {
+                for (int j = 0; j < curves[slice].size(); j++) {
                     boolean isContained = false;
 
                     if ((curveType == VOI.CONTOUR) || (curveType == VOI.POLYLINE)) {
@@ -459,15 +459,15 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         }
         // System.out.println("Mouse pressed - mode : " + mode);
 
-        int xS = (int)(getScaledX(mouseEvent.getX()) + 0.5f); // zoomed x.  Used as cursor
-        int yS = (int)(getScaledY(mouseEvent.getY()) + 0.5f); // zoomed y.  Used as cursor
+        int xS = (int) (getScaledX(mouseEvent.getX()) + 0.5f); // zoomed x.  Used as cursor
+        int yS = (int) (getScaledY(mouseEvent.getY()) + 0.5f); // zoomed y.  Used as cursor
 
         float[] lineX = new float[2];
         float[] lineY = new float[2];
         float[] lineZ = new float[2];
 
         try {
-            mousePressedPaint( mouseEvent );
+            mousePressedPaint(mouseEvent);
 
             if (mouseEvent.getModifiers() == MouseEvent.BUTTON3_MASK) {
                 VOIs = (ViewVOIVector) imageActive.getVOIs();
@@ -482,7 +482,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                             for (j = 0; j < VOIs.VOIAt(i).getCurves()[slice].size(); j++) {
 
                                 if (((VOIContour) (VOIs.VOIAt(i).getCurves()[slice].elementAt(j))).contains(xS, yS,
-                                                                                                                true)) {
+                                                                                                            true)) {
                                     return;
                                 }
                             }
@@ -506,8 +506,9 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                                     if (imageActive.isColorImage() == true) {
 
-                                        length = (int) (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
-                                                                  ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
+                                        length = (int)
+                                                     (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
+                                                                ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
                                         rgbPositions = new float[3][(length * 2) + 1];
                                         rgbIntensities = new float[3][(length * 2) + 1];
 
@@ -549,8 +550,9 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                         return;
                                     } else {
 
-                                        length = (int) (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
-                                                                  ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
+                                        length = (int)
+                                                     (Math.sqrt(((lineX[1] - lineX[0]) * (lineX[1] - lineX[0])) +
+                                                                ((lineY[1] - lineY[0]) * (lineY[1] - lineY[0]))));
                                         position = new float[(length * 2) + 1];
                                         intensity = new float[(length * 2) + 1];
 
@@ -636,7 +638,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
         setPixelInformationAtLocation(xS, yS);
 
-        if ((mouseEvent.getModifiers() & mouseEvent.BUTTON2_MASK) != 0) {
+        if ((mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
             ViewJFrameTriImage triFrame = imageActive.getTriImageFrame();
 
             if (triFrame != null) {
@@ -659,7 +661,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                 return;
             }
 
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ((mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
 
                 if (mode == NEW_POINT) {
                     ((VOICardiology) (VOIs.VOIAt(0).getCurves()[slice].elementAt(0))).insertElement(xS, yS, slice);
@@ -696,16 +698,16 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
             // setMode(DEFAULT);
         } else if (mode == POINT_VOI) {
 
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ((mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
 
                 if (voiHandler.isNewVoiNeeded(VOI.POINT)) { // create new VOI
 
                     VOI newPtVOI = null;
+
                     try {
                         float[] x = new float[1];
                         float[] y = new float[1];
                         float[] z = new float[1];
-
 
 
                         voiHandler.setVOI_ID(imageActive.getVOIs().size());
@@ -738,7 +740,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                         return;
                     }
 
-                  //  voiHandler.setLastPointVOI_ID(voiID);
+                    // voiHandler.setLastPointVOI_ID(voiID);
                     imageActive.registerVOI(newPtVOI);
                     newPtVOI.setActive(true);
 
@@ -747,7 +749,9 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                     imageActive.notifyImageDisplayListeners();
 
-                    voiHandler.graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(voiHandler.getVOI_ID()).getCurves()[slice].elementAt(0))), 0);
+                    voiHandler.graphPointVOI(newPtVOI,
+                                             ((VOIPoint)
+                                              (VOIs.VOIAt(voiHandler.getVOI_ID()).getCurves()[slice].elementAt(0))), 0);
 
                     if (mouseEvent.isShiftDown() != true) {
                         setMode(DEFAULT);
@@ -809,7 +813,8 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                     if (!((VOIs.VOIAt(i).getContourGraph() != null) && (imageActive.isColorImage() == true))) {
                         voiHandler.graphPointVOI(VOIs.VOIAt(i),
-                                      ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))), index - 1);
+                                                 ((VOIPoint) (VOIs.VOIAt(i).getCurves()[slice].elementAt(index - 1))),
+                                                 index - 1);
                     }
 
                     if (mouseEvent.isShiftDown() != true) {
@@ -822,7 +827,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
         } // end of else if (mode == POINT_VOI)
         else if (mode == ANNOTATION) {
 
-            if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ((mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
 
                 VOI newTextVOI = null;
 
@@ -941,11 +946,13 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                                                                        voiHandler.getImageGraphBuffer());
                                                             } // locks and releases lock
 
-                                                            intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
+                                                            intensitySum += ((VOIContour)
+                                                                                 (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                                 .calcRGBIntensity(voiHandler.getImageGraphBuffer(),
                                                                                                       imageActive.getExtents()[0],
                                                                                                       c);
-                                                            numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
+                                                            numPixels += ((VOIContour)
+                                                                              (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                              .getLastNumPixels();
                                                             foundCurve = true;
                                                         }
@@ -996,13 +1003,16 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                                             .isActive() || foundCurve) {
 
                                                         if (!foundCurve) {
-                                                            imageActive.exportData(s * length, length, voiHandler.getImageGraphBuffer());
+                                                            imageActive.exportData(s * length, length,
+                                                                                   voiHandler.getImageGraphBuffer());
                                                         } // locks and releases lock
 
-                                                        intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
+                                                        intensitySum += ((VOIContour)
+                                                                             (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                             .calcIntensity(voiHandler.getImageGraphBuffer(),
                                                                                                imageActive.getExtents()[0]);
-                                                        numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
+                                                        numPixels += ((VOIContour)
+                                                                          (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                          .getLastNumPixels();
                                                         foundCurve = true;
                                                     }
@@ -1052,10 +1062,12 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                                                        length, voiHandler.getImageGraphBuffer()); // locks and releases lock
 
                                                 for (j = 0; j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
-                                                    intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
+                                                    intensitySum += ((VOIContour)
+                                                                         (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                         .calcIntensity(voiHandler.getImageGraphBuffer(),
                                                                                            imageActive.getExtents()[0]);
-                                                    numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
+                                                    numPixels += ((VOIContour)
+                                                                      (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
                                                                      .getLastNumPixels();
 
                                                 }
@@ -1127,11 +1139,11 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
                                                                                                            value, null,
                                                                                                            true);
             ((ViewJFrameImage) ((ViewJFramePaintVasculature) frame).parent).getComponentImage().setRegionGrowVars((short)
-                                                                                                                      xS,
+                                                                                                                  xS,
                                                                                                                   (short)
-                                                                                                                      yS,
+                                                                                                                  yS,
                                                                                                                   (short)
-                                                                                                                      z,
+                                                                                                                  z,
                                                                                                                   value);
             imageActive.notifyImageDisplayListeners(null, true);
         } else if (mode == MOVE) {
@@ -1178,8 +1190,7 @@ public class ViewJComponentCardiology extends ViewJComponentEditImage
 
                     } else if ((selectedCurve instanceof VOIText) &&
                                    ((VOIText) selectedCurve).contains(xS, yS, getZoomX(), getZoomY(),
-                                                                          imageActive.getResolutions(0),
-                                                                          g)) {
+                                                                          imageActive.getResolutions(0), g)) {
 
                         allActive = false;
                         VOIs.VOIAt(i).setActive(true);

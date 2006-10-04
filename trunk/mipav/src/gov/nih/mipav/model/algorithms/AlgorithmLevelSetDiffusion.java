@@ -164,7 +164,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
             edgeImage = new float[length];
             levelImage = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Evolving the level set ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
         } catch (IOException error) {
             cleanUp();
             System.gc();
@@ -190,7 +190,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
             }
         }
 
-        initProgressBar();
+        
 
         int[] imageExtents = srcImage.getExtents();
         float min = Float.MAX_VALUE;
@@ -244,7 +244,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         for (n = 0; (n < iterations) && !threadStopped; n++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) n / (iterations - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) n / (iterations - 1) * 100));
             }
 
             for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
@@ -331,7 +331,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         algoPaintToVOI.setProgressBarVisible(false);
         algoPaintToVOI.run();
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -358,7 +358,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
             levelImage = new float[length];
             edgeImage = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Evolving the level set ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
         } catch (IOException error) {
             cleanUp();
             System.gc();
@@ -389,7 +389,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
             }
         }
 
-        initProgressBar();
+        
 
         int[] imageExtents = srcImage.getExtents();
         float min = Float.MAX_VALUE;
@@ -442,7 +442,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         for (n = 0; (n < iterations) && !threadStopped; n++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) n / (iterations - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) n / (iterations - 1) * 100));
             }
 
             for (i = imageSliceSize + xDim + 1; (i < (length - imageSliceSize - xDim - 1)) && !threadStopped; i++) {
@@ -532,7 +532,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         algoPaintToVOI.setProgressBarVisible(false);
         algoPaintToVOI.run();
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

@@ -36,7 +36,7 @@ public class AlgorithmInverseOrder extends AlgorithmBase {
      */
     public AlgorithmInverseOrder(ModelImage srcImg, int progress) {
         this(srcImg);
-        progressMode = progress;
+    //    progressMode = progress;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -103,7 +103,7 @@ public class AlgorithmInverseOrder extends AlgorithmBase {
             totalLength = threeDLength * tDim;
             buffer = new float[totalLength];
             sliceBuffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Reordering image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Reordering image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             sliceBuffer = null;
@@ -113,15 +113,15 @@ public class AlgorithmInverseOrder extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
 
             for (s = 0; (s < sliceNumber) && !threadStopped; s++) {
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) ((t * sliceNumber) + s) / ((tDim * sliceNumber) - 1) *
-                                                           100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) ((t * sliceNumber) + s) / ((tDim * sliceNumber) - 1) *
+                                                           100));
                 }
 
                 start = s * length;
@@ -202,7 +202,7 @@ public class AlgorithmInverseOrder extends AlgorithmBase {
         }
 
         srcImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

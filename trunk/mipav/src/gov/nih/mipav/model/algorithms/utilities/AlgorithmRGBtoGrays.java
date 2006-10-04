@@ -104,7 +104,7 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
             bufferDestR = new float[srcImage.getSliceSize()];
             bufferDestG = new float[srcImage.getSliceSize()];
             bufferDestB = new float[srcImage.getSliceSize()];
-            buildProgressBar(srcImage.getImageName(), "Forming new images ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Forming new images ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             bufferDestR = null;
@@ -117,7 +117,7 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 20;
 
@@ -166,8 +166,7 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
                     for (i = 0, id = 0; (i < length) && !threadStopped; i += 4, id++) {
 
                         if (((i % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 100),
-                                                    runningInSeparateThread);
+                            fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                         }
 
                         bufferDestR[id] = buffer[i + 1];
@@ -182,7 +181,7 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm RGB to grays: Import image(s): " + error);
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -203,7 +202,7 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
         destImageR.calcMinMax();
         destImageG.calcMinMax();
         destImageB.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

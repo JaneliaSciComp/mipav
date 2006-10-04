@@ -26,11 +26,8 @@ public class MipavMain {
     public static void main(String[] args) {
         System.setProperty("sun.awt.noerasebackground", "true");
 
-        ViewUserInterface ui = ViewUserInterface.create(args);
-
-        if ((args != null) && (args.length > 1)) {
-            ui.runCmdLine();
-        }
+        ViewUserInterface ui = ViewUserInterface.create();
+        ui.parseArguments(args);
 
 
         if (ui.isAppFrameVisible() && Preferences.is(Preferences.PREF_SHOW_SPLASH)) {

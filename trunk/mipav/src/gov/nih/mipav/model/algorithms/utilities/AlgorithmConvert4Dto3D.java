@@ -86,7 +86,7 @@ public class AlgorithmConvert4Dto3D extends AlgorithmBase {
             fileInfo[i].setExtents(newExtents);
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

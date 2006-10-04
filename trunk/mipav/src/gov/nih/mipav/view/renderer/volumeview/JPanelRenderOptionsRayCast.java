@@ -335,7 +335,7 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridx = 1;
         gbc.insets = new Insets(5, 5, 5, 5);
 
@@ -389,9 +389,9 @@ public class JPanelRenderOptionsRayCast extends JPanelRendererBase {
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 5, 0, 5);
 
         JPanel stepPanel = new JPanel(new GridBagLayout());

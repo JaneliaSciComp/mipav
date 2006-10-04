@@ -5,28 +5,17 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 
 /**
  * A script action which saves all the VOIs in an image to disk.
  */
-public class ActionSaveAllVOIs implements ScriptableActionInterface {
+public class ActionSaveAllVOIs extends ActionImageProcessorBase {
 
-    /**
-     * The label to use for the input image parameter.
-     */
-    private static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
-    
     /**
      * The label to use for the VOI-save destination directory parameter (leave empty for the default directory).
      */
     private static final String SAVE_VOIS_TO_DIR = "save_vois_to_dir";
-    
-    /**
-     * The image whose VOI-saving should be recorded in the script.  The actual VOI-saving must be done elsewhere.
-     */
-    private ModelImage recordingInputImage;
     
     /**
      * The directory where the VOIs were saved to, which should be recorded in the script.  Leave empty or null to save in the current default directory.
@@ -36,23 +25,28 @@ public class ActionSaveAllVOIs implements ScriptableActionInterface {
     /**
      * Constructor for the dynamic instantiation and execution of the SaveAllVOIs script action.
      */
-    public ActionSaveAllVOIs() {}
-    
-    /**
-     * Constructor used to record the SaveAllVOIs script action line.
-     * @param input  The image which had its VOIs saved.
-     */
-    public ActionSaveAllVOIs(ModelImage input) {
-        recordingInputImage = input;
+    public ActionSaveAllVOIs() {
+        super();
     }
     
     /**
      * Constructor used to record the SaveAllVOIs script action line.
-     * @param input      The image which had its VOIs saved.
-     * @param targetDir  The directory where the VOIs were saved (leave empty or null for the default directory).
+     * 
+     * @param  input  The image which had its VOIs saved.
+     */
+    public ActionSaveAllVOIs(ModelImage input) {
+        super(input);
+    }
+    
+    /**
+     * Constructor used to record the SaveAllVOIs script action line.
+     * 
+     * @param  input      The image which had its VOIs saved.
+     * @param  targetDir  The directory where the VOIs were saved (leave empty or null for the default directory).
      */
     public ActionSaveAllVOIs(ModelImage input, String targetDir) {
-        recordingInputImage = input;
+        this(input);
+        
         recordingTargetDir = targetDir;
     }
     
@@ -64,17 +58,17 @@ public class ActionSaveAllVOIs implements ScriptableActionInterface {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
+            parameters.put(createInputImageParameter());
             if (recordingTargetDir == null) {
                 recordingTargetDir = "";
             }
             parameters.put(ParameterFactory.newString(SAVE_VOIS_TO_DIR, recordingTargetDir));
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered creating parameters while recording SaveAllVOIs script action:\n" + pe);
+            MipavUtil.displayError("Error encountered creating parameters while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("SaveAllVOIs", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
     }
 
     /**
@@ -88,14 +82,6 @@ public class ActionSaveAllVOIs implements ScriptableActionInterface {
         } else {
             parameters.getImage(INPUT_IMAGE_LABEL).getParentFrame().saveAllVOIsTo(targetDir);
         }
-    }
-    
-    /**
-     * Changes the image whose VOI-saving should be recorded in the script.
-     * @param inputImage  The image whose VOIs were saved.
-     */
-    public void setInputImage(ModelImage inputImage) {
-        recordingInputImage = inputImage;
     }
     
     /**

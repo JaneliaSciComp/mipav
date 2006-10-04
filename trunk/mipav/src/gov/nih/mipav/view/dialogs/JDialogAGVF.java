@@ -185,7 +185,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
      */
     public JDialogAGVF(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         VOIs = im.getVOIs();
 
@@ -468,7 +468,8 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     agvfAlgo.addListener(this);
-
+                    createProgressBar(image.getImageName(), agvfAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -493,9 +494,6 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            agvfAlgo.setProgressBarVisible(false);
-                        }
 
                         agvfAlgo.run();
                     }
@@ -586,6 +584,7 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     agvfAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), agvfAlgo);
 
                     // Hide dialog
                     setVisible(false);
@@ -611,9 +610,6 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            agvfAlgo.setProgressBarVisible(false);
-                        }
 
                         agvfAlgo.run();
                     }
@@ -793,8 +789,8 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         iterationsPanel.add(labelGVFIterations);
         iterationsPanel.add(textGVFIterations);
         iterationsPanel.add(labelBoundaryIterations);
@@ -803,8 +799,8 @@ public class JDialogAGVF extends JDialogBase implements AlgorithmInterface, Item
 
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.weightx = 1;
-        gbc2.anchor = gbc2.WEST;
-        gbc2.fill = gbc2.HORIZONTAL;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel parametersPanel = new JPanel(new GridBagLayout());
         parametersPanel.setForeground(Color.black);

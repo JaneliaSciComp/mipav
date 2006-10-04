@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -17,7 +19,7 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  */
-public class JDialogEntropyMinimization extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogEntropyMinimization extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -28,7 +30,6 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
 
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
-
 
     /** DOCUMENT ME! */
     private AlgorithmEntropyMinimization emAlgo;
@@ -85,9 +86,6 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private String tmpStr;
-
-    /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -108,25 +106,55 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
     public JDialogEntropyMinimization(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface =  ViewUserInterface.getReference();
         init();
     }
 
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogEntropyMinimization(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-    }
+   
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_threshold", thresholdSelected));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", thresholdLevel));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_subsample", subsample));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("noise_type", noiseType));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        thresholdSelected = scriptParameters.getParams().getBoolean("do_threshold");
+        thresholdLevel = scriptParameters.getParams().getFloat("threshold");
+        subsample = scriptParameters.getParams().getBoolean("do_subsample");
+        noiseType = scriptParameters.getParams().getInt("noise_type");
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
 
     /**
      * actionPerformed - Closes dialog box when the OK button is pressed and calls the algorithm.
@@ -167,9 +195,6 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmEntropyMinimization) {
             image.clearMask();
 
@@ -181,7 +206,7 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
                 try {
 
                     // resultImage.setImageName("Unsharp mask");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -218,7 +243,9 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         emAlgo.finalize();
         emAlgo = null;
@@ -232,97 +259,6 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("EntropyMinimization " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + thresholdSelected + " " + thresholdLevel + " " +
-                                                           subsample + " " + noiseType + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + thresholdSelected + " " + thresholdLevel + " " +
-                                                           subsample + " " + noiseType + "\n");
-
-                }
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setThresholdSelected(parser.getNextBoolean());
-            setThresholdLevel(parser.getNextFloat());
-            setSubsample(parser.getNextBoolean());
-            setNoiseType(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -380,7 +316,7 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
      * Once all the necessary variables are set, call the Entropy Minimization algorithm based on what type of image
      * this is and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_entropyMin");
 
         if (displayLoc == NEW) {
@@ -410,6 +346,8 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
                 // This is made possible by implementing AlgorithmedPerformed interface
                 emAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), emAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -420,10 +358,6 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        emAlgo.setProgressBarVisible(false);
-                    }
-
                     emAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -450,6 +384,8 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
                 // This is made possible by implementing AlgorithmedPerformed interface
                 emAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), emAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -474,10 +410,6 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        emAlgo.setProgressBarVisible(false);
-                    }
-
                     emAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -499,8 +431,8 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
         gbc.weightx = 1;
 
         int yPos = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setBorder(buildTitledBorder("Input parameters"));
@@ -658,8 +590,5 @@ public class JDialogEntropyMinimization extends JDialogBase implements Algorithm
         }
 
         return true;
-
     }
-
-
 }

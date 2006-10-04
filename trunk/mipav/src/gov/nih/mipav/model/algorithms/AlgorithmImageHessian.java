@@ -151,27 +151,6 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         } // end if (srcImage.getNDims() == 3)
     } // end run()
 
-    /**
-     * Creates the standard progressBar. Stores in the class-global, progressBar.
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Hessian/Eigen System ...", 0, 100, true,
-                                                   this, this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-            Preferences.debug("AlgrithmMean: NullPointerException found while building progress bar.",
-                              Preferences.DEBUG_ALGORITHM);
-        }
-    }
 
     /**
      * DOCUMENT ME!
@@ -179,7 +158,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
     private void run2D() {
         DecimalFormat fltFmt = new DecimalFormat("0.00");
 
-        this.buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Hessian/Eigen System ...");
 
         // OK, here is where the meat of the algorithm goes
 
@@ -229,7 +208,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         double maxExpRb = 0, maxExpS = 0;
 
         for (row = 0; row < numRows; row++) {
-            progressBar.updateValue(Math.round(((float) (row) / (numRows - 1) * 100)), runningInSeparateThread);
+            fireProgressStateChanged(Math.round(((float) (row) / (numRows - 1) * 100)));
 
             for (col = 0; col < numCols; col++) {
 
@@ -324,7 +303,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
 
         // The meat is done
 
-        disposeProgressBar();
+        
 
         if (threadStopped) {
             finalize();
@@ -342,7 +321,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
     private void run3D() {
         DecimalFormat fltFmt = new DecimalFormat("0.00");
 
-        this.buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Hessian/Eigen System ...");
 
         // OK, here is where the meat of the algorithm goes
 
@@ -414,7 +393,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
             for (plane = 0; plane < numPlanes; plane++) {
-                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(((float) (plane) / (numPlanes - 1) * 100)));
 
                 for (row = 0; row < numRows; row++) {
 
@@ -534,7 +513,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
 
         // The meat is done
 
-        disposeProgressBar();
+        
 
         if (threadStopped) {
             finalize();
@@ -569,7 +548,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         float scaleIncrement = 0.5f;
         int numImages = (int) (((endScale - startScale) / scaleIncrement) + 1.5f);
 
-        this.buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Hessian/Eigen System ...");
 
         // OK, here is where the meat of the algorithm goes
 
@@ -638,13 +617,13 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             currentScale = startScale + (scaleIndex * scaleIncrement);
 
             // Show progress
-            progressBar.setMessage("Slice " + (scaleIndex + 1) + " of " + numImages + "  Scale: " + currentScale);
+            fireProgressStateChanged("Slice " + (scaleIndex + 1) + " of " + numImages + "  Scale: " + currentScale);
 
             sigmas[0] = sigmas[1] = currentScale;
             hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
             for (row = 0; row < numRows; row++) {
-                progressBar.updateValue(Math.round(((float) (row) / (numRows - 1) * 100)), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(((float) (row) / (numRows - 1) * 100)));
 
                 for (col = 0; col < numCols; col++) {
 
@@ -823,7 +802,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
 
         // The meat is done
 
-        disposeProgressBar();
+        
 
         if (threadStopped) {
             finalize();
@@ -855,7 +834,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
         float scaleIncrement = 2.0f;
         int numImages = (int) (((endScale - startScale) / scaleIncrement) + 1.5f);
 
-        this.buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Hessian/Eigen System ...");
 
         // OK, here is where the meat of the algorithm goes
 
@@ -928,13 +907,13 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             currentScale = startScale + (scaleIndex * scaleIncrement);
 
             // Show progress
-            progressBar.setMessage("Slice " + (scaleIndex + 1) + " of " + numImages + "  Scale: " + currentScale);
+            fireProgressStateChanged("Slice " + (scaleIndex + 1) + " of " + numImages + "  Scale: " + currentScale);
 
             sigmas[0] = sigmas[1] = sigmas[2] = currentScale;
             hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
             for (plane = 0; plane < numPlanes; plane++) {
-                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(((float) (plane) / (numPlanes - 1) * 100)));
 
                 for (row = 0; row < numRows; row++) {
 
@@ -1118,7 +1097,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
 
         // The meat is done
 
-        disposeProgressBar();
+        
 
         if (threadStopped) {
             finalize();
@@ -1145,7 +1124,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             return;
         }
 
-        this.buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Hessian/Eigen System ...");
 
         // OK, here is where the meat of the algorithm goes
 
@@ -1213,7 +1192,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             plane = ((numPlanes / 2) - 1);
 
             for (plane--; plane < ((numPlanes / 2) + 2); plane++) { // do 3 center slices
-                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(((float) (plane) / (numPlanes - 1) * 100)));
 
                 for (row = 0; row < numRows; row++) {
 
@@ -1371,7 +1350,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
 
         // The meat is done
 
-        disposeProgressBar();
+        
 
         if (threadStopped) {
             finalize();
@@ -1389,7 +1368,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
     private void runInPlace3D() {
         DecimalFormat fltFmt = new DecimalFormat("0.00");
 
-        this.buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Hessian/Eigen System ...");
 
         // OK, here is where the meat of the algorithm goes
 
@@ -1457,7 +1436,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             hessianAlgo = new AlgorithmHessian(srcImage, sigmas);
 
             for (plane = 0; plane < numPlanes; plane++) {
-                progressBar.updateValue(Math.round(((float) (plane) / (numPlanes - 1) * 100)), runningInSeparateThread);
+                fireProgressStateChanged(Math.round(((float) (plane) / (numPlanes - 1) * 100)));
 
                 for (row = 0; row < numRows; row++) {
 
@@ -1600,7 +1579,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
 
         // The meat is done
 
-        disposeProgressBar();
+        
 
         if (threadStopped) {
             finalize();

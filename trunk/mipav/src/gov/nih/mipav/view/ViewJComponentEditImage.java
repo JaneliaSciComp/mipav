@@ -635,7 +635,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (imageA.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageA, fillColor, polarity, false);
                 maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
                 if (imageA.getNDims() == 4){
@@ -647,7 +646,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 if (slice[0] <= 0 ){
                     maskAlgo = new AlgorithmMask(imageA, intensityDropper, polarity, false);
                     maskAlgo.setRunningInSeparateThread(false);
-                    maskAlgo.setProgressBarVisible(showProgressBar);
                     maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
 
                     if (imageA.getType() == ModelStorageBase.UBYTE) {
@@ -682,7 +680,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (imageB.isColorImage() == true) {
                 maskAlgo = new AlgorithmMask(imageB, fillColor, polarity, false);
                 maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25DC(paintBitmap, fillColor, timeSlice);
             } else {
                 if (imageA.getNDims() == 4){
@@ -692,7 +689,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 }
                 maskAlgo = new AlgorithmMask(imageB, intensityDropper, polarity, false);
                 maskAlgo.setRunningInSeparateThread(false);
-                maskAlgo.setProgressBarVisible(showProgressBar);
                 maskAlgo.calcInPlace25D(paintBitmap, intensityDropper, timeSlice, intensityLockVector);
 
                 if (imageB.getType() == ModelStorageBase.UBYTE) {
@@ -733,6 +729,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         byte red, green, blue;
         int i;
 
+        ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100, true);
+        progressBar.setSeparateThread(false);
+        
+        
         imageACopy = (ModelImage) imageA.clone();
 
         if (imageB != null) {
@@ -763,7 +763,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
 
             maskAlgo.setRunningInSeparateThread(false);
+            maskAlgo.addProgressChangeListener(progressBar);
+            progressBar.setVisible(imageA.getUserInterface().isAppFrameVisible());
             maskAlgo.calcInPlace25DCShortMask((BitSet) paintBitmap.clone(), fillColor, timeSlice);
+            
         } else { // not color
 
             if (imageB == null) {
@@ -780,6 +783,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
 
             maskAlgo.setRunningInSeparateThread(false);
+            maskAlgo.addProgressChangeListener(progressBar);
+            progressBar.setVisible(imageA.getUserInterface().isAppFrameVisible());
             maskAlgo.calcInPlace25DShortMask((BitSet) paintBitmap.clone(), intensityDropper, timeSlice);
         } // not color
 
@@ -1916,7 +1921,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
-        if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON2_MASK) != 0) {
+        if ( (mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
             ViewJFrameTriImage triFrame = imageActive.getTriImageFrame();
 
             if (triFrame != null) {

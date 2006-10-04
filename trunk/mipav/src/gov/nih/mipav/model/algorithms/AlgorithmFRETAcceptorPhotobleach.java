@@ -205,7 +205,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing FRET ...");
 
         constructLog();
         xDim = srcImage.getExtents()[0];
@@ -234,7 +234,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
 
         // Create black and white image using only the selected color
         if (srcImage.isColorImage()) {
-            progressBar.setMessage("Creating black and white image");
+            fireProgressStateChanged("Creating black and white image");
             minR = srcImage.getMinR();
             maxR = srcImage.getMaxR();
 
@@ -503,7 +503,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
         }
 
         if (register) {
-            progressBar.setMessage("Registering images");
+            fireProgressStateChanged("Registering images");
 
             int DOF = 3; // rigid transformation
             int interp = AlgorithmTransform.BILINEAR;
@@ -683,7 +683,7 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
             }
         } // else not registered
 
-        progressBar.setMessage("Cacluating average intensities");
+        fireProgressStateChanged("Cacluating average intensities");
         mask = new short[sliceSize];
 
         for (i = 0; i < mask.length; i++) {
@@ -877,35 +877,6 @@ public class AlgorithmFRETAcceptorPhotobleach extends AlgorithmBase {
 
         ViewUserInterface.getReference().setDataText("Efficiency = " + efficiency + "\n");
 
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
-    }
-
-    /**
-     * To create the standard progressBar. Stores in the class-global, progressBar
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Performing FRET ...", 0, 100, true, this,
-                                                   this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
     }
 
     /**

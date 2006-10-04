@@ -5,9 +5,10 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.srb.SRBFileTransferer;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.util.NDARPipeline;
+import gov.nih.mipav.model.util.*;
 
 import gov.nih.mipav.plugins.*;
 
@@ -33,7 +34,7 @@ import javax.swing.event.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      ViewJComponentEditImage
  */
-public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, MouseListener, MouseMotionListener{
+public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, MouseListener, MouseMotionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -144,7 +145,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** Reference to the magnification tool. */
     private JDialogZoom zoomDialog = null;
 
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -222,7 +222,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             getLUTa().zeroToOneLUTAdjust();
         }
 
-        }
+    }
 
     /**
      * Creates a new ViewJFrameImage object.
@@ -365,10 +365,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 /**
                  * Also need to disable the auto upload to srb function.
                  */
-                JCheckBoxMenuItem menuItemAutoUpload = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Auto Upload on|off");
+                JCheckBoxMenuItem menuItemAutoUpload = (JCheckBoxMenuItem)
+                                                           menuBuilder.getMenuItem("Auto Upload on|off");
+
                 if (menuItemAutoUpload.isSelected()) {
                     menuItemAutoUpload.setSelected(false);
                 }
+
                 if (userInterface.getNDARPipeline() != null) {
                     userInterface.getNDARPipeline().uninstall();
                 }
@@ -392,20 +395,26 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.transferSRBFiles();
         } else if (command.equals("AutoUploadToSRB")) {
             NDARPipeline pipeline = userInterface.getNDARPipeline();
+
             if (pipeline == null) {
                 pipeline = new NDARPipeline();
                 userInterface.setNDARPipeline(pipeline);
             }
+
             if (((JCheckBoxMenuItem) source).isSelected()) {
                 JCheckBoxMenuItem itemDicom = (JCheckBoxMenuItem) menuBuilder.getMenuItem("Enable DICOM receiver");
+
                 if (!itemDicom.isSelected()) {
+
                     if (userInterface.getDICOMCatcher() != null) {
                         userInterface.getDICOMCatcher().setStop();
                     }
+
                     itemDicom.setSelected(true);
                     userInterface.setDICOMCatcher(new DICOM_Receiver());
                     menuBuilder.setMenuItemEnabled("DICOM database access", true);
                 }
+
                 pipeline.install(userInterface.getDICOMCatcher());
             } else {
                 pipeline.uninstall();
@@ -423,33 +432,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.buildAnonDirectoryDialog();
         } else if (command.equals("RecordScript") || command.equals("ToolbarScriptRecord")) {
 
-            if (userInterface.getScriptDialog() != null) {
-                MipavUtil.displayError("Already recording.  You must save or exit the first script to begin a new one.");
-            } else {
-                JDialogScript scriptDialog = new JDialogScript("Record New Script", userInterface);
-
-                scriptDialog.addWindowListener((WindowListener) userInterface);
-                userInterface.setRecordingScript(true);
-                scriptDialog.setVisible(true);
-
-                if (userInterface.getActiveImageFrame() != null) {
-                    scriptDialog.setActiveImageFlag(true);
-                } else {
-                    scriptDialog.setActiveImageFlag(false);
-                }
-                // userInterface.activeImageRegistryMonitoring();
-            }
+            // pass script events to the VUI, since there's no need to have the same implementation twice
+            ViewUserInterface.getReference().actionPerformed(event);
         } else if (command.equals("RunScript")) {
 
-            if (userInterface.isScriptRecording()) {
-                MipavUtil.displayError("Cannot run a script within a script.");
-
-                return;
-            } else {
-                JDialogMultiple multiple = new JDialogMultiple("Run script on multiple images", getUserInterface());
-
-                multiple.setVisible(true);
-            }
+            // pass script events to the VUI, since there's no need to have the same implementation twice
+            ViewUserInterface.getReference().actionPerformed(event);
         } else if (command.equals("ToolbarScriptDir")) {
 
             // this action is to set the home directory and
@@ -472,50 +460,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             controls.updateScripts(userInterface.getDefaultScriptDirectory());
         } else if (command.equals("ToolbarScriptRun")) {
 
-            // this is different from RunScript ... this is from the
-            // scripting toolbar
-            if (userInterface.isScriptRecording()) {
-                MipavUtil.displayError("Cannot run a script within a script.");
+            // this is different from RunScript ... this is from the scripting toolbar
+            if (ScriptRecorder.getReference().getRecorderStatus() != ScriptRecorder.STOPPED) {
+                MipavUtil.displayError("Cannot run a script while recording a script.");
 
                 return;
             } else {
-                Preferences.debug("Run the current selected script on the active image.\n");
-                controls.runScript(getUserInterface());
+                Preferences.debug("Run the currently selected script from the toolbar.\n");
+                controls.runCurrentScript();
             }
         } else if (command.equals("ComponentLoadB")) {
 
             if (isMultipleImages() == true) {
-                JDialogLoadImage loadImageB = new JDialogLoadImage(this);
-
-                doOrigins = loadImageB.getMatchOrigins();
-                doOrients = loadImageB.getMatchOrients();
-
-                if (loadImage(loadImageB.getImage(), componentImage, false, doOrigins, doOrients)) {
-
-                    if ((imageA.getNDims() == 3) && (imageB.getNDims() == 4)) {
-                        removeControls();
-                        controls = new ViewControlsImage(this); // Build controls used in this frame
-                        menuBuilder = new ViewMenuBuilder(this);
-                        tSlice = 0;
-                        nTImage = imageB.getExtents()[3];
-                        zSlice = (imageB.getExtents()[2] - 1) / 2;
-                        nImage = imageB.getExtents()[2];
-                        menuBar = menuBarMaker.getMenuBar(this, 4, imageB.getType(), imageB.isDicomImage());
-                        controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
-                                              menuBuilder.isMenuItemSelected("VOI toolbar"),
-                                              menuBuilder.isMenuItemSelected("Paint toolbar"),
-                                              menuBuilder.isMenuItemSelected("Scripting toolbar"),
-                                              componentImage.getVOIHandler().getVOI_ID());
-                    }
-
-                    if (this.canCloseImageBAfterLoad()) {
-                        menuBuilder.setMenuItemEnabled("Close image(B)", true);
-                        menuBuilder.setMenuItemEnabled("Extract image(B)", true);
-                    }
-
-                    setControls();
-                    setTitle();
-                }
+                new JDialogLoadImage(this, getImageA(), JDialogLoadImage.LOAD_FROM_FRAME);
             } else {
                 MipavUtil.displayError("There are no other images to load.\n");
             }
@@ -633,37 +590,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setControls();
             setTitle();
         } else if (command.equals("LoadBlankB")) {
-
-            try {
-
-                if (imageA.isColorImage()) {
-                    ModelImage imgB = new ModelImage(imageA.getType(), imageA.getExtents(), " Blank");
-
-                    setImageB(imgB);
-                    menuBuilder.setMenuItemEnabled("Close image(B)", true);
-                    menuBuilder.setMenuItemEnabled("Extract image(B)", true);
-                    setControls();
-                    setTitle();
-                } else {
-                    JDialogBlankImage blankImageDialog = new JDialogBlankImage(this);
-
-                    if (blankImageDialog.isCancelled() == false) {
-                        setImageB(blankImageDialog.getImage());
-                        menuBuilder.setMenuItemEnabled("Close image(B)", true);
-                        menuBuilder.setMenuItemEnabled("Extract image(B)", true);
-                        setControls();
-                        setTitle();
-                        getLUTb().resetTransferLine(0, 255);
-                    }
-
-                    blankImageDialog.dispose();
-                }
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Out of memory: unable to open new Image");
-
-                return;
-            }
-
+            new JDialogLoadImage(this, getImageA(), JDialogLoadImage.LOAD_BLANK);
         } else if (command.equals("SaveImage")) {
             saveImageInfo();
             save(new FileWriteOptions(false), -1);
@@ -767,30 +694,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 ModelLUT lutClone = null;
 
-                    lutClone = (ModelLUT) LUTb.clone();
+                lutClone = (ModelLUT) LUTb.clone();
 
-                new ViewJFrameImage(clonedImage, lutClone, new Dimension(610, 200),
-                                    getImageB().getLogMagDisplay());
+                new ViewJFrameImage(clonedImage, lutClone, new Dimension(610, 200), getImageB().getLogMagDisplay());
                 System.gc();
 
-                if (userInterface.isScriptRecording()) {
-
-                    // check to see if the image is already in the ImgTable
-                    if (userInterface.getScriptDialog().getImgTableVar(getImageB().getImageName()) == null) {
-
-                        if (userInterface.getScriptDialog().getActiveImgTableVar(getImageB().getImageName()) ==
-                                null) {
-                            userInterface.getScriptDialog().putActiveVar(getImageB().getImageName());
-                        }
-                    }
-
-                    userInterface.getScriptDialog().append("ExtractImageB " +
-                                                           userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                           " ");
-                    userInterface.getScriptDialog().putVar(clonedImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(clonedImage.getImageName()) +
-                                                           "\n");
-                }
+                ScriptRecorder.getReference().addLine(new ActionExtractImageB(getImageA(), clonedImage));
             } catch (OutOfMemoryError error) {
 
                 if (clonedImage != null) {
@@ -803,9 +712,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 return;
             }
-        }
-          else if (command.equals("EditImageInfo")) {
-
+        } else if (command.equals("EditImageInfo")) {
             showEditImageInfo();
         } else if (command.equals("Exit")) {
             userInterface.windowClosing(null);
@@ -854,7 +761,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             Preferences.setProperty(Preferences.PREF_IMAGE_TOOLBAR_ON, String.valueOf(showImage));
             Preferences.setProperty(Preferences.PREF_PAINT_TOOLBAR_ON, String.valueOf(showPaint));
 
-            controls.buildToolbar(showImage, showVOI, showPaint, showScript, componentImage.getVOIHandler().getVOI_ID());
+            controls.buildToolbar(showImage, showVOI, showPaint, showScript,
+                                  componentImage.getVOIHandler().getVOI_ID());
             setControls();
         } else if (command.equals("PaintBrush")) {
             componentImage.setMode(ViewJComponentEditImage.PAINT_VOI);
@@ -1046,7 +954,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (getActiveImage().getVOIs().size() > 0) {
 
                 ViewVOIVector VOIs = getActiveImage().getVOIs();
-                Vector[] curves;
 
                 int i;
                 int nVOI = VOIs.size();
@@ -1133,11 +1040,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().append("VOI_to_BinaryMask " +
-                                                       userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                       " \n");
-            }
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), maskImage,
+                                                                      ActionVOIToMask.MASK_BINARY));
         } else if (command.equals("ShortMask")) {
             ModelImage shortImage = null;
 
@@ -1165,11 +1069,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().append("VOI_to_ShortMask " +
-                                                       userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                       " \n");
-            }
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), shortImage,
+                                                                      ActionVOIToMask.MASK_SHORT));
         } else if (command.equals("UnsignedByteMask")) {
             ModelImage uByteImage = null;
 
@@ -1197,66 +1098,24 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 return;
             }
 
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording() && (uByteImage != null)) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "VOI_to_UnsignedByteMask " +
-                              userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
-                userInterface.getScriptDialog().putVar(uByteImage.getImageName());
-                line += userInterface.getScriptDialog().getVar(uByteImage.getImageName()) + "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionVOIToMask(getActiveImage(), uByteImage,
+                                                                      ActionVOIToMask.MASK_UBYTE));
         } else if (command.equals("MaskToVOI")) {
+            AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
 
-               AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
-               //VOIExtractionAlgo.setActiveImage(false);
-               VOIExtractionAlgo.run();
+            // VOIExtractionAlgo.setActiveImage(false);
+            VOIExtractionAlgo.run();
 
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording()) {
+            ScriptRecorder.getReference().addLine(new ActionMaskToVOI(getActiveImage()));
 
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "MaskToVOI " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                              "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
             updateImages();
         } else if (command.equals("MaskToPaint")) {
+
+            // TODO: only runs with an imageB mask, not if imageA is a mask itself.
             handleMaskToPaint(true);
 
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "MaskToPaint " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                              "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
+            // TODO: the script action is recorded regardless of the conversion success
+            ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
         } else if (command.equals("PaintToVOI")) {
 
             // new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
@@ -1288,95 +1147,24 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             algoPaintToVOI.setRunningInSeparateThread(false);
             algoPaintToVOI.run();
 
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "PaintToVOI " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                              "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionPaintToVOI(getActiveImage()));
 
             updateImages();
         } else if (command.equals("PaintToShortMask")) {
-            String maskImageName = componentImage.commitPaintToMask();
+            ModelImage maskImage = ViewUserInterface.getReference().getRegisteredImageByName(componentImage.commitPaintToMask());
 
-            // add the conversion to the script, if one is being recorded
-            if (userInterface.isScriptRecording() && (maskImageName != null)) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "PaintToShortMask " +
-                              userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
-                userInterface.getScriptDialog().putVar(maskImageName);
-                line += userInterface.getScriptDialog().getVar(maskImageName) + "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage,
+                                                                        ActionPaintToMask.MASK_SHORT));
         } else if (command.equals("Open VOI")) {
             boolean success = openVOI(false);
 
-            if (success && userInterface.isScriptRecording()) {
-                String imageName = getActiveImage().getImageName();
-
-                if (userInterface.getScriptDialog().getImgTableVar(imageName) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageName) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageName);
-                    }
-                }
-
-                String imageVarName = (String) userInterface.getScriptDialog().getVar(imageName);
-
-                userInterface.getScriptDialog().append("OpenVOI " + imageVarName);
-
-                ViewVOIVector VOIs = (ViewVOIVector) getActiveImage().getVOIs();
-
-                int nVOI = VOIs.size();
-                int index = 0, i = 0;
-                boolean foundActive = false;
-
-                while (!foundActive && (i != nVOI)) {
-
-                    if (VOIs.VOIAt(i).isActive() == true) {
-                        index = i;
-                        foundActive = true;
-                    } else {
-                        i++;
-                    }
-                }
-
-                VOI currVOI = VOIs.VOIAt(index);
-                String voiName = currVOI.getName();
-
-                userInterface.getScriptDialog().putVoiVar(voiName);
-
-                String voiVarName = (String) userInterface.getScriptDialog().getVoiVar(voiName);
-
-                userInterface.getScriptDialog().append(" " + voiVarName + "\n");
+            if (success) {
+                ScriptRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
             }
         } else if (command.equals("Open all VOIs")) {
             loadAllVOIs(false);
 
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().append("OpenAllVOIs " +
-                                                       userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                       "\n");
-            }
+            ScriptRecorder.getReference().addLine(new ActionOpenAllVOIs(getActiveImage()));
         } else if (command.equals("Open all VOIs from...")) {
 
             // get the voi directory
@@ -1416,20 +1204,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Save all VOIs")) {
             saveAllVOIs();
 
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                    }
-                }
-
-                String line = "SaveAllVOIs " + userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                              "\n";
-                userInterface.getScriptDialog().append(line);
-            }
+            ScriptRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage()));
         } else if (command.equals("Save all VOIs to...")) {
 
             // get the voi directory
@@ -1458,22 +1233,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 voiDir = new String(directory + fileName + File.separator);
                 saveAllVOIsTo(voiDir);
 
-                if (userInterface.isScriptRecording()) {
-
-                    // check to see if the match image is already in the ImgTable
-                    if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                        if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) ==
-                                null) {
-                            userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                        }
-                    }
-
-                    String line = "SaveAllVOIsTo " +
-                                  userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) + " ";
-                    line += voiDir + "\n";
-                    userInterface.getScriptDialog().append(line);
-                }
+                ScriptRecorder.getReference().addLine(new ActionSaveAllVOIs(getActiveImage(), voiDir));
             }
         } else if (command.equals("Snake")) {
             new JDialogSnake(this, getActiveImage());
@@ -1565,24 +1325,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                     getActiveImage().getLogMagDisplay());
                 System.gc();
 
-                if (userInterface.isScriptRecording()) {
-
-                    // check to see if the image is already in the ImgTable
-                    if (userInterface.getScriptDialog().getImgTableVar(getActiveImage().getImageName()) == null) {
-
-                        if (userInterface.getScriptDialog().getActiveImgTableVar(getActiveImage().getImageName()) ==
-                                null) {
-                            userInterface.getScriptDialog().putActiveVar(getActiveImage().getImageName());
-                        }
-                    }
-
-                    userInterface.getScriptDialog().append("Clone " +
-                                                           userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                           " ");
-                    userInterface.getScriptDialog().putVar(clonedImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(clonedImage.getImageName()) +
-                                                           "\n");
-                }
+                ScriptRecorder.getReference().addLine(new ActionClone(getActiveImage(), clonedImage));
             } catch (OutOfMemoryError error) {
 
                 if (clonedImage != null) {
@@ -1616,8 +1359,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 dOrder.callAlgorithm();
             }
         } else if (command.equals("ReplaceBlankWithAvg")) {
-            JDialogReplaceBlankSlicesWithAverages rBlankWithAvg =
-                new JDialogReplaceBlankSlicesWithAverages(this, getActiveImage());
+            JDialogReplaceBlankSlicesWithAverages rBlankWithAvg = new JDialogReplaceBlankSlicesWithAverages(this,
+                                                                                                            getActiveImage());
             rBlankWithAvg.callAlgorithm();
 
         } else if (command.equals("FlipY")) {
@@ -1689,10 +1432,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogSwap34(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("onlyColor")) { // JDialogOnlyColor onlyColorDialog = new JDialogOnlyColor(this,
                                                   // getActiveImage()); onlyColorDialog.callAlgorithm();
-        } else if (command.equals("extractSurface")) {
-
-            // JDialogExtractSurface eSurface =
-            new JDialogExtractSurface(this, getActiveImage());
         } else if (command.equals("extractSurfaceCubes")) {
 
             // JDialogExtractSurface eSurface =
@@ -1703,8 +1442,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogEntropyMinimization(this, getActiveImage());
         } else if (command.equals("MRICorrection")) {
             new JDialogMRIShadingCorrection(this, getActiveImage());
-        } else if (command.equals("nonparametric")) {
-            new JDialogNonparametricSegmentation(this, getActiveImage());
         } else if (command.equals("graphBasedSeg")) {
             new JDialogGraphBasedSegmentation(this, getActiveImage());
         } else if (command.equals("evalSeg")) {
@@ -1748,9 +1485,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // JDialogIHN3Correction N3 =
             new JDialogIHN3Correction(this, getActiveImage());
         } else if (command.equals("SMRISNR")) {
-            new JDialogSingleMRIImageSNR(this,getActiveImage());
+            new JDialogSingleMRIImageSNR(this, getActiveImage());
         } else if (command.equals("DMRISNR")) {
-            new JDialogTwoMRIImagesSNR(this,getActiveImage());
+            new JDialogTwoMRIImagesSNR(this, getActiveImage());
         } else if (command.equals("waveletThreshold")) {
             new JDialogWaveletThreshold(this, getActiveImage());
         } else if (command.equals("Calculator")) {
@@ -1763,8 +1500,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 return;
             }
-        } else if (command.equals("Anonymize face")) {
-            new JDialogFaceAnonymizer(this, getActiveImage());
         } else if (command.equals("Anonymize face (BET)")) {
             new JDialogFaceAnonymizerBET(this, getActiveImage());
         } else if (command.equals("Image math")) {
@@ -1773,14 +1508,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogImageMath(this, getActiveImage());
         } else if (command.equals("matchImages")) {
             new JDialogMatchImages(this, getActiveImage());
-        } else if (command.equals("Plot surface")) {
-
-            // JDialogPlotSurface  plotSur =
-            new JDialogPlotSurface(this, getActiveImage(), zSlice);
         } else if (command.equals("InverseOrder")) {
-
-            // JDialogInverseOrder order =
-            new JDialogInverseOrder(this, getActiveImage()).run();
+            new JDialogInverseOrder(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("performRAHE")) {
 
             // JDialogAHE ahe =
@@ -1800,8 +1529,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogHistogram2Dim(this, getActiveImage());
         } else if (command.equals("DENCLUE")) {
             new JDialogDENCLUE(this, getActiveImage());
-        } else if (command.equals("colocDENCLUE")) {
-            new JDialogColocalizationDENCLUE(this, getActiveImage());
         } else if (command.equals("colocEM")) {
             new JDialogColocalizationEM(this, getActiveImage());
         } else if (command.equals("colocRegression")) {
@@ -1836,15 +1563,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             hsb.callAlgorithm();
         } else if (command.equals("ColorEdge")) {
-        //    JDialogColorEdge cEdge = new JDialogColorEdge(this, getActiveImage());
+            new JDialogColorEdge(this, getActiveImage());
         } else if (command.equals("Grays -> RGB")) {
-            JDialogRGBConcat graysToRGB = new JDialogRGBConcat(this, getActiveImage());
-
-            if (graysToRGB.getError() == null) {
-                graysToRGB.setVisible(true);
-            } else {
-                MipavUtil.displayError("" + graysToRGB.getError());
-            }
+            new JDialogRGBConcat(this, getActiveImage());
         } else if (command.equals("HistoSummary")) {
             new JDialogHistogramSummary(this, getActiveImage());
         } else if (command.equals("Convert type")) {
@@ -1858,7 +1579,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Convert3Dto4D")) {
             new JDialogConvert3Dto4D(this, getActiveImage());
         } else if (command.equals("Crop")) {
-            new JDialogCrop(this, getActiveImage(), zSlice);
+            new JDialogCrop(this, getActiveImage());
         } else if (command.equals("CropParam")) {
             new JDialogCropParam(this, getActiveImage());
         } else if (command.equals("FFT")) {
@@ -1872,9 +1593,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("Fill image")) {
             new JDialogMask(this, getActiveImage());
         } else if (command.equals("QuickMask")) {
-            new JDialogMask(userInterface, getActiveImage(), false, false);
+            new JDialogMask(getActiveImage(), false, false);
         } else if (command.equals("QuickMaskReverse")) {
-            new JDialogMask(userInterface, getActiveImage(), false, true);
+            new JDialogMask(getActiveImage(), false, true);
         } else if (command.equals("Mean")) {
             new JDialogMean(this, getActiveImage());
         } else if (command.equals("Median")) {
@@ -1889,8 +1610,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogDilate(this, getActiveImage());
         } else if (command.equals("Erode")) {
             new JDialogErode(this, getActiveImage());
-        } else if (command.equals("Skeletonize")) {
-            new JDialogSkeletonize(this, getActiveImage());
         } else if (command.equals("Skeletonize3D")) {
             new JDialogSkeletonize3D(this, getActiveImage());
         } else if (command.equals("SkelGeom3D")) {
@@ -1926,8 +1645,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogAdaptiveNR(this, getActiveImage());
         } else if (command.equals("adaptivePathSmooth")) {
             new JDialogAdaptivePathSmooth(this, getActiveImage());
-        } else if (command.equals("adaptiveSmooth")) {
-            new JDialogAdaptiveSmooth(this, getActiveImage());
         } else if (command.equals("NLNR")) {
 
             if (getActiveImage().getType() == ModelStorageBase.BOOLEAN) {
@@ -1936,11 +1653,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 new JDialogNLNoiseReduction(this, getActiveImage());
             }
         } else if (command.equals("RandOrder")) {
-            new JDialogRandomizeSliceOrder(this, getActiveImage()).run();
+            new JDialogRandomizeSliceOrder(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("ReplaceValue")) {
             new JDialogReplaceValue(this, getActiveImage());
-        } else if (command.equals("StereoDepth")) {
-            new JDialogStereoDepth(this, getActiveImage());
         } else if (command.equals("Haralick")) {
 
             if (getActiveImage().getType() == ModelStorageBase.UBYTE) {
@@ -1981,8 +1696,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 MipavUtil.displayError("There are no other images to register.");
             }
         } else if (command.equals("BSplineReg")) {
-            String[] akNamesCompatibleTargetImages = JDialogRegistrationBSpline.getNamesCompatibleTargetImages(componentImage.getActiveImage(),
-                                                                                                               userInterface);
+            String[] akNamesCompatibleTargetImages = JDialogRegistrationBSpline.getNamesCompatibleTargetImages(componentImage.getActiveImage());
 
             if (akNamesCompatibleTargetImages.length > 0) {
 
@@ -2069,31 +1783,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
                 MipavUtil.displayError("There are no other images to register.");
             }
-        } else if (command.equals("MRIShear")) {
-
-            if (isMultipleImages() == true) {
-                new JDialogRegistrationShear(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("There are no other images to register.");
-            }
         } else if (command.equals("TPSpline")) {
 
             if (isMultipleImages() == true) {
                 new JDialogRegistrationTPSpline(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("There are no other images to register.");
-            }
-        } else if (command.equals("AIR linear")) {
-
-            if (isMultipleImages() == true) {
-                new JDialogRegistrationAIR(this, getActiveImage());
-            } else {
-                MipavUtil.displayError("There are no other images to register.");
-            }
-        } else if (command.equals("AIR nonlinear")) {
-
-            if ((isMultipleImages() == true) || (getActiveImage().getNDims() == 3)) {
-                new JDialogRegistrationNonlinear(this, getActiveImage());
             } else {
                 MipavUtil.displayError("There are no other images to register.");
             }
@@ -2242,7 +1935,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("TransformNL")) {
             new JDialogTransformBSpline(this, getActiveImage());
         } else if (command.equals("Transform to power of 2")) {
-            new JDialogDirectResample(imageA, imageB, userInterface, componentImage, this);
+            new JDialogDirectResample(imageA, imageB, userInterface);
         } else if (command.equals("TransformNL")) {
             new JDialogTransformNL(this, getActiveImage());
         }
@@ -2342,6 +2035,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     if (imageB != null) {
                         linkTriFrame.setRGBTB(componentImage.getRGBTB());
                     }
+
                     linkTriFrame.updateImages(true);
                 }
 
@@ -2552,6 +2246,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 windowLevel[1].toFront();
             }
         } else if (command.equals("invertLUT")) {
+
             if (getActiveImage() == imageA) {
                 componentImage.getLUTa().invertLUT();
             } else if (getActiveImage() == imageB) {
@@ -2561,6 +2256,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (getActiveImage().getHistoLUTFrame() != null) {
                 getActiveImage().getHistoLUTFrame().update();
             }
+
             if (getActiveImage() == imageA) {
                 getActiveImage().notifyImageDisplayListeners(componentImage.getLUTa(), false);
             } else {
@@ -2862,11 +2558,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         }
 
-        if (userInterface.isScriptRecording()) {
-            userInterface.getScriptDialog().append("CloseFrame " +
-                                                   userInterface.getScriptDialog().getVar(getActiveImage().getImageName()) +
-                                                   "\n");
-        }
+        ScriptRecorder.getReference().addLine(new ActionCloseFrame(getActiveImage()));
 
         if ((imageA != null) && (imageA.getHistoLUTFrame() != null)) {
             imageA.getHistoLUTFrame().dispose();
@@ -2909,7 +2601,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param  event  event that triggered function
      */
     public synchronized void componentResized(ComponentEvent event) {
-    	int width, height;
+        int width, height;
         float bigger;
 
         if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
@@ -2927,19 +2619,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         if (zoom > componentImage.getZoomX()) {
             componentImage.setZoom((int) zoom, (int) zoom); // ***************************
+
             // setZoom(zoom, zoom);
             updateImages(true);
 
             if ((componentImage.getSize(null).width + 200) > xScreen) {
-               width = xScreen - 200;
+                width = xScreen - 200;
             } else {
-               width = componentImage.getSize(null).width /* + fudgeFactor*/;
+                width = componentImage.getSize(null).width /* + fudgeFactor*/;
             }
 
             if ((componentImage.getSize(null).height + 200) > yScreen) {
-               height = yScreen - 200;
+                height = yScreen - 200;
             } else {
-               height = componentImage.getSize(null).height /* + fudgeFactor*/;
+                height = componentImage.getSize(null).height /* + fudgeFactor*/;
             }
         } else if ((width < componentImage.getSize(null).width) && (height >= componentImage.getSize(null).height)) {
 
@@ -2951,27 +2644,29 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     scrollPane.getVerticalScrollBar().getWidth();
             // height += fudgeFactor;
 
-       /*
-        * The below else if block was modified to handle a bug found on Linux.  When a window was made smaller
-        * on windows on action event triggered the calling of this method, however on Linux several hundred
-        * events would be triggered by the same action.  The code would enter the below block, which did nothing.
-        * Then later in this method a small amount would be added to the width and height each time.  Until eventually
-        * the image would reach the original size before the user made it smaller.
-        *
-        * This code now re-adds the component listener and then just returns without allowing the code to reach
-        * the point where it adds to the size.  This has been tested on Windows and Linux and appears to produce
-        * the desired behavior on both.
-        *
-        * Nathan Pollack (Contractor-SSAI)  June 19, 2006
-        */
+            /*
+             * The below else if block was modified to handle a bug found on Linux.  When a window was made smaller on
+             * windows on action event triggered the calling of this method, however on Linux several hundred events
+             * would be triggered by the same action.  The code would enter the below block, which did nothing. Then
+             * later in this method a small amount would be added to the width and height each time.  Until eventually
+             * the image would reach the original size before the user made it smaller.
+             *
+             * This code now re-adds the component listener and then just returns without allowing the code to reach the
+             * point where it adds to the size.  This has been tested on Windows and Linux and appears to produce the
+             * desired behavior on both.
+             *
+             * Nathan Pollack (Contractor-SSAI)  June 19, 2006
+             */
         } else if ((width < componentImage.getSize(null).width) || (height < componentImage.getSize(null).height)) { // width += fudgeFactor;
-         	addComponentListener(this);
-        	return;
-                                                                                                                    // height += fudgeFactor;
+            addComponentListener(this);
+
+            return;
+            // height += fudgeFactor;
         } else if ((width > componentImage.getSize(null).width) || (height > componentImage.getSize(null).height)) {
 
             if (width > componentImage.getSize(null).width) {
                 width = componentImage.getSize(null).width; // ?????
+
                 // height += fudgeFactor;
             }
 
@@ -2981,7 +2676,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
         } else {
             addComponentListener(this);
-             return;
+
+            return;
         }
 
         width += scrollPane.getInsets().left + scrollPane.getInsets().right;
@@ -2992,15 +2688,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 scrollPane.getSize().height + getInsets().top + getInsets().bottom);
 
 
-
-
-        //validate();
+        // validate();
         setTitle();
         updateImages(true);
         addComponentListener(this);
         // componentImage.frameHeight = getSize().height;
         // componentImage.frameWidth = getSize().width;
-     }
+    }
 
     /**
      * Decreases the slice to be displayed by one and updates title frame.
@@ -3593,8 +3287,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @param  event  DOCUMENT ME!
      */
     public void mouseClicked(MouseEvent event) {
+
         if (event.getButton() == MouseEvent.BUTTON3) {
-             if (event.getSource() instanceof JToggleButton) {
+
+            if (event.getSource() instanceof JToggleButton) {
                 JToggleButton btnSource = (JToggleButton) event.getSource();
 
                 if (btnSource.getActionCommand().equals("MagImage") ||
@@ -3608,34 +3304,44 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /**
      * DOCUMENT ME!
      *
-     * @param  event  DOCUMENT ME!
+     * @param  e  DOCUMENT ME!
      */
-    public void mouseEntered(MouseEvent event) {}
+    public void mouseDragged(MouseEvent e) { }
 
     /**
      * DOCUMENT ME!
      *
      * @param  event  DOCUMENT ME!
      */
-    public void mouseExited(MouseEvent event) {}
+    public void mouseEntered(MouseEvent event) { }
 
     /**
      * DOCUMENT ME!
      *
      * @param  event  DOCUMENT ME!
      */
-    public void mousePressed(MouseEvent event) {}
+    public void mouseExited(MouseEvent event) { }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void mouseMoved(MouseEvent e) { }
 
     /**
      * DOCUMENT ME!
      *
      * @param  event  DOCUMENT ME!
      */
-    public void mouseReleased(MouseEvent event) {}
+    public void mousePressed(MouseEvent event) { }
 
-    public void mouseDragged(MouseEvent e){}
-
-    public void mouseMoved(MouseEvent e){}
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void mouseReleased(MouseEvent event) { }
 
 
     /**
@@ -3756,9 +3462,24 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /**
      * DOCUMENT ME!
      *
-     * @param  image2load  DOCUMENT ME!
+     * @param   image2load  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
      */
-    public void setAndLoad(ModelImage image2load) {
+    public boolean setAndLoad(ModelImage image2load) {
+        return setAndLoad(image2load, doOrigins, doOrients);
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   image2load  DOCUMENT ME!
+     * @param   doOrigins   DOCUMENT ME!
+     * @param   doOrients   DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean setAndLoad(ModelImage image2load, boolean doOrigins, boolean doOrients) {
 
         if (loadImage(image2load, componentImage, false, doOrigins, doOrients)) {
 
@@ -3774,7 +3495,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                                       menuBuilder.isMenuItemSelected("VOI toolbar"),
                                       menuBuilder.isMenuItemSelected("Paint toolbar"),
-                                      menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
+                                      menuBuilder.isMenuItemSelected("Scripting toolbar"),
+                                      componentImage.getVOIHandler().getVOI_ID());
             }
 
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
@@ -3782,7 +3504,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             setControls();
             setTitle();
+
+            return true;
         }
+
+        return false;
     }
 
     /**
@@ -3796,8 +3522,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void setControls() {
 
         if (getImageB() != null) {
+            menuBuilder.setMenuItemEnabled("Close image(B)", true);
             controls.addActiveImageControl();
         } else {
+            menuBuilder.setMenuItemEnabled("Close image(B)", false);
             controls.removeActiveImageControl();
         }
 
@@ -4249,7 +3977,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                               menuBuilder.isMenuItemSelected("VOI toolbar"),
                               menuBuilder.isMenuItemSelected("Paint toolbar"),
-                              menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
+                              menuBuilder.isMenuItemSelected("Scripting toolbar"),
+                              componentImage.getVOIHandler().getVOI_ID());
 
         // controls.setZSlider(zSlice);
         setControls();
@@ -5124,7 +4853,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"),
                               menuBuilder.isMenuItemSelected("VOI toolbar"),
                               menuBuilder.isMenuItemSelected("Paint toolbar"),
-                              menuBuilder.isMenuItemSelected("Scripting toolbar"), componentImage.getVOIHandler().getVOI_ID());
+                              menuBuilder.isMenuItemSelected("Scripting toolbar"),
+                              componentImage.getVOIHandler().getVOI_ID());
 
         if (getActiveImage().getFileInfo(0).getFileFormat() == FileBase.DICOM) {
 
@@ -5186,11 +4916,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
 
         /*
-         * The addComponentListener statement was moved from earlier in the code to the end
-         * because of a bug found on Linux.  It appeared that adding the component listener
-         * earlier caused events to be sent which led to a deadlocked situation.  So on the opening
-         * of a new window in Linux MIPAV would sometimes freeze up.  The moving of this statement
-         * to this line appeared to resolve that, and so this statement should remain here.
+         * The addComponentListener statement was moved from earlier in the code to the end because of a bug found on
+         * Linux.  It appeared that adding the component listener earlier caused events to be sent which led to a
+         * deadlocked situation.  So on the opening of a new window in Linux MIPAV would sometimes freeze up.  The
+         * moving of this statement to this line appeared to resolve that, and so this statement should remain here.
          *
          * Nathan Pollack (Contractor - SSAI)  June 19, 2006
          */
@@ -5209,7 +4938,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         componentImage = new ViewJComponentEditImage(this, imageA, LUTa, imageBufferA, null, null, imageBufferB,
                                                      pixBuffer, zoom, extents, logMagDisplay,
-                                                     FileInfoBase.UNKNOWN_ORIENT );
+                                                     FileInfoBase.UNKNOWN_ORIENT);
 
         componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
 
@@ -5250,8 +4979,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
 
-            if (!getActiveImage().getImageName().equals(name)) {
+            if (!imageA.getImageName().equals(name)) {
                 createDialog = true;
+
+                if ((imageB != null) && imageB.getImageName().equals(name)) {
+                    createDialog = false;
+                }
             }
         }
 

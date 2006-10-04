@@ -1,7 +1,10 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
+
+import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -965,7 +968,7 @@ public class ViewToolBarBuilder implements ItemListener {
             if (state == ItemEvent.SELECTED) {
                 currentSelectedScript = (String) currentScriptComboBox.getSelectedItem();
                 ((ViewJFrameBase) UI).getUserInterface().setLastScript(currentSelectedScript);
-                Preferences.debug("Current selected script is: " + currentSelectedScript + "\n");
+                Preferences.debug("toolbar:\tCurrent selected script is: " + currentSelectedScript + "\n", Preferences.DEBUG_SCRIPTING);
             }
         } else if (source instanceof AbstractButton) {
             ((AbstractButton) source).setBorderPainted(state == ItemEvent.SELECTED);
@@ -973,24 +976,35 @@ public class ViewToolBarBuilder implements ItemListener {
     }
 
     /**
-     * Method to run the current script.
-     *
-     * @param  userInterface  The system's user interface
+     * Method to run the script currently selected in the scripting toolbar.
      */
-    public void runScript(ViewUserInterface userInterface) {
-        ViewControlsScript scriptControls = new ViewControlsScript(userInterface);
+    public void runCurrentScript() {
+        try {
+            String scriptFile = getSelectedScriptFileName();
+            String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
 
-        scriptControls.setScriptDirectory(userInterface.getDefaultScriptDirectory() + File.separatorChar);
-
-        String tmpStr = (String) currentScriptComboBox.getSelectedItem();
-        int index = tmpStr.lastIndexOf(File.separatorChar);
-
-        tmpStr = tmpStr.substring(index + 1);
-
-        scriptControls.setScriptFileName(tmpStr);
-        scriptControls.runScript();
-
-    } // end runScript()
+            if (imageVars.length == 0) {
+                ScriptRunner.getReference().runScript(scriptFile, new Vector(), new Vector());
+            } else if (imageVars.length == 1 && Parser.getNumberOfVOIsRequiredForImageVar(scriptFile, imageVars[0]) == 0) {
+                Vector imageVector = new Vector();
+                String imageName = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage().getImageName();
+                imageVector.addElement(imageName);
+                ScriptRunner.getReference().runScript(scriptFile, imageVector, new Vector());
+            } else {
+                new JDialogRunScriptController(scriptFile);
+            }
+        } catch (ParserException pe) {
+            MipavUtil.displayError("Error encountered running script:\n " + pe);
+        }
+    }
+    
+    /**
+     * Returns the full path and file name of the currently selected script file in the scripting toolbar.
+     * @return The full path and file name of the currently selected script.
+     */
+    public String getSelectedScriptFileName() {
+        return (String) currentScriptComboBox.getSelectedItem();
+    }
 
     /**
      * Accessor that enables or disables the checkerboard button.
@@ -1179,14 +1193,14 @@ public class ViewToolBarBuilder implements ItemListener {
         try {
             filenames = filter.listFiles(dirFile);
         } catch (Exception e) {
-            Preferences.debug("Unable to access script files in " + dirName);
+            Preferences.debug("toolbar:\tUnable to access script files in " + dirName + "\n", Preferences.DEBUG_SCRIPTING);
             currentScriptComboBox.setEnabled(false);
 
             return;
         }
 
         if ((filenames == null) || (filenames.length == 0)) {
-            Preferences.debug("Found no script files in " + dirName);
+            Preferences.debug("toolbar:\tFound no script files in " + dirName + "\n", Preferences.DEBUG_SCRIPTING);
             currentScriptComboBox.setEnabled(false);
 
             return;

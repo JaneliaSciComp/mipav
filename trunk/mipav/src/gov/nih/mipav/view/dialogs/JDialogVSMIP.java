@@ -96,7 +96,7 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
         }
 
         srcImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     } // end JDialogVSMIP(...)
 
@@ -165,7 +165,7 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(srcImage.getImageName(), "_vsMIP");
 
         try {
@@ -177,6 +177,8 @@ public class JDialogVSMIP extends JDialogBase implements AlgorithmInterface {
             // This is made possible by implementing AlgorithmedPerformed interface
             vsMIPAlgo.addListener(this);
 
+            createProgressBar(srcImage.getImageName(), vsMIPAlgo);
+            
             if (isRunInSeparateThread()) {
 
                 if (vsMIPAlgo.startMethod(Thread.MIN_PRIORITY) == false) {

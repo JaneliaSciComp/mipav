@@ -80,7 +80,6 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
                                   boolean useRed, boolean useGreen, boolean useBlue) {
 
         super(destImg, srcImg);
-        this.baseImage = baseImage;
         this.doLinearRescale = doLinearRescale;
         this.bin1 = bin1;
         this.bin2 = bin2;
@@ -118,32 +117,6 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
             calcStoreInDestColor();
         } else {
             calcStoreInDest();
-        }
-    }
-
-    /**
-     * To create the standard progressBar. Stores in the class-global, progressBar
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Creating 2D Histogram ...", 0, 100, true,
-                                                   this, this);
-
-                int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-                int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-
-                progressBar.setLocation(xScreen / 2, yScreen / 2);
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
         }
     }
 
@@ -190,23 +163,14 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
 
         try {
 
-            try {
-                this.buildProgressBar();
-            } catch (NullPointerException npe) {
-
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm " +
-                                      "and dispose the progressbar between checking for " +
-                                      "threadStopping and using it.", Preferences.DEBUG_ALGORITHM);
-                }
-            }
+        	fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Histogram ...");
 
             srcImage.exportData(0, length, buffer); // locks and releases lock
             baseImage.exportData(0, length, baseBuffer);
 
             try {
-                progressBar.setMessage("Processing Image");
-                progressBar.updateValue(45, runningInSeparateThread); // a little less than midway
+                fireProgressStateChanged("Processing Image");
+                fireProgressStateChanged(45); // a little less than midway
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {
@@ -300,7 +264,7 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -346,16 +310,7 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
 
         try {
 
-            try {
-                this.buildProgressBar();
-            } catch (NullPointerException npe) {
-
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm " +
-                                      "and dispose the progressbar between checking for " +
-                                      "threadStopping and using it.", Preferences.DEBUG_ALGORITHM);
-                }
-            }
+        	fireProgressStateChanged(srcImage.getImageName(), "Creating 2D Histogram ...");
 
             if (useRed) {
                 srcImage.exportRGBData(1, 0, length, buffer); // locks and releases lock
@@ -370,8 +325,8 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
             }
 
             try {
-                progressBar.setMessage("Processing Image");
-                progressBar.updateValue(45, runningInSeparateThread); // a little less than midway
+                fireProgressStateChanged("Processing Image");
+                fireProgressStateChanged(45); // a little less than midway
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {
@@ -473,7 +428,7 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

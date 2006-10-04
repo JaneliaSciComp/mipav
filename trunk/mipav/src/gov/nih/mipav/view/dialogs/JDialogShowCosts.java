@@ -308,7 +308,7 @@ public class JDialogShowCosts extends JDialogBase {
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -429,7 +429,7 @@ public class JDialogShowCosts extends JDialogBase {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;

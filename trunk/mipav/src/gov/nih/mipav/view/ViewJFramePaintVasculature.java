@@ -1,6 +1,9 @@
 package gov.nih.mipav.view;
 
+
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
@@ -309,11 +312,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
             }
         }
 
-        if (userInterface.isScriptRecording()) {
-            userInterface.getScriptDialog().append("CloseFrame " +
-                                                   userInterface.getScriptDialog().getVar(componentImage.getActiveImage().getImageName()) +
-                                                   "\n");
-        }
+        ScriptRecorder.getReference().addLine(new ActionCloseFrame(componentImage.getActiveImage()));
 
         if (componentImage.growDialog != null) {
             componentImage.growDialog.resetDialogs();
@@ -1072,7 +1071,7 @@ public class ViewJFramePaintVasculature extends ViewJFrameBase {
 
         // init component image
         componentImage = new ViewJComponentEditImage(this, mipImage, LUTa, mipBuffer, null, null, null, pixBuffer, zoom,
-                                                     extents, logMagDisplay, FileInfoBase.UNKNOWN_ORIENT );
+                                                     extents, logMagDisplay, FileInfoBase.UNKNOWN_ORIENT);
 
         componentImage.setBuffers(mipBuffer, null, pixBuffer, null);
         componentImage.resetLUTs();

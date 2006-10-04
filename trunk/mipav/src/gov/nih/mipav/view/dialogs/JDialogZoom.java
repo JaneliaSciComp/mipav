@@ -233,7 +233,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel.add(magSlider, gbc);
 
@@ -241,19 +241,19 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel.add(minimum, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel.add(current, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel.add(maximum, gbc);
@@ -290,7 +290,7 @@ public class JDialogZoom extends JDialogBase implements ChangeListener, WindowLi
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         radioPanel.add(nearest, gbc);
         gbc.gridy = 1;

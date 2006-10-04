@@ -3,6 +3,8 @@ package gov.nih.mipav.model.scripting.parameters;
 
 import gov.nih.mipav.model.scripting.ParserException;
 
+import gov.nih.mipav.view.MipavUtil;
+
 import java.util.Vector;
 
 
@@ -21,6 +23,20 @@ public class ParameterList extends Parameter {
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    /**
+     * Creates a new ParameterList object.
+     *
+     * @param   paramLabel        The label/name to give to this parameter.
+     * @param   listContentsType  The type of the parameters contained in this list.
+     *
+     * @throws  ParserException  If there is a problem creating the parameter list.
+     */
+    public ParameterList(String paramLabel, int listContentsType) throws ParserException {
+        super(paramLabel, Parameter.PARAM_LIST);
+        setListType(listContentsType);
+        list = new Vector();
+    }
+    
     /**
      * Creates a new ParameterList object.
      *
@@ -44,7 +60,11 @@ public class ParameterList extends Parameter {
      * @param  elem  A parameter (should not be another list).
      */
     public void addToList(Parameter elem) {
-        list.add(elem);
+        if (elem.getType() == listType) {
+            list.add(elem);
+        } else {
+            MipavUtil.displayError("Error encountered:\n Attempted to add a " + Parameter.getTypeString(elem.getType()) + " parameter to a " + Parameter.getTypeString(listType) + " list.");
+        }
     }
 
     /**
@@ -56,6 +76,70 @@ public class ParameterList extends Parameter {
      */
     public Parameter elementAt(int index) {
         return (Parameter) list.elementAt(index);
+    }
+    
+    /**
+     * Returns the contents of this list as an array of booleans, if the list contains ParameterBoolean elements.
+     * @return  The list converted into an array of booleans.
+     */
+    public boolean[] getAsBooleanArray() {
+        if (listType != Parameter.PARAM_BOOLEAN) {
+            throw new ParameterException(getLabel(), "Tried to cast a " + Parameter.getTypeString(listType) + " list as an boolean array.");
+        }
+        
+        boolean[] array = new boolean[list.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = ((ParameterBoolean)elementAt(i)).getValue();
+        }
+        return array;
+    }
+    
+    /**
+     * Returns the contents of this list as an array of floats, if the list contains ParameterFloat elements.
+     * @return  The list converted into an array of floats.
+     */
+    public float[] getAsFloatArray() {
+        if (listType != Parameter.PARAM_FLOAT) {
+            throw new ParameterException(getLabel(), "Tried to cast a " + Parameter.getTypeString(listType) + " list as an float array.");
+        }
+        
+        float[] array = new float[list.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = ((ParameterFloat)elementAt(i)).getValue();
+        }
+        return array;
+    }
+    
+    /**
+     * Returns the contents of this list as an array of doubles, if the list contains ParameterDoubl elements.
+     * @return  The list converted into an array of doubles.
+     */
+    public double[] getAsDoubleArray() {
+        if (listType != Parameter.PARAM_DOUBLE) {
+            throw new ParameterException(getLabel(), "Tried to cast a " + Parameter.getTypeString(listType) + " list as an double array.");
+        }
+        
+        double[] array = new double[list.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = ((ParameterDouble)elementAt(i)).getValue();
+        }
+        return array;
+    }
+    
+    /**
+     * Returns the contents of this list as an array of ints, if the list contains ParameterInt elements.
+     * @return  The list converted into an array of ints.
+     */
+    public int[] getAsIntArray() {
+        if (listType != Parameter.PARAM_INT) {
+            throw new ParameterException(getLabel(), "Tried to cast a " + Parameter.getTypeString(listType) + " list as an int array.");
+        }
+        
+        int[] array = new int[list.size()];
+        for (int i = 0; i < array.length; i++) {
+            array[i] = ((ParameterInt)elementAt(i)).getValue();
+        }
+        return array;
     }
 
     /**
@@ -219,14 +303,18 @@ public class ParameterList extends Parameter {
             }
         }
 
-        strList.add(listString.substring(lastCommaIndex + 1));
+        // only add the rest of the string if there's something there..
+        String remainingListStr = listString.substring(lastCommaIndex + 1);
+        if (!remainingListStr.equals("")) {
+            strList.add(remainingListStr);
+        }
 
         Vector newList = new Vector();
 
         for (int i = 0; i < strList.size(); i++) {
             String str = ParameterList.replaceEscapedSpecialCharacters((String) strList.elementAt(i));
 
-            newList.add(ParameterFactory.newParameter("" + i, listContentsType, str));
+            newList.add(ParameterFactory.newNonListParameter("" + i, listContentsType, str));
         }
 
         return newList;

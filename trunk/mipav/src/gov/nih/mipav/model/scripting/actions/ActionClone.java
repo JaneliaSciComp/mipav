@@ -6,35 +6,28 @@ import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.ViewJFrameImage;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 
 /**
  * A script action which clones an input image and puts it into a new image frame.
  */
-public class ActionClone implements ScriptableActionInterface {
-
-    /**
-     * The label to use for the input image parameter.
-     */
-    private static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
+public class ActionClone extends ActionImageProcessorBase {
     
     /**
-     * The image whose cloning should be recorded in the script.  The actual cloning must be done elsewhere.
+     * Constructor for the dynamic instantiation and execution of the script action.
      */
-    private ModelImage recordingInputImage;
+    public ActionClone() {
+        super();
+    }
     
     /**
-     * Constructor for the dynamic instantiation and execution of the Clone script action.
+     * Constructor used to record the script action line.
+     * 
+     * @param  input   The image which was processed.
+     * @param  result  The result image generated.
      */
-    public ActionClone() {}
-    
-    /**
-     * Constructor used to record the Clone script action line.
-     * @param input  The image which was cloned.
-     */
-    public ActionClone(ModelImage input) {
-        recordingInputImage = input;
+    public ActionClone(ModelImage input, ModelImage result) {
+        super(input, result);
     }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -45,13 +38,14 @@ public class ActionClone implements ScriptableActionInterface {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
+            parameters.put(createInputImageParameter());
+            storeImageInRecorder(recordingResultImage);
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered creating input image parameter while recording Clone script action:\n" + pe);
+            MipavUtil.displayError("Error encountered creating input image parameter while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("Clone", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
     }
 
     /**
@@ -60,15 +54,7 @@ public class ActionClone implements ScriptableActionInterface {
     public void scriptRun(ParameterTable parameters) {
         ModelImage inputImage = parameters.getImage(INPUT_IMAGE_LABEL);
         ModelImage clonedImage = (ModelImage) inputImage.clone();
-        VariableTable.getReference().storeImageName(clonedImage.getImageName());
+        ScriptRunner.getReference().getImageTable().storeImageName(clonedImage.getImageName());
         new ViewJFrameImage(clonedImage);
-    }
-    
-    /**
-     * Changes the image whose cloning should be recorded in the script.
-     * @param inputImage  The image which was cloned.
-     */
-    public void setInputImage(ModelImage inputImage) {
-        recordingInputImage = inputImage;
     }
 }

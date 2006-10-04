@@ -3,6 +3,8 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -2639,14 +2641,13 @@ public class FileAvi extends FileBase {
                 }
             }
         }
-
-
-        if (UI.isScriptRecording()) {
-            UI.getScriptDialog().append("SaveImageAs " + UI.getScriptDialog().getVar(imageA.getImageName()) + " " +
-                                        ".avi " + newCompressionType + "\n");
-
-        }
-
+        
+        FileWriteOptions options = new FileWriteOptions(true);
+        options.setAVICompression(newCompressionType);
+        options.setFileType(FileBase.AVI);
+        options.setBeginSlice(0);
+        options.setEndSlice(imageA.getExtents()[2] - 1);
+        ScriptRecorder.getReference().addLine(new ActionSaveImageAs(imageA, options));
 
         if (useNewCompression) {
             // if the compression will be M-JPEG, X and Y extents must be multiples of 8... otherwise 4

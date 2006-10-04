@@ -48,7 +48,7 @@ public class JPanelProgressBar extends JPanel implements ProgressBarInterface {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1;
 

@@ -2,12 +2,13 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.ProgressChangeListener;
 
 import java.io.*;
 
 import javax.vecmath.*;
-
-
+import gov.nih
+.mipav.view.*;
 /**
  * The class generates a triangle or quad mesh of a 2D dataset (image) to be displayed in the surface viewer. If the
  * image is 3D, takes the 2D current slice. The triangle mesh is like a relief map of the image; the higher intensities
@@ -139,31 +140,31 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             cVertex = new Point3f[length / sampleSize];
             cConnect = new int[length * 4 / sampleSize];
             buffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Generating surface ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Generating surface ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        initProgressBar();
+        
 
         try {
             srcImage.exportSliceXY(slice, buffer);
         } catch (IOException error) {
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        progressBar.setMessage("Building vertex connectivity.");
-        progressBar.updateValue(10, runningInSeparateThread);
+        fireProgressStateChanged("Building vertex connectivity.");
+        fireProgressStateChanged(10);
 
         // build connectivity
         i = 0;
@@ -181,8 +182,8 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
 
         int length1 = i;
 
-        progressBar.setMessage("Building vertex data.");
-        progressBar.updateValue(60, runningInSeparateThread);
+        fireProgressStateChanged("Building vertex data.");
+        fireProgressStateChanged(60);
 
         float min = (float) srcImage.getMin();
         float max = (float) srcImage.getMax();
@@ -215,8 +216,8 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Saving surface.");
-        progressBar.updateValue(90, runningInSeparateThread);
+        fireProgressStateChanged("Saving surface.");
+        fireProgressStateChanged(90);
 
         try {
             qMesh = new ModelQuadMesh(cVertex, cConnect, length2, length1, null, maxBox);
@@ -226,25 +227,26 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             } else {
                 surfaceFileName = srcImage.getUserInterface().getDefaultDirectory() + surfaceFileName;
             }
-
-            qMesh.save(surfaceFileName, progressBar, 90, 10);
+            
+                        
+            qMesh.save(surfaceFileName, getProgressChangeListener(), 90, 10);
         } catch (IOException e) {
             System.gc();
             displayError("AlgorithmHeightFunction: " + e);
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -272,7 +274,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             cVertex = new Point3f[vCnt / sampleSize];
             cConnect = new int[length * 6 / sampleSize];
             buffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Generating surface ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Generating surface ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             cConnect = null;
@@ -280,25 +282,25 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        initProgressBar();
+        
 
         try {
             srcImage.exportData(slice, length, buffer); // locks and releases lock
         } catch (IOException error) {
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        progressBar.setMessage("Building vertex connectivity.");
-        progressBar.updateValue(10, runningInSeparateThread);
+        fireProgressStateChanged("Building vertex connectivity.");
+        fireProgressStateChanged(10);
 
         // build connectivity
         i = 0;
@@ -327,13 +329,13 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        progressBar.setMessage("Building vertex data.");
-        progressBar.updateValue(60, runningInSeparateThread);
+        fireProgressStateChanged("Building vertex data.");
+        fireProgressStateChanged(60);
 
         float min = (float) srcImage.getMin();
         float max = (float) srcImage.getMax();
@@ -382,8 +384,8 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             return;
         }
 
-        progressBar.setMessage("Saving surface.");
-        progressBar.updateValue(90, runningInSeparateThread);
+        fireProgressStateChanged("Saving surface.");
+        fireProgressStateChanged(90);
 
         try {
             vertex = new Point3f[i];
@@ -405,19 +407,19 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmHeightFunction: " + e);
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

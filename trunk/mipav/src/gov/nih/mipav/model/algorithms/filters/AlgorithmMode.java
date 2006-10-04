@@ -402,27 +402,27 @@ public class AlgorithmMode extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "", 0, 100); // let user know what is going on
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), ""); // let user know what is going on
+        
 
         // progressBar stuff here is a bit of overkill, unless we have a really
         // larger 2D image
-        progressBar.setMessage("Buffering ...");
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged("Buffering ...");
+        //fireProgressStateChanged(0);
 
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        //fireProgressStateChanged(100);
 
-        progressBar.setMessage("Filtering...");
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged("Filtering...");
+       // fireProgressStateChanged(0);
 
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
 
-        disposeProgressBar(); // filtering work should be done.
+         // filtering work should be done.
 
         if (threadStopped) {
             finalize();
@@ -487,8 +487,8 @@ public class AlgorithmMode extends AlgorithmBase {
             return;
         }
 
-        this.buildProgressBar(srcImage.getImageName(), "Buffering ...", 0, 100);
-        initProgressBar();
+        this.fireProgressStateChanged(srcImage.getImageName(), "Buffering ...");
+        
 
         // copy image data from srcBuffer into bdrBuffer
         copy3DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer);
@@ -496,14 +496,13 @@ public class AlgorithmMode extends AlgorithmBase {
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int bdrSliceLength = bdrBufferWidth * bdrBufferHeight;
 
-        progressBar.setMessage("Filtering...");
+        fireProgressStateChanged("Filtering...");
 
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
 
-                progressBar.updateValue(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)),
-                                        runningInSeparateThread);
+                fireProgressStateChanged(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)));
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
                                   currentSlice * srcSliceLength);
@@ -529,7 +528,7 @@ public class AlgorithmMode extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -583,28 +582,28 @@ public class AlgorithmMode extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Filtering image ...", 0, 100); // let user know what is going on
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Filtering image ..."); // let user know what is going on
+        
 
         // progressBar stuff here is a bit of overkill, unless we have a really
         // larger 2D image
-        progressBar.setMessage("Buffering ...");
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged("Buffering ...");
+        fireProgressStateChanged(0);
 
         // copy image data from buffer into borderBuffer
         copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, 0, 0);
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
 
-        progressBar.setMessage("Filtering...");
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged("Filtering...");
+        fireProgressStateChanged(0);
 
         this.sliceFilterBorder(bdrBuffer, resultBuffer, 0, 0); // filter this slice
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
 
-        disposeProgressBar(); // filtering work should be done.
+         // filtering work should be done.
 
         if (threadStopped) {
             finalize();
@@ -623,7 +622,7 @@ public class AlgorithmMode extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -676,8 +675,8 @@ public class AlgorithmMode extends AlgorithmBase {
             return;
         }
 
-        this.buildProgressBar(srcImage.getImageName(), "Buffering ...", 0, 100);
-        initProgressBar();
+        this.fireProgressStateChanged(srcImage.getImageName(), "Buffering ...");
+        
 
         // copy image data from srcBuffer into bdrBuffer
         copy3DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer);
@@ -685,14 +684,13 @@ public class AlgorithmMode extends AlgorithmBase {
         int srcSliceLength = srcBufferWidth * srcBufferHeight;
         int bdrSliceLength = bdrBufferWidth * bdrBufferHeight;
 
-        progressBar.setMessage("Filtering...");
+        fireProgressStateChanged("Filtering...");
 
         if (sliceFiltering) {
 
             for (currentSlice = 0; (currentSlice < numberOfSlices) && !threadStopped; currentSlice++) {
 
-                progressBar.updateValue(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)),
-                                        runningInSeparateThread);
+                fireProgressStateChanged(Math.round((((float) (currentSlice) / (srcBufferDepth - 1)) * 100)));
 
                 sliceFilterBorder(bdrBuffer, resultBuffer, currentSlice * bdrSliceLength,
                                   currentSlice * srcSliceLength);
@@ -702,7 +700,7 @@ public class AlgorithmMode extends AlgorithmBase {
         }
 
         destImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
-        disposeProgressBar(); // filtering work should be done.
+         // filtering work should be done.
 
         if (threadStopped) {
             finalize();
@@ -722,7 +720,7 @@ public class AlgorithmMode extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -873,7 +871,7 @@ public class AlgorithmMode extends AlgorithmBase {
 
         for (sliceIndex = 0; sliceIndex < srcBufferDepth; sliceIndex++) {
 
-            progressBar.updateValue(Math.round((((float) (sliceIndex) / (srcBufferDepth - 1)) * 100)), runningInSeparateThread);
+            fireProgressStateChanged(Math.round((((float) (sliceIndex) / (srcBufferDepth - 1)) * 100)));
 
             copy2DSrcBufferToBdrBuffer(srcBuffer, bdrBuffer, sliceIndex * srcBufferSliceLength,
                                        (sliceIndex * bdrBufferSliceLength) + bdrBufferSliceOffset);
@@ -1315,7 +1313,7 @@ public class AlgorithmMode extends AlgorithmBase {
 
         for (destSlice = 0; (destSlice < srcBufferDepth) && !threadStopped; destSlice++) {
 
-            progressBar.updateValue(Math.round((((float) (destSlice) / (srcBufferDepth - 1)) * 100)), runningInSeparateThread);
+            fireProgressStateChanged(Math.round((((float) (destSlice) / (srcBufferDepth - 1)) * 100)));
 
             srcBdrBufferSliceOffset = (destSlice * srcBdrBufferSliceLength) + srcBrdBufferKernelOffset;
 

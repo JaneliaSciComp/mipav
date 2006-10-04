@@ -2,9 +2,12 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -25,7 +28,7 @@ import javax.swing.*;
  * @author   Matthew J. McAuliffe, Ph.D.
  * @see      AlgorithmMorphology2D
  */
-public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogIDObjects extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -33,15 +36,6 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
     private static final long serialVersionUID = -6478138973143988561L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
 
     /** DOCUMENT ME! */
     private AlgorithmMorphology2D idObjectsAlgo2D = null;
@@ -53,12 +47,6 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
-
-    /** DOCUMENT ME! */
     private JLabel labelMax;
 
     /** DOCUMENT ME! */
@@ -68,13 +56,7 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
     private int max, min;
 
     /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** or if the source image is to be replaced. */
-    private boolean regionFlag = false;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -90,12 +72,6 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -122,31 +98,8 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogIDObjects(ViewUserInterface UI, ModelImage im) {
-        super();
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -181,8 +134,6 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMorphology2D) {
             image.clearMask();
 
@@ -194,7 +145,7 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                 try {
 
                     // resultImage.setImageName("ID image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -236,7 +187,7 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                 try {
 
                     // resultImage.setImageName("ID image");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -269,7 +220,9 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (idObjectsAlgo2D != null) {
             idObjectsAlgo2D.finalize();
@@ -294,127 +247,10 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("IDObjects " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + regionFlag + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + regionFlag + "\n");
-                }
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is blurred, <code>false</code> indicates a region.
-     */
-    public void setRegionFlag(boolean flag) {
-        regionFlag = flag;
-    }
-
-    /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         int kernel = 0;
         String name = makeImageName(image.getImageName(), "_IDObjects");
 
@@ -425,7 +261,7 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -436,17 +272,16 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                     // Make algorithm
                     idObjectsAlgo2D = new AlgorithmMorphology2D(resultImage, kernel, 0,
                                                                 AlgorithmMorphology2D.ID_OBJECTS, 0, 0, 0, 0,
-                                                                regionFlag);
+                                                                outputPanel.isProcessWholeImageSet());
                     idObjectsAlgo2D.setMinMax(min, max);
 
-                    if (regionFlag == false) {
+                    if (!outputPanel.isProcessWholeImageSet()) {
                         idObjectsAlgo2D.setMask(image.generateVOIMask());
-                        // This is very important. Adding this object as a listener allows the algorithm to notify this
-                        // object when it has completed of failed. See algorithm performed event. This is made possible
-                        // by implementing AlgorithmedPerformed interface
                     }
 
                     idObjectsAlgo2D.addListener(this);
+
+                    createProgressBar(image.getImageName(), idObjectsAlgo2D);
 
                     // Hide dialog
                     setVisible(false);
@@ -458,10 +293,6 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            idObjectsAlgo2D.setProgressBarVisible(false);
-                        }
-
                         idObjectsAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -481,17 +312,16 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     idObjectsAlgo2D = new AlgorithmMorphology2D(image, kernel, 0, AlgorithmMorphology2D.ID_OBJECTS, 0,
-                                                                0, 0, 0, regionFlag);
+                                                                0, 0, 0, outputPanel.isProcessWholeImageSet());
                     idObjectsAlgo2D.setMinMax(min, max);
 
-                    if (regionFlag == false) {
+                    if (!outputPanel.isProcessWholeImageSet()) {
                         idObjectsAlgo2D.setMask(image.generateVOIMask());
-                        // This is very important. Adding this object as a listener allows the algorithm to notify this
-                        // object when it has completed of failed. See algorithm performed event. This is made possible
-                        // by implementing AlgorithmedPerformed interface
                     }
 
                     idObjectsAlgo2D.addListener(this);
+
+                    createProgressBar(image.getImageName(), idObjectsAlgo2D);
 
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
@@ -517,6 +347,7 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             idObjectsAlgo2D.setProgressBarVisible(false);
                         }
@@ -535,7 +366,7 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            if (displayLoc == NEW) {
+            if (outputPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -546,10 +377,10 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                     // Make algorithm
                     idObjectsAlgo3D = new AlgorithmMorphology3D(resultImage, kernel, 0,
                                                                 AlgorithmMorphology3D.ID_OBJECTS, 0, 0, 0, 0,
-                                                                regionFlag);
+                                                                outputPanel.isProcessWholeImageSet());
                     idObjectsAlgo3D.setMinMax(min, max);
 
-                    if (regionFlag == false) {
+                    if (!outputPanel.isProcessWholeImageSet()) {
                         idObjectsAlgo3D.setMask(image.generateVOIMask());
                         // This is very important. Adding this object as a listener allows the algorithm to notify this
                         // object when it has completed of failed. See algorithm performed event. This is made possible
@@ -557,6 +388,8 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                     }
 
                     idObjectsAlgo3D.addListener(this);
+
+                    createProgressBar(image.getImageName(), idObjectsAlgo3D);
 
                     // Hide dialog
                     setVisible(false);
@@ -568,6 +401,7 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             idObjectsAlgo3D.setProgressBarVisible(false);
                         }
@@ -590,10 +424,10 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
 
                     // Make algorithm
                     idObjectsAlgo3D = new AlgorithmMorphology3D(image, kernel, 0, AlgorithmMorphology3D.ID_OBJECTS, 0,
-                                                                0, 0, 0, regionFlag);
+                                                                0, 0, 0, outputPanel.isProcessWholeImageSet());
                     idObjectsAlgo3D.setMinMax(min, max);
 
-                    if (regionFlag == false) {
+                    if (!outputPanel.isProcessWholeImageSet()) {
                         idObjectsAlgo3D.setMask(image.generateVOIMask());
                         // This is very important. Adding this object as a listener allows the algorithm to notify this
                         // object when it has completed of failed. See algorithm performed event. This is made possible
@@ -601,6 +435,8 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                     }
 
                     idObjectsAlgo3D.addListener(this);
+
+                    createProgressBar(image.getImageName(), idObjectsAlgo3D);
 
                     // Hide dialog
                     setVisible(false);
@@ -626,6 +462,7 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             idObjectsAlgo3D.setProgressBarVisible(false);
                         }
@@ -642,6 +479,50 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
     }
 
     /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if ((image.getType() != ModelImage.BOOLEAN) && (image.getType() != ModelImage.UBYTE) &&
+                (image.getType() != ModelImage.USHORT)) {
+            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
+            dispose();
+
+            return;
+        }
+
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+
+        int[] objectRange = scriptParameters.getParams().getList("object_size_range").getAsIntArray();
+        min = objectRange[0];
+        max = objectRange[1];
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessWholeImage(outputPanel.isProcessWholeImageSet());
+        scriptParameters.getParams().put(ParameterFactory.newParameter("object_size_range", new int[] { min, max }));
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -649,64 +530,17 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
 
         setTitle("Identify objects");
 
-        destinationPanel = new JPanel(new GridBagLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
 
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
+        JPanel mainPanel = new JPanel(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        destinationPanel.add(newImage, gbc);
-        gbc.gridy = 1;
-        destinationPanel.add(replaceImage, gbc);
-
-        imageVOIPanel = new JPanel(new GridBagLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("ID Objects"));
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        imageVOIPanel.add(wholeImage, gbc);
-        gbc.gridy = 1;
-        imageVOIPanel.add(VOIRegions, gbc);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
-        JPanel mainPanel = new JPanel(new GridBagLayout());
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.insets = new Insets(5, 5, 5, 5);
-        mainPanel.add(destinationPanel, gbc);
-        gbc.gridx = 1;
-        mainPanel.add(imageVOIPanel, gbc);
+        mainPanel.add(outputPanel, gbc);
 
         JPanel buttonPanel = new JPanel();
         buildOKButton();
@@ -737,28 +571,28 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
         gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelMax, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textMax, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         maskPanel.add(labelMin, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(textMin, gbc);
 
         JPanel controlPanel = new JPanel();
@@ -781,19 +615,6 @@ public class JDialogIDObjects extends JDialogBase implements AlgorithmInterface,
         System.gc();
 
         String tmpStr;
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-
-        }
-
-        if (wholeImage.isSelected()) {
-            regionFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            regionFlag = false;
-        }
 
         tmpStr = textMax.getText();
 

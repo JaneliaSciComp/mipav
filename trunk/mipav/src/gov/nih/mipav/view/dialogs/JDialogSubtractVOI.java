@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +23,7 @@ import javax.swing.*;
  * a new image type if the new minimum or maximum exceed the available range may be selected. For color only clipping is
  * currently available because MIPAV cannot handle negative color values.
  */
-public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterface {
+public class JDialogSubtractVOI extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -92,7 +94,10 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    // or if the source image is to be replaced
+    /**
+     * Constructor required for dynamic instantiation (during script execution).
+     */
+    public JDialogSubtractVOI() {}
 
     /**
      * Creates new dialog.
@@ -103,22 +108,8 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
     public JDialogSubtractVOI(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogSubtractVOI(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -154,9 +145,6 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmSubtractVOI) {
             image.clearMask();
 
@@ -167,7 +155,7 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -202,32 +190,8 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
             }
         }
 
-        if (subVOIAlgo.isCompleted() == true) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Subtract VOI " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + averageMode + " " + clipMode + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + averageMode + " " + clipMode + "\n");
-
-                }
-            }
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
         }
 
         // Update frame
@@ -265,9 +229,7 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
      *
      * @param  event  DOCUMENT ME!
      */
-    public void itemStateChanged(ItemEvent event) {
-        Object source = event.getSource();
-    }
+    public void itemStateChanged(ItemEvent event) {}
 
     /**
      * Accessor that sets the average mode.
@@ -306,7 +268,7 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (displayLoc == NEW) {
 
@@ -325,6 +287,8 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
                 // This is made possible by implementing AlgorithmedPerformed interface
                 subVOIAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), subVOIAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -427,12 +391,12 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 100;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(0, 0, 0, 0);
         inputPanel.add(radioMean, gbc);
@@ -459,12 +423,12 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
         clipGroup.add(radioPromote);
 
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 100;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(0, 0, 0, 0);
         clipPanel.add(radioClip, gbc);
@@ -494,7 +458,7 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 100;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         destinationPanel.add(replaceImage, gbc);
@@ -504,12 +468,12 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(inputPanel, gbc);
         gbc.gridy = 1;
         mainPanel.add(clipPanel, gbc);
         gbc.gridy = 2;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         mainPanel.add(destinationPanel, gbc);
 
         JPanel buttonPanel = new JPanel();
@@ -530,9 +494,6 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-
-        String tmpStr;
-
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
         } else if (newImage.isSelected()) {
@@ -554,4 +515,42 @@ public class JDialogSubtractVOI extends JDialogBase implements AlgorithmInterfac
         return true;
     }
 
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("average_mode", averageMode));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("clip_mode", clipMode));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        setAverageMode(scriptParameters.getParams().getInt("average_mode"));
+        setClipMode(scriptParameters.getParams().getInt("clip_mode"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
 }

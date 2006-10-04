@@ -410,23 +410,17 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             Cr = new int[length];
             Cb = new int[length];
             imgBuffer = new int[4 * length];
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Processing slice 1...", 0, 100, true, this,
-                                               this);
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth:  Out of Memory");
             setCompleted(false);
 
             return;
         }
 
-
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(0, srcImage.getImageName(), "Processing slice 1 ...");
+        
+        
 
         for (i = 0; i < zDim; i++) {
 
@@ -434,15 +428,15 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 srcImage.exportData(4 * i * length, 4 * length, imgBuffer); // locks and releases lock
             } catch (IOException error) {
                 cleanup();
-                progressBar.dispose();
                 displayError("AlgorithmAdaptivePathSmooth: Image(s) locked");
                 setCompleted(false);
 
                 return;
             }
 
-            progressBar.updateValue(i * 100 / zDim, runningInSeparateThread);
-            progressBar.setMessage("Processing slice " + (i + 1) + "...");
+            fireProgressStateChanged((int)(i * (100) / zDim), 
+                    srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
+           
             rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
             if (threadStopped) {
@@ -478,8 +472,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                     cleanup();
                     displayError("AlgorithmAdaptivePathSmooth: destImage locked " + error);
                     setCompleted(false);
-                    disposeProgressBar();
-
                     return;
                 }
             } else {
@@ -490,8 +482,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                     cleanup();
                     displayError("AlgorithmAdaptivePathSmooth: srcImage locked " + error);
                     setCompleted(false);
-                    disposeProgressBar();
-
                     return;
                 }
             }
@@ -503,8 +493,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             srcImage.calcMinMax();
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
-
+        fireProgressStateChanged(100, srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
+   
         if (threadStopped) {
             cleanup();
             finalize();
@@ -513,7 +503,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
         setCompleted(true);
     }
 
@@ -533,11 +522,9 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             length = xDim * yDim;
             totalLength = length;
             imgBuffer = new float[length];
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Processing slice 1 ...", 0, 100, true, this,
-                                               this);
+           
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth:  Out of Memory");
             setCompleted(false);
 
@@ -545,11 +532,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
 
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(0, srcImage.getImageName(), "Processing slice 1 ...");
 
         for (i = 0; i < zDim; i++) {
 
@@ -557,15 +540,14 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 srcImage.exportData(i * length, length, imgBuffer); // locks and releases lock
             } catch (IOException error) {
                 cleanup();
-                progressBar.dispose();
                 displayError("AlgorithmAdaptivePathSmooth: Image(s) locked");
                 setCompleted(false);
 
                 return;
             }
 
-            progressBar.updateValue(i * 100 / zDim, runningInSeparateThread);
-            progressBar.setMessage("Processing slice " + (i + 1) + "...");
+            fireProgressStateChanged((int)(i * 100 / zDim), srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
+            
 
             process(imgBuffer, false);
 
@@ -584,7 +566,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                     cleanup();
                     displayError("AlgorithmAdaptivePathSmooth: destImage locked " + error);
                     setCompleted(false);
-                    disposeProgressBar();
 
                     return;
                 }
@@ -596,7 +577,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                     cleanup();
                     displayError("AlgorithmAdaptivePathSmooth: srcImage locked " + error);
                     setCompleted(false);
-                    disposeProgressBar();
 
                     return;
                 }
@@ -609,8 +589,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             srcImage.calcMinMax();
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
-
+        fireProgressStateChanged(100, srcImage.getImageName(), "Processing slice " + (i + 1) + "...");
+        
         if (threadStopped) {
             cleanup();
             finalize();
@@ -619,7 +599,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
+    
         setCompleted(true);
     }
 
@@ -645,32 +625,23 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             Cb = new int[length];
             imgBuffer = new int[4 * length];
             srcImage.exportData(0, 4 * length, imgBuffer); // locks and releases lock
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Converting to Y,Cr,Cb ...", 0, 100, true, this,
-                                               this);
+           
         } catch (IOException error) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth:  Out of Memory");
             setCompleted(false);
 
             return;
         }
 
-
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
-
-        progressBar.setMessage("Converting from RGB to YCrCb");
+        fireProgressStateChanged(0, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
+      
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
         if (threadStopped) {
@@ -689,8 +660,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(95, runningInSeparateThread);
-        progressBar.setMessage("Converting fromYCrCb to RGB");
+        fireProgressStateChanged(95, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
         if (threadStopped) {
@@ -708,8 +679,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptivePathSmooth: destImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
-
                 return;
             }
         } else {
@@ -720,13 +689,12 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptivePathSmooth: srcImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
-
                 return;
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        
 
         if (threadStopped) {
             cleanup();
@@ -736,7 +704,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -755,18 +723,15 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             totalLength = length;
             imgBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Performing adaptive path smooth filter ...", 0,
-                                               100, true, this, this);
+     
         } catch (IOException error) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth:  Out of Memory");
             setCompleted(false);
 
@@ -774,11 +739,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
 
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(0, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
 
 
         process(imgBuffer, true);
@@ -798,8 +759,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptivePathSmooth: destImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
-
                 return;
             }
         } else {
@@ -810,13 +769,12 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptivePathSmooth: srcImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
-
+               
                 return;
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
 
         if (threadStopped) {
             cleanup();
@@ -826,7 +784,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
+      
         setCompleted(true);
     }
 
@@ -856,31 +814,23 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             Cb = new int[totalLength];
             imgBuffer = new int[4 * totalLength];
             srcImage.exportData(0, 4 * totalLength, imgBuffer); // locks and releases lock
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Converting to Y,Cr,Cb ...", 0, 100, true, this,
-                                               this);
+           
         } catch (IOException error) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth:  Out of Memory");
             setCompleted(false);
 
             return;
         }
 
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
+        fireProgressStateChanged(0, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
 
-        progressBar.setMessage("Converting from RGB to YCrCb");
         rgb2yCrCb(imgBuffer, Y, Cr, Cb);
 
         if (threadStopped) {
@@ -890,7 +840,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(5, runningInSeparateThread);
+        fireProgressStateChanged(5, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
         process3D(Y, Cr, Cb);
 
         if (threadStopped) {
@@ -900,8 +850,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(95, runningInSeparateThread);
-        progressBar.setMessage("Converting fromYCrCb to RGB");
+        fireProgressStateChanged(95, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        
         yCrCb2rgb(imgBuffer, Y, Cr, Cb);
 
         if (threadStopped) {
@@ -919,7 +869,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptivePathSmooth: destImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
@@ -931,13 +880,12 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptivePathSmooth: srcImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
-
                 return;
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100, srcImage.getImageName(), "Converting fromYCrCb to RGB ...");
+        
 
         if (threadStopped) {
             cleanup();
@@ -947,7 +895,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
+     
         setCompleted(true);
     }
 
@@ -977,30 +925,22 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             totalLength = length * zDim;
             imgBuffer = new float[totalLength];
             srcImage.exportData(0, totalLength, imgBuffer); // locks and releases lock
-            progressBar = new ViewJProgressBar(srcImage.getImageName(), "Performing adaptive path smooth filter ...", 0,
-                                               100, true, this, this);
         } catch (IOException error) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth: Image(s) locked");
             setCompleted(false);
 
             return;
         } catch (OutOfMemoryError e) {
             cleanup();
-            progressBar.dispose();
             displayError("AlgorithmAdaptivePathSmooth:  Out of Memory");
             setCompleted(false);
 
             return;
         }
-
-
-        int xScreen = Toolkit.getDefaultToolkit().getScreenSize().width;
-        int yScreen = Toolkit.getDefaultToolkit().getScreenSize().height;
-        progressBar.setLocation(xScreen / 2, yScreen / 2);
-        progressBar.setVisible(true);
-        progressBar.updateValue(0, runningInSeparateThread);
+        
+        
+        fireProgressStateChanged(0, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
 
         try {
             histX = new int[maxLength];
@@ -1022,7 +962,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         }
@@ -1066,8 +1005,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptivePathSmooth: destImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
-
                 return;
             }
         } else {
@@ -1078,13 +1015,13 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
                 cleanup();
                 displayError("AlgorithmAdaptivePathSmooth: srcImage locked " + error);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100, srcImage.getImageName(), "Performing adaptive path smooth filter ...");
+        
 
         if (threadStopped) {
             cleanup();
@@ -1094,7 +1031,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         }
 
         cleanup();
-        progressBar.dispose();
+      
         setCompleted(true);
     }
 
@@ -2753,7 +2690,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -2780,7 +2717,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory creating data1 " + e);
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -2841,7 +2778,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -2868,7 +2805,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory creating data1 " + e);
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
@@ -3169,23 +3106,14 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
 
         dataBW = Y;
 
-        // if (doProgress) {
-        // progressBar.updateValue(10, runningInSeparateThread);
-        // progressBar.setMessage("Performing median filter");
-        // }
-        // medianFilter(fY);
-        if (doProgress) {
-            progressBar.updateValue(20, runningInSeparateThread);
-            progressBar.setMessage("Creating edge graph");
-        }
-
+    
+        fireProgressStateChanged(20, srcImage.getImageName(), "Creating edge graph ...");
+        
         createEdgeGraph(fY);
 
-        if (doProgress) {
-            progressBar.updateValue(50, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Y space");
-        }
-
+        
+        fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
+      
         filterProcessBW();
 
         if (threadStopped) {
@@ -3241,23 +3169,16 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         width = xDim;
         height = yDim;
 
-        // if (doProgress) {
-        // progressBar.updateValue(10, runningInSeparateThread);
-        // progressBar.setMessage("Performing median filter");
-        // }
-        // medianFilter(fY,fR,fB);
-        if (doProgress) {
-            progressBar.updateValue(20, runningInSeparateThread);
-            progressBar.setMessage("Creating edge graph");
-        }
+      
+        
+        fireProgressStateChanged(20, srcImage.getImageName(), "Creating edge graph ...");
+       
 
         createEdgeGraph(fY, fR, fB);
 
-        if (doProgress) {
-            progressBar.updateValue(50, runningInSeparateThread);
-            progressBar.setMessage("Filtering in Y space");
-        }
-
+        
+        fireProgressStateChanged(50, srcImage.getImageName(), "Filtering in Y space ...");
+        
         filterProcess();
 
         if (threadStopped) {
@@ -3271,10 +3192,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = Cb;
             radius = radiusCb;
 
-            if (doProgress) {
-                progressBar.updateValue(70, runningInSeparateThread);
-                progressBar.setMessage("Filtering in Cb space");
-            }
+            fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
+            
 
             filterProcess();
 
@@ -3288,11 +3207,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = Cr;
             radius = radiusCr;
 
-            if (doProgress) {
-                progressBar.updateValue(90, runningInSeparateThread);
-                progressBar.setMessage("Filtering in Cr space");
-            }
-
+            fireProgressStateChanged(90, srcImage.getImageName(), "Filtering in Cr space ...");
+            
             filterProcess();
 
             if (threadStopped) {
@@ -3340,11 +3256,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = newB;
             radius = radiusCb / 2.0f;
 
-            if (doProgress) {
-                progressBar.updateValue(70, runningInSeparateThread);
-                progressBar.setMessage("Filtering in Cb space");
-            }
-
+            fireProgressStateChanged(70, srcImage.getImageName(), "Filtering in Cb space ...");
+           
             filterProcess();
 
             if (threadStopped) {
@@ -3357,11 +3270,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             data = newR;
             radius = radiusCr / 2.0f;
 
-            if (doProgress) {
-                progressBar.updateValue(90, runningInSeparateThread);
-                progressBar.setMessage("Filtering in Cr space");
-            }
-
+            fireProgressStateChanged(90, srcImage.getImageName(), "Filtering in Cr space ...");
+            
             filterProcess();
 
             if (threadStopped) {
@@ -3416,8 +3326,7 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory creating data1BW " + e);
             setCompleted(false);
-            disposeProgressBar();
-
+           
             return;
         }
 
@@ -3427,7 +3336,8 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             newValue = pIndex * 100 / totalLength;
 
             if (newValue > oldValue) {
-                progressBar.updateValue(newValue, runningInSeparateThread);
+                fireProgressStateChanged(newValue, srcImage.getImageName(), "Converting from RGB to YCrCb ...");
+               
             }
 
             oldValue = newValue;
@@ -3530,7 +3440,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory creating data1 " + e);
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         }
@@ -3564,7 +3473,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("AlgorithmAdaptivePathSmooth: Out of memory " + e);
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         }
@@ -3593,13 +3501,13 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
         height = yDim;
         depth = zDim;
 
-        progressBar.setMessage("Filtering in Y space");
 
         for (pIndex = 0; pIndex < totalLength; pIndex++) {
             newValue = 5 + (pIndex * 35 / totalLength);
 
             if (newValue > oldValue) {
-                progressBar.updateValue(newValue, runningInSeparateThread);
+                fireProgressStateChanged(newValue, srcImage.getImageName(), "Filtering in Y space ...");
+                
             }
 
             oldValue = newValue;
@@ -3672,7 +3580,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 displayError("AlgorithmAdaptivePathSmooth: Out of memory " + e);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
@@ -3697,13 +3604,13 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
 
             data = Cb;
 
-            progressBar.setMessage("Filtering in Cb space");
 
             for (pIndex = 0; pIndex < totalLength; pIndex++) {
                 newValue = 40 + (pIndex * 30 / totalLength);
 
                 if (newValue > oldValue) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged((newValue), srcImage.getImageName(), "Filtering in Cb space ...");
+                    
                 }
 
                 oldValue = newValue;
@@ -3775,7 +3682,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 displayError("AlgorithmAdaptivePathSmooth: Out of memory " + e);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
@@ -3800,13 +3706,12 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
 
             data = Cr;
 
-            progressBar.setMessage("Filtering in Cr space");
-
             for (pIndex = 0; pIndex < totalLength; pIndex++) {
                 newValue = 70 + (pIndex * 25 / totalLength);
 
                 if (newValue > oldValue) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged((newValue), srcImage.getImageName(), "Filtering in Cr space ...");
+                    
                 }
 
                 oldValue = newValue;
@@ -3979,7 +3884,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 displayError("AlgorithmAdaptivePathSmooth: Out of memory " + e);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
@@ -3989,7 +3893,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 displayError("AlgorithmAdaptivePathSmooth: Out of memory creating data1 " + e);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
@@ -4014,13 +3917,13 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
 
             data = newB;
 
-            progressBar.setMessage("Filtering in Cb space");
 
             for (pIndex = 0; pIndex < totalLength; pIndex++) {
                 newValue = 40 + (pIndex * 30 / totalLength);
 
                 if (newValue > oldValue) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged((newValue), srcImage.getImageName(), "Filtering in Cb space ...");
+                    
                 }
 
                 oldValue = newValue;
@@ -4093,7 +3996,6 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 displayError("AlgorithmAdaptivePathSmooth: Out of memory " + e);
                 setCompleted(false);
-                disposeProgressBar();
 
                 return;
             }
@@ -4118,13 +4020,12 @@ public class AlgorithmAdaptivePathSmooth extends AlgorithmBase {
 
             data = newR;
 
-            progressBar.setMessage("Filtering in Cr space");
-
             for (pIndex = 0; pIndex < totalLength; pIndex++) {
                 newValue = 70 + (pIndex * 25 / totalLength);
 
                 if (newValue > oldValue) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged((newValue), srcImage.getImageName(), "Filtering in Cr space ...");
+                    
                 }
 
                 oldValue = newValue;

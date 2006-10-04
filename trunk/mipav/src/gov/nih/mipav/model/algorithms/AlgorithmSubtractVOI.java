@@ -145,8 +145,8 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Calculating image ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Calculating image ...");
+        
 
         constructLog();
 
@@ -314,9 +314,8 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round(50 +
-                                                                   ((float) (i + offset) / (totalLength - 1) * 50)),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round(50 +
+                                                                   ((float) (i + offset) / (totalLength - 1) * 50)));
                             }
                         } catch (NullPointerException npe) {
 
@@ -355,7 +354,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Subtract VOI: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -364,7 +363,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         } // f loop
 
         srcImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -515,9 +514,8 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round(50 +
-                                                                   ((float) (i + offset) / (totalLength - 1) * 50)),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round(50 +
+                                                                   ((float) (i + offset) / (totalLength - 1) * 50)));
                             }
                         } catch (NullPointerException npe) {
 
@@ -558,7 +556,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Subtract VOI: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -567,7 +565,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         } // m loop
 
         srcImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -655,7 +653,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Subtract VOI : Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -665,9 +663,8 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round(50 +
-                                                                   ((float) (i + offset) / (totalLength - 1) * 50)),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round(50 +
+                                                                   ((float) (i + offset) / (totalLength - 1) * 50)));
                             }
                         } catch (NullPointerException npe) {
 
@@ -698,7 +695,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Subtract VOI: Destination Image locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -709,14 +706,14 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+            
             finalize();
 
             return;
         }
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -826,9 +823,8 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                         try {
 
                             if (((i % mod) == 0) && isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round(50 +
-                                                                   ((float) (i + offset) / (totalLength - 1) * 50)),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round(50 +
+                                                                   ((float) (i + offset) / (totalLength - 1) * 50)));
                             }
                         } catch (NullPointerException npe) {
 
@@ -869,7 +865,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                     } catch (IOException error) {
                         displayError("Algorithm Subtract VOI: Image(s) locked");
                         setCompleted(false);
-                        disposeProgressBar();
+                        
 
                         return;
                     }
@@ -878,7 +874,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
         } // m loop
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -1124,8 +1120,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                             try {
 
                                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                                    progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 50),
-                                                            runningInSeparateThread);
+                                    fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 50));
                                 }
                             } catch (NullPointerException npe) {
 
@@ -1256,8 +1251,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
                             try {
 
                                 if (((i % mod) == 0) && isProgressBarVisible()) {
-                                    progressBar.updateValue(Math.round((float) (i + offset) / (totalLength - 1) * 50),
-                                                            runningInSeparateThread);
+                                    fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 50));
                                 }
                             } catch (NullPointerException npe) {
 

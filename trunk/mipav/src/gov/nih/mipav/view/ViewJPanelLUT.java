@@ -1775,7 +1775,7 @@ public class ViewJPanelLUT extends JPanel
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         gbc.weighty = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.insets = new Insets(0, 5, 0, -5);
         controlPanel.add(updateCheckBoxA, gbc);
 
@@ -2051,7 +2051,7 @@ public class ViewJPanelLUT extends JPanel
         gbc.gridwidth = 1;
         gbc.weightx = 1;
         gbc.weighty = 0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         gbc.insets = new Insets(0, 5, 0, -5);
         controlPanelB.add(updateCheckBoxB, gbc);
@@ -2251,7 +2251,7 @@ public class ViewJPanelLUT extends JPanel
 
             AlgorithmHistogram histoAlgoA = new AlgorithmHistogram(histogramA, panelParent.getImageA(), entireFlag);
 
-            histoAlgoA.setProgressBarVisible(progressFlag);
+          //  histoAlgoA.setProgressBarVisible(progressFlag);
             histoAlgoA.setRunningInSeparateThread(false);
             histoAlgoA.run();
         }
@@ -2262,7 +2262,7 @@ public class ViewJPanelLUT extends JPanel
 
             AlgorithmHistogram histoAlgoB = new AlgorithmHistogram(histogramB, panelParent.getImageB(), entireFlag);
 
-            histoAlgoB.setProgressBarVisible(progressFlag);
+           // histoAlgoB.setProgressBarVisible(progressFlag);
             histoAlgoB.setRunningInSeparateThread(false);
             histoAlgoB.run();
         }

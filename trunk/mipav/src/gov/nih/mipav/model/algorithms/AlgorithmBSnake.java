@@ -194,8 +194,8 @@ public class AlgorithmBSnake extends AlgorithmBase {
             length = xDim * yDim;
             imgBuffer = new float[length];
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Bspline snake: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Bspline snake: Evolving boundary ...");
+            
         } catch (IOException error) {
             displayError("Algorithm Bsnake: Image(s) locked");
             setCompleted(false);
@@ -208,11 +208,11 @@ public class AlgorithmBSnake extends AlgorithmBase {
             return;
         }
 
-        progressBar.updateValue(25, runningInSeparateThread);
+        fireProgressStateChanged(25);
 
         contours = srcVOI.getCurves();
         nContours = contours[0].size();
-        progressBar.updateValue(30, runningInSeparateThread);
+        fireProgressStateChanged(30);
 
         for (int j = 0; j < nContours; j++) {
 
@@ -231,10 +231,10 @@ public class AlgorithmBSnake extends AlgorithmBase {
                 resultVOI.importPolygon(gons[j], 0);
             }
 
-            progressBar.updateValue(30 + (((j / nContours) - 1) * 70), runningInSeparateThread);
+            fireProgressStateChanged(30 + (((j / nContours) - 1) * 70));
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
 
         if (threadStopped) {
             finalize();
@@ -242,7 +242,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -271,8 +271,8 @@ public class AlgorithmBSnake extends AlgorithmBase {
             length = srcImage.getSliceSize();
             imgBuffer = new float[length];
 
-            buildProgressBar(srcImage.getImageName(), "Bspline snake: Evolving boundary ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Bspline snake: Evolving boundary ...");
+            
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Bsnake: Out of memory");
             setCompleted(false);
@@ -281,10 +281,10 @@ public class AlgorithmBSnake extends AlgorithmBase {
         }
 
         contours = srcVOI.getCurves();
-        progressBar.updateValue(30, runningInSeparateThread);
+        fireProgressStateChanged(30);
 
         for (slice = 0; slice < nSlices; slice++) {
-            progressBar.updateValue((int) (30 + (((float) slice / (nSlices - 1)) * 70)), runningInSeparateThread);
+            fireProgressStateChanged((int) (30 + (((float) slice / (nSlices - 1)) * 70)));
 
             try {
                 srcImage.exportData(slice * length, length, imgBuffer);
@@ -327,9 +327,9 @@ public class AlgorithmBSnake extends AlgorithmBase {
         }
 
         if (propagationType == PROP_SINGLE) {
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
             setCompleted(true);
-            progressBar.dispose();
+            
 
             return;
         }
@@ -346,7 +346,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
         // @todo + 2 in AlgorithmSnake (why?)
         xPoints = new float[tempGon.npoints + 5];
         yPoints = new float[tempGon.npoints + 5];
-        progressBar.updateValue(25, runningInSeparateThread);
+        fireProgressStateChanged(25);
 
         int percent = 25;
         int increment = (100 - percent) / (nSlices);
@@ -362,14 +362,14 @@ public class AlgorithmBSnake extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Bsnake: Image(s) locked");
                     setCompleted(false);
-                    progressBar.dispose();
+                    
 
                     return;
                 }
 
                 optGon = voiSimplex.goOptimize(imgBuffer, tempGon);
                 percent += increment;
-                progressBar.updateValue(percent, runningInSeparateThread);
+                fireProgressStateChanged(percent);
                 setPoints(xPoints, yPoints, tempGon);
 
                 energy = runSnake(xPoints, yPoints, imgBuffer, resultGon);
@@ -415,13 +415,13 @@ public class AlgorithmBSnake extends AlgorithmBase {
 
                 // only propagate to one other slice if PROP_NEXT
                 if (propagationType == PROP_NEXT) {
-                    progressBar.updateValue(100, runningInSeparateThread);
+                    fireProgressStateChanged(100);
 
                     if (!failureFlag) {
                         setCompleted(true);
                     }
 
-                    progressBar.dispose();
+                    
 
                     return;
                 }
@@ -443,7 +443,7 @@ public class AlgorithmBSnake extends AlgorithmBase {
             xPoints = new float[tempGon.npoints + 5];
             yPoints = new float[tempGon.npoints + 5];
             resultGon = new Polygon();
-            progressBar.updateValue(percent, runningInSeparateThread);
+            fireProgressStateChanged(percent);
 
             while (!threadStopped) {
 
@@ -452,14 +452,14 @@ public class AlgorithmBSnake extends AlgorithmBase {
                 } catch (IOException error) {
                     displayError("Algorithm Bsnake: Image(s) locked");
                     setCompleted(false);
-                    progressBar.dispose();
+                    
 
                     return;
                 }
 
                 optGon = voiSimplex.goOptimize(imgBuffer, tempGon);
                 percent += increment;
-                progressBar.updateValue(percent, runningInSeparateThread);
+                fireProgressStateChanged(percent);
                 setPoints(xPoints, yPoints, tempGon);
                 energy = runSnake(xPoints, yPoints, imgBuffer, resultGon);
                 nPts = resultGon.npoints;
@@ -501,13 +501,13 @@ public class AlgorithmBSnake extends AlgorithmBase {
 
                 // only propagate to one other slice if PROP_PREV
                 if (propagationType == PROP_PREV) {
-                    progressBar.updateValue(100, runningInSeparateThread);
+                    fireProgressStateChanged(100);
 
                     if (!failureFlag) {
                         setCompleted(true);
                     }
 
-                    progressBar.dispose();
+                    
 
                     return;
                 }
@@ -520,13 +520,13 @@ public class AlgorithmBSnake extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
 
         if (!failureFlag) {
             setCompleted(true);
         }
 
-        progressBar.dispose();
+        
     }
 
 

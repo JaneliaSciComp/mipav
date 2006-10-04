@@ -634,7 +634,7 @@ public class JDialogACPC extends JDialogBase {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         int y = 0;
 
@@ -1727,7 +1727,7 @@ public class JDialogACPC extends JDialogBase {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         int y = 0;
 

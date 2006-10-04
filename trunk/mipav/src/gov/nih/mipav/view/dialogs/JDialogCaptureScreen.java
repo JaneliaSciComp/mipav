@@ -349,7 +349,7 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
 
         JPanel instruction = new JPanel();
@@ -362,11 +362,11 @@ public class JDialogCaptureScreen extends JDialogBase implements MouseListener {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weighty = 1;
-        gbc.fill = gbc.VERTICAL;
+        gbc.fill = GridBagConstraints.VERTICAL;
         panel.add(instruction, gbc);
         gbc.gridy = 2;
         gbc.weighty = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         panel.add(regionButton, gbc);
         gbc.gridy = 3;
         panel.add(windowButton, gbc);

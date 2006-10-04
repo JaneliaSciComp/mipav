@@ -196,8 +196,8 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
 
         constructLog();
 
-        buildProgressBar(srcImage.getImageName(), "Performing MRI shading correction...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing MRI shading correction...");
+        
 
         srcImage.calcMinMax();
         xDim = srcImage.getExtents()[0];
@@ -359,7 +359,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
                 originalStdDev = Math.sqrt(originalStdDev);
 
                 for (it = 1; it <= iters; it++) {
-                    progressBar.updateValue(100 * ((iters * z) + it) / (zDim * iters), runningInSeparateThread);
+                    fireProgressStateChanged(100 * ((iters * z) + it) / (zDim * iters));
 
                     // The Laplacian of the buffer will be placed in buffer2
                     image2.importData(0, buffer, true);
@@ -693,10 +693,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
                 srcImage.calcMinMax();
             }
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+          
             setCompleted(true);
 
             return;
@@ -707,10 +704,7 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm MRI shading correction reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+           
             setCompleted(false);
 
             return;
@@ -719,9 +713,6 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm MRI shading correction reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 

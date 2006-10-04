@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -16,7 +18,7 @@ import javax.swing.*;
 /**
  * Dialog to get user input, then call the algorithm.
  */
-public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogIHN3Correction extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -54,9 +56,6 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
-
-    /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
 
     /** DOCUMENT ME! */
     private float kernelfwhm;
@@ -167,31 +166,9 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
             return;
         }
 
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         initVars();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogIHN3Correction(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-
-        if ((image.getNDims() == 3) && (image.getExtents()[2] <= 3)) {
-            MipavUtil.displayError("3D images must have at least 4 slices to use IHN3Correction");
-
-            return;
-        }
-
-        parentFrame = image.getParentFrame();
-        initVars();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -243,9 +220,6 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-        ViewJFrameImage fieldFrame = null;
-
         if (algorithm instanceof AlgorithmIHN3Correction) {
             image.clearMask();
 
@@ -256,7 +230,7 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     JOptionPane.showMessageDialog(null, "Out of memory: unable to open new frame", "Error",
@@ -268,7 +242,7 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
                     fieldImage.clearMask();
 
                     try {
-                        fieldFrame = new ViewJFrameImage(fieldImage, null, new Dimension(610, 220));
+                        new ViewJFrameImage(fieldImage, null, new Dimension(610, 220));
                     } catch (OutOfMemoryError error) {
                         System.gc();
                         JOptionPane.showMessageDialog(null, "Out of memory: unable to open new field frame", "Error",
@@ -290,7 +264,10 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
+
         N3Algo.finalize();
         N3Algo = null;
         dispose();
@@ -303,90 +280,6 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append("IHN3Correction " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       " " + regionFlag + " " + threshold + " " + endTol + " " +
-                                                       maxIter + " " + fieldDistance + " " + shrink + " " + kernelfwhm +
-                                                       " " + noise + " " + autoThreshold + " " + createField + "\n");
-            }
-        }
-    }
-
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-        initVars();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-            setThreshold(parser.getNextFloat());
-            setEndTol(parser.getNextFloat());
-            setMaxIter(parser.getNextInteger());
-            setFieldDistance(parser.getNextFloat());
-            setShrink(parser.getNextFloat());
-            setKernel(parser.getNextFloat());
-            setNoise(parser.getNextFloat());
-            setAutoFlag(parser.getNextBoolean());
-            setCreateField(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        useScript = true;
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
     }
 
     /**
@@ -482,7 +375,7 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
     /**
      * Once all the necessary variables are set, call the IHN3 Correction algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         String newName = makeImageName(image.getImageName(), "_N3Corrected");
 
@@ -520,6 +413,8 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
             // This is made possible by implementing AlgorithmedPerformed interface
             N3Algo.addListener(this);
 
+            createProgressBar(image.getImageName(), N3Algo);
+
             // Hide dialog
             setVisible(false);
 
@@ -530,6 +425,7 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     N3Algo.setProgressBarVisible(false);
                 }
@@ -553,6 +449,52 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
 
             return;
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        setRegionFlag(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
+        setThreshold(scriptParameters.getParams().getFloat("signal_threshold"));
+        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
+        setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
+        setFieldDistance(scriptParameters.getParams().getFloat("field_distance_mm"));
+        setShrink(scriptParameters.getParams().getFloat("subsampling_factor"));
+        setKernel(scriptParameters.getParams().getFloat("kernel_fwhm"));
+        setNoise(scriptParameters.getParams().getFloat("wiener_noise_filter"));
+        setAutoFlag(scriptParameters.getParams().getBoolean("do_auto_histo_thresholding"));
+        setCreateField(scriptParameters.getParams().getBoolean("do_create_field_image"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+        scriptParameters.storeProcessWholeImage(regionFlag);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("signal_threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("field_distance_mm", fieldDistance));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("subsampling_factor", shrink));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_fwhm", kernelfwhm));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("wiener_noise_filter", noise));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_auto_histo_thresholding", autoThreshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_field_image", createField));
     }
 
     /**
@@ -644,78 +586,78 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(labelSignal, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(textSignal, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(labelMaxIter, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(textMaxIter, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(labelEndTol, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(textEndTol, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(labelDistance, gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(textDistance, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(labelShrink, gbc);
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(textShrink, gbc);
         gbc.gridx = 0;
         gbc.gridy = 5;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(labelKernel, gbc);
         gbc.gridx = 1;
         gbc.gridy = 5;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(textKernel, gbc);
         gbc.gridx = 0;
         gbc.gridy = 6;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         paramPanel.add(labelNoise, gbc);
         gbc.gridx = 1;
         gbc.gridy = 6;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         paramPanel.add(textNoise, gbc);
 
         ButtonGroup imageVOIGroup = new ButtonGroup();
@@ -734,7 +676,7 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         imageVOIPanel.add(wholeImage, gbc);
         gbc.gridy = 1;
         imageVOIPanel.add(VOIRegions, gbc);
@@ -758,7 +700,7 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         otherPanel.add(autoThresholdCheckbox, gbc);
         gbc.gridy = 1;
         otherPanel.add(createFieldCheckbox, gbc);
@@ -769,7 +711,7 @@ public class JDialogIHN3Correction extends JDialogBase implements AlgorithmInter
         gbc.weightx = 0;
         gbc.gridwidth = 2;
         gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         mainPanel.add(paramPanel, gbc);
         gbc.gridy = 1;
         gbc.gridwidth = 1;

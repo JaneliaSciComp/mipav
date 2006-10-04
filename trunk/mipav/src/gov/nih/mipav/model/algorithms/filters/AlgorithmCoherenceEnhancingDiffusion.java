@@ -257,27 +257,6 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
     }
 
     /**
-     * Creates the standard progressBar. Stores in the class-global, progressBar.
-     */
-    private void buildProgressBar() {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar = new ViewJProgressBar(srcImage.getImageName(), "Coherence-Enhancing Diffusion ...", 0, 100,
-                                                   true, this, this);
-                initProgressBar();
-                progressBar.setVisible(true);
-            }
-        } catch (NullPointerException npe) {
-
-            if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
-                Preferences.debug("AlgorithmCoherenceEnhancingDiffusion: NullPointerException found while building progress bar.");
-            }
-        }
-    } // end buildProgressBar()
-
-    /**
      * DOCUMENT ME!
      *
      * @param  dx   float [] destination buffer
@@ -911,8 +890,6 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
      */
     private void run2D(int numImages) {
 
-        this.buildProgressBar();
-
         int totalComputation = numImages * numIterations;
         int computationCount = 0;
 
@@ -957,6 +934,9 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             return;
         } // end try{}-catch{}
 
+        
+        fireProgressStateChanged(0, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
+        
         // processing each slice starts here
         for (int imgNum = 0; imgNum < numImages; imgNum++) {
             sliceOffset = imgNum * length;
@@ -978,9 +958,9 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
             // iterate diffusion for each slice
             for (int iterNum = 1; iterNum <= numIterations; iterNum++) {
-                progressBar.updateValue(Math.round(((float) (computationCount++) / (totalComputation - 1) * 100)),
-                                        runningInSeparateThread);
-
+                
+                fireProgressStateChanged(((float)(computationCount++) / (totalComputation - 1)), null, null);
+                
                 computeDx(dx2, iterationBuffer);
                 computeDy(dy2, iterationBuffer);
 
@@ -1085,10 +1065,9 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
         } // end for (int imgNum = 0; ...)
 
+        fireProgressStateChanged(100, null, null);
+        
         destImage.calcMinMax();
-
-        // The meat is done
-        disposeProgressBar();
 
         if (threadStopped) {
             finalize();
@@ -1105,7 +1084,6 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
      * @param  numImages  int The number of 2D images
      */
     private void run2DC(int numImages) {
-        this.buildProgressBar();
 
         int totalComputation = numImages * numIterations;
         int computationCount = 0;
@@ -1150,6 +1128,8 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         boolean useBlue = true;
         int colorsPresent = 3;
 
+        fireProgressStateChanged(0, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
+        
         srcImage.calcMinMax();
 
         if (srcImage.getMinR() == srcImage.getMaxR()) {
@@ -1262,9 +1242,8 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
             // iterate diffusion for each slice
             for (int iterNum = 1; iterNum <= numIterations; iterNum++) {
-                progressBar.updateValue(Math.round(((float) (computationCount++) / (totalComputation - 1) * 100)),
-                                        runningInSeparateThread);
-
+                fireProgressStateChanged(((float)(computationCount++) / (totalComputation - 1)), null, null);
+                
                 if (useRed) {
                     computeDx(dx2, iterationBufferR);
                     computeDy(dy2, iterationBufferR);
@@ -1564,10 +1543,10 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
 
         } // end for (int imgNum = 0; ...)
 
+        fireProgressStateChanged(100, null, null);
+        
+        
         destImage.calcMinMax();
-
-        // The meat is done
-        disposeProgressBar();
 
         if (threadStopped) {
             finalize();
@@ -1582,8 +1561,6 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
      * Starts the algorithm for 3D images.
      */
     private void run3D() {
-
-        this.buildProgressBar();
 
         // OK, here is where the meat of the algorithm goes
         int length = xDim * yDim * zDim;
@@ -1603,6 +1580,9 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         float[] a, b, c; // references to the diffusion tensor
         float[] d, e, f;
 
+        fireProgressStateChanged(0, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
+        
+        
         try {
             resultBuffer = new float[length];
             iterationBuffer = new float[length];
@@ -1724,8 +1704,8 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             Matrix dMat;
 
             for (int z = 0; z < zDim; z++) {
-                progressBar.updateValue((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim), runningInSeparateThread);
-
+                fireProgressStateChanged(((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim)), null, null);
+                
                 for (int y = 0; y < yDim; y++) {
 
                     for (int x = 0; x < xDim; x++, idx++) {
@@ -1873,10 +1853,12 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             return;
         } // end try{}-catch{}
 
+        fireProgressStateChanged(100, null, null);
+        
         destImage.calcMinMax();
 
         // The meat is done
-        disposeProgressBar();
+        
 
         if (threadStopped) {
             finalize();
@@ -1891,8 +1873,6 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
      * Starts the algorithm for 3D color images.
      */
     private void run3DC() {
-
-        this.buildProgressBar();
 
         // OK, here is where the meat of the algorithm goes
         // Grap the basic image stuff
@@ -1941,6 +1921,9 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
         boolean useBlue = true;
         int colorsPresent = 3;
 
+        fireProgressStateChanged(0, srcImage.getImageName(), "Coherence-Enhancing Diffusion ...");
+        
+        
         srcImage.calcMinMax();
 
         if (srcImage.getMinR() == srcImage.getMaxR()) {
@@ -2287,7 +2270,7 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             Matrix dMat;
 
             for (int z = 0; z < zDim; z++) {
-                progressBar.updateValue((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim), runningInSeparateThread);
+                fireProgressStateChanged(((((iterNum - 1) * zDim) + z) * 100 / (numIterations * zDim)), null, null);
 
                 for (int y = 0; y < yDim; y++) {
 
@@ -2579,10 +2562,9 @@ public class AlgorithmCoherenceEnhancingDiffusion extends AlgorithmBase {
             return;
         } // end try{}-catch{}
 
+        fireProgressStateChanged(100, null, null);
+        
         destImage.calcMinMax();
-
-        // The meat is done
-        disposeProgressBar();
 
         if (threadStopped) {
             finalize();

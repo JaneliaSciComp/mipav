@@ -3,6 +3,8 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.file.xcede.*;
 
@@ -84,8 +86,6 @@ public class FileIO {
     public FileIO() {
         UI = ViewUserInterface.getReference();
         unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
-        this.fileName = fileName;
-        this.fileDir = fileDir;
         UI.setLoad(false); // default to "opening "
     }
 
@@ -3177,22 +3177,13 @@ public class FileIO {
                 return;
         }
 
-        if (UI.isScriptRecording()) {
-
-            if (options.isSaveAs()) {
-                UI.getScriptDialog().append("SaveImageAs " + UI.getScriptDialog().getVar(image.getImageName()) + " " +
-                                            getSuffix(fileType) + " ");
-
-                if (!options.isDefault()) {
-                    recordOptions(options, image.getExtents());
-                }
-
-                UI.getScriptDialog().append("\n");
-            } else {
-                UI.getScriptDialog().append("SaveImage " + UI.getScriptDialog().getVar(image.getImageName()) + " " +
-                                            getSuffix(fileType) + "\n");
-            }
+        ScriptableActionInterface action;
+        if (options.isSaveAs()) {
+            action = new ActionSaveImageAs(image, options);
+        } else {
+            action = new ActionSaveImage(image, options);
         }
+        ScriptRecorder.getReference().addLine(action);
     }
 
 
@@ -3704,7 +3695,7 @@ public class FileIO {
 
             // most likely an Analyze file
             try {
-                imageFile = new FileAnalyze(UI, fileName, fileDir, showProgressBar);
+                imageFile = new FileAnalyze(fileName, fileDir);
                 image = imageFile.readImage(one);
             } catch (IOException error) {
 
@@ -3808,7 +3799,7 @@ public class FileIO {
         // if one of the images has the wrong extents, the following must be changed.
         // (ei., too many images!)
         // for simplicity of setup, read in the first file hdr
-        imageFile = new FileAnalyze(UI, fileList[0], fileDir, false);
+        imageFile = new FileAnalyze(fileList[0], fileDir);
 
         try {
 
@@ -3860,7 +3851,7 @@ public class FileIO {
             try {
                 progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
-                imageFile = new FileAnalyze(UI, fileList[i], fileDir, false);
+                imageFile = new FileAnalyze(fileList[i], fileDir);
 
                 if (!((FileAnalyze) imageFile).readHeader(fileList[i], fileDir)) {
                     throw (new IOException(" Analyze header file error"));
@@ -7231,22 +7222,7 @@ public class FileIO {
             return null;
         }
 
-        if (UI.isScriptRecording()) {
-            UI.getScriptDialog().putVar(image.getImageName());
-            UI.getScriptDialog().append("OpenImage " + UI.getScriptDialog().getVar(image.getImageName()));
-            UI.getScriptDialog().append("\tAttributes " + fileInfo.getDataType() + " " + fileInfo.getEndianess() + " " +
-                                        fileInfo.getOffset() + " " + fileInfo.getExtents().length + " ");
-
-            for (i = 0; i < fileInfo.getExtents().length; i++) {
-                UI.getScriptDialog().append(fileInfo.getExtents()[i] + " " + fileInfo.getResolutions()[i] + " " +
-                                            fileInfo.getUnitsOfMeasure()[i] + " ");
-            }
-
-            UI.getScriptDialog().append("\n");
-        }
-
         return image;
-
     }
 
     /**
@@ -7412,20 +7388,6 @@ public class FileIO {
         }
 
         progressBar.dispose();
-
-        if (UI.isScriptRecording()) {
-            UI.getScriptDialog().putVar(image.getImageName());
-            UI.getScriptDialog().append("OpenMultiFile " + UI.getScriptDialog().getVar(image.getImageName()));
-            UI.getScriptDialog().append("\tAttributes " + fileInfo.getDataType() + " " + fileInfo.getEndianess() + " " +
-                                        fileInfo.getOffset() + " " + fileInfo.getExtents().length + " ");
-
-            for (i = 0; i < fileInfo.getExtents().length; i++) {
-                UI.getScriptDialog().append(fileInfo.getExtents()[i] + " " + fileInfo.getResolutions()[i] + " " +
-                                            fileInfo.getUnitsOfMeasure()[i] + " ");
-            }
-
-            UI.getScriptDialog().append("\n");
-        }
 
         return image;
 
@@ -8220,49 +8182,6 @@ public class FileIO {
     }
 
     /**
-     * Records the necessary options for a file save.
-     *
-     * @param  options  Structure holding the options used to write the image.
-     * @param  extents  Extents of the image, necessary to determine what to record.
-     */
-    private void recordOptions(FileWriteOptions options, int[] extents) {
-        int nDims = extents.length;
-
-        if ((options.getFileType() == FileBase.TIFF) && options.isPackBitEnabled()) {
-            UI.getScriptDialog().append("" + options.isWritePackBit() + " ");
-        }
-
-        if (nDims == 3) {
-            UI.getScriptDialog().append(options.getBeginSlice() + " " + options.getEndSlice() + " ");
-
-            if ((options.getFileType() == FileBase.TIFF) && options.isMultiFile()) {
-                UI.getScriptDialog().append(options.getStartNumber() + " " + options.getDigitNumber() + " ");
-            }
-        } else if (nDims == 4) {
-
-            if ((options.getFileType() == FileBase.TIFF) || (options.getFileType() == FileBase.MINC)) {
-                UI.getScriptDialog().append(options.getBeginSlice() + " " + options.getEndSlice() + " " +
-                                            options.getTimeSlice() + " ");
-
-                if (options.isMultiFile()) {
-                    UI.getScriptDialog().append(options.getStartNumber() + " " + options.getDigitNumber() + " ");
-                }
-            } else {
-                UI.getScriptDialog().append(options.getBeginSlice() + " " + options.getEndSlice() + " " +
-                                            options.getBeginTime() + " " + options.getEndTime());
-            }
-        }
-
-        if (options.getFileType() == FileBase.MINC) {
-            UI.getScriptDialog().append(options.getOrientation() + " " + options.getXStart() + " " +
-                                        options.getXSpace() + " " + options.getYStart() + " " + options.getYSpace() +
-                                        " " + options.getZStart() + " " + options.getZSpace() + " " +
-                                        options.isLeftToRight() + " " + options.isPosToAnt() + " " +
-                                        options.isInfToSup() + " ");
-        }
-    }
-
-    /**
      * Sorts an array of floats (using insertion sort), turns into array of ints used to sort images by slice location;
      * thus, the final value of B[i] is for the ith image read in, put that image at location B[i] in the image buffer.
      * This is necessary for images labeled dicom1, dicom2, etc because dicom11, dicom12, ... will come before dicom2.
@@ -8453,7 +8372,7 @@ public class FileIO {
         }
 
         try { // Construct a new file object
-            analyzeFile = new FileAnalyze(UI, options.getFileName(), options.getFileDirectory(), true);
+            analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
             analyzeFile.writeImage(image, options);
         } catch (IOException error) {
 

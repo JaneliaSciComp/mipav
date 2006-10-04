@@ -60,9 +60,21 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
     /**
      * Creates the way to open and verify files before they are loaded by the FileIO.
      *
+     * @param  openDialog  a boolean that selects whether this UI should be built and displayed. <code>true</code>
+     *                     indicates the UI will be displayed, and <code>false</code> is that it will not be displayed.
+     */
+    public ViewOpenFileUI(boolean openDialog) {
+        super(ViewUserInterface.getReference(), openDialog, false);
+    }
+    
+    /**
+     * Creates the way to open and verify files before they are loaded by the FileIO.
+     *
      * @param  ui          Main user interface.
      * @param  openDialog  a boolean that selects whether this UI should be built and displayed. <code>true</code>
      *                     indicates the UI will be displayed, and <code>false</code> is that it will not be displayed.
+     *                     
+     * @deprecated  Shouldn't pass around the UI since it's a singleton.
      */
     public ViewOpenFileUI(ViewUserInterface ui, boolean openDialog) {
         super(ui, openDialog, false);
@@ -343,24 +355,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
         secondImage = fileIO.getSecondImage();
 
-        if (UI.isScriptRecording()) {
-
-            if ((image.getFileInfo(0).getFileFormat() != FileBase.RAW) &&
-                    (image.getFileInfo(0).getFileFormat() != FileBase.RAW_MULTIFILE)) {
-
-                // RAW files need special info appended so it's done in that function.
-                UI.getScriptDialog().putVar(image.getImageName());
-
-                if (multiFile) {
-                    UI.getScriptDialog().append("OpenMultiFile " + UI.getScriptDialog().getVar(image.getImageName()) +
-                                                "\n");
-                } else {
-                    UI.getScriptDialog().append("OpenImage " + UI.getScriptDialog().getVar(image.getImageName()) +
-                                                "\n");
-                }
-            }
-        }
-
         if (secondImage != 0) {
 
             try {
@@ -388,24 +382,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     MipavUtil.displayError("Out of memory!");
 
                     return images; // we did successfully open the first image
-                }
-
-                if (UI.isScriptRecording()) {
-
-                    if ((image2.getFileInfo(0).getFileFormat() != FileBase.RAW) &&
-                            (image2.getFileInfo(0).getFileFormat() != FileBase.RAW_MULTIFILE)) {
-
-                        // RAW files need special info appended so it's done in that function.
-                        UI.getScriptDialog().putVar(image2.getImageName());
-
-                        if (multiFile) {
-                            UI.getScriptDialog().append("OpenMultiFile " +
-                                                        UI.getScriptDialog().getVar(image2.getImageName()) + "\n");
-                        } else {
-                            UI.getScriptDialog().append("OpenImage " +
-                                                        UI.getScriptDialog().getVar(image2.getImageName()) + "\n");
-                        }
-                    }
                 }
             }
         } // if (secondImage != 0)
@@ -520,25 +496,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
             return null;
         }
-
-        if (UI.isScriptRecording()) {
-
-            if ((image.getFileInfo(0).getFileFormat() != FileBase.RAW) &&
-                    (image.getFileInfo(0).getFileFormat() != FileBase.RAW_MULTIFILE)) {
-
-                // RAW files need special info appended so it's done in that function.
-                UI.getScriptDialog().putVar(image.getImageName());
-
-                if (multiFile) {
-                    UI.getScriptDialog().append("OpenMultiFile " + UI.getScriptDialog().getVar(image.getImageName()) +
-                                                "\n");
-                } else {
-                    UI.getScriptDialog().append("OpenImage " + UI.getScriptDialog().getVar(image.getImageName()) +
-                                                "\n");
-                }
-            }
-        }
-
+        
         if (secondImage != 0) {
 
             try {
@@ -576,24 +534,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
             }
 
             // UI.getMainFrame().pack();
-            if (UI.isScriptRecording()) {
-
-                if ((image2.getFileInfo(0).getFileFormat() != FileBase.RAW) &&
-                        (image2.getFileInfo(0).getFileFormat() != FileBase.RAW_MULTIFILE)) {
-
-                    // RAW files need special info appended so it's done in that function.
-                    UI.getScriptDialog().putVar(image2.getImageName());
-
-                    if (multiFile) {
-                        UI.getScriptDialog().append("OpenMultiFile " +
-                                                    UI.getScriptDialog().getVar(image2.getImageName()) + "\n");
-                    } else {
-                        UI.getScriptDialog().append("OpenImage " + UI.getScriptDialog().getVar(image2.getImageName()) +
-                                                    "\n");
-                    }
-                }
-            }
-
         } // if (secondImage != 0)
 
 

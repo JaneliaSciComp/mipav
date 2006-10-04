@@ -1195,8 +1195,10 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             pt[j] = p[j];
         }
 
+        System.err.println("ITMax is: " + ITMAX);
+        
         for (iter = 1;; iter++) {
-            progressBar.updateValue(100 * iter / ITMAX, runningInSeparateThread);
+            fireProgressStateChanged(100 * iter / ITMAX);
             fp = fret;
             ibig = -1;
 
@@ -1298,8 +1300,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
 
         constructLog();
 
-        buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -1350,15 +1352,15 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         if (c == 1) {
                             minimum = minimumR;
                             maximum = maximumR;
-                            progressBar.setMessage("Performing red entropy minimization");
+                            fireProgressStateChanged("Performing red entropy minimization");
                         } else if (c == 2) {
                             minimum = minimumG;
                             maximum = maximumG;
-                            progressBar.setMessage("Performing green entropy minimization");
+                            fireProgressStateChanged("Performing green entropy minimization");
                         } else if (c == 3) {
                             minimum = minimumB;
                             maximum = maximumB;
-                            progressBar.setMessage("Performing blue entropy minimization");
+                            fireProgressStateChanged("Performing blue entropy minimization");
                         }
                     } // if (srcImage.isColorImage())
                     else {
@@ -1750,10 +1752,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy minimization reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -1762,19 +1760,13 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy Minimization reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
+        
 
             setCompleted(false);
 
             return;
         }
 
-
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
 
         setCompleted(true);
 
@@ -1808,8 +1800,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
 
         constructLog();
 
-        buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -1860,15 +1852,15 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         if (c == 1) {
                             minimum = minimumR;
                             maximum = maximumR;
-                            progressBar.setMessage("Performing red entropy minimization");
+                            fireProgressStateChanged("Performing red entropy minimization");
                         } else if (c == 2) {
                             minimum = minimumG;
                             maximum = maximumG;
-                            progressBar.setMessage("Performing green entropy minimization");
+                            fireProgressStateChanged("Performing green entropy minimization");
                         } else if (c == 3) {
                             minimum = minimumB;
                             maximum = maximumB;
-                            progressBar.setMessage("Performing blue entropy minimization");
+                            fireProgressStateChanged("Performing blue entropy minimization");
                         }
                     } // if (srcImage.isColorImage())
                     else {
@@ -2200,10 +2192,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy minimization reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+          
             setCompleted(false);
 
             return;
@@ -2212,19 +2201,13 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy Minimization reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+         
             setCompleted(false);
 
             return;
         }
 
 
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
 
         setCompleted(true);
 
@@ -2258,8 +2241,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
 
         constructLog();
 
-        buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -2310,15 +2293,15 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         if (c == 1) {
                             minimum = minimumR;
                             maximum = maximumR;
-                            progressBar.setMessage("Performing red entropy minimization");
+                            fireProgressStateChanged("Performing red entropy minimization");
                         } else if (c == 2) {
                             minimum = minimumG;
                             maximum = maximumG;
-                            progressBar.setMessage("Performing green entropy minimization");
+                            fireProgressStateChanged("Performing green entropy minimization");
                         } else if (c == 3) {
                             minimum = minimumB;
                             maximum = maximumB;
-                            progressBar.setMessage("Performing blue entropy minimization");
+                            fireProgressStateChanged("Performing blue entropy minimization");
                         }
                     } // if (srcImage.isColorImage())
                     else {
@@ -2694,10 +2677,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy minimization reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+          
             setCompleted(false);
 
             return;
@@ -2706,19 +2686,13 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy Minimization reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
+          
 
             setCompleted(false);
 
             return;
         }
 
-
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
 
         setCompleted(true);
 
@@ -2758,8 +2732,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
 
         constructLog();
 
-        buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -2813,15 +2787,15 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         if (c == 1) {
                             minimum = minimumR;
                             maximum = maximumR;
-                            progressBar.setMessage("Performing red entropy minimization");
+                            fireProgressStateChanged("Performing red entropy minimization");
                         } else if (c == 2) {
                             minimum = minimumG;
                             maximum = maximumG;
-                            progressBar.setMessage("Performing green entropy minimization");
+                            fireProgressStateChanged("Performing green entropy minimization");
                         } else if (c == 3) {
                             minimum = minimumB;
                             maximum = maximumB;
-                            progressBar.setMessage("Performing blue entropy minimization");
+                            fireProgressStateChanged("Performing blue entropy minimization");
                         }
                     } // if (srcImage.isColorImage())
                     else {
@@ -3343,10 +3317,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy minimization reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -3355,19 +3325,12 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy Minimization reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
+      
             setCompleted(false);
 
             return;
         }
 
-
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
 
         setCompleted(true);
 
@@ -3404,8 +3367,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
 
         constructLog();
 
-        buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization ...");
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -3459,15 +3422,15 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         if (c == 1) {
                             minimum = minimumR;
                             maximum = maximumR;
-                            progressBar.setMessage("Performing red entropy minimization");
+                            fireProgressStateChanged("Performing red entropy minimization");
                         } else if (c == 2) {
                             minimum = minimumG;
                             maximum = maximumG;
-                            progressBar.setMessage("Performing green entropy minimization");
+                            fireProgressStateChanged("Performing green entropy minimization");
                         } else if (c == 3) {
                             minimum = minimumB;
                             maximum = maximumB;
-                            progressBar.setMessage("Performing blue entropy minimization");
+                            fireProgressStateChanged("Performing blue entropy minimization");
                         }
                     } // if (srcImage.isColorImage())
                     else {
@@ -3887,9 +3850,7 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy minimization reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
+          
 
             setCompleted(false);
 
@@ -3899,19 +3860,13 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy Minimization reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
+       
 
             setCompleted(false);
 
             return;
         }
 
-
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
 
         setCompleted(true);
 
@@ -3947,8 +3902,8 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
 
         constructLog();
 
-        buildProgressBar(srcImage.getImageName(), "Performing entropy minimization...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing entropy minimization...");
+        
 
         srcImage.calcMinMax();
         minimum = srcImage.getMin();
@@ -4002,15 +3957,15 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
                         if (c == 1) {
                             minimum = minimumR;
                             maximum = maximumR;
-                            progressBar.setMessage("Performing red entropy minimization");
+                            fireProgressStateChanged("Performing red entropy minimization");
                         } else if (c == 2) {
                             minimum = minimumG;
                             maximum = maximumG;
-                            progressBar.setMessage("Performing green entropy minimization");
+                            fireProgressStateChanged("Performing green entropy minimization");
                         } else if (c == 3) {
                             minimum = minimumB;
                             maximum = maximumB;
-                            progressBar.setMessage("Performing blue entropy minimization");
+                            fireProgressStateChanged("Performing blue entropy minimization");
                         }
                     } // if (srcImage.isColorImage())
                     else {
@@ -4535,10 +4490,6 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy minimization reports:\n" + ioe.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -4547,18 +4498,10 @@ public class AlgorithmEntropyMinimization extends AlgorithmBase {
             System.gc();
             MipavUtil.displayError("Algorithm Entropy Minimization reports:\n" + error.toString());
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 
             return;
-        }
-
-
-        if (progressBar != null) {
-            progressBar.dispose();
         }
 
         setCompleted(true);

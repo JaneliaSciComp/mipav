@@ -369,8 +369,8 @@ public class JDialogSaveSlices extends JDialogBase {
         gbc.gridheight = 1;
         gbc.insets = insets;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
 
         slicePanel = new JPanel();
         slicePanel.setLayout(new GridLayout(2, 2));
@@ -388,14 +388,14 @@ public class JDialogSaveSlices extends JDialogBase {
         textFirstSlice.setFont(serif12);
         textFirstSlice.addFocusListener(this);
         gbc.gridx = 1;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         textFirstPanel.add(textFirstSlice);
         slicePanel.add(textFirstPanel);
 
         labelLastSlice = new JLabel("Last Slice");
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         labelLastSlice.setFont(serif12);
         labelLastSlice.setForeground(Color.black);
         slicePanel.add(labelLastSlice);
@@ -403,7 +403,7 @@ public class JDialogSaveSlices extends JDialogBase {
         JPanel textLastPanel = new JPanel();
         textLastSlice = new JTextField(5);
         gbc.gridx = 1;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         textLastSlice.setText(String.valueOf(maxValue));
         textLastSlice.setFont(serif12);
         textLastSlice.addFocusListener(this);

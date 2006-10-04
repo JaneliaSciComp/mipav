@@ -106,7 +106,7 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
         super(theParentFrame, true);
         setForeground(Color.black);
         image = im;
-        userInterface = ((ViewJFrameBase) parentFrame).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         init();
     }
@@ -215,7 +215,7 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();
@@ -235,6 +235,8 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
             // This is made possible by implementing AlgorithmedPerformed interface
             algoTrans.addListener(this);
 
+            createProgressBar(image.getImageName(), algoTrans);
+            
             // Hide dialog
             setVisible(false);
 

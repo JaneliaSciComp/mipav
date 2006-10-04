@@ -71,15 +71,6 @@ public class FileWriteOptions {
     /** AVI option. */
     private boolean isAVI = false;
 
-    /** MINC options. */
-    private boolean isInfToSup;
-
-    /** DOCUMENT ME! */
-    private boolean isLeftToRight;
-
-    /** DOCUMENT ME! */
-    private boolean isPosToAnt;
-
     /** For Scripts. */
     private boolean isScript = false;
 
@@ -105,14 +96,10 @@ public class FileWriteOptions {
     private boolean optionsSet = false;
 
     /** DOCUMENT ME! */
-    private int orientation;
-
-    /** DOCUMENT ME! */
     private boolean packBitEnable = false;
 
     /** DOCUMENT ME! */
     private BitSet paintBitmap;
-
 
     // DICOM option(s)
     /** recalculate the Instance Number (0020,0013). Default <code>true</code> */
@@ -379,15 +366,6 @@ public class FileWriteOptions {
     }
 
     /**
-     * Gets the orientation selected, axial, coronal, or sagittal, in MINC file.
-     *
-     * @return  Integer representing the orientation.
-     */
-    public int getOrientation() {
-        return orientation;
-    }
-
-    /**
      * DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
@@ -536,15 +514,6 @@ public class FileWriteOptions {
     }
 
     /**
-     * Checks if this is the default MINC orientation or not.
-     *
-     * @return  <code>true</code> represents inferior to superior, <code>false</code> represents superior to inferior.
-     */
-    public boolean isInfToSup() {
-        return isInfToSup;
-    }
-
-    /**
      * Accessor that returns whether or not the Instance Number (0020,0013) should be recalculated before saving.
      *
      * @return  <code>true</code> indicates recalculate the Instance number, <code>false</code> don't modify the
@@ -552,15 +521,6 @@ public class FileWriteOptions {
      */
     public boolean isInstanceNumberRecalculated() {
         return recalculateInstanceNumber;
-    }
-
-    /**
-     * Checks if this is the default MINC orientation or not.
-     *
-     * @return  <code>true</code> represents left to right, <code>false</code> represents right to left.
-     */
-    public boolean isLeftToRight() {
-        return isLeftToRight;
     }
 
     /**
@@ -581,15 +541,6 @@ public class FileWriteOptions {
      */
     public boolean isPackBitEnabled() {
         return packBitEnable;
-    }
-
-    /**
-     * Checks if this is the default MINC orientation or not.
-     *
-     * @return  <code>true</code> represents posterior to anterior, <code>false</code> represents anterior to posterior.
-     */
-    public boolean isPosToAnt() {
-        return isPosToAnt;
     }
 
     /**
@@ -783,17 +734,6 @@ public class FileWriteOptions {
     }
 
     /**
-     * Accessor that sets whether or not the axis is increasing from inferior to superior.
-     *
-     * @param  flag  <code>true</code> indicates inferior to superior, <code>false</code> superior to inferior.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
-     */
-    public void setInfToSup(boolean flag) {
-        isInfToSup = flag;
-    }
-
-    /**
      * DOCUMENT ME!
      *
      * @param  isAVI  DOCUMENT ME!
@@ -809,17 +749,6 @@ public class FileWriteOptions {
      */
     public void setIsScript(boolean isScript) {
         this.isScript = isScript;
-    }
-
-    /**
-     * Accessor that sets whether or not the axis is increasing from left to right.
-     *
-     * @param  flag  <code>true</code> indicates left to right, <code>false</code> right to left.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
-     */
-    public void setLeftToRight(boolean flag) {
-        isLeftToRight = flag;
     }
 
     /**
@@ -887,17 +816,6 @@ public class FileWriteOptions {
     }
 
     /**
-     * Accessor that sets the orientation (axial, coronal, or sagittal). Used for MINC.
-     *
-     * @param  value  The defined orientation, in ModelImage.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
-     */
-    public void setOrientation(int value) {
-        orientation = value;
-    }
-
-    /**
      * Accessor that sets whether it is possible to write with packed bits compression. It is only an options for TIFF
      * files that are byte images.
      *
@@ -916,17 +834,6 @@ public class FileWriteOptions {
      */
     public void setPaintBitmap(BitSet paintBitmap) {
         this.paintBitmap = paintBitmap;
-    }
-
-    /**
-     * Accessor that sets whether or not the axis is increasing from posterior to anterior.
-     *
-     * @param  flag  <code>true</code> indicates posterior to anterior, <code>false</code> anterior to posterior.
-     *
-     * @see    gov.nih.mipav.view.dialogs.JDialogSaveMinc
-     */
-    public void setPosToAnt(boolean flag) {
-        isPosToAnt = flag;
     }
 
     /**
@@ -1110,9 +1017,7 @@ public class FileWriteOptions {
              multiFile + "\n\tStart #: " + fileStartNumber + "\n\t# digits: " + fileDigitNumber + "\n\n";
         s += "MINC options:\n";
         s += "\tX Start: " + xStart + "\n\tY Start: " + yStart + "\n\tZ Start: " + zStart + "\n\tX Space: " + xSpace +
-             "\n\tY Space: " + ySpace + "\n\tZ Space: " + zSpace + "\n\tOrientation: " + orientation +
-             "\n\tLeft to Right: " + isLeftToRight + "\n\tPosterior to Anterior: " + isPosToAnt +
-             "\n\tInferior to Superior: " + isInfToSup + "\n\n";
+             "\n\tY Space: " + ySpace + "\n\tZ Space: " + zSpace + "\n\n";
         s += "DICOM options:\n";
         s += "\tRecalculate Image Instance: " + recalculateInstanceNumber + "\n";
 

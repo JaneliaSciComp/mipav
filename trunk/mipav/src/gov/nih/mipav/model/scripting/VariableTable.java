@@ -1,15 +1,13 @@
 package gov.nih.mipav.model.scripting;
 
 
-import gov.nih.mipav.model.structures.ModelImage;
-
-import gov.nih.mipav.view.ViewUserInterface;
+import gov.nih.mipav.view.Preferences;
 
 import java.util.Hashtable;
 
 
 /**
- * A table used to store variables and their values.  The main use at the moment is to store image names as values and assign them image placeholder variable names (e.g., '$image1'), which can then be used in scripts.
+ * A table used to store variables and their values.
  */
 public class VariableTable extends Hashtable {
 
@@ -21,14 +19,6 @@ public class VariableTable extends Hashtable {
     /** The reference to the only VariableTable which should ever be instantiated. */
     protected static VariableTable singletonReference = null;
 
-    /** The base image placeholder variable string prefix.  Should be prepended to a number for each image used in a script. */
-    protected static final String imageVariablePrefix = "$image";
-
-    //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** The number to use for the next image placeholder variable to be added to the table.  Starts at 1. */
-    protected int currentImageNumber = 1;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -36,6 +26,7 @@ public class VariableTable extends Hashtable {
      */
     protected VariableTable() {
         super();
+        Preferences.debug("varTable:\tCreated." + "\n", Preferences.DEBUG_SCRIPTING);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -55,17 +46,6 @@ public class VariableTable extends Hashtable {
     }
 
     /**
-     * Returns the image associated with a image placeholder variable.
-     *
-     * @param   varName  An image placeholder variable (e.g., '$image1').
-     *
-     * @return  The associated image.
-     */
-    public ModelImage getImage(String varName) {
-        return ViewUserInterface.getReference().getRegisteredImageByName(interpolate(varName));
-    }
-
-    /**
      * Interpolates and returns the value of a given variable.
      *
      * @param   varName  The name of the variable to interpolate.
@@ -73,6 +53,7 @@ public class VariableTable extends Hashtable {
      * @return  The variable's value.
      */
     public String interpolate(String varName) {
+        Preferences.debug("varTable:\tRetrieving:\t" + varName + "\t->\t" + (String)super.get(varName) + "\n", Preferences.DEBUG_SCRIPTING);
         return (String) super.get(varName);
     }
 
@@ -93,45 +74,18 @@ public class VariableTable extends Hashtable {
      * @param  varName  The name of the variable to remove.
      */
     public void removeVariable(String varName) {
+        Preferences.debug("varTable:\tRemoving:\t" + varName + "\n", Preferences.DEBUG_SCRIPTING);
         super.remove(varName);
-    }
-
-    /**
-     * Stores a new image name in the variable table, giving it the next available image placeholder variable name.
-     *
-     * @param   imageName  The name of the image to add to the table.
-     *
-     * @return  The image placeholder variable assigned to the newly added image (e.g., '$image2').
-     * 
-     * @see     gov.nih.mipav.model.structures.ModelImage#getImageName()
-     */
-    public String storeImageName(String imageName) {
-        String imageVar = null;
-
-        if (!super.containsValue(imageName)) {
-            imageVar = imageVariablePrefix + currentImageNumber;
-            super.put(imageVar, imageName);
-            currentImageNumber++;
-        } else {
-
-            for (int i = 1; i <= currentImageNumber; i++) {
-
-                if (imageName.equals(interpolate(imageVariablePrefix + i))) {
-                    imageVar = imageVariablePrefix + i;
-                }
-            }
-        }
-
-        return imageVar;
     }
 
     /**
      * Stores a variable name and its value in the variable table.
      *
-     * @param  varName  The name of the variable.
+     * @param  varName  The name of the variable (e.g., '$save_as_file_name').
      * @param  value    The variable value.
      */
     public void storeVariable(String varName, String value) {
+        Preferences.debug("varTable:\tStored:\t" + varName + "\t->\t" + value + "\n", Preferences.DEBUG_SCRIPTING);
         super.put(varName, value);
     }
 }

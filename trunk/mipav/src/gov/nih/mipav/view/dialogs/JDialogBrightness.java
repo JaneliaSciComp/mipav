@@ -230,7 +230,7 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel.add(brightnessSlider, gbc);
 
@@ -238,19 +238,19 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel.add(minimum, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel.add(current, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel.add(maximum, gbc);
@@ -286,7 +286,7 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
         gbc.gridwidth = 3;
         gbc.weightx = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         sliderPanel2.add(contrastSlider, gbc);
 
@@ -294,19 +294,19 @@ public class JDialogBrightness extends JDialogBase implements ChangeListener {
         gbc.gridy = 1;
         gbc.gridwidth = 1;
         gbc.weightx = 0;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.NONE;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.NONE;
 
         sliderPanel2.add(minimum2, gbc);
 
         gbc.gridx = 1;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.weightx = .5;
 
         sliderPanel2.add(current2, gbc);
 
         gbc.gridx = 2;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.weightx = 0;
 
         sliderPanel2.add(maximum2, gbc);

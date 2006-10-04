@@ -169,7 +169,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             totalLength = length * nImages;
             buffer = new float[length];
             resultBuffer = new float[totalLength];
-            buildProgressBar(srcImage.getImageName(), "Unsharp mask image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Unsharp mask image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             resultBuffer = null;
@@ -179,7 +179,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -197,7 +197,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -232,7 +232,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -253,7 +253,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "UnsharpMasking ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "UnsharpMasking ...");
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -268,14 +268,14 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -314,7 +314,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
         }
 
         setCompleted(true);
-        disposeProgressBar();
+        
     }
 
     /**
@@ -343,7 +343,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             length = srcImage.getSliceSize();
             totalLength = length * nImages;
             buffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Unsharp image ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Unsharp image ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             errorCleanUp("Algorithm Unsharp Mask:  Out of memory", true);
@@ -352,7 +352,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
         }
 
         int mod = totalLength / 100; // mod is 1 percent of length
-        initProgressBar();
+        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -369,7 +369,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((float) (start + i) / (totalLength - 1) * 100), runningInSeparateThread);
+                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -391,7 +391,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -418,7 +418,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             length = srcImage.getSliceSize() * srcImage.getExtents()[2];
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "UnsharpMasking ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "UnsharpMasking ...");
         } catch (IOException error) {
             buffer = null;
             errorCleanUp("Algorithm UnsharpMask exportData: Image(s) locked", true);
@@ -431,14 +431,14 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         int mod = length / 100; // mod is 1 percent of length
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             if ((entireImage == true) || mask.get(i)) {
@@ -457,7 +457,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
 
         destImage.calcMinMax();
         destImage.releaseLock();
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

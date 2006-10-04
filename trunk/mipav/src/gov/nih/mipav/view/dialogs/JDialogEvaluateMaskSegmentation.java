@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,7 +22,7 @@ import javax.swing.*;
  * Dialog to get user input, then call AlgorithmEvaluateMaskSegmentation. Selected image is test image, the image that
  * is compared to a gold standard true image. Algorithms are executed in their own thread.
  */
-public class JDialogEvaluateMaskSegmentation extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogEvaluateMaskSegmentation extends JDialogScriptableBase implements AlgorithmInterface{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -36,41 +38,13 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
     private AlgorithmEvaluateMaskSegmentation evalSeg = null;
 
     /** DOCUMENT ME! */
-    private int length;
-
-    /** DOCUMENT ME! */
-    private boolean present;
-
-    /** DOCUMENT ME! */
-    private int[] testArray;
-
-    /** DOCUMENT ME! */
     private ModelImage testImage;
-
-    /** DOCUMENT ME! */
-    private int[] testLevelArray = new int[20];
-
-    /** DOCUMENT ME! */
-    private int testLevels = 0;
 
     /** Used to lock and unlock images. */
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private int[] trueArray;
-
-    /** DOCUMENT ME! */
     private ModelImage trueImage;
-
-    /** DOCUMENT ME! */
-    private int[] trueLevelArray = new int[20];
-
-    /** DOCUMENT ME! */
-    private int trueLevels = 0;
-
-    /** Pointer to GUI. */
-    private ViewUserInterface UI;
-
 
     /** Reference to userface. */
     private ViewUserInterface userInterface;
@@ -100,74 +74,47 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
         }
 
         trueImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
-        length = trueImage.getExtents()[0];
-
-        for (int i = 1; i < trueImage.getNDims(); i++) {
-            length *= trueImage.getExtents()[i];
-        }
-
-        for (int i = 0; i < trueLevelArray.length; i++) {
-            trueLevelArray[i] = 0;
-        }
-
-        trueArray = new int[length];
-        testArray = new int[length];
-
-        try {
-            trueImage.exportData(0, length, trueArray);
-        } catch (IOException e) {
-            MipavUtil.displayError("IOError on trueImage.exportData");
-
-            return;
-        }
-
-        for (int i = 0; i < length; i++) {
-
-            if (trueArray[i] != 0) {
-                present = false;
-
-                for (int j = 0; (j < trueLevels) && (!present); j++) {
-
-                    if (trueArray[i] == trueLevelArray[j]) {
-                        present = true;
-                    }
-                }
-
-                if (!present) {
-                    trueLevelArray[trueLevels++] = trueArray[i];
-                }
-            }
-        }
+        userInterface = ViewUserInterface.getReference();
 
         init();
     }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  _UI  The user interface, needed to create the image frame.
-     * @param  im   Source image.
-     */
-    public JDialogEvaluateMaskSegmentation(ViewUserInterface _UI, ModelImage im) {
-        super();
-
-        if ((im.getType() != ModelImage.BOOLEAN) && (im.getType() != ModelImage.UBYTE) &&
-                (im.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        userInterface = _UI;
-        trueImage = im;
-        parentFrame = im.getParentFrame();
-    }
-
+    
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(trueImage);
+        scriptParameters.storeImage(testImage, "test_image");
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        trueImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = trueImage.getParentFrame();
+        
+        if ((trueImage.getType() != ModelImage.BOOLEAN) && (trueImage.getType() != ModelImage.UBYTE) && (trueImage.getType() != ModelImage.USHORT)) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image must be Boolean or UByte or UShort");
+        }
+        
+        testImage = scriptParameters.retrieveImage("test_image");
+        
+        // just make sure the image dims match, not the level testing done in a run from the dialog.  TODO: the full testing may be added later
+        if (trueImage.getNDims() != testImage.getNDims()) {
+            throw new ParameterException("test_image", "The true image and test image have different dimensionalities.");
+        } else {
+            for (int i = 0; i < trueImage.getNDims(); i++) {
+                if (trueImage.getExtents()[i] != testImage.getExtents()[i]) {
+                    throw new ParameterException("test_image", "The true image and test image extents do not match.");
+                }
+            }
+        }
+    }
+    
     /**
      * Closes dialog box when the OK button is pressed, set variables, and calls the algorithm.
      *
@@ -199,8 +146,6 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmEvaluateMaskSegmentation) {
 
             // These next lines set the titles in all frames where the source image is displayed to
@@ -217,7 +162,9 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
                 }
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
 
             if (parentFrame != null) {
                 userInterface.registerFrame(parentFrame);
@@ -225,80 +172,6 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
 
             dispose();
         }
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the true image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(trueImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(trueImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(trueImage.getImageName());
-                    }
-                }
-
-                // check to see if the test image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(testImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(testImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(testImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("EvaluateMaskSegmentation " +
-                                                       userInterface.getScriptDialog().getVar(trueImage.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(testImage.getImageName()) +
-                                                       "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String image1Key = null;
-        String image2Key = null;
-
-        try {
-            image1Key = parser.getNextString();
-            image2Key = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im1 = parser.getImage(image1Key);
-        ModelImage im2 = parser.getImage(image2Key);
-
-        if ((im1.getType() != ModelImage.BOOLEAN) && (im1.getType() != ModelImage.UBYTE) &&
-                (im1.getType() != ModelImage.USHORT)) {
-            MipavUtil.displayError("Source Image must be Boolean or UByte or UShort");
-            dispose();
-
-            return;
-        }
-
-        trueImage = im1;
-        setTestImage(im2);
-        userInterface = trueImage.getUserInterface();
-        parentFrame = trueImage.getParentFrame();
-
-        setSeparateThread(false);
-        callAlgorithm();
     }
 
     /**
@@ -311,22 +184,6 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
     }
 
     /**
-     * Constructs a string indicating if the algorithm completed sucessfully.
-     */
-    protected void closingLog() {
-        String logString;
-
-        if (evalSeg.isCompleted() == true) {
-            logString = new String("EvaluateMaskSegmentation " + testImage.getImageName() + " to " +
-                                   trueImage.getImageName() + " Completed successfully!" + "\n");
-        } else {
-            logString = new String("EvaluateMaskSegmentation " + testImage.getImageName() + " to " +
-                                   trueImage.getImageName() + " Algorithm failed!" + "\n");
-        }
-        // Preferences.log(trueImage.getUserInterface(), logString);
-    }
-
-    /**
      * Builds a list of images. Returns combobox.
      *
      * @param   image  DOCUMENT ME!
@@ -334,35 +191,66 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
      * @return  Newly created combo box.
      */
     private JComboBox buildImageEvalComboBox(ModelImage image) {
-        ViewUserInterface UI;
         ModelImage img;
         boolean dimMatch;
         int levelsMatch;
-        int i, j;
-
+        
+        int trueLevels = 0;
+        int[] trueLevelArray = new int[20];
+        int[] testLevelArray = new int[20];
 
         JComboBox comboBox = new JComboBox();
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
+        
+        int length = trueImage.getExtents()[0];
+        for (int i = 1; i < trueImage.getNDims(); i++) {
+            length *= trueImage.getExtents()[i];
+        }
+        
+        int[] trueArray = new int[length];
+        int[] testArray = new int[length];
+        
+        try {
+            trueImage.exportData(0, length, trueArray);
+        } catch (IOException e) {
+            MipavUtil.displayError("IOError on trueImage.exportData");
+            return null;
+        }
+        
+        boolean present;
+        for (int i = 0; i < length; i++) {
+            if (trueArray[i] != 0) {
+                present = false;
 
-        UI = image.getUserInterface();
+                for (int j = 0; (j < trueLevels) && (!present); j++) {
 
-        Enumeration names = UI.getRegisteredImageNames();
+                    if (trueArray[i] == trueLevelArray[j]) {
+                        present = true;
+                    }
+                }
 
+                if (!present) {
+                    trueLevelArray[trueLevels++] = trueArray[i];
+                }
+            }
+        }
+
+        Enumeration names = userInterface.getRegisteredImageNames();
         while (names.hasMoreElements()) {
             String name = (String) names.nextElement();
 
             try {
-                img = UI.getRegisteredImageByName(name);
+                img = userInterface.getRegisteredImageByName(name);
 
-                if (UI.getFrameContainingImage(img) != null) {
+                if (userInterface.getFrameContainingImage(img) != null) {
 
                     if (!name.equals(image.getImageName())) {
 
                         if (img.getNDims() == image.getNDims()) {
                             dimMatch = true;
 
-                            for (i = 0; i < image.getNDims(); i++) {
+                            for (int i = 0; i < image.getNDims(); i++) {
 
                                 if (image.getExtents()[i] != img.getExtents()[i]) {
                                     dimMatch = false;
@@ -370,7 +258,6 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
                             }
 
                             if (dimMatch) {
-
                                 try {
                                     img.exportData(0, length, testArray);
                                 } catch (IOException e) {
@@ -379,14 +266,13 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
                                     return null;
                                 }
 
-                                testLevels = 0;
+                                int testLevels = 0;
 
-                                for (i = 0; i < length; i++) {
-
+                                for (int i = 0; i < length; i++) {
                                     if (testArray[i] != 0) {
                                         present = false;
 
-                                        for (j = 0; (j < testLevels) && (!present); j++) {
+                                        for (int j = 0; (j < testLevels) && (!present); j++) {
 
                                             if (testArray[i] == testLevelArray[j]) {
                                                 present = true;
@@ -402,9 +288,9 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
                                 if (trueLevels == testLevels) {
                                     levelsMatch = 0;
 
-                                    for (i = 0; i < trueLevels; i++) {
+                                    for (int i = 0; i < trueLevels; i++) {
 
-                                        for (j = 0; j < trueLevels; j++) {
+                                        for (int j = 0; j < trueLevels; j++) {
 
                                             if (trueLevelArray[i] == testLevelArray[j]) {
                                                 levelsMatch++;
@@ -437,7 +323,7 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
     /**
      * Sets arrays appropriately and calls registration algorithm, running it in it's own thread.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             evalSeg = new AlgorithmEvaluateMaskSegmentation(trueImage, testImage);
@@ -453,6 +339,8 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
         // See algorithm performed event. This is made possible by implementing
         evalSeg.addListener(this);
 
+        createProgressBar(testImage.getImageName(), evalSeg);
+        
         // These next lines set the titles in all frames where the source image
         // is displayed to "locked - " image name so as to indicate that the image
         // is now read/write locked!  The image frames are disabled and then
@@ -477,16 +365,6 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
     }
 
     /**
-     * Constructs a string of the construction parameters and outputs the string to the messsage frame if the logging
-     * procedure is turned on.
-     */
-    private void constructLog() {
-        String logString = new String("EvaluateMaskSegmentation " + testImage.getImageName() + " to " +
-                                      trueImage.getImageName() + "\n");
-        // Preferences.log(trueImage.getUserInterface(), logString);
-    }
-
-    /**
      * Initializes GUI components and displays dialog.
      */
     private void init() {
@@ -508,13 +386,13 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         imagePanel.add(labelTrue, gbc);
         gbc.gridy = 1;
         imagePanel.add(labelTest, gbc);
@@ -534,15 +412,10 @@ public class JDialogEvaluateMaskSegmentation extends JDialogBase implements Algo
      * @return  <code>true</code> if successful in setting variables.
      */
     private boolean setVariables() {
-
         // assign testImage to image selected in comboBox
-        ViewUserInterface UI = trueImage.getUserInterface();
         String selectedName = (String) comboBoxImage.getSelectedItem();
 
-        testImage = UI.getRegisteredImageByName(selectedName);
-
-
-        constructLog();
+        testImage = userInterface.getRegisteredImageByName(selectedName);
 
         return true;
     }

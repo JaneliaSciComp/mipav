@@ -191,14 +191,14 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
+        
 
         for (deltaY = 0; deltaY < yDim; deltaY++) {
             newValue = deltaY * 100 / yDim;
 
             if (isProgressBarVisible() && (newValue > oldValue)) {
-                progressBar.updateValue(newValue, runningInSeparateThread);
+                fireProgressStateChanged(newValue);
             }
 
             oldValue = newValue;
@@ -218,7 +218,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
         zeroCoefficient = resultBuffer[0];
 
         for (y = 0; y < yDim; y++) {
@@ -324,7 +324,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             fwhm = Integer.MAX_VALUE;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -386,14 +386,14 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 return;
             }
 
-            buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
+            
 
             for (deltaY = 0; deltaY < yDim; deltaY++) {
                 newValue = deltaY * 100 / (yDim * colorsPresent);
 
                 if (isProgressBarVisible() && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged(newValue);
                 }
 
                 oldValue = newValue;
@@ -413,7 +413,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 }
             }
 
-            progressBar.updateValue(100 / colorsPresent, runningInSeparateThread);
+            fireProgressStateChanged(100 / colorsPresent);
             zeroCoefficient = resultBuffer[0];
 
             for (y = 0; y < yDim; y++) {
@@ -463,7 +463,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 newValue = lastValue + (deltaY * 100 / (yDim * colorsPresent));
 
                 if (isProgressBarVisible() && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged(newValue);
                 }
 
                 oldValue = newValue;
@@ -483,7 +483,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 }
             }
 
-            progressBar.updateValue(lastValue + (100 / colorsPresent), runningInSeparateThread);
+            fireProgressStateChanged(lastValue + (100 / colorsPresent));
             zeroCoefficient = resultBuffer[0];
 
             for (y = 0; y < yDim; y++) {
@@ -533,7 +533,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 newValue = lastValue + (deltaY * 100 / (yDim * colorsPresent));
 
                 if (isProgressBarVisible() && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged(newValue);
                 }
 
                 oldValue = newValue;
@@ -553,7 +553,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 }
             }
 
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
             zeroCoefficient = resultBuffer[0];
 
             for (y = 0; y < yDim; y++) {
@@ -580,7 +580,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
         } // if (destImageB != null)
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -630,7 +630,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             buffer = new float[length];
             resultBuffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -645,13 +645,13 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
 
         for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
             newValue = deltaZ * 100 / zDim;
 
             if (isProgressBarVisible() && (newValue > oldValue)) {
-                progressBar.updateValue(newValue, runningInSeparateThread);
+                fireProgressStateChanged(newValue);
             }
 
             oldValue = newValue;
@@ -682,7 +682,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
         zeroCoefficient = resultBuffer[0];
 
         for (z = 0; z < zDim; z++) {
@@ -815,7 +815,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             fwhm = Integer.MAX_VALUE;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -879,14 +879,14 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 return;
             }
 
-            buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
+            
 
             for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
                 newValue = deltaZ * 100 / (zDim * colorsPresent);
 
                 if (isProgressBarVisible() && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged(newValue);
                 }
 
                 oldValue = newValue;
@@ -924,7 +924,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 }
             }
 
-            progressBar.updateValue(100 / colorsPresent, runningInSeparateThread);
+            fireProgressStateChanged(100 / colorsPresent);
             zeroCoefficient = resultBuffer[0];
 
             for (z = 0; z < zDim; z++) {
@@ -979,7 +979,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 newValue = lastValue + (deltaZ * 100 / (zDim * colorsPresent));
 
                 if (isProgressBarVisible() && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged(newValue);
                 }
 
                 oldValue = newValue;
@@ -1017,7 +1017,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 }
             }
 
-            progressBar.updateValue(lastValue + (100 / colorsPresent), runningInSeparateThread);
+            fireProgressStateChanged(lastValue + (100 / colorsPresent));
             zeroCoefficient = resultBuffer[0];
 
             for (z = 0; z < zDim; z++) {
@@ -1072,7 +1072,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 newValue = lastValue + (deltaZ * 100 / (zDim * colorsPresent));
 
                 if (isProgressBarVisible() && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged(newValue);
                 }
 
                 oldValue = newValue;
@@ -1110,7 +1110,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 }
             }
 
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
             zeroCoefficient = resultBuffer[0];
 
             for (z = 0; z < zDim; z++) {
@@ -1142,7 +1142,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
         } // if (destImageB != null)
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -1184,8 +1184,8 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             resultBuffer = new float[length];
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
+            
         } catch (IOException error) {
             buffer = null;
             resultBuffer = null;
@@ -1205,7 +1205,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             newValue = deltaT * 100 / tDim;
 
             if (isProgressBarVisible() && (newValue > oldValue)) {
-                progressBar.updateValue(newValue, runningInSeparateThread);
+                fireProgressStateChanged(newValue);
             }
 
             oldValue = newValue;
@@ -1249,7 +1249,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
         }
 
-        progressBar.updateValue(100, runningInSeparateThread);
+        fireProgressStateChanged(100);
         zeroCoefficient = resultBuffer[0];
 
         for (t = 0; t < tDim; t++) {
@@ -1290,7 +1290,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -1357,14 +1357,14 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 return;
             }
 
-            buildProgressBar(srcImage.getImageName(), "Calculating autocorrelation ..", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Calculating autocorrelation ..");
+            
 
             for (deltaT = 0; deltaT < tDim; deltaT++) {
                 newValue = deltaT * 100 / (tDim * colorsPresent);
 
                 if (isProgressBarVisible() && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged(newValue);
                 }
 
                 oldValue = newValue;
@@ -1409,7 +1409,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 }
             }
 
-            progressBar.updateValue(100 / colorsPresent, runningInSeparateThread);
+            fireProgressStateChanged(100 / colorsPresent);
             zeroCoefficient = resultBuffer[0];
 
             for (t = 0; t < tDim; t++) {
@@ -1471,7 +1471,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 newValue = lastValue + (deltaT * 100 / (tDim * colorsPresent));
 
                 if (isProgressBarVisible() && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged(newValue);
                 }
 
                 oldValue = newValue;
@@ -1516,7 +1516,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 }
             }
 
-            progressBar.updateValue(lastValue + (100 / colorsPresent), runningInSeparateThread);
+            fireProgressStateChanged(lastValue + (100 / colorsPresent));
             zeroCoefficient = resultBuffer[0];
 
             for (t = 0; t < tDim; t++) {
@@ -1578,7 +1578,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 newValue = lastValue + (deltaT * 100 / (tDim * colorsPresent));
 
                 if (isProgressBarVisible() && (newValue > oldValue)) {
-                    progressBar.updateValue(newValue, runningInSeparateThread);
+                    fireProgressStateChanged(newValue);
                 }
 
                 oldValue = newValue;
@@ -1623,7 +1623,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
                 }
             }
 
-            progressBar.updateValue(100, runningInSeparateThread);
+            fireProgressStateChanged(100);
             zeroCoefficient = resultBuffer[0];
 
             for (t = 0; t < tDim; t++) {
@@ -1663,7 +1663,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             }
         } // if (destImageB != null)
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

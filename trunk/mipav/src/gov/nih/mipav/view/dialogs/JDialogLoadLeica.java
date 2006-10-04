@@ -60,7 +60,7 @@ public class JDialogLoadLeica extends JDialogBase {
      */
     public JDialogLoadLeica(Frame theParentFrame, File headerFile) {
         super(theParentFrame, false);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         this.headerFile = headerFile;
         init();
     }

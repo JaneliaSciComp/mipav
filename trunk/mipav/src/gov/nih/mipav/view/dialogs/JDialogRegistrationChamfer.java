@@ -92,7 +92,7 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
     public JDialogRegistrationChamfer(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         matchImage = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     }
 
@@ -190,7 +190,7 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
     /**
      * Calls the algorithm, assuming the variables are already set up. Runs algorithm in separate thread.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (image25D) {
             chamfer = new AlgorithmRegChamfer(baseImage, matchImage, regionFlag, image25D);
@@ -206,6 +206,8 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
         // See algorithm performed event. This is made possible by implementing
         chamfer.addListener(this);
 
+        createProgressBar(baseImage.getImageName(), chamfer);
+        
         // These next lines set the titles in all frames where the source image
         // is displayed to "locked - " image name so as to indicate that the image
         // is now read/write locked!  The image frames are disabled and then
@@ -290,7 +292,7 @@ public class JDialogRegistrationChamfer extends JDialogBase implements Algorithm
         gbc.gridy = 0;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         regPanel.add(register2Dor3D, gbc);
         gbc.gridx = 1;
         regPanel.add(comboBox2or3D, gbc);

@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,8 +22,7 @@ import javax.swing.*;
  *
  * @author  mccreedy
  */
-public class JDialogFaceAnonymizerBET extends JDialogBase
-        implements AlgorithmInterface, DialogDefaultsInterface, ScriptableInterface {
+public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -48,6 +49,13 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
 
     /** DOCUMENT ME! */
     private static final int FACING_OUT_OF_SCREEN = 6;
+    
+    private static final String PARAM_FACE_ORIENTATION = "face_orientation";
+    private static final String PARAM_EXTRA_MMS_TO_DELETE = "mms_to_delete_from_face";
+    private static final String PARAM_VERT_DELETION_LIMIT = "vertical_deletion_limit_ratio";
+    private static final String PARAM_BET_DO_SPHERE_ESTIMATION = "bet_do_estimate_with_sphere";
+    private static final String PARAM_BET_IMG_INFLUENCE = "bet_image_influence";
+    private static final String PARAM_BET_STIFFNESS = "bet_stiffness"; 
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -180,7 +188,7 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
         }
 
         if ((algorithm instanceof AlgorithmFaceAnonymizerBET) && algorithm.isCompleted()) {
-            insertScriptLine(algorithm);
+            insertScriptLine();
             srcImage.calcMinMax();
             srcImage.notifyImageDisplayListeners(null, true);
             defaceAlgo.finalize();
@@ -191,7 +199,7 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
     /**
      * Calls the algorithm.
      */
-    public void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();
@@ -200,20 +208,18 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
             defaceAlgo.setBETParameters(estimateWithSphereBET, imageInfluenceBET, stiffnessBET);
             defaceAlgo.addListener(this);
 
+            createProgressBar(srcImage.getImageName(), defaceAlgo);
+            
             // Hide dialog
             setVisible(false);
 
-            if (runInSeparateThread) {
+            if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
                 if (defaceAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!ViewUserInterface.getReference().isAppFrameVisible()) {
-                    defaceAlgo.setProgressBarVisible(false);
-                }
-
                 defaceAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -249,33 +255,6 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-            ViewUserInterface ui = ViewUserInterface.getReference();
-
-            if (ui.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (ui.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (ui.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        ui.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                ui.getScriptDialog().append("FaceAnonymizerBET " +
-                                            ui.getScriptDialog().getVar(srcImage.getImageName()) + " ");
-                ui.getScriptDialog().append(getParameterString(" ") + "\n");
-            }
-        }
-    }
-
-    /**
      * Loads the default settings from Preferences to set up the dialog.
      */
     public void loadDefaults() {
@@ -307,52 +286,6 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
     public void saveDefaults() {
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-        srcImage = im;
-        parentFrame = srcImage.getParentFrame();
-
-        try {
-
-            // only use the script's face orientation if we can't guess it
-            faceOrientation = getFaceOrientation(srcImage);
-
-            int scriptFaceOrientation = parser.getNextInteger();
-
-            if (faceOrientation == FACING_UNKNOWN) {
-                faceOrientation = scriptFaceOrientation;
-            }
-
-            extraMMsToDelete = parser.getNextInteger();
-            verticalDeletionLimit = parser.getNextFloat();
-            estimateWithSphereBET = parser.getNextBoolean();
-            imageInfluenceBET = parser.getNextFloat();
-            stiffnessBET = parser.getNextFloat();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
     }
 
     /**
@@ -398,42 +331,42 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
         facingRightRadio = new JRadioButton("Right");
         facingRightRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_RIGHT) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_RIGHT) {
             facingRightRadio.setSelected(true);
         }
 
         facingLeftRadio = new JRadioButton("Left");
         facingLeftRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_LEFT) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_LEFT) {
             facingLeftRadio.setSelected(true);
         }
 
         facingDownRadio = new JRadioButton("Down");
         facingDownRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_DOWN) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_DOWN) {
             facingDownRadio.setSelected(true);
         }
 
         facingUpRadio = new JRadioButton("Up");
         facingUpRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_UP) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_UP) {
             facingUpRadio.setSelected(true);
         }
 
         facingIntoRadio = new JRadioButton("Into the screen");
         facingIntoRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_INTO_SCREEN) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_INTO_SCREEN) {
             facingIntoRadio.setSelected(true);
         }
 
         facingOutRadio = new JRadioButton("Out of the screen");
         facingOutRadio.setFont(MipavUtil.font12);
 
-        if (faceOrientation == JDialogFaceAnonymizer.FACING_OUT_OF_SCREEN) {
+        if (faceOrientation == JDialogFaceAnonymizerBET.FACING_OUT_OF_SCREEN) {
             facingOutRadio.setSelected(true);
         }
 
@@ -595,5 +528,39 @@ public class JDialogFaceAnonymizerBET extends JDialogBase
         }
 
         return true;
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    public void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        parentFrame = srcImage.getParentFrame();
+        
+        faceOrientation = getFaceOrientation(srcImage);
+        int scriptFaceOrientation = scriptParameters.getParams().getInt(PARAM_FACE_ORIENTATION);
+        if (faceOrientation == FACING_UNKNOWN) {
+            faceOrientation = scriptFaceOrientation;
+        }
+        
+        extraMMsToDelete = scriptParameters.getParams().getInt(PARAM_EXTRA_MMS_TO_DELETE);
+        verticalDeletionLimit = scriptParameters.getParams().getFloat(PARAM_VERT_DELETION_LIMIT);
+        estimateWithSphereBET = scriptParameters.getParams().getBoolean(PARAM_BET_DO_SPHERE_ESTIMATION);
+        imageInfluenceBET = scriptParameters.getParams().getFloat(PARAM_BET_IMG_INFLUENCE);
+        stiffnessBET = scriptParameters.getParams().getFloat(PARAM_BET_STIFFNESS);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_FACE_ORIENTATION, faceOrientation));
+        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_EXTRA_MMS_TO_DELETE, extraMMsToDelete));
+        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_VERT_DELETION_LIMIT, verticalDeletionLimit));
+        scriptParameters.getParams().put(ParameterFactory.newBoolean(PARAM_BET_DO_SPHERE_ESTIMATION, estimateWithSphereBET));
+        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_BET_IMG_INFLUENCE, imageInfluenceBET));
+        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_BET_STIFFNESS, stiffnessBET));
     }
 }

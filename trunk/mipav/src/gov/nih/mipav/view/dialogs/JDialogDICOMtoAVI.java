@@ -164,7 +164,7 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
     /**
      * Method for calling the Dicom to AVI algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         setVisible(false);
 
         Preferences.debug("Using DICOM input directory: " + dirField.getText() + "\n");
@@ -173,6 +173,7 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
 
         AlgorithmDICOMtoAVI algoDicomConvert = new AlgorithmDICOMtoAVI(dirField.getText(),
                                                                        aviField.getText(), compression);
+        createProgressBar(dirField.getText(), algoDicomConvert);
 
         /**
          * Only set quality for MJPEG compression
@@ -190,10 +191,6 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!userInterface.isAppFrameVisible()) {
-                algoDicomConvert.setProgressBarVisible(false);
-            }
-
             algoDicomConvert.run();
         }
 
@@ -225,15 +222,15 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 4;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
         gbc.insets = new Insets(0, 5, 0, 10);
         dicomDirPanel.add(dirField, gbc);
 
         gbc.gridx = 4;
         gbc.gridwidth = 1;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.weightx = 0.0;
         gbc.insets = new Insets(0, 0, 0, 5);
         dicomDirPanel.add(browseButton, gbc);
@@ -265,15 +262,15 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
         gbc2.gridx = 0;
         gbc2.gridy = 0;
         gbc2.gridwidth = 4;
-        gbc2.anchor = gbc2.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         gbc2.insets = new Insets(0, 5, 0, 10);
-        gbc2.fill = gbc2.HORIZONTAL;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
         gbc2.weightx = 1.0;
         aviPanel.add(aviField, gbc2);
 
         gbc2.gridx = 4;
         gbc2.gridwidth = 1;
-        gbc2.fill = gbc2.NONE;
+        gbc2.fill = GridBagConstraints.NONE;
         gbc2.weightx = 0.0;
         gbc2.insets = new Insets(0, 0, 0, 5);
         aviPanel.add(browseOutputButton, gbc2);
@@ -326,7 +323,7 @@ public class JDialogDICOMtoAVI extends JDialogBase implements AlgorithmInterface
 
         gbc2.gridx = 0;
         gbc2.gridy = 1;
-        gbc2.anchor = gbc2.WEST;
+        gbc2.anchor = GridBagConstraints.WEST;
         aviPanel.add(compressionBox, gbc2);
 
         qualityLabel = new JLabel("M-JPEG Quality (0.01 - 1.00):");

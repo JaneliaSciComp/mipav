@@ -338,9 +338,6 @@ public class ViewJFrameAnimateClip extends ViewJFrameBase implements ChangeListe
         this.nRow = nRow;
         this.nColumn = nColumn;
         this.nImage = nImages;
-        this.originalZDim = originalZDim;
-        this.showFrameBorder = showFrameBorder;
-        this.borderCol = borderCol;
         // setTitle(imageA.getImageName());
 
         /* Not that the loading is often sufficiently quick so that the

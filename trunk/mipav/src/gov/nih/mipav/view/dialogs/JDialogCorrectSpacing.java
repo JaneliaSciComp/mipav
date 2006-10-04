@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,8 +23,7 @@ import javax.swing.*;
  * will have the same slice thickness and the image volume will be to proper scale. When spacing < thickness: set
  * thickness = spacing. Only works for DICOM or XML files, since they include the sliceSpacing field.
  */
-
-public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogCorrectSpacing extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -59,9 +59,6 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
     /** DOCUMENT ME! */
     private String[] titles;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -78,7 +75,6 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
     public JDialogCorrectSpacing(JFrame parent, ModelImage image) {
         super(parent, false);
         this.image = image;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         setVisible(false);
 
         fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
@@ -124,9 +120,7 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
      *
      * @param  event  Event that triggered this function.
      */
-    public void actionPerformed(ActionEvent event) {
-        String command = event.getActionCommand();
-    }
+    public void actionPerformed(ActionEvent event) { }
 
     /**
      * This method is required if the AlgorithmInterface is implemented.
@@ -134,7 +128,6 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
 
         if (algorithm instanceof AlgorithmCorrectSpacing) {
 
@@ -163,7 +156,7 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
                 }
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -189,7 +182,9 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (parentFrame != null) {
             ((ViewJFrameBase) parentFrame).getUserInterface().unregisterFrame(parentFrame);
@@ -222,6 +217,8 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
                 correctSpaceAlgo = new AlgorithmCorrectSpacing(image, resultImage, numRepIm, numBlank);
                 correctSpaceAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), correctSpaceAlgo);
+
                 Vector imageFrames = image.getImageFrameVector();
                 titles = new String[imageFrames.size()];
 
@@ -238,9 +235,6 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
                         MipavUtil.displayError("Correct Spacing reports: A thread is already running on this object [correctSpaceAlgo]");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        correctSpaceAlgo.setProgressBarVisible(false);
-                    }
 
                     correctSpaceAlgo.run();
                 }
@@ -269,57 +263,18 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                userInterface.getScriptDialog().append("CorrectSpacing " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                       "\n");
-            }
-        }
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
     }
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
         parentFrame = image.getParentFrame();
-        setVisible(false);
 
         fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
         fileFormat = fileInfoBuffer.getFileFormat();
@@ -331,7 +286,7 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
         } else if (image.getNDims() == 4) {
             extents = new int[3];
         } else {
-            MipavUtil.displayError("This utility only works with 3 and 4 D files.");
+            MipavUtil.displayError("This utility only works with 3D and 4D files.");
 
             return;
         }
@@ -355,41 +310,35 @@ public class JDialogCorrectSpacing extends JDialogBase implements AlgorithmInter
                               numBlank + " blanks are inserted.");
             generateNewImages();
         }
+    }
 
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(getResultImage());
     }
 
     /**
      * This method corrects spacing for cases where the space is less than the thickness, by assigning space value to
      * the z direction resolution.
      *
-     * @param  image     DOCUMENT ME!
-     * @param  newThick  DOCUMENT ME!
+     * @param  im           DOCUMENT ME!
+     * @param  newThickVal  DOCUMENT ME!
      */
-    private void correctSpaceLTthick(ModelImage image, float newThick) {
+    private void correctSpaceLTthick(ModelImage im, float newThickVal) {
         FileInfoBase[] arrayOfFileInfo;
-        arrayOfFileInfo = (FileInfoBase[]) image.getFileInfo();
+        arrayOfFileInfo = (FileInfoBase[]) im.getFileInfo();
 
-        int zExtent = image.getExtents()[2];
+        int zExtent = im.getExtents()[2];
 
         for (int i = 0; i < zExtent; i++) {
-            arrayOfFileInfo[i].setResolutions(newThick, 2);
+            arrayOfFileInfo[i].setResolutions(newThickVal, 2);
         }
 
-        MipavUtil.displayInfo("Since spacing is less than thickness, setting thickness to spacing value (" + newThick +
-                              ").");
+        MipavUtil.displayInfo("Since spacing is less than thickness, setting thickness to spacing value (" +
+                              newThickVal + ").");
         dispose();
 
         return;

@@ -81,7 +81,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         super(frame, false);
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
     } // end JDialogHessian(...)
 
@@ -162,7 +162,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
      * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
      * or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         float[] sigmas = null;
         String name = makeImageName(image.getImageName(), "_vs");
 
@@ -194,6 +194,8 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
                 // This is made possible by implementing AlgorithmedPerformed interface
                 imgHessianAlgor.addListener(this);
 
+                createProgressBar(image.getImageName(), imgHessianAlgor);
+                
                 if (isRunInSeparateThread()) {
 
                     // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -201,10 +203,6 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        imgHessianAlgor.setProgressBarVisible(false);
-                    }
-
                     imgHessianAlgor.run();
                 } // end if (isRunInSeparateThread())
             } catch (OutOfMemoryError x) {
@@ -377,7 +375,7 @@ public class JDialogHessian extends JDialogBase implements AlgorithmInterface {
         hessianPanel.setForeground(Color.black);
         hessianPanel.setBorder(buildTitledBorder("Hessian"));
 
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
 

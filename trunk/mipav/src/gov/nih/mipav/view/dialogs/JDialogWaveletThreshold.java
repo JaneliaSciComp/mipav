@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -18,7 +20,7 @@ import javax.swing.*;
 /**
  * DOCUMENT ME!
  */
-public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogWaveletThreshold extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -42,9 +44,11 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     public static final int SOFT = 2;
-    
+
+    /** DOCUMENT ME! */
     public static final int NONNEGATIVE_GARROTE = 3;
-    
+
+    /** DOCUMENT ME! */
     public static final int SCAD = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -62,6 +66,9 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
     private boolean doWaveletImage;
 
     /** DOCUMENT ME! */
+    private JRadioButton garrote;
+
+    /** DOCUMENT ME! */
     private JRadioButton hard;
 
     /** DOCUMENT ME! */
@@ -77,11 +84,10 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private JRadioButton soft;
-    
-    private JRadioButton garrote;
-    
     private JRadioButton scad;
+
+    /** DOCUMENT ME! */
+    private JRadioButton soft;
 
     /** DOCUMENT ME! */
     private JTextField textThreshold;
@@ -160,9 +166,6 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-        ViewJFrameImage imageFrameW = null;
-
         if (algorithm instanceof AlgorithmWaveletThreshold) {
             image.clearMask();
 
@@ -174,7 +177,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                 try {
 
                     // resultImage.setImageName("Unsharp mask");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -188,7 +191,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                         updateFFTFileInfo(image, waveletImage, ModelStorageBase.FLOAT);
 
                         try {
-                            imageFrameW = new ViewJFrameImage(waveletImage, null, new Dimension(610, 220));
+                            new ViewJFrameImage(waveletImage, null, new Dimension(610, 220));
                         } catch (OutOfMemoryError error) {
                             MipavUtil.displayError("Out of memory: Unable to open wavelet image frame");
                         }
@@ -227,7 +230,9 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         waveletAlgo.finalize();
         waveletAlgo = null;
@@ -243,44 +248,6 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("WaveletThreshold " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + cNum + " " + thresholdType + " " + threshold + " " +
-                                                           doWaveletImage + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + cNum + " " + thresholdType + " " + threshold + " " +
-                                                           doWaveletImage + "\n");
-
-                }
-            }
-        }
-    }
-
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -294,59 +261,6 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
         // Object source = event.getSource();
         // float tempNum;
 
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setCNum(parser.getNextInteger());
-            setThresholdType(parser.getNextInteger());
-            setThreshold(parser.getNextFloat());
-            setDoWaveletImage(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -404,7 +318,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
      * Once all the necessary variables are set, call the UnsharpMark algorithm based on what type of image this is and
      * whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_waveletThr");
 
         if (image.getNDims() == 2) { // source image is 2D
@@ -440,6 +354,8 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     waveletAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), waveletAlgo);
+
                     // Hide dialog
                     setVisible(false);
 
@@ -450,6 +366,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             waveletAlgo.setProgressBarVisible(false);
                         }
@@ -480,6 +397,8 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     waveletAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), waveletAlgo);
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -504,6 +423,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             waveletAlgo.setProgressBarVisible(false);
                         }
@@ -549,6 +469,8 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     waveletAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), waveletAlgo);
+
                     // Hide dialog
                     setVisible(false);
 
@@ -559,6 +481,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             waveletAlgo.setProgressBarVisible(false);
                         }
@@ -588,6 +511,8 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                     // This is made possible by implementing AlgorithmedPerformed interface
                     waveletAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), waveletAlgo);
+
                     // Hide dialog
                     setVisible(false);
 
@@ -612,6 +537,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
+
                         if (!userInterface.isAppFrameVisible()) {
                             waveletAlgo.setProgressBarVisible(false);
                         }
@@ -628,6 +554,51 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
     }
 
     /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+
+        if (scriptParameters.doOutputNewImage()) {
+            this.setDisplayLocNew();
+        } else {
+            this.setDisplayLocReplace();
+        }
+
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        cNum = scriptParameters.getParams().getInt("num_coefficients");
+        thresholdType = scriptParameters.getParams().getInt("threshold_type");
+        threshold = scriptParameters.getParams().getFloat("threshold");
+        doWaveletImage = scriptParameters.getParams().getBoolean("do_show_wavelet_image");
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_coefficients", cNum));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_type", thresholdType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_wavelet_image", doWaveletImage));
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -635,8 +606,8 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel paramPanel = new JPanel(new GridBagLayout());
         paramPanel.setBorder(buildTitledBorder("Parameters"));
@@ -685,7 +656,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 3;
         paramPanel.add(soft, gbc);
-        
+
         garrote = new JRadioButton("Nonnegative garrote", false);
         garrote.setFont(serif12);
         garrote.addActionListener(this);
@@ -693,7 +664,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
         gbc.gridx = 0;
         gbc.gridy = 4;
         paramPanel.add(garrote, gbc);
-        
+
         scad = new JRadioButton("SCAD", false);
         scad.setFont(serif12);
         scad.addActionListener(this);
@@ -775,7 +746,7 @@ public class JDialogWaveletThreshold extends JDialogBase implements AlgorithmInt
 
         if (hard.isSelected()) {
             thresholdType = HARD;
-        } else if (soft.isSelected()){
+        } else if (soft.isSelected()) {
             thresholdType = SOFT;
         } else if (garrote.isSelected()) {
             thresholdType = NONNEGATIVE_GARROTE;

@@ -709,7 +709,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             direction = -1;
         }
 
-        // progressBar.setMessage("Running FFT algorithm...");
+        // fireProgressStateChanged("Running FFT algorithm...");
         j1 = 1;
         dim = 1;
 
@@ -893,7 +893,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 // forms a nArray[i] by nArray[i] matrix with order'th derivatives
                 if (nArray[i] < 4) {
                     MipavUtil.displayError("algorithm IHN3Correction bending energy not defined for size < 4");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -1364,7 +1364,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
                 if (nArray[i] < 4) {
                     cleanUp();
                     MipavUtil.displayError("algorithm IHN3Correction bending energy not defined for size < 4");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -1725,8 +1725,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         orgDim[1] = srcImage.getExtents()[1];
         sliceSize = orgDim[0] * orgDim[1];
 
-        buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
+        
 
 
         try {
@@ -1734,7 +1734,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             srcImage.exportData(0, sliceSize, buffer);
         } catch (IOException ioe) {
             MipavUtil.displayError("algorithm IHN3Correction reports:\n" + ioe.toString());
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1742,7 +1742,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             buffer = null;
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -1839,7 +1839,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
                 if ((sMax + logOffset) >= Float.MAX_VALUE) {
                     MipavUtil.displayError("Dynamic range too great for log compression");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -1996,7 +1996,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -2009,10 +2009,10 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         volumeDomain();
 
         for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++) {
-            progressBar.setMessage("Starting iteration " + iters);
+            fireProgressStateChanged("Starting iteration " + iters);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) iters / (maxIters - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) iters / (maxIters - 1) * 100));
             }
 
             // Correct volume using field estimate
@@ -2299,7 +2299,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
            Preferences.debug("Stopped after iteration " + (iters-1) + " due to cancellation\n");
         }
 
-        progressBar.setMessage("Last iteration was = " + (iters - 1));
+        fireProgressStateChanged("Last iteration was = " + (iters - 1));
         logBuffer = null;
         correctedBuffer = null;
         estimateBuffer = null;
@@ -2333,7 +2333,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             MipavUtil.displayError("algorithm IHN3Correction could not normalize with zero mean");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -2389,7 +2389,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: IOException on field image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -2397,13 +2397,13 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
 
         return;
@@ -2426,8 +2426,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         volSize = sliceSize * orgDim[2];
 
 
-        buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Importing source image...");
+        
 
         try {
             buffer = new float[volSize];
@@ -2436,7 +2436,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             MipavUtil.displayError("algorithm IHN3Correction reports:\n" + ioe.toString());
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -2444,7 +2444,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -2555,7 +2555,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
                 if ((sMax + logOffset) >= Float.MAX_VALUE) {
                     MipavUtil.displayError("Dynamic range too great for log compression");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -2711,7 +2711,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -2728,8 +2728,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             Preferences.debug("Starting iteration " + iters + ": Tol = " + stddev + "\n", Preferences.DEBUG_ALGORITHM);
 
             if (isProgressBarVisible()) {
-                progressBar.setMessage("Starting iteration " + iters + ": Tol = " + stddev);
-                progressBar.updateValue(Math.round((float) iters / (maxIters - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged("Starting iteration " + iters + ": Tol = " + stddev);
+                fireProgressStateChanged(Math.round((float) iters / (maxIters - 1) * 100));
             }
 
             // Correct volume using field estimate
@@ -3022,10 +3022,9 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         if (threadStopped) {
             Preferences.debug("Stopped during iteration " + (iters-1) + " due to cancellation\n");
         }
-
-        if (progressBar != null) {
-            progressBar.setMessage("Last iteration was = " + (iters - 1));
-        }
+        
+        fireProgressStateChanged("Last iteration was = " + (iters - 1));
+        
 
         logBuffer = null;
         correctedBuffer = null;
@@ -3059,7 +3058,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             }
         } else {
             MipavUtil.displayError("Algorithm IHN3Correction could not normalize with zero mean");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -3117,7 +3116,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: IOException on field image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -3125,13 +3124,13 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
 
         return;
@@ -3674,7 +3673,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
             cleanUp();
             System.gc();
             displayError("AlgorithmIHN3Correction: Out of memory on field image import data in routine volumeDomain");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;

@@ -161,16 +161,16 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
         }
 
         try {
-            buildProgressBar(srcImage.getImageName(), "Matching Histogram ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Matching Histogram ...");
+            
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock
                 baseImage.exportData(0, baseLength, baseBuffer);
 
                 try {
-                    progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, runningInSeparateThread); // not quite midway
+                    fireProgressStateChanged("Processing Image");
+                    fireProgressStateChanged(45); // not quite midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -192,19 +192,10 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
                 for (colour = 0; (colour < valuesPerPixel) && !threadStopped; colour++) { // for each color
 
-                    try {
-
-                        if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (colour) / valuesPerPixel) * 100), runningInSeparateThread);
-                            progressBar.setMessage("Processing colour " + Integer.toString(colour));
-                        }
-                    } catch (NullPointerException npe) {
-
-                        if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
-                        }
-                    }
+                 
+                	fireProgressStateChanged((int) (((float) (colour) / valuesPerPixel) * 100));
+                	fireProgressStateChanged("Processing colour " + Integer.toString(colour));
+             
 
                     srcImage.exportRGBData(colour, 0, length, buffer); // get the slice
                     baseImage.exportRGBData(colour, 0, baseLength, baseBuffer);
@@ -242,10 +233,6 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
             finalize();
 
             return;
-        }
-
-        if (progressBar != null) {
-            progressBar.dispose();
         }
 
         setCompleted(true);
@@ -290,16 +277,16 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
         destImage.releaseLock(); // we need to be able to alter the dest image
 
         try {
-            buildProgressBar(srcImage.getImageName(), "Matching Histogram ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Matching Histogram ...");
+            
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock
                 baseImage.exportData(0, baseLength, baseBuffer);
 
                 try {
-                    progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, runningInSeparateThread); // a little less than midway
+                    fireProgressStateChanged("Processing Image");
+                    fireProgressStateChanged(45); // a little less than midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -321,20 +308,10 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
 
                 for (colour = 0; (colour < valuesPerPixel) && !threadStopped; colour++) { // for each color
 
-                    try {
-
-                        if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (colour) / valuesPerPixel) * 100), runningInSeparateThread);
-                            progressBar.setMessage("Processing colour " + Integer.toString(colour));
-                        }
-                    } catch (NullPointerException npe) {
-
-                        if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
-                        }
-                    }
-
+                
+                	fireProgressStateChanged((int) (((float) (colour) / valuesPerPixel) * 100));
+                	fireProgressStateChanged("Processing colour " + Integer.toString(colour));
+           
                     srcImage.exportRGBData(colour, 0, length, buffer); // grab the slice
                     baseImage.exportRGBData(colour, 0, baseLength, baseBuffer);
 
@@ -375,7 +352,7 @@ public class AlgorithmHistogramMatch extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 

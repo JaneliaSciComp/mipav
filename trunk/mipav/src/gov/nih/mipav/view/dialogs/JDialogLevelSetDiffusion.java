@@ -112,7 +112,7 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
      */
     public JDialogLevelSetDiffusion(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         image = im;
 
         ViewVOIVector VOIs = image.getVOIs();
@@ -235,6 +235,9 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
                     // This is made possible by implementing AlgorithmedPerformed interface
                     levelSetAlgo.addListener(this);
 
+                    
+                    createProgressBar(image.getImageName(), levelSetAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -282,6 +285,8 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
                     // This is made possible by implementing AlgorithmedPerformed interface
                     levelSetAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), levelSetAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -430,7 +435,7 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;

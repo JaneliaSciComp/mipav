@@ -1,9 +1,6 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.structures.*;
-
 import java.awt.*;
 
 import java.io.*;
@@ -43,17 +40,6 @@ public class ViewDirectoryChooser {
     }
 
     /**
-     * Creates a new ViewDirectoryChooser object.
-     *
-     * @deprecated  Creates a dialog for choosing a directory.
-     *
-     * @param       ui  Main user interface.
-     */
-    public ViewDirectoryChooser(ViewUserInterface ui) {
-        this();
-    }
-
-    /**
      * Creates a dialog for choosing a directory with a parent frame.
      *
      * @param  parent  Parent frame.
@@ -61,18 +47,6 @@ public class ViewDirectoryChooser {
     public ViewDirectoryChooser(Component parent) {
         UI = ViewUserInterface.getReference();
         parentFrame = parent;
-    }
-
-    /**
-     * Creates a new ViewDirectoryChooser object.
-     *
-     * @deprecated  Creates a dialog for choosing a directory with a parent frame.
-     *
-     * @param       ui      Main user interface.
-     * @param       parent  Parent frame.
-     */
-    public ViewDirectoryChooser(ViewUserInterface ui, Component parent) {
-        this(parent);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -171,83 +145,4 @@ public class ViewDirectoryChooser {
     public String getImageDirectory() {
         return chooseDirectory(UI.getDefaultDirectory());
     }
-
-    /**
-     * Open an image based on the suffix of the file.
-     *
-     * @param   fileName   Full pathname of file to open.
-     * @param   multiFile  Flag to indicate if image is an array of 2D image files (<code>true</code>) or if the image
-     *                     is stored in a single file (<code>false</code>).
-     * @param   fileInfo   File info, can be null. In the case of RAW images read by the script, will not be null.
-     *
-     * @return  The image name of the image that was read in.
-     */
-    public String open(String fileName, boolean multiFile, FileInfoBase fileInfo) {
-        int index;
-        ModelImage image;
-        ModelLUT LUT;
-        ViewJFrameImage imageFrame;
-        FileIO fileIO = null;
-        String directory;
-
-        // separate fileName and directory
-        index = fileName.lastIndexOf(File.separatorChar);
-
-        if (index <= 0) {
-            return null;
-        }
-
-        directory = fileName.substring(0, index + 1); // ends with File.separator
-        Preferences.debug(directory);
-        fileName = fileName.substring(index + 1, fileName.length());
-        Preferences.debug(fileName);
-
-        try {
-            fileIO = new FileIO();
-            image = fileIO.readImage(fileName, directory, multiFile, fileInfo);
-        } catch (OutOfMemoryError e) {
-            MipavUtil.displayError("Out of memory!");
-
-            return null;
-        }
-
-        if (image == null) {
-            return null;
-        }
-
-        // Not sure if this is really needed or wanted -- Matt 6/2004. Tagged for removal.
-        // image.getMatrix().identity();
-        LUT = fileIO.getModelLUT(); // LUT is not null if TIFF image has a LUT else it is null
-                                    // and create in ViewFrameImage
-
-        try {
-            imageFrame = new ViewJFrameImage(image, LUT);
-        } catch (OutOfMemoryError e) {
-            MipavUtil.displayError("Out of memory!");
-
-            return null;
-        }
-
-        UI.getMainFrame().pack();
-
-        if (UI.isScriptRecording()) {
-
-            if (image.getFileInfo(0).getFileFormat() != FileBase.RAW) { // RAW files need special info appended so it's
-                                                                        // done in that function.
-                UI.getScriptDialog().putVar(image.getImageName());
-
-                if (multiFile) {
-                    UI.getScriptDialog().append("OpenMultiFile " + UI.getScriptDialog().getVar(image.getImageName()) +
-                                                "\n");
-                } else {
-                    UI.getScriptDialog().append("OpenImage " + UI.getScriptDialog().getVar(image.getImageName()) +
-                                                "\n");
-                }
-            }
-        }
-
-        return image.getImageName();
-
-    }
-
 } // end class ViewDirectoryChooser

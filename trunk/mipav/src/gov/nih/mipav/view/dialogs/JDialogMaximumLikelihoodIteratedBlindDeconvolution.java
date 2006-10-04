@@ -3,8 +3,9 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 
-import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -25,11 +26,7 @@ import javax.swing.*;
  *
  * See AlgorithmMaximumLikelihoodIteratedBlindDeconvolution.java for algorithm details. 
  */
-public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
-    extends JDialogBase
-    implements AlgorithmInterface,
-               ScriptableInterface
-{
+public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -153,71 +150,54 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
                 MipavUtil.displayError("Out of memory: unable to open new frame");
             }
 
-            insertScriptLine(algorithm);
+            insertScriptLine();
 
             ibdAlgor.finalize();
             ibdAlgor = null;
         }
     } // end algorithmPerformed(...)
 
-
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) { }
-    }
-
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try { }
-        catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(originalImage);
         
-        setSeparateThread(false);
-
-        if (!srcImageKey.equals(destImageKey)) { }
+        scriptParameters.storeNumIterations(numberIterations);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("display_every_n_slices", showProgress));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("objective_numerical_aperature", objectiveNumericalAperature));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("wavelength_nm", wavelength));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("refractive_index", refractiveIndex));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_microscope_settings", useMicroscopeSettings));
     }
-
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        originalImage = scriptParameters.retrieveInputImage();
+        
+        numberIterations = scriptParameters.getNumIterations();
+        showProgress = scriptParameters.getParams().getInt("display_every_n_slices");
+        objectiveNumericalAperature = scriptParameters.getParams().getFloat("objective_numerical_aperature");
+        wavelength = scriptParameters.getParams().getFloat("wavelength_nm");
+        refractiveIndex = scriptParameters.getParams().getFloat("refractive_index");
+        useMicroscopeSettings = scriptParameters.getParams().getBoolean("do_use_microscope_settings");
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(ibdAlgor.getReconstructedImage());
+    }
 
     /**
      * Once all the necessary variables are set, call the mean algorithm based
      * on what type of image this is and whether or not there is a separate
      * destination image.
      */
-    private void callAlgorithm() {
-        String name;
-        name = makeImageName(originalImage.getImageName(), "_ibd");
-
+    protected void callAlgorithm() {
         try {
             ibdAlgor =
                 new AlgorithmMaximumLikelihoodIteratedBlindDeconvolution(originalImage,
@@ -234,6 +214,8 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
             // This is made possible by implementing AlgorithmedPerformed interface
             ibdAlgor.addListener(this);
 
+            createProgressBar(originalImage.getImageName(), ibdAlgor);
+            
             if (isRunInSeparateThread()) {
 
                 // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -331,7 +313,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
         checkAdvancedOptions.setActionCommand( "MicroscopeOptions" );
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
@@ -373,7 +355,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution
         gbc.gridx = 0;
         gbc.weightx = 1.0;
         gbc.weighty = 1.0;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
 

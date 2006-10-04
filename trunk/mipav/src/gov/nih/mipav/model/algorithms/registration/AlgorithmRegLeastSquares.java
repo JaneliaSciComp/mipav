@@ -247,7 +247,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
         try {
             int i, j;
 
-            // buildProgressBar(srcImage.getImageName(), "Registering image ...", 0, 100);
+            // fireProgressStateChanged(srcImage.getImageName(), "Registering image ...");
             // initProgressBar();
             // set p1 and p2 to zeros
             double[] p1 = new double[dim];
@@ -333,7 +333,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
 
                     // The points are colinear.
                     setCompleted(false);
-                    disposeProgressBar();
+                    
                 } else if (numberZeroes == 1) {
                     ratio = singularValues[2] / singularValues[1];
 
@@ -345,7 +345,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
 
                         // The points are colinear.
                         setCompleted(false);
-                        disposeProgressBar();
+                        
                     }
 
                     V = SVD.getV();
@@ -367,7 +367,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
 
                     // The points are colinear.
                     setCompleted(false);
-                    disposeProgressBar();
+                    
                 }
             } // if det(X) = -1, this is a degenerate case.  X is a reflection instead of a rotation.
 
@@ -396,7 +396,7 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
                     Preferences.debug("This is a degenerate case.\n X is a reflection instead of a rotation.\n");
                     Preferences.debug("The points are too noisy.\n");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
                 } else if (numberZeroes == 1) {
                     MipavUtil.displayError("Least Squares Failed due to colinear points \n");
                     Preferences.debug("Least Squares Failed. Determinate = -1\n");
@@ -405,21 +405,21 @@ public class AlgorithmRegLeastSquares extends AlgorithmBase {
 
                     // The points are colinear.
                     setCompleted(false);
-                    disposeProgressBar();
+                    
                 }
                 // return -1;
             } else {
                 MipavUtil.displayError("Least Squares Rounding Problem");
                 Preferences.debug("Least Squares Rounding Problem: determinate did not = 1 or -1\n");
                 setCompleted(false);
-                // disposeProgressBar();
+                // 
                 // return -2;
             }
-            // disposeProgressBar();
+            // 
 
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("Algo Register Least Squares: unable to allocate enough memory");
-            // disposeProgressBar();
+            // 
             // return -3;
         }
     }

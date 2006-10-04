@@ -61,7 +61,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
      */
     public AlgorithmSubsample(ModelImage src, ModelImage result, int[] newExtents, float[] _sigmas, boolean indep,
                               boolean transformVOI, TransMatrix transMatrix) {
-
+    	super(result, src);
         if (src == null) {
             MipavUtil.displayError("No source image provided to be subsampled.");
 
@@ -79,7 +79,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         if (processIndep && (srcImage.getExtents()[2] != resultExtents[2])) {
             MipavUtil.displayError("Cannot perform 2.5D subsampling and change the number of slices");
             threadStopped = true;
-            completed = false;
+            setCompleted(false);
 
             return;
         }
@@ -109,8 +109,8 @@ public class AlgorithmSubsample extends AlgorithmBase {
      * Subsample the image.
      */
     public void runAlgorithm() {
-        buildProgressBar("Subsamping image " + srcImage.getImageName(), "Subsampling image..", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged("Subsamping image " + srcImage.getImageName(), "Subsampling image..");
+        
 
         ModelSimpleImage temp = null;
 
@@ -133,7 +133,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             resultImage.importData(0, temp.data, true);
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(100, runningInSeparateThread);
+                fireProgressStateChanged(100);
             }
         } catch (IOException ioe) {
             MipavUtil.displayError("Error caught trying to import subsample result image.");
@@ -206,7 +206,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             float[][] xfrm = null;
             int imgLength;
             float[] imgBuf;
-            progressBar.setMessage("Subsample on VOIs");
+            fireProgressStateChanged("Subsample on VOIs");
             xfrm = AlgorithmTransform.matrixtoInverseArray(transMatrix);
 
             if ((srcImage.getNDims() >= 3) && (!processIndep)) {
@@ -226,7 +226,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 srcImage.exportData(0, imgLength, imgBuf);
             } catch (IOException error) {
                 displayError("Algorithm Subsample: IOException on srcImage.exportData");
-                disposeProgressBar();
+                
                 finalize();
                 setCompleted(false);
 
@@ -235,7 +235,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 finalize();
                 System.gc();
                 displayError("Algorithm Subsample: Out of memory on srcImage.exportData");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -251,7 +251,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
         setCompleted(true);
 
-        disposeProgressBar();
+        
     }
 
     /**
@@ -655,7 +655,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         int zOffset;
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(percent, runningInSeparateThread);
+            fireProgressStateChanged(percent);
         }
 
         for (int s = 0; s < nImages; s++) {
@@ -801,7 +801,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         percent += (int) inc;
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(percent, runningInSeparateThread);
+            fireProgressStateChanged(percent);
         }
 
         remainder += inc - (int) inc;
@@ -811,7 +811,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             remainder = remainder - (int) remainder;
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(percent, runningInSeparateThread);
+                fireProgressStateChanged(percent);
             }
         }
 
@@ -871,13 +871,13 @@ public class AlgorithmSubsample extends AlgorithmBase {
         float inc = (90.0f / result.zDim);
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(percent, runningInSeparateThread);
+            fireProgressStateChanged(percent);
         }
 
         for (int z = 0; z < result.zDim; z++) {
 
             if (isProgressBarVisible()) {
-                progressBar.setMessage("Subsampling slice " + (z + 1) + "..");
+                fireProgressStateChanged("Subsampling slice " + (z + 1) + "..");
             }
 
             for (int y = 0; y < result.yDim; y++) {
@@ -1189,7 +1189,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             percent += (int) inc;
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(percent, runningInSeparateThread);
+                fireProgressStateChanged(percent);
             }
 
             remainder += inc - (int) inc;
@@ -1199,7 +1199,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 remainder = remainder - (int) remainder;
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(percent, runningInSeparateThread);
+                    fireProgressStateChanged(percent);
                 }
             }
 
@@ -1263,13 +1263,13 @@ public class AlgorithmSubsample extends AlgorithmBase {
         float inc = (90.0f / (result.tDim * result.zDim));
 
         if (isProgressBarVisible()) {
-            progressBar.updateValue(percent, runningInSeparateThread);
+            fireProgressStateChanged(percent);
         }
 
         for (int t = 0; t < result.tDim; t++) {
 
             if (isProgressBarVisible()) {
-                progressBar.setMessage("Subsampling time " + (t + 1) + "..");
+                fireProgressStateChanged("Subsampling time " + (t + 1) + "..");
             }
 
             for (int z = 0; z < result.zDim; z++) {
@@ -1585,7 +1585,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 percent += (int) inc;
 
                 if (isProgressBarVisible()) {
-                    progressBar.updateValue(percent, runningInSeparateThread);
+                    fireProgressStateChanged(percent);
                 }
 
                 remainder += inc - (int) inc;
@@ -1595,7 +1595,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                     remainder = remainder - (int) remainder;
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(percent, runningInSeparateThread);
+                        fireProgressStateChanged(percent);
                     }
                 } // if (remainder >= 1)
 

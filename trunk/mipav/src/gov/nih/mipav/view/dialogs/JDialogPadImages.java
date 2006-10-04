@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +24,7 @@ import javax.swing.*;
  *
  * @author  Ruida Cheng
  */
-public class JDialogPadImages extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogPadImages extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -47,9 +49,6 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
     private int displayLoc; // Flag indicating if a new image is to be generated
 
     // or if the source image is to be replaced
-
-    /** DOCUMENT ME! */
-    private boolean dontOpenFrame = false;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -88,9 +87,6 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
-    private boolean successful = false; // indicates status of algorithm
-
-    /** DOCUMENT ME! */
     private String[] titles; // title of the frame shown when image is NULL
 
     /** DOCUMENT ME! */
@@ -112,7 +108,7 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
     public JDialogPadImages(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im; // set the image from the arguments to an image in this class
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         nSlices = image.getExtents()[2];
         paddedSlices = dimPowerOfTwo(nSlices);
 
@@ -123,29 +119,6 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
         }
 
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogPadImages(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        nSlices = image.getExtents()[2];
-        paddedSlices = dimPowerOfTwo(nSlices);
-
-        if (nSlices == paddedSlices) {
-            MipavUtil.displayError(nSlices + " slices is already a power of 2");
-
-            return;
-        }
-
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -195,15 +168,10 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
                     try {
 
                         // put the new image into a new frame
-                        if (!dontOpenFrame) {
-                            new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
-                        }
-
-                        successful = true;
+                        new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
                     } catch (OutOfMemoryError error) {
                         MipavUtil.displayError("Pad With Slices reports: out of memory; " +
                                                "unable to open a new frame");
-                        successful = false;
                     }
 
                     if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
@@ -216,7 +184,6 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
                     resultImage.disposeLocal(); // clean up memory
                     resultImage = null;
                     System.gc();
-                    successful = false;
                 }
                 // last case is that algorithm failed, but no image was produced.
                 // since there is no image, don't need to clean up anything!
@@ -246,7 +213,6 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
 
                 // this won't really work until the notifyImageExtentsListeners has been
                 // fully implemented.
-                successful = true;
                 image.notifyImageExtentsListeners();
 
                 if (Preferences.debugLevel(Preferences.DEBUG_ALGORITHM)) {
@@ -257,7 +223,9 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
 
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         padSlicesAlgo.finalize();
         padSlicesAlgo = null;
@@ -272,103 +240,6 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
      */
     public ModelImage getResultImage() {
         return resultImage;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("PadWithSlices " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " ");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                }
-
-                userInterface.getScriptDialog().append(padMode + "\n");
-            }
-        }
-    }
-
-    /**
-     * Accessor that returns the whether or not the algorithm completed successfully.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public boolean isSuccessful() {
-        return successful;
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setPadMode(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -388,15 +259,6 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @param  dontOpenFrame  DOCUMENT ME!
-     */
-    public void setDontOpenFrame(boolean dontOpenFrame) {
-        this.dontOpenFrame = dontOpenFrame;
-    }
-
-    /**
      * Accessor to set padMode.
      *
      * @param  padMode  int
@@ -409,7 +271,7 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
      * Once all the necessary variables are set, call the Remove Slices algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         System.gc();
 
         int[] destExtents = null;
@@ -433,6 +295,9 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 padSlicesAlgo.addListener(this);
+
+                createProgressBar(image.getImageName(), padSlicesAlgo);
+
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {
@@ -442,6 +307,7 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
+
                     if (!userInterface.isAppFrameVisible()) {
                         padSlicesAlgo.setProgressBarVisible(false);
                     }
@@ -473,6 +339,9 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
                 // notify this object when it has completed of failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 padSlicesAlgo.addListener(this);
+
+                createProgressBar(image.getImageName(), padSlicesAlgo);
+
                 setVisible(false); // Hide dialog
 
                 // These next lines set the titles in all frames where the source image is displayed to
@@ -496,6 +365,7 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
+
                     if (!userInterface.isAppFrameVisible()) {
                         padSlicesAlgo.setProgressBarVisible(false);
                     }
@@ -511,6 +381,51 @@ public class JDialogPadImages extends JDialogBase implements AlgorithmInterface,
         } // end if display is LOC or REPLACE
 
 
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        nSlices = image.getExtents()[2];
+        paddedSlices = dimPowerOfTwo(nSlices);
+
+        if (nSlices == paddedSlices) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1),
+                                         nSlices + " slices is already a power of 2");
+        }
+
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setPadMode(scriptParameters.getParams().getInt("padding_mode"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("padding_mode", padMode));
     }
 
     /**

@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -24,8 +26,7 @@ import javax.swing.*;
  * @author   William Gandler
  * @see      AlgorithmMRIShadingCorrection
  */
-public class JDialogMRIShadingCorrection extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogMRIShadingCorrection extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -137,24 +138,10 @@ public class JDialogMRIShadingCorrection extends JDialogBase
     public JDialogMRIShadingCorrection(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogMRIShadingCorrection(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -187,7 +174,6 @@ public class JDialogMRIShadingCorrection extends JDialogBase
                 thresholdText.setEnabled(false);
             }
         } // else if (source == thresholdCheckbox)
-
     }
 
     // ************************************************************************
@@ -201,9 +187,6 @@ public class JDialogMRIShadingCorrection extends JDialogBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmMRIShadingCorrection) {
             image.clearMask();
 
@@ -215,7 +198,7 @@ public class JDialogMRIShadingCorrection extends JDialogBase
                 try {
 
                     // resultImage.setImageName("Unsharp mask");
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -252,35 +235,13 @@ public class JDialogMRIShadingCorrection extends JDialogBase
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         mAlgo.finalize();
         mAlgo = null;
         dispose();
-    }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += norm + delim;
-        str += scaleX + delim;
-        str += scaleY + delim;
-        str += iters + delim;
-        str += thresholdSelected + delim;
-        str += thresholdLevel;
-
-        return str;
     }
 
     /**
@@ -291,45 +252,52 @@ public class JDialogMRIShadingCorrection extends JDialogBase
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("MRIShadingCorrection " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + norm + " " + scaleX + " " + scaleY + " " + iters +
-                                                           " " + thresholdSelected + " " + thresholdLevel + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + norm + " " + scaleX + " " + scaleY + " " + iters +
-                                                           " " + thresholdSelected + " " + thresholdLevel + "\n");
-
-                }
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("normalization_const", norm));
+        scriptParameters.getParams().put(ParameterFactory.newParameter(AlgorithmParameters.SIGMAS, new float[] {scaleX, scaleY}));
+        scriptParameters.storeNumIterations(iters);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_periphery_threshold", thresholdSelected));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("periphery_threshold_level", thresholdLevel));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        setNorm(scriptParameters.getParams().getFloat("normalization_const"));
+        float[] sigmas = scriptParameters.getUnnormalizedSigmas();
+        setScaleX(sigmas[0]);
+        setScaleY(sigmas[1]);
+        setIters(scriptParameters.getNumIterations());
+        setThresholdSelected(scriptParameters.getParams().getBoolean("do_periphery_threshold"));
+        setThresholdLevel(scriptParameters.getParams().getFloat("periphery_threshold_level"));
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
-
 
     /**
      * Loads the default settings from Preferences to set up the dialog.
@@ -376,67 +344,18 @@ public class JDialogMRIShadingCorrection extends JDialogBase
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + newImage.isSelected());
+        String delim = ",";
+        
+        String defaultsString = norm + delim;
+        defaultsString += scaleX + delim;
+        defaultsString += scaleY + delim;
+        defaultsString += iters + delim;
+        defaultsString += thresholdSelected + delim;
+        defaultsString += thresholdLevel;
+        defaultsString += newImage.isSelected();
 
         // System.err.println(defaultsString);
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setNorm(parser.getNextFloat());
-            setScaleX(parser.getNextFloat());
-            setScaleY(parser.getNextFloat());
-            setIters(parser.getNextInteger());
-            setThresholdSelected(parser.getNextBoolean());
-            setThresholdLevel(parser.getNextFloat());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
     }
 
     /**
@@ -512,7 +431,7 @@ public class JDialogMRIShadingCorrection extends JDialogBase
      * Once all the necessary variables are set, call the Entropy Minimization algorithm based on what type of image
      * this is and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_mriShadingCorr");
 
         if (displayLoc == NEW) {
@@ -542,6 +461,8 @@ public class JDialogMRIShadingCorrection extends JDialogBase
                 // This is made possible by implementing AlgorithmedPerformed interface
                 mAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), mAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -582,6 +503,8 @@ public class JDialogMRIShadingCorrection extends JDialogBase
                 // This is made possible by implementing AlgorithmedPerformed interface
                 mAlgo.addListener(this);
 
+                createProgressBar(image.getImageName(), mAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 

@@ -4,9 +4,15 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ParserException;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.JPanelAlgorithmOutputOptions;
+import gov.nih.mipav.view.components.JPanelColorChannels;
+import gov.nih.mipav.view.components.JPanelSigmas;
+import gov.nih.mipav.view.components.PanelManager;
+import gov.nih.mipav.view.components.WidgetFactory;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -26,8 +32,8 @@ import javax.swing.*;
  *
  * @see  AlgorithmGaussianBlurITK
  */
-public class JDialogGaussianBlurITK extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogGaussianBlurITK extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -37,31 +43,7 @@ public class JDialogGaussianBlurITK extends JDialogBase
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    public long start, end;
-
-    /** DOCUMENT ME! */
-    private boolean blue = false;
-
-    /** DOCUMENT ME! */
-    private JCheckBox blueCheckbox;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel destinationPanel;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** DOCUMENT ME! */
     private AlgorithmGaussianBlurITK gaussianBlurAlgo;
-
-    /** DOCUMENT ME! */
-    private boolean green = false;
-
-    /** DOCUMENT ME! */
-    private JCheckBox greenCheckbox;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
@@ -73,79 +55,22 @@ public class JDialogGaussianBlurITK extends JDialogBase
     private JCheckBox image25DCheckbox;
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
-    private JPanel imageVOIPanel;
-
-    /** DOCUMENT ME! */
-    private JLabel labelCorrected;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussX;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussY;
-
-    /** DOCUMENT ME! */
-    private JLabel labelGaussZ;
-
-    /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
-    private float normFactor = 1; // normalization factor to adjust for resolution
-
-    /** DOCUMENT ME! */
-    private boolean red = false; // set to true if requested for ARGB images
-
-    /** DOCUMENT ME! */
-    private JCheckBox redCheckbox;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
-
-    /** difference between x,y resolutions (in plane) and z resolution (between planes). */
-    private JCheckBox resolutionCheckbox;
-
-    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
-    private JPanel scalePanel;
-
-    /** DOCUMENT ME! */
-    private float scaleX;
-
-    /** DOCUMENT ME! */
-    private float scaleY;
-
-    /** DOCUMENT ME! */
-    private float scaleZ;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussX;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussY;
-
-    /** DOCUMENT ME! */
-    private JTextField textGaussZ;
 
     /** DOCUMENT ME! */
     private String[] titles;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-
-    /** or if the source image is to be replaced. */
-    private boolean useVOI = false;
-
+    
     /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
+    private JPanelColorChannels colorChannelPanel;
+    
     /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
+    private JPanelAlgorithmOutputOptions outputOptionsPanel;
+    
+    /** DOCUMENT ME! */
+    private JPanelSigmas sigmaPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -163,24 +88,10 @@ public class JDialogGaussianBlurITK extends JDialogBase
     public JDialogGaussianBlurITK(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogGaussianBlurITK(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -216,15 +127,10 @@ public class JDialogGaussianBlurITK extends JDialogBase
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
 
-        end = System.currentTimeMillis();
-        Preferences.debug("Gaussian Elapsed: " + (end - start));
         image.clearMask();
 
         if ((gaussianBlurAlgo.isCompleted() == true) && (resultImage != null)) {
@@ -237,7 +143,7 @@ public class JDialogGaussianBlurITK extends JDialogBase
             resultImage.clearMask();
 
             try {
-                imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
             } catch (OutOfMemoryError error) {
                 System.gc();
                 MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -272,7 +178,9 @@ public class JDialogGaussianBlurITK extends JDialogBase
 
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (gaussianBlurAlgo != null) {
             gaussianBlurAlgo.finalize();
@@ -280,30 +188,6 @@ public class JDialogGaussianBlurITK extends JDialogBase
         }
 
         dispose();
-    }
-
-    /**
-     * When the user clicks the mouse out of a text field, resets the neccessary variables.
-     *
-     * @param  event  event that triggers this function
-     */
-    public void focusLost(FocusEvent event) {
-        Object source = event.getSource();
-        JTextField field;
-        String text;
-        float tempNum;
-
-        if (source == textGaussZ) {
-            field = (JTextField) source;
-            text = field.getText();
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        }
     }
 
     /**
@@ -318,16 +202,17 @@ public class JDialogGaussianBlurITK extends JDialogBase
         if (delim.equals("")) {
             delim = " ";
         }
-
+        
         String str = new String();
-        str += useVOI + delim;
+        str += outputOptionsPanel.isProcessWholeImageSet() + delim;
         str += image25D + delim;
-        str += scaleX + delim;
-        str += scaleY + delim;
-        str += textGaussZ.getText() + delim;
-        str += red + delim;
-        str += green + delim;
-        str += blue;
+        str += sigmaPanel.getUnnormalized3DSigmas()[0] + delim;
+        str += sigmaPanel.getUnnormalized3DSigmas()[1] + delim;
+        str += sigmaPanel.getUnnormalized3DSigmas()[2] + delim;
+        str += sigmaPanel.isResolutionCorrectionEnabled() + delim;
+        str += colorChannelPanel.isRedProcessingRequested() + delim;
+        str += colorChannelPanel.isGreenProcessingRequested() + delim;
+        str += colorChannelPanel.isBlueProcessingRequested();
 
         return str;
     }
@@ -341,42 +226,6 @@ public class JDialogGaussianBlurITK extends JDialogBase
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                String line = "GaussianBlurITK " + userInterface.getScriptDialog().getVar(image.getImageName()) + " ";
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    line += userInterface.getScriptDialog().getVar(resultImage.getImageName()) + " " +
-                            getParameterString(" ") + "\n";
-                } else {
-                    line += userInterface.getScriptDialog().getVar(image.getImageName()) + " " +
-                            getParameterString(" ") + "\n";
-
-                }
-
-                userInterface.getScriptDialog().append(line);
-            }
-        }
-    }
-
     // *******************************************************************
     // ************************* Item Events ****************************
     // *******************************************************************
@@ -388,29 +237,9 @@ public class JDialogGaussianBlurITK extends JDialogBase
      */
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
-        float tempNum;
 
-        if (source == resolutionCheckbox) {
-
-            if (resolutionCheckbox.isSelected()) {
-                tempNum = normFactor * Float.valueOf(textGaussZ.getText()).floatValue();
-                labelCorrected.setText("      Corrected scale = " + makeString(tempNum, 3));
-            } else {
-                labelCorrected.setText(" ");
-            }
-        } else if (source == image25DCheckbox) {
-
-            if (image25DCheckbox.isSelected()) {
-                resolutionCheckbox.setEnabled(false); // Image is only 2D or 2.5D, thus this checkbox
-                labelGaussZ.setEnabled(false); // is not relevent
-                textGaussZ.setEnabled(false);
-                labelCorrected.setEnabled(false);
-            } else {
-                resolutionCheckbox.setEnabled(true);
-                labelGaussZ.setEnabled(true);
-                textGaussZ.setEnabled(true);
-                labelCorrected.setEnabled(true);
-            }
+        if (source == image25DCheckbox) {
+            sigmaPanel.enable3DComponents(!image25DCheckbox.isSelected());
         }
     }
 
@@ -420,35 +249,26 @@ public class JDialogGaussianBlurITK extends JDialogBase
     public void loadDefaults() {
         String defaultsString = Preferences.getDialogDefaults(getDialogName());
 
-        if ((defaultsString != null) && (VOIRegions != null)) {
+        if ((defaultsString != null) && (outputOptionsPanel != null)) {
 
             try {
-                Preferences.debug(defaultsString);
+                //Preferences.debug(defaultsString);
 
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
-
-                if (MipavUtil.getBoolean(st)) {
-                    wholeImage.setSelected(true);
-                } else {
-                    VOIRegions.setSelected(true);
-                }
-
+                
+                outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
+                
                 image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
-                textGaussX.setText("" + MipavUtil.getFloat(st));
-                textGaussY.setText("" + MipavUtil.getFloat(st));
-                textGaussZ.setText("" + MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
+                sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
+                sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
 
-                redCheckbox.setSelected(MipavUtil.getBoolean(st));
-                greenCheckbox.setSelected(MipavUtil.getBoolean(st));
-                blueCheckbox.setSelected(MipavUtil.getBoolean(st));
+                colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
+                colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
+                colorChannelPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
 
-                resolutionCheckbox.setSelected(MipavUtil.getBoolean(st));
-
-                if (MipavUtil.getBoolean(st)) {
-                    newImage.setSelected(true);
-                } else {
-                    replaceImage.setSelected(true);
-                }
+                outputOptionsPanel.setOutputNewImage(MipavUtil.getBoolean(st));
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -462,101 +282,9 @@ public class JDialogGaussianBlurITK extends JDialogBase
      * Saves the default settings into the Preferences file.
      */
     public void saveDefaults() {
-        String defaultsString = new String(getParameterString(",") + "," + resolutionCheckbox.isSelected() + "," +
-                                           newImage.isSelected());
+        String defaultsString = new String(getParameterString(",") + "," + sigmaPanel.isResolutionCorrectionEnabled() + "," +
+                                           outputOptionsPanel.isOutputNewImageSet());
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setUseVOI(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            setScaleX(parser.getNextFloat());
-            setScaleY(parser.getNextFloat());
-            setScaleZ(parser.getNextFloat());
-            setRed(parser.getNextBoolean());
-            setGreen(parser.getNextBoolean());
-            setBlue(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    /**
-     * Accessor that sets the color flag.
-     *
-     * @param  flag  <code>true</code> indicates ARG image, blue.
-     */
-    public void setBlue(boolean flag) {
-        blue = flag;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
-     * Accessor that sets the color flag.
-     *
-     * @param  flag  <code>true</code> indicates ARG image, green.
-     */
-    public void setGreen(boolean flag) {
-        green = flag;
     }
 
     /**
@@ -569,67 +297,17 @@ public class JDialogGaussianBlurITK extends JDialogBase
     }
 
     /**
-     * Accessor that sets the color flag.
-     *
-     * @param  flag  <code>true</code> indicates ARG image, red.
-     */
-    public void setRed(boolean flag) {
-        red = flag;
-    }
-
-    /**
-     * Accessor that sets the x scale.
-     *
-     * @param  scale  Value to set x scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleX(float scale) {
-        scaleX = scale;
-    }
-
-    /**
-     * Accessor that sets the y scale.
-     *
-     * @param  scale  Value to set y scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleY(float scale) {
-        scaleY = scale;
-    }
-
-    /**
-     * Accessor that sets the z scale.
-     *
-     * @param  scale  Value to set z scale to (should be between 0.0 and 10.0).
-     */
-    public void setScaleZ(float scale) {
-        scaleZ = scale;
-    }
-
-    /**
-     * Accessor that sets the use VOI flag.
-     *
-     * @param  flag  <code>true</code> indicates the VOI is blurred, <code>false</code> indicates the whole image.
-     */
-    public void setUseVOI(boolean flag) {
-        useVOI = flag;
-    }
-
-    /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_gblur");
-
-        start = System.currentTimeMillis();
 
         if (image.getNDims() == 2) { // source image is 2D and kernel not separable
 
-            float[] sigmas = new float[2];
+            float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
-            sigmas[0] = scaleX; // set standard deviations (sigma) in X and Y
-            sigmas[1] = scaleY;
-
-            if (displayLoc == NEW) {
+            if (outputOptionsPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -665,11 +343,14 @@ public class JDialogGaussianBlurITK extends JDialogBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gaussianBlurAlgo.addListener(this);
-                    gaussianBlurAlgo.setRed(red);
-                    gaussianBlurAlgo.setGreen(green);
-                    gaussianBlurAlgo.setBlue(blue);
+                    
+                    createProgressBar(image.getImageName(), gaussianBlurAlgo);
+                    
+                    gaussianBlurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
+                    gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
+                    gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-                    if (useVOI) {
+                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
                         gaussianBlurAlgo.setMask(image.generateVOIMask());
                     }
 
@@ -709,11 +390,13 @@ public class JDialogGaussianBlurITK extends JDialogBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gaussianBlurAlgo.addListener(this);
-                    gaussianBlurAlgo.setRed(red);
-                    gaussianBlurAlgo.setGreen(green);
-                    gaussianBlurAlgo.setBlue(blue);
+                    createProgressBar(image.getImageName(), gaussianBlurAlgo);
+                    
+                    gaussianBlurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
+                    gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
+                    gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-                    if (useVOI) {
+                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
                         gaussianBlurAlgo.setMask(image.generateVOIMask());
                     }
 
@@ -753,13 +436,9 @@ public class JDialogGaussianBlurITK extends JDialogBase
             }
         } else if (image.getNDims() >= 3) { // kerenl not separable
 
-            float[] sigmas = new float[3];
+            float[] sigmas = sigmaPanel.getNormalizedSigmas();
 
-            sigmas[0] = scaleX;
-            sigmas[1] = scaleY;
-            sigmas[2] = scaleZ; // normalized  - scaleZ * resolutionX/resolutionZ; !!!!!!!
-
-            if (displayLoc == NEW) {
+            if (outputOptionsPanel.isOutputNewImageSet()) {
 
                 try {
 
@@ -801,11 +480,14 @@ public class JDialogGaussianBlurITK extends JDialogBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gaussianBlurAlgo.addListener(this);
-                    gaussianBlurAlgo.setRed(red);
-                    gaussianBlurAlgo.setGreen(green);
-                    gaussianBlurAlgo.setBlue(blue);
+                    
+                    createProgressBar(image.getImageName(), gaussianBlurAlgo);
+                    
+                    gaussianBlurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
+                    gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
+                    gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-                    if (useVOI) {
+                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
                         gaussianBlurAlgo.setMask(image.generateVOIMask());
                     }
 
@@ -844,11 +526,14 @@ public class JDialogGaussianBlurITK extends JDialogBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gaussianBlurAlgo.addListener(this);
-                    gaussianBlurAlgo.setRed(red);
-                    gaussianBlurAlgo.setGreen(green);
-                    gaussianBlurAlgo.setBlue(blue);
+                    
+                    createProgressBar(image.getImageName(), gaussianBlurAlgo);
+                    
+                    gaussianBlurAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
+                    gaussianBlurAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
+                    gaussianBlurAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
 
-                    if (useVOI) {
+                    if (!outputOptionsPanel.isProcessWholeImageSet()) {
                         gaussianBlurAlgo.setMask(image.generateVOIMask());
                     }
 
@@ -897,195 +582,33 @@ public class JDialogGaussianBlurITK extends JDialogBase
 
         setTitle("Gaussian Blur");
         getContentPane().setLayout(new BorderLayout());
+        
+        sigmaPanel = new JPanelSigmas(image);
 
-        JPanel mainPanel;
+        image25DCheckbox = WidgetFactory.buildCheckBox("Process each slice independently (2.5D)", false, this);
 
-        mainPanel = new JPanel();
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 3));
-        mainPanel.setLayout(new GridBagLayout());
-
-        GridBagConstraints gbc = new GridBagConstraints();
-
-        gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.weightx = 1;
-        gbc.insets = new Insets(3, 3, 3, 3);
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
-        scalePanel = new JPanel(new GridLayout(3, 2));
-        scalePanel.setForeground(Color.black);
-        scalePanel.setBorder(buildTitledBorder("Scale of the Gaussian"));
-        mainPanel.add(scalePanel, gbc);
-
-        labelGaussX = createLabel("X dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussX);
-        textGaussX = createTextField("1.0");
-        scalePanel.add(textGaussX);
-
-        labelGaussY = createLabel("Y dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussY);
-        textGaussY = createTextField("1.0");
-        scalePanel.add(textGaussY);
-
-        labelGaussZ = createLabel("Z dimension (0.0 - 10.0) ");
-        scalePanel.add(labelGaussZ);
-        textGaussZ = createTextField("1.0");
-        scalePanel.add(textGaussZ);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-
-        JPanel resPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc2 = new GridBagConstraints();
-
-        gbc2.gridwidth = 1;
-        gbc2.gridheight = 1;
-        gbc2.anchor = gbc.WEST;
-        gbc2.weightx = 1;
-        gbc2.insets = new Insets(3, 3, 3, 3);
-        gbc2.fill = GridBagConstraints.HORIZONTAL;
-        resPanel.setBorder(buildTitledBorder("Options"));
-
-        resolutionCheckbox = new JCheckBox("Use image resolutions to normalize Z scale");
-        resolutionCheckbox.setFont(serif12);
-        gbc2.gridx = 0;
-        gbc2.gridy = 1;
-        resPanel.add(resolutionCheckbox, gbc2);
-        resolutionCheckbox.setSelected(true);
-
-        image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
-        image25DCheckbox.setFont(serif12);
-        gbc2.gridx = 0;
-        gbc2.gridy = 3;
-        resPanel.add(image25DCheckbox, gbc2);
-        image25DCheckbox.setSelected(false);
-        image25DCheckbox.addItemListener(this);
-
-        if (image.getNDims() >= 3) { // if the source image is 3D then allow
-            resolutionCheckbox.setEnabled(true); // the user to indicate if it wishes to
-            resolutionCheckbox.addItemListener(this); // use the correction factor
-            textGaussZ.addFocusListener(this);
-            textGaussZ.setEnabled(true);
-
-            if (image.getNDims() == 4) {
-                image25DCheckbox.setEnabled(false);
-            }
-        } else {
-            resolutionCheckbox.setEnabled(false); // Image is only 2D, thus this checkbox
-            labelGaussZ.setEnabled(false); // is not relevent
-            textGaussZ.setEnabled(false);
+        if (image.getNDims() != 3) {
             image25DCheckbox.setEnabled(false);
-        }
-
-        if (image.getNDims() >= 3) { // Source image is 3D, thus show correction factor
-
-            int index = image.getExtents()[2] / 2;
-            float xRes = image.getFileInfo(index).getResolutions()[0];
-            float zRes = image.getFileInfo(index).getResolutions()[2];
-
-            normFactor = xRes / zRes; // Calculate correction factor
-            labelCorrected = new JLabel("      Corrected scale = " +
-                                        String.valueOf(normFactor * Float.valueOf(textGaussZ.getText()).floatValue()));
-            labelCorrected.setForeground(Color.black);
-            labelCorrected.setFont(serif12);
-            gbc2.gridx = 0;
-            gbc2.gridy = 2;
-            resPanel.add(labelCorrected, gbc2);
-        }
-
-        mainPanel.add(resPanel, gbc);
-
-        JPanel RGBPanel = new JPanel(new GridLayout(3, 1));
-
-        RGBPanel.setForeground(Color.black);
-        RGBPanel.setBorder(buildTitledBorder("Color channel selection"));
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        mainPanel.add(RGBPanel, gbc);
-
-        redCheckbox = new JCheckBox("Process red channel.");
-        redCheckbox.setFont(serif12);
-        RGBPanel.add(redCheckbox);
-        redCheckbox.setSelected(true);
-        redCheckbox.addItemListener(this);
-
-        greenCheckbox = new JCheckBox("Process green channel.");
-        greenCheckbox.setFont(serif12);
-        RGBPanel.add(greenCheckbox);
-        greenCheckbox.setSelected(true);
-        greenCheckbox.addItemListener(this);
-
-        blueCheckbox = new JCheckBox("Process blue channel.");
-        blueCheckbox.setFont(serif12);
-        RGBPanel.add(blueCheckbox);
-        blueCheckbox.setSelected(true);
-        blueCheckbox.addItemListener(this);
-
-        if (image.isColorImage() == false) {
-            redCheckbox.setEnabled(false);
-            greenCheckbox.setEnabled(false);
-            blueCheckbox.setEnabled(false);
-        }
-
-        JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
-
-        destinationPanel = new JPanel(new BorderLayout());
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-        outputOptPanel.add(destinationPanel);
-        // mainPanel.add(destinationPanel);
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage);
-        destinationPanel.add(newImage, BorderLayout.NORTH);
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage);
-        destinationPanel.add(replaceImage, BorderLayout.CENTER);
-
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
         } else {
-            replaceImage.setEnabled(false);
-        }
-
-        imageVOIPanel = new JPanel();
-        imageVOIPanel.setLayout(new BorderLayout());
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Blur"));
-        outputOptPanel.add(imageVOIPanel);
-
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage);
-        imageVOIPanel.add(wholeImage, BorderLayout.NORTH);
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions);
-        imageVOIPanel.add(VOIRegions, BorderLayout.CENTER);
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        mainPanel.add(outputOptPanel, gbc);
-
-        getContentPane().add(mainPanel, BorderLayout.CENTER);
-        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
-        pack();
-        setResizable(true);
-
-        if (image25DCheckbox.isEnabled()) {
             image25DCheckbox.setSelected(image.getFileInfo()[0].getIs2_5D());
         }
 
-        // setVisible( true );
+        PanelManager kernelOptionsPanelManager = new PanelManager("Options");
+        kernelOptionsPanelManager.add(image25DCheckbox);
+
+        colorChannelPanel = new JPanelColorChannels(image);
+        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
+
+        PanelManager paramPanelManager = new PanelManager();
+        paramPanelManager.add(sigmaPanel);
+        paramPanelManager.addOnNextLine(kernelOptionsPanelManager.getPanel());
+        paramPanelManager.addOnNextLine(colorChannelPanel);
+        paramPanelManager.addOnNextLine(outputOptionsPanel);
+
+        getContentPane().add(paramPanelManager.getPanel(), BorderLayout.CENTER);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
+        pack();
+        setResizable(true);
 
         System.gc();
     }
@@ -1096,74 +619,57 @@ public class JDialogGaussianBlurITK extends JDialogBase
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        String tmpStr;
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        useVOI = VOIRegions.isSelected();
-        image25D = image25DCheckbox.isSelected();
-
-        tmpStr = textGaussX.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleX = Float.valueOf(tmpStr).floatValue();
+        if (image25DCheckbox.isSelected()) {
+            image25D = true;
         } else {
-            textGaussX.requestFocus();
-            textGaussX.selectAll();
+            image25D = false;
+        }
 
+        if (!sigmaPanel.testSigmaValues()) {
             return false;
-        }
-
-        tmpStr = textGaussY.getText();
-
-        if (testParameter(tmpStr, 0.0, 10.0)) {
-            scaleY = Float.valueOf(tmpStr).floatValue();
-        } else {
-            textGaussY.requestFocus();
-            textGaussY.selectAll();
-
-            return false;
-        }
-
-        if (!image25D) {
-            tmpStr = textGaussZ.getText();
-
-            if (testParameter(tmpStr, 0.0, 10.0)) {
-                scaleZ = Float.valueOf(tmpStr).floatValue();
-            } else {
-                textGaussZ.requestFocus();
-                textGaussZ.selectAll();
-
-                return false;
-            }
-        }
-
-        // Apply normalization if requested!
-        if (!image25D) {
-
-            if (resolutionCheckbox.isSelected()) {
-                scaleZ = scaleZ * normFactor;
-            }
-        }
-
-        // set up red, green, and blue ARGB values
-        if (redCheckbox.isSelected() && redCheckbox.isEnabled()) {
-            red = true;
-        }
-
-        if (greenCheckbox.isSelected() && greenCheckbox.isEnabled()) {
-            green = true;
-        }
-
-        if (blueCheckbox.isSelected() && blueCheckbox.isEnabled()) {
-            blue = true;
         }
 
         return true;
     }
+    
+    /**
+     * Perform any actions required after the running of the algorithm is complete.
+     */
+    protected void doPostAlgorithmActions() {
+        if (outputOptionsPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
 
+    /**
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
+        sigmaPanel = new JPanelSigmas(image);
+        colorChannelPanel = new JPanelColorChannels(image);
+        
+        scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        scriptParameters.setSigmasGUI(sigmaPanel);
+        scriptParameters.setColorOptionsGUI(colorChannelPanel);
+    }
+
+    /**
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     * 
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
+        scriptParameters.storeSigmas(sigmaPanel);
+        scriptParameters.storeColorOptions(colorChannelPanel);
+    }
 }

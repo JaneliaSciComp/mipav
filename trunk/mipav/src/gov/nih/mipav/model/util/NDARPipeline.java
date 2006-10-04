@@ -1,16 +1,14 @@
 package gov.nih.mipav.model.util;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmScriptParser;
 import gov.nih.mipav.model.dicomcomm.DICOM_Receiver;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.srb.*;
 import gov.nih.mipav.model.structures.ModelImage;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.srb.*;
-
-import java.io.File;
 
 import java.util.Vector;
 
@@ -60,10 +58,9 @@ public class NDARPipeline implements Observer {
 
     /**
      * Sets up the parameters of this pipeline.
-     *
-     * @param  o  the observable object.
+     * 
+     * @return <code>True</code> if the setup was performed successfully, <code>false</code> otherwise.
      */
-    
     public boolean setup(){
         JDialogSetupPipeline pipelineDialog = new JDialogSetupPipeline("Setup the NDAR pipeline");
         if (!pipelineDialog.isCancelled()) {
@@ -138,42 +135,23 @@ public class NDARPipeline implements Observer {
                 return;
             }
 
-            String scriptDir, scriptName;
-            int index = scriptFileName.lastIndexOf(File.separator);
-            if (index == -1) {
-                scriptDir = ".";
-                scriptName = scriptFileName;
-            } else {
-                scriptDir = scriptFileName.substring(0, index + 1);
-                scriptName = scriptFileName.substring(index + 1);
-            }
             // System.out.println("Script file: dir = " + scriptDir + " name = " + scriptName);
-
-            AlgorithmScriptParser scriptParser = new AlgorithmScriptParser(scriptName, scriptDir);
-
-            // sanity checks on the script contents
-            int numImages = scriptParser.preParse();
-            if (numImages > 0) {
-                MipavUtil.displayError("The pre-upload script must be an active mode script (no OpenImage or LoadImage commands).\nNumber of images found: " +
-                                       numImages);
+            
+            try {
+                int numImagesInScript = Parser.getImageVarsUsedInScript(scriptFileName).length;
+                if (numImagesInScript != 1) {
+                    MipavUtil.displayError("The pre-upload script must use exactly one active image.\nNumber of images found: " + numImagesInScript);
+                    return;
+                }
+            } catch (ParserException pe) {
+                MipavUtil.displayError("Error encountered getting the number of images used in the pre-upload script: " + pe);
                 return;
             }
-
-            int numActiveImages = scriptParser.preParseActiveImages();
-            if (numActiveImages != 1) {
-                MipavUtil.displayError("The pre-upload script must use exactly one active image.\nNumber of images found: " +
-                                       numActiveImages);
-                return;
-            }
-
-            // run the pre-upload script
-            scriptParser.preSetupActiveImages();
-            scriptParser.run();
-
-            if (!scriptParser.isCompleted()) {
-                MipavUtil.displayError("Pre-upload script failed.  Skipping header anonymization and image upload.");
-                return;
-            }
+            
+            Vector imageNameList = new Vector();
+            imageNameList.addElement(ViewUserInterface.getReference().getActiveImageFrame().getActiveImage().getImageName());
+            
+            ScriptRunner.getReference().runScript(scriptFileName, imageNameList, new Vector());
 
             // anonymize all tags in the image
             ModelImage resultImage = ViewUserInterface.getReference().getActiveImageFrame().getActiveImage();

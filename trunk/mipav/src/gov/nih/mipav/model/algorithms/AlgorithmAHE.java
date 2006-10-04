@@ -310,15 +310,15 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         try {
-            buildProgressBar(srcImage.getImageName(), "Equalizing Histogram ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
+            
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock
 
                 try {
-                    progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, runningInSeparateThread); // not quite midway
+                    fireProgressStateChanged("Processing Image");
+                    fireProgressStateChanged(45); // not quite midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -343,20 +343,10 @@ public class AlgorithmAHE extends AlgorithmBase {
                     if (((color == 1) && rChannel) || ((color == 2) && gChannel) // process only desired channels
                             || ((color == 3) && bChannel)) { // -- and not alpha channel at all --
 
-                        try {
-
-                            if (pBarVisible) {
-                                progressBar.updateValue((int) (((float) (color) / valuesPerPixel) * 100), runningInSeparateThread);
-                                progressBar.setMessage("Processing color " + Integer.toString(color));
-                            }
-                        } catch (NullPointerException npe) {
-
-                            if (threadStopped) {
-                                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                                  Preferences.DEBUG_ALGORITHM);
-                            }
-                        }
-
+                       
+                    	fireProgressStateChanged((int) (((float) (color) / valuesPerPixel) * 100));
+    	                            fireProgressStateChanged("Processing color " + Integer.toString(color));
+                     
                         srcImage.exportRGBData(color, 0, length, buffer); // get the slice
 
                         monoSliceFilter(buffer, resultBuffer);
@@ -394,7 +384,7 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         // srcImage.releaseLock(); // we didn't want to allow the image to be adjusted by someone else
-        progressBar.dispose();
+        
 
         setCompleted(true);
     }
@@ -440,27 +430,18 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         try {
-            buildProgressBar(srcImage.getImageName(), "Equalizing Histogram ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
+            
 
             if (!isColorImage) {
 
                 // image length is length in 3 dims
                 for (i = 0; (i < nSlices) && !threadStopped; i++) {
 
-                    try {
-
-                        if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (i) / nSlices) * 100), runningInSeparateThread);
-                            progressBar.setMessage("Processing slice " + Integer.toString(i + 1));
-                        }
-                    } catch (NullPointerException npe) {
-
-                        if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
-                        }
-                    }
+                 
+                	fireProgressStateChanged((int) (((float) (i) / nSlices) * 100));
+                	fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
+                   
 
                     srcImage.exportData(length * i, length, buffer); // locks and releases lock
                     monoSliceFilter(buffer, resultBuffer);
@@ -484,28 +465,18 @@ public class AlgorithmAHE extends AlgorithmBase {
 
                         for (i = 0; (i < nSlices) && !threadStopped; i++) { // get all the slices
 
-                            try {
+                    
+                        	fireProgressStateChanged((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) +
+                                                                             i) / (numColors * nSlices)) * 100));
 
-                                if (pBarVisible) {
-                                    progressBar.updateValue((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) +
-                                                                             i) / (numColors * nSlices)) * 100),
-                                                            runningInSeparateThread);
-
-                                    if ((color == 1) && rChannel) {
-                                        progressBar.setMessage("Processing red slice " + Integer.toString(i + 1));
-                                    } else if ((color == 2) && gChannel) {
-                                        progressBar.setMessage("Processing green slice " + Integer.toString(i + 1));
-                                    } else if ((color == 3) && bChannel) {
-                                        progressBar.setMessage("Processing blue slice " + Integer.toString(i + 1));
-                                    }
-                                }
-                            } catch (NullPointerException npe) {
-
-                                if (threadStopped) {
-                                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                                      Preferences.DEBUG_ALGORITHM);
-                                }
-                            }
+                        	if ((color == 1) && rChannel) {
+                        		fireProgressStateChanged("Processing red slice " + Integer.toString(i + 1));
+                        	} else if ((color == 2) && gChannel) {
+                        		fireProgressStateChanged("Processing green slice " + Integer.toString(i + 1));
+                        	} else if ((color == 3) && bChannel) {
+                        		fireProgressStateChanged("Processing blue slice " + Integer.toString(i + 1));
+                        	}
+                             
 
                             srcImage.exportRGBData(color, 4 * length * i, length, buffer); // grab the next slice
 
@@ -542,7 +513,7 @@ public class AlgorithmAHE extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -572,15 +543,15 @@ public class AlgorithmAHE extends AlgorithmBase {
         destImage.releaseLock(); // we need to be able to alter the dest image
 
         try {
-            buildProgressBar(srcImage.getImageName(), "Equalizing Histogram ...", 0, 100);
-            initProgressBar();
+            fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
+            
 
             if (!isColorImage) {
                 srcImage.exportData(0, length, buffer); // locks and releases lock
 
                 try {
-                    progressBar.setMessage("Processing Image");
-                    progressBar.updateValue(45, runningInSeparateThread); // a little less than midway
+                    fireProgressStateChanged("Processing Image");
+                    fireProgressStateChanged(45); // a little less than midway
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -602,20 +573,10 @@ public class AlgorithmAHE extends AlgorithmBase {
 
                 for (color = 0; (color < valuesPerPixel) && !threadStopped; color++) { // for each color
 
-                    try {
-
-                        if (pBarVisible) {
-                            progressBar.updateValue((int) (((float) (color) / valuesPerPixel) * 100), runningInSeparateThread);
-                            progressBar.setMessage("Processing color " + Integer.toString(color));
-                        }
-                    } catch (NullPointerException npe) {
-
-                        if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
-                        }
-                    }
-
+             
+                	fireProgressStateChanged((int) (((float) (color) / valuesPerPixel) * 100));
+                	fireProgressStateChanged("Processing color " + Integer.toString(color));
+              
                     srcImage.exportRGBData(color, 0, length, buffer); // grab the slice
 
                     if (((color == 1) && rChannel) || ((color == 2) && gChannel) // process only desired channels
@@ -657,7 +618,7 @@ public class AlgorithmAHE extends AlgorithmBase {
             return;
         }
 
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -700,8 +661,8 @@ public class AlgorithmAHE extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Equalizing Histogram ...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Equalizing Histogram ...");
+        
 
         try {
 
@@ -709,19 +670,10 @@ public class AlgorithmAHE extends AlgorithmBase {
 
                 for (i = 0; (i < nSlices) && !threadStopped; i++) { // process for all slices
 
-                    try {
-
-                        if (pBarVisible) {
-                            progressBar.updateValue((int) ((float) (i) / nSlices * 100), runningInSeparateThread);
-                            progressBar.setMessage("Processing slice " + Integer.toString(i + 1));
-                        }
-                    } catch (NullPointerException npe) {
-
-                        if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
-                        }
-                    }
+                  
+                	fireProgressStateChanged((int) ((float) (i) / nSlices * 100));
+                	fireProgressStateChanged("Processing slice " + Integer.toString(i + 1));
+   	                         
 
                     srcImage.exportData(length * i, length, buffer); // locks and releases lock
                     monoSliceFilter(buffer, resultBuffer);
@@ -745,28 +697,18 @@ public class AlgorithmAHE extends AlgorithmBase {
 
                     for (i = 0; (i < nSlices) && !threadStopped; i++) { // for all slices at once
 
-                        try {
+                      
+                    	fireProgressStateChanged((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) + i) /
+                                                                    (numColors * nSlices)) * 100));
 
-                            if (pBarVisible) {
-                                progressBar.updateValue((int) (((float) ((Math.max(0, colorUsed - 1) * nSlices) + i) /
-                                                                    (numColors * nSlices)) * 100), runningInSeparateThread);
-
-                                if ((color == 1) && rChannel) {
-                                    progressBar.setMessage("Processing red slice " + Integer.toString(i + 1));
-                                } else if ((color == 2) && gChannel) {
-                                    progressBar.setMessage("Processing green slice " + Integer.toString(i + 1));
-                                } else if ((color == 3) && bChannel) {
-                                    progressBar.setMessage("Processing blue slice " + Integer.toString(i + 1));
-                                }
-                            }
-                        } catch (NullPointerException npe) {
-
-                            if (threadStopped) {
-                                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                                  Preferences.DEBUG_ALGORITHM);
-                            }
-                        }
-
+                    	if ((color == 1) && rChannel) {
+                    		fireProgressStateChanged("Processing red slice " + Integer.toString(i + 1));
+                    	} else if ((color == 2) && gChannel) {
+                    		fireProgressStateChanged("Processing green slice " + Integer.toString(i + 1));
+                    	} else if ((color == 3) && bChannel) {
+                    		fireProgressStateChanged("Processing blue slice " + Integer.toString(i + 1));
+                    	}
+                  
                         srcImage.exportRGBData(color, 4 * length * i, length, buffer);
 
                         if (((color == 1) && rChannel) || ((color == 2) && gChannel) // process only desired channels
@@ -811,7 +753,7 @@ public class AlgorithmAHE extends AlgorithmBase {
         }
 
         // or the processing completed okay, so dispose of the user notification
-        progressBar.dispose();
+        
         setCompleted(true);
     }
 
@@ -1326,28 +1268,6 @@ public class AlgorithmAHE extends AlgorithmBase {
 
         for (int i = 0; i < histo.length; i++) {
             Preferences.debug("hist[" + i + "] = " + histo[i] + "\n");
-        }
-    }
-
-    /**
-     * If the progress bar is visible, sets the text to:<br>
-     * <tt>Copying all <i>color</i> values ...</tt>
-     *
-     * @param  colorText  the color to use. Eg., "red" or "blue"
-     */
-    private void setCopyColorText(String colorText) {
-
-        try {
-
-            if (pBarVisible == true) {
-                progressBar.setMessage("Copying all " + colorText + " values ... ");
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
         }
     }
 

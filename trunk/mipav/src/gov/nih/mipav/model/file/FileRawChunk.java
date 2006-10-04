@@ -70,10 +70,12 @@ public class FileRawChunk extends FileBase {
     private InflaterInputStream inflaterStream;
 
     /** DOCUMENT ME! */
-    private int planarConfig = 0; // 0 = rgb,rgb, 1 = rrr, ggg, bbb
-    
     private int numColors = 3;
-    
+
+    /** DOCUMENT ME! */
+    private int planarConfig = 0; // 0 = rgb,rgb, 1 = rrr, ggg, bbb
+
+    /** DOCUMENT ME! */
     private boolean RGBAOrder = false;
 
     /** DOCUMENT ME! */
@@ -351,7 +353,7 @@ public class FileRawChunk extends FileBase {
                         bufferFloat = new float[bufferSize];
                         bufferByte = new byte[4 * bufferSize];
                         break;
-                        
+
                     case ModelStorageBase.DCOMPLEX:
                         bufferDouble = new double[bufferSize];
                         bufferByte = new byte[8 * bufferSize];
@@ -957,6 +959,15 @@ public class FileRawChunk extends FileBase {
     }
 
     /**
+     * Sets the number of colors used in RGB files.
+     *
+     * @param  numColors  DOCUMENT ME!
+     */
+    public void setNumColors(int numColors) {
+        this.numColors = numColors;
+    }
+
+    /**
      * Sets the planar configuration for RGB images.
      *
      * @param  _planarConfig  0 indicates pixels are RGB, RGB chunky 1 indicates pixels are RRR, GGG, BBB planar
@@ -964,15 +975,12 @@ public class FileRawChunk extends FileBase {
     public void setPlanarConfig(int _planarConfig) {
         planarConfig = _planarConfig;
     }
-    
+
     /**
-     * Sets the number of colors used in RGB files.
-     * @param numColors
+     * DOCUMENT ME!
+     *
+     * @param  RGBAOrder  DOCUMENT ME!
      */
-    public void setNumColors(int numColors) {
-        this.numColors = numColors;
-    }
-    
     public void setRGBAOrder(boolean RGBAOrder) {
         this.RGBAOrder = RGBAOrder;
     }
@@ -1558,10 +1566,10 @@ public class FileRawChunk extends FileBase {
                         bufferFloat = new float[2 * bufferSize];
                         bufferByte = new byte[8 * bufferSize];
                         break;
-                        
+
                     case ModelStorageBase.DCOMPLEX:
                         bufferDouble = new double[2 * bufferSize];
-                        bufferByte = new byte[16* bufferSize];
+                        bufferByte = new byte[16 * bufferSize];
                         break;
 
                     default:
@@ -2064,7 +2072,7 @@ public class FileRawChunk extends FileBase {
                 }
 
                 break;
-                
+
             case ModelStorageBase.DCOMPLEX:
                 try {
                     image.exportData(2 * start, 2 * bufferSize, bufferDouble);
@@ -2083,7 +2091,7 @@ public class FileRawChunk extends FileBase {
                             bufferByte[index++] = (byte) (tmpLong >>> 16);
                             bufferByte[index++] = (byte) (tmpLong >>> 8);
                             bufferByte[index++] = (byte) (tmpLong & 0xff);
-                            tmpLong = Double.doubleToLongBits(bufferDouble[i+1]);
+                            tmpLong = Double.doubleToLongBits(bufferDouble[i + 1]);
                             bufferByte[index++] = (byte) (tmpLong >>> 56);
                             bufferByte[index++] = (byte) (tmpLong >>> 48);
                             bufferByte[index++] = (byte) (tmpLong >>> 40);
@@ -2105,7 +2113,7 @@ public class FileRawChunk extends FileBase {
                             bufferByte[index++] = (byte) (tmpLong >>> 40);
                             bufferByte[index++] = (byte) (tmpLong >>> 48);
                             bufferByte[index++] = (byte) (tmpLong >>> 56);
-                            tmpLong = Double.doubleToLongBits(bufferDouble[i+1]);
+                            tmpLong = Double.doubleToLongBits(bufferDouble[i + 1]);
                             bufferByte[index++] = (byte) (tmpLong & 0xff);
                             bufferByte[index++] = (byte) (tmpLong >>> 8);
                             bufferByte[index++] = (byte) (tmpLong >>> 16);

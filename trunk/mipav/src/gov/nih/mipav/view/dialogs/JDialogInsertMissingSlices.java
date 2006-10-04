@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -10,72 +12,81 @@ import gov.nih.mipav.view.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import java.util.*;
-
 import javax.swing.*;
 
 
 /**
- * Creates the dialog to insert missing slices into an image. The dialog use the
- * origin[2] for each slice to see if there are any missing slices.  If so, either
- * an average or a blank can be inserted.
+ * Creates the dialog to insert missing slices into an image. The dialog use the origin[2] for each slice to see if
+ * there are any missing slices. If so, either an average or a blank can be inserted.
  */
-public class JDialogInsertMissingSlices extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogInsertMissingSlices extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
-    //private static final long serialVersionUID;
+    private static final long serialVersionUID = -5205189127854148892L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** If true insert blank slices, if false insert weighted average slices */
-    private boolean insertBlank;
+    /** true if no slices are missing. */
+    private boolean allPresent;
 
-    /** Radio button selected if inserted slices are a weighted average of
-     *  surrounding slices */
+    /** Radio button selected if inserted slices are a weighted average of surrounding slices. */
     private JRadioButton average;
 
-    /** Radio button selected if inserted slices are blank */
+    /** Radio button selected if inserted slices are blank. */
     private JRadioButton blank;
 
-    
-    /** source image */
+    /** Array of length totalSlices, false where slice is already present, true where slice must be inserted. */
+    private boolean[] checkListInsert;
+
+    /** DOCUMENT ME! */
+    private boolean destFlag;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup destinationGroup;
+
+    /** Flag indicating if a new image is to be generated. */
+    private int displayLoc;
+
+    /** source image. */
     private ModelImage image;
 
-    /** true if no slices are missing */
-    private boolean allPresent;
+    /** If true insert blank slices, if false insert weighted average slices. */
+    private boolean insertBlank;
+
+    /** DOCUMENT ME! */
+    private int[] missingNumberArray;
+
+    /** DOCUMENT ME! */
+    private int missingPositions = 0;
+
+    /** DOCUMENT ME! */
+    private int[] missingSliceArray;
+
+    /** DOCUMENT ME! */
+    private int missingSlices;
+
+    /** DOCUMENT ME! */
+    private JRadioButton newImage;
+
+    /** Number of slices in original 3D image. */
+    private int nSlices;
+
+    /** DOCUMENT ME! */
+    private JRadioButton replaceImage;
+
+    /** image create if new image button is selected. */
+    private ModelImage resultImage = null;
 
     /** DOCUMENT ME! */
     private AlgorithmReplaceRemovedSlices rSliceAlgo;
 
-    /** Number of slices in original 3D image */
-    private int nSlices;
-
-    /** image create if new image button is selected */
-    private ModelImage resultImage = null;
+    /** Number of slices that will be present in the 3D image after the missing slices have been inserted. */
+    private int totalSlices;
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
-    
-    private ButtonGroup destinationGroup;
-    
-    private JRadioButton newImage;
-    
-    private JRadioButton replaceImage;
-    
-    /** Flag indicating if a new image is to be generated */
-    private int displayLoc;
-    
-    /** Array of length totalSlices, false where slice is already present,
-        true where slice must be inserted */
-    private boolean[] checkListInsert;
-    
-    /** Number of slices that will be present in the 3D image after the
-     *  missing slices have been inserted */
-    private int totalSlices;
-    
-    private boolean destFlag;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -93,73 +104,12 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
     public JDialogInsertMissingSlices(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im; // set the image from the arguments to an image in this class
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogInsertMissingSlices(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = im.getParentFrame();
-        setUpCheckList();
-        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    private void setUpCheckList() {
-        int m;
-        float averageSpacing;
-        int z;
-        float spacing;
-        int numSlices;
-        int i;
-        
-        averageSpacing = (image.getFileInfo(nSlices-1).getOrigin()[2] -
-                image.getFileInfo(0).getOrigin()[2])/
-                (nSlices - 1);
-        // Count first slice
-        totalSlices = 1;
-        for (z = 0; z < nSlices - 1; z++) {
-          spacing = image.getFileInfo(z+1).getOrigin()[2] 
-                    - image.getFileInfo(z).getOrigin()[2];
-          numSlices = Math.max(1,Math.round(spacing/averageSpacing));
-          
-          if (numSlices == 2) {
-              Preferences.debug("1 slice is missing between " + (z+1) +
-                  " and " + (z+2) + "\n");
-          }
-          else if (numSlices > 2) {
-              Preferences.debug((numSlices-1) + " are missing between " + (z+1) +
-                  " and " + (z+2) + "\n");
-          }
-          totalSlices += numSlices;
-        }
-        
-        allPresent = true;
-        checkListInsert = new boolean[totalSlices];
-        checkListInsert[0] = false;
-        for (z = 0, m = 1; z < nSlices - 1; z++) {
-          spacing = image.getFileInfo(z+1).getOrigin()[2] 
-                    - image.getFileInfo(z).getOrigin()[2];
-          numSlices = Math.max(1,Math.round(spacing/averageSpacing));
-          
-          for (i = 0; i < numSlices - 1; i++) {
-              checkListInsert[m++] = true;
-              allPresent = false;
-          }
-          checkListInsert[m++] = false;
-        }
-    }
-    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -177,7 +127,7 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
             dispose();
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("");
-        } 
+        }
     }
 
     // ************************************************************************
@@ -193,20 +143,23 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
         if (algorithm instanceof AlgorithmReplaceRemovedSlices) {
-            
+
             if (displayLoc == NEW) {
 
                 if (rSliceAlgo.isCompleted() == true) {
                     resultImage = rSliceAlgo.getResultImage();
+
                     if (resultImage != null) {
 
                         try {
-    
+
                             // put the new image into a new frame
                             new ViewJFrameImage(resultImage, null, new Dimension(25, 32));
-    
+
                         } catch (OutOfMemoryError error) {
-                            MipavUtil.displayError("Insert missing Slices reports: out of memory; " + "unable to open a new frame");
+                            MipavUtil.displayError("Insert missing Slices reports: out of memory; " +
+                                                   "unable to open a new frame");
+
                             return;
                         }
                     }
@@ -220,7 +173,7 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
         }
 
         if (algorithm.isCompleted() && (algorithm instanceof AlgorithmReplaceRemovedSlices)) {
-            insertScriptLine(algorithm);
+            insertScriptLine();
         }
 
         algorithm.finalize();
@@ -238,100 +191,6 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("InsertMissingSlices " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " ");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-                }
-
-                userInterface.getScriptDialog().append(insertBlank + "\n");
-            }
-        }
-    }
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-        
-        if (allPresent) {
-            destImageKey = srcImageKey;
-        }
-        
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            insertBlank = parser.getNextBoolean();
-            setInsertBlank(insertBlank);
-
-            
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    
-    /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
      */
     public void setDisplayLocNew() {
@@ -345,56 +204,56 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
     public void setDisplayLocReplace() {
         displayLoc = REPLACE;
     }
-    
+
 
     /**
      * Accessor which lets you change the type of slice to be inserted.
      *
-     * @param  inseertBlank  the type of slice to be inserted (either AVERAGE_SLICE or BLANK_Slice)
+     * @param  insertBlank  the type of slice to be inserted (either AVERAGE_SLICE or BLANK_Slice)
      */
     public void setInsertBlank(boolean insertBlank) {
         this.insertBlank = insertBlank;
     }
 
-    
-
     /**
      * Once all the necessary variables are set, call the Insert Slice algorithm based on what type of image this is and
      * whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
-        
+    protected void callAlgorithm() {
+
         if (allPresent) {
+            MipavUtil.displayInfo(image.getImageName() + " has no missing slices");
             Preferences.debug(image.getImageName() + " has no missing slices\n");
             dispose();
+
             return;
         }
 
-        
-
         try {
 
-            
+
             if (displayLoc == NEW) {
-                resultImage = (ModelImage)image.clone();
+                resultImage = (ModelImage) image.clone();
                 resultImage.setImageName(image.getImageName() + "_insertedMisssingSlices");
             }
 
             // Make algorithm:
             if (displayLoc == REPLACE) {
                 destFlag = false;
-                rSliceAlgo = new AlgorithmReplaceRemovedSlices(image, checkListInsert, false, destFlag,
-                                                                      insertBlank);
+                rSliceAlgo = new AlgorithmReplaceRemovedSlices(image, checkListInsert, false, destFlag, insertBlank);
             } else {
                 destFlag = true;
                 rSliceAlgo = new AlgorithmReplaceRemovedSlices(resultImage, checkListInsert, false, destFlag,
-                                                                      insertBlank);
+                                                               insertBlank);
             }
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             rSliceAlgo.addListener(this);
+
+            createProgressBar(image.getImageName(), rSliceAlgo);
+
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -404,6 +263,7 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     rSliceAlgo.setProgressBarVisible(false);
                 }
@@ -424,22 +284,131 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
     }
 
     /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        findMissingSlices();
+
+        if (!allPresent && scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setInsertBlank(scriptParameters.getParams().getBoolean("do_insert_blank_slices"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_insert_blank_slices", insertBlank));
+    }
+
+    /**
+     * DOCUMENT ME!
+     */
+    private void findMissingSlices() {
+        int m;
+        float averageSpacing;
+        int z;
+        float spacing;
+        int numSlices;
+        int i;
+        int k;
+
+        nSlices = image.getExtents()[2];
+
+        float[] beginOrigin = image.getFileInfo(0).getOrigin();
+        float[] endOrigin = image.getFileInfo(nSlices - 1).getOrigin();
+
+        int sliceOriginIndex;
+
+        if ((beginOrigin[0] != endOrigin[0]) && (beginOrigin[1] == endOrigin[1]) && (beginOrigin[2] == endOrigin[2])) {
+            sliceOriginIndex = 0;
+        } else if ((beginOrigin[0] == endOrigin[0]) && (beginOrigin[1] != endOrigin[1]) &&
+                       (beginOrigin[2] == endOrigin[2])) {
+            sliceOriginIndex = 1;
+        } else {
+            sliceOriginIndex = 2;
+        }
+
+        averageSpacing = (endOrigin[sliceOriginIndex] - beginOrigin[sliceOriginIndex]) / (nSlices - 1);
+
+        // Count first slice
+        totalSlices = 1;
+
+        for (z = 0; z < (nSlices - 1); z++) {
+            spacing = image.getFileInfo(z + 1).getOrigin()[sliceOriginIndex] -
+                      image.getFileInfo(z).getOrigin()[sliceOriginIndex];
+            numSlices = Math.max(1, Math.round(spacing / averageSpacing));
+
+            if (numSlices >= 2) {
+                missingPositions++;
+            }
+
+            if (numSlices == 2) {
+                Preferences.debug("1 slice is missing between " + (z + 1) + " and " + (z + 2) + "\n");
+            } else if (numSlices > 2) {
+                Preferences.debug((numSlices - 1) + " are missing between " + (z + 1) + " and " + (z + 2) + "\n");
+            }
+
+            totalSlices += numSlices;
+        }
+
+        missingSlices = totalSlices - nSlices;
+        missingSliceArray = new int[missingPositions];
+        missingNumberArray = new int[missingPositions];
+
+        allPresent = true;
+        checkListInsert = new boolean[totalSlices];
+        checkListInsert[0] = false;
+
+        for (z = 0, m = 1, k = 0; z < (nSlices - 1); z++) {
+            spacing = image.getFileInfo(z + 1).getOrigin()[sliceOriginIndex] -
+                      image.getFileInfo(z).getOrigin()[sliceOriginIndex];
+            numSlices = Math.max(1, Math.round(spacing / averageSpacing));
+
+            if (numSlices >= 2) {
+                missingSliceArray[k] = z;
+                missingNumberArray[k++] = numSlices - 1;
+            }
+
+            for (i = 0; i < (numSlices - 1); i++) {
+                checkListInsert[m++] = true;
+                allPresent = false;
+            }
+
+            checkListInsert[m++] = false;
+        }
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-        float averageSpacing;
-        float spacing;
-        int z, i, m, k;
-        int numSlices;
+        int i;
         int yPos = 0;
-        JLabel statusLabel[] = new JLabel[10];
+        JLabel[] statusLabel = new JLabel[10];
         int numStatusLabels = 0;
-        int missingSlices;
-        int missingPositions = 0;
-        int missingSliceArray[];
-        int missingNumberArray[];
-        nSlices = image.getExtents()[2];
-        
+
         for (i = 0; i < 10; i++) {
             statusLabel[i] = null;
         }
@@ -449,76 +418,34 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
 
         JPanel slicePanel = new JPanel(new GridBagLayout());
         slicePanel.setBorder(buildTitledBorder("Insert missing slices"));
-        
-        averageSpacing = (image.getFileInfo(nSlices-1).getOrigin()[2] -
-                image.getFileInfo(0).getOrigin()[2])/
-                (nSlices - 1);
-        // Count first slice
-        totalSlices = 1;
-        for (z = 0; z < nSlices - 1; z++) {
-          spacing = image.getFileInfo(z+1).getOrigin()[2] 
-                    - image.getFileInfo(z).getOrigin()[2];
-          numSlices = Math.max(1,Math.round(spacing/averageSpacing));
-          if (numSlices >= 2) {
-              missingPositions++;
-          }
-          if (numSlices == 2) {
-              Preferences.debug("1 slice is missing between " + (z+1) +
-                  " and " + (z+2) + "\n");
-          }
-          else if (numSlices > 2) {
-              Preferences.debug((numSlices-1) + " are missing between " + (z+1) +
-                  " and " + (z+2) + "\n");
-          }
-          totalSlices += numSlices;
-        }
-        missingSlices = totalSlices - nSlices;
-        missingSliceArray = new int[missingPositions];
-        missingNumberArray = new int[missingPositions];
-        
-        allPresent = true;
-        checkListInsert = new boolean[totalSlices];
-        checkListInsert[0] = false;
-        for (z = 0, m = 1, k = 0; z < nSlices - 1; z++) {
-          spacing = image.getFileInfo(z+1).getOrigin()[2] 
-                    - image.getFileInfo(z).getOrigin()[2];
-          numSlices = Math.max(1,Math.round(spacing/averageSpacing));
-          if (numSlices >= 2) {
-              missingSliceArray[k] = z;
-              missingNumberArray[k++] = (numSlices-1);
-          }
-          for (i = 0; i < numSlices - 1; i++) {
-              checkListInsert[m++] = true;
-              allPresent = false;
-          }
-          checkListInsert[m++] = false;
-        }
-        
+
+        findMissingSlices();
+
         if (allPresent) {
             statusLabel[0] = new JLabel("No slices are missing");
             numStatusLabels = 1;
-        }
-        else if (missingPositions <= 10) {
-                for (i = 0; i < missingPositions; i++) {
-                    if (missingNumberArray[i] == 1) {
-                        statusLabel[i] = new JLabel("1 slice between " +
-                                (missingSliceArray[i]+1) +
-                                " and " + (missingSliceArray[i]+2) + " is missing");
-                    }
-                    else {
-                        statusLabel[i] = new JLabel(missingNumberArray[i] + 
-                                " slices between " +
-                                (missingSliceArray[i]+1) +
-                                " and " + (missingSliceArray[i]+2) + " are missing");   
-                    }
-                    
+        } else if (missingPositions <= 10) {
+
+            for (i = 0; i < missingPositions; i++) {
+
+                if (missingNumberArray[i] == 1) {
+                    statusLabel[i] = new JLabel("1 slice between " + (missingSliceArray[i] + 1) + " and " +
+                                                (missingSliceArray[i] + 2) + " is missing");
+                } else {
+                    statusLabel[i] = new JLabel(missingNumberArray[i] + " slices between " +
+                                                (missingSliceArray[i] + 1) + " and " + (missingSliceArray[i] + 2) +
+                                                " are missing");
                 }
+
+            }
+
             numStatusLabels = missingPositions;
         } // else if (missingPositions <= 10)
         else {
             statusLabel[0] = new JLabel(missingSlices + " slices are missing");
             numStatusLabels = 1;
         }
+
         for (i = 0; i < numStatusLabels; i++) {
             statusLabel[i].setFont(serif12);
         }
@@ -527,22 +454,23 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
         average = new JRadioButton("Average", true);
         average.setFont(serif12);
         average.addActionListener(this);
-        sliceGroup.add(average); 
+        sliceGroup.add(average);
 
         blank = new JRadioButton("Blank", false);
         blank.setFont(serif12);
         blank.addActionListener(this);
-        sliceGroup.add(blank);   
+        sliceGroup.add(blank);
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(3, 3, 3, 3);
-        
+
         gbc.gridx = 0;
         gbc.gridy = yPos++;
         gbc.weightx = 1;
         gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
+
         for (i = 0; i < numStatusLabels; i++) {
             gbc.gridy = yPos++;
             slicePanel.add(statusLabel[i], gbc);
@@ -557,7 +485,7 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
         gbc.gridy = yPos++;
         slicePanel.add(blank, gbc);
 
-//      destination goes in the left of the lower box
+        // destination goes in the left of the lower box
         JPanel destinationPanel = new JPanel();
         destinationPanel.setLayout(new BoxLayout(destinationPanel, BoxLayout.Y_AXIS));
 
@@ -596,7 +524,7 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
         pack();
         setVisible(true);
-        
+
     }
 
     /**
@@ -605,20 +533,18 @@ public class JDialogInsertMissingSlices extends JDialogBase implements Algorithm
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        
+
         if (replaceImage.isSelected()) {
             displayLoc = REPLACE;
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
         }
-        
 
         if (average.isSelected()) {
             insertBlank = false;
-        } 
-        else {
+        } else {
             insertBlank = true;
-        } 
+        }
 
         return true;
     }

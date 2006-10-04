@@ -4,9 +4,12 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -21,7 +24,7 @@ import javax.swing.*;
  * source image. In addition the user can select having the algorithm applied to whole image or to the VOI regions. It
  * should be noted that the algorithms are executed in their own thread.
  */
-public class JDialogMean extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogMean extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -47,15 +50,6 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxKernelSize;
-
-    /** DOCUMENT ME! */
-    private ButtonGroup destinationGroup;
-
-    /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    /** or if the source image is to be replaced. */
-    private boolean entireImageFlag; // true = apply algorithm to the whole image
 
     /** DOCUMENT ME! */
     private boolean green;
@@ -85,25 +79,16 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
     private boolean image25D = false; // flag indicating if slices should be processed independently
 
     /** DOCUMENT ME! */
-    private ButtonGroup imageVOIGroup;
-
-    /** DOCUMENT ME! */
     private int kernelSize;
 
     /** DOCUMENT ME! */
     private AlgorithmMean meanAlgo = null;
 
     /** DOCUMENT ME! */
-    private JRadioButton newImage;
-
-    /** DOCUMENT ME! */
     private boolean red;
 
     /** DOCUMENT ME! */
     private JCheckBox redChannel;
-
-    /** DOCUMENT ME! */
-    private JRadioButton replaceImage;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
@@ -115,13 +100,9 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
     private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
-    private JRadioButton VOIRegions;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeImage;
-
-    /** DOCUMENT ME! */
-    private JRadioButton wholeVolume; //
+    private JRadioButton wholeVolume;
+    
+    private JPanelAlgorithmOutputOptions outputPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -147,30 +128,8 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
         }
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogMean(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-
-        if (im.getType() == ModelImage.BOOLEAN) {
-            MipavUtil.displayError("Source Image must NOT be Boolean");
-            dispose();
-
-            return;
-        }
-
-        image = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -306,7 +265,9 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         meanAlgo.finalize();
         meanAlgo = null;
@@ -321,111 +282,61 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("Mean " +
-                                                       userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + entireImageFlag + " " + image25D + " " + kernelSize +
-                                                           " " + filterType +
-                                                           " " + red + " " + green + " " + blue + 
-                                                           " " + redVector + " " + greenVector + " " + blueVector + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " " + entireImageFlag + " " + image25D + " " + kernelSize +
-                                                           " " + filterType + 
-                                                           " " + red + " " + green + " " + blue + 
-                                                           " " + redVector + " " + greenVector + " " + blueVector + "\n");
-                }
-            }
-        }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        
+        scriptParameters.storeOutputImageParams(getResultImage(), outputPanel.isOutputNewImageSet());
+        scriptParameters.storeProcessingOptions(outputPanel.isProcessWholeImageSet(), image25D);
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_filter_type", filterType));
+        scriptParameters.storeColorOptions(red, green, blue);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_vector", new int[] {redVector, greenVector, blueVector}));
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        if (im.getType() == ModelImage.BOOLEAN) {
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+        
+        if (image.getType() == ModelImage.BOOLEAN) {
             MipavUtil.displayError("Source Image must NOT be Boolean");
             dispose();
 
             return;
         }
-
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        try {
-            setEntireImageFlag(parser.getNextBoolean());
-            setImage25D(parser.getNextBoolean());
-            setKernelSize(parser.getNextInteger());
-            setFilterType(parser.getNextInteger());
-            setRed(parser.getNextBoolean());
-            setGreen(parser.getNextBoolean());
-            setBlue(parser.getNextBoolean());
-            setRedVector(parser.getNextInteger());
-            setGreenVector(parser.getNextInteger());
-            setBlueVector(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+        
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
+        scriptParameters.setOutputOptionsGUI(outputPanel);
+        
+        setImage25D(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_3D_AS_25D));
+        setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
+        setFilterType(scriptParameters.getParams().getInt("rgb_filter_type"));
+        
+        boolean[] rgb = scriptParameters.getParams().getList(AlgorithmParameters.DO_PROCESS_RGB).getAsBooleanArray();
+        setRed(rgb[0]);
+        setGreen(rgb[1]);
+        setBlue(rgb[2]);
+        
+        int[] rgbVectors = scriptParameters.getParams().getList("rgb_vector").getAsIntArray();
+        setRedVector(rgbVectors[0]);
+        setGreenVector(rgbVectors[1]);
+        setBlueVector(rgbVectors[2]);
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (outputPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -436,30 +347,6 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
      */
     public void setBlue(boolean flag) {
         blue = flag;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
-     */
-    public void setDisplayLocNew() {
-        displayLoc = NEW;
-    }
-
-    /**
-     * Accessor that sets the display loc variable to replace, so the current image is replaced once the algorithm
-     * completes.
-     */
-    public void setDisplayLocReplace() {
-        displayLoc = REPLACE;
-    }
-
-    /**
-     * Accessor that sets the region flag.
-     *
-     * @param  flag  <code>true</code> indicates the whole image is processed, <code>false</code> indicates a region.
-     */
-    public void setEntireImageFlag(boolean flag) {
-        entireImageFlag = flag;
     }
 
     /**
@@ -522,6 +409,10 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
         this.greenVector = greenVector;
     }
     
+    /**
+     * 
+     * @param blueVector
+     */
     public void setBlueVector(int blueVector) {
         this.blueVector = blueVector;
     }
@@ -552,7 +443,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
      * Once all the necessary variables are set, call the mean algorithm based on what type of image this is and whether
      * or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(image.getImageName(), "_mean");
 
         // stuff to do when working on 2-D images.
@@ -562,7 +453,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
             destExtents[0] = image.getExtents()[0]; // X dim
             destExtents[1] = image.getExtents()[1]; // Y dim
 
-            if (displayLoc == NEW) { // (2D)
+            if (outputPanel.isOutputNewImageSet()) { // (2D)
 
                 try {
 
@@ -581,7 +472,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     }
 
                     // Make algorithm
-                    meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, entireImageFlag);
+                    meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     meanAlgo.setRGBChannelFilter(filterType, red, green, blue,
@@ -591,6 +482,9 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     meanAlgo.addListener(this);
+                    
+                    createProgressBar(image.getImageName(), meanAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -622,7 +516,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    meanAlgo = new AlgorithmMean(image, kernelSize, entireImageFlag);
+                    meanAlgo = new AlgorithmMean(image, kernelSize, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     meanAlgo.setRGBChannelFilter(filterType, red, green, blue,
@@ -632,6 +526,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     meanAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), meanAlgo);
 
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
@@ -675,7 +570,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
             destExtents[1] = image.getExtents()[1];
             destExtents[2] = image.getExtents()[2];
 
-            if (displayLoc == NEW) { // (3D)
+            if (outputPanel.isOutputNewImageSet()) { // (3D)
 
                 try {
 
@@ -699,7 +594,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     }
 
                     // Make algorithm
-                    meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, image25D, entireImageFlag);
+                    meanAlgo = new AlgorithmMean(resultImage, image, kernelSize, image25D, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     meanAlgo.setRGBChannelFilter(filterType, red, green, blue,
@@ -709,6 +604,8 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     meanAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), meanAlgo);
+                    
                     setVisible(false); // Hide dialog
 
                     if (isRunInSeparateThread()) {
@@ -739,7 +636,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                 try {
 
                     // Make algorithm
-                    meanAlgo = new AlgorithmMean(image, kernelSize, image25D, entireImageFlag);
+                    meanAlgo = new AlgorithmMean(image, kernelSize, image25D, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     meanAlgo.setRGBChannelFilter(filterType, red, green, blue,
@@ -749,6 +646,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     meanAlgo.addListener(this);
+                    createProgressBar(image.getImageName(), meanAlgo);
 
                     // Hide dialog
                     setVisible(false);
@@ -774,10 +672,7 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            meanAlgo.setProgressBarVisible(false);
-                        }
-
+                      
                         meanAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -973,50 +868,9 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
         colourPanel.setToolTipText("Colour images can be filtered over any combination of colour channels");
         setupBox.add(colourPanel);
 
-        Box lowerBox = new Box(BoxLayout.X_AXIS);
+        outputPanel = new JPanelAlgorithmOutputOptions(image);
 
-        // destination goes in the left of the lower box
-        JPanel destinationPanel = new JPanel();
-        Box destinationBox = new Box(BoxLayout.Y_AXIS);
-
-        destinationPanel.setForeground(Color.black);
-        destinationPanel.setBorder(buildTitledBorder("Destination"));
-
-        destinationGroup = new ButtonGroup();
-        newImage = new JRadioButton("New image", true);
-        newImage.setFont(serif12);
-        destinationGroup.add(newImage); // add the button to the grouping
-        destinationBox.add(newImage); // add the button to the component
-
-        replaceImage = new JRadioButton("Replace image", false);
-        replaceImage.setFont(serif12);
-        destinationGroup.add(replaceImage); // add the button to the grouping
-        destinationBox.add(replaceImage); // add the button to the component
-        destinationPanel.add(destinationBox);
-
-        lowerBox.add(destinationPanel);
-
-        // filter goes in the right of the lower box
-        JPanel imageVOIPanel = new JPanel();
-        imageVOIPanel.setForeground(Color.black);
-        imageVOIPanel.setBorder(buildTitledBorder("Filter"));
-
-        Box imageVOIBox = new Box(BoxLayout.Y_AXIS);
-        imageVOIGroup = new ButtonGroup();
-        wholeImage = new JRadioButton("Whole image", true);
-        wholeImage.setFont(serif12);
-        imageVOIGroup.add(wholeImage); // add the button to the grouping
-        imageVOIBox.add(wholeImage); // add the button to the component
-
-        VOIRegions = new JRadioButton("VOI region(s)", false);
-        VOIRegions.setFont(serif12);
-        imageVOIGroup.add(VOIRegions); // add the button to the grouping
-        imageVOIBox.add(VOIRegions); // add the button to the component
-
-        imageVOIPanel.add(imageVOIBox); // place the box onto a border
-        lowerBox.add(imageVOIPanel); // place the bordered stuff into the lower box
-
-        setupBox.add(lowerBox); // place lowerBox into the setupBox
+        setupBox.add(outputPanel); // place lowerBox into the setupBox
 
         if (image.getNDims() > 2) { // only perform if the image has more than 1 slice
 
@@ -1046,20 +900,12 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
 
         getContentPane().add(setupBox, BorderLayout.CENTER); // put the setupBox into the dialog
 
-        // Only if the image is unlocked can it be replaced.
-        if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
-            replaceImage.setEnabled(true);
-        } else {
-            replaceImage.setEnabled(false);
-        }
-
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
         setVisible(true);
         setResizable(false);
         System.gc();
-
     }
 
     /**
@@ -1072,18 +918,6 @@ public class JDialogMean extends JDialogBase implements AlgorithmInterface, Scri
         int colorMax = 255;
         if (image.getType() == ModelStorageBase.ARGB_USHORT) {
             colorMax = 65535;
-        }
-
-        if (replaceImage.isSelected()) {
-            displayLoc = REPLACE;
-        } else if (newImage.isSelected()) {
-            displayLoc = NEW;
-        }
-
-        if (wholeImage.isSelected()) {
-            entireImageFlag = true;
-        } else if (VOIRegions.isSelected()) {
-            entireImageFlag = false;
         }
 
         // associate kernel size with selectBox choice.

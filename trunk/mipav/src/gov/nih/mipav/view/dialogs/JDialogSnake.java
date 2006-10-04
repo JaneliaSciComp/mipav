@@ -130,7 +130,7 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
      */
     public JDialogSnake(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         VOIs = im.getVOIs();
 
         int nVOI;
@@ -264,6 +264,8 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
                     // This is made possible by implementing AlgorithmedPerformed interface
                     snakeAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), snakeAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -307,6 +309,8 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
                     // This is made possible by implementing AlgorithmedPerformed interface
                     snakeAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), snakeAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -576,7 +580,7 @@ public class JDialogSnake extends JDialogBase implements AlgorithmInterface {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.gridx = 0;

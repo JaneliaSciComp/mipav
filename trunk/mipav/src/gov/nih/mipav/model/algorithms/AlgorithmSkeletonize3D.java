@@ -369,8 +369,8 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
         constructLog();
 
-        buildProgressBar(srcImage.getImageName(), "Performing 3D skeletonization...", 0, 100);
-        initProgressBar();
+        fireProgressStateChanged(srcImage.getImageName(), "Performing 3D skeletonization...");
+        
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -386,7 +386,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             srcImage.exportData(0, totLength, volFloat);
         } catch (IOException e) {
             MipavUtil.displayError("IO error on srcImage.exportData");
-            disposeProgressBar();
+            
             setCompleted(false);
 
             return;
@@ -396,26 +396,26 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
             if (!checkVolumePadding()) {
                 MipavUtil.displayError("Error! The object is not sufficiently padded");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
             }
         } // if (skPoints == null)
 
-        progressBar.setMessage("Making volume solid");
+        fireProgressStateChanged("Making volume solid");
         Preferences.debug("Making volume solid\n");
         makeSolidVolume();
         /*boolean test;
          * test = false; if (test) { solidImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(),
          *                   "solidImage", srcImage.getUserInterface()); try {     solidImage.importData(0, vol, true);
          * } catch (IOException e) {     MipavUtil.displayError("IOException on soldImage.importData");
-         * disposeProgressBar();     setCompleted(false);     return; }
+         *      setCompleted(false);     return; }
          *
-         * new ViewJFrameImage(solidImage); progressBar.dispose(); setCompleted(true); return;} // if (test)*/
+         * new ViewJFrameImage(solidImage);  setCompleted(true); return;} // if (test)*/
 
         if (sliceHoleFilling) {
-            progressBar.setMessage("Slice by slice hole filling");
+            fireProgressStateChanged("Slice by slice hole filling");
             Preferences.debug("Slice by slice hole filling\n");
             extents2D = new int[2];
             extents2D[0] = srcImage.getExtents()[0];
@@ -439,7 +439,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     grayImage2D.importData(0, buffer2D, true);
                 } catch (IOException e) {
                     MipavUtil.displayError("Error on grayImage2D importData");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -456,7 +456,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     grayImage2D.exportData(0, sliceSize, buffer2D);
                 } catch (IOException e) {
                     MipavUtil.displayError("Error on grayImage2D exportData");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -473,7 +473,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             buffer2D = null;
         } // if (sliceHoleFilling)
 
-        progressBar.setMessage("Delete all but the largest object\n");
+        fireProgressStateChanged("Delete all but the largest object\n");
         Preferences.debug("Delete all but the largest object\n");
         idImage = new ModelImage(ModelStorageBase.USHORT, srcImage.getExtents(), srcImage.getImageName() + "_id",
                                  srcImage.getUserInterface());
@@ -482,7 +482,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             idImage.importData(0, vol, true);
         } catch (IOException e) {
             MipavUtil.displayError("IOException on idImage.importData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -513,7 +513,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             idImage.exportData(0, totLength, idArray);
         } catch (IOException e) {
             MipavUtil.displayError("IOException on idImage.exportData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -554,9 +554,9 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
          * test = true; if (test) { solidImage = new ModelImage(ModelStorageBase.BYTE, srcImage.getExtents(),
          *                  "solidImage", srcImage.getUserInterface()); try {     solidImage.importData(0, vol, true); }
          * catch (IOException e) {     MipavUtil.displayError("IOException on soldImage.importData");
-         * disposeProgressBar();     setCompleted(false);     return; }
+         *      setCompleted(false);     return; }
          *
-         * new ViewJFrameImage(solidImage); progressBar.dispose(); setCompleted(true); return;} // if (test)*/
+         * new ViewJFrameImage(solidImage);  setCompleted(true); return;} // if (test)*/
 
         // Reset the INTERIOR voxels with at least one 6 neighbor EXTERIOR
         // to be SURF voxels
@@ -570,7 +570,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 forceZ = new double[totLength];
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory error when allocating force");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
@@ -579,14 +579,14 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             // Thicken the object with distCharges layers of extra voxels and
             // compute the potential field
             if (distCharges > 0) {
-                progressBar.setMessage("Padding the object");
+                fireProgressStateChanged("Padding the object");
                 Preferences.debug("Padding the object\n");
 
                 // First layer attaches itself to the SURF voxels
                 if (!expandVolume(SURF, PADDING_MIN)) {
                     MipavUtil.displayError("Error padding the object");
                     MipavUtil.displayError("Volume bounds are too tight");
-                    disposeProgressBar();
+                    
                     setCompleted(false);
 
                     return;
@@ -598,7 +598,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     if (!expandVolume((byte) (PADDING_MIN + (i - 1)), (byte) (PADDING_MIN + i))) {
                         MipavUtil.displayError("Error padding the object");
                         MipavUtil.displayError("Volume bounds are too tight");
-                        disposeProgressBar();
+                        
                         setCompleted(false);
 
                         return;
@@ -606,7 +606,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 }
             } // if (distCharges > 0)
             else if (distCharges < 0) {
-                progressBar.setMessage("Peeling the object");
+                fireProgressStateChanged("Peeling the object");
                 Preferences.debug("Peeling the object\n");
 
                 for (i = 0; i > distCharges; i--) {
@@ -614,27 +614,27 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 }
             } // else if (distCharges <0)
 
-            progressBar.setMessage("Calculating potential field");
+            fireProgressStateChanged("Calculating potential field");
             Preferences.debug("Calculating potential field\n");
 
             // Check volume padding - fast version
             if (!quickCheckVolumePadding()) {
                 MipavUtil.displayError("Error - object touches bounding box");
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
             }
 
             if (!calculatePotentialField()) {
-                disposeProgressBar();
+                
                 setCompleted(false);
 
                 return;
             }
 
             if (saveVF) {
-                progressBar.setMessage("Saving potential field");
+                fireProgressStateChanged("Saving potential field");
                 Preferences.debug("Saving potential field\n");
                 gvfImage = new ModelImage(ModelImage.DOUBLE, srcImage.getExtents(), srcImage.getImageName() + "_xvf",
                                           srcImage.getUserInterface());
@@ -649,7 +649,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     }
 
                     MipavUtil.displayError("Error on gvfImage.importData");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -666,7 +666,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     }
 
                     MipavUtil.displayError("Error on gvfImage.saveImage");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -682,7 +682,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     }
 
                     MipavUtil.displayError("Error on gvfImage.importData");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -699,7 +699,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     }
 
                     MipavUtil.displayError("Error on gvfImage.saveImage");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -715,7 +715,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     }
 
                     MipavUtil.displayError("Error on gvfImage.importData");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -732,7 +732,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     }
 
                     MipavUtil.displayError("Error on gvfImage.saveImage");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -742,20 +742,20 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 gvfImage = null;
             } // if (saveVF)
 
-            progressBar.setMessage("Detecting critical points\n");
-            progressBar.updateValue(92, runningInSeparateThread);
+            fireProgressStateChanged("Detecting critical points\n");
+            fireProgressStateChanged(92);
             Preferences.debug("Detecting critical points\n");
 
             if (!getCriticalPoints()) {
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
             }
 
             // Generating the skeleton
-            progressBar.setMessage("Generating level 1 skeleton");
-            progressBar.updateValue(94, runningInSeparateThread);
+            fireProgressStateChanged("Generating level 1 skeleton");
+            fireProgressStateChanged(94);
             Preferences.debug("Generating level1 skeleton\n");
 
             // Allocate skeleton structure
@@ -766,21 +766,21 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 skelSegments = new int[skelSizeSegments][];
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Error allocating skeleton structure");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
             }
 
             if (!getLevel1Skeleton()) {
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
             }
 
             if (saveVF) {
-                progressBar.setMessage("Saving level 1 skeleton\n");
+                fireProgressStateChanged("Saving level 1 skeleton\n");
                 Preferences.debug("Saving level 1 skeleton\n");
                 file = new File(srcImage.getFileInfo(0).getFileDirectory() + srcImage.getImageName() + ".skf");
 
@@ -808,7 +808,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                     raFile.close();
                 } catch (IOException e) {
                     MipavUtil.displayError("IOEXception on new RandomAccessFile");
-                    progressBar.dispose();
+                    
                     setCompleted(false);
 
                     return;
@@ -854,7 +854,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 skSegments = null;
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Error allocating skeleton structure");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -862,13 +862,13 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         } // else skPoints != null
 
         if (perHDPoints > 0.0f) {
-            progressBar.setMessage("Getting high divergence points");
-            progressBar.updateValue(96, runningInSeparateThread);
+            fireProgressStateChanged("Getting high divergence points");
+            fireProgressStateChanged(96);
             Preferences.debug("Getting high divergence points\n");
 
             // Get top perHDPoints fraction of highest negative divergence points
             if (!getHighDivergencePoints()) {
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -879,19 +879,19 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
              *  Preferences.debug(i + " = " + hdPoints[i][0] + "  " + hdPoints[i][1] + "  " +
              * hdPoints[i][2] + "\n");}*/
 
-            progressBar.setMessage("Computing level 2 skeleton");
-            progressBar.updateValue(92, runningInSeparateThread);
+            fireProgressStateChanged("Computing level 2 skeleton");
+            fireProgressStateChanged(92);
             Preferences.debug("Computing level 2 skeleton\n");
 
             if (!getLevel2Skeleton()) {
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
             }
         } // if (perHDPoints > 0.0f)
 
-        progressBar.updateValue(99, runningInSeparateThread);
+        fireProgressStateChanged(99);
 
         if (outputPoints) {
             // Write out the skeleton points
@@ -903,7 +903,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
                 used = new boolean[skelNumPoints];
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory error allocating used array");
-                progressBar.dispose();
+                
                 setCompleted(false);
 
                 return;
@@ -1014,7 +1014,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         Preferences.debug("Segments output = " + skelNumSegments + "\n");
         Preferences.debug("Points output = " + ptNum + "\n");
         srcImage.notifyImageDisplayListeners();
-        progressBar.dispose();
+        
         setCompleted(true);
 
         return;
@@ -1218,7 +1218,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
         for (z = 0; z < zDim; z++) {
             Preferences.debug("Processing plane " + z + " out of " + (zDim - 1) + "\n");
-            progressBar.updateValue(z * 90 / (zDim - 1), runningInSeparateThread);
+            fireProgressStateChanged(z * 90 / (zDim - 1));
 
             // Find the boundary voxels that will influence this point
             // Look at the z coordinate
@@ -2024,7 +2024,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             }
 
             MipavUtil.displayError("Error on cylImage.importData");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;
@@ -2040,7 +2040,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
             }
 
             MipavUtil.displayError("Error on cylImage.saveImage");
-            progressBar.dispose();
+            
             setCompleted(false);
 
             return;

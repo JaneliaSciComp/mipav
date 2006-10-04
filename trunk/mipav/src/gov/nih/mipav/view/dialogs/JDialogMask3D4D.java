@@ -95,9 +95,9 @@ public class JDialogMask3D4D extends JDialogBase {
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         destinationPanel.add(threeD, gbc);
         gbc.gridy = 1;

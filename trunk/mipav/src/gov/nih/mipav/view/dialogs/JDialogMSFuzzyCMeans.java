@@ -3,9 +3,12 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.components.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -20,8 +23,7 @@ import javax.swing.filechooser.FileFilter;
 /**
  * Dialog to get user input, then call the algorithm.
  */
-public class JDialogMSFuzzyCMeans extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, ListSelectionListener {
+public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements AlgorithmInterface, ListSelectionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -34,9 +36,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
     private AlgorithmMSpectralFuzzyCMeans afcmAlgo;
 
     /** DOCUMENT ME! */
-    private JCheckBox blueCheckbox;
-
-    /** DOCUMENT ME! */
     private float[] centroids;
 
     /** DOCUMENT ME! */
@@ -44,9 +43,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
     /** DOCUMENT ME! */
     private JButton chooserButton;
-
-    /** DOCUMENT ME! */
-    private JPanel colorPanel;
 
     /** DOCUMENT ME! */
     private boolean cropBackground;
@@ -58,25 +54,10 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
     private int[] destExtents;
 
     /** DOCUMENT ME! */
-    private boolean doBlue;
-
-    /** DOCUMENT ME! */
-    private boolean doColor;
-
-    /** DOCUMENT ME! */
-    private boolean doGreen;
-
-    /** DOCUMENT ME! */
-    private boolean doRed;
-
-    /** DOCUMENT ME! */
     private float endTol;
 
     /** DOCUMENT ME! */
     private JRadioButton fuzzyOnly;
-
-    /** DOCUMENT ME! */
-    private JCheckBox greenCheckbox;
 
     /** DOCUMENT ME! */
     private JRadioButton hardFuzzyBoth;
@@ -130,9 +111,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
     private int nClasses;
 
     /** DOCUMENT ME! */
-    private Dimension newFrameLocation;
-
-    /** DOCUMENT ME! */
     private int nPyramid = 4;
 
     /** DOCUMENT ME! */
@@ -154,9 +132,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
     private float q;
 
     /** DOCUMENT ME! */
-    private JCheckBox redCheckbox;
-
-    /** DOCUMENT ME! */
     private boolean regionFlag; // true = apply algorithm to the whole image
 
     /** DOCUMENT ME! */
@@ -167,39 +142,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
     /** DOCUMENT ME! */
     private ModelImage[] resultImage = null; // result image
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage0 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage1 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage10 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage2 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage3 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage4 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage5 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage6 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage7 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage8 = null;
-
-    /** DOCUMENT ME! */
-    private ModelImage resultImage9 = null;
 
     /** DOCUMENT ME! */
     private int resultNumber;
@@ -266,6 +208,8 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
     /** DOCUMENT ME! */
     private JRadioButton wholeImage;
+    
+    private JPanelColorChannels colorPanel;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -286,19 +230,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         super(theParentFrame, true);
         srcImage = new ModelImage[1];
         srcImage[0] = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
-
-        if (im.isColorImage()) {
-            doColor = true;
-            doRed = true;
-            doBlue = true;
-            doGreen = true;
-        } else {
-            doColor = false;
-            doRed = false;
-            doBlue = false;
-            doGreen = false;
-        }
+        userInterface = ViewUserInterface.getReference();
 
         if (srcImage[0].getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
@@ -312,43 +244,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         }
 
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogMSFuzzyCMeans(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        srcImage = new ModelImage[1];
-        srcImage[0] = im;
-
-        if (im.isColorImage()) {
-            doColor = true;
-            doRed = true;
-            doBlue = true;
-            doGreen = true;
-        } else {
-            doColor = false;
-            doRed = false;
-            doBlue = false;
-            doGreen = false;
-        }
-
-        if (srcImage[0].getNDims() == 2) { // source image is 2D
-            destExtents = new int[2];
-            destExtents[0] = srcImage[0].getExtents()[0]; // X dim
-            destExtents[1] = srcImage[0].getExtents()[1]; // Y dim
-        } else { // srcImage[0].getNDims)() == 3
-            destExtents = new int[3];
-            destExtents[0] = srcImage[0].getExtents()[0];
-            destExtents[1] = srcImage[0].getExtents()[1];
-            destExtents[2] = srcImage[0].getExtents()[2];
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -504,7 +399,9 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         dispose();
     }
@@ -517,103 +414,43 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
     public ModelImage[] getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the  srcImage[0] is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage[0].getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage[0].getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage[0].getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("MSFuzzyCMeans " +
-                                                       userInterface.getScriptDialog().getVar(srcImage[0].getImageName()) +
-                                                       " " + srcImage.length + " ");
-
-                for (int i = 1; i < srcImage.length; i++) {
-
-                    // check to see if the  srcImage[i] is already in the ImgTable
-                    if (userInterface.getScriptDialog().getImgTableVar(srcImage[i].getImageName()) == null) {
-
-                        if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage[i].getImageName()) == null) {
-                            userInterface.getScriptDialog().putActiveVar(srcImage[i].getImageName());
-                        }
-                    }
-
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(srcImage[i].getImageName()) +
-                                                           " ");
-                }
-
-                userInterface.getScriptDialog().append(resultNumber + " ");
-
-                for (int i = 0; i < resultNumber; i++) {
-                    userInterface.getScriptDialog().putVar(resultImage[i].getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage[i].getImageName()) +
-                                                           " ");
-                } // for (i = 0; i < resultNumber; i++)
-
-                userInterface.getScriptDialog().append(regionFlag + " " + nClasses + " " + q + " " + cropBackground +
-                                                       " " + endTol + " " + maxIter + " " + segmentation + " ");
-
-                String temp = "";
-
-                for (int i = 0; i < threshold.length; i++) {
-                    temp += threshold[i] + " ";
-                }
-
-                for (int i = 0; i < centroids.length; i++) {
-                    temp += centroids[i] + " ";
-                }
-
-                userInterface.getScriptDialog().append(doRed + " " + doGreen + " " + doBlue + " " + temp + "\n");
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_input_images", srcImage.length));
+        for (int i = 0; i < srcImage.length; i++) {
+            scriptParameters.storeInputImage(srcImage[i]);
         }
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_result_images", resultNumber));
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRecorder(getResultImage()[i]);
+        }
+        
+        scriptParameters.storeProcessWholeImage(regionFlag);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_classes", nClasses));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("exponent_q", q));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_crop_background", cropBackground));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("thresholds", threshold));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("end_tolerance", endTol));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_iterations", maxIter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("segmentation_type", segmentation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("centroids", centroids));
+        scriptParameters.storeColorOptions(colorPanel);
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * {@inheritDoc}
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
+    protected void setGUIFromParams() {
+        int numInputImages = scriptParameters.getParams().getInt("number_of_input_images");
+        srcImage = new ModelImage[numInputImages];
+        for (int i = 1; i <= numInputImages; i++) {
+            srcImage[i - 1] = scriptParameters.retrieveInputImage(i);
         }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        srcImage = new ModelImage[1];
-        srcImage[0] = im;
-
-        if (im.isColorImage()) {
-            doColor = true;
-            doRed = true;
-            doBlue = true;
-            doGreen = true;
-        } else {
-            doColor = false;
-            doRed = false;
-            doBlue = false;
-            doGreen = false;
-        }
-
+        
         if (srcImage[0].getNDims() == 2) { // source image is 2D
             destExtents = new int[2];
             destExtents[0] = srcImage[0].getExtents()[0]; // X dim
@@ -627,112 +464,35 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
         userInterface = srcImage[0].getUserInterface();
         parentFrame = srcImage[0].getParentFrame();
-
-        String[] results;
-        ModelImage[] sources;
-
-        try {
-            int length = parser.getNextInteger();
-            sources = new ModelImage[length];
-            sources[0] = im;
-
-            for (int i = 1; i < length; i++) {
-                sources[i] = parser.getImage(parser.getNextString());
-            }
-
-            setSourceImage(sources);
-
-            int numImages = parser.getNextInteger();
-            results = new String[numImages];
-
-            for (int i = 0; i < numImages; i++) {
-                results[i] = parser.getNextString();
-            }
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setRegionFlag(parser.getNextBoolean());
-
-            int nClasses = parser.getNextInteger();
-            setNClasses(nClasses);
-            setQ(parser.getNextFloat());
-            setCrop(parser.getNextBoolean());
-            setEndTol(parser.getNextFloat());
-            setMaxIter(parser.getNextInteger());
-            setSegmentationType(parser.getNextInteger());
-
-            boolean red = parser.getNextBoolean();
-            boolean green = parser.getNextBoolean();
-            boolean blue = parser.getNextBoolean();
-            setRed(red);
-            setBlue(blue);
-            setGreen(green);
-
-            int length2 = 0;
-
-            for (int i = 0; i < sources.length; i++) {
-
-                if (red) {
-                    length2++;
-                }
-
-                if (green) {
-                    length2++;
-                }
-
-                if (blue) {
-                    length2++;
-                }
-
-                if (!red && !green && !blue) {
-                    length2++;
-                }
-            }
-
-            float[] threshold = new float[length2];
-            float[] centroids = new float[length2 * nClasses];
-
-            for (int i = 0; i < threshold.length; i++) {
-                threshold[i] = parser.getNextFloat();
-            }
-
-            for (int i = 0; i < centroids.length; i++) {
-                centroids[i] = parser.getNextFloat();
-            }
-
-            setThreshold(threshold);
-            setCentroids(centroids);
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-
+        
+        resultNumber = scriptParameters.getParams().getInt("number_of_result_images");
+        
+        setRegionFlag(scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_PROCESS_WHOLE_IMAGE));
+        setNClasses(scriptParameters.getParams().getInt("number_of_classes"));
+        setQ(scriptParameters.getParams().getFloat("exponent_q"));
+        setCrop(scriptParameters.getParams().getBoolean("do_crop_background"));
+        setThreshold(scriptParameters.getParams().getList("thresholds").getAsFloatArray());
+        setEndTol(scriptParameters.getParams().getFloat("end_tolerance"));
+        setMaxIter(scriptParameters.getParams().getInt("max_iterations"));
+        setSegmentationType(scriptParameters.getParams().getInt("segmentation_type"));
+        setCentroids(scriptParameters.getParams().getList("centroids").getAsFloatArray());
+        
+        colorPanel = new JPanelColorChannels(srcImage[0]);
+        scriptParameters.setColorOptionsGUI(colorPanel);
+        
         for (int i = 0; i < srcImage.length; i++) {
-
             if (!checkImage(srcImage[i])) {
                 return;
             }
         }
-
-        callAlgorithm();
-
-        for (int i = 0; i < results.length; i++) {
-            parser.putVariable(results[i], getResultImage()[i].getImageName());
-        }
     }
-
+    
     /**
-     * Accessor that sets the color flag.
-     *
-     * @param  flag  <code>true</code> indicates ARG image, blue.
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    public void setBlue(boolean flag) {
-
-        if (doColor) {
-            doBlue = flag;
+    protected void doPostAlgorithmActions() {
+        for (int i = 0; i < resultNumber; i++) {
+            AlgorithmParameters.storeImageInRunner(getResultImage()[i]);
         }
     }
 
@@ -764,18 +524,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
     }
 
     /**
-     * Accessor that sets the color flag.
-     *
-     * @param  flag  <code>true</code> indicates ARG image, green.
-     */
-    public void setGreen(boolean flag) {
-
-        if (doColor) {
-            doGreen = flag;
-        }
-    }
-
-    /**
      * Accessor that sets the max iterations.
      *
      * @param  max  The max iterations
@@ -800,18 +548,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
      */
     public void setQ(float scale) {
         q = scale;
-    }
-
-    /**
-     * Accessor that sets the color flag.
-     *
-     * @param  flag  <code>true</code> indicates ARG image, red.
-     */
-    public void setRed(boolean flag) {
-
-        if (doColor) {
-            doRed = flag;
-        }
     }
 
     /**
@@ -867,7 +603,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
      * Once all the necessary variables are set, call the Fuzzy C Means algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         int i;
         System.gc();
 
@@ -927,14 +663,18 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
             // Make algorithm
             afcmAlgo = new AlgorithmMSpectralFuzzyCMeans(resultImage, srcImage, nClasses, nPyramid, oneJacobiIter,
                                                          twoJacobiIter, q, oneSmooth, twoSmooth, outputGainField,
-                                                         segmentation, cropBackground, maxIter, endTol, doRed, doGreen,
-                                                         doBlue, regionFlag);
+                                                         segmentation, cropBackground, maxIter, endTol, colorPanel.isRedProcessingRequested(),
+                                                         colorPanel.isGreenProcessingRequested(), colorPanel.isBlueProcessingRequested(), regionFlag);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             afcmAlgo.addListener(this);
 
+            
+            createProgressBar(srcImage[0].getImageName(), afcmAlgo);
+            
+            
             if (regionFlag == false) {
                 afcmAlgo.setMask(srcImage[0].generateVOIMask());
             }
@@ -961,10 +701,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    afcmAlgo.setProgressBarVisible(false);
-                }
-
+             
                 afcmAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -1005,11 +742,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         }
 
         if ((srcImage[0].isColorImage() == true) && (testImage.isColorImage() == false)) {
-
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().removeLine();
-            }
-
             MipavUtil.displayError("Cannot load a color (" + testImage.getImageName() +
                                    ") unless the original file is color.");
 
@@ -1017,11 +749,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         }
 
         if (srcImage[0].getNDims() != testImage.getNDims()) {
-
-            if (userInterface.isScriptRecording()) {
-                userInterface.getScriptDialog().removeLine();
-            }
-
             MipavUtil.displayError("Error! " + srcImage[0].getImageName() + " is " + srcImage[0].getNDims() +
                                    "D, while " + testImage.getImageName() + " is " + testImage.getNDims() + "D");
 
@@ -1031,11 +758,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         for (int i = 0; i < srcImage[0].getNDims(); i++) {
 
             if ((testImage != null) && (destExtents[i] != testImage.getExtents()[i])) {
-
-                if (userInterface.isScriptRecording()) {
-                    userInterface.getScriptDialog().removeLine();
-                }
-
                 MipavUtil.displayError("Error! For dimension = " + i + " " + srcImage[0].getImageName() +
                                        " has length = " + destExtents[i] + " while " + testImage.getImageName() +
                                        " has length = " + testImage.getExtents()[i]);
@@ -1085,15 +807,15 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
             if (srcImage[i].isColorImage()) {
 
-                if (doRed) {
+                if (colorPanel.isRedProcessingRequested()) {
                     spectraNumber++;
                 }
 
-                if (doGreen) {
+                if (colorPanel.isGreenProcessingRequested()) {
                     spectraNumber++;
                 }
 
-                if (doBlue) {
+                if (colorPanel.isBlueProcessingRequested()) {
                     spectraNumber++;
                 }
             } else {
@@ -1114,19 +836,19 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
                 if (srcImage[i].isColorImage()) {
 
-                    if (doRed) {
+                    if (colorPanel.isRedProcessingRequested()) {
                         minimum[j] = (float) srcImage[i].getMinR();
                         maximum[j] = (float) srcImage[i].getMaxR();
                         j++;
                     }
 
-                    if (doGreen) {
+                    if (colorPanel.isGreenProcessingRequested()) {
                         minimum[j] = (float) srcImage[i].getMinG();
                         maximum[j] = (float) srcImage[i].getMaxG();
                         j++;
                     }
 
-                    if (doBlue) {
+                    if (colorPanel.isBlueProcessingRequested()) {
                         minimum[j] = (float) srcImage[i].getMinB();
                         maximum[j] = (float) srcImage[i].getMaxB();
                         j++;
@@ -1142,7 +864,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
                 if (srcImage[i].isColorImage()) {
 
-                    if (doRed) {
+                    if (colorPanel.isRedProcessingRequested()) {
                         srcImage[i].exportRGBData(1, 0, sliceSize, tBuffer);
 
                         kVol = k * volSize;
@@ -1152,9 +874,9 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
                         }
 
                         k++;
-                    } // if (doRed)
+                    } // if (colorPanel.isRedProcessingRequested())
 
-                    if (doGreen) {
+                    if (colorPanel.isGreenProcessingRequested()) {
                         srcImage[i].exportRGBData(2, 0, sliceSize, tBuffer);
 
                         kVol = k * volSize;
@@ -1164,9 +886,9 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
                         }
 
                         k++;
-                    } // if (doGreen)
+                    } // if (colorPanel.isGreenProcessingRequested())
 
-                    if (doBlue) {
+                    if (colorPanel.isBlueProcessingRequested()) {
                         srcImage[i].exportRGBData(3, 0, sliceSize, tBuffer);
 
                         kVol = k * volSize;
@@ -1176,7 +898,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
                         }
 
                         k++;
-                    } // if (doBlue)
+                    } // if (colorPanel.isBlueProcessingRequested())
                 } else { // not color
                     srcImage[i].exportData(0, volSize, tBuffer);
 
@@ -1223,7 +945,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
                 if (srcImage[i].isColorImage()) {
 
-                    if (doRed) {
+                    if (colorPanel.isRedProcessingRequested()) {
                         JDialogCentroidThreshold dialogCentroidThreshold = new JDialogCentroidThreshold(parentFrame,
                                                                                                         "RED " +
                                                                                                         srcImage[i].getImageName(),
@@ -1244,9 +966,9 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
                             k++;
                         }
-                    } // if (doRed)
+                    } // if (colorPanel.isRedProcessingRequested())
 
-                    if (doGreen) {
+                    if (colorPanel.isGreenProcessingRequested()) {
                         JDialogCentroidThreshold dialogCentroidThreshold = new JDialogCentroidThreshold(parentFrame,
                                                                                                         "GREEN " +
                                                                                                         srcImage[i].getImageName(),
@@ -1267,9 +989,9 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
                             k++;
                         }
-                    } // if (doGreen)
+                    } // if (colorPanel.isGreenProcessingRequested())
 
-                    if (doBlue) {
+                    if (colorPanel.isBlueProcessingRequested()) {
                         JDialogCentroidThreshold dialogCentroidThreshold = new JDialogCentroidThreshold(parentFrame,
                                                                                                         "BLUE " +
                                                                                                         srcImage[i].getImageName(),
@@ -1290,7 +1012,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
                             k++;
                         }
-                    } // if (doBlue)
+                    } // if (colorPanel.isBlueProcessingRequested())
                 } else { // not color
 
                     JDialogCentroidThreshold dialogCentroidThreshold = new JDialogCentroidThreshold(parentFrame,
@@ -1467,7 +1189,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
      */
     private void init() {
         setForeground(Color.black);
-        newFrameLocation = userInterface.getNewFrameYLocation();
 
         setTitle("Fuzzy C-means");
 
@@ -1518,48 +1239,48 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(5, 5, 5, 5);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelNClasses, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textNClasses, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelExpo, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textExpo, gbc);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelEndTol, gbc);
         gbc.gridx = 1;
         gbc.gridy = 2;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textEndTol, gbc);
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         upperPanel.add(labelMaxIter, gbc);
         gbc.gridx = 1;
         gbc.gridy = 3;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         upperPanel.add(textMaxIter, gbc);
         gbc.gridx = 0;
         gbc.gridy = 4;
@@ -1590,7 +1311,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(0, 0, 0, 0);
         imageVOIPanel.add(wholeImage, gbc);
@@ -1616,7 +1337,7 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridwidth = 1;
         segmentationPanel.add(hardOnly, gbc);
         gbc.gridy = 1;
@@ -1629,9 +1350,9 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         paramPanel.setBorder(buildTitledBorder("Parameters"));
 
         gbc.gridx = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridy = 0;
-        gbc.fill = gbc.BOTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         paramPanel.add(upperPanel, gbc);
         gbc.gridy = 1;
@@ -1640,43 +1361,9 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         gbc.gridx = 1;
         paramPanel.add(segmentationPanel, gbc);
 
-        if (doColor) {
-            colorPanel = new JPanel(new GridBagLayout());
-            colorPanel.setBorder(buildTitledBorder("Channels"));
-
-            redCheckbox = new JCheckBox("Red");
-            redCheckbox.setFont(serif12);
-            redCheckbox.setSelected(true);
-            redCheckbox.addActionListener(this);
-            redCheckbox.setActionCommand("Red");
-
-            greenCheckbox = new JCheckBox("Green");
-            greenCheckbox.setFont(serif12);
-            greenCheckbox.setSelected(true);
-            greenCheckbox.addActionListener(this);
-            greenCheckbox.setActionCommand("Green");
-
-            blueCheckbox = new JCheckBox("Blue");
-            blueCheckbox.setFont(serif12);
-            blueCheckbox.setSelected(true);
-            blueCheckbox.addActionListener(this);
-            blueCheckbox.setActionCommand("Blue");
-
-            gbc.gridx = 0;
-            gbc.gridy = 0;
-            colorPanel.add(redCheckbox, gbc);
-            gbc.gridy = 1;
-            colorPanel.add(greenCheckbox, gbc);
-            gbc.gridy = 2;
-            colorPanel.add(blueCheckbox, gbc);
-            gbc.gridx = 1;
-            colorPanel.add(Box.createHorizontalStrut(5), gbc);
-
-            gbc.gridx = 2;
-            gbc.gridy = 1;
-            gbc.gridwidth = 1;
+        colorPanel = new JPanelColorChannels(srcImage[0]);
+        if (srcImage[0].isColorImage()) {
             paramPanel.add(colorPanel, gbc);
-
         } // if (doColor)
 
         /*calcGainFieldCheckbox = new JCheckBox("Generate gain field.");
@@ -1714,9 +1401,9 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
         imagePanel.add(chooserPanel, BorderLayout.SOUTH);
 
         gbc.gridx = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridy = 2;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
         paramPanel.add(imagePanel, gbc);
 
@@ -1897,12 +1584,6 @@ public class JDialogMSFuzzyCMeans extends JDialogBase
 
         /* if (calcGainFieldCheckbox.isSelected()) {
          *  outputGainField = true;   }   else { outputGainField = false;   } */
-
-        if (doColor) {
-            doRed = redCheckbox.isSelected();
-            doGreen = greenCheckbox.isSelected();
-            doBlue = blueCheckbox.isSelected();
-        } // if (doColor)
 
         return true;
     }

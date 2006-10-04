@@ -84,7 +84,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
             length = srcImage.getSliceSize();
             buffer = new float[length];
             srcImage.exportData(0, length, buffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Quantify ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Quantify ...");
         } catch (IOException error) {
             buffer = null;
             System.gc();
@@ -103,7 +103,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
 
         int mod = length / 25; // mod is 4 percent of length
 
-        initProgressBar();
+        
 
         objs = new MaskObject[(int) maskImage.getMax() + 1];
 
@@ -116,7 +116,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
         for (i = 0; (i < length) && !threadStopped; i++) {
 
             if (((i % mod) == 0) && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) i / (length - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
             objID = maskImage.getShort(i);
@@ -143,7 +143,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
         }
         // output object data.
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 
@@ -161,7 +161,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
         try {
             length = srcImage.getSliceSize();
             buffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Quantify ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Quantify ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
             System.gc();
@@ -171,7 +171,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
             return;
         }
 
-        initProgressBar();
+        
         objs = new MaskObject[(int) maskImage.getMax() + 1];
 
         for (i = 0; i < objs.length; i++) {
@@ -189,7 +189,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
                 return;
             }
 
-            progressBar.updateValue(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100), runningInSeparateThread);
+            fireProgressStateChanged(Math.round((float) z / (srcImage.getExtents()[2] - 1) * 100));
             offset = z * length;
 
             for (i = 0; i < length; i++) {
@@ -218,7 +218,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
             objs[i].output(srcImage, i);
         }
 
-        disposeProgressBar();
+        
         setCompleted(true);
     }
 

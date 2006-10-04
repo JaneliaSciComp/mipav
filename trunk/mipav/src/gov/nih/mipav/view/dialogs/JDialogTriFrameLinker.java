@@ -195,7 +195,7 @@ public class JDialogTriFrameLinker extends JDialogBase {
         gbc.gridy = 0;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(5, 5, 5, 5);
         inputPanel.add(labelUse, gbc);
@@ -204,13 +204,13 @@ public class JDialogTriFrameLinker extends JDialogBase {
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 2;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         inputPanel.add(labelImageB, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         inputPanel.add(comboBoxImage, gbc);
 
         JPanel mainPanel = new JPanel(new BorderLayout());

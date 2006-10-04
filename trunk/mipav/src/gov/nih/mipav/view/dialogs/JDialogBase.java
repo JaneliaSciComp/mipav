@@ -13,7 +13,7 @@ import java.util.*;
 
 import javax.swing.*;
 import javax.swing.border.*;
-
+import gov.nih.mipav.model.algorithms.AlgorithmBase;
 
 /**
  * This class is the base for all the other dialogs. It has two important functions that are used by almost all the
@@ -84,6 +84,9 @@ public abstract class JDialogBase extends JDialog
     /** Fonts, same as <code>MipavUtil.font12</code> and <code>MipavUtil.font12B.</code> */
     protected Font serif12, serif12B;
 
+    /** Progress bar that will listen to a dialog's algorithm (and reflect current progress)*/
+    protected ViewJProgressBar progressBar;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -196,7 +199,7 @@ public abstract class JDialogBase extends JDialog
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+    
     /**
      * Helper method for making the result image's name. Strips the current extension from the original name, adds the
      * given extension, and returns the new name.
@@ -395,6 +398,13 @@ public abstract class JDialogBase extends JDialog
         }
 
         super.setVisible(status);
+        
+        //now is when we want to display the progress bar (if it exists and the app frame is visible)
+      //  if (status == false && 
+      //  		progressBar != null &&
+      //  		ViewUserInterface.getReference().isAppFrameVisible()) {
+      //  	progressBar.setVisible(true);
+      //  }
     }
 
 
@@ -807,7 +817,7 @@ public abstract class JDialogBase extends JDialog
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -895,7 +905,30 @@ public abstract class JDialogBase extends JDialog
 
         return tf;
     }
-
+    
+    /**
+     * Creates the progress bar that will listen to an algorithm's progress changes
+     * @param title progress bar's title
+     * @param pListener algorithmbase that will notify progress updates to the pBar
+     */
+    protected void createProgressBar(String title, AlgorithmBase pListener) {
+    	createProgressBar(title, " ...", pListener);
+    }
+    
+    /**
+     * Creates the progress bar (should be created within JDialog's callAlgorithm method
+     * @param title progress bar's title
+     * @param msg the message to display on the progress bar (initial setting)
+     * @param pListener the algorithm that will register the progress bar as a listener
+     */
+    protected void createProgressBar(String title, String msg, AlgorithmBase pListener) {
+    	progressBar = new ViewJProgressBar(title, msg, 0, 100, true);
+        progressBar.setSeparateThread(runInSeparateThread);
+        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        pListener.addProgressChangeListener(progressBar);
+        pListener.setProgressValues(0, 100);
+    }
+    
     /**
      * Returns the name of the dialog (e.g. JDialogBase -> Base)
      *
@@ -920,7 +953,7 @@ public abstract class JDialogBase extends JDialog
      *
      * @return  whether a script is running
      */
-    protected boolean isScriptRunning() {
+    public boolean isScriptRunning() {
         return runningScriptFlag;
     }
 
@@ -929,7 +962,7 @@ public abstract class JDialogBase extends JDialog
      *
      * @param  flag  whether a script is being executed
      */
-    protected void setScriptRunning(boolean flag) {
+    public void setScriptRunning(boolean flag) {
         runningScriptFlag = flag;
     }
 

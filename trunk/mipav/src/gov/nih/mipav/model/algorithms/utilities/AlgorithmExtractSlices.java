@@ -146,19 +146,19 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                 imageBuffer = new float[sliceArea];
             }
 
-            buildProgressBar(srcImage.getImageName(), "Extracting Selected Slices...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Extracting Selected Slices...");
         } catch (OutOfMemoryError e) {
             imageBuffer = null;
             System.gc();
             displayError("Algorithm Extract Slices reports: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+            
 
             return;
         }
 
         // make a location & view the progressbar; make length & increment of progressbar.
-        initProgressBar();
+        
 
         // No DICOM 4D images
         if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
@@ -187,7 +187,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                     MipavUtil.displayWarning("Extract Slices does not support changes in\n" +
                                              "image position (DICOM tag 0020,0032)\n" + "in more than one dimension.");
                     setCompleted(false);
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -217,8 +217,8 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
 
                     // let user know something is happening by updating the progressbar
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) ((t * oldZdim) + zSrc) / ((tDimSrc * oldZdim) - 1) *
-                                                               100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDimSrc * oldZdim) - 1) *
+                                                               100));
                     }
 
                     // if the slice has been marked for extraction, copy it all over.
@@ -237,7 +237,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                         } catch (IOException error) {
                             displayError("Algorithm ExtractSlices reports: " + error.getMessage());
                             setCompleted(false);
-                            disposeProgressBar();
+                            
 
                             return;
                         }
@@ -309,7 +309,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                     imageBuffer = null;
                     setCompleted(false);
                     finalize();
-                    disposeProgressBar();
+                    
 
                     return;
                 }
@@ -346,14 +346,13 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                             }
 
                             if (isProgressBarVisible()) {
-                                progressBar.updateValue(Math.round((float) (zDest + 1) / (numElements) * 100),
-                                                        runningInSeparateThread);
+                                fireProgressStateChanged(Math.round((float) (zDest + 1) / (numElements) * 100));
                             }
 
                         } catch (IOException error) {
                             displayError("Algorithm ExtractSlices reports: " + error.getMessage());
                             setCompleted(false);
-                            disposeProgressBar();
+                            
 
                             return;
                         }
@@ -371,7 +370,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
         }
 
         destImage.calcMinMax();
-        disposeProgressBar();
+        
         setCompleted(true);
 
     } // end calcStoreInDest()

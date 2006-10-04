@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -18,7 +20,7 @@ import javax.swing.*;
  * Dialog to get user input Create 2D histogram of images with equal dimensions or 2D histograms with 2 colors inside a
  * RGB image. Algorithms are executed in their own thread.
  */
-public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogHistogram2Dim extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -103,9 +105,6 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private boolean useBlue = false;
 
     /** DOCUMENT ME! */
@@ -113,6 +112,9 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
 
     /** DOCUMENT ME! */
     private boolean useRed = false;
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -130,21 +132,8 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
     public JDialogHistogram2Dim(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         firstImage = im;
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogHistogram2Dim(ViewUserInterface UI, ModelImage im) {
-        super();
-        this.UI = UI;
-        firstImage = im;
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -179,8 +168,6 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmHistogram2Dim) {
             firstImage.clearMask();
 
@@ -191,7 +178,7 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -208,13 +195,13 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        UI.registerFrame((Frame) (imageFrames.elementAt(i)));
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
 
                     }
                 }
 
                 if (parentFrame != null) {
-                    UI.registerFrame(parentFrame);
+                    userInterface.registerFrame(parentFrame);
                 }
 
                 firstImage.notifyImageDisplayListeners(null, true);
@@ -228,7 +215,9 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         histogram2DimAlgo.finalize();
         histogram2DimAlgo = null;
@@ -244,125 +233,6 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
         return resultImage;
     }
 
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted() == true) {
-
-            if (secondImage != null) {
-                possibleIntValues = firstImage.getMax() - firstImage.getMin() + 1;
-
-                if (((firstImage.getType() == ModelStorageBase.BYTE) ||
-                         (firstImage.getType() == ModelStorageBase.UBYTE) ||
-                         (firstImage.getType() == ModelStorageBase.SHORT) ||
-                         (firstImage.getType() == ModelStorageBase.USHORT) ||
-                         (firstImage.getType() == ModelStorageBase.INTEGER) ||
-                         (firstImage.getType() == ModelStorageBase.UINTEGER) ||
-                         (firstImage.getType() == ModelStorageBase.LONG)) &&
-                        (bin1 == (int) Math.round(possibleIntValues))) {
-                    bin1Default = true;
-                } else {
-                    bin1Default = false;
-                }
-
-                possibleInt2Values = secondImage.getMax() - secondImage.getMin() + 1;
-
-                if (((secondImage.getType() == ModelStorageBase.BYTE) ||
-                         (secondImage.getType() == ModelStorageBase.UBYTE) ||
-                         (secondImage.getType() == ModelStorageBase.SHORT) ||
-                         (secondImage.getType() == ModelStorageBase.USHORT) ||
-                         (secondImage.getType() == ModelStorageBase.INTEGER) ||
-                         (secondImage.getType() == ModelStorageBase.UINTEGER) ||
-                         (secondImage.getType() == ModelStorageBase.LONG)) && (!doLinearRescale) &&
-                        (bin2 == (int) Math.round(possibleInt2Values))) {
-                    bin2Default = true;
-                } else {
-                    bin2Default = false;
-                }
-
-                if (UI.isScriptRecording()) {
-
-                    // check to see if the first image is already in the ImgTable
-                    if (UI.getScriptDialog().getImgTableVar(firstImage.getImageName()) == null) {
-
-                        if (UI.getScriptDialog().getActiveImgTableVar(firstImage.getImageName()) == null) {
-                            UI.getScriptDialog().putActiveVar(firstImage.getImageName());
-                        }
-                    }
-
-                    // check to see if the first image is already in the ImgTable
-                    if (UI.getScriptDialog().getImgTableVar(secondImage.getImageName()) == null) {
-
-                        if (UI.getScriptDialog().getActiveImgTableVar(secondImage.getImageName()) == null) {
-                            UI.getScriptDialog().putActiveVar(secondImage.getImageName());
-                        }
-                    }
-
-                    UI.getScriptDialog().append("Histogram2Dim " +
-                                                UI.getScriptDialog().getVar(firstImage.getImageName()) + " " +
-                                                UI.getScriptDialog().getVar(secondImage.getImageName()) + " ");
-                    UI.getScriptDialog().putVar(resultImage.getImageName());
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " ");
-                    UI.getScriptDialog().append(doLinearRescale + " " + bin1 + " " + bin2 + " " + bin1Default + " " +
-                                                bin2Default + " " + useRed + " " + useGreen + " " + useBlue + "\n");
-                }
-
-            } else { // if (secondImage != null)
-
-                if (UI.isScriptRecording()) {
-
-                    // check to see if the image is already in the ImgTable
-                    if (UI.getScriptDialog().getImgTableVar(firstImage.getImageName()) == null) {
-
-                        if (UI.getScriptDialog().getActiveImgTableVar(firstImage.getImageName()) == null) {
-                            UI.getScriptDialog().putActiveVar(firstImage.getImageName());
-                        }
-                    }
-
-                    if (useRed) {
-                        possibleIntValues = firstImage.getMaxR() - firstImage.getMinR() + 1;
-                    } else {
-                        possibleIntValues = firstImage.getMaxG() - firstImage.getMinG() + 1;
-                    }
-
-                    if (useBlue) {
-                        possibleInt2Values = firstImage.getMaxB() - firstImage.getMinB() + 1;
-                    } else {
-                        possibleInt2Values = firstImage.getMaxG() - firstImage.getMinG() + 1;
-                    }
-
-                    if (((firstImage.getType() == ModelStorageBase.ARGB) ||
-                             (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) &&
-                            (bin1 == (int) Math.round(possibleIntValues))) {
-                        bin1Default = true;
-                    } else {
-                        bin1Default = false;
-                    }
-
-                    if (((firstImage.getType() == ModelStorageBase.ARGB) ||
-                             (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) && (!doLinearRescale) &&
-                            (bin2 == (int) Math.round(possibleInt2Values))) {
-                        bin2Default = true;
-                    } else {
-                        bin2Default = false;
-                    }
-
-                    UI.getScriptDialog().append("Histogram2Dim " +
-                                                UI.getScriptDialog().getVar(firstImage.getImageName()) + " " +
-                                                UI.getScriptDialog().getVar(firstImage.getImageName()) + " ");
-                    UI.getScriptDialog().putVar(resultImage.getImageName());
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " ");
-                    UI.getScriptDialog().append(doLinearRescale + " " + bin1 + " " + bin2 + " " + bin1Default + " " +
-                                                bin2Default + " " + useRed + " " + useGreen + " " + useBlue + "\n");
-                }
-            }
-        } // if (algo.isCompleted() == true)
-    }
-
     // ************************* Item Events ****************************
     // *******************************************************************
 
@@ -376,10 +246,10 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
         String tmpStr;
 
         if (source == imageComboBox) {
-            UI = firstImage.getUserInterface();
+            userInterface = firstImage.getUserInterface();
 
             String selectedName = (String) imageComboBox.getSelectedItem();
-            secondImage = UI.getRegisteredImageByName(selectedName);
+            secondImage = userInterface.getRegisteredImageByName(selectedName);
 
             possibleInt2Values = secondImage.getMax() - secondImage.getMin() + 1;
 
@@ -510,121 +380,6 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
     }
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String image1Key = null;
-        String image2Key = null;
-        String destImageKey = null;
-
-        try {
-            image1Key = parser.getNextString();
-            image2Key = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(image1Key);
-
-        firstImage = im;
-        UI = firstImage.getUserInterface();
-        parentFrame = firstImage.getParentFrame();
-
-        if (!image1Key.equals(image2Key)) {
-            setSecondImage(parser.getImage(image1Key));
-        }
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setDoLinearRescale(parser.getNextBoolean());
-            setBin1(parser.getNextInteger());
-            setBin2(parser.getNextInteger());
-            setBin1Default(parser.getNextBoolean());
-            setBin2Default(parser.getNextBoolean());
-            setUseRed(parser.getNextBoolean());
-            setUseGreen(parser.getNextBoolean());
-            setUseBlue(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-
-        if (secondImage != null) {
-
-            if (bin1Default) {
-                possibleIntValues = firstImage.getMax() - firstImage.getMin() + 1;
-
-                if ((firstImage.getType() == ModelStorageBase.BYTE) ||
-                        (firstImage.getType() == ModelStorageBase.UBYTE) ||
-                        (firstImage.getType() == ModelStorageBase.SHORT) ||
-                        (firstImage.getType() == ModelStorageBase.USHORT) ||
-                        (firstImage.getType() == ModelStorageBase.INTEGER) ||
-                        (firstImage.getType() == ModelStorageBase.UINTEGER) ||
-                        (firstImage.getType() == ModelStorageBase.LONG)) {
-                    bin1 = (int) Math.round(possibleIntValues);
-                }
-            } // if (bin1Default)
-
-            if (bin2Default) {
-                possibleInt2Values = secondImage.getMax() - secondImage.getMin() + 1;
-
-                if ((secondImage.getType() == ModelStorageBase.BYTE) ||
-                        (secondImage.getType() == ModelStorageBase.UBYTE) ||
-                        (secondImage.getType() == ModelStorageBase.SHORT) ||
-                        (secondImage.getType() == ModelStorageBase.USHORT) ||
-                        (secondImage.getType() == ModelStorageBase.INTEGER) ||
-                        (secondImage.getType() == ModelStorageBase.UINTEGER) ||
-                        (secondImage.getType() == ModelStorageBase.LONG)) {
-                    bin2 = (int) Math.round(possibleInt2Values);
-                }
-            } // if (bin2Default)
-        } else { // secondImage == null
-
-            if (bin1Default) {
-
-                if (useRed) {
-                    possibleIntValues = firstImage.getMaxR() - firstImage.getMinR() + 1;
-                } else {
-                    possibleIntValues = firstImage.getMaxG() - firstImage.getMinG() + 1;
-                }
-
-                if ((firstImage.getType() == ModelStorageBase.ARGB) ||
-                        (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) {
-                    bin1 = (int) Math.round(possibleIntValues);
-                }
-            } // if (bin1Default)
-
-            if (bin2Default) {
-
-                if (useBlue) {
-                    possibleInt2Values = firstImage.getMaxB() - firstImage.getMinB() + 1;
-                } else {
-                    possibleInt2Values = firstImage.getMaxG() - firstImage.getMinG() + 1;
-                }
-
-                if ((firstImage.getType() == ModelStorageBase.ARGB) ||
-                        (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) {
-                    bin2 = (int) Math.round(possibleInt2Values);
-                }
-            } // if (bin2Default)
-        } // else secondImage == null
-
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
-    }
-
-    /**
      * Accessor that sets bin1.
      *
      * @param  bin1  DOCUMENT ME!
@@ -707,60 +462,9 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
     }
 
     /**
-     * Builds a list of images. Returns combobox. List must be all color or all black and white.
-     *
-     * @param   image  DOCUMENT ME!
-     *
-     * @return  Newly created combo box.
-     */
-    private JComboBox buildComboBox(ModelImage image) {
-        ViewUserInterface UI;
-        ModelImage nextImage;
-        boolean doAdd;
-        int i;
-
-        JComboBox comboBox = new JComboBox();
-        comboBox.setFont(serif12);
-        comboBox.setBackground(Color.white);
-
-        UI = image.getUserInterface();
-
-        Enumeration names = UI.getRegisteredImageNames();
-
-        while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
-
-            if (!name.equals(image.getImageName())) {
-                nextImage = UI.getRegisteredImageByName(name);
-
-                if (UI.getFrameContainingImage(nextImage) != null) {
-
-                    if ((image.isColorImage() == nextImage.isColorImage()) &&
-                            (image.getNDims() == nextImage.getNDims())) {
-                        doAdd = true;
-
-                        for (i = 0; i < image.getNDims(); i++) {
-
-                            if (image.getExtents()[i] != nextImage.getExtents()[i]) {
-                                doAdd = false;
-                            }
-                        }
-
-                        if (doAdd) {
-                            comboBox.addItem(name);
-                        }
-                    }
-                }
-            }
-        }
-
-        return comboBox;
-    }
-
-    /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(firstImage.getImageName(), "_hist2Dim");
 
         try {
@@ -783,6 +487,8 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
             // This is made possible by implementing AlgorithmedPerformed interface
             histogram2DimAlgo.addListener(this);
 
+            createProgressBar(firstImage.getImageName(), histogram2DimAlgo);
+
             // Hide dialog
             setVisible(false);
 
@@ -793,10 +499,6 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!UI.isAppFrameVisible()) {
-                    histogram2DimAlgo.setProgressBarVisible(false);
-                }
-
                 histogram2DimAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -811,6 +513,239 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
 
             return;
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(getResultImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        ParameterImage firstImageParameter = scriptParameters.getParams().getImageParameter(AlgorithmParameters.getInputImageLabel(1));
+        ParameterImage secondImageParameter = scriptParameters.getParams().getImageParameter(AlgorithmParameters.getInputImageLabel(2));
+
+        firstImage = firstImageParameter.getImage();
+        userInterface = firstImage.getUserInterface();
+        parentFrame = firstImage.getParentFrame();
+
+        // only set the second image if it isn't the same as the first one..
+        if (!firstImageParameter.isSameImageAs(secondImageParameter)) {
+            secondImage = secondImageParameter.getImage();
+        }
+
+        setDoLinearRescale(scriptParameters.getParams().getBoolean("do_linear_rescale"));
+        setBin1(scriptParameters.getParams().getInt("bin_1"));
+        setBin2(scriptParameters.getParams().getInt("bin_2"));
+        setBin1Default(scriptParameters.getParams().getBoolean("do_use_bin_1_default"));
+        setBin2Default(scriptParameters.getParams().getBoolean("do_use_bin_2_default"));
+
+        boolean[] rgb = scriptParameters.getParams().getList(AlgorithmParameters.DO_PROCESS_RGB).getAsBooleanArray();
+        setUseRed(rgb[0]);
+        setUseGreen(rgb[1]);
+        setUseBlue(rgb[2]);
+
+        if (secondImage != null) {
+
+            if (bin1Default) {
+                possibleIntValues = firstImage.getMax() - firstImage.getMin() + 1;
+
+                if ((firstImage.getType() == ModelStorageBase.BYTE) ||
+                        (firstImage.getType() == ModelStorageBase.UBYTE) ||
+                        (firstImage.getType() == ModelStorageBase.SHORT) ||
+                        (firstImage.getType() == ModelStorageBase.USHORT) ||
+                        (firstImage.getType() == ModelStorageBase.INTEGER) ||
+                        (firstImage.getType() == ModelStorageBase.UINTEGER) ||
+                        (firstImage.getType() == ModelStorageBase.LONG)) {
+                    bin1 = (int) Math.round(possibleIntValues);
+                }
+            } // if (bin1Default)
+
+            if (bin2Default) {
+                possibleInt2Values = secondImage.getMax() - secondImage.getMin() + 1;
+
+                if ((secondImage.getType() == ModelStorageBase.BYTE) ||
+                        (secondImage.getType() == ModelStorageBase.UBYTE) ||
+                        (secondImage.getType() == ModelStorageBase.SHORT) ||
+                        (secondImage.getType() == ModelStorageBase.USHORT) ||
+                        (secondImage.getType() == ModelStorageBase.INTEGER) ||
+                        (secondImage.getType() == ModelStorageBase.UINTEGER) ||
+                        (secondImage.getType() == ModelStorageBase.LONG)) {
+                    bin2 = (int) Math.round(possibleInt2Values);
+                }
+            } // if (bin2Default)
+        } else { // secondImage == null
+
+            if (bin1Default) {
+
+                if (useRed) {
+                    possibleIntValues = firstImage.getMaxR() - firstImage.getMinR() + 1;
+                } else {
+                    possibleIntValues = firstImage.getMaxG() - firstImage.getMinG() + 1;
+                }
+
+                if ((firstImage.getType() == ModelStorageBase.ARGB) ||
+                        (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) {
+                    bin1 = (int) Math.round(possibleIntValues);
+                }
+            } // if (bin1Default)
+
+            if (bin2Default) {
+
+                if (useBlue) {
+                    possibleInt2Values = firstImage.getMaxB() - firstImage.getMinB() + 1;
+                } else {
+                    possibleInt2Values = firstImage.getMaxG() - firstImage.getMinG() + 1;
+                }
+
+                if ((firstImage.getType() == ModelStorageBase.ARGB) ||
+                        (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) {
+                    bin2 = (int) Math.round(possibleInt2Values);
+                }
+            } // if (bin2Default)
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+
+        if (secondImage != null) {
+            possibleIntValues = firstImage.getMax() - firstImage.getMin() + 1;
+
+            if (((firstImage.getType() == ModelStorageBase.BYTE) || (firstImage.getType() == ModelStorageBase.UBYTE) ||
+                     (firstImage.getType() == ModelStorageBase.SHORT) ||
+                     (firstImage.getType() == ModelStorageBase.USHORT) ||
+                     (firstImage.getType() == ModelStorageBase.INTEGER) ||
+                     (firstImage.getType() == ModelStorageBase.UINTEGER) ||
+                     (firstImage.getType() == ModelStorageBase.LONG)) &&
+                    (bin1 == (int) Math.round(possibleIntValues))) {
+                bin1Default = true;
+            } else {
+                bin1Default = false;
+            }
+
+            possibleInt2Values = secondImage.getMax() - secondImage.getMin() + 1;
+
+            if (((secondImage.getType() == ModelStorageBase.BYTE) ||
+                     (secondImage.getType() == ModelStorageBase.UBYTE) ||
+                     (secondImage.getType() == ModelStorageBase.SHORT) ||
+                     (secondImage.getType() == ModelStorageBase.USHORT) ||
+                     (secondImage.getType() == ModelStorageBase.INTEGER) ||
+                     (secondImage.getType() == ModelStorageBase.UINTEGER) ||
+                     (secondImage.getType() == ModelStorageBase.LONG)) && (!doLinearRescale) &&
+                    (bin2 == (int) Math.round(possibleInt2Values))) {
+                bin2Default = true;
+            } else {
+                bin2Default = false;
+            }
+
+            scriptParameters.storeInputImage(firstImage);
+            scriptParameters.storeInputImage(secondImage);
+            AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_linear_rescale", doLinearRescale));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("bin_1", bin1));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("bin_2", bin2));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_bin_1_default", bin1Default));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_bin_2_default", bin2Default));
+            scriptParameters.storeColorOptions(useRed, useGreen, useBlue);
+        } else {
+            // secondImage == null
+
+            if (useRed) {
+                possibleIntValues = firstImage.getMaxR() - firstImage.getMinR() + 1;
+            } else {
+                possibleIntValues = firstImage.getMaxG() - firstImage.getMinG() + 1;
+            }
+
+            if (useBlue) {
+                possibleInt2Values = firstImage.getMaxB() - firstImage.getMinB() + 1;
+            } else {
+                possibleInt2Values = firstImage.getMaxG() - firstImage.getMinG() + 1;
+            }
+
+            if (((firstImage.getType() == ModelStorageBase.ARGB) ||
+                     (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) &&
+                    (bin1 == (int) Math.round(possibleIntValues))) {
+                bin1Default = true;
+            } else {
+                bin1Default = false;
+            }
+
+            if (((firstImage.getType() == ModelStorageBase.ARGB) ||
+                     (firstImage.getType() == ModelStorageBase.ARGB_USHORT)) && (!doLinearRescale) &&
+                    (bin2 == (int) Math.round(possibleInt2Values))) {
+                bin2Default = true;
+            } else {
+                bin2Default = false;
+            }
+
+            // store the first image as both image1 and image2
+            scriptParameters.storeInputImage(firstImage);
+            scriptParameters.storeInputImage(firstImage);
+            AlgorithmParameters.storeImageInRecorder(getResultImage());
+
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_linear_rescale", doLinearRescale));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("bin_1", bin1));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("bin_2", bin2));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_bin_1_default", bin1Default));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_bin_2_default", bin2Default));
+            scriptParameters.storeColorOptions(useRed, useGreen, useBlue);
+        }
+    }
+
+    /**
+     * Builds a list of images. Returns combobox. List must be all color or all black and white.
+     *
+     * @param   image  DOCUMENT ME!
+     *
+     * @return  Newly created combo box.
+     */
+    private JComboBox buildComboBox(ModelImage image) {
+        ModelImage nextImage;
+        boolean doAdd;
+        int i;
+
+        JComboBox comboBox = new JComboBox();
+        comboBox.setFont(serif12);
+        comboBox.setBackground(Color.white);
+
+        Enumeration names = userInterface.getRegisteredImageNames();
+
+        while (names.hasMoreElements()) {
+            String name = (String) names.nextElement();
+
+            if (!name.equals(image.getImageName())) {
+                nextImage = userInterface.getRegisteredImageByName(name);
+
+                if (userInterface.getFrameContainingImage(nextImage) != null) {
+
+                    if ((image.isColorImage() == nextImage.isColorImage()) &&
+                            (image.getNDims() == nextImage.getNDims())) {
+                        doAdd = true;
+
+                        for (i = 0; i < image.getNDims(); i++) {
+
+                            if (image.getExtents()[i] != nextImage.getExtents()[i]) {
+                                doAdd = false;
+                            }
+                        }
+
+                        if (doAdd) {
+                            comboBox.addItem(name);
+                        }
+                    }
+                }
+            }
+        }
+
+        return comboBox;
     }
 
     /**
@@ -912,7 +847,7 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
                 GridBagConstraints gbc2 = new GridBagConstraints();
                 gbc2.gridwidth = 1;
                 gbc2.gridheight = 1;
-                gbc2.anchor = gbc2.WEST;
+                gbc2.anchor = GridBagConstraints.WEST;
                 gbc2.weightx = 1;
                 gbc2.insets = new Insets(3, 3, 3, 3);
                 gbc2.fill = GridBagConstraints.HORIZONTAL;
@@ -972,7 +907,7 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
             imageComboBox = buildComboBox(firstImage);
             imageComboBox.addItemListener(this);
 
-            UI = firstImage.getUserInterface();
+            userInterface = firstImage.getUserInterface();
 
             String selectedName = (String) imageComboBox.getSelectedItem();
 
@@ -982,7 +917,7 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
                 return;
             }
 
-            secondImage = UI.getRegisteredImageByName(selectedName);
+            secondImage = userInterface.getRegisteredImageByName(selectedName);
 
             bin1 = 256;
             possibleIntValues = firstImage.getMax() - firstImage.getMin() + 1;
@@ -1010,7 +945,7 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 2;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
         gbc.insets = new Insets(3, 3, 3, 3);
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -1117,7 +1052,7 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
         doLinearRescale = linearCheckbox.isSelected();
 
         if (firstImage.isColorImage()) {
-            UI = firstImage.getUserInterface();
+            userInterface = firstImage.getUserInterface();
 
             if (((redCheckBox.isSelected()) && (greenCheckBox.isSelected()) && (!blueCheckBox.isSelected())) ||
                     ((redCheckBox.isSelected()) && (!greenCheckBox.isSelected()) && (blueCheckBox.isSelected())) ||
@@ -1206,10 +1141,10 @@ public class JDialogHistogram2Dim extends JDialogBase implements AlgorithmInterf
             }
         } // if (firstImage.isColorImage())
         else { // not color image
-            UI = firstImage.getUserInterface();
+            userInterface = firstImage.getUserInterface();
 
             String selectedName = (String) imageComboBox.getSelectedItem();
-            secondImage = UI.getRegisteredImageByName(selectedName);
+            secondImage = userInterface.getRegisteredImageByName(selectedName);
 
             if (secondImage == null) {
                 return false;

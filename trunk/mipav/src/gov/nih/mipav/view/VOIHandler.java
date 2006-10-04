@@ -1439,7 +1439,7 @@ public class VOIHandler extends JComponent
 
         // clicking with the right mouse button in a regular image frame updates the image's
         // tri-image frame (if one is open) to show that point in all of the components
-        if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON2_MASK) != 0) {
+        if ( (mouseEvent.getModifiers() & InputEvent.BUTTON2_MASK) != 0) {
             ViewJFrameTriImage triFrame = compImage.getActiveImage().getTriImageFrame();
 
             if (triFrame != null) {
@@ -1448,7 +1448,7 @@ public class VOIHandler extends JComponent
         }
 
         if (mode == ViewJComponentEditImage.POINT_VOI) {
-            if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ( (mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
                 if (isNewVoiNeeded(VOI.POINT)) { // create new VOI
                     VOI newPtVOI = null;
                     try {
@@ -1560,7 +1560,7 @@ public class VOIHandler extends JComponent
         } // end of else if (mode == POINT_VOI)
 
         else if (mode == ViewJComponentEditImage.POLYLINE_SLICE_VOI) {
-            if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ( (mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
                 if (isNewVoiNeeded(VOI.POLYLINE_SLICE)) { // create new VOI
                     try {
                         float[] x = new float[1];
@@ -1651,7 +1651,7 @@ public class VOIHandler extends JComponent
 
         }
         else if (mode == ViewJComponentEditImage.ANNOTATION) {
-            if ( (mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0) {
+            if ( (mouseEvent.getModifiers() & InputEvent.BUTTON1_MASK) != 0) {
 
                 VOI newTextVOI = null;
 

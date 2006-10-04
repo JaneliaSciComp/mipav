@@ -59,7 +59,7 @@ public class VOIPoint extends VOIBase {
     }
 
     public VOIPoint(String voiName, boolean doPoly) {
-        this.name = name;
+        this.name = voiName;
         this.isPolySlice = doPoly;
     }
 

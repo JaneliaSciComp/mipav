@@ -372,9 +372,6 @@ public class JDialogAnimate extends JDialogBase {
                 return;
             }
 
-            if (!ui.isAppFrameVisible()) {
-                algoTrans.setProgressBarVisible(false);
-            }
 
             algoTrans.run();
 
@@ -405,10 +402,6 @@ public class JDialogAnimate extends JDialogBase {
                     MipavUtil.displayError("Dialog Transform: unable to allocate enough memory");
 
                     return;
-                }
-
-                if (!ui.isAppFrameVisible()) {
-                    algoTransB.setProgressBarVisible(false);
                 }
 
                 algoTransB.run();
@@ -863,8 +856,8 @@ public class JDialogAnimate extends JDialogBase {
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.anchor = gbc.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
         mainPanel.add(scalePanel, gbc);
 
         if (DIM == 4) {

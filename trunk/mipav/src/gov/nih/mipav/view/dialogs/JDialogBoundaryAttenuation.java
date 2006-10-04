@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -20,8 +22,8 @@ import javax.swing.*;
  *
  * @author  Evan McCreedy
  */
-public class JDialogBoundaryAttenuation extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
+public class JDialogBoundaryAttenuation extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -131,7 +133,7 @@ public class JDialogBoundaryAttenuation extends JDialogBase
             destImage = attenuationAlgo.getResultImage();
             new ViewJFrameImage(destImage, null, userInterface.getNewFrameLocation());
 
-            insertScriptLine(algo);
+            insertScriptLine();
         }
 
         srcImage.clearMask();
@@ -156,36 +158,6 @@ public class JDialogBoundaryAttenuation extends JDialogBase
         str += maxAttenuation;
 
         return str;
-    }
-
-    /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(srcImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(srcImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(srcImage.getImageName());
-                    }
-                }
-
-                String line = "BoundaryAttenuation " + userInterface.getScriptDialog().getVar(srcImage.getImageName()) +
-                              " ";
-                userInterface.getScriptDialog().putVar(destImage.getImageName());
-                line += userInterface.getScriptDialog().getVar(destImage.getImageName()) + " " +
-                        getParameterString(" ") + "\n";
-
-                userInterface.getScriptDialog().append(line);
-            }
-        }
     }
 
     /**
@@ -219,59 +191,15 @@ public class JDialogBoundaryAttenuation extends JDialogBase
     }
 
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        srcImage = im;
-        userInterface = srcImage.getUserInterface();
-        parentFrame = srcImage.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            numErosions = parser.getNextInteger();
-            maxAttenuation = parser.getNextFloat();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-
-        callAlgorithm();
-
-        parser.putVariable(destImageKey, destImage.getImageName());
-    }
-
-    /**
      * Construct and run the algorithm.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         setVisible(false);
+
 
         attenuationAlgo = new AlgorithmBoundaryAttenuation(srcImage, numErosions, maxAttenuation);
         attenuationAlgo.addListener(this);
+        createProgressBar(srcImage.getImageName(), attenuationAlgo);
 
         if (isRunInSeparateThread()) {
 
@@ -280,12 +208,52 @@ public class JDialogBoundaryAttenuation extends JDialogBase
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!userInterface.isAppFrameVisible()) {
-                attenuationAlgo.setProgressBarVisible(false);
-            }
-
             attenuationAlgo.run();
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(destImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = srcImage.getParentFrame();
+
+        if (srcImage.getNDims() != 3) {
+            MipavUtil.displayError("The Boundary Attenuation algorithm can only be applied to 3D images.");
+            dispose();
+
+            return;
+        }
+
+        if (srcImage.getVOIs().size() == 0) {
+            MipavUtil.displayError("The Boundary Attenuation algorithm requires at least one VOI within the image.");
+            dispose();
+
+            return;
+        }
+
+        maxAttenuation = scriptParameters.getParams().getFloat("max_attenuation");
+        numErosions = scriptParameters.getParams().getInt("num_erosions");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+        AlgorithmParameters.storeImageInRecorder(destImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("max_attenuation", maxAttenuation));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("num_erosions", numErosions));
     }
 
     /**

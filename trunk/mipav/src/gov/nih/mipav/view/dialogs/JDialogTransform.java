@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
@@ -29,8 +31,7 @@ import javax.swing.event.*;
  * @author   Neva Cherniavsky
  * @author   Zohara Cohen
  */
-
-public class JDialogTransform extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ChangeListener {
+public class JDialogTransform extends JDialogScriptableBase implements AlgorithmInterface, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -79,10 +80,10 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
     private JRadioButton computeTImage;
 
     /** DOCUMENT ME! */
-    private int DIM;
+    private boolean do25D = false;
 
     /** DOCUMENT ME! */
-    private boolean do25D = false;
+    private boolean doRotateCenter;
 
     /** DOCUMENT ME! */
     private boolean doTalairach = false;
@@ -112,9 +113,6 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
     private JLabel labelTx, labelTy, labelTz, labelRx, labelRy, labelRz, labelSx, labelSy, labelSz, labelSKx, labelSKy,
                    labelSKz;
 
-    /** DOCUMENT ME! */
-    private JLabel maximum, minimum, current;
-
     /** If true change matrix to the left-hand coordinate system. */
     private boolean leftHandSystem = false;
 
@@ -132,6 +130,9 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
     /** DOCUMENT ME! */
     private int max, min;
+
+    /** DOCUMENT ME! */
+    private JLabel maximum, minimum, current;
 
     /** DOCUMENT ME! */
     private int oXdim, oYdim, oZdim, cXdim, cYdim, cZdim;
@@ -177,7 +178,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
     private String[] tVal;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
+    private ViewUserInterface userInterface;
 
     /** If true change matrix to the world coordinate system. */
     private boolean wcSystem = false;
@@ -207,41 +208,10 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         image = im;
         resampleImage = im;
 
-        if (image.getNDims() == 4) {
-            DIM = 4;
-        } else if (image.getNDims() == 3) {
-            DIM = 3;
-        } else if (image.getNDims() == 2) {
-            DIM = 2;
-        }
-
-        UI = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         cZres = 1.f;
         cZdim = 1;
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  _UI  The user interface, needed to create the image frame.
-     * @param  im   Source image.
-     */
-    public JDialogTransform(ViewUserInterface _UI, ModelImage im) {
-        super();
-        UI = _UI;
-        image = im;
-        parentFrame = image.getParentFrame();
-        resampleImage = im;
-
-        if (image.getNDims() == 4) {
-            DIM = 4;
-        } else if (image.getNDims() == 3) {
-            DIM = 3;
-        } else if (image.getNDims() == 2) {
-            DIM = 2;
-        }
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -321,7 +291,9 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         // Update frames
         image.notifyImageDisplayListeners(null, true);
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (algoTrans != null) {
             algoTrans.disposeLocal();
@@ -477,102 +449,6 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                UI.getScriptDialog().append("Transform " + UI.getScriptDialog().getVar(image.getImageName()) + " ");
-                UI.getScriptDialog().putVar(resultImage.getImageName());
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " " + interp +
-                                            " " + doVOI + " " + doClip + " " + doTalairach + " ");
-
-                if (doTalairach) {
-                    UI.getScriptDialog().append(transformType + " ");
-
-                    Point3Df acpcPC = tInfo.getAcpcPC();
-                    UI.getScriptDialog().append(acpcPC.x + " " + acpcPC.y + " " + acpcPC.z + " ");
-
-                    float acpcRes = tInfo.getAcpcRes();
-                    UI.getScriptDialog().append(acpcRes + " ");
-
-                    Point3Df origAC = tInfo.getOrigAC();
-                    UI.getScriptDialog().append(origAC.x + " " + origAC.y + " " + origAC.z + " ");
-
-                    Point3Df origPC = tInfo.getOrigPC();
-                    UI.getScriptDialog().append(origPC.x + " " + origPC.y + " " + origPC.z + " ");
-
-                    float[] origRes = tInfo.getOrigRes();
-                    UI.getScriptDialog().append(origRes[0] + " " + origRes[1] + " " + origRes[2] + " ");
-
-                    int[] origDim = tInfo.getOrigDim();
-                    UI.getScriptDialog().append(origDim[0] + " " + origDim[1] + " " + origDim[2] + " ");
-
-                    float[][] origOrient = tInfo.getOrigOrient();
-                    UI.getScriptDialog().append(origOrient[0][0] + " " + origOrient[0][1] + " " + origOrient[0][2] +
-                                                " " + origOrient[1][0] + " " + origOrient[1][1] + " " +
-                                                origOrient[1][2] + " " + origOrient[2][0] + " " + origOrient[2][1] +
-                                                " " + origOrient[2][2]);
-
-                    if ((transformType == ORIG_TO_ACPC) || (transformType == ACPC_TO_ORIG)) {
-                        UI.getScriptDialog().append("\n");
-                    } else {
-                        UI.getScriptDialog().append(" ");
-                    }
-
-                    if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) ||
-                            (transformType == TLRC_TO_ORIG) || (transformType == TLRC_TO_ACPC)) {
-                        Point3Df acpcMin = tInfo.getAcpcMin();
-                        UI.getScriptDialog().append(acpcMin.x + " " + acpcMin.y + " " + acpcMin.z + " ");
-
-                        Point3Df acpcMax = tInfo.getAcpcMax();
-                        UI.getScriptDialog().append(acpcMax.x + " " + acpcMax.y + " " + acpcMax.z + " ");
-
-                        float[] tlrcRes = tInfo.getTlrcRes();
-                        UI.getScriptDialog().append(tlrcRes[0] + " " + tlrcRes[1] + " " + tlrcRes[2] + " " +
-                                                    tlrcRes[3] + " " + tlrcRes[4] + " " + tlrcRes[5] + " " +
-                                                    tlrcRes[6] + "\n");
-                    } // do Talairach Transformation
-                } // if (doTalairach)
-                else { // not Talairach
-                    UI.getScriptDialog().append(do25D + " " + doUpdateOrigin + " " + doPad + " " + padValue + " ");
-
-                    double[][] xMat;
-                    xMat = xfrm.getMatrix();
-
-                    if ((DIM == 2) || do25D) {
-                        UI.getScriptDialog().append(oXres + " " + oYres + " " + oXdim + " " + oYdim + " " + xMat[0][0] +
-                                                    " " + xMat[0][1] + " " + xMat[0][2] + " " + xMat[1][0] + " " +
-                                                    xMat[1][1] + " " + xMat[1][2] + " " + xMat[2][0] + " " +
-                                                    xMat[2][1] + " " + xMat[2][2] + "\n");
-                    } else {
-                        UI.getScriptDialog().append(oXres + " " + oYres + " " + oZres + " " + oXdim + " " + oYdim +
-                                                    " " + oZdim + " " + xMat[0][0] + " " + xMat[0][1] + " " +
-                                                    xMat[0][2] + " " + xMat[0][3] + " " + xMat[1][0] + " " +
-                                                    xMat[1][1] + " " + xMat[1][2] + " " + xMat[1][3] + " " +
-                                                    xMat[2][0] + " " + xMat[2][1] + " " + xMat[2][2] + " " +
-                                                    xMat[2][3] + " " + xMat[3][0] + " " + xMat[3][1] + " " +
-                                                    xMat[3][2] + " " + xMat[3][3] + "\n");
-                    }
-                } // else not Talairach
-            }
-        }
-    }
-
-    /**
      * Method to handle item events.
      *
      * @param  event  event that cause the method to fire
@@ -620,7 +496,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 labelDimZ.setEnabled(false);
                 textResZ.setEnabled(false);
                 textDimZ.setEnabled(false);
-            } else if (DIM >= 3) { // && image25D is not selected
+            } else if (image.getNDims() >= 3) { // && image25D is not selected
                 do25D = false;
                 comboBoxInterp.removeItemAt(1);
                 comboBoxInterp.insertItemAt("Trilinear", 1);
@@ -645,7 +521,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                     textResZ.setEnabled(true);
                     textDimZ.setEnabled(true);
                 }
-            } else if (DIM == 2) {
+            } else if (image.getNDims() == 2) {
                 comboBoxInterp.setSelectedIndex(1); // bilinear
             }
 
@@ -670,7 +546,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 textSKx.setEnabled(true);
                 textSKy.setEnabled(true);
 
-                if ((DIM >= 3) && (image25DCheckbox.isSelected() == false)) {
+                if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
                     labelSz.setEnabled(true);
                     labelSKz.setEnabled(true);
                     textSz.setEnabled(true);
@@ -772,7 +648,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 textSKx.setEnabled(true);
                 textSKy.setEnabled(true);
 
-                if ((DIM >= 3) && (image25DCheckbox.isSelected() == false)) {
+                if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
                     labelTz.setEnabled(true);
                     labelRx.setEnabled(true);
                     labelRy.setEnabled(true);
@@ -936,7 +812,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 textDimX.setText(String.valueOf(Math.round(resampleImage.getExtents()[0])));
                 textDimY.setText(String.valueOf(Math.round(resampleImage.getExtents()[1])));
 
-                if (DIM == 3) {
+                if (image.getNDims() == 3) {
                     textResZ.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[2]));
                     textDimZ.setText(String.valueOf(Math.round(resampleImage.getExtents()[2])));
                 }
@@ -952,27 +828,26 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
     public String matrixFileMenu() {
         String fileName, directory;
         JFileChooser chooser;
-        ViewUserInterface UI = image.getUserInterface();
         fileName = null;
 
         // bring up file dialog
         try {
             chooser = new JFileChooser();
 
-            if (UI.getDefaultDirectory() != null) {
-                chooser.setCurrentDirectory(new File(UI.getDefaultDirectory()));
+            if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             } else {
                 chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
 
             chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.MATRIX));
 
-            int returnVal = chooser.showOpenDialog(UI.getMainFrame());
+            int returnVal = chooser.showOpenDialog(ViewUserInterface.getReference().getMainFrame());
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 fileName = chooser.getSelectedFile().getName();
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
-                UI.setDefaultDirectory(directory);
+                ViewUserInterface.getReference().setDefaultDirectory(directory);
                 matrixFName.setText(fileName);
             } else {
                 return null;
@@ -994,9 +869,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
      * @param  fileName  name of the matrix file.
      */
     public void readTransformMatrixFile(String fileName) {
-        ViewUserInterface UI = image.getUserInterface();
-        JDialogOrientMatrix diaglogMatrix = null;
-        TransMatrix matrix = new TransMatrix(DIM + 1);
+        TransMatrix matrix = new TransMatrix(image.getNDims() + 1);
         matrix.identity();
 
         if (fileName == null) {
@@ -1004,7 +877,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         }
 
         try {
-            File file = new File(UI.getDefaultDirectory() + fileName);
+            File file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
             RandomAccessFile raFile = new RandomAccessFile(file, "r");
             matrix.readMatrix(raFile, false);
             raFile.close();
@@ -1013,189 +886,11 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             // We don't know the coordinate system that the transformation represents. Therefore
             // bring up a dialog where the user can ID the coordinate system changes (i.e.
             // world coordinate and/or the "left-hand" coordinate system!
-            diaglogMatrix = new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
+            new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
         } catch (IOException error) {
             MipavUtil.displayError("Matrix read error");
             fileTransMatrix.identity();
         }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        UI = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-        resampleImage = im;
-
-        if (image.getNDims() == 4) {
-            DIM = 4;
-        } else if (image.getNDims() == 3) {
-            DIM = 3;
-        } else if (image.getNDims() == 2) {
-            DIM = 2;
-        }
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            TransMatrix transMat;
-
-            setInterp(parser.getNextInteger());
-            setVOIFlag(parser.getNextBoolean());
-            setClipFlag(parser.getNextBoolean());
-
-            boolean doTalairach = parser.getNextBoolean();
-            setDoTalairach(doTalairach);
-
-            if (doTalairach) {
-                tInfo = new TalairachTransformInfo();
-                tInfo.isAcpc(true);
-
-                int transformType = parser.getNextInteger();
-                setTransformType(transformType);
-
-                Point3Df acpcPC = new Point3Df();
-                acpcPC.x = parser.getNextFloat();
-                acpcPC.y = parser.getNextFloat();
-                acpcPC.z = parser.getNextFloat();
-                tInfo.setAcpcPC(acpcPC);
-
-                float acpcRes = parser.getNextFloat();
-                tInfo.setAcpcRes(acpcRes);
-
-                Point3Df origAC = new Point3Df();
-                origAC.x = parser.getNextFloat();
-                origAC.y = parser.getNextFloat();
-                origAC.z = parser.getNextFloat();
-                tInfo.setOrigAC(origAC);
-
-                Point3Df origPC = new Point3Df();
-                origPC.x = parser.getNextFloat();
-                origPC.y = parser.getNextFloat();
-                origPC.z = parser.getNextFloat();
-                tInfo.setOrigPC(origPC);
-
-                float[] origRes = new float[3];
-                origRes[0] = parser.getNextFloat();
-                origRes[1] = parser.getNextFloat();
-                origRes[2] = parser.getNextFloat();
-                tInfo.setOrigRes(origRes);
-
-                int[] origDim = new int[3];
-                origDim[0] = parser.getNextInteger();
-                origDim[1] = parser.getNextInteger();
-                origDim[2] = parser.getNextInteger();
-                tInfo.setOrigDim(origDim);
-
-                float[][] origOrient = new float[3][3];
-                origOrient[0][0] = parser.getNextFloat();
-                origOrient[0][1] = parser.getNextFloat();
-                origOrient[0][2] = parser.getNextFloat();
-                origOrient[1][0] = parser.getNextFloat();
-                origOrient[1][1] = parser.getNextFloat();
-                origOrient[1][2] = parser.getNextFloat();
-                origOrient[2][0] = parser.getNextFloat();
-                origOrient[2][1] = parser.getNextFloat();
-                origOrient[2][2] = parser.getNextFloat();
-                tInfo.setOrigOrient(origOrient);
-
-                if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) ||
-                        (transformType == TLRC_TO_ORIG) || (transformType == TLRC_TO_ACPC)) {
-                    tInfo.isTlrc(true);
-
-                    Point3Df acpcMin = new Point3Df();
-                    acpcMin.x = parser.getNextFloat();
-                    acpcMin.y = parser.getNextFloat();
-                    acpcMin.z = parser.getNextFloat();
-                    tInfo.setAcpcMin(acpcMin);
-
-                    Point3Df acpcMax = new Point3Df();
-                    acpcMax.x = parser.getNextFloat();
-                    acpcMax.y = parser.getNextFloat();
-                    acpcMax.z = parser.getNextFloat();
-                    tInfo.setAcpcMax(acpcMax);
-
-                    float[] tlrcRes = new float[7];
-                    tlrcRes[0] = parser.getNextFloat();
-                    tlrcRes[1] = parser.getNextFloat();
-                    tlrcRes[2] = parser.getNextFloat();
-                    tlrcRes[3] = parser.getNextFloat();
-                    tlrcRes[4] = parser.getNextFloat();
-                    tlrcRes[5] = parser.getNextFloat();
-                    tlrcRes[6] = parser.getNextFloat();
-                    tInfo.setTlrcRes(tlrcRes);
-                } // do Talairach Transformation
-            } // if (doTalairach)
-            else { // not Talairach
-
-                boolean image25D = parser.getNextBoolean();
-                setImage25D(image25D);
-                setUpdateOrigin(parser.getNextBoolean());
-                setPadFlag(parser.getNextBoolean());
-                setPadValue(parser.getNextInteger());
-
-                if ((image.getNDims() == 2) || image25D) {
-                    int[] dims = new int[2];
-                    float[] res = new float[2];
-                    res[0] = parser.getNextFloat();
-                    res[1] = parser.getNextFloat();
-                    dims[0] = parser.getNextInteger();
-                    dims[1] = parser.getNextInteger();
-                    setOutResolutions(res);
-                    setOutDimensions(dims);
-                    transMat = new TransMatrix(3);
-                } else {
-                    int[] dims = new int[3];
-                    float[] res = new float[3];
-                    res[0] = parser.getNextFloat();
-                    res[1] = parser.getNextFloat();
-                    res[2] = parser.getNextFloat();
-                    dims[0] = parser.getNextInteger();
-                    dims[1] = parser.getNextInteger();
-                    dims[2] = parser.getNextInteger();
-                    setOutResolutions(res);
-                    setOutDimensions(dims);
-                    transMat = new TransMatrix(4);
-                }
-
-                for (int i = 0; i < transMat.getNRows(); i++) {
-
-                    for (int j = 0; j < transMat.getNCols(); j++) {
-                        transMat.set(i, j, parser.getNextDouble());
-                    }
-                }
-
-                setMatrix(transMat);
-            } // else not Talairach
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
     }
 
     /**
@@ -1226,7 +921,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         int[] iDims;
         int ndim;
 
-        if (DIM >= 3) {
+        if (image.getNDims() >= 3) {
             ndim = 3;
         } else {
             ndim = 2;
@@ -1243,7 +938,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         textDimY.setText(String.valueOf(iDims[1]));
         textResY.setText(String.valueOf(resols[1]));
 
-        if (DIM >= 3) {
+        if (image.getNDims() >= 3) {
             textDimZ.setText(String.valueOf(iDims[2]));
             textResZ.setText(String.valueOf(resols[2]));
         }
@@ -1310,7 +1005,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         oXdim = outDim[0];
         oYdim = outDim[1];
 
-        if ((DIM >= 3) && !do25D) {
+        if ((image.getNDims() >= 3) && !do25D) {
             oZdim = outDim[2];
         }
     }
@@ -1324,7 +1019,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         oXres = outRes[0];
         oYres = outRes[1];
 
-        if ((DIM >= 3) && !do25D) {
+        if ((image.getNDims() >= 3) && !do25D) {
             oZres = outRes[2];
         }
     }
@@ -1386,10 +1081,10 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
     /**
      * Sets values based on knob along slider.
      *
-     * @param  e  ChangeEvent event that triggered this function
+     * @param  event  ChangeEvent event that triggered this function
      */
-    public void stateChanged(ChangeEvent e) {
-        Object source = e.getSource();
+    public void stateChanged(ChangeEvent event) {
+        Object source = event.getSource();
         float factor;
 
         if (source == magSlider) {
@@ -1400,7 +1095,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             textDimY.setText(String.valueOf(Math.round(factor * resampleImage.getExtents()[1])));
             textResX.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[0] / factor));
 
-            if (DIM >= 3) {
+            if (image.getNDims() >= 3) {
                 textResZ.setText(String.valueOf(resampleImage.getFileInfo(0).getResolutions()[2] / factor));
                 textDimZ.setText(String.valueOf(Math.round(factor * resampleImage.getExtents()[2])));
             }
@@ -1408,27 +1103,303 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
     }
 
     /**
+     * Calls the algorithm with the set variables.
+     */
+    protected void callAlgorithm() {
+        Point3Df center;
+
+        if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
+            xfrm.invert();
+        }
+
+        // Hide dialog
+        setVisible(false);
+
+        if (doTalairach) {
+            callTalAlgorithm();
+
+            return;
+        }
+
+        if ((image.getNDims() == 2) || (do25D)) {
+            Preferences.debug("oXres, oYres = " + oXres + ", " + oYres);
+            Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
+            System.out.println(xfrm);
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, doVOI, doClip, doPad);
+            algoTrans.setPadValue(padValue);
+        } else { // ((image.getNDims() >= 3) && (!do25D))
+            Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
+            Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
+            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, doVOI,
+                                               doClip, doPad);
+            algoTrans.setPadValue(padValue);
+            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
+        }
+
+        if (doRotateCenter) { // rotate about center of image
+            center = resampleImage.getImageCentermm();
+            algoTrans.setDoCenter(true);
+            algoTrans.setCenter(center);
+        }
+
+        // This is very important. Adding this object as a listener allows
+        // the algorithm to notify this object when it has completed of failed.
+        // See algorithm performed event. This is made possible by implementing
+        algoTrans.addListener(this);
+
+        createProgressBar(image.getImageName(), algoTrans);
+
+        // Start the thread as a low priority because we wish to still have
+        // user interface work fast
+
+        if (isRunInSeparateThread()) {
+
+            if (algoTrans.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            if (!userInterface.isAppFrameVisible()) {
+                algoTrans.setProgressBarVisible(false);
+            }
+
+            algoTrans.run();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        resampleImage = image;
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        interp = scriptParameters.getParams().getInt("interpolation_type");
+        doVOI = scriptParameters.getParams().getBoolean("do_transform_VOIs");
+        doClip = scriptParameters.getParams().getBoolean("do_clip_output");
+        doRotateCenter = scriptParameters.getParams().getBoolean("do_rotate_about_center");
+        doTalairach = scriptParameters.getParams().getBoolean("do_talairach_transform");
+
+        if (doTalairach) {
+            tInfo = new TalairachTransformInfo();
+            tInfo.isAcpc(true);
+
+            transformType = scriptParameters.getParams().getInt("transform_type");
+
+            float[] tempArray = scriptParameters.getParams().getList("acpc_PC").getAsFloatArray();
+            Point3Df acpcPC = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+            tInfo.setAcpcPC(acpcPC);
+
+            tInfo.setAcpcRes(scriptParameters.getParams().getFloat("acpc_res"));
+
+            tempArray = scriptParameters.getParams().getList("orig_AC").getAsFloatArray();
+
+            Point3Df origAC = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+            tInfo.setOrigAC(origAC);
+
+            tempArray = scriptParameters.getParams().getList("orig_PC").getAsFloatArray();
+
+            Point3Df origPC = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+            tInfo.setOrigPC(origPC);
+
+            tInfo.setOrigRes(scriptParameters.getParams().getList("orig_res").getAsFloatArray());
+            tInfo.setOrigDim(scriptParameters.getParams().getList("orig_dim").getAsIntArray());
+
+            float[][] origOrient = new float[3][3];
+
+            for (int i = 0; i < 3; i++) {
+                origOrient[i] = scriptParameters.getParams().getList("orig_orient_" + i).getAsFloatArray();
+            }
+
+            tInfo.setOrigOrient(origOrient);
+
+            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
+                    (transformType == TLRC_TO_ACPC)) {
+                tempArray = scriptParameters.getParams().getList("acpc_min").getAsFloatArray();
+
+                Point3Df acpcMin = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+                tInfo.setAcpcMin(acpcMin);
+
+                tempArray = scriptParameters.getParams().getList("acpc_max").getAsFloatArray();
+
+                Point3Df acpcMax = new Point3Df(tempArray[0], tempArray[1], tempArray[2]);
+                tInfo.setAcpcMax(acpcMax);
+
+                tInfo.setTlrcRes(scriptParameters.getParams().getList("tlrc_res").getAsFloatArray());
+            } // do Talairach Transformation
+        } // if doTalairach
+        else { // not Talairach
+
+            TransMatrix transMat = null;
+
+            do25D = scriptParameters.doProcess3DAs25D();
+            doUpdateOrigin = scriptParameters.getParams().getBoolean("do_update_origin");
+            doPad = scriptParameters.getParams().getBoolean("do_pad");
+            padValue = scriptParameters.getParams().getInt("pad_value");
+
+            double[][] xMat = null;
+            xMat = xfrm.getMatrix();
+
+            if ((image.getNDims() == 2) || do25D) {
+                transMat = new TransMatrix(3);
+
+                float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
+                oXres = outputRes[0];
+                oYres = outputRes[1];
+
+                int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
+                oXdim = outputDim[0];
+                oYdim = outputDim[1];
+
+                xMat = new double[3][3];
+
+                for (int i = 0; i < 3; i++) {
+                    xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                }
+            } else {
+                transMat = new TransMatrix(4);
+
+                float[] outputRes = scriptParameters.getParams().getList("output_res").getAsFloatArray();
+                oXres = outputRes[0];
+                oYres = outputRes[1];
+                oZres = outputRes[2];
+
+                int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
+                oXdim = outputDim[0];
+                oYdim = outputDim[1];
+                oZdim = outputDim[2];
+
+                xMat = new double[4][4];
+
+                for (int i = 0; i < 4; i++) {
+                    xMat[i] = scriptParameters.getParams().getList("x_mat" + i).getAsDoubleArray();
+                }
+            }
+
+            transMat.setMatrix(xMat);
+
+        } // else not Talairach
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_transform_VOIs", doVOI));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_clip_output", doClip));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_rotate_about_center", doRotateCenter));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_talairach_transform", doTalairach));
+
+        if (doTalairach) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("transform_type", transformType));
+
+            Point3Df acpcPC = tInfo.getAcpcPC();
+            scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_PC",
+                                                                           new float[] { acpcPC.x, acpcPC.y, acpcPC.z }));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_res", tInfo.getAcpcRes()));
+
+            Point3Df origAC = tInfo.getOrigAC();
+            scriptParameters.getParams().put(ParameterFactory.newParameter("orig_AC",
+                                                                           new float[] { origAC.x, origAC.y, origAC.z }));
+
+            Point3Df origPC = tInfo.getOrigPC();
+            scriptParameters.getParams().put(ParameterFactory.newParameter("orig_PC",
+                                                                           new float[] { origPC.x, origPC.y, origPC.z }));
+
+            scriptParameters.getParams().put(ParameterFactory.newParameter("orig_res", tInfo.getOrigRes()));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("orig_dim", tInfo.getOrigDim()));
+
+            float[][] origOrient = tInfo.getOrigOrient();
+
+            for (int i = 0; i < 3; i++) {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("orig_orient_" + i, origOrient[i]));
+            }
+
+            if ((transformType == ORIG_TO_TLRC) || (transformType == ACPC_TO_TLRC) || (transformType == TLRC_TO_ORIG) ||
+                    (transformType == TLRC_TO_ACPC)) {
+                Point3Df acpcMin = tInfo.getAcpcMin();
+
+                scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_min",
+                                                                               new float[] {
+                                                                                   acpcMin.x, acpcMin.y, acpcMin.z
+                                                                               }));
+
+                Point3Df acpcMax = tInfo.getAcpcMax();
+                scriptParameters.getParams().put(ParameterFactory.newParameter("acpc_max",
+                                                                               new float[] {
+                                                                                   acpcMax.x, acpcMax.y, acpcMax.z
+                                                                               }));
+
+                scriptParameters.getParams().put(ParameterFactory.newParameter("tlrc_res", tInfo.getTlrcRes()));
+
+            } // do Talairach Transformation
+        } // if doTalairach
+        else { // not Talairach
+
+            scriptParameters.storeProcess3DAs25D(do25D);
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_update_origin", doUpdateOrigin));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_pad", doPad));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("pad_value", padValue));
+
+            double[][] xMat;
+            xMat = xfrm.getMatrix();
+
+            if ((image.getNDims() == 2) || do25D) {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("output_res",
+                                                                               new float[] { oXres, oYres }));
+                scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
+                                                                               new int[] { oXdim, oYdim }));
+
+                for (int i = 0; i < 3; i++) {
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xMat[i]));
+                }
+
+            } else {
+                scriptParameters.getParams().put(ParameterFactory.newParameter("output_res",
+                                                                               new float[] { oXres, oYres, oZres }));
+                scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
+                                                                               new int[] { oXdim, oYdim, oZdim }));
+
+                for (int i = 0; i < 4; i++) {
+                    scriptParameters.getParams().put(ParameterFactory.newParameter("x_mat" + i, xMat[i]));
+                }
+            }
+        } // else not Talairach
+    }
+
+    /**
      * Builds a list of images to register to the template image.
      */
     private void buildComboBox() {
-        ViewUserInterface UI;
         ModelImage img;
         comboBoxImage = new JComboBox();
         comboBoxImage.setFont(serif12);
         comboBoxImage.setBackground(Color.white);
         comboBoxImage.addItemListener(this);
 
-        if ((DIM == 2) || (DIM >= 3)) {
-            comboBoxImage.addItem(image.getImageName()); // add its own name first. \
-            UI = image.getUserInterface();
+        if ((image.getNDims() == 2) || (image.getNDims() >= 3)) {
+            comboBoxImage.addItem(image.getImageName()); // add its own name first.
 
-            Enumeration names = UI.getRegisteredImageNames();
+            Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
 
             while (names.hasMoreElements()) {
                 String name = (String) names.nextElement();
-                img = UI.getRegisteredImageByName(name);
+                img = ViewUserInterface.getReference().getRegisteredImageByName(name);
 
-                if (UI.getFrameContainingImage(img) != null) {
+                if (ViewUserInterface.getReference().getFrameContainingImage(img) != null) {
 
                     if (!image.getImageName().equals(name)) {
                         comboBoxImage.addItem(name);
@@ -1466,7 +1437,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             GridBagConstraints gbc = new GridBagConstraints();
             gbc.gridwidth = 1;
             gbc.gridheight = 1;
-            gbc.anchor = gbc.WEST;
+            gbc.anchor = GridBagConstraints.WEST;
             gbc.weightx = 1;
             gbc.insets = new Insets(0, 0, 0, 0);
             gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -1677,7 +1648,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         textSKz.addFocusListener(this);
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridheight = 1;
         gbc.gridwidth = 1;
         gbc.insets = new Insets(2, 2, 2, 2);
@@ -1798,7 +1769,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
         comboBoxInterp.addItem("Nearest Neighbor");
 
-        if (DIM == 2) {
+        if (image.getNDims() == 2) {
             comboBoxInterp.addItem("Bilinear");
         } else {
             comboBoxInterp.addItem("Trilinear");
@@ -1913,7 +1884,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 0, 2, 0);
 
         gbc.gridx = 0;
@@ -1946,7 +1917,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
         gbc.gridx = 0;
         gbc.gridy = 4;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         optionPanel.add(clipCheckbox, gbc);
         gbc.gridy = 5;
@@ -2065,7 +2036,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         textResZ.setPreferredSize(new Dimension(72, 21));
         textResZ.setMinimumSize(new Dimension(30, 21));
 
-        if (DIM >= 3) {
+        if (image.getNDims() >= 3) {
             cZres = image.getFileInfo()[0].getResolutions()[2];
             textResZ.setText(String.valueOf(cZres));
         }
@@ -2081,7 +2052,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         textDimZ.setPreferredSize(new Dimension(55, 20));
         textDimZ.setMinimumSize(new Dimension(30, 20));
 
-        if (DIM >= 3) {
+        if (image.getNDims() >= 3) {
             cZdim = image.getExtents()[2];
             textDimZ.setText(String.valueOf(cZdim));
         }
@@ -2137,7 +2108,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 2, 2, 2);
 
         /* First radio button: "Resample to size of: " */
@@ -2147,16 +2118,16 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         resamplePanel.add(resampletoImage, gbc);
 
         gbc.gridx += 2;
-        gbc.gridwidth = gbc.REMAINDER;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.anchor = gbc.CENTER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.CENTER;
         resamplePanel.add(comboBoxImage, gbc);
 
         gbc.gridx = 1;
         gbc.gridy++;
         gbc.gridwidth = 2;
-        gbc.fill = gbc.NONE;
-        gbc.anchor = gbc.CENTER;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.anchor = GridBagConstraints.CENTER;
         resamplePanel.add(addPixels, gbc);
 
         gbc.gridy++;
@@ -2165,13 +2136,13 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         /* Second radio button: "User defined size:" */
         gbc.gridx = 0;
         gbc.gridy++;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         resamplePanel.add(resampletoUser, gbc);
 
         /* Before x values, in center: option to constrain field-of-view ratio */
         gbc.gridx = 1;
         gbc.gridy++;
-        gbc.anchor = gbc.CENTER;
+        gbc.anchor = GridBagConstraints.CENTER;
         resamplePanel.add(fieldOfView, gbc);
 
         /* First row: x dimensions (first row of resolution info corresponds to gridy=4) */
@@ -2232,7 +2203,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         /* Third radio button: "Resample by factor:" */
         gbc.gridx = 0;
         gbc.gridy++;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridwidth = 2;
         resamplePanel.add(resampleSlider, gbc);
 
@@ -2243,96 +2214,34 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         gbc2.gridwidth = 3;
         gbc2.weightx = 1;
         gbc2.gridheight = 1;
-        gbc2.fill = gbc2.HORIZONTAL;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
         sliderPanel.add(magSlider, gbc2);
         gbc2.gridx = 0;
         gbc2.gridy = 1;
         gbc2.gridwidth = 1;
         gbc2.weightx = 0;
-        gbc2.anchor = gbc2.WEST;
-        gbc2.fill = gbc2.NONE;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.fill = GridBagConstraints.NONE;
         sliderPanel.add(minimum, gbc2);
         gbc2.gridx = 1;
-        gbc2.anchor = gbc2.CENTER;
+        gbc2.anchor = GridBagConstraints.CENTER;
         gbc2.weightx = .5;
         sliderPanel.add(current, gbc2);
         gbc2.gridx = 2;
-        gbc2.anchor = gbc2.EAST;
+        gbc2.anchor = GridBagConstraints.EAST;
         gbc2.weightx = 0;
         sliderPanel.add(maximum, gbc2);
 
         gbc.gridx = 0;
         gbc.gridy++;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         gbc.weighty = 1;
-        gbc.anchor = gbc.NORTH;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         resamplePanel.add(sliderPanel, gbc);
 
         return resamplePanel;
-    }
-
-    /**
-     * Calls the algorithm with the set variables.
-     */
-    private void callAlgorithm() {
-        Point3Df center;
-        
-
-        if ((invertCheckbox != null) && (invertCheckbox.isSelected())) {
-            xfrm.invert();
-        }
-
-        // Hide dialog
-        setVisible(false);
-
-        if (doTalairach) {
-            callTalAlgorithm();
-
-            return;
-        }
-
-        if ((DIM == 2) || (do25D)) {
-            Preferences.debug("oXres, oYres = " + oXres + ", " + oYres);
-            Preferences.debug(" oXdim, oYdim = " + oXdim + ", " + oYdim + "\n");
-            System.out.println(xfrm);
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oXdim, oYdim, doVOI, doClip, doPad);
-            algoTrans.setPadValue(padValue);
-        } else { // ((DIM >= 3) && (!do25D))
-            Preferences.debug("oXres, oYres, oZres = " + oXres + ", " + oYres + ", " + oZres);
-            Preferences.debug(" oXdim, oYdim, oZdim = " + oXdim + ", " + oYdim + ", " + oZdim + "\n");
-            algoTrans = new AlgorithmTransform(image, xfrm, interp, oXres, oYres, oZres, oXdim, oYdim, oZdim, doVOI,
-                                               doClip, doPad);
-            algoTrans.setPadValue(padValue);
-            algoTrans.setUpdateOriginFlag(doUpdateOrigin);
-        }
-        
-        if (rotCenter.isSelected()) { // rotate about center of image
-            center = resampleImage.getImageCentermm();
-            algoTrans.setDoCenter(true);
-            algoTrans.setCenter(center);
-        }
-
-        // This is very important. Adding this object as a listener allows
-        // the algorithm to notify this object when it has completed of failed.
-        // See algorithm performed event. This is made possible by implementing
-        algoTrans.addListener(this);
-        // Start the thread as a low priority because we wish to still have
-        // user interface work fast
-
-        if (isRunInSeparateThread()) {
-
-            if (algoTrans.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
-            if (!UI.isAppFrameVisible()) {
-                algoTrans.setProgressBarVisible(false);
-            }
-
-            algoTrans.run();
-        }
     }
 
     /**
@@ -2361,7 +2270,8 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         }
 
         try {
-            resultImage = new ModelImage(ModelImage.FLOAT, dims, makeImageName(image.getImageName(), "_TT"), UI);
+            resultImage = new ModelImage(ModelImage.FLOAT, dims, makeImageName(image.getImageName(), "_TT"),
+                                         userInterface);
             fileInfo = resultImage.getFileInfo();
 
             if ((transformType == ACPC_TO_ORIG) || (transformType == TLRC_TO_ORIG)) {
@@ -2511,7 +2421,8 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!UI.isAppFrameVisible()) {
+
+                if (!userInterface.isAppFrameVisible()) {
                     algoTal.setProgressBarVisible(false);
                 }
 
@@ -2543,7 +2454,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         textDimX.setEnabled(state);
         textDimY.setEnabled(state);
 
-        if ((DIM >= 3) && (image25DCheckbox.isSelected() == false)) {
+        if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
             labelDimZ.setEnabled(state);
             textDimZ.setEnabled(state);
         }
@@ -2560,7 +2471,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         textResX.setEnabled(state);
         textResY.setEnabled(state);
 
-        if ((DIM >= 3) && (image25DCheckbox.isSelected() == false)) {
+        if ((image.getNDims() >= 3) && (image25DCheckbox.isSelected() == false)) {
             labelResZ.setEnabled(state);
             textResZ.setEnabled(state);
         }
@@ -2931,7 +2842,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.add(leftPanel, gbc);
         gbc.gridx = 1;
-        gbc.fill = gbc.VERTICAL;
+        gbc.fill = GridBagConstraints.VERTICAL;
         gbc.weightx = 1.5;
         mainPanel.add(resamplePanel, gbc);
 
@@ -3066,7 +2977,6 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         int iXdim, iYdim, iZdim = 0;
         float iXres, iYres, iZres = 1.f;
         double Tx = 0, Ty = 0, Tz = 0, Rx, Ry, Rz, Sx, Sy, Sz, SKx, SKy, SKz;
-        Point3Df center = null;
         float fovX = 0.f, fovY = 0.f, fovZ = 0.f;
 
         int boxIndex = comboBoxInterp.getSelectedIndex();
@@ -3075,7 +2985,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             interp = AlgorithmTransform.NEAREST_NEIGHBOR;
         } else if (boxIndex == 1) {
 
-            if (do25D || (DIM == 2)) {
+            if (do25D || (image.getNDims() == 2)) {
                 interp = AlgorithmTransform.BILINEAR;
             } else {
                 interp = AlgorithmTransform.TRILINEAR;
@@ -3122,8 +3032,6 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             return true;
         } // if (computeTImage.isSelected())
 
-        Enumeration names = UI.getRegisteredImageNames();
-
         doPad = padRadio.isSelected();
         doUpdateOrigin = updateOriginCheckbox.isSelected();
 
@@ -3138,9 +3046,9 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             }
         }
 
-        if ((do25D) || (DIM == 2)) {
+        if ((do25D) || (image.getNDims() == 2)) {
             xfrm = new TransMatrix(3);
-        } else { // (DIM >= 3) && (!do25D)
+        } else { // (image.getNDims() >= 3) && (!do25D)
             xfrm = new TransMatrix(4);
         }
 
@@ -3151,7 +3059,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         iXdim = image.getExtents()[0];
         iYdim = image.getExtents()[1];
 
-        if (DIM >= 3) {
+        if (image.getNDims() >= 3) {
             iZdim = image.getExtents()[2];
             iZres = image.getFileInfo(0).getResolutions()[2];
         } else {
@@ -3166,7 +3074,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             String selectName = (String) (comboBoxImage.getSelectedItem());
 
             // get the selected image
-            ModelImage selectedImg = UI.getRegisteredImageByName(selectName);
+            ModelImage selectedImg = userInterface.getRegisteredImageByName(selectName);
 
             // assign output resolutions and dims to those of image selected in comboBox
             oXres = selectedImg.getFileInfo(0).getResolutions()[0];
@@ -3182,7 +3090,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 oYdim = selectedImg.getExtents()[1];
             }
 
-            if ((DIM >= 3) && (!do25D)) {
+            if ((image.getNDims() >= 3) && (!do25D)) {
                 oZres = selectedImg.getFileInfo(0).getResolutions()[2];
 
                 if (addPix) {
@@ -3191,7 +3099,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 } else {
                     oZdim = selectedImg.getExtents()[2];
                 }
-            } else if ((DIM >= 3) && (do25D)) { // cannot change third dimension
+            } else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
                 oZres = image.getFileInfo(0).getResolutions()[2];
                 oZdim = image.getExtents()[2];
             }
@@ -3220,7 +3128,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 return false;
             }
 
-            if (DIM >= 3) {
+            if (image.getNDims() >= 3) {
                 tmpStr = textResZ.getText();
 
                 if (testParameter(tmpStr, 0, 1000000000)) {
@@ -3256,7 +3164,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 return false;
             }
 
-            if (DIM >= 3) {
+            if (image.getNDims() >= 3) {
                 tmpStr = textDimZ.getText();
 
                 if (testParameter(tmpStr, 0, 2048)) {
@@ -3272,16 +3180,13 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             factor = magSlider.getValue() / (float) 100;
             oXdim = Math.round(image.getExtents()[0] * factor);
             oYdim = Math.round(image.getExtents()[1] * factor);
-            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]) /
-                        (float) (oXdim);
-            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]) /
-                        (float) (oYdim);
+            oXres = image.getFileInfo(0).getResolutions()[0] * (float) (image.getExtents()[0]) / (float) (oXdim);
+            oYres = image.getFileInfo(0).getResolutions()[1] * (float) (image.getExtents()[1]) / (float) (oYdim);
 
-            if ((DIM >= 3) && (!do25D)) {
+            if ((image.getNDims() >= 3) && (!do25D)) {
                 oZdim = Math.round(image.getExtents()[2] * factor);
-                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]) /
-                            (float) (oZdim);
-            } else if ((DIM >= 3) && (do25D)) { // cannot change third dimension
+                oZres = image.getFileInfo(0).getResolutions()[2] * (float) (image.getExtents()[2]) / (float) (oZdim);
+            } else if ((image.getNDims() >= 3) && (do25D)) { // cannot change third dimension
                 oZdim = image.getExtents()[2];
                 oZres = image.getFileInfo(0).getResolutions()[2];
             }
@@ -3289,16 +3194,11 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
 
         // TRANSFORMATION MATRIX INFO
         /*if (rotCenter.isSelected()) { // rotate about center of image
-            Note that when rotation around the center is selected,
-            this operation now occurs in AlgorithmTransform.transform().
-            center = resampleImage.getImageCentermm();
-
-            if ((DIM >= 3) && (!do25D)) {
-                xfrm.setTranslate(center.x, center.y, center.z);
-            } else { // (DIM == 2) || do25D
-                xfrm.setTranslate(center.x, center.y);
-            }
-        }*/
+         *  Note that when rotation around the center is selected, this operation now occurs in
+         * AlgorithmTransform.transform(). center = resampleImage.getImageCentermm();
+         *
+         * if ((image.getNDims() >= 3) && (!do25D)) {     xfrm.setTranslate(center.x, center.y, center.z); } else { //
+         * (image.getNDims() == 2) || do25D     xfrm.setTranslate(center.x, center.y); }}*/
 
         if (fileMatrix.isSelected()) { // read matrix from file
 
@@ -3386,7 +3286,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 return false;
             }
 
-            if ((DIM >= 3) && (!do25D)) {
+            if ((image.getNDims() >= 3) && (!do25D)) {
                 tmpStr = textTz.getText();
 
                 if (testParameter(tmpStr, -2048, 2048)) {
@@ -3446,7 +3346,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                 xfrm.setRotate(Rx, Ry, Rz, TransMatrix.DEGREES);
                 xfrm.setSkew(SKx, SKy, SKz);
                 xfrm.setZoom(Sx, Sy, Sz);
-            } else { // (DIM == 2) || (do25D)
+            } else { // (image.getNDims() == 2) || (do25D)
                 xfrm.setTranslate(Tx, Ty);
                 xfrm.setRotate(Rz);
                 xfrm.setSkew(SKx, SKy);
@@ -3488,7 +3388,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
         // AND (total image size !=), then scale
         if ((noTransform.isSelected() || userDefinedMatrix.isSelected())) {
 
-            if ((DIM >= 3) && (!do25D)) {
+            if ((image.getNDims() >= 3) && (!do25D)) {
 
                 if (((iXres * (float) (iXdim)) != (oXres * (float) (oXdim))) ||
                         ((iYres * (float) (iYdim)) != (oYres * (float) (oYdim))) ||
@@ -3498,7 +3398,7 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
                     Sz = ((float) (oZdim) * oZres) / ((float) (iZdim) * iZres);
                     xfrm.setZoom(Sx, Sy, Sz);
                 }
-            } else { // ((DIM == 2) || (do25D))
+            } else { // ((image.getNDims() == 2) || (do25D))
 
                 if (((iXres * (float) (iXdim)) != (oXres * (float) (oXdim))) ||
                         ((iYres * (float) (iYdim)) != (oYres * (float) (oYdim)))) {
@@ -3509,24 +3409,21 @@ public class JDialogTransform extends JDialogBase implements AlgorithmInterface,
             }
         }
 
-        if (Preferences.debugLevel(Preferences.DEBUG_MINOR) && (DIM == 3)) {
+        if (Preferences.debugLevel(Preferences.DEBUG_MINOR) && (image.getNDims() == 3)) {
             Preferences.debug("oDim = " + oXdim + ", " + oYdim + ", " + oZdim);
             Preferences.debug("oRes = " + oXres + ", " + oYres + ", " + oZres);
         }
 
         /*if (rotCenter.isSelected()) { // rotate about center of image
-            Note that when rotation around the center is selected,
-            this operation now occurs in AlgorithmTransform.transform().
-            if ((DIM >= 3) && (!do25D)) {
-                center = image.getImageCentermm();
-                xfrm.setTranslate(-center.x, -center.y, -center.z);
-            } else { // ((DIM ==2) || (do25D))
-                center = image.getImageCentermm();
-                xfrm.setTranslate(-center.x, -center.y);
-            }
-        }*/
+         *  Note that when rotation around the center is selected, this operation now occurs in
+         * AlgorithmTransform.transform(). if ((image.getNDims() >= 3) && (!do25D)) {     center =
+         * image.getImageCentermm();     xfrm.setTranslate(-center.x, -center.y, -center.z); } else { //
+         * ((image.getNDims() ==2) || (do25D))     center = image.getImageCentermm();     xfrm.setTranslate(-center.x,
+         * -center.y); }}*/
 
         Preferences.debug(xfrm + "\n");
+
+        doRotateCenter = rotCenter.isSelected();
 
         return true;
     }

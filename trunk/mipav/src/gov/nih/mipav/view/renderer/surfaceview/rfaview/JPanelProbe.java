@@ -1907,8 +1907,8 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         JPanel probeParamPanel = new JPanel(new GridBagLayout());
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.BOTH;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 100;
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1948,12 +1948,12 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
         searchPanel.add(searchLabel, gbc);
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx++;
         searchPanel.add(resultLabel, gbc);
 
@@ -1977,12 +1977,12 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         saveMapButton.setMinimumSize(MipavUtil.defaultButtonSize);
 
         gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
         mapPanel.add(loadMapButton, gbc);
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx++;
         mapPanel.add(saveMapButton, gbc);
 
@@ -2030,8 +2030,8 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         m_kProbeTwistSlider.setLabelTable(labels);
         m_kProbeTwistSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        kGBC.anchor = kGBC.NORTH;
-        kGBC.fill = kGBC.BOTH;
+        kGBC.anchor = GridBagConstraints.NORTH;
+        kGBC.fill = GridBagConstraints.BOTH;
         kGBC.weightx = 1;
         kGBC.weighty = 1;
 
@@ -2040,8 +2040,8 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         JPanel placementPanel = new JPanel(new GridBagLayout());
 
         gbc = new GridBagConstraints();
-        gbc.anchor = gbc.NORTH;
-        gbc.fill = gbc.BOTH;
+        gbc.anchor = GridBagConstraints.NORTH;
+        gbc.fill = GridBagConstraints.BOTH;
         gbc.weightx = 1;
         gbc.weighty = 1;
         gbc.gridx = 0;
@@ -2659,8 +2659,8 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
 
         GridBagConstraints gbc = new GridBagConstraints();
 
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
         burnParamPanel.add(centerPanel, gbc);
@@ -2824,7 +2824,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
      * @return  the image the user wants to load
      */
     private ModelImage loadImage() {
-        ViewOpenFileUI openFile = new ViewOpenFileUI(parentFrame.getUserInterface(), true);
+        ViewOpenFileUI openFile = new ViewOpenFileUI(true);
 
         openFile.setPutInFrame(false);
 

@@ -8,7 +8,7 @@ import gov.nih.mipav.model.scripting.parameters.*;
 /**
  * Forces the JVM to perform a garbage collection of un-referenced memory.
  */
-public class ActionCollectGarbage implements ScriptableActionInterface {
+public class ActionCollectGarbage extends ActionBase {
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ public class ActionCollectGarbage implements ScriptableActionInterface {
      * {@inheritDoc}
      */
     public void insertScriptLine() {
-        ScriptRecorder.getReference().addLine("CollectGarbage");
+        ScriptRecorder.getReference().addLine(getActionName(), new ParameterTable());
     }
 
     /**

@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -21,7 +23,7 @@ import javax.swing.*;
  * @version  0.1 July 14, 2003
  * @author   Zohara A Cohen, Ph.D.
  */
-public class JDialogMatchImages extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogMatchImages extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -82,31 +84,8 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
     public JDialogMatchImages(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         imageA = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI      The user interface, needed to create the image frame.
-     * @param  imA     Source image.
-     * @param  imB     DOCUMENT ME!
-     * @param  doOr    DOCUMENT ME!
-     * @param  doRe    DOCUMENT ME!
-     * @param  doOrig  DOCUMENT ME!
-     * @param  doDim   DOCUMENT ME!
-     */
-    public JDialogMatchImages(ViewUserInterface UI, ModelImage imA, ModelImage imB, boolean doOr, boolean doRe,
-                              boolean doOrig, boolean doDim) {
-        super(false);
-        imageA = imA;
-        imageB = imB;
-        userInterface = UI;
-        doOrigins = doOrig;
-        doDimensions = doDim;
-        parentFrame = imA.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -118,7 +97,6 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        Object source = event.getSource();
 
         if (command.equals("OK")) {
 
@@ -143,9 +121,6 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrameA, imageFrameB;
-        imageFrameA = null;
-        imageFrameB = null;
 
         if (algorithm instanceof AlgorithmMatchImages) {
             boolean isNewA = matchAlgo.isNewA();
@@ -167,12 +142,12 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
 
                     if (isNewA) {
                         resultImageA.calcMinMax();
-                        imageFrameA = new ViewJFrameImage(resultImageA, null, new Dimension(25, 55));
+                        new ViewJFrameImage(resultImageA, null, new Dimension(25, 55));
                     }
 
                     if (isNewB) {
                         resultImageB.calcMinMax();
-                        imageFrameB = new ViewJFrameImage(resultImageB, null, new Dimension(35, 65));
+                        new ViewJFrameImage(resultImageB, null, new Dimension(35, 65));
                     }
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -195,7 +170,9 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
         imageB.notifyImageDisplayListeners(null, true);
 
         // Write to script.
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         matchAlgo.finalize();
         matchAlgo = null;
@@ -223,95 +200,6 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the  imageA is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageA.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageA.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageA.getImageName());
-                    }
-                }
-
-                // check to see if the  imageB is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(imageB.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(imageB.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(imageB.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("MatchImages " +
-                                                       userInterface.getScriptDialog().getVar(imageA.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(imageB.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().putVar(resultImageA.getImageName());
-                userInterface.getScriptDialog().putVar(resultImageB.getImageName());
-                userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImageA.getImageName()) +
-                                                       " " +
-                                                       userInterface.getScriptDialog().getVar(resultImageB.getImageName()) +
-                                                       " ");
-                userInterface.getScriptDialog().append(doOrigins + " " + doDimensions + "\n");
-            }
-        }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String imageAKey = null;
-        String imageBKey = null;
-        String destImageAKey = null;
-        String destImageBKey = null;
-
-        try {
-            imageAKey = parser.getNextString();
-            imageBKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        imageA = parser.getImage(imageAKey);
-        imageB = parser.getImage(imageBKey);
-        userInterface = imageA.getUserInterface();
-        parentFrame = imageA.getParentFrame();
-
-        // the result image
-        try {
-            destImageAKey = parser.getNextString();
-            destImageBKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            doOrigins = parser.getNextBoolean();
-            doDimensions = parser.getNextBoolean();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(destImageAKey, getResultImageA().getImageName());
-        parser.putVariable(destImageBKey, getResultImageB().getImageName());
-    }
-
-    /**
      * Accessor that sets image A.
      *
      * @param  im  Image A.
@@ -330,41 +218,10 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
-     * Builds a list of images to operate on from the template image.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private JComboBox buildComboBoxImage() {
-        ViewUserInterface UI;
-
-        JComboBox comboBoxImage = new JComboBox();
-        comboBoxImage.setFont(serif12);
-        comboBoxImage.setBackground(Color.white);
-
-        UI = imageA.getUserInterface();
-
-        Enumeration names = UI.getRegisteredImageNames();
-
-        // Add images from user interface
-        // Guaranteed to have at least one unique potential image B, because it's
-        // tested for in ViewJFrameImage before this dialog is created.
-        while (names.hasMoreElements()) {
-            String name = (String) names.nextElement();
-            ModelImage img = UI.getRegisteredImageByName(name);
-
-            if (UI.getFrameContainingImage(img) != null) {
-                comboBoxImage.addItem(name);
-            }
-        }
-
-        return comboBoxImage;
-    }
-
-    /**
      * Once all the necessary variables are set, call the Gaussian Blur algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
 
@@ -378,6 +235,8 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
             // This is made possible by implementing AlgorithmedPerformed interface
             matchAlgo.addListener(this);
 
+            createProgressBar(imageA.getImageName(), matchAlgo);
+
             // Hide dialog
             setVisible(false);
 
@@ -388,10 +247,6 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    matchAlgo.setProgressBarVisible(false);
-                }
-
                 matchAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -400,6 +255,80 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
 
             return;
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (getResultImageA() != null) {
+            AlgorithmParameters.storeImageInRunner(getResultImageA());
+        }
+
+        if (getResultImageB() != null) {
+            AlgorithmParameters.storeImageInRunner(getResultImageB());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        imageA = scriptParameters.retrieveInputImage(1);
+        imageB = scriptParameters.retrieveInputImage(2);
+
+        userInterface = imageA.getUserInterface();
+        parentFrame = imageA.getParentFrame();
+
+        doOrigins = scriptParameters.getParams().getBoolean("do_match_origins");
+        doDimensions = scriptParameters.getParams().getBoolean("do_match_dimensions");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        scriptParameters.storeInputImage(imageB);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_origins", doOrigins));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_match_dimensions", doDimensions));
+
+        if (getResultImageA() != null) {
+            AlgorithmParameters.storeImageInRecorder(getResultImageA());
+        }
+
+        if (getResultImageB() != null) {
+            AlgorithmParameters.storeImageInRecorder(getResultImageB());
+        }
+    }
+
+    /**
+     * Builds a list of images to operate on from the template image.
+     *
+     * @return  DOCUMENT ME!
+     */
+    private JComboBox buildComboBoxImage() {
+        JComboBox comboBoxImage = new JComboBox();
+        comboBoxImage.setFont(serif12);
+        comboBoxImage.setBackground(Color.white);
+
+        Enumeration names = ViewUserInterface.getReference().getRegisteredImageNames();
+
+        // Add images from user interface
+        // Guaranteed to have at least one unique potential image B, because it's
+        // tested for in ViewJFrameImage before this dialog is created.
+        while (names.hasMoreElements()) {
+            String name = (String) names.nextElement();
+            ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
+
+            if (ViewUserInterface.getReference().getFrameContainingImage(img) != null) {
+                comboBoxImage.addItem(name);
+            }
+        }
+
+        return comboBoxImage;
     }
 
     /**
@@ -414,7 +343,7 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
         inputPanel.setLayout(new GridBagLayout());
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.gridy = 1;
         gbc.gridwidth = 2;
 
@@ -486,11 +415,10 @@ public class JDialogMatchImages extends JDialogBase implements AlgorithmInterfac
      * @return  <code>true</code> if parameters set successfully, <code>false</code> otherwise.
      */
     private boolean setVariables() {
-        ViewUserInterface UI = imageA.getUserInterface();
         selectedNameA = (String) comboBoxImageA.getSelectedItem();
         selectedNameB = (String) comboBoxImageB.getSelectedItem();
-        imageA = UI.getRegisteredImageByName(selectedNameA);
-        imageB = UI.getRegisteredImageByName(selectedNameB);
+        imageA = ViewUserInterface.getReference().getRegisteredImageByName(selectedNameA);
+        imageB = ViewUserInterface.getReference().getRegisteredImageByName(selectedNameB);
         doOrigins = checkOrigins.isSelected();
         doDimensions = checkDimensions.isSelected();
 

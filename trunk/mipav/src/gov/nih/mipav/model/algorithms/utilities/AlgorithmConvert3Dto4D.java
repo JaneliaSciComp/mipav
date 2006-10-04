@@ -5,8 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 
@@ -133,7 +131,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                                        srcImage.getUserInterface());
             length = colorFactor * xDim * yDim * zDim;
             buffer = new float[length];
-            buildProgressBar(srcImage.getImageName(), "Converting from 3D to 4D ...", 0, 100);
+            fireProgressStateChanged(srcImage.getImageName(), "Converting from 3D to 4D ...");
         } catch (OutOfMemoryError e) {
             buffer = null;
 
@@ -145,18 +143,18 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmConvert3Dto4D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
         int mod = length / 100; // mod is 1 percent of length
-        initProgressBar();
+
 
         for (t = 0; (t < tDim) && !threadStopped; t++) {
 
             if (isProgressBarVisible()) {
-                progressBar.updateValue(Math.round((float) t / (tDim - 1) * 100), runningInSeparateThread);
+                fireProgressStateChanged(Math.round((float) t / (tDim - 1) * 100));
             }
 
             try {
@@ -171,7 +169,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
                 destImage = null;
                 buffer = null;
                 setCompleted(false);
-                disposeProgressBar();
+
 
                 return;
             }
@@ -187,7 +185,7 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
                 destImage = null;
                 setCompleted(false);
-                disposeProgressBar();
+
 
                 return;
             }
@@ -283,7 +281,6 @@ public class AlgorithmConvert3Dto4D extends AlgorithmBase {
 
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 

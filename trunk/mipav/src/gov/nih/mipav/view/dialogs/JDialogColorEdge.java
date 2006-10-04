@@ -3,38 +3,28 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-
 import java.awt.*;
 import java.awt.event.*;
-
 import java.util.*;
-
 import javax.swing.*;
 
 
 /**
- 
+ * GUI for entering parameters for the Color Edge algorithm and making it scriptable.
  */
-public class JDialogColorEdge extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, DialogDefaultsInterface {
-
-    //~ Static fields/initializers -------------------------------------------------------------------------------------
-
+public class JDialogColorEdge extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private AlgorithmColorEdge algoColorEdge;
-
     
     /** DOCUMENT ME! */
-    private int displayLoc; // Flag indicating if a new image is to be generated
-
-    // or if the source image is to be replaced
+    private int displayLoc;
 
     /** DOCUMENT ME! */
     private ModelImage resultImage;
@@ -95,8 +85,56 @@ public class JDialogColorEdge extends JDialogBase
         setVisible(true);
     }
 
-    
     //~ Methods --------------------------------------------------------------------------------------------------------
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected  void storeParamsFromGUI() throws ParserException{
+        scriptParameters.storeInputImage(sourceImage);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_color_1", new int[] {red1, green1, blue1}));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_color_2", new int[] {red2, green2, blue2}));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected  void setGUIFromParams() {
+        sourceImage = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = sourceImage.getParentFrame();
+        
+        if (!sourceImage.isColorImage()) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Must be a color image.");
+        }
+        
+        if (scriptParameters.doOutputNewImage()) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+        
+        int[] rgb1 = scriptParameters.getParams().getList("rgb_color_1").getAsIntArray();
+        red1 = rgb1[0];
+        green1 = rgb1[1];
+        blue1 = rgb1[2];
+        
+        int[] rgb2 = scriptParameters.getParams().getList("rgb_color_2").getAsIntArray();
+        red2 = rgb2[0];
+        green2 = rgb2[1];
+        blue2 = rgb2[2];
+    }
+    
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
 
     // ************************************************************************
     // ************************** Action Events *******************************
@@ -187,7 +225,9 @@ public class JDialogColorEdge extends JDialogBase
                 System.gc();
             }
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
         } // else not a Color Edge algorithm
         else {
             Preferences.debug("JDialogColorEdge caught algorithm performed for: " +
@@ -237,41 +277,6 @@ public class JDialogColorEdge extends JDialogBase
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the  image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(sourceImage.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(sourceImage.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(sourceImage.getImageName());
-                    }
-                }
-
-                userInterface.getScriptDialog().append("ColorEdge " +
-                                                       userInterface.getScriptDialog().getVar(sourceImage.getImageName()) +
-                                                       " ");
-
-                if (displayLoc == NEW) {
-                    userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                } else {
-                    userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(sourceImage.getImageName()) +
-                                                           " " + getParameterString(" ") + "\n");
-                }
-            }
-        }
-    }
-
-    /**
      * Loads the default settings from Preferences to set up the dialog.
      */
     public void loadDefaults() {
@@ -305,63 +310,6 @@ public class JDialogColorEdge extends JDialogBase
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        sourceImage = im;
-        if (!im.isColorImage()) {
-            MipavUtil.displayError("Must be a color image");
-            return;
-        }
-        displayLoc = NEW;
-        userInterface = sourceImage.getUserInterface();
-        parentFrame = sourceImage.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setRed1(parser.getNextInteger());
-            setGreen1(parser.getNextInteger());
-            setBlue1(parser.getNextInteger());
-            setRed2(parser.getNextInteger());
-            setGreen2(parser.getNextInteger());
-            setBlue2(parser.getNextInteger());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
-
-    
     /**
      * 
      * @param red1
@@ -427,10 +375,6 @@ public class JDialogColorEdge extends JDialogBase
         // displayLoc = REPLACE;
         displayLoc = NEW;
     }
-
-    
-    
-
     
     /**
      * creates the planel which contains the OKAY and Cancel buttons. sets their sizes, colours and listeners.
@@ -441,15 +385,13 @@ public class JDialogColorEdge extends JDialogBase
         return buildButtons();
     }
 
-    
-
     /**
      * part of the algorithm rests on finding the original image minus an estimation of the local mean.
      *
      * <p>This is the same as using as unsharp-mask filter; so, this panel is a recreation of the inputs made in the
      * JDialogUnsharpMask.</p>
      *
-     * <p>The panel is returned to the caller.</p>
+     * @return  The color panel.
      *
      * @see  JDialogUnsharpMask
      */
@@ -464,74 +406,74 @@ public class JDialogColorEdge extends JDialogBase
         colorPanel.setLayout(gbl);
         colorPanel.setBorder(buildTitledBorder("Colors at edge"));
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Red 1:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         red1Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(red1Text, true);
         colorPanel.add(red1Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Green 1:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         green1Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(green1Text, true);
         colorPanel.add(green1Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Blue 1:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         blue1Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(blue1Text, true);
         colorPanel.add(blue1Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Red 2:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         red2Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(red2Text, true);
         colorPanel.add(red2Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Green 2:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         green2Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(green2Text, true);
         colorPanel.add(green2Text, gbc);
 
-        gbc.gridwidth = gbc.RELATIVE;
+        gbc.gridwidth = GridBagConstraints.RELATIVE;
         gbc.insets = nospace;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         colorPanel.add(createLabel("Blue 2:"), gbc);
 
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = spacer;
-        gbc.anchor = gbc.EAST;
+        gbc.anchor = GridBagConstraints.EAST;
         blue2Text = createEntryField("0");
         MipavUtil.makeNumericsOnly(blue2Text, true);
         colorPanel.add(blue2Text, gbc);
@@ -543,7 +485,7 @@ public class JDialogColorEdge extends JDialogBase
      * Once all the necessary variables are set, call the local normalization algorithm based on what type of image this
      * is and whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(sourceImage.getImageName(), "_ColorEdge");
 
         
@@ -572,6 +514,9 @@ public class JDialogColorEdge extends JDialogBase
             // This is made possible by implementing
             // AlgorithmedPerformed interface
             algoColorEdge.addListener(this);
+            
+            createProgressBar(sourceImage.getImageName(), algoColorEdge);
+            
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -582,9 +527,6 @@ public class JDialogColorEdge extends JDialogBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    algoColorEdge.setProgressBarVisible(false);
-                }
 
                 algoColorEdge.run();
             }
@@ -603,9 +545,6 @@ public class JDialogColorEdge extends JDialogBase
          */
         
     } // end callAlgorithm()
-
-    
-
 
     /**
      * Builds a new JTextField, with the given String, sets its font (to MipavUtil.font12), sets the foreground colour

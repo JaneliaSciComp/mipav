@@ -5,18 +5,12 @@ import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
-import gov.nih.mipav.view.dialogs.AlgorithmParameters;
 
 
 /**
  * A script action which converts all paint within an image to some type of mask image (short, binary, ubyte).
  */
-public class ActionPaintToMask implements ScriptableActionInterface {
-
-    /**
-     * The label to use for the input image parameter.
-     */
-    private static final String INPUT_IMAGE_LABEL = AlgorithmParameters.getInputImageLabel(1);
+public class ActionPaintToMask extends ActionImageProcessorBase {
     
     /**
      * The label to use for the mask output image data type parameter.
@@ -39,11 +33,6 @@ public class ActionPaintToMask implements ScriptableActionInterface {
     public static final String MASK_UBYTE = "ubyte";
     
     /**
-     * The image which had its paint extracted to a mask (which should now be recorded).
-     */
-    private ModelImage recordingInputImage;
-    
-    /**
      * The type of mask extracted from the paint (which should now be recorded).
      */
     private String recordingMaskType;
@@ -51,15 +40,19 @@ public class ActionPaintToMask implements ScriptableActionInterface {
     /**
      * Constructor for the dynamic instantiation and execution of the PaintToMask script action.
      */
-    public ActionPaintToMask() {}
+    public ActionPaintToMask() {
+        super();
+    }
     
     /**
      * Constructor used to record the PaintToMask script action line.
-     * @param inputImage  The image whose paint was extracted to a mask image.
-     * @param maskType    The type of the extracted mask image.
+     * 
+     * @param  inputImage   The image whose paint was extracted to a mask image.
+     * @param  resultImage  The result image generated.
+     * @param  maskType     The type of the extracted mask image.
      */
-    public ActionPaintToMask(ModelImage inputImage, String maskType) {
-        recordingInputImage = inputImage;
+    public ActionPaintToMask(ModelImage inputImage, ModelImage resultImage, String maskType) {
+        super(inputImage, resultImage);
         recordingMaskType = maskType;
     }
     
@@ -71,14 +64,15 @@ public class ActionPaintToMask implements ScriptableActionInterface {
     public void insertScriptLine() {
         ParameterTable parameters = new ParameterTable();
         try {
-            parameters.put(ParameterFactory.newImage(INPUT_IMAGE_LABEL, recordingInputImage.getImageName()));
+            parameters.put(createInputImageParameter());
             parameters.put(ParameterFactory.newString(MASK_DATA_TYPE, recordingMaskType));
+            storeImageInRecorder(recordingResultImage);
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error encountered creating parameters while recording PaintToMask script action:\n" + pe);
+            MipavUtil.displayError("Error encountered creating parameters while recording " + getActionName() + " script action:\n" + pe);
             return;
         }
         
-        ScriptRecorder.getReference().addLine("PaintToMask", parameters);
+        ScriptRecorder.getReference().addLine(getActionName(), parameters);
     }
 
     /**
@@ -97,19 +91,11 @@ public class ActionPaintToMask implements ScriptableActionInterface {
                 return;
             }
             
-            VariableTable.getReference().storeImageName(maskImageName);
+            ScriptRunner.getReference().getImageTable().storeImageName(maskImageName);
         } catch (OutOfMemoryError oome) {
             MipavUtil.displayError("Out of memory: unable to create new mask image from paint.");
             return;
         }
-    }
-    
-    /**
-     * Changes the image whose paint to mask extraction should be recorded in the script.
-     * @param inputImage  The image whose paint was extracted.
-     */
-    public void setInputImage(ModelImage inputImage) {
-        recordingInputImage = inputImage;
     }
     
     /**

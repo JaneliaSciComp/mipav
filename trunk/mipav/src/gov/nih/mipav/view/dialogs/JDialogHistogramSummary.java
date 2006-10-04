@@ -2,6 +2,8 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -18,7 +20,7 @@ import javax.swing.*;
  * @version  0.1 June 5, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogHistogramSummary extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogHistogramSummary extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -101,22 +103,8 @@ public class JDialogHistogramSummary extends JDialogBase implements AlgorithmInt
         super(theParentFrame, false);
 
         image = im;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogHistogramSummary(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -187,11 +175,12 @@ public class JDialogHistogramSummary extends JDialogBase implements AlgorithmInt
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        ViewJFrameImage imageFrame = null;
 
         if (algorithm instanceof AlgorithmHistogram) {
 
-            insertScriptLine(algorithm);
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
 
             histAlgo.finalize();
             histAlgo = null;
@@ -210,35 +199,19 @@ public class JDialogHistogramSummary extends JDialogBase implements AlgorithmInt
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) { }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException { }
-
-    /**
      * Accessor that sets the RGBOffset.
      *
      * @param  RGBoffset  DOCUMENT ME!
      */
     public void setRGBOffset(int RGBoffset) {
-        this.RGBOffset = RGBOffset;
+        this.RGBOffset = RGBoffset;
     }
 
     /**
      * Once all the necessary variables are set, call the Histogram algorithm based on whehter the image is color or
      * not.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         try {
             System.gc();
@@ -255,6 +228,8 @@ public class JDialogHistogramSummary extends JDialogBase implements AlgorithmInt
             // This is made possible by implementing AlgorithmedPerformed interface
             histAlgo.addListener(this);
 
+            createProgressBar(image.getImageName(), histAlgo);
+
             // Hide dialog
             setVisible(false);
 
@@ -265,10 +240,6 @@ public class JDialogHistogramSummary extends JDialogBase implements AlgorithmInt
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    histAlgo.setProgressBarVisible(false);
-                }
-
                 histAlgo.run();
             }
 
@@ -280,6 +251,40 @@ public class JDialogHistogramSummary extends JDialogBase implements AlgorithmInt
 
             return;
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+
+        bins = scriptParameters.getParams().getInt("number_of_bins");
+
+        if (image.isColorImage() && scriptParameters.getParams().containsParameter("RGB_offset")) {
+            RGBOffset = scriptParameters.getParams().getInt("RGB_offset");
+        } else if (image.isColorImage()) {
+            throw new ParameterException("RGB_offset",
+                                         "This parameter (RGB_offset) is required for the processing of color images.  Please re-record this script using a color image.");
+        }
+
+        radWholeImage = new JRadioButton("Whole image");
+        radWholeImage.setSelected(scriptParameters.doProcessWholeImage());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_bins", bins));
+
+        if (image.isColorImage()) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("RGB_offset", bins));
+        }
+
+        scriptParameters.storeProcessWholeImage(radWholeImage.isSelected());
     }
 
     /**

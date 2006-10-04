@@ -136,7 +136,7 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
      */
     public JDialogGVF(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
 
         VOIs = im.getVOIs();
 
@@ -308,6 +308,8 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gvfAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gvfAlgo);
+                    
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -332,10 +334,6 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            gvfAlgo.setProgressBarVisible(false);
-                        }
-
                         gvfAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -394,6 +392,8 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gvfAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), gvfAlgo);
+                    
                     // Hide dialog
                     setVisible(false);
 
@@ -418,10 +418,6 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            gvfAlgo.setProgressBarVisible(false);
-                        }
-
                         gvfAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -608,8 +604,8 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
 
         GridBagConstraints gbc2 = new GridBagConstraints();
         gbc2.weightx = 1;
-        gbc2.anchor = gbc2.WEST;
-        gbc2.fill = gbc2.HORIZONTAL;
+        gbc2.anchor = GridBagConstraints.WEST;
+        gbc2.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel parametersPanel = new JPanel(new GridBagLayout());
         parametersPanel.setForeground(Color.black);
@@ -641,8 +637,8 @@ public class JDialogGVF extends JDialogBase implements AlgorithmInterface, ItemL
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;

@@ -1,7 +1,8 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -182,22 +183,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
      */
     public AlgorithmMorphology3D(ModelImage srcImg, int kernelType, float sphereDiameter, int method, int iterD,
                                  int iterE, int pruningPix, int edType, boolean entireImage) {
-        super(null, srcImg);
-        makeKernel(kernelType);
-        setAlgorithm(method);
-        iterationsD = iterD;
-        iterationsE = iterE;
-        numPruningPixels = pruningPix;
-        edgingType = edType;
-        this.entireImage = entireImage;
-        this.kernelType = kernelType;
-
-        if (kernelType == SIZED_SPHERE) {
-            this.sphereDiameter = sphereDiameter;
-            makeSphericalKernel();
-        } else {
-            makeKernel(kernelType);
-        }
+        this(srcImg, null, kernelType, sphereDiameter, method, iterD, iterE, pruningPix, edType, entireImage);
     }
 
     /**
@@ -245,8 +231,12 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         processBuffer = null;
         imgBuffer = null;
         srcImage = null;
-        objects.removeAllElements();
-        objects = null;
+
+        if (objects != null) {
+            objects.removeAllElements();
+            objects = null;
+        }
+
         super.finalize();
     }
 
@@ -263,7 +253,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
+
             finalize();
 
             return;
@@ -283,29 +274,14 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         int sliceSize = xDim * yDim;
         int imgSize = sliceSize * zDim;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Finding Edges ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged(0, srcImage.getImageName(), "Finding Edges ...");
 
         try {
             tempBuffer = new short[imgBuffer.length];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
@@ -315,15 +291,21 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             tempBuffer[pix] = 0;
         }
 
+        float pixelsPerProgressValue = 100f / imgSize;
+
         if (edgingType == OUTER_EDGING) {
 
             // dilate image and then XOR with orignal image
             for (int s = 0; (s < (zDim * sliceSize)) && !threadStopped; s += sliceSize) {
 
+                if ((s % pixelsPerProgressValue) == 0) {
+                    fireProgressStateChanged(MipavMath.round((s / pixelsPerProgressValue)));
+                }
+
                 try {
 
                     if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round(((float) s) / ((float) (imgSize - 1)) * 100), runningInSeparateThread);
+                        fireProgressStateChanged(Math.round(((float) s) / ((float) (imgSize - 1)) * 100));
                     }
                 } catch (NullPointerException npe) {
 
@@ -373,18 +355,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             for (int s = 0; (s < (zDim * sliceSize)) && !threadStopped; s += sliceSize) {
 
-                try {
+                //                try {
+                //
+                //                   if (isProgressBarVisible()) {
+                // fireProgressStateChanged(Math.round(((float) s) / ((float) (imgSize - 1)) * 100));
+                // }                } catch (NullPointerException npe) {
 
-                    if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round(((float) s) / ((float) (imgSize - 1)) * 100), runningInSeparateThread);
-                    }
-                } catch (NullPointerException npe) {
-
-                    if (threadStopped) {
-                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                          Preferences.DEBUG_ALGORITHM);
-                    }
-                }
+                //                    if (threadStopped) {                        Preferences.debug("somehow you managed
+                // to cancel the algorithm and dispose the progressbar between checking for threadStopping and using
+                // it.",                                          Preferences.DEBUG_ALGORITHM);                    }
+                //            }
 
                 for (pix = s; pix < (s + sliceSize); pix++) {
 
@@ -444,7 +424,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
+
                 finalize();
 
                 return;
@@ -454,13 +435,13 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
         setCompleted(true);
-        disposeProgressBar();
+
     }
 
     /**
@@ -473,7 +454,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
@@ -487,41 +468,23 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         short floodValue = 1;
         int count = 0;
 
+        int[] progressValues = getProgressValues();
+
+        this.setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 95));
         deleteObjects(min, max, true);
 
-        try {
+        this.setProgressValues(progressValues);
 
-            if (progressBar != null) {
-                progressBar.setMessage("Identifing objects ...");
-            }
+        fireProgressStateChanged("Identifying objects ...");
 
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
 
         int mod = imageLength / 50;
 
         // objects.removeAllElements();
         for (pix = 0; (pix < imageLength) && !threadStopped; pix++) {
 
-            try {
-
-                if (((pix % mod) == 0) && isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round((pix + 1) / ((float) imageLength) * 100), runningInSeparateThread);
-                }
-            } catch (NullPointerException npe) {
-
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                      Preferences.DEBUG_ALGORITHM);
-                }
+            if (((pix % mod) == 0)) {
+                fireProgressStateChanged(95 + Math.round((pix + 1) / ((float) imageLength) * 5));
             }
 
             if (entireImage == true) {
@@ -543,7 +506,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
             finalize();
 
             return;
@@ -573,7 +535,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
                 finalize();
 
                 return;
@@ -587,18 +549,15 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
 
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -640,41 +599,33 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Pruning image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
-
+        /*
+         *      try {
+         *
+         *       if  {             progressBar.setMessage("Pruning image ...");         }
+         *
+         *       if  {             fireProgressStateChanged(0);         }     } catch (NullPointerException npe) {
+         *
+         *       if (threadStopped) {             Preferences.debug("somehow you managed to cancel the algorithm and
+         * dispose the progressbar between checking for threadStopping and using it.",
+         * Preferences.DEBUG_ALGORITHM);         }     }
+         */
         for (slice = 0; slice < zDim; slice++) {
 
-            try {
-                progressBar.setMessage("Pruning Slice " + (slice + 1));
-                progressBar.updateValue(Math.round(((float) slice) / ((float) zDim) * 100), runningInSeparateThread);
-            } catch (NullPointerException npe) {
-
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                      Preferences.DEBUG_ALGORITHM);
-                }
-            }
-
+            /*            try {
+             *              progressBar.setMessage("Pruning Slice " + (slice + 1));
+             * fireProgressStateChanged(Math.round(((float) slice) / ((float) zDim) * 100));         } catch
+             * (NullPointerException npe) {
+             *
+             *           if (threadStopped) {                 Preferences.debug("somehow you managed to cancel the
+             * algorithm and dispose the progressbar between checking for threadStopping and using it.",
+             *                   Preferences.DEBUG_ALGORITHM);             }         }
+             */
             // sets the intensity of border points to 0
             for (pix = (slice * sliceSize); pix < ((slice * sliceSize) + xDim); pix++) {
                 imgBuffer[pix] = 0;
@@ -840,7 +791,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
+
                 finalize();
 
                 return;
@@ -850,12 +802,11 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -890,28 +841,34 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             int length = srcImage.getSliceSize() * srcImage.getExtents()[2];
 
             imgBuffer = new short[length];
+
             if (algorithm != FILL_HOLES) {
                 processBuffer = new short[length];
             }
+
             srcImage.exportData(0, length, imgBuffer); // locks and releases lock
-            buildProgressBar(srcImage.getImageName(), "Morph 3D ...", 0, 100);
+
+            // fireProgressStateChanged(srcImage.getImageName(), "Morph 3D ...");
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
-        initProgressBar();
+        // initProgressBar();
 
         constructLog();
+
+        int[] progressValues; // used to temporarily store the max progress value (for algorithms doing multiple
+                              // functions)
 
         switch (algorithm) {
 
@@ -924,12 +881,23 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 break;
 
             case CLOSE:
+
+                progressValues = getProgressValues();
+                setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
                 dilate(true);
+
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
+                                  generateProgressValue(progressValues[0], progressValues[1], 100));
                 erode(false);
                 break;
 
             case OPEN:
+                progressValues = getProgressValues();
+                setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
                 erode(true);
+
+                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
+                                  generateProgressValue(progressValues[0], progressValues[1], 100));
                 dilate(false);
                 break;
 
@@ -1058,7 +1026,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
@@ -1080,7 +1048,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
+
             finalize();
 
             return;
@@ -1108,39 +1077,15 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         short[] tempBuffer;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Skeletonize image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
-
         for (pix = 0; pix < imageLength; pix++) {
             processBuffer[pix] = 0;
         }
 
         for (int i = 0; (i < zDim) && !threadStopped; i++) {
 
-            try {
-                progressBar.setMessage("Skeletonizing Slice " + (i + 1));
-                progressBar.updateValue(Math.round(((float) i) / ((float) zDim) * 100), runningInSeparateThread);
-            } catch (NullPointerException npe) {
+            fireProgressStateChanged("Skeletonizing Slice " + (i + 1));
+            fireProgressStateChanged(Math.round(((float) i) / ((float) zDim) * 100));
 
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                      Preferences.DEBUG_ALGORITHM);
-                }
-            }
 
             do {
                 pixelsRemoved = thin(pass++, i, table);
@@ -1167,7 +1112,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
                 finalize();
 
                 return;
@@ -1177,12 +1122,11 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1196,7 +1140,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
@@ -1217,29 +1161,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         float[] minDistanceBuffer;
         Vector edgePoints = new Vector();
 
-        try {
+        fireProgressStateChanged("Bg. distance image ...");
+        fireProgressStateChanged(0);
 
-            if (progressBar != null) {
-                progressBar.setMessage("Bg. distance image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
 
         try {
             minDistanceBuffer = new float[volSize];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
@@ -1269,7 +1200,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
 
             finalize();
 
@@ -1297,8 +1228,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                     try {
 
-                        if (((pix % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((pix + 1) / ((float) volSize) * 100), runningInSeparateThread);
+                        if (((pix % mod) == 0)) {
+                            fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) * 100));
                         }
                     } catch (NullPointerException npe) {
 
@@ -1350,7 +1281,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
                 finalize();
 
                 return;
@@ -1361,18 +1292,17 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology3D.distanceMap: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1399,7 +1329,6 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
             finalize();
 
             return;
@@ -1414,22 +1343,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         short floodValue = 1;
         short[] tmpBuffer;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Removing objects ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged("Removing objects ...");
 
         objects.removeAllElements();
 
@@ -1458,36 +1372,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
         }
 
-        try {
-            progressBar.updateValue(33, runningInSeparateThread);
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged(10);
 
         for (i = 0; i < objects.size(); i++) {
-
-            try {
-
-                if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(33 + ((i + 1) / ((float) objects.size()) * 33)), runningInSeparateThread);
-                }
-            } catch (NullPointerException npe) {
-
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                      Preferences.DEBUG_ALGORITHM);
-                }
-            }
+            fireProgressStateChanged(Math.round(10 + ((i + 1) / ((float) objects.size()) * 45)));
 
             if (entireImage == true) {
 
@@ -1512,37 +1406,16 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
         }
 
-        try {
-            progressBar.updateValue(66, runningInSeparateThread);
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
 
         // relabel objects in order
         for (i = 0; i < objects.size(); i++) {
-
-            try {
-
-                if (isProgressBarVisible()) {
-                    progressBar.updateValue(Math.round(66 + ((i + 1) / ((float) objects.size()) * 34)), runningInSeparateThread);
-                }
-            } catch (NullPointerException npe) {
-
-                if (threadStopped) {
-                    Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                      Preferences.DEBUG_ALGORITHM);
-                }
-            }
+            fireProgressStateChanged(Math.round(55 + ((i + 1) / ((float) objects.size()) * 45)));
 
             if (entireImage == true) {
                 floodFill(processBuffer, ((intObject) (objects.elementAt(i))).index, (short) (i + 1),
@@ -1555,19 +1428,19 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
         }
 
         try {
-            progressBar.updateValue(100, runningInSeparateThread);
-
-            ViewUserInterface.getReference().setDataText("\nDeleted objects outside range (" + min + "," + max + "). \n");
+            ViewUserInterface.getReference().setDataText("\nDeleted objects outside range (" + min + "," + max +
+                                                         "). \n");
 
             for (i = 0; i < objects.size(); i++) {
-                ViewUserInterface.getReference().setDataText("  Object " + (i + 1) + " = " + ((intObject) (objects.elementAt(i))).size + "\n");
+                ViewUserInterface.getReference().setDataText("  Object " + (i + 1) + " = " +
+                                                             ((intObject) (objects.elementAt(i))).size + "\n");
             }
         } catch (NullPointerException npe) {
 
@@ -1585,7 +1458,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
                 finalize();
 
                 return;
@@ -1599,18 +1472,17 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -1625,7 +1497,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
@@ -1657,22 +1529,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
         int tmpSize = 0;
         int mod = totalSize / 100;
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Dilating image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged("Dilating image ...");
 
         int length = xDim * yDim * zDim;
 
@@ -1685,17 +1542,8 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
 
-                try {
-
-                    if ((((tmpSize + pix) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (tmpSize + pix) / totalSize * 100), runningInSeparateThread);
-                    }
-                } catch (NullPointerException npe) {
-
-                    if (threadStopped) {
-                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                          Preferences.DEBUG_ALGORITHM);
-                    }
+                if (((tmpSize + pix) % mod) == 0) {
+                    fireProgressStateChanged(Math.round((float) (tmpSize + pix) / totalSize * 100));
                 }
 
                 if (entireImage || mask.get(pix)) {
@@ -1715,9 +1563,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
                         // Took this out and check it later.  This caused the a subtle error by setting
                         // a pixel on an incorrect slice
-//                        if (startZ < 0) {
-//                            startZ = 0;
-//                        }
+                        // if (startZ < 0) {
+                        // startZ = 0;
+                        // }
 
                         if (endZ > imgSize) {
                             endZ = imgSize;
@@ -1741,31 +1589,33 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
 kernelLoop:
                         for (k = startZ; k < endZ; k += sliceSize) {
-                        	// only work on valid pixels
-                        	// essentially process only the overlap between
-                        	// valid image and kernel slices
-                        	if (k >= 0) {
-                        		startY = k + indexY;
-                        		endY = k + indexYU;
 
-                        		for (j = startY; j < endY; j += xDim) {
-                        			startX = j + offsetX;
-                        			endX = j + offsetXU;
+                            // only work on valid pixels
+                            // essentially process only the overlap between
+                            // valid image and kernel slices
+                            if (k >= 0) {
+                                startY = k + indexY;
+                                endY = k + indexYU;
 
-                        			for (i = startX; i < endX; i++) {
+                                for (j = startY; j < endY; j += xDim) {
+                                    startX = j + offsetX;
+                                    endX = j + offsetXU;
 
-                        				if (kernel.get(count) == true) {
-                        					processBuffer[i] = value;
-                        				}
+                                    for (i = startX; i < endX; i++) {
 
-                        				count++;
-                        			}
-                        		}
-                        	} else {
-                        		// jump to the next kernel slice as the current slice
-                        		// overlaps invalid image slices
-                        		count += kDimXY * kDimXY;
-                        	}  // end if (k > 0) {} else {}
+                                        if (kernel.get(count) == true) {
+                                            processBuffer[i] = value;
+                                        }
+
+                                        count++;
+                                    }
+                                }
+                            } else {
+
+                                // jump to the next kernel slice as the current slice
+                                // overlaps invalid image slices
+                                count += kDimXY * kDimXY;
+                            } // end if (k > 0) {} else {}
                         } // end for (k = startZ; ...)
                     }
                 } else {
@@ -1786,7 +1636,7 @@ kernelLoop:
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
                 finalize();
 
                 return;
@@ -1796,13 +1646,12 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
         setCompleted(true);
-        disposeProgressBar();
     }
 
     /**
@@ -1815,7 +1664,8 @@ kernelLoop:
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
+
             finalize();
 
             return;
@@ -1835,30 +1685,15 @@ kernelLoop:
 
         float[] minDistanceBuffer;
         Vector edgePoints = new Vector();
+        fireProgressStateChanged("Distance image ...");
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Distance image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
 
         try {
             minDistanceBuffer = new float[volSize];
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
@@ -1890,7 +1725,7 @@ kernelLoop:
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
@@ -1915,19 +1750,22 @@ kernelLoop:
 
                 for (x = 0; (x < xDim) && !threadStopped; x++) {
 
-                    try {
-
-                        if (((pix % mod) == 0) && isProgressBarVisible()) {
-                            progressBar.updateValue(Math.round((pix + 1) / ((float) volSize) * 100), runningInSeparateThread);
-                        }
-                    } catch (NullPointerException npe) {
-
-                        if (threadStopped) {
-                            Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                              Preferences.DEBUG_ALGORITHM);
-                        }
+                    if (((pix % mod) == 0)) {
+                        fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) * 100));
                     }
 
+                    /*
+                     *                  try {
+                     *
+                     *                   if (((pix % mod) == 0)) {
+                     * fireProgressStateChanged(Math.round((pix + 1) / ((float) volSize) * 100));                     }
+                     *                } catch (NullPointerException npe) {
+                     *
+                     *                   if (threadStopped) {                         Preferences.debug("somehow you
+                     * managed to cancel the algorithm and dispose the progressbar between checking for threadStopping
+                     * and using it.",                                           Preferences.DEBUG_ALGORITHM);
+                     *           }                 }
+                     */
                     if (entireImage || mask.get(pix)) {
 
                         if (imgBuffer[pix] > 0) {
@@ -1969,7 +1807,7 @@ kernelLoop:
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
                 finalize();
 
                 return;
@@ -1980,18 +1818,17 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology3D.distanceMap: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -2006,7 +1843,7 @@ kernelLoop:
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
@@ -2039,24 +1876,19 @@ kernelLoop:
         int totalSize = imgSize * iterationsE;
         int tmpSize = 0;
         int mod = totalSize / 100;
+        fireProgressStateChanged("Eroding image ...");
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Eroding image ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
-
+        /*
+         *      try {
+         *
+         *       if  {             fireProgressStateChanged("Eroding image ...");         }
+         *
+         *       if  {             fireProgressStateChanged(0);         }     } catch (NullPointerException npe) {
+         *
+         *       if (threadStopped) {             Preferences.debug("somehow you managed to cancel the algorithm and
+         * dispose the progressbar between checking for threadStopping and using it.",
+         * Preferences.DEBUG_ALGORITHM);         }     }
+         */
         for (pix = 0; pix < imgSize; pix++) {
             processBuffer[pix] = 0;
         }
@@ -2066,19 +1898,20 @@ kernelLoop:
 
             for (pix = 0; (pix < imgSize) && !threadStopped; pix++) {
 
-                try {
-
-                    if ((((tmpSize + pix) % mod) == 0) && isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round((float) (tmpSize + pix) / totalSize * 100), runningInSeparateThread);
-                    }
-                } catch (NullPointerException npe) {
-
-                    if (threadStopped) {
-                        Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                          Preferences.DEBUG_ALGORITHM);
-                    }
+                if ((((tmpSize + pix) % mod) == 0)) {
+                    fireProgressStateChanged(Math.round((float) (tmpSize + pix) / totalSize * 100));
                 }
 
+                /*
+                 *              try {
+                 *
+                 *               if ((((tmpSize + pix) % mod) == 0) && isProgressBarVisible()) {
+                 *              }             } catch (NullPointerException npe) {
+                 *
+                 *               if (threadStopped) {                     Preferences.debug("somehow you managed to
+                 * cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
+                 *                                      Preferences.DEBUG_ALGORITHM);                 }             }
+                 */
                 if (entireImage || mask.get(pix)) {
                     value = imgBuffer[pix];
 
@@ -2099,9 +1932,9 @@ kernelLoop:
 
                         // Took this out and check it later.  This caused the a subtle error by setting
                         // a pixel on an incorrect slice
-//                        if (startZ < 0) {
-//                            startZ = 0;
-//                        }
+                        // if (startZ < 0) {
+                        // startZ = 0;
+                        // }
 
                         if (endZ > imgSize) {
                             endZ = imgSize;
@@ -2125,33 +1958,35 @@ kernelLoop:
 
 kernelLoop:
                         for (k = startZ; k < endZ; k += sliceSize) {
-                        	// only process on valid image slices
-                        	// essentially process only the overlap between
-                        	// valid image and kernel slices
-                        	if (k >= 0) {
-                        		startY = k + indexY;
-                        		endY = k + indexYU;
 
-                        		for (j = startY; j < endY; j += xDim) {
-                        			startX = j + offsetX;
-                        			endX = j + offsetXU;
+                            // only process on valid image slices
+                            // essentially process only the overlap between
+                            // valid image and kernel slices
+                            if (k >= 0) {
+                                startY = k + indexY;
+                                endY = k + indexYU;
 
-                        			for (i = startX; i < endX; i++) {
+                                for (j = startY; j < endY; j += xDim) {
+                                    startX = j + offsetX;
+                                    endX = j + offsetXU;
 
-                        				if ((kernel.get(count) == true) && (imgBuffer[i] == 0)) {
-                        					clear = true;
+                                    for (i = startX; i < endX; i++) {
 
-                        					break kernelLoop;
-                        				}
+                                        if ((kernel.get(count) == true) && (imgBuffer[i] == 0)) {
+                                            clear = true;
 
-                        				count++;
-                        			}
-                        		}
-                        	}  else {
-                        		// jump to the next kernel slice as the current 
-                        		// image slice overlaps invalid image slices
-                        		count += kDimXY * kDimXY;
-                        	}  // end if (k > 0) {} else {}
+                                            break kernelLoop;
+                                        }
+
+                                        count++;
+                                    }
+                                }
+                            } else {
+
+                                // jump to the next kernel slice as the current
+                                // image slice overlaps invalid image slices
+                                count += kDimXY * kDimXY;
+                            } // end if (k > 0) {} else {}
                         }
                     }
 
@@ -2178,7 +2013,7 @@ kernelLoop:
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
                 finalize();
 
                 return;
@@ -2188,12 +2023,11 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 
@@ -2269,13 +2103,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
@@ -2289,7 +2123,7 @@ kernelLoop:
             } catch (IOException error) {
                 displayError("Algorithm Morphology3D: Image(s) locked in Fill Objects");
                 setCompleted(false);
-                disposeProgressBar();
+
 
                 return;
             }
@@ -2301,7 +2135,6 @@ kernelLoop:
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
 
     }
@@ -2757,7 +2590,6 @@ kernelLoop:
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
             finalize();
 
             return;
@@ -2776,51 +2608,42 @@ kernelLoop:
         ModelImage distanceImage = null;
         AlgorithmWatershed ws = null;
 
+        int[] progressValues = getProgressValues();
+        setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 45));
+
         try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Particle analysis (PA) ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(0, runningInSeparateThread);
-            }
-
-            // add set minimum dist
             deleteObjects(min, max, true);
-            srcImage.exportData(0, volSize, imgBuffer);
-        } catch (NullPointerException npe) {
 
             if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
+                setCompleted(false);
+                finalize();
+
+                return;
             }
+
+            srcImage.exportData(0, volSize, imgBuffer);
         } catch (IOException error) {
             displayError("Algorithm Morphology3D.particleAnalysis: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
+        setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 45),
+                          generateProgressValue(progressValues[0], progressValues[1], 90));
+
         ultimateErode(true); // forms list of points (one point per object, hopefully)
 
-        try {
+        if (threadStopped) {
+            setCompleted(false);
+            finalize();
 
-            if (progressBar != null) {
-                progressBar.updateValue(25, runningInSeparateThread);
-            }
-
-            if (progressBar != null) {
-                progressBar.setMessage("PA - distance map ...");
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
+            return;
         }
+
+        // reset progress min & max
+        setProgressValues(progressValues);
 
         try {
             srcImage.exportData(0, volSize, imgBuffer);
@@ -2829,13 +2652,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology3D.particleAnalysis: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.particleAnalysis: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
@@ -2866,7 +2689,7 @@ kernelLoop:
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
@@ -2893,22 +2716,7 @@ kernelLoop:
             }
         }
 
-        try {
-
-            if (progressBar != null) {
-                progressBar.setMessage("Watershed stage ...");
-            }
-
-            if (progressBar != null) {
-                progressBar.updateValue(70, runningInSeparateThread);
-            }
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
-        }
+        fireProgressStateChanged("Watershed stage ...");
 
         destExtents[0] = xDim;
         destExtents[1] = yDim;
@@ -2959,24 +2767,26 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology3Db: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
+        linkProgressToAlgorithm(ws);
+        ws.setProgressValues(generateProgressValues(90, 95));
+
         ws.setSeedVector(seeds);
-        ws.setProgressBarVisible(false);
         ws.setEnergyImage(distanceImage);
         ws.run();
 
         if (!ws.isCompleted()) { // if the (sub) algo is cancelled, this is too
-            disposeProgressBar();
+
             setCompleted(false);
             finalize();
 
@@ -2984,7 +2794,6 @@ kernelLoop:
         }
 
         try {
-            progressBar.updateValue(90, runningInSeparateThread);
             wsImage.exportData(0, xDim * yDim * zDim, imgBuffer);
 
             // once the data from the watershed has been exported to imgBuffer, the
@@ -2997,35 +2806,25 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology3Dc: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
         }
 
-        try {
+        fireProgressStateChanged("Deleting objects ...");
+        setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 95),
+                          generateProgressValue(progressValues[0], progressValues[1], 100));
+        deleteObjects(min, max, false);
 
-            if (progressBar != null) {
-                progressBar.setMessage("Deleting objects ...");
-            }
+        if (threadStopped) {
+            setCompleted(false);
+            finalize();
 
-            if (progressBar != null) {
-                progressBar.updateValue(90, runningInSeparateThread);
-            }
-
-            deleteObjects(min, max, false);
-        } catch (NullPointerException npe) {
-
-            if (threadStopped) {
-                Preferences.debug("somehow you managed to cancel the algorithm and dispose the progressbar between checking for threadStopping and using it.",
-                                  Preferences.DEBUG_ALGORITHM);
-            }
+            return;
         }
+
+        setCompleted(true);
+
     }
 
     /**
@@ -3177,7 +2976,7 @@ kernelLoop:
         // if thread has already been stopped, dump out
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
 
             finalize();
 
@@ -3220,7 +3019,7 @@ kernelLoop:
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D.distanceMap: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
@@ -3255,12 +3054,23 @@ kernelLoop:
             }
         }
 
+        int[] progressValues = getProgressValues();
+
+        this.setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 30));
+
         distanceMap(true);
+
+        this.setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 30),
+                               generateProgressValue(progressValues[0], progressValues[1], 95));
+
         identifyObjects(true); // results are in destImage
+
+        // reset the min/max progress values to original state...no longer calling functions
+        setProgressValues(progressValues);
 
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
@@ -3273,10 +3083,13 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
+
+        fireProgressStateChanged(95, null, "Eroding ...");
+
 
         // We have choosen to find ult. points on a slice by slice basis
         for (z = 0; (z < zDim) && !threadStopped; z++) {
@@ -3332,7 +3145,7 @@ kernelLoop:
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
 
                 finalize();
 
@@ -3410,9 +3223,11 @@ kernelLoop:
             }
         }
 
+        fireProgressStateChanged(98);
+
         if (threadStopped) {
             setCompleted(false);
-            disposeProgressBar();
+
             finalize();
 
             return;
@@ -3480,10 +3295,10 @@ kernelLoop:
 
                             if (Math.sqrt(((erodeObjsOrdered[i].x - erodeObjsOrdered[j].x) *
                                                (erodeObjsOrdered[i].x - erodeObjsOrdered[j].x)) +
-                                              ((erodeObjsOrdered[i].y - erodeObjsOrdered[j].y) *
-                                                   (erodeObjsOrdered[i].y - erodeObjsOrdered[j].y)) +
-                                              ((erodeObjsOrdered[i].z - erodeObjsOrdered[j].z) *
-                                                   (erodeObjsOrdered[i].z - erodeObjsOrdered[j].z))) < pixDist) {
+                                          ((erodeObjsOrdered[i].y - erodeObjsOrdered[j].y) *
+                                               (erodeObjsOrdered[i].y - erodeObjsOrdered[j].y)) +
+                                          ((erodeObjsOrdered[i].z - erodeObjsOrdered[j].z) *
+                                               (erodeObjsOrdered[i].z - erodeObjsOrdered[j].z))) < pixDist) {
 
                                 imgBuffer[(int) ((erodeObjsOrdered[j].z * sliceSize) + (erodeObjsOrdered[j].y * xDim) +
                                                  erodeObjsOrdered[j].x)] = 0;
@@ -3515,10 +3330,13 @@ kernelLoop:
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Morphology3D: Out of memory");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
+
+        fireProgressStateChanged(100);
+
 
         if (returnFlag == true) {
             return;
@@ -3528,7 +3346,7 @@ kernelLoop:
 
             if (threadStopped) {
                 setCompleted(false);
-                disposeProgressBar();
+
 
                 finalize();
 
@@ -3539,12 +3357,11 @@ kernelLoop:
         } catch (IOException error) {
             displayError("Algorithm Morphology3D: Image(s) locked");
             setCompleted(false);
-            disposeProgressBar();
+
 
             return;
         }
 
-        disposeProgressBar();
         setCompleted(true);
     }
 

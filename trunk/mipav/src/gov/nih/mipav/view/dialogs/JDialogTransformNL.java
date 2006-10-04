@@ -3,6 +3,8 @@ package gov.nih.mipav.view.dialogs;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.registration.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,7 +24,7 @@ import javax.swing.event.*;
  * interpolation method. Creates new volume.
  */
 
-public class JDialogTransformNL extends JDialogBase implements AlgorithmInterface, ScriptableInterface, ChangeListener {
+public class JDialogTransformNL extends JDialogScriptableBase implements AlgorithmInterface, ChangeListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -71,9 +73,6 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
     private int fmodel;
 
     /** DOCUMENT ME! */
-    private Font font12, font12B;
-
-    /** DOCUMENT ME! */
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
@@ -89,9 +88,6 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
     private RandomAccessFile raFile;
 
     /** DOCUMENT ME! */
-    private ModelImage resampleImage;
-
-    /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
@@ -104,7 +100,7 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
     private int targetXDim, targetYDim, targetZDim;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
+    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -121,27 +117,9 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
      */
     public JDialogTransformNL(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
-        font12 = MipavUtil.font12;
-        font12B = MipavUtil.font12B;
         image = im;
-        resampleImage = im;
-        UI = image.getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  _UI  The user interface, needed to create the image frame.
-     * @param  im   Source image.
-     */
-    public JDialogTransformNL(ViewUserInterface _UI, ModelImage im) {
-        super();
-        UI = _UI;
-        image = im;
-        resampleImage = im;
-        parentFrame = image.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -177,8 +155,6 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        int i, j;
-        ViewJFrameImage imageFrame = null;
 
         if (algorithm instanceof AlgorithmRegNonlinear) {
             resultImage = algoTrans.getTransformedImage();
@@ -188,7 +164,7 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -205,7 +181,9 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
         // Update frames
         image.notifyImageDisplayListeners(null, true);
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         if (algoTrans != null) {
             algoTrans.disposeLocal();
@@ -213,16 +191,6 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
         }
 
         dispose();
-    }
-
-    /**
-     * When the user clicks the mouse out of a text field, resets the neccessary variables.
-     *
-     * @param  event  event that triggers this function
-     */
-    public void focusLost(FocusEvent event) {
-        // Object      source = event.getSource();
-
     }
 
     /**
@@ -325,45 +293,6 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                UI.getScriptDialog().append("TransformNL " + UI.getScriptDialog().getVar(image.getImageName()) + " ");
-                UI.getScriptDialog().putVar(resultImage.getImageName());
-                UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + " " + targetXDim +
-                                            " " + targetYDim + " " + targetZDim + " " + resultResolutions[0] + " " +
-                                            resultResolutions[1] + " " + resultResolutions[2] + " " + targetUnits[0] +
-                                            " " + targetUnits[1] + " " + targetUnits[2] + " " + fmodel + " " + coords +
-                                            " " + coeffp + " ");
-
-                for (int i = 0; i < coords; i++) {
-
-                    for (int j = 0; j < coeffp; j++) {
-                        UI.getScriptDialog().append(es[i][j] + " ");
-                    }
-                }
-
-                UI.getScriptDialog().append(interp + " " + doClip + " " + transformVOI + "\n");
-            }
-        }
-    }
-
-    /**
      * Method to handle item events.
      *
      * @param  event  event that cause the method to fire
@@ -391,7 +320,7 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
     public String parametersFileMenu() {
         String fileName, directory;
         JFileChooser chooser;
-        ViewUserInterface UI = image.getUserInterface();
+        ViewUserInterface UI = ViewUserInterface.getReference();
         fileName = null;
 
         // bring up file dialog
@@ -434,14 +363,13 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
      */
     public void readTransformParameters(String fileName) {
         int i, j;
-        ViewUserInterface UI = image.getUserInterface();
 
         if (fileName == null) {
             MipavUtil.displayError("filename = null");
         }
 
         try {
-            File file = new File(UI.getDefaultDirectory() + fileName);
+            File file = new File(userInterface.getDefaultDirectory() + fileName);
             raFile = new RandomAccessFile(file, "r");
             targetXDim = getInt(endianess);
             targetYDim = getInt(endianess);
@@ -478,79 +406,6 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
         } catch (IOException error) {
             MipavUtil.displayError("Parameters read error");
         }
-    }
-
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        image = im;
-        resampleImage = im;
-        UI = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        try {
-            setTargetXDim(parser.getNextInteger());
-            setTargetYDim(parser.getNextInteger());
-            setTargetZDim(parser.getNextInteger());
-
-            float[] resultResolutions = new float[3];
-            resultResolutions[0] = parser.getNextFloat();
-            resultResolutions[1] = parser.getNextFloat();
-            resultResolutions[2] = parser.getNextFloat();
-            setResultResolutions(resultResolutions);
-
-            int[] targetUnits = new int[3];
-            targetUnits[0] = parser.getNextInteger();
-            targetUnits[1] = parser.getNextInteger();
-            targetUnits[2] = parser.getNextInteger();
-            setTargetUnits(targetUnits);
-            setFmodel(parser.getNextInteger());
-
-            int coords = parser.getNextInteger();
-            int coeffp = parser.getNextInteger();
-            double[][] es = new double[coords][coeffp];
-
-            for (int i = 0; i < coords; i++) {
-
-                for (int j = 0; j < coeffp; j++) {
-                    es[i][j] = parser.getNextDouble();
-                }
-            }
-
-            setEs(es);
-            setInterp(parser.getNextInteger());
-            setClipFlag(parser.getNextBoolean());
-            setVOIFlag(parser.getNextBoolean());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-        parser.putVariable(destImageKey, getResultImage().getImageName());
     }
 
     /**
@@ -653,6 +508,99 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
     }
 
     /**
+     * Calls the algorithm with the set variables.
+     */
+    protected void callAlgorithm() {
+
+        algoTrans = new AlgorithmRegNonlinear(image, targetXDim, targetYDim, targetZDim, resultResolutions, targetUnits,
+                                              fmodel, es, interp, doClip, transformVOI);
+
+        // This is very important. Adding this object as a listener allows
+        // the algorithm to notify this object when it has completed of failed.
+        // See algorithm performed event. This is made possible by implementing
+        algoTrans.addListener(this);
+
+        createProgressBar(image.getImageName(), algoTrans);
+
+        // Start the thread as a low priority because we wish to still have
+        // user interface work fast
+
+        if (isRunInSeparateThread()) {
+
+            if (algoTrans.startMethod(Thread.MIN_PRIORITY) == false) {
+                MipavUtil.displayError("A thread is already running on this object");
+            }
+        } else {
+
+            if (!userInterface.isAppFrameVisible()) {
+                algoTrans.setProgressBarVisible(false);
+            }
+
+            algoTrans.run();
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        int[] outputDim = scriptParameters.getParams().getList("output_dim").getAsIntArray();
+        targetXDim = outputDim[0];
+        targetYDim = outputDim[1];
+        targetZDim = outputDim[2];
+
+        resultResolutions = scriptParameters.getParams().getList("output_res").getAsFloatArray();
+        targetUnits = scriptParameters.getParams().getList("output_units").getAsIntArray();
+
+        fmodel = scriptParameters.getParams().getInt("nonlinear_model");
+        coords = scriptParameters.getParams().getInt("coords");
+
+        es = new double[fmodel][coords];
+
+        for (int i = 0; i < coords; i++) {
+            es[i] = scriptParameters.getParams().getList("transform_parameters_" + i).getAsDoubleArray();
+        }
+
+        interp = scriptParameters.getParams().getInt("interpolation_type");
+        doClip = scriptParameters.getParams().getBoolean("do_clip_output");
+        transformVOI = scriptParameters.getParams().getBoolean("do_transform_VOIs");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("output_dim",
+                                                                       new int[] { targetXDim, targetYDim, targetZDim }));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("output_res", resultResolutions));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("output_units", targetUnits));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("nonlinear_model", fmodel));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("coords", coords));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("interpolation_type", interp));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_clip_output", doClip));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_transform_VOIs", transformVOI));
+
+
+        for (int i = 0; i < coords; i++) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("transform_parameters_" + i, es[i]));
+        }
+    }
+
+    /**
      * Builds the OptionPanel.
      *
      * @return  DOCUMENT ME!
@@ -703,7 +651,7 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(2, 0, 2, 0);
 
         gbc.gridx = 0;
@@ -716,7 +664,7 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
         optionPanel.add(comboBoxInterp, gbc);
         gbc.gridx = 0;
         gbc.gridy = 1;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.weightx = 1;
         optionPanel.add(clipCheckbox, gbc);
         gbc.gridy = 3;
@@ -757,35 +705,6 @@ public class JDialogTransformNL extends JDialogBase implements AlgorithmInterfac
         parametersPanel.add(filePanel);
 
         return parametersPanel;
-    }
-
-    /**
-     * Calls the algorithm with the set variables.
-     */
-    private void callAlgorithm() {
-
-        algoTrans = new AlgorithmRegNonlinear(image, targetXDim, targetYDim, targetZDim, resultResolutions, targetUnits,
-                                              fmodel, es, interp, doClip, transformVOI);
-
-        // This is very important. Adding this object as a listener allows
-        // the algorithm to notify this object when it has completed of failed.
-        // See algorithm performed event. This is made possible by implementing
-        algoTrans.addListener(this);
-        // Start the thread as a low priority because we wish to still have
-        // user interface work fast
-
-        if (isRunInSeparateThread()) {
-
-            if (algoTrans.startMethod(Thread.MIN_PRIORITY) == false) {
-                MipavUtil.displayError("A thread is already running on this object");
-            }
-        } else {
-            if (!UI.isAppFrameVisible()) {
-                algoTrans.setProgressBarVisible(false);
-            }
-
-            algoTrans.run();
-        }
     }
 
     /**

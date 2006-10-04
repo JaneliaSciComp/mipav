@@ -260,12 +260,12 @@ public class AlgorithmFFT extends AlgorithmBase {
      * @param  unequalDim     if true allow unequal FFT dimensions
      * @param  freqU          Frequency along U axis before rotation by theta range -1 to 1
      * @param  freqV          Frequency along V axis before rotation by theta range -1 to 1
-     * @param  simgaU         Destination image model
+     * @param  sigmaU         Destination image model
      * @param  sigmaV         Standard deviation along prerotated V axis
      * @param  theta          Rotation in radians
      */
     public AlgorithmFFT(ModelImage srcImg, int transformDir, boolean logMagDisplay, boolean unequalDim, float freqU,
-                        float freqV, float simgaU, float sigmaV, float theta) {
+                        float freqV, float sigmaU, float sigmaV, float theta) {
 
         super(null, srcImg);
 
@@ -338,6 +338,7 @@ public class AlgorithmFFT extends AlgorithmBase {
      */
     public AlgorithmFFT(ModelImage destImg, ModelImage srcImg, int transformDir, boolean logMagDisplay,
                         boolean unequalDim, float freqU, float freqV, float sigmaU, float sigmaV, float theta) {
+
         super(destImg, srcImg);
 
         this.transformDir = transformDir;
@@ -513,7 +514,8 @@ public class AlgorithmFFT extends AlgorithmBase {
      */
     public AlgorithmFFT(ModelImage destImg, ModelImage srcImg, int transformDir, boolean logMagDisplay,
                         boolean unequalDim, boolean image25D, boolean imageCrop, int kernelDiameter, int filterType,
-                        float freq1, float freq2, int constructionMethod, int butterworthOrder) {
+                        float freq1, float freq2, int constructionMethod, int butterworthOrder ) {
+
         super(destImg, srcImg);
 
         this.transformDir = transformDir;
@@ -648,10 +650,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             return;
         }
 
-        buildProgressBar(srcImage.getImageName(), "Importing source image...", 0, 100);
-
-        initProgressBar();
-
         constructLog();
 
         if (destImage != null) {
@@ -739,10 +737,10 @@ public class AlgorithmFFT extends AlgorithmBase {
                 realSubsetData = new float[newSliceSize];
                 imagSubsetData = new float[newSliceSize];
 
-                if ((transformDir == FORWARD) && isProgressBarVisible()) {
-                    progressBar.setMessage("Running forward FFTs");
-                } else if (isProgressBarVisible()) {
-                    progressBar.setMessage("Running inverse FFTs");
+                if (transformDir == FORWARD) {
+                    fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
+                } else {
+                    fireProgressStateChanged(0, srcImage.getImageName(), "Running inverse FFTs ...");
                 }
 
                 for (z = 0; z < newDimLengths[2]; z++) {
@@ -754,10 +752,8 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                     exec(realSubsetData, imagSubsetData, z);
 
-                    if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80)),
-                                                runningInSeparateThread);
-                    }
+                    fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80))), null, null);
+                   
 
                     if (transformDir == FORWARD) {
 
@@ -820,8 +816,8 @@ public class AlgorithmFFT extends AlgorithmBase {
             } // else not image25D
         } // end of if ((transformDir == FILTER) && (constructionMethod == WINDOW))
 
-        if ((transformDir == FILTER) && isProgressBarVisible()) {
-            progressBar.setMessage("Storing filtered FFT in source image...");
+        if ((transformDir == FILTER)) {
+            fireProgressStateChanged(-1, null, "Storing filtered FFT in source image ...");
         }
 
         if (transformDir == FORWARD) {
@@ -837,9 +833,8 @@ public class AlgorithmFFT extends AlgorithmBase {
 
             srcImage.setHaveWindowed(false);
 
-            if (isProgressBarVisible()) {
-                progressBar.setMessage("Storing FFT in source image...");
-            }
+            fireProgressStateChanged(-1, null, "Storing FFT in source image ...");
+            
         } // end of if (transformDir == FORWARD)
 
         if (transformDir == FILTER) {
@@ -859,20 +854,12 @@ public class AlgorithmFFT extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("AlgorithmFFT: IOException on srcImage.reallocate");
 
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
             } catch (OutOfMemoryError e) {
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory on srcImage.reallocate");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -888,10 +875,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("AlgorithmFFT: IOException on source image import complex data");
 
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
@@ -899,28 +882,19 @@ public class AlgorithmFFT extends AlgorithmBase {
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory on source image import complex data");
 
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
             }
         } // end of if ((transformDir == FORWARD)|| (transformDir == FILTER))
         else if (transformDir == INVERSE) {
-            if (isProgressBarVisible()) {
-                progressBar.setMessage("Storing inverse FFT in source image...");
-            }
+            fireProgressStateChanged(-1, null, "Storing inverse FFT in source image ...");
+            
             // back in the spatial domain so only realData is now present
             try {
                 srcImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
             } catch (IOException error) {
                 displayError("AlgorithmFFT: IOException on srcImage.reallocate");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -928,10 +902,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory on srcImage.reallocate");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -943,10 +913,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("AlgorithmFFT: IOException on source image import data");
 
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
@@ -954,19 +920,12 @@ public class AlgorithmFFT extends AlgorithmBase {
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory on source image import data");
 
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
             }
         } // end of else if (transformDir == INVERSE)
 
-        if (isProgressBarVisible()) {
-            progressBar.dispose();
-        }
 
         setCompleted(true);
     }
@@ -1006,10 +965,10 @@ public class AlgorithmFFT extends AlgorithmBase {
                 realSubsetData = new float[newSliceSize];
                 imagSubsetData = new float[newSliceSize];
 
-                if ((transformDir == FORWARD) && isProgressBarVisible()) {
-                    progressBar.setMessage("Running forward FFTs");
+                if (transformDir == FORWARD) {
+                    fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
                 } else if (isProgressBarVisible()) {
-                    progressBar.setMessage("Running inverse FFTs");
+                    fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
                 }
 
                 for (z = 0; z < newDimLengths[2]; z++) {
@@ -1021,11 +980,8 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                     exec(realSubsetData, imagSubsetData, z);
 
-                    if (isProgressBarVisible()) {
-                        progressBar.updateValue(Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80)),
-                                                runningInSeparateThread);
-                    }
-
+                    fireProgressStateChanged((Math.round(10 + ((float) (z + 1) / newDimLengths[2] * 80))), srcImage.getImageName(), "Running forward FFTs ...");
+                 
                     if (transformDir == FORWARD) {
 
                         for (i = 0; i < newSliceSize; i++) {
@@ -1087,12 +1043,12 @@ public class AlgorithmFFT extends AlgorithmBase {
             } // else not image25D
         } // end of if ((transformDir == FILTER) && (constructionMethod == WINDOW))
 
-        if ((transformDir == FILTER) && isProgressBarVisible()) {
-            progressBar.setMessage("Storing filtered FFT in destination image...");
+        if (transformDir == FILTER) {
+            fireProgressStateChanged(-1, null, "Storing filtered FFT in destination image ...");
         }
 
-        if ((transformDir == FORWARD) && isProgressBarVisible()) {
-            progressBar.setMessage("Storing FFT in destination image...");
+        if (transformDir == FORWARD) {
+            fireProgressStateChanged(-1, null, "Storing FFT in destination image ...");
         }
 
         if ((transformDir == FORWARD) || (transformDir == FILTER)) {
@@ -1102,21 +1058,12 @@ public class AlgorithmFFT extends AlgorithmBase {
                 destImage.reallocate(ModelStorageBase.COMPLEX, newDimLengths);
             } catch (IOException error) {
                 displayError("AlgorithmFFT: IOException on destImage.reallocate");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
             } catch (OutOfMemoryError e) {
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory on destImage.reallocate");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1132,9 +1079,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("AlgorithmFFT: IOException on destination image import complex data");
 
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1142,10 +1086,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory on destination image import complex data");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1185,18 +1125,13 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         } // end of if ((transformDir == FORWARD) || (transformDir == FILTER))
         else if (transformDir == INVERSE) {
-            if (isProgressBarVisible()) {
-                progressBar.setMessage("Storing inverse FFT in destination image...");
-            }
+            fireProgressStateChanged(-1, null, "Storing inverse FFT in destination image ...");
+          
             // back in the spatial domain so only realData is now present
             try {
                 destImage.reallocate(ModelStorageBase.FLOAT, originalDimLengths);
             } catch (IOException error) {
                 displayError("AlgorithmFFT: IOException on destImage.reallocate");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1204,10 +1139,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             } catch (OutOfMemoryError e) {
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory on destImage.reallocate");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1219,20 +1150,12 @@ public class AlgorithmFFT extends AlgorithmBase {
             } catch (IOException error) {
                 displayError("AlgorithmFFT: IOException on destination image import data");
 
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
-
                 setCompleted(false);
 
                 return;
             } catch (OutOfMemoryError e) {
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory on destination image import data");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1241,10 +1164,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         } // end of else if (transformDir == INVERSE)
 
-        if (isProgressBarVisible()) {
-            progressBar.dispose();
-        }
-
+        fireProgressStateChanged(100, null, null);
         setCompleted(true);
     }
 
@@ -1282,10 +1202,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1337,10 +1253,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1452,10 +1364,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 centerData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating centerData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -1861,10 +1769,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmFFT: Out of memory creating tempData in edgeStrip routine");
 
-            if (isProgressBarVisible()) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -1964,10 +1868,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmFFT: Out of memory creating realData in edgeStrip routine");
 
-            if (isProgressBarVisible()) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -2017,15 +1917,15 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         if (transformDir == INVERSE) {
 
-            if (!image25D && isProgressBarVisible()) {
-                progressBar.setMessage("Centering data before inverse FFT...");
+            if (!image25D) {
+                fireProgressStateChanged(-1, null, "Centering data before inverse FFT ...");
             }
 
             center(rData, iData);
         }
 
-        if (!image25D && isProgressBarVisible()) {
-            progressBar.setMessage("Running FFT algorithm...");
+        if (!image25D) {
+            fireProgressStateChanged(-1, null, "Running FFT algorithm ...");
         }
 
         j1 = 1;
@@ -2094,8 +1994,8 @@ public class AlgorithmFFT extends AlgorithmBase {
                 return;
             }
 
-            if (!image25D && isProgressBarVisible()) {
-                progressBar.updateValue(Math.round(10 + ((float) (i + 1) / ndim * 80)), runningInSeparateThread);
+            if (!image25D) {
+                fireProgressStateChanged((Math.round(10 + ((float) (i + 1) / ndim * 80))), null, null);
             }
         }
 
@@ -2105,8 +2005,8 @@ public class AlgorithmFFT extends AlgorithmBase {
 
         if ((transformDir == FORWARD) || (transformDir == FILTER)) {
 
-            if (!image25D && isProgressBarVisible()) {
-                progressBar.setMessage("Centering data after FFT algorithm...");
+            if (!image25D) {
+                fireProgressStateChanged(-1, null, "Centering data after FFT algorithm ...");
             }
 
             center(rData, iData);
@@ -2136,8 +2036,8 @@ public class AlgorithmFFT extends AlgorithmBase {
 
             // Do edge stripping to restore the original dimensions the source image had
             // before the forward FFT
-            if (!image25D && isProgressBarVisible()) {
-                progressBar.setMessage("Zero stripping data after inverse FFT...");
+            if (!image25D) {
+                fireProgressStateChanged(-1, null, "Zero stripping data after inverse FFT ...");
             }
 
             edgeStrip(rData, z);
@@ -2993,10 +2893,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmFFT: Out of memory creating realData");
 
-            if (isProgressBarVisible()) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -3008,10 +2904,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             imagData = null;
             System.gc();
             displayError("AlgorithmFFT: Out of memory creating imagData");
-
-            if (isProgressBarVisible()) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 
@@ -3032,10 +2924,6 @@ public class AlgorithmFFT extends AlgorithmBase {
         } catch (IOException error) {
             displayError("AlgorithmFFT: Source image is locked");
 
-            if (isProgressBarVisible()) {
-                progressBar.dispose();
-            }
-
             setCompleted(false);
 
             return;
@@ -3044,10 +2932,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             imagData = null;
             System.gc();
             displayError("AlgorithmFFT: Out of memory");
-
-            if (isProgressBarVisible()) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 
@@ -3078,10 +2962,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 tempData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating tempData for cropping");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -3269,19 +3149,14 @@ public class AlgorithmFFT extends AlgorithmBase {
         if (zeroPad) {
 
             // zero pad the data so that all dimensions are powers of 2
-            if (isProgressBarVisible()) {
-                progressBar.setMessage("Zero padding source data...");
-            }
+            fireProgressStateChanged(-1, null, "Zero padding source data ...");
+         
             try {
                 tempData = new float[newArrayLength];
             } catch (OutOfMemoryError e) {
                 tempData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating tempData for zero padding");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -3377,10 +3252,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 realData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating realData in zero padding routine");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -3481,10 +3352,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 imagData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating imagData in zero padding routine");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -3681,10 +3548,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                 default:
                     displayError("makeKernelData: no such filter type");
-                    if (isProgressBarVisible()) {
-                        progressBar.dispose();
-                    }
-
+                 
                     setCompleted(false);
 
                     return;
@@ -3701,10 +3565,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 realKernelData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating realKernelData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -3726,9 +3586,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating imagKernelData");
 
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -3758,10 +3615,7 @@ public class AlgorithmFFT extends AlgorithmBase {
 
                 default:
                     displayError("makeKernelData: no such filter type");
-                    if (isProgressBarVisible()) {
-                        progressBar.dispose();
-                    }
-
+                 
                     setCompleted(false);
 
                     return;
@@ -3775,10 +3629,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 realKernelData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating realKernelData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -3803,10 +3653,6 @@ public class AlgorithmFFT extends AlgorithmBase {
                 imagKernelData = null;
                 System.gc();
                 displayError("AlgorithmFFT: Out of memory creating imagKernelData");
-
-                if (isProgressBarVisible()) {
-                    progressBar.dispose();
-                }
 
                 setCompleted(false);
 
@@ -3866,10 +3712,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             tempData = null;
             System.gc();
             displayError("AlgorithmFFT: Out of memory creating tempData in shiftBack routine");
-
-            if (isProgressBarVisible()) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 
@@ -4037,10 +3879,6 @@ public class AlgorithmFFT extends AlgorithmBase {
             tempData = null;
             System.gc();
             displayError("AlgorithmFFT: Out of memory creating tempData in zeroAround routine");
-
-            if (isProgressBarVisible()) {
-                progressBar.dispose();
-            }
 
             setCompleted(false);
 

@@ -1236,7 +1236,7 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
      * @param  loadInto  whether this image is an imageA or an imageB
      */
     protected synchronized void loadImageFromFile(String type, String file, int loadInto) {
-        ViewOpenFileUI openFile = new ViewOpenFileUI(userInterface, false);
+        ViewOpenFileUI openFile = new ViewOpenFileUI(false);
 
         openFile.setPutInFrame(false);
 

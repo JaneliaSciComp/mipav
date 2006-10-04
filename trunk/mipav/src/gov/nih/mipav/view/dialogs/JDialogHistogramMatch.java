@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -18,7 +19,7 @@ import javax.swing.*;
  * Dialog to get user input Selected image is match image, the image that gets transformed until it is histogram matched
  * to the base image. Algorithms are executed in their own thread.
  */
-public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInterface, ScriptableInterface {
+public class JDialogHistogramMatch extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -55,7 +56,7 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
+    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -73,21 +74,8 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
     public JDialogHistogramMatch(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, true);
         matchImage = im;
+        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogHistogramMatch(ViewUserInterface UI, ModelImage im) {
-        super();
-        this.UI = UI;
-        matchImage = im;
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -121,9 +109,6 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-
-        ViewJFrameImage imageFrame = null;
-
         if (algorithm instanceof AlgorithmHistogramMatch) {
             matchImage.clearMask();
 
@@ -134,7 +119,7 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
                 resultImage.clearMask();
 
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
                     MipavUtil.displayError("Out of memory: unable to open new frame");
@@ -151,13 +136,13 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        UI.registerFrame((Frame) (imageFrames.elementAt(i)));
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
 
                     }
                 }
 
                 if (parentFrame != null) {
-                    UI.registerFrame(parentFrame);
+                    userInterface.registerFrame(parentFrame);
                 }
 
                 matchImage.notifyImageDisplayListeners(null, true);
@@ -171,7 +156,9 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
             }
         }
 
-        insertScriptLine(algorithm);
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
+        }
 
         matchHistogramAlgo.finalize();
         matchHistogramAlgo = null;
@@ -186,91 +173,37 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
     public ModelImage getResultImage() {
         return resultImage;
     }
-
+    
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
+     * {@inheritDoc}
      */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (UI.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(matchImage.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(matchImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(matchImage.getImageName());
-                    }
-                }
-
-                // check to see if the base image is already in the ImgTable
-                if (UI.getScriptDialog().getImgTableVar(baseImage.getImageName()) == null) {
-
-                    if (UI.getScriptDialog().getActiveImgTableVar(baseImage.getImageName()) == null) {
-                        UI.getScriptDialog().putActiveVar(baseImage.getImageName());
-                    }
-                }
-
-                UI.getScriptDialog().append("HistogramMatch " + UI.getScriptDialog().getVar(matchImage.getImageName()) +
-                                            " " + UI.getScriptDialog().getVar(baseImage.getImageName()) + " ");
-
-                if (displayLoc == NEW) {
-                    UI.getScriptDialog().putVar(resultImage.getImageName());
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(resultImage.getImageName()) + "\n");
-                } else {
-                    UI.getScriptDialog().append(UI.getScriptDialog().getVar(matchImage.getImageName()) + "\n");
-                }
-            }
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeImage(matchImage, "match_image");
+        scriptParameters.storeImage(baseImage, "base_image");
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+    }
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        matchImage = scriptParameters.retrieveImage("match_image");
+        baseImage = scriptParameters.retrieveImage("base_image");
+        userInterface = matchImage.getUserInterface();
+        parentFrame = matchImage.getParentFrame();
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
         }
     }
-
+    
     /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
+     * Store the result image in the script runner's image table now that the action execution is finished.
      */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        String image1Key = null;
-        String image2Key = null;
-        String destImageKey = null;
-
-        try {
-            image1Key = parser.getNextString();
-            image2Key = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im1 = parser.getImage(image1Key);
-        setBaseImage(parser.getImage(image2Key));
-
-        matchImage = im1;
-        UI = matchImage.getUserInterface();
-        parentFrame = matchImage.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (image1Key.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!image1Key.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
+    protected void doPostAlgorithmActions() {
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
         }
     }
 
@@ -313,7 +246,7 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
         comboBox.setFont(serif12);
         comboBox.setBackground(Color.white);
 
-        UI = image.getUserInterface();
+        UI = ViewUserInterface.getReference();
 
         Enumeration names = UI.getRegisteredImageNames();
 
@@ -338,7 +271,7 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
     /**
      * DOCUMENT ME!
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
         String name = makeImageName(matchImage.getImageName(), "_histMatch");
 
         if (displayLoc == NEW) {
@@ -355,6 +288,8 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
                 // This is made possible by implementing AlgorithmedPerformed interface
                 matchHistogramAlgo.addListener(this);
 
+                createProgressBar(matchImage.getImageName(), matchHistogramAlgo);
+                
                 // Hide dialog
                 setVisible(false);
 
@@ -365,10 +300,6 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!UI.isAppFrameVisible()) {
-                        matchHistogramAlgo.setProgressBarVisible(false);
-                    }
-
                     matchHistogramAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -396,6 +327,8 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
                 // This is made possible by implementing AlgorithmedPerformed interface
                 matchHistogramAlgo.addListener(this);
 
+                createProgressBar(matchImage.getImageName(), matchHistogramAlgo);
+                
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -405,13 +338,13 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
                 // algorithm has completed.
                 Vector imageFrames = matchImage.getImageFrameVector();
                 titles = new String[imageFrames.size()];
-                UI = matchImage.getUserInterface();
+                userInterface = matchImage.getUserInterface();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
                     titles[i] = ((ViewJFrameBase) (imageFrames.elementAt(i))).getTitle();
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(false);
-                    UI.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
                 }
 
                 if (isRunInSeparateThread()) {
@@ -421,10 +354,6 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!UI.isAppFrameVisible()) {
-                        matchHistogramAlgo.setProgressBarVisible(false);
-                    }
-
                     matchHistogramAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -501,10 +430,10 @@ public class JDialogHistogramMatch extends JDialogBase implements AlgorithmInter
             displayLoc = NEW;
         }
 
-        UI = matchImage.getUserInterface();
+        userInterface = matchImage.getUserInterface();
 
         String selectedName = (String) comboBoxImage.getSelectedItem();
-        baseImage = UI.getRegisteredImageByName(selectedName);
+        baseImage = userInterface.getRegisteredImageByName(selectedName);
 
         if (baseImage != null) {
             return true;

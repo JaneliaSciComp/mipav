@@ -783,7 +783,7 @@ public class JDialogFileInfoDICOM extends JDialogBase implements ActionListener 
             tagsModel.addColumn(columnNames[i]);
         }
 
-        tagsTable.setAutoResizeMode(tagsTable.AUTO_RESIZE_ALL_COLUMNS);
+        tagsTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         tagsTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         tagsTable.getColumn("Tag").setMinWidth(90);
         tagsTable.getColumn("Tag").setMaxWidth(90);

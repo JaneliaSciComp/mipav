@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -22,8 +24,8 @@ import javax.swing.*;
  * @version  1.0 Jan 25, 1999
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class JDialogConvertType extends JDialogBase
-        implements AlgorithmInterface, ScriptableInterface, ItemListener, DialogDefaultsInterface {
+public class JDialogConvertType extends JDialogScriptableBase
+        implements AlgorithmInterface, ItemListener, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -69,9 +71,6 @@ public class JDialogConvertType extends JDialogBase
     private double inTempMin, inTempMax;
 
     /** DOCUMENT ME! */
-    private double inTempMinDefault, inTempMaxDefault;
-
-    /** DOCUMENT ME! */
     private JRadioButton littleEnd;
 
     /** DOCUMENT ME! */
@@ -88,9 +87,6 @@ public class JDialogConvertType extends JDialogBase
 
     /** DOCUMENT ME! */
     private double outTempMin, outTempMax;
-
-    /** DOCUMENT ME! */
-    private double outTempMinDefault, outTempMaxDefault;
 
     /** DOCUMENT ME! */
     private boolean processIndep = false; // for 2.5D processing each slice independently
@@ -185,24 +181,10 @@ public class JDialogConvertType extends JDialogBase
     public JDialogConvertType(Frame theParentFrame, ModelImage _image) {
         super(theParentFrame, false);
         image = _image;
-        userInterface = ((ViewJFrameBase) (parentFrame)).getUserInterface();
+        userInterface = ViewUserInterface.getReference();
         init();
         loadDefaults();
         setVisible(true);
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public JDialogConvertType(ViewUserInterface UI, ModelImage im) {
-        super(false);
-        userInterface = UI;
-        image = im;
-        parentFrame = im.getParentFrame();
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -282,8 +264,6 @@ public class JDialogConvertType extends JDialogBase
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
 
-        ViewJFrameImage imageFrame = null;
-
         if (Preferences.is(Preferences.PREF_SAVE_DEFAULTS) && (this.getOwner() != null) && !isScriptRunning()) {
             saveDefaults();
         }
@@ -295,7 +275,7 @@ public class JDialogConvertType extends JDialogBase
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
-                    imageFrame = new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+                    new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
@@ -328,7 +308,7 @@ public class JDialogConvertType extends JDialogBase
             }
         }
 
-        insertScriptLine(algorithm);
+        insertScriptLine();
 
         // Update frame
         // ((ViewJFrameBase)parentFrame).updateImages(true);
@@ -386,56 +366,6 @@ public class JDialogConvertType extends JDialogBase
     }
 
     /**
-     * If a script is being recorded and the algorithm is done, add an entry for this algorithm.
-     *
-     * @param  algo  the algorithm to make an entry for
-     */
-    public void insertScriptLine(AlgorithmBase algo) {
-
-        if (algo.isCompleted()) {
-
-            if (userInterface.isScriptRecording()) {
-
-                // check to see if the match image is already in the ImgTable
-                if (userInterface.getScriptDialog().getImgTableVar(image.getImageName()) == null) {
-
-                    if (userInterface.getScriptDialog().getActiveImgTableVar(image.getImageName()) == null) {
-                        userInterface.getScriptDialog().putActiveVar(image.getImageName());
-                    }
-                }
-
-                if (useDefaultRanges == true) {
-                    userInterface.getScriptDialog().append("ConvertType " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-
-                    if (displayLoc == NEW) {
-                        userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                               " " + getParameterString(" ") + "\n");
-                    } else {
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                               " " + getParameterString(" ") + "\n");
-                    }
-                } else { // not using default ranges
-                    userInterface.getScriptDialog().append("ConvertType " +
-                                                           userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                           " ");
-
-                    if (displayLoc == NEW) {
-                        userInterface.getScriptDialog().putVar(resultImage.getImageName());
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(resultImage.getImageName()) +
-                                                               " " + getParameterString(" ") + "\n");
-                    } else {
-                        userInterface.getScriptDialog().append(userInterface.getScriptDialog().getVar(image.getImageName()) +
-                                                               " " + getParameterString(" ") + "\n");
-                    }
-                } // end if useDefaultRanges
-            }
-        }
-    }
-
-    /**
      * Sets the flags for the checkboxes and resets labels.
      *
      * @param  event  Event that triggered this function.
@@ -454,8 +384,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (0 to 255).");
                 textOutStart.setText("0");
                 textOutEnd.setText("255");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 255;
                 inMin = 0;
                 inMax = 255;
                 outMin = 0;
@@ -465,8 +393,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (0 to 65535).");
                 textOutStart.setText("0");
                 textOutEnd.setText("4095");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 4095;
                 inMin = 0;
                 inMax = 65535;
                 outMin = 0;
@@ -476,8 +402,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (-3.40 E+38 to 3.40 E+38).");
                 textOutStart.setText("0");
                 textOutEnd.setText("1023");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 1023;
                 inMin = -Float.MAX_VALUE;
                 inMax = Float.MAX_VALUE;
                 outMin = -Float.MAX_VALUE;
@@ -493,8 +417,6 @@ public class JDialogConvertType extends JDialogBase
                 textOutStart.setEnabled(false);
                 textOutEnd.setText("1");
                 textOutEnd.setEnabled(false);
-                outTempMinDefault = 0;
-                outTempMaxDefault = 1;
                 inMin = 0;
                 inMax = 1;
                 outMin = 0;
@@ -504,8 +426,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (-128 to 127).");
                 textOutStart.setText("-128");
                 textOutEnd.setText("127");
-                outTempMinDefault = -128;
-                outTempMaxDefault = 127;
                 inMin = -128;
                 inMax = 127;
                 outMin = -128;
@@ -515,8 +435,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (0 to 255).");
                 textOutStart.setText("0");
                 textOutEnd.setText("255");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 255;
                 inMin = 0;
                 inMax = 255;
                 outMin = 0;
@@ -526,8 +444,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (-32768 to 32767).");
                 textOutStart.setText("-1024");
                 textOutEnd.setText("3071");
-                outTempMinDefault = -1024;
-                outTempMaxDefault = 3071;
                 inMin = -32768;
                 inMax = 32767;
                 outMin = -32768;
@@ -537,8 +453,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (0 to 65535).");
                 textOutStart.setText("0");
                 textOutEnd.setText("4095");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 4095;
                 inMin = 0;
                 inMax = 65535;
                 outMin = 0;
@@ -548,8 +462,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (-2.147 E+9  to 2.147 E+9).");
                 textOutStart.setText("0");
                 textOutEnd.setText("4095");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 4095;
                 inMin = Integer.MIN_VALUE;
                 inMax = Integer.MAX_VALUE;
                 outMin = Integer.MIN_VALUE;
@@ -559,8 +471,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (0 to 4.29 E+9).");
                 textOutStart.setText("0");
                 textOutEnd.setText("4095");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 4095;
                 inMin = 0;
                 inMax = 4294967295L;
                 outMin = 0;
@@ -570,8 +480,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (-9.22 E+18 to 9.22 E+18).");
                 textOutStart.setText("0");
                 textOutEnd.setText("4095");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 4095;
                 inMin = Long.MIN_VALUE;
                 inMax = Long.MAX_VALUE;
                 outMin = Long.MIN_VALUE;
@@ -581,8 +489,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (-3.40 E+38 to 3.40 E+38).");
                 textOutStart.setText("0");
                 textOutEnd.setText("1023");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 1023;
                 inMin = -Float.MAX_VALUE;
                 inMax = Float.MAX_VALUE;
                 outMin = -Float.MAX_VALUE;
@@ -592,8 +498,6 @@ public class JDialogConvertType extends JDialogBase
                 outEnd.setText("Ending range (-1.8 E+308 to 1.8 E+308).");
                 textOutStart.setText("0");
                 textOutEnd.setText("1023");
-                outTempMinDefault = 0;
-                outTempMaxDefault = 1023;
                 inMin = -Double.MAX_VALUE;
                 inMax = Double.MAX_VALUE;
                 outMin = -Double.MAX_VALUE;
@@ -680,7 +584,6 @@ public class JDialogConvertType extends JDialogBase
                         radioDouble.setSelected(true);
                     }
                 }
-
             } catch (Exception ex) {
 
                 // since there was a problem parsing the defaults string, start over with the original defaults
@@ -699,77 +602,6 @@ public class JDialogConvertType extends JDialogBase
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
     }
 
-    /**
-     * Run this algorithm from a script.
-     *
-     * @param   parser  the script parser we get the state from
-     *
-     * @throws  IllegalArgumentException  if there is something wrong with the arguments in the script
-     */
-    public void scriptRun(AlgorithmScriptParser parser) throws IllegalArgumentException {
-        setScriptRunning(true);
-
-        String srcImageKey = null;
-        String destImageKey = null;
-
-        Preferences.debug("Script run of converttype");
-
-        try {
-            srcImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        ModelImage im = parser.getImage(srcImageKey);
-
-        setModal(false);
-        image = im;
-        userInterface = image.getUserInterface();
-        parentFrame = image.getParentFrame();
-
-        // the result image
-        try {
-            destImageKey = parser.getNextString();
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        if (srcImageKey.equals(destImageKey)) {
-            this.setDisplayLocReplace();
-        } else {
-            this.setDisplayLocNew();
-        }
-
-        Preferences.debug("about to read variables");
-
-        try {
-            setDataType(parser.getNextInteger());
-            setEndianess(parser.getNextBoolean());
-
-            if (parser.getNextBoolean()) {
-                setUseDefaultRanges(true);
-                setDefaultRanges();
-            } else {
-                setUseDefaultRanges(false);
-                setInputRangeMin(parser.getNextDouble());
-                setInputRangeMax(parser.getNextDouble());
-            }
-
-            setOutputRangeMin(parser.getNextDouble());
-            setOutputRangeMax(parser.getNextDouble());
-        } catch (Exception e) {
-            throw new IllegalArgumentException();
-        }
-
-        Preferences.debug("got past var read");
-
-        setSeparateThread(false);
-        callAlgorithm();
-
-        if (!srcImageKey.equals(destImageKey)) {
-            parser.putVariable(destImageKey, getResultImage().getImageName());
-        }
-    }
 
     /**
      * Accessor that sets the data type for what the converted image is to be.
@@ -877,7 +709,7 @@ public class JDialogConvertType extends JDialogBase
      * Once all the necessary variables are set, call the Change Type algorithm based on what type of image this is and
      * whether or not there is a separate destination image.
      */
-    private void callAlgorithm() {
+    protected void callAlgorithm() {
 
         if (image.getNDims() == 2) { // source image is 2D
 
@@ -892,8 +724,8 @@ public class JDialogConvertType extends JDialogBase
                 try {
 
                     // Make result image of the new data type
-                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(),
-                                                                                      "_changed"), userInterface);
+                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_changed"),
+                                                 userInterface);
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
@@ -903,6 +735,8 @@ public class JDialogConvertType extends JDialogBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
+
+                    createProgressBar(image.getImageName(), changeTypeAlgo);
 
                     // Hide dialog
                     setVisible(false);
@@ -914,9 +748,6 @@ public class JDialogConvertType extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
 
                         changeTypeAlgo.run();
                     }
@@ -944,6 +775,8 @@ public class JDialogConvertType extends JDialogBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), changeTypeAlgo);
+
                     // Hide the dialog since the algorithm is about to run.
                     setVisible(false);
 
@@ -968,9 +801,6 @@ public class JDialogConvertType extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
 
                         changeTypeAlgo.run();
                     }
@@ -1009,8 +839,8 @@ public class JDialogConvertType extends JDialogBase
                 try {
 
                     // Make result image of the new data type
-                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(),
-                                                                                      "_changed"), userInterface);
+                    resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_changed"),
+                                                 userInterface);
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
@@ -1020,6 +850,8 @@ public class JDialogConvertType extends JDialogBase
                     // notify this object when it has completed or failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
+
+                    createProgressBar(image.getImageName(), changeTypeAlgo);
 
                     // Hide dialog
                     setVisible(false);
@@ -1031,9 +863,6 @@ public class JDialogConvertType extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
 
                         changeTypeAlgo.run();
                     }
@@ -1060,6 +889,8 @@ public class JDialogConvertType extends JDialogBase
                     // This is made possible by implementing AlgorithmedPerformed interface
                     changeTypeAlgo.addListener(this);
 
+                    createProgressBar(image.getImageName(), changeTypeAlgo);
+
                     // Hide dialog
                     setVisible(false);
 
@@ -1084,9 +915,6 @@ public class JDialogConvertType extends JDialogBase
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
 
                         changeTypeAlgo.run();
                     }
@@ -1097,6 +925,104 @@ public class JDialogConvertType extends JDialogBase
                 }
             }
         }
+    }
+
+    /**
+     * Used to perform actions after the execution of the algorithm is completed (e.g., put the result image in the
+     * image table). Defaults to no action, override to actually have it do something.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * Set the dialog GUI using the script parameters while running this algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+
+        processIndep = scriptParameters.doProcess3DAs25D();
+
+        dataType = scriptParameters.getParams().getInt("data_type");
+        endianess = scriptParameters.getParams().getBoolean("is_big_endian");
+
+        useDefaultRanges = scriptParameters.getParams().getBoolean("do_use_default_input_ranges");
+
+        if (useDefaultRanges) {
+            setDefaultRanges();
+        } else {
+            double[] inRange = scriptParameters.getParams().getList("input_range").getAsDoubleArray();
+            inTempMin = inRange[0];
+            inTempMax = inRange[1];
+        }
+
+        double[] outRange = scriptParameters.getParams().getList("output_range").getAsDoubleArray();
+        outTempMin = outRange[0];
+        outTempMax = outRange[1];
+
+        if (inTempMin >= inTempMax) {
+            MipavUtil.displayError("Input minimum must be less than the input maximum (" + inTempMin + " >= " +
+                                   inTempMax + ").");
+
+            return;
+        }
+
+        if (outTempMin >= outTempMax) {
+            MipavUtil.displayError("Output minimum must be less than the output maximum (" + outTempMin + " >= " +
+                                   outTempMax + ").");
+
+            return;
+        }
+
+        if (inTempMin < image.getMin()) {
+            MipavUtil.displayError("Input minimum must be within the range of the input image (" + inTempMin + " < " +
+                                   image.getMin() + ").");
+
+            return;
+        }
+
+        if (inTempMax > image.getMax()) {
+            MipavUtil.displayError("Input maximum must be within the range of the input image (" + inTempMax + " > " +
+                                   image.getMax() + ").");
+
+            return;
+        }
+    }
+
+    /**
+     * Record the parameters just used to run this algorithm in a script.
+     *
+     * @throws  ParserException  If there is a problem creating/recording the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        scriptParameters.storeProcess3DAs25D(processIndep);
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("data_type", dataType));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("is_big_endian", endianess));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_default_input_ranges",
+                                                                       useDefaultRanges));
+
+        if (!useDefaultRanges) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("input_range",
+                                                                           new double[] { inTempMin, inTempMax }));
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("output_range",
+                                                                       new double[] { outTempMin, outTempMax }));
     }
 
     /**
@@ -1186,9 +1112,9 @@ public class JDialogConvertType extends JDialogBase
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         gbc.insets = new Insets(0, 5, 0, 5);
 
         if (image.isColorImage()) {
@@ -1240,8 +1166,6 @@ public class JDialogConvertType extends JDialogBase
 
         inMin = (float) image.getMin();
         inMax = (float) image.getMax();
-        inTempMinDefault = inMin;
-        inTempMaxDefault = inMax;
 
         String tempStr = new String("  Start input range ( " + makeString((float) inMin, 12) + " - " +
                                     makeString((float) inMax, 12) + " ).");
@@ -1289,7 +1213,7 @@ public class JDialogConvertType extends JDialogBase
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         panelInRange.add(fullRangeRadio, gbc);
         gbc.gridx = 1;
         panelInRange.add(userRangeRadio, gbc);
@@ -1305,8 +1229,8 @@ public class JDialogConvertType extends JDialogBase
         panelInRange.add(inEnd, gbc);
         gbc.gridx = 1;
         gbc.gridy = 1;
-        gbc.fill = gbc.HORIZONTAL;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.insets = normal;
         panelInRange.add(textInStart, gbc);
         gbc.gridy = 2;
@@ -1338,15 +1262,15 @@ public class JDialogConvertType extends JDialogBase
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.gridheight = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         panelOutRange.add(outStart, gbc);
         gbc.gridy = 1;
         panelOutRange.add(outEnd, gbc);
         gbc.gridx = 1;
         gbc.gridy = 0;
-        gbc.fill = gbc.NONE;
-        gbc.gridwidth = gbc.REMAINDER;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         panelOutRange.add(textOutStart, gbc);
         gbc.gridy = 1;
         panelOutRange.add(textOutEnd, gbc);
@@ -1377,11 +1301,11 @@ public class JDialogConvertType extends JDialogBase
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         destinationPanel.add(newImage, gbc);
         gbc.gridy = 1;
         destinationPanel.add(replaceImage, gbc);
@@ -1417,11 +1341,11 @@ public class JDialogConvertType extends JDialogBase
 
         gbc.gridx = 0;
         gbc.gridy = 0;
-        gbc.gridwidth = gbc.REMAINDER;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.gridheight = 1;
-        gbc.fill = gbc.HORIZONTAL;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1;
-        gbc.anchor = gbc.WEST;
+        gbc.anchor = GridBagConstraints.WEST;
         endianessPanel.add(littleEnd, gbc);
         gbc.gridy = 1;
         endianessPanel.add(bigEnd, gbc);
@@ -1452,8 +1376,6 @@ public class JDialogConvertType extends JDialogBase
             textOutStart.setEnabled(false);
             textOutEnd.setText("1");
             textOutEnd.setEnabled(false);
-            outTempMinDefault = 0;
-            outTempMaxDefault = 1;
             inMin = 0;
             inMax = 1;
             outMin = 0;
@@ -1464,8 +1386,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (-128 to 127).");
             textOutStart.setText("-128");
             textOutEnd.setText("127");
-            outTempMinDefault = -128;
-            outTempMaxDefault = 127;
             inMin = -128;
             inMax = 127;
             outMin = -128;
@@ -1476,8 +1396,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (0 to 255).");
             textOutStart.setText("0");
             textOutEnd.setText("255");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 255;
             inMin = 0;
             inMax = 255;
             outMin = 0;
@@ -1488,8 +1406,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (-32768 to 32767).");
             textOutStart.setText("-1024");
             textOutEnd.setText("3071");
-            outTempMinDefault = -1024;
-            outTempMaxDefault = 3071;
             inMin = -32768;
             inMax = 32767;
             outMin = -32768;
@@ -1500,8 +1416,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (0 to 65535).");
             textOutStart.setText("0");
             textOutEnd.setText("4095");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 4095;
             inMin = 0;
             inMax = 65535;
             outMin = 0;
@@ -1512,8 +1426,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (-2.147 E+9 to 2.147 E+9).");
             textOutStart.setText("0");
             textOutEnd.setText("4095");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 4095;
             inMin = Integer.MIN_VALUE;
             inMax = Integer.MAX_VALUE;
             outMin = Integer.MIN_VALUE;
@@ -1524,8 +1436,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (0 to 4.29 E+9).");
             textOutStart.setText("0");
             textOutEnd.setText("4095");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 4095;
             inMin = 0;
             inMax = 4294967295L;
             outMin = 0;
@@ -1536,8 +1446,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (-9.22 E+18 to 9.22 E+18).");
             textOutStart.setText("0");
             textOutEnd.setText("4095");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 4095;
             inMin = Long.MIN_VALUE;
             inMax = Long.MAX_VALUE;
             outMin = Long.MIN_VALUE;
@@ -1548,8 +1456,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (-3.40 E+38 to 3.40 E+38).");
             textOutStart.setText("0");
             textOutEnd.setText("1023");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 1023;
             inMin = -Float.MAX_VALUE;
             inMax = Float.MAX_VALUE;
             outMin = -Float.MAX_VALUE;
@@ -1560,8 +1466,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (-1.8 E+308 to 1.8 E+308).");
             textOutStart.setText("0");
             textOutEnd.setText("1023");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 1023;
             inMin = -Double.MAX_VALUE;
             inMax = Double.MAX_VALUE;
             outMin = -Double.MAX_VALUE;
@@ -1572,8 +1476,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (0 to 255).");
             textOutStart.setText("0");
             textOutEnd.setText("255");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 255;
             inMin = 0;
             inMax = 255;
             outMin = 0;
@@ -1584,8 +1486,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (0 to 65535).");
             textOutStart.setText("0");
             textOutEnd.setText("4095");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 4095;
             inMin = 0;
             inMax = 65535;
             outMin = 0;
@@ -1596,8 +1496,6 @@ public class JDialogConvertType extends JDialogBase
             outEnd.setText("Ending range (-3.40 E+38 to 3.40 E+38).");
             textOutStart.setText("0");
             textOutEnd.setText("1023");
-            outTempMinDefault = 0;
-            outTempMaxDefault = 1023;
             inMin = -Float.MAX_VALUE;
             inMax = Float.MAX_VALUE;
             outMin = -Float.MAX_VALUE;

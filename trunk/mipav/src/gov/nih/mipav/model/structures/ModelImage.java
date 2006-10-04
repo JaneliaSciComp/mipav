@@ -4,6 +4,8 @@ package gov.nih.mipav.model.structures;
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.actions.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -665,9 +667,9 @@ public class ModelImage extends ModelStorageBase {
 
         try {
             maskImage = new ModelImage(ModelImage.BOOLEAN, this.getExtents(), "Binary Image");
-            
+
             JDialogBase.updateFileInfo(this, maskImage);
-            
+
             fixFileTypeInfo(maskImage);
         } catch (OutOfMemoryError error) {
             throw error;
@@ -712,9 +714,9 @@ public class ModelImage extends ModelStorageBase {
 
         try {
             maskImage = new ModelImage(ModelImage.SHORT, this.getExtents(), "Short Image", UI);
-            
+
             JDialogBase.updateFileInfo(this, maskImage);
-            
+
             fixFileTypeInfo(maskImage);
         } catch (OutOfMemoryError error) {
             throw error;
@@ -761,9 +763,9 @@ public class ModelImage extends ModelStorageBase {
 
         try {
             maskImage = new ModelImage(ModelImage.UBYTE, this.getExtents(), "UBYTE Image", UI);
-            
+
             JDialogBase.updateFileInfo(this, maskImage);
-            
+
             fixFileTypeInfo(maskImage);
         } catch (OutOfMemoryError error) {
             throw error;
@@ -996,6 +998,20 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
+     * Returns the directory where the image file is located.
+     *
+     * @return  The directory where the image file resides.
+     */
+    public String getImageDirectory() {
+
+        if (fileInfo != null) {
+            return fileInfo[0].getFileDirectory();
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Returns the file name of the image.
      *
      * @return  the String that represents the filename (as stored in the fileinfo)
@@ -1208,12 +1224,14 @@ public class ModelImage extends ModelStorageBase {
         botRight.y *= yRes;
         botRight.z *= zRes;
 
-        int planeLength = (int) MipavMath.round(Math.sqrt(((botLeft.x - topLeft.x) * (botLeft.x - topLeft.x)) +
-                                                          ((botLeft.y - topLeft.y) * (botLeft.y - topLeft.y)) +
-                                                          ((botLeft.z - topLeft.z) * (botLeft.z - topLeft.z))));
-        int planeWidth = (int) MipavMath.round(Math.sqrt(((topRight.x - topLeft.x) * (topRight.x - topLeft.x)) +
-                                                         ((topRight.y - topLeft.y) * (topRight.y - topLeft.y)) +
-                                                         ((topRight.z - topLeft.z) * (topRight.z - topLeft.z))));
+        int planeLength = (int)
+                              MipavMath.round(Math.sqrt(((botLeft.x - topLeft.x) * (botLeft.x - topLeft.x)) +
+                                                        ((botLeft.y - topLeft.y) * (botLeft.y - topLeft.y)) +
+                                                        ((botLeft.z - topLeft.z) * (botLeft.z - topLeft.z))));
+        int planeWidth = (int)
+                             MipavMath.round(Math.sqrt(((topRight.x - topLeft.x) * (topRight.x - topLeft.x)) +
+                                                       ((topRight.y - topLeft.y) * (topRight.y - topLeft.y)) +
+                                                       ((topRight.z - topLeft.z) * (topRight.z - topLeft.z))));
         int planeSize = planeLength * planeWidth;
         float[] plane = new float[planeSize];
 
@@ -1275,6 +1293,118 @@ public class ModelImage extends ModelStorageBase {
         }
 
         return null;
+    }
+
+    /**
+     * Takes input x,y,z coordinate and returns that point transformed into the scanner's (DICOM) coordinate system. L =
+     * Left - first axis is positive to the left P = Posterior - second axis is positive to the posterior S = Superior -
+     * third axis is positive to the superior
+     *
+     * @param  x             Absolute x value in slice.
+     * @param  y             Absolute y value in slice.
+     * @param  z             Absolute z value in slice.
+     * @param  scannerCoord  the point transformed into the scanner's (DICOM) coordinate system.
+     */
+    public void getScannerCoordLPS(int x, int y, int z, float[] scannerCoord) {
+
+        if ((getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) &&
+                (getFileInfo()[0].getFileFormat() != FileBase.XML) &&
+                (getFileInfo()[0].getFileFormat() != FileBase.MINC) &&
+                (getFileInfo()[0].getFileFormat() != FileBase.NIFTI) &&
+                (getFileInfo()[0].getFileFormat() != FileBase.AFNI)) {
+            return;
+        }
+
+        int nDims = getNDims();
+
+        if (nDims > 3) {
+            nDims = 3;
+        }
+
+        float[] coord = new float[3];
+        float[] tCoord = new float[3];
+        float[] origin = new float[3];
+        float[] res = new float[3];
+
+        // Get the voxel coordinate in from mouse events in image space
+        coord[0] = x;
+        coord[1] = y;
+        coord[2] = z;
+
+        // Get image origin
+        origin[0] = getFileInfo()[0].getOrigin()[0];
+        origin[1] = getFileInfo()[0].getOrigin()[1];
+        origin[2] = getFileInfo()[0].getOrigin()[2];
+        // System.out.println("Origin     "  + origin[0] + ", " + origin[1] + ", " + origin[2] );
+
+        for (int j = 0; j < 3; j++) {
+
+            if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE) ||
+                    (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE)) {
+                origin[0] = getFileInfo()[0].getOrigin()[j];
+
+            } else if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE) ||
+                           (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE)) {
+                origin[1] = getFileInfo()[0].getOrigin()[j];
+
+            } else if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE) ||
+                           (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE)) {
+                origin[2] = getFileInfo()[0].getOrigin()[j];
+
+            }
+        }
+        // origin in LPS order
+
+
+        // Get voxel resolutions
+        res[0] = getFileInfo(0).getResolutions()[0];
+        res[1] = getFileInfo(0).getResolutions()[1];
+        res[2] = getFileInfo(0).getResolutions()[2];
+        // System.out.println("res " + res[0] + ", " + res[1] + ", " + res[2]);
+
+        // Change voxel coordinate into millimeter space
+        coord[0] = coord[0] * res[0];
+        coord[1] = coord[1] * res[1];
+        coord[2] = coord[2] * res[2];
+
+        // System.out.println("dicomMatrix = " + dicomMatrix.toString());
+        if ((getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
+                (getFileInfo()[0].getFileFormat() == FileBase.DICOM)) {
+
+            // System.out.println("dicomMatrix = " + dicomMatrix.toString());
+            TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
+
+            // Finally convert the point to axial millimeter DICOM space.
+            dicomMatrix.transform(coord, tCoord);
+
+            // Add in the
+            scannerCoord[0] = origin[0] + tCoord[0];
+            scannerCoord[1] = origin[1] + tCoord[1];
+            scannerCoord[2] = origin[2] + tCoord[2];
+        } else {
+
+            for (int j = 0; j < 3; j++) {
+
+                if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE) {
+                    tCoord[0] = -coord[j];
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE) {
+                    tCoord[0] = coord[j];
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE) {
+                    tCoord[1] = -coord[j];
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE) {
+                    tCoord[1] = coord[j];
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE) {
+                    tCoord[2] = -coord[j];
+                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE) {
+                    tCoord[2] = coord[j];
+                }
+            }
+
+            scannerCoord[0] = origin[0] + tCoord[0];
+            scannerCoord[1] = origin[1] + tCoord[1];
+            scannerCoord[2] = origin[2] + tCoord[2];
+
+        }
     }
 
     /**
@@ -1357,118 +1487,6 @@ public class ModelImage extends ModelStorageBase {
      */
     public VOIVector getVOIs() {
         return voiVector;
-    }
-
-    /**
-     * Takes input x,y,z coordinate and returns that point transformed into the scanner's (DICOM) coordinate system. L =
-     * Left - first axis is positive to the left P = Posterior - second axis is positive to the posterior S = Superior -
-     * third axis is positive to the superior
-     *
-     * @param  x             Absolute x value in slice.
-     * @param  y             Absolute y value in slice.
-     * @param  z             Absolute z value in slice.
-     * @param  scannerCoord  the point transformed into the scanner's (DICOM) coordinate system.
-     */
-    public void getScannerCoordLPS(int x, int y, int z, float[] scannerCoord) {
-    
-        if ((getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) &&
-                (getFileInfo()[0].getFileFormat() != FileBase.XML) &&
-                (getFileInfo()[0].getFileFormat() != FileBase.MINC) &&
-                (getFileInfo()[0].getFileFormat() != FileBase.NIFTI) &&
-                (getFileInfo()[0].getFileFormat() != FileBase.AFNI)) {
-            return;
-        }
-    
-        int nDims = getNDims();
-    
-        if (nDims > 3) {
-            nDims = 3;
-        }
-    
-        float[] coord = new float[3];
-        float[] tCoord = new float[3];
-        float[] origin = new float[3];
-        float[] res = new float[3];
-    
-        // Get the voxel coordinate in from mouse events in image space
-        coord[0] = x;
-        coord[1] = y;
-        coord[2] = z;
-    
-        // Get image origin
-        origin[0] = getFileInfo()[0].getOrigin()[0];
-        origin[1] = getFileInfo()[0].getOrigin()[1];
-        origin[2] = getFileInfo()[0].getOrigin()[2];
-        // System.out.println("Origin     "  + origin[0] + ", " + origin[1] + ", " + origin[2] );
-    
-        for (int j = 0; j < 3; j++) {
-    
-            if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE) ||
-                    (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE)) {
-                origin[0] = getFileInfo()[0].getOrigin()[j];
-    
-            } else if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE) ||
-                           (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE)) {
-                origin[1] = getFileInfo()[0].getOrigin()[j];
-    
-            } else if ((getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE) ||
-                           (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE)) {
-                origin[2] = getFileInfo()[0].getOrigin()[j];
-    
-            }
-        }
-        // origin in LPS order
-    
-    
-        // Get voxel resolutions
-        res[0] = getFileInfo(0).getResolutions()[0];
-        res[1] = getFileInfo(0).getResolutions()[1];
-        res[2] = getFileInfo(0).getResolutions()[2];
-        // System.out.println("res " + res[0] + ", " + res[1] + ", " + res[2]);
-    
-        // Change voxel coordinate into millimeter space
-        coord[0] = coord[0] * res[0];
-        coord[1] = coord[1] * res[1];
-        coord[2] = coord[2] * res[2];
-    
-        // System.out.println("dicomMatrix = " + dicomMatrix.toString());
-        if ((getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
-                (getFileInfo()[0].getFileFormat() == FileBase.DICOM)) {
-    
-            // System.out.println("dicomMatrix = " + dicomMatrix.toString());
-            TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
-    
-            // Finally convert the point to axial millimeter DICOM space.
-            dicomMatrix.transform(coord, tCoord);
-    
-            // Add in the
-            scannerCoord[0] = origin[0] + tCoord[0];
-            scannerCoord[1] = origin[1] + tCoord[1];
-            scannerCoord[2] = origin[2] + tCoord[2];
-        } else {
-    
-            for (int j = 0; j < 3; j++) {
-    
-                if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_L2R_TYPE) {
-                    tCoord[0] = -coord[j];
-                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_R2L_TYPE) {
-                    tCoord[0] = coord[j];
-                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_P2A_TYPE) {
-                    tCoord[1] = -coord[j];
-                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_A2P_TYPE) {
-                    tCoord[1] = coord[j];
-                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_S2I_TYPE) {
-                    tCoord[2] = -coord[j];
-                } else if (getFileInfo(0).getAxisOrientation()[j] == FileInfoBase.ORI_I2S_TYPE) {
-                    tCoord[2] = coord[j];
-                }
-            }
-    
-            scannerCoord[0] = origin[0] + tCoord[0];
-            scannerCoord[1] = origin[1] + tCoord[1];
-            scannerCoord[2] = origin[2] + tCoord[2];
-    
-        }
     }
 
     /**
@@ -2524,6 +2542,7 @@ public class ModelImage extends ModelStorageBase {
 
         // System.err.println("Full new name: " + name + suffix);
         for (int i = 0; i < fInfos.length; i++) {
+
             if (fInfos[i] instanceof FileInfoDicom) {
                 fInfos[i].setFileName(name + (i + 1) + suffix);
             } else {
@@ -3055,25 +3074,10 @@ public class ModelImage extends ModelStorageBase {
      * @param  newImageName  DOCUMENT ME!
      */
     public void updateFileName(String newImageName) {
-        String oldName = getImageName();
+        String oldImageName = getImageName();
         setImageName(newImageName);
 
-        if (UI.isScriptRecording()) {
-
-            if (UI.getScriptDialog().getImgTableVar(oldName) == null) {
-
-                if (UI.getScriptDialog().getActiveImgTableVar(oldName) == null) {
-                    UI.getScriptDialog().putActiveVar(getImageName());
-                } else {
-                    UI.getScriptDialog().changeActiveVar(oldName, newImageName);
-                }
-            } else {
-                UI.getScriptDialog().changeVar(oldName, newImageName);
-            }
-
-            String line = "ChangeName " + UI.getScriptDialog().getVar(getImageName()) + " " + newImageName + "\n";
-            UI.getScriptDialog().append(line);
-        }
+        ScriptRecorder.getReference().addLine(new ActionChangeName(this, oldImageName, newImageName));
 
         try {
             UI.getFrameContainingImage(this).setTitle();
