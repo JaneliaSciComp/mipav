@@ -772,13 +772,13 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     {
         if ( orientation == FileInfoBase.AXIAL )
         {
-            return xSlice - 1;
+            return xSlice;
         }
         else if ( orientation == FileInfoBase.CORONAL )
         {
-            return ySlice - 1;
+            return ySlice;
         }
-        return zSlice - 1;
+        return zSlice;
     }
 
     public void setCenter( int i, int j, int k )

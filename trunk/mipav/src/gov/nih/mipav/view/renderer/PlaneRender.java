@@ -59,8 +59,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /** Boolean to turn on/off the RFA probe entry point selection with mouse:. */
     private boolean m_bEntryPointSelect = false;
 
-    /** DOCUMENT ME! */
-    private boolean m_bFirstRightDrag = true;
+    /** Change the mouse cursor with the first mouseDrag event */
+    private boolean m_bFirstDrag = true;
 
     /** True when the left mouse has been pressed, set to false when the left mouse button is released. */
     private boolean m_bLeftMousePressed = false;
@@ -488,11 +488,10 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
                 m_kActiveImage.notifyImageDisplayListeners((ModelLUT)m_kActiveLookupTable, false);
             }
             m_bRightMousePressed = false;
-            m_bFirstRightDrag = true;
-            m_kCanvas.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
         }
 
         if ((kEvent.getButton() == MouseEvent.BUTTON1) && !kEvent.isShiftDown()) {
+            processLeftMouseDrag( kEvent );
             m_bLeftMousePressed = false;
 
             /* If the RFA probe point is being set by the mouse, then
@@ -520,8 +519,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
                 /* Tell the parent to draw the RFA point: */
                 m_kParent.drawRFAPoint( new Point3f( kRFAPoint.x, kRFAPoint.y, kRFAPoint.z ) );
             }
-
         }
+        m_bFirstDrag = true;
+        m_kCanvas.setCursor(new Cursor(Cursor.CROSSHAIR_CURSOR));
     }
 
     /**
@@ -555,16 +555,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     {
         m_kPatientSlice.setLUTb( LUT );
         writeTexture( true );
-    }
-
-    /**
-     * Called when the flythru view changes position, sets the m_iSlice based on the z-value of the path position.
-     *
-     * @param  kPosition  the 3d position of a point used to set the slices
-     */
-    public void setPathPosition(Point3f kPosition)
-    {
-        setCenter( new Point3Df( kPosition.x, kPosition.y, kPosition.z ) );
     }
 
     /**
@@ -704,13 +694,16 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             updateViewScreenScale(transform);
 
             /* Undo zoom for the Axes so the remain in place: */
-            float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
-            float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
+//             float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
+//             float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
+            float fXTrans = m_fX0 * 0.85f;
+            float fYTrans = m_fY1 * 0.85f;
 
             Transform3D kTextTransform = new Transform3D();
 
             kTextTransform.setTranslation(new Vector3f(fXTrans, fYTrans, 0.0f));
-            kTextTransform.setScale(0.01f / m_fZoomScale);
+//             kTextTransform.setScale(0.01f / m_fZoomScale);
+            kTextTransform.setScale(0.01f);
             m_kTextTransformGroup.setTransform(kTextTransform);
         }
 
@@ -1144,9 +1137,13 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     private void getCenter(int iX, int iY, float[] afCenter) {
         int iCanvasWidth = m_kCanvas.getWidth();
         int iCanvasHeight = m_kCanvas.getHeight();
+        iX = (int)Math.min( iCanvasWidth,  Math.max( 0, iX ) );
+        iY = (int)Math.min( iCanvasHeight, Math.max( 0, iY ) );
+        float fHalfWidth = ((float) iCanvasWidth-1) / 2.0f;
+        float fHalfHeight = ((float) iCanvasHeight-1) / 2.0f;
 
-        afCenter[0] = (float) (iX - ((iCanvasWidth - 1) / 2.0f)) / ((float) iCanvasWidth / 2.0f);
-        afCenter[1] = (float) (iY - ((iCanvasHeight - 1) / 2.0f)) / ((float) iCanvasWidth / 2.0f);
+        afCenter[0] = ((float) (iX - fHalfWidth)) / fHalfWidth;
+        afCenter[1] = ((float) (iY - fHalfHeight)) / fHalfWidth;
 
         afCenter[0] /= m_fZoomScale;
         afCenter[1] /= m_fZoomScale;
@@ -1155,21 +1152,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         afCenter[1] -= m_fYTranslate;
 
         /* Bounds checking: */
-        if (afCenter[0] < m_fX0) {
-            afCenter[0] = m_fX0;
-        }
-
-        if (afCenter[0] > m_fX1) {
-            afCenter[0] = m_fX1;
-        }
-
-        if (afCenter[1] < m_fY0) {
-            afCenter[1] = m_fY0;
-        }
-
-        if (afCenter[1] > m_fY1) {
-            afCenter[1] = m_fY1;
-        }
+        afCenter[0] = Math.min( Math.max( afCenter[0], m_fX0 ), m_fX1 );
+        afCenter[1] = Math.min( Math.max( afCenter[1], m_fY0 ), m_fY1 );
     }
 
     /**
@@ -1184,10 +1168,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         kView.setProjectionPolicy(View.PARALLEL_PROJECTION);
         kView.setScreenScalePolicy(View.SCALE_EXPLICIT);
-
-        /* This will move the ViewPlatform back a bit so the objects in the
-         * scene can be viewed. */
-        m_kUniverse.getViewingPlatform().setNominalViewingTransform();
 
         m_kObjRootBG.compile();
         m_kUniverse.addBranchGraph(m_kObjRootBG);
@@ -1330,8 +1310,10 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         Shape3D kXAxisLabel = new Shape3D(kXText, kXAppearance);
         Shape3D kYAxisLabel = new Shape3D(kYText, kYAppearance);
 
-        float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
-        float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
+        float fXTrans = m_fX0 * 0.85f;
+        float fYTrans = m_fY1 * 0.85f;
+//         float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
+//         float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
 
         if (m_bPatientOrientation &&
             (m_iPlaneOrientation != FileInfoBase.AXIAL)) {
@@ -1340,8 +1322,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
         Transform3D kTextTransform = new Transform3D();
 
-        kTextTransform.setScale(0.01f / m_fZoomScale);
-        kTextTransform.setTranslation(new Vector3f(fXTrans, fYTrans, 0.0f));
+        kTextTransform.setScale(0.01f);
+        //        kTextTransform.setScale(0.01f / m_fZoomScale);
+        kTextTransform.setTranslation(new Vector3f(fXTrans, fYTrans, 0.01f));
         m_kTextTransformGroup = new TransformGroup();
         m_kTextTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
         m_kTextTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
@@ -1446,8 +1429,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         float fX = (afCenter[0] - m_fX0) / m_fXRange;
         float fY = (afCenter[1] - m_fY0) / m_fYRange;
 
-        System.err.println( fX + " " + fY );
-
         m_kActiveLookupTable = null;
 
         /* Get which image is active, either m_kImageA or m_kImageB: */
@@ -1462,7 +1443,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         m_kPatientSlice.setActiveImage( m_kActiveImage );
         m_kActiveLookupTable = m_kPatientSlice.getActiveLookupTable();
 
-        if ( m_kWinLevel.updateWinLevel( fX, fY, m_bFirstRightDrag, m_kActiveLookupTable, m_kActiveImage ) )
+        if ( m_kWinLevel.updateWinLevel( fX, fY, m_bFirstDrag, m_kActiveLookupTable, m_kActiveImage ) )
         {
             if ( m_kActiveImage == m_kImageA )
             {
@@ -1489,17 +1470,15 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
                 }
             }
         }
-        if (m_bFirstRightDrag) {
+        if (m_bFirstDrag) {
             try {
                 Image kImg = MipavUtil.getIconImage("qkwinlevel.gif");
-
                 Cursor kWinLevelCursor = Toolkit.getDefaultToolkit().createCustomCursor(kImg, new Point(12, 12),
                                                                                         "WinLevel");
-
                 /* Set the cursor icon: */
                 m_kCanvas.setCursor(kWinLevelCursor);
             } catch (FileNotFoundException error) { }
-            m_bFirstRightDrag = false;
+            m_bFirstDrag = false;
         }
     }
 
@@ -1585,32 +1564,23 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         }
 
         BoundingSphere kBounds = new BoundingSphere(new Point3d(0, 0, 0), dRadius);
-
         kBounds.transform(kBounds, kTransform);
-
         Point3d kVolumeCenterPoint = new Point3d();
-
         kBounds.getCenter(kVolumeCenterPoint);
-
         float dDist = Math.abs((float) kVolumeCenterPoint.z);
 
         View kView = m_kUniverse.getViewer().getView();
         float dFieldOfView = (float) kView.getFieldOfView();
-        float dViewWidth = 16.0f * dDist * (float) Math.tan(dFieldOfView / 15.0f);
+        float dViewWidth = 2.0f * dDist * (float) Math.tan(dFieldOfView /2.0f);
 
         Screen3D kScreen = m_kCanvas.getScreen3D();
-
+        // screen width is in meters.
         float dNewScreenScale = (float) kScreen.getPhysicalScreenWidth() / dViewWidth;
+        float dOldScreenScale = (float) kScreen.getPhysicalScreenWidth() / 2.0f;
 
         kView.setScreenScale(dNewScreenScale);
 
-        /* Calculate and store the original screenscale: */
-        dViewWidth = 16.0f * 2 * (float) Math.tan(dFieldOfView / 15.0f);
-
-        float dOriginalScreenScale = (float) kScreen.getPhysicalScreenWidth() / dViewWidth;
-
-        m_fZoomScale = (float) (dNewScreenScale / dOriginalScreenScale);
-        m_fZoomScale /= dFieldOfView;
+        m_fZoomScale = (float) (dNewScreenScale / dOldScreenScale);
     }
 
     /**

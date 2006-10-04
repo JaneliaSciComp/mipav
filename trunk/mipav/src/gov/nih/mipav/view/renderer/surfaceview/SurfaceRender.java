@@ -2136,7 +2136,6 @@ public class SurfaceRender extends RenderViewBase {
 
                 /* Rotate the points in the bounding box: */
                 kTransform.transform( inVertices[j][i], outVertices[j][i] );
-
                 /* Convert the points to ModelImage space: */
                 ScreenToModel( new Point3Df( outVertices[j][i].x, outVertices[j][i].y, outVertices[j][i].z ),
                                boxSliceVertices[j][i] );
@@ -2151,9 +2150,9 @@ public class SurfaceRender extends RenderViewBase {
      */
     private void ScreenToModel( Point3Df screen, Point3Df model )
     {
-        model.x = ((screen.x + xBox) / (2.0f * xBox)) * ((float)xDim-1);
-        model.y = ((screen.y - yBox) / (-2.0f * yBox)) * ((float)yDim-1);
-        model.z = ((screen.z + zBox) / (2.0f * zBox)) * ((float)zDim-1);
+        model.x = Math.round(((screen.x + xBox) * ((float)xDim-1)) / (2.0f * xBox));
+        model.y = Math.round(((screen.y - yBox) * ((float)yDim-1)) / (-2.0f * yBox));
+        model.z = Math.round(((screen.z + zBox) * ((float)zDim-1)) / (2.0f * zBox));
     }
 
     /** Translate from Model coordinates to normalized plane coordinates:

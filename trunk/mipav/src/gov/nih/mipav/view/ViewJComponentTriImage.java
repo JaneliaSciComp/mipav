@@ -673,9 +673,28 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      */
     public void setZoom(float zX, float zY)
     {
+        float xRatio = zX / zoomX;
+        float yRatio = zY / zoomY;
         super.setZoom( zX, zY );
         m_kScreenScale.x = zoomX * resolutionX;
         m_kScreenScale.y = zoomY * resolutionY;
+
+        for ( int i = 0; i < cropPoints.length; i++ )
+        {
+            if ( cropPoints[i] != null )
+            {
+                cropPoints[i].x *= xRatio;
+                cropPoints[i].y *= yRatio;
+            }
+        }
+        for ( int i = 0; i < cornerCropPt.length; i++ )
+        {
+            if ( cornerCropPt[i] != null )
+            {
+                cornerCropPt[i].x *= xRatio;
+                cornerCropPt[i].y *= yRatio;
+            }
+        }
     }
 
 
@@ -2141,6 +2160,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      */
     private void drawAxes(Graphics2D offscreenGraphics2d)
     {
+        offscreenGraphics2d.scale( zoomX, zoomY );
         if ( !hasOrientation || (orientation == FileInfoBase.AXIAL))
         {
             offscreenGraphics2d.setColor(xColor[orientation]);
@@ -2163,7 +2183,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         {
             offscreenGraphics2d.setColor(xColor[orientation]);
 
-            int componentHeight = getSize().height;
+            int componentHeight = img.getHeight(this);
             offscreenGraphics2d.drawString( axisLabels[orientation][0], 45, componentHeight - 6);
             offscreenGraphics2d.drawLine(10, componentHeight - 12, 39, componentHeight - 12);
             offscreenGraphics2d.drawLine(10, componentHeight - 11, 40, componentHeight - 11);
@@ -2179,6 +2199,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             offscreenGraphics2d.drawLine(5, componentHeight - 36, 10, componentHeight - 41);
             offscreenGraphics2d.drawLine(15, componentHeight - 36, 10, componentHeight - 41);
         }
+        offscreenGraphics2d.scale( 1f/zoomX, 1f/zoomY );
     }
 
     /**
@@ -2191,9 +2212,9 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
         for ( int i = 0; i < 4; i++ )
         {
-            graphics.drawLine((int)cropPoints[i].x, (int)cropPoints[i].y,
-                              (int)cropPoints[(i+1)%4].x, (int)cropPoints[(i+1)%4].y);
-            graphics.fillRect((int)cropPoints[i].x - 2, (int)cropPoints[i].y - 2, 4, 4);
+            graphics.drawLine((int)(cropPoints[i].x), (int)(cropPoints[i].y),
+                              (int)(cropPoints[(i+1)%4].x), (int)(cropPoints[(i+1)%4].y));
+            graphics.fillRect((int)(cropPoints[i].x) - 2, (int)(cropPoints[i].y) - 2, 4, 4);
         }
     }
 
