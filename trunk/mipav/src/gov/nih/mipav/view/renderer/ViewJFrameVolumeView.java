@@ -2378,11 +2378,13 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  kScaledPosition  Ruida please add comment
      */
     public void setPathPosition(Point3f kPosition, Point3f kScaledPosition) {
-
+        Point3Df kCenter = new Point3Df( kPosition.x * imageA.getExtents()[0], 
+                                         kPosition.y * imageA.getExtents()[1], 
+                                         kPosition.z * imageA.getExtents()[2] );
         for (int iPlane = 0; iPlane < 3; iPlane++) {
-            m_akPlaneRender[iPlane].setPathPosition(kPosition);
+            m_akPlaneRender[iPlane].setCenter( kCenter );
         }
-
+        surRender.setCenter( kCenter );
         surRender.getSurfaceDialog().setPathPosition(kScaledPosition);
 
     }

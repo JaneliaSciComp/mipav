@@ -3078,7 +3078,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         /* set the center after the triImage[].setResolutions and
          * triImage[].setZoom calls have been made: */
         setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
-        setCrop(new Point3Df(0, 0, 0), new Point3Df(extents[0] - 1, extents[1] - 1, extents[2] - 1));
+        setCrop(new Point3Df(extents[0] * 0.25f, extents[1] * 0.25f, extents[2] * 0.25f),
+                new Point3Df(extents[0] * 0.75f, extents[1] * 0.75f, extents[2] * 0.75f)  );
 
 
         setTitle();
