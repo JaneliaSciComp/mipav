@@ -380,7 +380,8 @@ public class JDialogRunScriptController implements ActionListener {
 
         // xmlDoc.toString().replace("Script Executer", "Script_Executer").replace("VOI Needed","VOI_Needed");
         // return xmlDoc.toString().replace(" ", "_").replace("$", "__").replace("'", "___");
-        return xmlDoc.toString().replace("Script Executer", "Script_Executer");
+        // return xmlDoc.toString().replace("Script Executer", "Script_Executer");
+        return xmlDoc.toString().replaceAll("Script Executer", "Script_Executer");
                /*
                 * return xmlDoc.toString().replace ("Script Executer", "Script__Executer").replace ("VOI
                 * Needed","VOI_Needed").replace ("$", "___").replace ("'", "____");
