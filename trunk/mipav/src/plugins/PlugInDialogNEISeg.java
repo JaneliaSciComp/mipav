@@ -1,4 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -14,7 +16,7 @@ import java.awt.event.*;
  * @version  0.1 Nov 17, 1998
  * @author   Matthew J. McAuliffe, Ph.D.
  */
-public class PlugInDialogNEISeg extends JDialogBase implements AlgorithmInterface {
+public class PlugInDialogNEISeg extends JDialogScriptableBase implements AlgorithmInterface {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -84,6 +86,39 @@ public class PlugInDialogNEISeg extends JDialogBase implements AlgorithmInterfac
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImageFinal);
+        AlgorithmParameters.storeImageInRunner(resultImageHSB_Hue);
+        AlgorithmParameters.storeImageInRunner(resultImageRGB);
+        AlgorithmParameters.storeImageInRunner(resultImageRGB_AllRatios);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+    	imageA = scriptParameters.retrieveInputImage();
+
+        userInterface = imageA.getUserInterface();
+        parentFrame = imageA.getParentFrame();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(imageA);
+        AlgorithmParameters.storeImageInRecorder(resultImageFinal);
+        AlgorithmParameters.storeImageInRecorder(resultImageHSB_Hue);
+        AlgorithmParameters.storeImageInRecorder(resultImageRGB);
+        AlgorithmParameters.storeImageInRecorder(resultImageRGB_AllRatios);
+    }
+    
+    
     /**
      * Closes dialog box when the OK button is pressed and calls the algorithm.
      *
@@ -130,6 +165,10 @@ public class PlugInDialogNEISeg extends JDialogBase implements AlgorithmInterfac
 
                 // imageA.getParentFrame().setImageB(resultImage);
             }
+        }
+        
+        if (algorithm.isCompleted()) {
+            insertScriptLine();
         }
     }
 

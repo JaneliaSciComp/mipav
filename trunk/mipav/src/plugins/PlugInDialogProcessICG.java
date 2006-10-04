@@ -1,3 +1,5 @@
+import gov.nih.mipav.model.scripting.ParserException;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.view.*;
@@ -10,7 +12,7 @@ import java.util.Vector;
 import javax.swing.*;
 
 
-public class PlugInDialogProcessICG extends JDialogBase implements
+public class PlugInDialogProcessICG extends JDialogScriptableBase implements
         AlgorithmInterface {
 
     private PlugInAlgorithmProcessICG icgAlgo;
@@ -65,6 +67,43 @@ public class PlugInDialogProcessICG extends JDialogBase implements
 
     public PlugInDialogProcessICG() {}
 
+    /**
+     * {@inheritDoc}
+     */
+    protected void doPostAlgorithmActions() {
+        AlgorithmParameters.storeImageInRunner(resultImage);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+    	image = scriptParameters.retrieveInputImage();
+
+        userInterface = image.getUserInterface();
+        parentFrame = image.getParentFrame();
+        
+        
+        doDistortion = scriptParameters.getParams().getBoolean("doDistortion");
+        if (doDistortion) {
+        	distortionThreshold = scriptParameters.getParams().getFloat("distortionThreshold");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        AlgorithmParameters.storeImageInRecorder(resultImage);
+   
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doDistortion", doDistortion));
+        
+        scriptParameters.getParams().put(ParameterFactory.newParameter("distortionThreshold", distortionThreshold));
+        
+        
+    }
+    
     /**
      * Run this algorithm from a script.
      * @param parser the script parser we get the state from
