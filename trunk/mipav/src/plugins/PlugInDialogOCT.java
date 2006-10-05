@@ -25,6 +25,11 @@ import javax.swing.*;
  */
 public class PlugInDialogOCT extends JDialogBase implements AlgorithmInterface {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 9149071074555976041L;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -59,26 +64,6 @@ public class PlugInDialogOCT extends JDialogBase implements AlgorithmInterface {
 
         image = im;
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public PlugInDialogOCT(ViewUserInterface UI, ModelImage im) {
-        super();
-
-        if ((im.getType() == ModelImage.BOOLEAN) || im.isColorImage()) {
-            MipavUtil.displayError("Source Image must NOT be Boolean or Color");
-            dispose();
-
-            return;
-        }
-
-        image = im;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -129,13 +114,6 @@ public class PlugInDialogOCT extends JDialogBase implements AlgorithmInterface {
             }
         }
 
-        // if (thicknessAlgo.isCompleted() == true) {
-        // if (userInterface.isScriptRecording()) {
-        // userInterface.getScriptDialog().append("Flow " +
-        // userInterface.getScriptDialog().getVar(image.getImageName()) + " "
-        // + correctionVal + "\n");
-        // }
-        // }
         dispose();
 
     } // end AlgorithmPerformed()
@@ -159,9 +137,9 @@ public class PlugInDialogOCT extends JDialogBase implements AlgorithmInterface {
                 // This is made possible by implementing AlgorithmedPerformed
                 // interface
                 thicknessAlgo.addListener(this);
-                
+
                 createProgressBar(image.getImageName(), " ...", thicknessAlgo);
-                
+
                 setVisible(false); // Hide dialog
 
                 if (isRunInSeparateThread()) {

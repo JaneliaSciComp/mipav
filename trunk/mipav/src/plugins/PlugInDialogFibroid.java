@@ -22,6 +22,11 @@ import javax.swing.*;
  */
 public class PlugInDialogFibroid extends JDialogBase implements AlgorithmInterface {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -688660407101883562L;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -29,9 +34,6 @@ public class PlugInDialogFibroid extends JDialogBase implements AlgorithmInterfa
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -44,21 +46,7 @@ public class PlugInDialogFibroid extends JDialogBase implements AlgorithmInterfa
     public PlugInDialogFibroid(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public PlugInDialogFibroid(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-        image = im;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -102,11 +90,10 @@ public class PlugInDialogFibroid extends JDialogBase implements AlgorithmInterfa
 
             if (fibroidAlgo.isCompleted() == true) {
 
-         //       if (userInterface.isScriptRecording()) {
-         //           userInterface.getScriptDialog().append("Fibroid " +
-         //                                                  userInterface.getScriptDialog().getVar(image.getImageName()) +
-         //                                                  " " + "\n");
-         //       }
+                //       if (userInterface.isScriptRecording()) {
+                // userInterface.getScriptDialog().append("Fibroid " +
+                // userInterface.getScriptDialog().getVar(image.getImageName()) +
+                //           " " + "\n");       }
             }
 
             dispose();
@@ -126,9 +113,9 @@ public class PlugInDialogFibroid extends JDialogBase implements AlgorithmInterfa
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             fibroidAlgo.addListener(this);
-            
+
             createProgressBar(image.getImageName(), " ...", fibroidAlgo);
-            
+
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
