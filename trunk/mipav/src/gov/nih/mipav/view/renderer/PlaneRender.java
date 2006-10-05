@@ -694,16 +694,16 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             updateViewScreenScale(transform);
 
             /* Undo zoom for the Axes so the remain in place: */
-//             float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
-//             float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
-            float fXTrans = m_fX0 * 0.85f;
-            float fYTrans = m_fY1 * 0.85f;
+            float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
+            float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
+            if (m_bPatientOrientation &&
+                (m_iPlaneOrientation != FileInfoBase.AXIAL)) {
+                fYTrans = -fYTrans;
+            }
 
             Transform3D kTextTransform = new Transform3D();
-
-            kTextTransform.setTranslation(new Vector3f(fXTrans, fYTrans, 0.0f));
-//             kTextTransform.setScale(0.01f / m_fZoomScale);
-            kTextTransform.setScale(0.01f);
+            kTextTransform.setTranslation(new Vector3f(fXTrans, fYTrans, -2.5f));
+            kTextTransform.setScale(0.01f / m_fZoomScale);
             m_kTextTransformGroup.setTransform(kTextTransform);
         }
 
@@ -1310,10 +1310,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         Shape3D kXAxisLabel = new Shape3D(kXText, kXAppearance);
         Shape3D kYAxisLabel = new Shape3D(kYText, kYAppearance);
 
-        float fXTrans = m_fX0 * 0.85f;
-        float fYTrans = m_fY1 * 0.85f;
-//         float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
-//         float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
+        float fXTrans = m_fX0 * 0.85f / m_fZoomScale;
+        float fYTrans = m_fY1 * 0.85f / m_fZoomScale;
 
         if (m_bPatientOrientation &&
             (m_iPlaneOrientation != FileInfoBase.AXIAL)) {
@@ -1321,10 +1319,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         }
 
         Transform3D kTextTransform = new Transform3D();
-
-        kTextTransform.setScale(0.01f);
-        //        kTextTransform.setScale(0.01f / m_fZoomScale);
-        kTextTransform.setTranslation(new Vector3f(fXTrans, fYTrans, 0.01f));
+        kTextTransform.setScale(0.01f / m_fZoomScale);
+        kTextTransform.setTranslation(new Vector3f(fXTrans, fYTrans, -2.5f));
         m_kTextTransformGroup = new TransformGroup();
         m_kTextTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
         m_kTextTransformGroup.setCapability(TransformGroup.ALLOW_TRANSFORM_READ);
