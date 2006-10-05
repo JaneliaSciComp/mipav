@@ -27,6 +27,11 @@ import javax.swing.*;
  */
 public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -4785622467099872569L;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -104,27 +109,6 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public PlugInDialogCT_MD(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-
-        if ((im.getType() == ModelImage.BOOLEAN) || im.isColorImage()) {
-            MipavUtil.displayError("Source Image must NOT be Boolean or Color");
-            dispose();
-
-            return;
-        }
-
-        image = im;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -217,15 +201,6 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
             }
         }
 
-        if (ctSegAlgo.isCompleted() == true) {
-
-         //   if (userInterface.isScriptRecording()) {
-         //       userInterface.getScriptDialog().append("Flow " +
-         //                                              userInterface.getScriptDialog().getVar(image.getImageName()) +
-        //                                               " " + correctionVal + "\n");
-         //   }
-        }
-
         dispose();
 
     } // end AlgorithmPerformed()
@@ -273,7 +248,7 @@ public class PlugInDialogCT_MD extends JDialogBase implements AlgorithmInterface
                 ctSegAlgo = new PlugInAlgorithmCT_MD(resultImage, image);
 
                 createProgressBar(image.getImageName(), "CT segmentations ...", ctSegAlgo);
-                
+
                 System.out.println("Dialog fatL = " + fatLVal + " fatH = " + fatHVal);
                 ctSegAlgo.fatL = fatLVal;
                 ctSegAlgo.fatH = fatHVal;
