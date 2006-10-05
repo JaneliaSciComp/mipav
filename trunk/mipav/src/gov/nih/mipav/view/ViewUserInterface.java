@@ -1331,17 +1331,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     } // end getRegisteredImagesNum()
 
     /**
-     * TODO: REMOVE ME!!!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public JDialogScriptRecorder getScriptDialog() {
-        MipavUtil.displayError("This class is trying to get the old script recorder dialog. (VUI.getScriptDialog()).");
-
-        return null;
-    }
-
-    /**
      * DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
@@ -1474,17 +1463,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return imageHashtable.containsKey((Object) imageName);
 
     } // end isImageRegistered()
-
-    /**
-     * TODO: REMOVE ME!!!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public boolean isScriptRecording() {
-        MipavUtil.displayError("This class uses the old way to check if a script is recording. (VUI.isScriptRecording()).");
-
-        return false;
-    }
 
     /**
      * Determines if the UserInterface is currently recording an action command as a shortcut.
