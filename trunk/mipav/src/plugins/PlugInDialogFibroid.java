@@ -88,14 +88,6 @@ public class PlugInDialogFibroid extends JDialogBase implements AlgorithmInterfa
         if (algorithm instanceof PlugInAlgorithmFibroid) {
             image.clearMask();
 
-            if (fibroidAlgo.isCompleted() == true) {
-
-                //       if (userInterface.isScriptRecording()) {
-                // userInterface.getScriptDialog().append("Fibroid " +
-                // userInterface.getScriptDialog().getVar(image.getImageName()) +
-                //           " " + "\n");       }
-            }
-
             dispose();
         }
     } // end AlgorithmPerformed()
