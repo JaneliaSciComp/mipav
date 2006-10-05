@@ -1347,17 +1347,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 return;
             }
-        } else if (command.equals("DicomOrder")) {
-
-            // Below line must precede dialog creation or dialog run will be executed twice
-            int xAxisOrientation = getActiveImage().getFileInfo()[0].getAxisOrientation()[0];
-            JDialogDicomOrder dOrder = new JDialogDicomOrder(this, getActiveImage());
-
-            if (xAxisOrientation != FileInfoBase.ORI_UNKNOWN_TYPE) {
-
-                // Axis information is already present so user need not enter it on the dialog
-                dOrder.callAlgorithm();
-            }
         } else if (command.equals("ReplaceBlankWithAvg")) {
             JDialogReplaceBlankSlicesWithAverages rBlankWithAvg = new JDialogReplaceBlankSlicesWithAverages(this,
                                                                                                             getActiveImage());
