@@ -691,7 +691,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private double[] decompReconst(double fn[], int fnx, int fny, double noise[],
                                   int noisex, int noisey) {
         double fh[] = null;
-        int pind[][] = null;
+        Vector pind = null;
         Vector pyr = null;
         Vector pyrN = null;
         pyr = buildSFpyr(fn, fnx, fny, nScales, nOrientations-1, 1.0, pind);
@@ -725,12 +725,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *                in octaves.  (default = 1, which gives a raised cosine for the
      *                bandpass filters).
      * @param indices An N by 2 matrix containing the sizes of each subband.
-     * @param error[] 0 = no error, 1 = error
      * @return pyr    A vector containing the N pyramid subbands, ordered from fine
      *                to coarse 
      */
     private Vector buildSFpyr(double[] im, int imx, int imy, int ht, int order, double twidth,
-                              int indices[][]) {
+                              Vector indices) {
         int max_ht;
         int nbands;
         int ctrx;
@@ -740,11 +739,17 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double angle[][];
         double log_rad[][];
         int i, j;
+        int index;
         double value;
         double logC;
         double xrcos[] = null;
         double yrcos[] = null;
         double yircos[];
+        double lo0mask[][] = null;
+        FFTUtility fftUtil;
+        double imagArray[];
+        double lo0dftr[];
+        double lo0dfti[];
         Vector pyr = new Vector();
         // log2(x) = loge(x)/loge(2)
         logC = 1.0/Math.log(2.0);
@@ -815,7 +820,141 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             value = yrcos[i];
             yircos[i] = Math.sqrt(1.0 - value*value);
         }
+        lo0mask = pointOp(log_rad, imx, imy, yircos, yircos.length, 1, xrcos[0],
+                          (xrcos[1] - xrcos[0]), false);
+        // forward FFT
+        imagArray = new double[imx*imy];
+        fftUtil = new FFTUtility(im, imagArray, imy, imx, 1, -1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        fftUtil = new FFTUtility(im, imagArray, 1, imy, imx, -1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        center(im, imagArray);
+        lo0dftr = new double[imx*imy];
+        lo0dfti = new double[imx*imy];
+        for (j = 0; j < imy; j++) {
+            for (i = 0; i < imx; i++) {
+                index = i + j*imx;
+                lo0dftr[index] = im[index] * lo0mask[imx][imy];
+                lo0dfti[index] = imagArray[index] * lo0mask[imx][imy];
+            }
+        }
         return pyr;
+    }
+    
+    /**
+     * This is a port of a MATLAB function written by Eero Simoncelli, 5/97.
+     * Recursive function for constructing levels of a steerable pyramid.
+     * This is called by buildSFpyr, and is usually not called directly.
+     * @param lodftr
+     * @param lodfti
+     * @param lodx
+     * @param lody
+     * @param lograd
+     * @param xrcos
+     * @param yrcos
+     * @param angle
+     * @param ht
+     * @param nbands
+     * @return
+     */
+    private Vector buildSFpyrLevs(double lodftr[], double lodfti[], int lodx, int lody, 
+                                  double lograd[][], double xrcos[], double yrcos[],
+                                  double angle[][], int ht, int nbands, Vector pind) {
+        FFTUtility fftUtil;
+        double bands[];
+        Integer bind[][];
+        Vector pyr = new Vector();
+        pind = new Vector();
+        if (ht <= 0) {
+            center(lodftr,lodfti);
+            // Inverse FFT
+            fftUtil = new FFTUtility(lodftr, lodfti, lody, lodx, 1, +1, FFTUtility.FFT);
+            fftUtil.setProgressBarVisible(false);
+            fftUtil.run();
+            fftUtil.finalize();
+            fftUtil = new FFTUtility(lodftr, lodfti, 1, lody, lodx, +1, FFTUtility.FFT);
+            fftUtil.setProgressBarVisible(false);
+            fftUtil.run();
+            fftUtil.finalize();
+            pyr.add(lodftr);
+            Integer[][] integerArray = new Integer[1][2];
+            integerArray[0][0] = new Integer(lodx);
+            integerArray[0][1] = new Integer(lody);
+            pind.add(integerArray);
+        } // if (ht <= 0)
+        else {
+            bands = new double[lodx*lody*nbands];
+            bind = new Integer[nbands][2]; 
+        }
+        return pyr;
+    }
+    
+    /**
+     * This is a port of pointOp.c by Eero Simoncelli, 7/96
+     * Apply a point operation, specified by lookup table LUT to image array IM.
+     * LUT must be a row or column vector, and is assumed to contain (equi-spaced)
+     * samples of the function.  origin specifies the abscissa associated with the
+     * first sample, and increment specifies the spacing between samples. Between-
+     * sample values are estimated via linear interpolation.  If warnings is true,
+     * the function outputs a warning whenever the lookup table is extrapolated.
+     * The drawbacks are that the lookup table must be equi-spaced, and the 
+     * interpolation is linear. 
+     * @param im
+     * @param imx
+     * @param imy
+     * @param lut
+     * @param lutx
+     * @param luty
+     * @param origin
+     * @param increment
+     * @param warnings
+     * @return
+     */
+    private double[][] pointOp(double im[][], int imx, int imy, double lut[], int lutx,
+                               int luty, double origin, double increment, boolean warnings) {
+        double res[][] = new double[imx][imy];
+        int lutsize = lutx * luty;
+        int i, j;
+        double pos;
+        int index;
+        lutsize = lutsize - 2; // Maximum index value
+        boolean l_unwarned = warnings;
+        boolean r_unwarned = warnings;
+        if (increment > 0) {
+            for (j = 0; j < imy; j++) {
+                for (i = 0; i < imx; i++) {
+                    pos = (im[i][j] - origin) / increment;
+                    index = (int)pos; // Floor
+                    if (index < 0) {
+                        index = 0;
+                        if (l_unwarned) {
+                            MipavUtil.displayWarning("Warning: Extrapolating to left of lookup table...");
+                            l_unwarned = false;
+                        }
+                    } // if (index < 0)
+                    else if (index > lutsize) {
+                        index = lutsize;
+                        if (r_unwarned) {
+                            MipavUtil.displayWarning("Warning: Extrapolating to right of lookup table...");
+                            r_unwarned = false;
+                        }
+                    } // else if (index > lutsize)
+                    res[i][j] = lut[index] + (lut[index+1] - lut[index]) * (pos - index);
+                } // for (i = 0; i < imx; i++)
+            } // for (j = 0; j < imy; j++)
+        } // if (increment > 0)
+        else {
+            for (j = 0; j < imy; j++) {
+                for (i = 0; i < imx; i++) {
+                    res[i][j] = lut[0];
+                }
+            }
+        }
+        return res;
     }
     
     /**
