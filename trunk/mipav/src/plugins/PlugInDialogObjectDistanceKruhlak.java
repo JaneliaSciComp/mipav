@@ -1,4 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -11,19 +13,19 @@ import javax.swing.*;
 
 
 /**
- * JDialogBase class.
- *
- * <p>Note:</p>
- *
  * @version  June 2, 2004
- * @author   DOCUMENT ME!
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
  *           <p>$Logfile: /mipav/src/plugins/PlugInDialogObjectDistanceKruhlak.java $ $Revision: 6 $ $Date: 1/25/06
  *           4:59p $</p>
  */
-public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements AlgorithmInterface {
+public class PlugInDialogObjectDistanceKruhlak extends JDialogScriptableBase implements AlgorithmInterface {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -1456956765697025584L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -61,9 +63,6 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
     private JCheckBox redCheckBox;
 
     /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
     private JTextField textThreshold1;
 
     /** DOCUMENT ME! */
@@ -84,10 +83,12 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
     /** DOCUMENT ME! */
     private boolean useRed = false;
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Empty constructor needed for dynamic instantiation (used during scripting).
+     */
+    public PlugInDialogObjectDistanceKruhlak() { }
 
     /**
      * Creates new dialog for distances between 2 3D centers of mass using a plugin.
@@ -106,29 +107,7 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
         }
 
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public PlugInDialogObjectDistanceKruhlak(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-
-        if (!im.isColorImage()) {
-            MipavUtil.displayError("Source Image must be Color");
-            dispose();
-
-            return;
-        }
-
-        image = im;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -173,19 +152,12 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
             image.clearMask();
 
             if (objectDistAlgo.isCompleted() == true) {
-
-                if (userInterface.isScriptRecording()) {
-           //         userInterface.getScriptDialog().append("ObjectDistanceKruhlak " +
-           //                                                userInterface.getScriptDialog().getVar(image.getImageName()) +
-          //                                                 " " + useRed + " " + useGreen + " " + useBlue + " " +
-           //                                                threshold1 + " " + threshold2 + "\n");
-                }
+                insertScriptLine();
             }
 
             dispose();
         }
-
-    } // end AlgorithmPerformed()
+    }
 
     /**
      * itemStateChanged.
@@ -251,9 +223,9 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             objectDistAlgo.addListener(this);
-            
-            createProgressBar(image.getImageName(), " ...",objectDistAlgo);
-            
+
+            createProgressBar(image.getImageName(), " ...", objectDistAlgo);
+
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -269,15 +241,41 @@ public class PlugInDialogObjectDistanceKruhlak extends JDialogBase implements Al
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("Object Distance Kruhlak: unable to allocate enough memory");
 
-            if (resultImage != null) {
-                resultImage.disposeLocal(); // Clean up memory of result image
-                resultImage = null;
-            }
-
             return;
         }
 
     } // end callAlgorithm()
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        parentFrame = image.getParentFrame();
+
+        if (!image.isColorImage()) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image must be Color");
+        }
+
+        boolean[] rgb = scriptParameters.doProcessRGB();
+        useRed = rgb[0];
+        useGreen = rgb[1];
+        useBlue = rgb[2];
+
+        threshold1 = scriptParameters.getParams().getInt("threshold_1");
+        threshold2 = scriptParameters.getParams().getInt("threshold_2");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        scriptParameters.storeColorOptions(useRed, useGreen, useBlue);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_1", threshold1));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("threshold_2", threshold2));
+    }
 
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.

@@ -1,4 +1,6 @@
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -13,16 +15,18 @@ import javax.swing.*;
 /**
  * JDialogBase class.
  *
- * <p>Note:</p>
- *
  * @version  March 29, 2004
- * @author   DOCUMENT ME!
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
  *           <p>$Logfile: /mipav/src/plugins/PlugInDialogFISHAnalysis.java $ $Revision: 2 $ $Date: 1/25/06 4:59p $</p>
  */
-public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmInterface {
+public class PlugInDialogFISHAnalysis extends JDialogScriptableBase implements AlgorithmInterface {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = 5344141440812459432L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -32,13 +36,12 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
     /** DOCUMENT ME! */
     private PlugInAlgorithmFISHAnalysis regionDistAlgo = null;
 
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Default constructor required for dynamic instantiation during script execution.
+     */
+    public PlugInDialogFISHAnalysis() { }
 
     /**
      * Creates new dialog for region distances within a cell using a plugin.
@@ -57,29 +60,7 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
         }
 
         image = im;
-        userInterface = ViewUserInterface.getReference();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public PlugInDialogFISHAnalysis(ViewUserInterface UI, ModelImage im) {
-        super();
-        userInterface = UI;
-
-        if (!im.isColorImage()) {
-            MipavUtil.displayError("Source Image must be Color");
-            dispose();
-
-            return;
-        }
-
-        image = im;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -122,25 +103,11 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
             image.clearMask();
 
             if (regionDistAlgo.isCompleted() == true) {
-
-                if (userInterface.isScriptRecording()) {
-       //             userInterface.getScriptDialog().append("FISHAnalysis " +
-        //                                                   userInterface.getScriptDialog().getVar(image.getImageName()) +
-        //                                                   " " + "\n");
-                }
+                insertScriptLine();
             }
 
             dispose();
         }
-    } // end AlgorithmPerformed()
-
-    /**
-     * Accessor that returns the image.
-     *
-     * @return  The result image.
-     */
-    public ModelImage getResultImage() {
-        return resultImage;
     }
 
     /**
@@ -156,9 +123,9 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
             // notify this object when it has completed or failed. See algorithm performed event.
             // This is made possible by implementing AlgorithmedPerformed interface
             regionDistAlgo.addListener(this);
-            
+
             createProgressBar(image.getImageName(), " ...", regionDistAlgo);
-            
+
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -173,14 +140,28 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
         } catch (OutOfMemoryError x) {
             MipavUtil.displayError("FISHAnalysis: unable to allocate enough memory");
 
-            if (resultImage != null) {
-                resultImage.disposeLocal(); // Clean up memory of result image
-                resultImage = null;
-            }
-
             return;
         }
-    } // end callAlgorithm()
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        parentFrame = image.getParentFrame();
+
+        if (!image.isColorImage()) {
+            throw new ParameterException(AlgorithmParameters.getInputImageLabel(1), "Source Image must be Color");
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+    }
 
     /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
@@ -233,5 +214,5 @@ public class PlugInDialogFISHAnalysis extends JDialogBase implements AlgorithmIn
         setVisible(true);
         setResizable(false);
         System.gc();
-    } // end init()
+    }
 }

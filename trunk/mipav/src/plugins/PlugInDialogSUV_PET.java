@@ -1,5 +1,7 @@
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -14,10 +16,6 @@ import javax.swing.*;
 
 
 /**
- * JDialogBase class.
- *
- * <p>Note:</p>
- *
  * @version  May 9, 2005
  * @author   William Gandler
  * @see      JDialogBase
@@ -26,6 +24,9 @@ import javax.swing.*;
 public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Use serialVersionUID for interoperability. */
+    private static final long serialVersionUID = -1059724818991849179L;
 
     /** 3 types of decay correction. */
     private static final int UNKNOWN = 0;
@@ -138,9 +139,6 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
     private JTextField textWeight;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface UI;
-
-    /** DOCUMENT ME! */
     private JRadioButton unknownDecayButton;
 
     /** DOCUMENT ME! */
@@ -163,23 +161,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
     public PlugInDialogSUV_PET(Frame theParentFrame, ModelImage im) {
         super(theParentFrame, false);
         image = im;
-        UI = ((ViewJFrameBase) (parentFrame)).getUserInterface();
         findValues();
         init();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI  The user interface, needed to create the image frame.
-     * @param  im  Source image.
-     */
-    public PlugInDialogSUV_PET(ViewUserInterface UI, ModelImage im) {
-        super();
-        this.UI = UI;
-        findValues();
-        image = im;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -223,14 +206,6 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
         if (algorithm instanceof PlugInAlgorithmSUV_PET) {
             image.clearMask();
 
-            if (suvAlgo.isCompleted() == true) {
-
-                if (UI.isScriptRecording()) {
-       //             UI.getScriptDialog().append("SUV_PET " + UI.getScriptDialog().getVar(image.getImageName()) + " " +
-       //                                         "\n");
-                }
-            }
-
             dispose();
         }
 
@@ -253,9 +228,9 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
             // This is made possible by implementing AlgorithmedPerformed
             // interface
             suvAlgo.addListener(this);
-            
+
             createProgressBar(image.getImageName(), " ...", suvAlgo);
-            
+
             setVisible(false); // Hide dialog
 
             if (isRunInSeparateThread()) {
@@ -363,7 +338,9 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
                 if (((FileInfoDicom) (fileInfo[0])).getValue("0010,0040") != null) {
                     sex = (String) (((FileInfoDicom) fileInfo[0]).getValue("0010,0040"));
+
                     if (sex.length() != 0) {
+
                         if (sex.substring(0, 1).equalsIgnoreCase("M")) {
                             male = true;
                             haveSex = true;
@@ -373,8 +350,7 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
                         } else {
                             Preferences.debug("Sex not M or F.\n");
                         }
-                    }
-                    else {
+                    } else {
                         Preferences.debug("Sex string is zero length\n");
                     }
                 } else {
@@ -439,8 +415,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
                     if (((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true) !=
                             null) {
-                        sq = (FileDicomSQ) ((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016"))
-                                 .getValue(true);
+                        sq = (FileDicomSQ)
+                                 ((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true);
                         display = sq.getSequenceDisplay();
                         doseStr = "";
                         found = false;
@@ -510,7 +486,7 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
                     Preferences.debug("Decay correction string is null\n");
                 }
             } catch (NullPointerException noTag) {
-                UI.setDataText("Decay Correction = \n");
+                ViewUserInterface.getReference().setDataText("Decay Correction = \n");
                 Preferences.debug("Tag (0054,1102) was not found.\n");
             }
 
@@ -520,8 +496,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
                     if (((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true) !=
                             null) {
-                        sq = (FileDicomSQ) ((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016"))
-                                 .getValue(true);
+                        sq = (FileDicomSQ)
+                                 ((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true);
                         display = sq.getSequenceDisplay();
                         radStartStr = "";
                         found = false;
@@ -722,7 +698,7 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
                     Preferences.debug("Tag (0008,0032) for acquistion Start Time is null\n");
                 }
             } catch (NullPointerException noTag) {
-                UI.setDataText("Acquisition Time = \n");
+                ViewUserInterface.getReference().setDataText("Acquisition Time = \n");
                 Preferences.debug("Tag (0008,0032) was not found.\n");
             }
 
@@ -732,8 +708,8 @@ public class PlugInDialogSUV_PET extends JDialogBase implements AlgorithmInterfa
 
                     if (((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true) !=
                             null) {
-                        sq = (FileDicomSQ) ((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016"))
-                                 .getValue(true);
+                        sq = (FileDicomSQ)
+                                 ((FileDicomTag) ((FileInfoDicom) fileInfo[0]).getTagsList().get("0054,0016")).getValue(true);
                         display = sq.getSequenceDisplay();
                         halfLifeStr = "";
                         found = false;
