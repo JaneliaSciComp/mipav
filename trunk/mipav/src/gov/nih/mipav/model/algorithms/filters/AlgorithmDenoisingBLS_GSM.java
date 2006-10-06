@@ -149,10 +149,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     private int npy; // Integer multiple of 2**(nScales+1) for applying pyramidal representation
     
-    private int newDimLengths[];
-    
-    private int newArrayLength;
-    
     private int error = 0; // 0 for no error, 1 for error
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -334,13 +330,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         }
         npx = (int)(Math.ceil(nx/twoPow)*twoPow);
         npy = (int)(Math.ceil(ny/twoPow)*twoPow);
-        newDimLengths = new int[2];
-        newDimLengths[0] = npx;
-        newDimLengths[1] = npy;
-        newArrayLength = npx * npy;
         
-        
-
         try {
             im = new double[arrayLength];
         } catch (OutOfMemoryError e) {
@@ -472,7 +462,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
-        center(delta, imagArray);
+        center(delta, imagArray, npx, npy);
         
         if (repres1 == ORTHOGONAL_WAVELET) {
             imagArray = new double[npx*npy];
@@ -490,7 +480,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 psArray[i] = delta[i]*delta[i] + imagArray[i]*imagArray[i];
             }
             imagArray = new double[npx*npy];
-            center(delta, imagArray);
+            center(delta, imagArray, npx, npy);
             // Noise, to be used only with translation variant transforms (such as
             // orthogonal wavelet)
             ranArray = new double[npx*npy];
@@ -694,6 +684,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         Vector pind = null;
         Vector pyr = null;
         Vector pyrN = null;
+        Vector pyrh;
+        int bandNum;
+        int nband;
         pyr = buildSFpyr(fn, fnx, fny, nScales, nOrientations-1, 1.0, pind);
         if (error == 1) {
             return null;
@@ -702,7 +695,36 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (error == 1) {
             return null;
         }
+        pyrh = pyr;
+        bandNum = pind.size()/2;
+        for (nband = 1; nband <= bandNum-1; nband++) {
+            fireProgressStateChanged((100 * nband)/ (bandNum-1));    
+        } // for (nband = 1; nband <= bandNum-1; nband++)
         return fh;
+    }
+    
+    private double[][] pyrBand(Vector pyr, Vector pind, int band) {
+        double res[][] = null;
+        int ind;
+        int i;
+        int x;
+        int y;
+        int indices[];
+        
+        ind = 1;
+        for (i = 0; i <= band-2; i++) {
+            x = ((Integer)pind.get(2*i)).intValue();
+            y = ((Integer)pind.get(2*i+1)).intValue();
+            ind = ind + x*y;
+        }
+        
+        x = ((Integer)pind.get(2*(band-1))).intValue();
+        y = ((Integer)pind.get(2*(band-1)+1)).intValue();
+        indices = new int[x*y];
+        for (i = 0; i < x*y; i++) {
+            indices[i] = ind-1+i;
+        }
+        return res;
     }
     
     /**
@@ -724,12 +746,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * @param twidth  The width of the transition region of the radial lowpass function
      *                in octaves.  (default = 1, which gives a raised cosine for the
      *                bandpass filters).
-     * @param indices An N by 2 matrix containing the sizes of each subband.
+     * @param pind An N by 2 matrix containing the sizes of each subband.
      * @return pyr    A vector containing the N pyramid subbands, ordered from fine
      *                to coarse 
      */
     private Vector buildSFpyr(double[] im, int imx, int imy, int ht, int order, double twidth,
-                              Vector indices) {
+                              Vector pind) {
         int max_ht;
         int nbands;
         int ctrx;
@@ -747,10 +769,14 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double yircos[];
         double lo0mask[][] = null;
         FFTUtility fftUtil;
-        double imagArray[];
+        double imdftr[];
+        double imdfti[];
         double lo0dftr[];
         double lo0dfti[];
-        Vector pyr = new Vector();
+        double hi0mask[][];
+        double hi0dftr[];
+        double hi0dfti[];
+        Vector pyr;
         // log2(x) = loge(x)/loge(2)
         logC = 1.0/Math.log(2.0);
         max_ht = (int)Math.floor(logC*Math.log(Math.min(imx,imy)) + 2);
@@ -820,28 +846,60 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             value = yrcos[i];
             yircos[i] = Math.sqrt(1.0 - value*value);
         }
-        lo0mask = pointOp(log_rad, imx, imy, yircos, yircos.length, 1, xrcos[0],
+        lo0mask = pointOp(log_rad, yircos, xrcos[0],
                           (xrcos[1] - xrcos[0]), false);
         // forward FFT
-        imagArray = new double[imx*imy];
-        fftUtil = new FFTUtility(im, imagArray, imy, imx, 1, -1, FFTUtility.FFT);
+        imdftr = new double[imx*imy];
+        for (i = 0; i < im.length; i++) {
+            imdftr[i] = im[i];    
+        }
+        imdfti = new double[imx*imy];
+        fftUtil = new FFTUtility(imdftr, imdfti, imy, imx, 1, -1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
-        fftUtil = new FFTUtility(im, imagArray, 1, imy, imx, -1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(imdftr, imdfti, 1, imy, imx, -1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
-        center(im, imagArray);
+        center(imdftr, imdfti, imx, imy);
         lo0dftr = new double[imx*imy];
         lo0dfti = new double[imx*imy];
         for (j = 0; j < imy; j++) {
             for (i = 0; i < imx; i++) {
                 index = i + j*imx;
-                lo0dftr[index] = im[index] * lo0mask[imx][imy];
-                lo0dfti[index] = imagArray[index] * lo0mask[imx][imy];
+                lo0dftr[index] = imdftr[index] * lo0mask[imx][imy];
+                lo0dfti[index] = imdfti[index] * lo0mask[imx][imy];
             }
         }
+        
+        pyr = buildSFpyrLevs(lo0dftr, lo0dfti, imx, imy, log_rad, xrcos,
+                             yrcos, angle, ht, nbands, pind);
+        
+        hi0mask = pointOp(log_rad, yrcos, xrcos[0], (xrcos[1] - xrcos[0]), false);
+        hi0dftr = new double[imx*imy];
+        hi0dfti = new double[imx*imy];
+        for (j = 0; j < imy; j++) {
+            for (i = 0; i < imx; i++) {
+                index = i + j*imx;
+                hi0dftr[index] = imdftr[index] * hi0mask[i][j];
+                hi0dfti[index] = imdfti[index] * hi0mask[i][j];
+            }
+        }
+        center(hi0dftr, hi0dfti, imx, imy);
+        // Inverse FFT
+        fftUtil = new FFTUtility(hi0dftr, hi0dfti, imy, imx, 1, +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        fftUtil = new FFTUtility(hi0dftr, hi0dfti, 1, imy, imx, +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        
+        pyr.insertElementAt(hi0dftr, 0);
+        pind.insertElementAt(new Integer(imy), 0);
+        pind.insertElementAt(new Integer(imx), 0);
         return pyr;
     }
     
@@ -867,10 +925,43 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         FFTUtility fftUtil;
         double bands[];
         Integer bind[][];
+        int logx;
+        int logy;
+        int i, j;
+        int lutsize;
+        double xcosn[];
+        int order;
+        double constant;
+        double ycosn[];
+        double himask[][];
+        int b;
+        double anglemask[][];
+        double banddftr[];
+        double banddfti[];
+        int index;
+        int ctrx;
+        int ctry;
+        int lodimsx;
+        int lodimsy;
+        int loctrx;
+        int loctry;
+        int lostartx;
+        int lostarty;
+        int loendx;
+        int loendy;
+        double temp[][];
+        double temp2[];
+        double yircos[];
+        double lomask[][];
         Vector pyr = new Vector();
+        Vector npyr;
+        Vector nind = null;
         pind = new Vector();
+        logx = lograd.length;
+        logy = lograd[0].length;
+        long p, q;
         if (ht <= 0) {
-            center(lodftr,lodfti);
+            center(lodftr,lodfti, lodx, lody);
             // Inverse FFT
             fftUtil = new FFTUtility(lodftr, lodfti, lody, lodx, 1, +1, FFTUtility.FFT);
             fftUtil.setProgressBarVisible(false);
@@ -889,8 +980,186 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         else {
             bands = new double[lodx*lody*nbands];
             bind = new Integer[nbands][2]; 
-        }
+            
+            for (j = 0; j < logy; j++) {
+                for (i = 0; i < logx; i++) {
+                    lograd[i][j] = lograd[i][j] + 1;
+                }
+            } // for (j = 0; j < logy; j++)
+            
+            lutsize = 1024;
+            xcosn = new double[3*lutsize + 3];
+            for (i = 0, j = -(2*lutsize+1); i < 3*lutsize + 3; i++, j++) {
+                xcosn[i] = (Math.PI * j) / lutsize;
+            }
+            order = nbands - 1;
+            // Divide by sqrt(sum_(n=0)^(N-1) cos(pi*n/N)^(2(N-1)) )
+            p = factorial(order);
+            q = factorial(2*order);
+            constant = Math.pow(2.0,(2.0*order)) * (p*p) / (nbands * q);
+            ycosn = new double[3*lutsize + 3];
+            for (i = 0; i < ycosn.length; i++) {
+                ycosn[i] = Math.sqrt(constant) * Math.pow(Math.cos(xcosn[i]), order);
+            }
+            himask = pointOp(lograd, yrcos, xrcos[0], (xrcos[1]-xrcos[0]), false);
+            
+            banddftr = new double[lodx*lody];
+            banddfti = new double[lodx*lody];
+            for (b = 1; b <= nbands; b++) {
+                anglemask = pointOp(angle, ycosn, xcosn[0] + Math.PI*(b-1)/nbands,
+                                    xcosn[1] - xcosn[0], true);
+                if (((nbands-1) % 4) == 0) {
+                    for (j = 0; j < lody; j++) {
+                        for (i = 0; i < lodx; i++) {
+                            index = i + j*lodx;
+                            banddftr[index] = lodftr[index] * anglemask[i][j] * himask[i][j];
+                            banddfti[index] = lodfti[index] * anglemask[i][j] * himask[i][j];
+                        }
+                    }
+                } // if (((nbands-1) % 4) == 0)
+                else if (((nbands-1) % 4) == 1) {
+                    for (j = 0; j < lody; j++) {
+                        for (i = 0; i < lodx; i++) {
+                            index = i + j*lodx;
+                            banddfti[index] = -lodftr[index] * anglemask[i][j] * himask[i][j];
+                            banddftr[index] = lodfti[index] * anglemask[i][j] * himask[i][j];
+                        }
+                    }    
+                } // else if (((nbands-1) % 4) == 1)
+                else if (((nbands-1) % 4) == 2) {
+                    for (j = 0; j < lody; j++) {
+                        for (i = 0; i < lodx; i++) {
+                            index = i + j*lodx;
+                            banddftr[index] = -lodftr[index] * anglemask[i][j] * himask[i][j];
+                            banddfti[index] = -lodfti[index] * anglemask[i][j] * himask[i][j];
+                        }
+                    }    
+                } // else if (((nbands-1) % 4) == 2)
+                else if (((nbands-1) % 4) == 3) {
+                    for (j = 0; j < lody; j++) {
+                        for (i = 0; i < lodx; i++) {
+                            index = i + j*lodx;
+                            banddfti[index] = lodftr[index] * anglemask[i][j] * himask[i][j];
+                            banddftr[index] = -lodfti[index] * anglemask[i][j] * himask[i][j];
+                        }
+                    }    
+                } // else if (((nbands-1) % 4) == 3)
+                center(banddftr, banddfti, lodx, lody);
+                // Inverse FFT
+                fftUtil = new FFTUtility(banddftr, banddfti, lody, lodx, 1, +1, FFTUtility.FFT);
+                fftUtil.setProgressBarVisible(false);
+                fftUtil.run();
+                fftUtil.finalize();
+                fftUtil = new FFTUtility(banddftr, banddfti, 1, lody, lodx, +1, FFTUtility.FFT);
+                fftUtil.setProgressBarVisible(false);
+                fftUtil.run();
+                fftUtil.finalize();
+                
+                for (i = 0; i < banddftr.length; i++) {
+                    bands[(b-1)*banddftr.length + i] = banddftr[i];
+                }
+                bind[b-1][0] = new Integer(lodx);
+                bind[b-1][1] = new Integer(lody);
+            } // for (b = 1; b <= nbands; b++)
+            
+            ctrx = (int)Math.ceil((lodx + 0.5)/2.0);
+            ctry = (int)Math.ceil((lody + 0.5)/2.0);
+            lodimsx = (int)Math.ceil((lodx - 0.5)/2.0);
+            lodimsy = (int)Math.ceil((lody - 0.5)/2.0);
+            loctrx = (int)Math.ceil((lodimsx + 0.5)/2.0);
+            loctry = (int)Math.ceil((lodimsy + 0.5)/2.0);
+            lostartx = ctrx - loctrx + 1;
+            lostarty = ctry - loctry + 1;
+            loendx = lostartx + lodimsx - 1;
+            loendy = lostarty + lodimsy - 1;
+            
+            temp = new double[loendx - lostartx][loendy - lostarty];
+            for (j = 0; j < loendy - lostarty; j++) {
+                for (i = 0; i < loendx - lostartx; i++) {
+                    temp[i][j] = lograd[lostartx - 1 + i][lostarty - 1 + j];
+                }
+            }
+            lograd = null;
+            lograd = temp;
+            temp = new double[loendx - lostartx][loendy - lostarty];
+            for (j = 0; j < loendy - lostarty; j++) {
+                for (i = 0; i < loendx - lostartx; i++) {
+                    temp[i][j] = angle[lostartx - 1 + i][lostarty - 1 + j];
+                }
+            }
+            angle = null;
+            angle = temp;
+            temp2 = new double[(loendx - lostartx) * (loendy - lostarty)];
+            for (j = 0; j < loendy - lostarty; j++) {
+                for (i = 0; i < loendx - lostartx; i++) {
+                    index = (lostartx - 1 + i) + lodx*(lostarty - 1 + j);
+                    temp2[i + j*(loendx-lostartx)] = lodftr[index];
+                }
+            }
+            lodftr = null;
+            lodftr = temp2;
+            temp2 = new double[(loendx - lostartx) * (loendy - lostarty)];
+            for (j = 0; j < loendy - lostarty; j++) {
+                for (i = 0; i < loendx - lostartx; i++) {
+                    index = (lostartx - 1 + i) + lodx*(lostarty - 1 + j);
+                    temp2[i + j*(loendx-lostartx)] = lodfti[index];
+                }
+            }
+            lodfti = null;
+            lodfti = temp2;
+            yircos = new double[yrcos.length];
+            for (i = 0; i < yrcos.length; i++) {
+                yircos[i] = Math.abs(Math.sqrt(1.0 - yrcos[i]*yrcos[i]));        
+            }
+            lomask = pointOp(lograd, yircos, xrcos[0], (xrcos[1] - xrcos[0]), false);
+            
+            for (j = 0; j < loendy - lostarty; j++) {
+                for (i = 0; i < loendx - lostartx; i++) {
+                    index = i + j*(loendx-lostartx);
+                    lodftr[index] = lomask[i][j] * lodftr[index];
+                    lodfti[index] = lomask[i][j] * lodfti[index];
+                }
+            }
+            
+            npyr = buildSFpyrLevs(lodftr, lodfti, (loendx - lostartx), (loendy - lostarty),
+                                  lograd, xrcos, yrcos, angle, ht-1, nbands, nind);
+            
+            pyr.removeAllElements();
+            pyr.add(bands);
+            pyr.addAll(npyr);
+            pind.removeAllElements();
+            pind.add(bind);
+            pind.addAll(nind);
+        } // else
         return pyr;
+    }
+    
+    /**
+     * Returns the factorial of a nonnegative integer.
+     *
+     * @param   number  integer whose factorial is being returned
+     *
+     * @return  number!
+     */
+    private long factorial(int number) {
+        long i, j;
+
+        if (number < 0) {
+            MipavUtil.displayError("A factorial cannot be performed on a negative number");
+
+            return -1L;
+        }
+
+        if (number == 0) {
+            return 1L;
+        } else {
+
+            for (i = 1, j = 1; i <= number; i++) {
+                j = j * i;
+            }
+
+            return j;
+        }
     }
     
     /**
@@ -904,20 +1173,18 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * The drawbacks are that the lookup table must be equi-spaced, and the 
      * interpolation is linear. 
      * @param im
-     * @param imx
-     * @param imy
      * @param lut
-     * @param lutx
-     * @param luty
      * @param origin
      * @param increment
      * @param warnings
      * @return
      */
-    private double[][] pointOp(double im[][], int imx, int imy, double lut[], int lutx,
-                               int luty, double origin, double increment, boolean warnings) {
+    private double[][] pointOp(double im[][], double lut[],
+                               double origin, double increment, boolean warnings) {
+        int imx = im.length;
+        int imy = im[0].length;
         double res[][] = new double[imx][imy];
-        int lutsize = lutx * luty;
+        int lutsize = lut.length;
         int i, j;
         double pos;
         int index;
@@ -1054,8 +1321,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *
      * @param  rData  real data buffer
      * @param  iData  imaginary data buffer
+     * @param  xDim
+     * @param  yDim
      */
-    private void center(double[] rData, double[] iData) {
+    private void center(double[] rData, double[] iData, int xDim, int yDim) {
 
         // center() is called after the forward fast fourier transform to enhance the display
         // center() is called before the inverse fast fourier transform to return the data
@@ -1064,18 +1333,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int xnew, ynew;
         int xdimHalf, ydimHalf;
         double[] centerData;
-        int newLength;
-
-        if (image25D) {
-            newLength = newDimLengths[0] * newDimLengths[1];
-        } else {
-            newLength = newArrayLength;
-        }
-
-        
+        int length = xDim * yDim;
 
             try {
-                centerData = new double[newDimLengths[0] * newDimLengths[1]]; // Temp storage for centered
+                centerData = new double[length]; // Temp storage for centered
             } catch (OutOfMemoryError e) {
                 centerData = null;
                 System.gc();
@@ -1085,8 +1346,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 return;
             }
 
-            xdimHalf = newDimLengths[0] / 2;
-            ydimHalf = newDimLengths[1] / 2;
+            xdimHalf = xDim / 2;
+            ydimHalf = yDim / 2;
 
             for (j = 0; j < ydimHalf; j++) {
 
@@ -1094,41 +1355,41 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
                     xnew = i + xdimHalf;
                     ynew = j + ydimHalf;
-                    centerData[(newDimLengths[0] * ynew) + xnew] = rData[(newDimLengths[0] * j) + i];
+                    centerData[(xDim * ynew) + xnew] = rData[(xDim * j) + i];
                 }
             }
 
-            for (j = ydimHalf; j < newDimLengths[1]; j++) {
+            for (j = ydimHalf; j < yDim; j++) {
 
                 for (i = 0; i < xdimHalf; i++) {
 
                     xnew = i + xdimHalf;
                     ynew = j - ydimHalf;
-                    centerData[(newDimLengths[0] * ynew) + xnew] = rData[(newDimLengths[0] * j) + i];
+                    centerData[(xDim * ynew) + xnew] = rData[(xDim * j) + i];
                 }
             }
 
-            for (j = ydimHalf; j < newDimLengths[1]; j++) {
+            for (j = ydimHalf; j < yDim; j++) {
 
-                for (i = xdimHalf; i < newDimLengths[0]; i++) {
+                for (i = xdimHalf; i < xDim; i++) {
 
                     xnew = i - xdimHalf;
                     ynew = j - ydimHalf;
-                    centerData[(newDimLengths[0] * ynew) + xnew] = rData[(newDimLengths[0] * j) + i];
+                    centerData[(xDim * ynew) + xnew] = rData[(xDim * j) + i];
                 }
             }
 
             for (j = 0; j < ydimHalf; j++) {
 
-                for (i = xdimHalf; i < newDimLengths[0]; i++) {
+                for (i = xdimHalf; i < xDim; i++) {
 
                     xnew = i - xdimHalf;
                     ynew = j + ydimHalf;
-                    centerData[(newDimLengths[0] * ynew) + xnew] = rData[(newDimLengths[0] * j) + i];
+                    centerData[(xDim * ynew) + xnew] = rData[(xDim * j) + i];
                 }
             }
 
-            for (i = 0; i < newLength; i++) {
+            for (i = 0; i < length; i++) {
                 rData[i] = centerData[i];
             }
 
@@ -1138,41 +1399,41 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
                     xnew = i + xdimHalf;
                     ynew = j + ydimHalf;
-                    centerData[(newDimLengths[0] * ynew) + xnew] = iData[(newDimLengths[0] * j) + i];
+                    centerData[(xDim * ynew) + xnew] = iData[(xDim * j) + i];
                 }
             }
 
-            for (j = ydimHalf; j < newDimLengths[1]; j++) {
+            for (j = ydimHalf; j < yDim; j++) {
 
                 for (i = 0; i < xdimHalf; i++) {
 
                     xnew = i + xdimHalf;
                     ynew = j - ydimHalf;
-                    centerData[(newDimLengths[0] * ynew) + xnew] = iData[(newDimLengths[0] * j) + i];
+                    centerData[(xDim * ynew) + xnew] = iData[(xDim * j) + i];
                 }
             }
 
-            for (j = ydimHalf; j < newDimLengths[1]; j++) {
+            for (j = ydimHalf; j < yDim; j++) {
 
-                for (i = xdimHalf; i < newDimLengths[0]; i++) {
+                for (i = xdimHalf; i < xDim; i++) {
 
                     xnew = i - xdimHalf;
                     ynew = j - ydimHalf;
-                    centerData[(newDimLengths[0] * ynew) + xnew] = iData[(newDimLengths[0] * j) + i];
+                    centerData[(xDim * ynew) + xnew] = iData[(xDim * j) + i];
                 }
             }
 
             for (j = 0; j < ydimHalf; j++) {
 
-                for (i = xdimHalf; i < newDimLengths[0]; i++) {
+                for (i = xdimHalf; i < xDim; i++) {
 
                     xnew = i - xdimHalf;
                     ynew = j + ydimHalf;
-                    centerData[(newDimLengths[0] * ynew) + xnew] = iData[(newDimLengths[0] * j) + i];
+                    centerData[(xDim * ynew) + xnew] = iData[(xDim * j) + i];
                 }
             }
 
-            for (i = 0; i < newLength; i++) {
+            for (i = 0; i < length; i++) {
                 iData[i] = centerData[i];
             }
 
