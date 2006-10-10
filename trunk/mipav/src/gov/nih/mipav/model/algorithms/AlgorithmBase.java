@@ -388,15 +388,6 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     public void setMask(BitSet imageMask) {
         mask = imageMask;
     }
-
- 
-    private int getProgressFromFloat(float percentage) {
-        return MipavMath.round(minProgressValue + (percentage * (maxProgressValue - minProgressValue)));
-    }
-    
-    private int getProgressFromInt(int percentage) {
-        return MipavMath.round(minProgressValue + ((percentage / 100.0) * (maxProgressValue - minProgressValue)));
-    }
         	
     /**
      * Helper function to link the currently listening progress bar with an algorithm created within
@@ -643,7 +634,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         //adjust value based on minProgress and maxProgress
         if (value != ViewJProgressBar.PROGRESS_VALUE_UNCHANGED &&
         		value != ViewJProgressBar.PROGRESS_WINDOW_CLOSING) {
-        	value = getProgressFromInt(value);
+        	value = ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, value);
         }
         
         for(int i = listeners.length-2; i >= 0; i -= 2){
@@ -654,7 +645,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
         }
     }
     protected void fireProgressStateChanged(float fVal, String title, String message) {
-    	fireProgressStateChanged(getProgressFromFloat(fVal), title, message);
+    	fireProgressStateChanged(ViewJProgressBar.getProgressFromFloat(minProgressValue, maxProgressValue, fVal), title, message);
     }
 
     /**
@@ -697,26 +688,8 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
      * @return array of 2 ints [current, max]
      */
     public int [] generateProgressValues(int currentProgress, int desiredMaxProgress) {
-    	return new int[] { getProgressFromInt(currentProgress), getProgressFromInt(desiredMaxProgress)};
-    }
-
-    /**
-     * Helper function used when calling subroutines of an algorithm to find an adjusted
-     * progress based on a percentage of the passed in min and max
-     * The user can store the original min and max progressvalues, and then use the stored ones
-     * to set the min and max progress values so that every subroutine called THINKS that it is
-     * running on a 0->100 scale 
-     * 
-     * see AlgorithmMorphology3D for examples of usage (where there are many subroutines called within
-     * different functions, so each subroutine needs to act as if it is on a 0->100 scale)
-     * @param minProgress the min progress value
-     * @param maxProgress the max progress value
-     * @param percentage the percentage that a function's subroutine will cover
-     * @return the adjusted progress value
-     */
-    public int generateProgressValue(int minProgress, int maxProgress, int percentage) {
-    	return (minProgress + MipavMath.round((maxProgress - minProgress) * percentage /100f));
-    	
+    	return new int[] { ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, currentProgress), 
+    			ViewJProgressBar.getProgressFromInt(minProgressValue, maxProgressValue, desiredMaxProgress)};
     }
     
     /**

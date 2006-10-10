@@ -971,7 +971,8 @@ public class FileAnalyze extends FileBase {
 
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
-
+            linkProgress(rawFile);
+            
             int offset = (int) Math.abs(vox_offset);
 
             if (one) {
@@ -1147,6 +1148,7 @@ public class FileAnalyze extends FileBase {
         if (options.isMultiFile()) {
             FileRaw rawFile;
             rawFile = new FileRaw(image.getFileInfo(0));
+            linkProgress(rawFile);
             flipTopBottom(image);
 
             if (image.getNDims() == 3) {
@@ -1163,6 +1165,8 @@ public class FileAnalyze extends FileBase {
             try {
                 FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                linkProgress(rawFile);
+                
                 flipTopBottom(image);
                 rawFile.writeImage(image, options);
                 nImagesSaved = rawFile.getNImages();

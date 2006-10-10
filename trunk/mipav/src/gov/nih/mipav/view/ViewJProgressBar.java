@@ -7,7 +7,7 @@ import java.awt.event.*;
 import java.io.*;
 
 import javax.swing.*;
-
+import gov.nih.mipav.MipavMath;
 
 /**
  * Progress bar used everywhere for displaying to the user how long the current process is going to take. The progress
@@ -257,6 +257,15 @@ public class ViewJProgressBar extends JFrame
         return (pBar.getPercentComplete() == 1);
     }
 
+    public static int getProgressFromInt(int minProgressValue, int maxProgressValue, int percentage) {
+        return MipavMath.round(minProgressValue + ((percentage / 100.0) * (maxProgressValue - minProgressValue)));
+    }
+    
+    public static int getProgressFromFloat(int minProgressValue, int maxProgressValue, float percentage) {
+        return MipavMath.round(minProgressValue + (percentage * (maxProgressValue - minProgressValue)));
+    }
+
+    
     /**
      * Implementation of the ProgressChangeListener interface.
      *
@@ -265,7 +274,8 @@ public class ViewJProgressBar extends JFrame
     public void progressStateChanged(ProgressChangeEvent e) {
         int value = e.getValue();
 
-        if (value == PROGRESS_WINDOW_CLOSING) {
+        if (value == PROGRESS_WINDOW_CLOSING ||
+        		value == 100) {
             dispose();
 
             return;

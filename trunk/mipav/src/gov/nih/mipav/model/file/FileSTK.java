@@ -521,11 +521,6 @@ public class FileSTK extends FileBase {
                 imgBuffer = new float[bufferSize];
             }
 
-            progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                               ViewUserInterface.getReference().getProgressBarPrefix() +
-                                               "STK image(s) ...", 0, 100, false, null, null);
-            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
-
             for (i = 0; i < imageSlice; i++) {
 
                 try {
@@ -553,7 +548,7 @@ public class FileSTK extends FileBase {
             }
 
             raFile.close();
-            progressBar.dispose();
+            
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -612,7 +607,6 @@ public class FileSTK extends FileBase {
         boolean oneFile = true;
         int offset = 0;
         String prefix, fileSuffix;
-        ViewJProgressBar progressBar = null;
         int stripCount, totStripCount;
 
 
@@ -652,10 +646,6 @@ public class FileSTK extends FileBase {
                     timeOffset = options.getTimeSlice() * image.getExtents()[2] * bufferSize;
                 }
             }
-
-            progressBar = new ViewJProgressBar("Saving TIFF image", "Saving Image " + fileName, 0, 100, false, null,
-                                               null);
-            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
 
             index = fileName.indexOf(".");
             prefix = fileName.substring(0, index); // Used for setting file name
@@ -818,10 +808,9 @@ public class FileSTK extends FileBase {
 
                     for (k = options.getBeginSlice(), m = 0; k <= options.getEndSlice(); k++, m++) {
 
-                        progressBar.updateValue(Math.round((float) (k - options.getBeginSlice() + 1) /
+                        fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
                                                                (options.getEndSlice() - options.getBeginSlice() + 1) *
-                                                               100), options.isRunningInSeparateThread());
-                        progressBar.setTitle("Saving image " + k);
+                                                               100));
 
                         if (options.isWritePackBit()) {
                             stripCount = filePB.getStripSize(image, timeOffset + (k * bufferSize),
@@ -870,9 +859,7 @@ public class FileSTK extends FileBase {
                         }
                     }
                 } else {
-                    progressBar.updateValue(Math.round((float) s / (options.getEndSlice()) * 100),
-                                            options.isRunningInSeparateThread());
-                    progressBar.setTitle("Saving image " + seq);
+                    fireProgressStateChanged(Math.round((float) s / (options.getEndSlice()) * 100));
 
                     if (options.isWritePackBit()) {
                         stripCount = filePB.getStripSize(image, s * bufferSize, (s * bufferSize) + bufferSize);
@@ -908,12 +895,12 @@ public class FileSTK extends FileBase {
         } catch (OutOfMemoryError error) {
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw error;
         }
 
         raFile.close();
-        progressBar.dispose();
+        
     }
 
     /**
@@ -2023,12 +2010,11 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j++, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             buffer[i] = byteBuffer[j >> 3] & (1 << (j % 8));
@@ -2047,13 +2033,12 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             for (j = 0; j < nBytes; j++, i++) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = byteBuffer[j];
@@ -2065,7 +2050,7 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -2079,8 +2064,8 @@ public class FileSTK extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j];
@@ -2101,8 +2086,8 @@ public class FileSTK extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j];
@@ -2126,13 +2111,12 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             for (j = 0; j < nBytes; j++, i++) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = byteBuffer[j] & 0xff;
@@ -2144,7 +2128,7 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -2158,8 +2142,8 @@ public class FileSTK extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j] & 0xff;
@@ -2180,8 +2164,8 @@ public class FileSTK extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j] & 0xff;
@@ -2203,12 +2187,11 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2233,12 +2216,11 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2262,12 +2244,11 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2293,12 +2274,11 @@ public class FileSTK extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2327,14 +2307,13 @@ public class FileSTK extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             // For the moment I compress RGB images to unsigned bytes.
                             for (j = 0; j < nBytes; j += 3, i += 4) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = 255;
@@ -2356,14 +2335,14 @@ public class FileSTK extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + progress) /
-                                                                               progressLength * 100), false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                               progressLength * 100));
                                     }
 
                                     buffer[i] = 255;
@@ -2382,14 +2361,13 @@ public class FileSTK extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     buffer[i + 2] = getUnsignedByte(byteBuffer, j);
@@ -2407,14 +2385,13 @@ public class FileSTK extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     buffer[i + 3] = getUnsignedByte(byteBuffer, j);
@@ -2473,14 +2450,13 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j++) {
 
                             if ((x < xDim) && (y < yDim)) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[x + (y * xDim)] = byteBuffer[j >> 3] & (1 << (j % 8));
@@ -2516,15 +2492,15 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             for (j = 0; j < nBytes; j++) {
 
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     buffer[x + (y * xDim)] = byteBuffer[j];
@@ -2555,7 +2531,7 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -2571,8 +2547,8 @@ public class FileSTK extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -2604,8 +2580,8 @@ public class FileSTK extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -2647,15 +2623,15 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             for (j = 0; j < nBytes; j++) {
 
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -2686,7 +2662,7 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -2702,8 +2678,8 @@ public class FileSTK extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -2735,8 +2711,8 @@ public class FileSTK extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -2776,14 +2752,13 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2) {
 
                             if ((x < xDim) && (y < yDim)) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 b1 = getUnsignedByte(byteBuffer, j);
@@ -2825,14 +2800,13 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2) {
 
                             if ((x < xDim) && (y < yDim)) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 b1 = getUnsignedByte(byteBuffer, j);
@@ -2874,14 +2848,13 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 4) {
 
                             if ((x < xDim) && (y < yDim)) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 b1 = getUnsignedByte(byteBuffer, j);
@@ -2925,14 +2898,13 @@ public class FileSTK extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 4) {
 
                             if ((x < xDim) && (y < yDim)) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 b1 = getUnsignedByte(byteBuffer, j);
@@ -2980,15 +2952,15 @@ public class FileSTK extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             for (j = 0; j < nBytes; j += 3) {
 
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     buffer[4 * (x + (y * xDim))] = 255;

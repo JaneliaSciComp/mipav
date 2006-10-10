@@ -344,8 +344,8 @@ public class FileAvi extends FileBase {
 
                 // progressBar.setLocation( (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2,
                 // 50);
-                setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
-                progressBar.setVisible(isProgressBarVisible());
+                
+                
             }
 
             startPosition = raFile.getFilePointer();
@@ -691,7 +691,7 @@ public class FileAvi extends FileBase {
                                                 imageA.importData(z * bufferSize, imgBuffer, false);
                                             }
 
-                                            progressBar.updateValue(100 * z / (imgExtents[2] - 1), false);
+                                            fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
                                             z++;
                                         } // else if ((x == imgExtents[0] && (y == 0))
                                     } // for (j = 0; j < datalength;j=j+3)
@@ -719,7 +719,7 @@ public class FileAvi extends FileBase {
                                                 imageA.importData(z * bufferSize, imgBuffer, false);
                                             }
 
-                                            progressBar.updateValue(100 * z / (imgExtents[2] - 1), false);
+                                            fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
                                             z++;
                                         } // else if ((x == imgExtents[0] && (y == 0))
                                     } // for (j = 0; j < datalength;j=j+4)
@@ -750,7 +750,7 @@ public class FileAvi extends FileBase {
                                                 imageA.importData(z * bufferSize, imgBuffer, false);
                                             }
 
-                                            progressBar.updateValue(100 * z / (imgExtents[2] - 1), false);
+                                            fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
                                             z++;
                                         } // else if ((x == imgExtents[0] && (y == 0))
                                     } // for (int j = 0; j < dataLength;)
@@ -786,7 +786,7 @@ public class FileAvi extends FileBase {
                                                 imageA.importData(z * bufferSize, imgBuffer, false);
                                             }
 
-                                            progressBar.updateValue(100 * z / (imgExtents[2] - 1), false);
+                                            fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
                                             z++;
                                         } // else if ((x == imgExtents[0]) && (y == 0))
                                     } // for (j = 0; j < dataLength; j++)
@@ -991,7 +991,7 @@ public class FileAvi extends FileBase {
                                     }
 
                                     if (actualFrames > 1) {
-                                        progressBar.updateValue(100 * z / (imgExtents[2] - 1), false);
+                                        fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
                                     }
 
                                     z++;
@@ -1208,7 +1208,7 @@ public class FileAvi extends FileBase {
                                             }
 
                                             if (actualFrames > 1) {
-                                                progressBar.updateValue(100 * z / (imgExtents[2] - 1), false);
+                                                fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
                                             }
 
                                             z++;
@@ -1560,7 +1560,7 @@ public class FileAvi extends FileBase {
                                             }
 
                                             if (actualFrames > 1) {
-                                                progressBar.updateValue(100 * z / (imgExtents[2] - 1), false);
+                                                fireProgressStateChanged(100 * z / (imgExtents[2] - 1));
                                             }
 
                                             z++;
@@ -1779,7 +1779,7 @@ public class FileAvi extends FileBase {
                 }
             }
 
-            progressBar.dispose();
+            
 
             return imageA;
 
@@ -1791,7 +1791,7 @@ public class FileAvi extends FileBase {
             }
 
             System.gc();
-            progressBar.dispose();
+            
             throw error;
         }
     }
@@ -2787,8 +2787,8 @@ public class FileAvi extends FileBase {
         progressBar = new ViewJProgressBar(imageA.getImageName(), progressString, 0, 100, false, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-        progressBar.setVisible(isProgressBarVisible());
+        
+        
 
         lutBufferRemapped = new int[1];
 
@@ -3342,7 +3342,7 @@ public class FileAvi extends FileBase {
                         writeAVITriplet(t, z, LUTb, red, green, blue, 1 - OPACITY, alphaBlend, paintBitmap);
 
                         if (((zDim * tDim) - 1) >= 1) {
-                            progressBar.updateValue(100 * (z + (t * zDim)) / ((zDim * tDim) - 1), false);
+                            fireProgressStateChanged(100 * (z + (t * zDim)) / ((zDim * tDim) - 1));
                         }
                     }
                 }
@@ -3359,7 +3359,7 @@ public class FileAvi extends FileBase {
                         writeAVITripletC(t, z, RGBTA, RGBTB, red, green, blue, 1 - OPACITY, alphaBlend, paintBitmap);
 
                         if (((zDim * tDim) - 1) >= 1) {
-                            progressBar.updateValue(100 * (z + (t * zDim)) / ((zDim * tDim) - 1), false);
+                            fireProgressStateChanged(100 * (z + (t * zDim)) / ((zDim * tDim) - 1));
                         }
                     }
                 }
@@ -3391,7 +3391,7 @@ public class FileAvi extends FileBase {
                     writeRLE8(t, z, pixStore, lastStore, encodeStore);
 
                     if (((zDim * tDim) - 1) >= 1) {
-                        progressBar.updateValue(100 * (z + (t * zDim)) / ((zDim * tDim) - 1), false);
+                        fireProgressStateChanged(100 * (z + (t * zDim)) / ((zDim * tDim) - 1));
                     }
                 }
             }
@@ -3463,7 +3463,7 @@ public class FileAvi extends FileBase {
         writeInt((int) (endPos - (saveidx1Length + 4)), endianess);
 
         // raFile.close();
-        progressBar.dispose();
+        
 
         // do some cleanup...
         imageBufferA = null;

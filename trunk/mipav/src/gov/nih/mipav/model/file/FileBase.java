@@ -193,7 +193,7 @@ public abstract class FileBase {
     protected boolean pBarVisible = true;
 
     /** Progress bar to show when reading in image file. */
-    protected ProgressBarInterface progressBar;
+    //protected ProgressBarInterface progressBar;
 
     /** Pointer to file to read or write from. */
     protected RandomAccessFile raFile;
@@ -452,7 +452,7 @@ public abstract class FileBase {
      * Prepares this class for cleanup.
      */
     public void finalize() {
-        progressBar = null;
+       // progressBar = null;
 
         if (raFile != null) {
 
@@ -475,6 +475,10 @@ public abstract class FileBase {
         fireProgressStateChanged(value, null, null);
     }
 
+    public void fireProgressStateChanged(String message) {
+    	fireProgressStateChanged(ViewJProgressBar.PROGRESS_VALUE_UNCHANGED, null, message);
+    }
+    
     /**
      * Notifies all listeners that have registered interest for notification on this event type.
      *
@@ -494,6 +498,40 @@ public abstract class FileBase {
         }
     }
 
+    public ProgressChangeListener [] getProgressChangeListeners() {
+        Object[] listeners = listenerList.getListenerList();
+        
+        int count = 0;
+        for (int i = 0; i < listeners.length; i++) {
+            if (listeners[i] instanceof ProgressChangeListener) {
+                count++;
+            }
+        }
+        
+        if (count > 0) {
+            ProgressChangeListener [] pcl = new ProgressChangeListener[count];
+            count = 0;
+            for (int i = 0; i < listeners.length; i++) {
+                if (listeners[i] instanceof ProgressChangeListener) {
+                    pcl[count] = (ProgressChangeListener)listeners[i];
+                    count++;
+                }
+            }
+            return pcl;
+        } else {
+            return null;
+        }
+    }
+
+    protected void linkProgress(FileBase fBase) {
+    	ProgressChangeListener[] listeners = this.getProgressChangeListeners();
+        if (listeners != null) {
+            for (int i = 0; i < listeners.length; i++) {
+            	fBase.addProgressChangeListener(listeners[i]);
+            }
+        }
+    }
+    
     /**
      * Converts byte data to float data.
      *
@@ -1135,16 +1173,7 @@ public abstract class FileBase {
     public void setEndianess(boolean bigEndian) {
         this.bigEndian = bigEndian;
     }
-
-    /**
-     * Sets whether or not the progress bar should be visible.
-     *
-     * @param  flag  <code>true</code> if should be visible, <code>false</code> if not visible.
-     */
-    public void setProgressBarVisible(boolean flag) {
-        pBarVisible = flag;
-    }
-
+  
     /**
      * Writes a double as eight bytes to a file.
      *

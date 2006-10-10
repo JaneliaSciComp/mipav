@@ -221,7 +221,7 @@ public class FileDicom extends FileDicomBase {
             fileInfo = new FileInfoDicom(fileName, fileDir, FileBase.DICOM);
             fileInfo.resetDictionary();
             fileInfo.setEndianess(LITTLE_ENDIAN);
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, false, FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory in FileDicom constructor.");
@@ -266,7 +266,7 @@ public class FileDicom extends FileDicomBase {
             fileInfo = new FileInfoDicom(fileName, fileDir, FileBase.DICOM);
             fileInfo.resetDictionary();
             fileInfo.setEndianess(LITTLE_ENDIAN);
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, false, FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
         } catch (NullPointerException npe) {
             npe.printStackTrace();
         } catch (OutOfMemoryError e) {

@@ -121,8 +121,8 @@ public class FileImageXML extends FileXML {
      * @param  fDir   File directory.
      * @param  show   Flag for showing the progress bar.
      */
-    public FileImageXML(ViewUserInterface _UI, String fName, String fDir, boolean show) {
-        super(_UI, fName, fDir, show);
+    public FileImageXML(ViewUserInterface _UI, String fName, String fDir) {
+        super(_UI, fName, fDir);
         fileInfo = new FileInfoImageXML(fName, fDir, FileBase.XML);
     }
 
@@ -383,7 +383,6 @@ public class FileImageXML extends FileXML {
      * @see        FileRaw
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
-        ViewJProgressBar progressBar = null;
 
         float[][] resolutions = null;
 
@@ -468,7 +467,7 @@ public class FileImageXML extends FileXML {
             String readFileName = new String(imageFileName);
 
             // imageFileName was parsed from the "image".xml file.
-            rawFile = new FileRaw(fileDir + File.separator + readFileName, (FileInfoImageXML) fileInfo, showProgress,
+            rawFile = new FileRaw(fileDir + File.separator + readFileName, (FileInfoImageXML) fileInfo,
                                   FileBase.READ);
 
             int offset = 0;
@@ -480,13 +479,9 @@ public class FileImageXML extends FileXML {
                 }
             }
 
-            progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                                               UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null, null);
+            linkProgress(rawFile);
 
-            progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
-            rawFile.addProgressChangeListener(progressBar);
-
-            progressBar.updateValue(0, true);
+            fireProgressStateChanged(0);
 
             rawFile.readImage(image, offset);
 
@@ -545,12 +540,12 @@ public class FileImageXML extends FileXML {
             }
 
         } catch (IOException error) {
-            progressBar.dispose();
+            //
             image.disposeLocal();
             throw new IOException("FileXML: " + error);
         } catch (OutOfMemoryError e) {
             image.disposeLocal();
-            progressBar.dispose();
+            //
             throw (e);
         }
 
@@ -572,9 +567,6 @@ public class FileImageXML extends FileXML {
 
             annotationVector.removeAllElements();
         }
-
-        progressBar.dispose();
-        progressBar.dispose();
 
         return image;
     }
@@ -614,8 +606,7 @@ public class FileImageXML extends FileXML {
                 imageFileName = FileUtility.stripExtension(fileName) + ".raw";
             }
 
-            rawFile = new FileRaw(imageFileName, fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo, showProgress,
-                                  FileBase.READ);
+            rawFile = new FileRaw(imageFileName, fileInfo.getFileDirectory(), (FileInfoImageXML) fileInfo, FileBase.READ);
             rawFile.readImage(buffer, 0, ((FileInfoImageXML) fileInfo).getDataType());
 
             if (fileInfo.getFileName().indexOf(".img") == (fileInfo.getFileName().length() - 4)) {
@@ -1596,8 +1587,6 @@ public class FileImageXML extends FileXML {
         String fhName;
         int index;
 
-        ViewJProgressBar progressBar = null;
-
         FileInfoBase infoClone = (FileInfoBase) img.getFileInfo(0).clone();
 
         int num = img.getExtents().length;
@@ -1660,15 +1649,8 @@ public class FileImageXML extends FileXML {
             FileRaw rawFile;
 
             rawFile = new FileRaw(img.getFileInfo(0));
-
-            progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                                               UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null, null);
-
-            progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
-            rawFile.addProgressChangeListener(progressBar);
-
-            progressBar.updateValue(0, true);
-
+            linkProgress(rawFile);
+            
             if (img.getNDims() == 3) {
                 rawFile.writeImage3DTo2D(img, options, rawExtension);
                 writeHeader3DTo2D(img, fhName, fileDir, options);
@@ -1693,16 +1675,9 @@ public class FileImageXML extends FileXML {
 
                 FileRaw rawFile;
 
-                rawFile = new FileRaw(fileName, fileDir, img.getFileInfo(0), showProgress, FileBase.READ_WRITE);
-
-                progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                                                   UI.getProgressBarPrefix() + "XML image ...", 0, 100, false, null,
-                                                   null);
-
-                progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
-                rawFile.addProgressChangeListener(progressBar);
-
-                progressBar.updateValue(0, true);
+                rawFile = new FileRaw(fileName, fileDir, img.getFileInfo(0), FileBase.READ_WRITE);
+             
+                linkProgress(rawFile);
 
                 // options.setFileName(rawName);
                 rawFile.writeImage(img, options);
@@ -1733,11 +1708,6 @@ public class FileImageXML extends FileXML {
                 img.setFileInfo(infoClone, 0);
                 throw (error);
             }
-        }
-
-        // With extents from rawFile
-        if (progressBar != null) {
-            progressBar.dispose();
         }
     }
 

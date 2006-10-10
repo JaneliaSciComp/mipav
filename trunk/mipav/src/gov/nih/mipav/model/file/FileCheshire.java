@@ -43,7 +43,7 @@ public class FileCheshire extends FileBase {
     private float[] scaleFactor;
 
     /** DOCUMENT ME! */
-    private boolean showProgress = true;
+    
 
     /** DOCUMENT ME! */
     private int startFirstImage;
@@ -79,13 +79,7 @@ public class FileCheshire extends FileBase {
         fileName = fName;
         fileDir = fDir;
         pBarVisible = show;
-        progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                           ViewUserInterface.getReference().getProgressBarPrefix() +
-                                           "Cheshire image(s) ...", 0, 100, false, null, null);
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-        progressBar.setVisible(isProgressBarVisible());
-        progressBar.updateValue(0, true);
+        fireProgressStateChanged(0);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -326,12 +320,12 @@ public class FileCheshire extends FileBase {
             FileRaw rawFile;
             int offset;
             float[] buffer = new float[imageLength];
-            rawFile = new FileRaw(fileName, fileDir, fileInfo, showProgress, FileBase.READ);
+            rawFile = new FileRaw(fileName, fileDir, fileInfo, FileBase.READ);
 
             for (int t = 0; t < tDim; t++) {
 
                 for (int z = 0; z < zDim; z++) {
-                    progressBar.updateValue(Math.round((float) ((t * zDim) + z) / (nTotalSlices - 1) * 100), false);
+                    fireProgressStateChanged(Math.round((float) ((t * zDim) + z) / (nTotalSlices - 1) * 100));
 
                     if (z == 0) {
 
@@ -369,14 +363,14 @@ public class FileCheshire extends FileBase {
 
             rawFile.raFile.close();
         } catch (IOException error) {
-            progressBar.dispose();
+            
             throw new IOException("FileCheshire: " + error);
         } catch (OutOfMemoryError e) {
-            progressBar.dispose();
+            
             throw (e);
         }
 
-        progressBar.dispose();
+        
 
         // image.calcMinMax();
         return image;

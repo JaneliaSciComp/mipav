@@ -259,9 +259,6 @@ public class FileTiff extends FileBase {
     private int samplesPerPixel = 1;
 
     /** DOCUMENT ME! */
-    private boolean showProgressBar = true;
-
-    /** DOCUMENT ME! */
     private byte[] software;
 
     /** DOCUMENT ME! */
@@ -330,11 +327,10 @@ public class FileTiff extends FileBase {
      *
      * @exception  IOException  if there is an error making the file
      */
-    public FileTiff(ViewUserInterface _UI, String fileName, String fileDir, boolean showProgress) throws IOException {
+    public FileTiff(ViewUserInterface _UI, String fileName, String fileDir) throws IOException {
         UI = _UI;
         this.fileName = fileName;
         this.fileDir = fileDir;
-        this.showProgressBar = showProgress;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -560,20 +556,6 @@ public class FileTiff extends FileBase {
                 bufferSize = xDim * yDim;
             }
 
-            if (progressBar == null) {
-                progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                                   ViewUserInterface.getReference().getProgressBarPrefix() +
-                                                   "TIFF image(s) ...", 0, 100, false, null, null);
-                progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            }
-
-            pBarVisible = !one;
-
-            if (multiFile || !showProgressBar || !ViewUserInterface.getReference().isAppFrameVisible()) {
-                pBarVisible = false;
-            }
-            
-            progressBar.setVisible(pBarVisible);
 
             // long secondTime = System.currentTimeMillis();
             // System.err.println("Time elapsed reading IFDs: " + ((secondTime - firstTime) / 1000));
@@ -649,7 +631,7 @@ public class FileTiff extends FileBase {
 
             fileInfo.setExtents(imgExtents);
             raFile.close();
-            progressBar.dispose();
+            
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -727,18 +709,7 @@ public class FileTiff extends FileBase {
             float[] tempBuffer = new float[imgExtents[0] * imgExtents[1]];
             int alphaIndexStart = 0;
 
-            // build the progress bar
-            if (progressBar == null) {
-                progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() +
-                                                   series.getName(),
-                                                   ViewUserInterface.getReference().getProgressBarPrefix() +
-                                                   "series(s) ...", 0, 100, false, null, null);
-                progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-                progressBar.updateValue(0, false);
-                setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-                progressBar.setVisible(isProgressBarVisible());
-            }
-
+          
             // go through each file name in the vector, loading
             // them into the r,g, and b slot of the final image
             for (int i = 0, j = 0; i < numImages; i++) {
@@ -757,12 +728,11 @@ public class FileTiff extends FileBase {
                 tempName = tempPath.substring(tempPath.lastIndexOf(File.separator) + 1, tempPath.length());
 
                 // use FileTiff to read a single ModelImage
-                tempTiff = new FileTiff(UI, tempName, tempDir, false);
+                tempTiff = new FileTiff(UI, tempName, tempDir);
                 tempImage = tempTiff.readImage(false, true);
 
-                if (progressBar != null) {
-                    progressBar.updateValue(((int) (((float) (i + 1) / (float) numImages) * 100f)), false);
-                }
+                fireProgressStateChanged(((int) (((float) (i + 1) / (float) numImages) * 100f)));
+       
 
                 tempImage.exportData(0, tempBuffer.length, tempBuffer);
                 finalImage.importRGBData((colorIndex + 1), alphaIndexStart, tempBuffer, false);
@@ -786,19 +756,7 @@ public class FileTiff extends FileBase {
             String tempPath, tempDir, tempName;
             FileTiff tempTiff;
             float[] tempBuffer = new float[imgExtents[0] * imgExtents[1]];
-
-            // build the progress bar
-            if (progressBar == null) {
-                progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() +
-                                                   series.getName(),
-                                                   ViewUserInterface.getReference().getProgressBarPrefix() +
-                                                   "series(s) ...", 0, 100, false, null, null);
-                progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-                setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-                progressBar.setVisible(isProgressBarVisible());
-                progressBar.updateValue(0, false);
-            }
-
+         
             // go through each file name in the vector and load them into the slices
             // of the final image (single channel so one per slice)
             for (int i = 0; i < numImages; i++) {
@@ -809,23 +767,15 @@ public class FileTiff extends FileBase {
                 tempName = tempPath.substring(tempPath.lastIndexOf(File.separator) + 1, tempPath.length());
 
                 // use FileTiff to read a single ModelImage
-                tempTiff = new FileTiff(UI, tempName, tempDir, false);
+                tempTiff = new FileTiff(UI, tempName, tempDir);
                 tempImage = tempTiff.readImage(false, true);
 
-                if (progressBar != null) {
-                    progressBar.updateValue(((int) (((float) (i + 1) / (float) numImages) * 100f)), false);
-                }
+                fireProgressStateChanged(((int) (((float) (i + 1) / (float) numImages) * 100f)));
 
                 tempImage.exportData(0, tempBuffer.length, tempBuffer);
                 finalImage.importData((i * tempBuffer.length), tempBuffer, false);
                 tempImage.disposeLocal();
             }
-        }
-
-        // kill the pbar
-        if (progressBar != null) {
-            progressBar.setVisible(false);
-            progressBar.dispose();
         }
 
         // set the fileinfos for each slice
@@ -854,15 +804,6 @@ public class FileTiff extends FileBase {
      */
     public void setFileName(String fName) {
         fileName = fName;
-    }
-
-    /**
-     * Accessor for the progress bar for reading in TIFF files.
-     *
-     * @param  pBar  the new progress bar to use
-     */
-    public void setProgressBar(ProgressBarInterface pBar) {
-        this.progressBar = pBar;
     }
 
     /**
@@ -956,8 +897,8 @@ public class FileTiff extends FileBase {
             progressBar = new ViewJProgressBar("Saving TIFF image", "Saving Image " + fileName, 0, 100, false, null,
                                                null);
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-            progressBar.setVisible(isProgressBarVisible());
+            
+            
             index = fileName.indexOf(".");
             prefix = fileName.substring(0, index); // Used for setting file name
             fileSuffix = fileName.substring(index);
@@ -1149,9 +1090,9 @@ public class FileTiff extends FileBase {
                 if (oneFile == true) { // one file with one or more images
 
                     for (k = options.getBeginSlice(), m = 0; k <= options.getEndSlice(); k++, m++) {
-                        progressBar.updateValue(Math.round((float) (k - options.getBeginSlice() + 1) /
+                        fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
                                                                (options.getEndSlice() - options.getBeginSlice() + 1) *
-                                                               100), options.isRunningInSeparateThread());
+                                                               100));
                         progressBar.setTitle("Saving image " + k);
 
                         if (options.isWritePackBit()) {
@@ -1205,8 +1146,7 @@ public class FileTiff extends FileBase {
                         }
                     }
                 } else {
-                    progressBar.updateValue(Math.round((float) s / (options.getEndSlice()) * 100),
-                                            options.isRunningInSeparateThread());
+                    fireProgressStateChanged(Math.round((float) s / (options.getEndSlice()) * 100));
                     progressBar.setTitle("Saving image " + seq);
 
                     if (options.isWritePackBit()) {
@@ -1240,7 +1180,7 @@ public class FileTiff extends FileBase {
         } catch (OutOfMemoryError error) {
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw error;
         }
 
@@ -1251,7 +1191,7 @@ public class FileTiff extends FileBase {
         }
 
         raFile.close();
-        progressBar.dispose();
+        
     }
 
     /**
@@ -2781,12 +2721,11 @@ public class FileTiff extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j++, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             buffer[i] = byteBuffer[j >> 3] & (1 << (j % 8));
@@ -2803,13 +2742,12 @@ public class FileTiff extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             for (j = 0; j < nBytes; j++, i++) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = byteBuffer[j + currentIndex];
@@ -2822,7 +2760,7 @@ public class FileTiff extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -2836,8 +2774,8 @@ public class FileTiff extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j + currentIndex];
@@ -2858,8 +2796,8 @@ public class FileTiff extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j + currentIndex];
@@ -2881,13 +2819,12 @@ public class FileTiff extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             for (j = 0; j < nBytes; j++, i++) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = byteBuffer[j + currentIndex] & 0xff;
@@ -2902,7 +2839,7 @@ public class FileTiff extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -2916,8 +2853,8 @@ public class FileTiff extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j + currentIndex] & 0xff;
@@ -2938,8 +2875,8 @@ public class FileTiff extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j + currentIndex] & 0xff;
@@ -2961,12 +2898,11 @@ public class FileTiff extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -2990,12 +2926,11 @@ public class FileTiff extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -3019,12 +2954,11 @@ public class FileTiff extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -3050,12 +2984,11 @@ public class FileTiff extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -3083,12 +3016,11 @@ public class FileTiff extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -3116,14 +3048,13 @@ public class FileTiff extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             // For the moment I compress RGB images to unsigned bytes.
                             for (j = 0; j < nBytes; j += 3, i += 4) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = 255;
@@ -3141,7 +3072,7 @@ public class FileTiff extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -3155,8 +3086,8 @@ public class FileTiff extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         if (rgbLoc == 1) {
@@ -3187,8 +3118,8 @@ public class FileTiff extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         if (rgbLoc == 1) {
@@ -3218,14 +3149,14 @@ public class FileTiff extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + progress) /
-                                                                               progressLength * 100), false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                               progressLength * 100));
                                     }
 
                                     buffer[i] = 255;
@@ -3244,14 +3175,13 @@ public class FileTiff extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     buffer[i + 2] = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -3269,14 +3199,13 @@ public class FileTiff extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     buffer[i + 3] = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -3297,14 +3226,13 @@ public class FileTiff extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             // For the moment I compress RGB images to unsigned bytes.
                             for (j = 0; j < nBytes; j += 6, i += 4) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = 65535;
@@ -3346,14 +3274,14 @@ public class FileTiff extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                                     if ((((i / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + progress) /
-                                                                               progressLength * 100), false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                               progressLength * 100));
                                     }
 
                                     buffer[i] = 65535;
@@ -3379,14 +3307,13 @@ public class FileTiff extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                                     if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -3411,14 +3338,13 @@ public class FileTiff extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                                     if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j + currentIndex);
@@ -3508,12 +3434,12 @@ public class FileTiff extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imageSlice;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
 
                 for (j = 0; j < nBytes; j += 8, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = byteBuffer[j + currentIndex] & 0xff;
@@ -3582,7 +3508,7 @@ public class FileTiff extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         nLength = 8 * ((nBytes + 63) >> 6); // new BitSet(size) = new long[(size+63)>>6];
                         if (lzwCompression) {
 
@@ -3603,8 +3529,8 @@ public class FileTiff extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     buffer[x + (y * xDim)] = decomp[j >> 3] & (1 << (j % 8));
@@ -3627,8 +3553,8 @@ public class FileTiff extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     buffer[x + (y * xDim)] = byteBuffer[j >> 3] & (1 << (j % 8));
@@ -3670,7 +3596,7 @@ public class FileTiff extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             if (lzwCompression) {
 
@@ -3685,8 +3611,8 @@ public class FileTiff extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[x + (y * xDim)] = decomp[j] & 0xff;
@@ -3707,8 +3633,8 @@ public class FileTiff extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[x + (y * xDim)] = byteBuffer[j];
@@ -3740,7 +3666,7 @@ public class FileTiff extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -3756,8 +3682,8 @@ public class FileTiff extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -3789,8 +3715,8 @@ public class FileTiff extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -3837,7 +3763,7 @@ public class FileTiff extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             if (lzwCompression) {
 
@@ -3852,8 +3778,8 @@ public class FileTiff extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[x + (y * xDim)] = decomp[j] & 0xff;
@@ -3874,8 +3800,8 @@ public class FileTiff extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -3907,7 +3833,7 @@ public class FileTiff extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -3923,8 +3849,8 @@ public class FileTiff extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -3956,8 +3882,8 @@ public class FileTiff extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -3997,14 +3923,13 @@ public class FileTiff extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2) {
 
                             if ((x < xDim) && (y < yDim)) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 b1 = getUnsignedByte(byteBuffer, j);
@@ -4051,7 +3976,7 @@ public class FileTiff extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         if (lzwCompression) {
 
                             if (decomp == null) {
@@ -4065,8 +3990,8 @@ public class FileTiff extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(decomp, j);
@@ -4093,8 +4018,8 @@ public class FileTiff extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -4142,7 +4067,7 @@ public class FileTiff extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         if (lzwCompression) {
 
                             if (decomp == null) {
@@ -4156,8 +4081,8 @@ public class FileTiff extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(decomp, j);
@@ -4190,8 +4115,8 @@ public class FileTiff extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -4243,7 +4168,7 @@ public class FileTiff extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         if (lzwCompression) {
 
                             if (decomp == null) {
@@ -4257,8 +4182,8 @@ public class FileTiff extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(decomp, j);
@@ -4291,8 +4216,8 @@ public class FileTiff extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -4349,7 +4274,7 @@ public class FileTiff extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             if (lzwCompression) {
 
@@ -4368,8 +4293,8 @@ public class FileTiff extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[4 * (x + (y * xDim))] = 255;
@@ -4394,8 +4319,8 @@ public class FileTiff extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[4 * (x + (y * xDim))] = getUnsignedByte(decomp, j + 3);
@@ -4420,8 +4345,8 @@ public class FileTiff extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[4 * (x + (y * xDim))] = 255;

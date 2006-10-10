@@ -2065,12 +2065,7 @@ public class FileLSM extends FileBase {
                 imageSlice = 1;
                 image.setFileInfo(fileInfo, 0);
             }
-
-            progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                               ViewUserInterface.getReference().getProgressBarPrefix() +
-                                               "LSM image(s) ...", 0, 100, false, null, null);
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
+            
             
             for (i = 0; i < imageSlice; i++) {
 
@@ -2106,7 +2101,7 @@ public class FileLSM extends FileBase {
             }
 
             raFile.close();
-            progressBar.dispose();
+            
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -3250,12 +3245,11 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j++, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             buffer[i] = byteBuffer[j >> 3] & (1 << (j % 8));
@@ -3274,13 +3268,12 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             for (j = 0; j < nBytes; j++, i++) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = byteBuffer[j];
@@ -3292,7 +3285,7 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -3306,8 +3299,8 @@ public class FileLSM extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j];
@@ -3328,8 +3321,8 @@ public class FileLSM extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j];
@@ -3358,13 +3351,12 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             for (j = 0; j < nBytes; j++, i++) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = byteBuffer[j] & 0xff;
@@ -3376,7 +3368,7 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -3390,8 +3382,8 @@ public class FileLSM extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, j++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j] & 0xff;
@@ -3412,8 +3404,8 @@ public class FileLSM extends FileBase {
                                     for (iNext = 0; iNext < iCount; iNext++, i++) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[i] = byteBuffer[j] & 0xff;
@@ -3435,12 +3427,11 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -3471,12 +3462,11 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -3500,12 +3490,11 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -3536,12 +3525,11 @@ public class FileLSM extends FileBase {
                         progress = slice * buffer.length;
                         progressLength = buffer.length * imageSlice;
                         mod = progressLength / 10;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -3573,14 +3561,13 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             // For the moment I compress RGB images to unsigned bytes.
                             for (j = 0; j < nBytes; j += 3, i += 4) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = 255;
@@ -3602,14 +3589,14 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + progress) /
-                                                                               progressLength * 100), false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                               progressLength * 100));
                                     }
 
                                     buffer[i] = 255;
@@ -3635,14 +3622,13 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     if (greenOffset == 1) {
@@ -3666,14 +3652,13 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j++, i += 4) {
 
                                     if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     if (blueOffset == 2) {
@@ -3703,14 +3688,13 @@ public class FileLSM extends FileBase {
                             progress = slice * buffer.length;
                             progressLength = buffer.length * imageSlice;
                             mod = progressLength / 10;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             // For the moment I compress RGB images to unsigned bytes.
                             for (j = 0; j < nBytes; j += 6, i += 4) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 buffer[i] = 65535;
@@ -3756,14 +3740,14 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 // For the moment I compress RGB images to unsigned bytes
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                                     if ((((i / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + progress) /
-                                                                               progressLength * 100), false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + progress) /
+                                                                               progressLength * 100));
                                     }
 
                                     buffer[i] = 65535;
@@ -3808,14 +3792,13 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                                     if ((((i / 3) + (buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -3860,14 +3843,13 @@ public class FileLSM extends FileBase {
                                 progress = slice * buffer.length;
                                 progressLength = buffer.length * imageSlice;
                                 mod = progressLength / 10;
-                                progressBar.setVisible(isProgressBarVisible());
+                                
 
                                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                                     if ((((i / 3) + (2 * buffer.length / 3) + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
-                                                                                    progress) / progressLength * 100),
-                                                                false);
+                                        fireProgressStateChanged(Math.round((float) ((i / 3) + (2 * buffer.length / 3) +
+                                                                                    progress) / progressLength * 100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7313,7 +7295,7 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         nLength = 8 * ((nBytes + 63) >> 6); // new BitSet(size) = new long[(size+63)>>6];
 
                         if (lzwCompression) {
@@ -7335,8 +7317,8 @@ public class FileLSM extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     buffer[x + (y * xDim)] = decomp[j >> 3] & (1 << (j % 8));
@@ -7360,8 +7342,8 @@ public class FileLSM extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     buffer[x + (y * xDim)] = byteBuffer[j >> 3] & (1 << (j % 8));
@@ -7403,7 +7385,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             if (lzwCompression) {
 
@@ -7418,8 +7400,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[x + (y * xDim)] = decomp[j] & 0xff;
@@ -7441,8 +7423,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[x + (y * xDim)] = byteBuffer[j];
@@ -7474,7 +7456,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -7490,8 +7472,8 @@ public class FileLSM extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -7523,8 +7505,8 @@ public class FileLSM extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j];
@@ -7572,7 +7554,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             if (lzwCompression) {
 
@@ -7587,8 +7569,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[x + (y * xDim)] = decomp[j] & 0xff;
@@ -7610,8 +7592,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -7643,7 +7625,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
                             j = 0;
 
                             while (j < nBytes) {
@@ -7659,8 +7641,8 @@ public class FileLSM extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -7692,8 +7674,8 @@ public class FileLSM extends FileBase {
                                         if ((x < xDim) && (y < yDim)) {
 
                                             if (((i + progress) % mod) == 0) {
-                                                progressBar.updateValue(Math.round((float) (i + progress) /
-                                                                                       progressLength * 100), false);
+                                                fireProgressStateChanged(Math.round((float) (i + progress) /
+                                                                                       progressLength * 100));
                                             }
 
                                             buffer[x + (y * xDim)] = byteBuffer[j] & 0xff;
@@ -7733,14 +7715,13 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
                         for (j = 0; j < nBytes; j += 2) {
 
                             if ((x < xDim) && (y < yDim)) {
 
                                 if (((i + progress) % mod) == 0) {
-                                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                            false);
+                                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                                 }
 
                                 b1 = getUnsignedByte(byteBuffer, j);
@@ -7787,7 +7768,7 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
 
                         if (lzwCompression) {
 
@@ -7802,8 +7783,8 @@ public class FileLSM extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(decomp, j);
@@ -7830,8 +7811,8 @@ public class FileLSM extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7879,7 +7860,7 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
 
                         if (lzwCompression) {
 
@@ -7894,8 +7875,8 @@ public class FileLSM extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(decomp, j);
@@ -7927,8 +7908,8 @@ public class FileLSM extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7978,7 +7959,7 @@ public class FileLSM extends FileBase {
                         progress = slice * xDim * yDim;
                         progressLength = imageSlice * xDim * yDim;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
 
                         if (lzwCompression) {
 
@@ -7993,8 +7974,8 @@ public class FileLSM extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(decomp, j);
@@ -8028,8 +8009,8 @@ public class FileLSM extends FileBase {
                                 if ((x < xDim) && (y < yDim)) {
 
                                     if (((i + progress) % mod) == 0) {
-                                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                               100), false);
+                                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                               100));
                                     }
 
                                     b1 = getUnsignedByte(byteBuffer, j);
@@ -8083,7 +8064,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim;
                             progressLength = imageSlice * xDim * yDim;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             if (lzwCompression) {
                                 // System.err.println("Read " + nBytes + " from raFile");
@@ -8100,8 +8081,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[4 * (x + (y * xDim))] = 255;
@@ -8126,8 +8107,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((i + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength *
-                                                                                   100), false);
+                                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength *
+                                                                                   100));
                                         }
 
                                         buffer[4 * (x + (y * xDim))] = 255;
@@ -8173,7 +8154,7 @@ public class FileLSM extends FileBase {
                             progress = slice * xDim * yDim * 3;
                             progressLength = imageSlice * xDim * yDim * 3;
                             mod = progressLength / 100;
-                            progressBar.setVisible(isProgressBarVisible());
+                            
 
                             if (lzwCompression) {
                                 // System.err.println("Read " + nBytes + " from raFile");
@@ -8195,8 +8176,8 @@ public class FileLSM extends FileBase {
                                     if ((x < xDim) && (y < yDim)) {
 
                                         if (((counter + progress) % mod) == 0) {
-                                            progressBar.updateValue(Math.round((float) (counter + progress) /
-                                                                                   progressLength * 100), false);
+                                            fireProgressStateChanged(Math.round((float) (counter + progress) /
+                                                                                   progressLength * 100));
                                         }
 
                                         buffer[i] = 255;

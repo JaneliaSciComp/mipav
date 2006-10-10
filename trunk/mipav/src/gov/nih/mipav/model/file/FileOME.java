@@ -185,7 +185,7 @@ public class FileOME extends FileBase {
             FileRaw rawFile;
 
             // imageFileName was parsed from the "image".xml file.
-            rawFile = new FileRaw(fileDir + imageFileName, fileInfo, showProgress, FileBase.READ);
+            rawFile = new FileRaw(fileDir + imageFileName, fileInfo, FileBase.READ);
 
             int offset = 0;
 

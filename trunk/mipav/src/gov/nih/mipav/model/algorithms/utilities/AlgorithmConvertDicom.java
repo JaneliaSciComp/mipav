@@ -333,9 +333,6 @@ public class AlgorithmConvertDicom extends AlgorithmBase {
                     FileAvi aviFile;
                     aviFile = new FileAvi(ViewUserInterface.getReference(), name, newDirectory);
                     aviFile.setCompressionQuality(quality);
-
-                    aviFile.setProgressBarVisible(false);
-
                     if (compression != 0) {
                         fireProgressStateChanged("Encoding image as compressed avi...");
                     } else {

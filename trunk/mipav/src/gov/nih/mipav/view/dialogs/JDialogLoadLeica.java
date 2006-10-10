@@ -408,7 +408,7 @@ public class JDialogLoadLeica extends JDialogBase {
                 tempPath = (String) series.getFileNames().elementAt(0);
                 tempDir = tempPath.substring(0, tempPath.lastIndexOf(File.separator) + 1);
                 tempName = tempPath.substring(tempPath.lastIndexOf(File.separator) + 1, tempPath.length());
-                tempTiff = new FileTiff(userInterface, tempName, tempDir, true);
+                tempTiff = new FileTiff(userInterface, tempName, tempDir);
 
                 image = tempTiff.readImage(false, false);
                 lut = tempTiff.getModelLUT();
@@ -418,7 +418,7 @@ public class JDialogLoadLeica extends JDialogBase {
                 image.getFileInfo()[0].setUnitsOfMeasure(FileInfoBase.MICROMETERS, 0);
                 image.setImageName(series.getName());
             } else {
-                tempTiff = new FileTiff(userInterface, "", "", true);
+                tempTiff = new FileTiff(userInterface, "", "");
                 image = tempTiff.readLeicaSeries(series);
             }
 

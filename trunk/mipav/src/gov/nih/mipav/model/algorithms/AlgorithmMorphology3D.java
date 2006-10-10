@@ -470,7 +470,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
 
         int[] progressValues = getProgressValues();
 
-        this.setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 95));
+        this.setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95));
         deleteObjects(min, max, true);
 
         this.setProgressValues(progressValues);
@@ -883,21 +883,21 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
             case CLOSE:
 
                 progressValues = getProgressValues();
-                setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 dilate(true);
 
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
-                                  generateProgressValue(progressValues[0], progressValues[1], 100));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 erode(false);
                 break;
 
             case OPEN:
                 progressValues = getProgressValues();
-                setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
+                setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 erode(true);
 
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
-                                  generateProgressValue(progressValues[0], progressValues[1], 100));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                                  ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 dilate(false);
                 break;
 
@@ -2609,7 +2609,7 @@ kernelLoop:
         AlgorithmWatershed ws = null;
 
         int[] progressValues = getProgressValues();
-        setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 45));
+        setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45));
 
         try {
             deleteObjects(min, max, true);
@@ -2630,8 +2630,8 @@ kernelLoop:
             return;
         }
 
-        setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 45),
-                          generateProgressValue(progressValues[0], progressValues[1], 90));
+        setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45),
+                          ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 90));
 
         ultimateErode(true); // forms list of points (one point per object, hopefully)
 
@@ -2812,8 +2812,8 @@ kernelLoop:
         }
 
         fireProgressStateChanged("Deleting objects ...");
-        setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 95),
-                          generateProgressValue(progressValues[0], progressValues[1], 100));
+        setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95),
+                          ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
         deleteObjects(min, max, false);
 
         if (threadStopped) {
@@ -3056,12 +3056,12 @@ kernelLoop:
 
         int[] progressValues = getProgressValues();
 
-        this.setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 30));
+        this.setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 30));
 
         distanceMap(true);
 
-        this.setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 30),
-                               generateProgressValue(progressValues[0], progressValues[1], 95));
+        this.setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 30),
+                               ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95));
 
         identifyObjects(true); // results are in destImage
 

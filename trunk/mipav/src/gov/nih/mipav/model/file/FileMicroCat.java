@@ -374,7 +374,6 @@ public class FileMicroCat extends FileBase {
         FileInfoMicroCat fileInfo;
         String[] fileList;
         int i;
-        ViewJProgressBar progressBar = null;
         int length;
         int nImages;
 
@@ -391,15 +390,7 @@ public class FileMicroCat extends FileBase {
                 return null;
             }
 
-            progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                               ViewUserInterface.getReference().getProgressBarPrefix() +
-                                               "Micro Cat image(s) ...", 0, 100, false, null, null);
-
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(!quiet && !one && ViewUserInterface.getReference().isAppFrameVisible());
-            progressBar.setVisible(isProgressBarVisible());
-            
-            progressBar.updateValue(0, true);
+            fireProgressStateChanged(0);
             i = 0;
 
 
@@ -454,13 +445,13 @@ public class FileMicroCat extends FileBase {
 
 
             for (int m = 0; m < nImages; m++) {
-                imageFile = new FileRaw(fileList[m], fileDir, fileInfo, true, FileBase.READ);
-                progressBar.updateValue((int) (((float) m / (float) nImages) * 100.0f), false);
+                imageFile = new FileRaw(fileList[m], fileDir, fileInfo, FileBase.READ);
+                fireProgressStateChanged((int) (((float) m / (float) nImages) * 100.0f));
                 imageFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
                 image.importData(m * length, buffer, false);
             }
 
-            progressBar.dispose();
+            
         } catch (IOException error) {
 
             if (image != null) {
@@ -469,11 +460,6 @@ public class FileMicroCat extends FileBase {
             }
 
             buffer = null;
-
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             System.gc();
 
             if (!quiet) {
@@ -490,10 +476,6 @@ public class FileMicroCat extends FileBase {
 
             buffer = null;
 
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
-
             System.gc();
 
             if (!quiet) {
@@ -509,10 +491,6 @@ public class FileMicroCat extends FileBase {
             }
 
             buffer = null;
-
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
 
             System.gc();
 

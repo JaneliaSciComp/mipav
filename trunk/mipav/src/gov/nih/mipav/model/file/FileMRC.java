@@ -154,8 +154,8 @@ public class FileMRC extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading MRC file...", 0, 100, true, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-            progressBar.setVisible(isProgressBarVisible());
+            
+            
 
             file = new File(fileDir + fileName);
 
@@ -231,12 +231,12 @@ public class FileMRC extends FileBase {
                 dataSize = 3 * nx * ny * nz;
             } else if (mode == 17) {
                 raFile.close();
-                progressBar.dispose();
+                
                 MipavUtil.displayError("Compressed RGB mode not implemented");
                 throw new IOException();
             } else {
                 raFile.close();
-                progressBar.dispose();
+                
                 MipavUtil.displayError("mode is an illegal " + mode);
                 throw new IOException();
             }
@@ -427,7 +427,7 @@ public class FileMRC extends FileBase {
 
             image.calcMinMax();
             raFile.close();
-            progressBar.dispose();
+            
 
             return image;
         } catch (Exception e) {
@@ -480,8 +480,8 @@ public class FileMRC extends FileBase {
         progressBar = new ViewJProgressBar(fileName, "Writing MRC file...", 0, 100, true, null, null);
 
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-        progressBar.setVisible(isProgressBarVisible());
+        
+        
 
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
@@ -765,7 +765,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged(count * 100 / numberSlices);
                         image.exportSliceXY(i, byteBuffer);
                         raFile.write(byteBuffer);
                     } // for (z = sBegin; z <= sEnd; z++,count++)
@@ -783,7 +783,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged(count * 100 / numberSlices);
                         image.exportSliceXY(i, shortBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -815,7 +815,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged(count * 100 / numberSlices);
                         image.exportSliceXY(i, floatBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -848,7 +848,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged(count * 100 / numberSlices);
                         image.exportComplexData(2 * i * sliceSize, sliceSize, floatBuffer, floatBufferI);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -891,7 +891,7 @@ public class FileMRC extends FileBase {
 
                     for (z = sBegin; z <= sEnd; z++, count++) {
                         i = (t * zDim) + z;
-                        progressBar.updateValue(count * 100 / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged(count * 100 / numberSlices);
                         image.exportRGBData(1, 4 * i * sliceSize, sliceSize, byteBufferR);
                         image.exportRGBData(2, 4 * i * sliceSize, sliceSize, byteBufferG);
                         image.exportRGBData(3, 4 * i * sliceSize, sliceSize, byteBufferB);
@@ -910,7 +910,7 @@ public class FileMRC extends FileBase {
         } // switch(image.getType())
 
         raFile.close();
-        progressBar.dispose();
+        
     }
 
     /**
@@ -945,11 +945,11 @@ public class FileMRC extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 100;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = byteBuffer[j] & 0xff;
@@ -970,11 +970,11 @@ public class FileMRC extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -1003,11 +1003,11 @@ public class FileMRC extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -1040,13 +1040,13 @@ public class FileMRC extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
 
                 // For the moment I compress RGB images to unsigned bytes.
                 for (j = 0; j < nBytes; j += 3, i += 4) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = 255;
@@ -1092,11 +1092,11 @@ public class FileMRC extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -1134,11 +1134,11 @@ public class FileMRC extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * imgExtents[2];
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 8, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);

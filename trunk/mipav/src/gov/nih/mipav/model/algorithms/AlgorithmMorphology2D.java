@@ -1524,32 +1524,32 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 break;
 
             case CLOSE:
-            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
+            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
-                		generateProgressValue(progressValues[0], progressValues[1], 100));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 erode(false, iterationsE);
                 break;
 
             case OPEN:
-            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
+            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 erode(true, iterationsE);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
-                		generateProgressValue(progressValues[0], progressValues[1], 100));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 dilate(false, iterationsD);
                 break;
 
             case PARTICLE_ANALYSIS_NEW:
 
                 // open
-            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 15));
+            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 15));
                 fillHoles(true);
 
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 15),
-                		generateProgressValue(progressValues[0], progressValues[1], 30));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 15),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 30));
                 erode(true, iterationsOpen);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 30),
-                		generateProgressValue(progressValues[0], progressValues[1], 45));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 30),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45));
                 dilate(true, iterationsOpen);
 
                 if (kernelTypeErode == SIZED_CIRCLE) {
@@ -1559,22 +1559,22 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 }
 
                 makeKernel(CONNECTED4);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 45),
-                		generateProgressValue(progressValues[0], progressValues[1], 60));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 45),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 60));
                 erode(true, iterationsE);
 
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 60),
-                		generateProgressValue(progressValues[0], progressValues[1], 75));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 60),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 75));
                 skeletonize(numPruningPixels, true);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 75),
-                		generateProgressValue(progressValues[0], progressValues[1], 80));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 75),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 80));
                 pruneAuto(true);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 80),
-                		generateProgressValue(progressValues[0], progressValues[1], 95));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 80),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95));
                 particleAnalysisNew(true);
                 setMinMax(0, 1000000);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 95),
-                		generateProgressValue(progressValues[0], progressValues[1], 100));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 95),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 identifyObjects(false);
                 break;
 
@@ -1599,10 +1599,10 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
                 break;
 
             case ULTIMATE_ERODE:
-            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
+            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 skeletonize(numPruningPixels, true);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
-                		generateProgressValue(progressValues[0], progressValues[1], 100));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 pruneAuto(false);
                 break;
 
@@ -3470,8 +3470,8 @@ kernelLoop:
           try {
         	
             // add set minimum dist
-        	  setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 0),
-            		generateProgressValue(progressValues[0], progressValues[1], 25));
+        	  setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 0),
+            		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 25));
         	  ultimateErode(true); // forms list of points (one point per object)
         	  setProgressValues(progressValues);
 
@@ -3654,8 +3654,8 @@ kernelLoop:
        fireProgressStateChanged(90);
        
 
-       setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 90),
-       		generateProgressValue(progressValues[0], progressValues[1], 100));
+       setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 90),
+       		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
        deleteObjects(min, max, false);
        setProgressValues(progressValues);
 
@@ -3699,7 +3699,7 @@ kernelLoop:
             // add set minimum dist           
 
             srcImage.exportData(0, xDim * yDim, imgBuffer); // locks and releases lock
-            setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 60));
+            setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 60));
             distanceMap(true);
             setProgressValues(progressValues);
             destExtents = new int[2];

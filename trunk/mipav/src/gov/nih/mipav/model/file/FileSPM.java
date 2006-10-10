@@ -108,7 +108,7 @@ public class FileSPM extends FileBase {
     private ModelImage image;
 
     /** DOCUMENT ME! */
-    private boolean showProgress = true;
+    
 
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
@@ -123,11 +123,10 @@ public class FileSPM extends FileBase {
      * @param  fDir   File directory.
      * @param  show   Flag for showing the progress bar.
      */
-    public FileSPM(ViewUserInterface _UI, String fName, String fDir, boolean show) {
+    public FileSPM(ViewUserInterface _UI, String fName, String fDir) {
         UI = _UI;
         fileName = fName;
         fileDir = fDir;
-        showProgress = show;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -601,7 +600,7 @@ public class FileSPM extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, showProgress,
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
                                   FileBase.READ);
 
             int offset = 0;
@@ -655,8 +654,7 @@ public class FileSPM extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, showProgress,
-                                  FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
             rawFile.readImage(buffer, 0, fileInfo.getDataType());
             rawFile.raFile.close();
             flipTopBottom(buffer, fileInfo);
@@ -886,7 +884,7 @@ public class FileSPM extends FileBase {
 
             try {
                 FileRaw rawFile;
-                rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), true, FileBase.READ_WRITE);
+                rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
                 flipTopBottom(image);
                 rawFile.writeImage(image, options);
                 nImagesSaved = rawFile.getNImages();

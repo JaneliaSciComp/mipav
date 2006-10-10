@@ -154,9 +154,7 @@ public class FileBioRad extends FileBase {
         try {
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
-            progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                               ViewUserInterface.getReference().getProgressBarPrefix() +
-                                               "BioRad image(s) ...", 0, 100, false, null, null);
+            
             xDim = getSignedShort(endianess); // 0
             yDim = getSignedShort(endianess); // 2
             zDim = getSignedShort(endianess); // 4
@@ -166,7 +164,7 @@ public class FileBioRad extends FileBase {
             byteFormat = (short) getSignedShort(endianess); // 14
             num = (short) getSignedShort(endianess); // 16
 
-            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
+            
 
             for (i = 0; i < 32; i++) {
                 name[i] = 0;
@@ -267,7 +265,7 @@ public class FileBioRad extends FileBase {
             } // for (i = 0; i < imageSlice; i++)
 
             raFile.close();
-            progressBar.dispose();
+            
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -311,11 +309,11 @@ public class FileBioRad extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * zDim;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = byteBuffer[j] & 0xff;
@@ -333,11 +331,11 @@ public class FileBioRad extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * zDim;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -359,13 +357,13 @@ public class FileBioRad extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * zDim;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
 
                 // For the moment I compress RGB images to unsigned bytes.
                 for (j = 0; j < nBytes; j += 2, i += 4) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), true);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = 255;

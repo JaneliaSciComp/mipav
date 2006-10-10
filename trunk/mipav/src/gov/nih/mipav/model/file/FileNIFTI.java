@@ -200,7 +200,7 @@ public class FileNIFTI extends FileBase {
     private short sform_code;
 
     /** DOCUMENT ME! */
-    private boolean showProgress = true;
+    
 
     /** DOCUMENT ME! */
     private int slice_dim = 0;
@@ -257,11 +257,10 @@ public class FileNIFTI extends FileBase {
      * @param  fDir   File directory.
      * @param  show   Flag for showing the progress bar.
      */
-    public FileNIFTI(ViewUserInterface _UI, String fName, String fDir, boolean show) {
+    public FileNIFTI(ViewUserInterface _UI, String fName, String fDir) {
         UI = _UI;
         fileName = fName;
         fileDir = fDir;
-        showProgress = show;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -1743,7 +1742,7 @@ public class FileNIFTI extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, showProgress,
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
                                   FileBase.READ);
 
             if (oneFileStorage) {
@@ -1884,7 +1883,7 @@ public class FileNIFTI extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, showProgress,
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
                                   FileBase.READ);
 
             if (oneFileStorage) {
@@ -2084,7 +2083,7 @@ public class FileNIFTI extends FileBase {
 
             try {
                 FileRaw rawFile;
-                rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), true, FileBase.READ_WRITE);
+                rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
                 flipTopBottom(image);
 
                 if (oneFile) {
