@@ -147,32 +147,13 @@ public class ScriptRunner {
 
             voiTable = new VOITable(scriptFile, voiPathList);
 
-            Parser.runScript(scriptFile);
+            ScriptThread thread = new ScriptThread(scriptFile);
+            thread.start();
         } catch (ParserException pe) {
-            MipavUtil.displayError("Error executing script:\n" + pe);
-            Preferences.debug("script runner:\tAborted script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
-
-            // if this exception was caused by another exception, print it to stderr
-            if (pe.getCause() != null) {
-                pe.printStackTrace();
-
-                String message = "script runner:\tScript error:\t" + pe.getCause().getClass().getName() + "\n";
-
-                for (int i = 0; i < pe.getCause().getStackTrace().length; i++) {
-                    message += "\t" + pe.getCause().getStackTrace()[i] + "\n";
-                }
-
-                Preferences.debug(message, Preferences.DEBUG_SCRIPTING);
-            }
-
-            setRunning(false);
+            handleParserException(pe);
 
             return false;
         }
-
-        setRunning(false);
-
-        Preferences.debug("script runner:\tFinished script execution:\t" + file + "\n", Preferences.DEBUG_SCRIPTING);
 
         return true;
     }
@@ -210,11 +191,79 @@ public class ScriptRunner {
     }
 
     /**
+     * Handle a script parser exception by printing out the location of the problem and stopping script execution.
+     *
+     * @param  pe  The parser exception to handle.
+     */
+    protected void handleParserException(ParserException pe) {
+        MipavUtil.displayError("Error executing script:\n" + pe);
+        Preferences.debug("script runner:\tAborted script execution:\t" + pe.getParsedFileName() + "\n",
+                          Preferences.DEBUG_SCRIPTING);
+
+        // if this exception was caused by another exception, print it to stderr
+        if (pe.getCause() != null) {
+            pe.printStackTrace();
+
+            String message = "script runner:\tScript error:\t" + pe.getCause().getClass().getName() + "\n";
+
+            for (int i = 0; i < pe.getCause().getStackTrace().length; i++) {
+                message += "\t" + pe.getCause().getStackTrace()[i] + "\n";
+            }
+
+            Preferences.debug(message, Preferences.DEBUG_SCRIPTING);
+        }
+
+        setRunning(false);
+    }
+
+    /**
      * Changes the flag indicating whether a script is currently being run.
      *
      * @param  running  Whether we are running a script.
      */
     protected synchronized void setRunning(boolean running) {
         isRunning = running;
+    }
+
+    //~ Inner Classes --------------------------------------------------------------------------------------------------
+
+    /**
+     * A separate thread used to execute a given script (the image and voi table should already be set up before the
+     * thread is started).
+     */
+    private class ScriptThread extends Thread {
+
+        /** The file name of the script to execute in this thread. */
+        private String curScriptFile;
+
+        /**
+         * Creates a new ScriptThread object.
+         *
+         * @param  file  The script file to execute in this thread.
+         */
+        public ScriptThread(String file) {
+            curScriptFile = file;
+        }
+
+        /**
+         * Start execution of the script.
+         */
+        public void run() {
+
+            try {
+                Parser.runScript(curScriptFile);
+
+                setRunning(false);
+
+                Preferences.debug("script runner:\tFinished script execution:\t" + curScriptFile + "\n",
+                                  Preferences.DEBUG_SCRIPTING);
+            } catch (ParserException pe) {
+                handleParserException(pe);
+
+                synchronized (ScriptRunner.getReference()) {
+                    ScriptRunner.getReference().notifyAll();
+                }
+            }
+        }
     }
 }
