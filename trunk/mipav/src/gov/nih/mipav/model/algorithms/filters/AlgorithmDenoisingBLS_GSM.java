@@ -687,6 +687,19 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         Vector pyrh;
         int bandNum;
         int nband;
+        double aux[] = null;
+        double auxn[] = null;
+        int nsx[] = new int[1];
+        int nsy[] = new int[1];
+        int nsxn[] = new int[1];
+        int nsyn[] = new int[1];
+        boolean prnt;
+        double BL[][][];
+        double BLn[][][];
+        double var;
+        int i, j;
+        int index;
+        double imagArray[];
         pyr = buildSFpyr(fn, fnx, fny, nScales, nOrientations-1, 1.0, pind);
         if (error == 1) {
             return null;
@@ -698,33 +711,264 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         pyrh = pyr;
         bandNum = pind.size()/2;
         for (nband = 1; nband <= bandNum-1; nband++) {
-            fireProgressStateChanged((100 * nband)/ (bandNum-1));    
+            fireProgressStateChanged((100 * nband)/ (bandNum-1));
+            aux = pyrBand(pyr, pind, nband-1,nsx, nsy);
+            auxn = pyrBand(pyrN, pind, nband-1, nsxn, nsyn);
+            prnt = useParent && (nband < bandNum - 1 - nOrientations) &&
+                   (nband > 1);
+            if (prnt) {
+                BL = new double[nsx[0]][nsy[0]][2];
+                BLn = new double[nsx[0]][nsy[0]][2];
+            } // if (prnt)
+            else {
+                BL = new double[nsx[0]][nsy[0]][1];
+                BLn = new double[nsx[0]][nsy[0]][1];
+            } // else 
+            // Because we are discarding 2 coefficients on every dimension
+            var = Math.sqrt(((nsx[0]-2)*(nsy[0]-2))/(nsx[0]*nsy[0]));
+            for (j = 0; j < nsy[0]; j++) {
+                for (i = 0; i < nsx[0]; i++) {
+                    index = i + j * nsx[0];
+                    BL[i][j][0] = aux[index];
+                    BLn[i][j][0] = auxn[index]*var;
+                }
+            }
+            if (prnt) {
+                aux = pyrBand(pyr, pind, nband+nOrientations-1, nsxn, nsyn);
+                imagArray = new double[aux.length];
+                expand(aux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
+            } // if (prnt)
         } // for (nband = 1; nband <= bandNum-1; nband++)
         return fh;
     }
     
-    private double[][] pyrBand(Vector pyr, Vector pind, int band) {
-        double res[][] = null;
-        int ind;
-        int i;
-        int x;
-        int y;
-        int indices[];
+    /**
+     * Port of expand.m, written by JPM, 5/1//95
+     * It expands (spatially) an image into a factor f in each dimension.
+     * It does it filling in with zeros the expanded Fourier domain.
+     * @param t
+     * @param f
+     * @param mx
+     * @param my
+     * @param ter
+     * @param tei
+     */
+    private void expand(double[] t, double f, int mx, int my,
+                        double [] ter, double [] tei) {
+        FFTUtility fftUtil;
+        double tr[] = null;
+        double ti[] = null;
+        int i, j, i2, j2;
+        double f2;
+        int cx;
+        int cy;
+        boolean evenmx;
+        boolean evenmy;
+        int x1, x2, y1, y2;
+        int xs;
+        int ys;
+        int xf;
+        int yf;
+        double esqr;
+        double esqi;
+        int offset[] = new int[2];
         
-        ind = 1;
-        for (i = 0; i <= band-2; i++) {
-            x = ((Integer)pind.get(2*i)).intValue();
-            y = ((Integer)pind.get(2*i+1)).intValue();
-            ind = ind + x*y;
+        mx = (int)Math.round(f*mx);
+        my = (int)Math.round(f*my);
+        ter = new double[mx*my];
+        tei = new double[mx*my];
+        
+        //forward FFT
+        tr = new double[mx*my];
+        ti = new double[mx*my];
+        for (i = 0; i < tr.length; i++) {
+            tr[i] = t[i];
+        }
+        fftUtil = new FFTUtility(tr, ti, my, mx, 1, -1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        fftUtil = new FFTUtility(tr, ti, 1, my, mx, -1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        center(tr, ti, mx, my);
+        f2 = f * f;
+        for (i = 0; i < tr.length; i++) {
+            tr[i] = f2 * tr[i];
+            ti[i] = f2 * ti[i];
         }
         
-        x = ((Integer)pind.get(2*(band-1))).intValue();
-        y = ((Integer)pind.get(2*(band-1)+1)).intValue();
-        indices = new int[x*y];
-        for (i = 0; i < x*y; i++) {
-            indices[i] = ind-1+i;
+        cx = (int)Math.ceil(mx/2.0);
+        evenmx = (mx == ((mx/2)*2));
+        cy = (int)Math.ceil(my/2.0);
+        evenmy = (my == ((my/2)*2));
+        
+        x1 = cx - (int)Math.floor(mx/(2.0*f)) - 1;
+        if (evenmx) {
+            x1 = x1 + 2;
         }
-        return res;
+        x2 = cx + (int)Math.floor(mx/(2.0*f)) - 1;
+        y1 = cy - (int)Math.floor(my/(2.0*f)) - 1;
+        if (evenmy) {
+            y1 = y1 + 2;
+        }
+        y2 = cy + (int)Math.floor(my/(2.0*f)) - 1;
+        
+        xs = 0;
+        if (evenmx) {
+            xs = 1;
+        }
+        xf = (int)Math.round(mx/f) - 1;
+        ys = 0;
+        if (evenmy) {
+            ys = 1;
+        }
+        yf = (int)Math.round(my/f) - 1;
+        
+        for (j = y1, j2 = ys; j <= y2; j++, j2++) {
+            for (i = x1, i2 = xs; i <= x2; i++, i2++) {
+                ter[i + mx*j] = tr[i2 + mx*j2];
+                tei[i + mx*j] = ti[i2 + mx*j2];
+            }
+        }
+        
+        if (evenmx) {
+            for (j = y1, j2 = 1; j <= y2; j++, j2++) {
+                ter[x1-1 + mx*j] = tr[mx*j2]/2.0;
+                tei[x1-1 + mx*j] = ti[mx*j2]/2.0;
+            }
+            
+            for (j = y1, j2 = (int)Math.round(my/f)-1; j <= y2; j++, j2--) {
+                ter[x2+1 + mx*j] = tr[mx*j2]/2.0;
+                tei[x2+1 + mx*j] = -ti[mx*j2]/2.0;
+            }
+        } // if (evenmx)
+        
+        if (evenmy) {
+            for (i = x1, i2 = 1; i <= x2; i++, i2++) {
+                ter[i + mx*(y1-1)] = tr[i2]/2.0;
+                tei[i + mx*(y1-1)] = ti[i2]/2.0;
+            }
+            
+            for (i = x1, i2 = (int)Math.round(mx/f)-1; i <= x2; i++, i2--) {
+                ter[i + mx*(y2+1)] = tr[i2]/2.0;
+                tei[i + mx*(y2+1)] = -ti[i2]/2.0f;
+            }
+        } // if (evenmy)
+        
+        if (evenmx && evenmy) {
+            esqr = tr[0]/4.0;
+            esqi = ti[0]/4.0;
+            ter[x1-1 + mx*(y1-1)] = esqr;
+            tei[x1-1 + mx*(y1-1)] = esqi;
+            ter[x2+1 + mx*(y1-1)] = esqr;
+            tei[x2+1 + mx*(y1-1)] = esqi;
+            ter[x1-1 + mx*(y2+1)] = esqr;
+            tei[x1-1 + mx*(y2+1)] = esqi;
+            ter[x2+1 + mx*(y2+1)] = esqr;
+            tei[x2+1 + mx*(y2+1)] = esqi;
+        } // if (evenmx && evenmy)
+        
+        center(ter, tei, mx, my);
+        offset[0] = 1;
+        if (evenmx) {
+            offset[0] = 0;
+        }
+        offset[1] = 1;
+        if (evenmy) {
+            offset[1] = 0;
+        }
+        shift(ter, tei, mx, my, offset, ter, tei);
+        // Inverse FFT
+        fftUtil = new FFTUtility(ter, tei, my, mx, 1, +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        fftUtil = new FFTUtility(ter, tei, 1, my, mx, +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        return;
+    }
+    
+    
+    /**
+     * Port of shift.m
+     * Circular shift 2D matrix samples by offset (a [X, Y} 2 vector),
+     * such that res(pos) = mtx(pos-offset)
+     * @param mtxr
+     * @param mtxi
+     * @param dimx
+     * @param dimy
+     * @param offset
+     * @param resr
+     * @param resi
+     */
+    private void shift(double mtxr[], double mtxi[], int dimx, int dimy, int offset[],
+                       double resr[], double resi[]) {
+        resr = new double[mtxr.length];
+        resi = new double[mtxr.length];
+        int n;
+        int offsetx;
+        int offsety;
+        int i, j, i2, j2;
+        
+        n = (int)Math.floor(-offset[0]/(double)dimx);
+        offsetx = -offset[0] - n*dimx;
+        if (offsetx < 0) {
+            offsetx = offsetx + dimx;
+        }
+        
+        n = (int)Math.floor(-offset[1]/(double)dimy);
+        offsety = -offset[1] - n*dimy;
+        if (offsety < 0) {
+            offsety = offsety + dimy;
+        }
+        
+        for (j = 0, j2 = offsety; j2 <= dimy-1; j++, j2++) {
+            for (i = 0, i2 = offsetx; i2 <= dimx - 1; i++, i2++) {
+                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+                resi[i + dimx*j] = mtxi[i2 + dimx*j2];
+            }
+            
+            for (i = dimx - offsetx, i2 = 0; i2 <= offsetx-1; i++, i2++) {
+                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+                resi[i + dimx*j] = mtxi[i2 + dimx*j2];
+            }
+        }
+        
+        for (j = dimy - offsety, j2 = 0; j2 <= offsety - 1; j++, j2++) {
+            for (i = 0, i2 = offsetx; i2 <= dimx - 1; i++, i2++) {
+                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+                resi[i + dimx*j] = mtxi[i2 + dimx*j2];
+            }
+            
+            for (i = dimx - offsetx, i2 = 0; i2 <= offsetx-1; i++, i2++) {
+                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+                resi[i + dimx*j] = mtxi[i2 + dimx*j2];
+            }
+        }
+        
+        return;
+    }
+    
+    /**
+     * This duplicates the functionality of pyrBand.m
+     * @param pyr
+     * @param pind
+     * @param band
+     * @rows
+     * @columns
+     * @return
+     */
+    private double[] pyrBand(Vector pyr, Vector pind, int band, int rows[], int columns[]) {
+        double arr[];
+        
+        arr = (double[])pyr.get(band); 
+        rows[0] = ((Integer)pind.get(2*band)).intValue();
+        columns[0] = ((Integer)pind.get(2*band+1)).intValue();
+        return arr;
     }
     
     /**
@@ -923,7 +1167,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                                   double lograd[][], double xrcos[], double yrcos[],
                                   double angle[][], int ht, int nbands, Vector pind) {
         FFTUtility fftUtil;
-        double bands[];
+        double bands[][];
         Integer bind[][];
         int logx;
         int logy;
@@ -972,13 +1216,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             fftUtil.run();
             fftUtil.finalize();
             pyr.add(lodftr);
-            Integer[][] integerArray = new Integer[1][2];
-            integerArray[0][0] = new Integer(lodx);
-            integerArray[0][1] = new Integer(lody);
-            pind.add(integerArray);
+            pind.add(new Integer(lodx));
+            pind.add(new Integer(lody));
         } // if (ht <= 0)
         else {
-            bands = new double[lodx*lody*nbands];
+            bands = new double[nbands][lodx*lody];
             bind = new Integer[nbands][2]; 
             
             for (j = 0; j < logy; j++) {
@@ -1056,7 +1298,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 fftUtil.finalize();
                 
                 for (i = 0; i < banddftr.length; i++) {
-                    bands[(b-1)*banddftr.length + i] = banddftr[i];
+                    bands[b-1][i] = banddftr[i];
                 }
                 bind[b-1][0] = new Integer(lodx);
                 bind[b-1][1] = new Integer(lody);
@@ -1125,10 +1367,16 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                                   lograd, xrcos, yrcos, angle, ht-1, nbands, nind);
             
             pyr.removeAllElements();
-            pyr.add(bands);
+            for (i = 0; i < nbands; i++) {
+                pyr.add(bands[i]);
+            }
             pyr.addAll(npyr);
             pind.removeAllElements();
-            pind.add(bind);
+            for (i = 0; i < nbands; i++) {
+                for (j = 0; j < 2; j++) {
+                    pind.add(bind[i][j]);
+                }
+            }
             pind.addAll(nind);
         } // else
         return pyr;
