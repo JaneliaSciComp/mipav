@@ -320,8 +320,6 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                     aviFile = new FileAvi(ViewUserInterface.getReference(), name, newDirectory);
                     aviFile.setCompressionQuality(quality);
 
-                    aviFile.setProgressBarVisible(false);
-
                     if (compression != 0) {
                         fireProgressStateChanged("Encoding image as compressed avi...");
                     } else {

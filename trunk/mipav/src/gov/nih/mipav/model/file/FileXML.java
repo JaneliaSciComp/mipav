@@ -59,9 +59,6 @@ public abstract class FileXML extends FileBase {
     /** progress bar implementation (either through a JProgressBar or JPanel) passed in for reading/saving file. */
     protected ProgressBarInterface pInterface = null;
 
-    /** show progress of loading/saving file. */
-    protected boolean showProgress = true;
-
     /** tab level counter for writing xml header. */
     protected int tabLevel = 0;
 
@@ -78,11 +75,10 @@ public abstract class FileXML extends FileBase {
      * @param  fDir   File directory.
      * @param  show   Flag for showing the progress bar.
      */
-    public FileXML(ViewUserInterface _UI, String fName, String fDir, boolean show) {
+    public FileXML(ViewUserInterface _UI, String fName, String fDir) {
         UI = _UI;
         fileName = fName;
         fileDir = fDir;
-        showProgress = show;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

@@ -537,13 +537,7 @@ public class FileCOR extends FileBase {
 
         lastHyphen = fileName.lastIndexOf("-");
         fileBase = fileName.substring(0, lastHyphen + 1);
-        progressBar = new ViewJProgressBar(fileName, "Writing COR file...", 0, 100, true, null, null);
-
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-        progressBar.setVisible(isProgressBarVisible());
-
+      
         if (image.getNDims() >= 3) {
             sBegin = options.getBeginSlice();
             sEnd = options.getEndSlice();
@@ -925,7 +919,7 @@ public class FileCOR extends FileBase {
 
         // Stored as 8-bit unsigned byte
         for (z = sBegin; z <= sEnd; z++) {
-            progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+            fireProgressStateChanged((100 * count++) / numberSlices);
             fileExt = Integer.toString(fileNumber++);
 
             // Pad file numbers with leading zeros to the prescribed
@@ -948,7 +942,7 @@ public class FileCOR extends FileBase {
             raFile.close();
         }
 
-        progressBar.dispose();
+        
     }
 
     /**

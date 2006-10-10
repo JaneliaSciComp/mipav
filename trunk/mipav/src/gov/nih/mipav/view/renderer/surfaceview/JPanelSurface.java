@@ -4415,7 +4415,7 @@ public class JPanelSurface extends JPanelRendererBase
             }
             /* Read the xml file and add to the scene graph: */
             else if (kName.indexOf(".xml") != -1) {
-                kSurfaceXML = new FileSurfaceXML(ViewUserInterface.getReference(), kName, files[i].getParent(), false);
+                kSurfaceXML = new FileSurfaceXML(ViewUserInterface.getReference(), kName, files[i].getParent());
                 kFileInfo = kSurfaceXML.readSurfaceXML(kName, files[i].getParent());
 
                 if (kFileInfo != null) {
@@ -6168,7 +6168,7 @@ public class JPanelSurface extends JPanelRendererBase
         name = name.substring(i + 1);
 
         /* Create the FileSurfaceXML to write the mesh: */
-        FileSurfaceXML kSurfaceXML = new FileSurfaceXML(ViewUserInterface.getReference(), null, null, false);
+        FileSurfaceXML kSurfaceXML = new FileSurfaceXML(ViewUserInterface.getReference(), null, null);
 
         try {
             kSurfaceXML.writeHeader(name, dir, kMesh, kMaterial, getSurfaceAttributeOpacity(), getSurfaceLevelDetail());

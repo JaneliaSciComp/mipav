@@ -113,8 +113,8 @@ public class FileMedVision extends FileBase {
             progressBar = new ViewJProgressBar("Loading MedVision image", "Loading Image " + fileName, 0, 100, false,
                                                null, null);
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-            progressBar.setVisible(isProgressBarVisible());
+            
+            
         }
     }
 
@@ -216,7 +216,7 @@ public class FileMedVision extends FileBase {
         // Read in all slices
         for (i = 0; i < fileInfoCom.totalSlices; i++) {
 
-            progressBar.updateValue(Math.round((float) i / (fileInfoCom.totalSlices - 1) * 100), true);
+            fireProgressStateChanged(Math.round((float) i / (fileInfoCom.totalSlices - 1) * 100));
             progressBar.setTitle(ViewUserInterface.getReference().getProgressBarPrefix() + "image " + i);
             fileInfo = new FileInfoMedVision(fileName, fileDir, FileBase.MEDVISION);
             copyFileInfoCommon();
@@ -260,7 +260,7 @@ public class FileMedVision extends FileBase {
 
         raFile.close();
         reader.close();
-        progressBar.dispose();
+        
 
         return image;
     }

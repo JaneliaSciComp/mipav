@@ -1248,9 +1248,8 @@ public class FileAfni extends FileBase {
         readImage2();
 
         if (readACPC) {
-            buildProgressBar(originalFileName, "Rotation transformation ...", 0, 100);
-            initProgressBar();
-            progressBar.updateValue(0, false);
+            
+            fireProgressStateChanged(0);
             iXdim = dicomXDim;
             iYdim = dicomYDim;
             iZdim = dicomZDim;
@@ -1590,7 +1589,7 @@ public class FileAfni extends FileBase {
                 image.setFileInfo(fileInfo, i);
             }
 
-            progressBar.dispose();
+            
 
         } // if (readACPC)
 
@@ -2033,14 +2032,12 @@ public class FileAfni extends FileBase {
             Talx = Math.abs(dicomOrigin[0]);
             Taly = Math.abs(dicomOrigin[1]);
             Talz = Math.abs(dicomOrigin[2]);
-
-            buildProgressBar(originalFileName, "Transformation pass #1 ...", 0, 100);
-            initProgressBar();
-            progressBar.updateValue(0, false);
+            
+            fireProgressStateChanged(0);
 
             for (i = 0; i < 12; i++) {
                 j = i + 1;
-                progressBar.setMessage("Transformation pass #" + j);
+                fireProgressStateChanged("Transformation pass #" + j);
                 rrArray[i].x = -warpData[(i * 30) + 21];
                 rrArray[i].y = -warpData[(i * 30) + 22];
                 rrArray[i].z = -warpData[(i * 30) + 23];
@@ -2171,7 +2168,7 @@ public class FileAfni extends FileBase {
                 image.setFileInfo(fileInfo, i);
             }
 
-            progressBar.dispose();
+            
 
         } // if (readTLRC)
 
@@ -2317,10 +2314,7 @@ public class FileAfni extends FileBase {
         fileHeaderName = fileName.substring(0, lastPeriod + 1) + "HEAD";
         fileDataName = fileName.substring(0, lastPeriod + 1) + "BRIK";
 
-        progressBar = new ViewJProgressBar(fileName, "Writing AFNI header file...", 0, 100, true, null, null);
-
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
+        
 
         zBegin = options.getBeginSlice();
         zEnd = options.getEndSlice();
@@ -3769,7 +3763,7 @@ public class FileAfni extends FileBase {
 
         raFile.close();
 
-        progressBar.setMessage("Writing data file");
+        fireProgressStateChanged("Writing data file");
         file = new File(fileDir + fileDataName);
         raFile = new RandomAccessFile(file, "rw");
 
@@ -3785,7 +3779,7 @@ public class FileAfni extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, byteBuffer);
                         raFile.write(byteBuffer);
                     }
@@ -3799,7 +3793,7 @@ public class FileAfni extends FileBase {
                 for (t = 0; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, shortBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -3819,7 +3813,7 @@ public class FileAfni extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, intBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -3841,7 +3835,7 @@ public class FileAfni extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, floatBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -3864,7 +3858,7 @@ public class FileAfni extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, doubleBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -3893,20 +3887,7 @@ public class FileAfni extends FileBase {
         } // switch(mage.getFileInfo()[0].getDataType())
 
         raFile.close();
-        progressBar.dispose();
-    }
-
-    /**
-     * Construct progress bar.
-     *
-     * @param  imageName  title of the toolbar
-     * @param  message    message to be displayed in the frame
-     * @param  start      start (typical = 0)
-     * @param  end        end (typical = 100)
-     */
-    private void buildProgressBar(String imageName, String message, int start, int end) {
-        progressBar = new ViewJProgressBar(imageName, message, start, end, false, null, null);
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
+        
     }
 
     /**
@@ -4260,15 +4241,6 @@ public class FileAfni extends FileBase {
     }
 
     /**
-     * Initialize progress bar.
-     */
-    private void initProgressBar() {
-        if (progressBar != null) {
-            progressBar.setVisible(isProgressBarVisible());
-        }
-    }
-
-    /**
      * DOCUMENT ME!
      *
      * @param   pt     DOCUMENT ME!
@@ -4352,11 +4324,11 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = byteBuffer[j] & 0xff;
@@ -4371,11 +4343,11 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -4398,11 +4370,11 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -4426,11 +4398,11 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7155,10 +7127,6 @@ public class FileAfni extends FileBase {
         raFile = new RandomAccessFile(file, "r");
         fileLength = raFile.length();
 
-        buildProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + brikFileName,
-                         ViewUserInterface.getReference().getProgressBarPrefix() + "AFNI image(s) ...", 0, 100);
-        initProgressBar();
-
         if (doDicom) {
 
             if (ModelImage.isColorImage(fileInfo.getDataType())) {
@@ -7359,7 +7327,7 @@ public class FileAfni extends FileBase {
         image.calcMinMax();
 
         raFile.close();
-        progressBar.dispose();
+        
 
         return image;
 
@@ -7419,8 +7387,8 @@ public class FileAfni extends FileBase {
         int newY = 0;
         int newZ = 0;
         int progress, progressLength, mod;
-        progressBar.setTitle(ViewUserInterface.getReference().getProgressBarPrefix() + brikFileName);
-        progressBar.setMessage(ViewUserInterface.getReference().getProgressBarPrefix() + "AFNI...");
+        
+        fireProgressStateChanged(ViewUserInterface.getReference().getProgressBarPrefix() + "AFNI...");
 
         switch (brikDataType) {
 
@@ -7431,11 +7399,11 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * subBrickNumber;
                 mod = progressLength / 100;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = byteBuffer[j] & 0xff;
@@ -7450,11 +7418,11 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * subBrickNumber;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7477,11 +7445,11 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * subBrickNumber;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7505,11 +7473,11 @@ public class FileAfni extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * subBrickNumber;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -7543,12 +7511,11 @@ public class FileAfni extends FileBase {
             }
         } // if (scaleFact > 0)
 
-        progressBar.setTitle("Reordering " + brikFileName);
-        progressBar.setMessage("Putting AFNI image into Dicom order...");
+        fireProgressStateChanged("Putting AFNI image into Dicom order...");
 
         for (x = 0; x < xDim; x++) {
             progress = 100 * slice / subBrickNumber;
-            progressBar.updateValue(Math.round(progress + (100 * x / (subBrickNumber * (xDim - 1)))), false);
+            fireProgressStateChanged(Math.round(progress + (100 * x / (subBrickNumber * (xDim - 1)))));
 
             switch (orientSpecific[0]) {
 
@@ -7884,8 +7851,8 @@ public class FileAfni extends FileBase {
 
         for (k = 0; k < oZdim; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) k / oZdim * 100) + 0.5f), true);
+            if ( ((k % mod) == 0)) {
+                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
             kmm = k * oZres;
@@ -8016,8 +7983,8 @@ public class FileAfni extends FileBase {
 
         for (k = botZ; k <= topZ; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
-                progressBar.updateValue((int) (((float) (k - botZ) / (topZ - botZ) * 100) + .5), true);
+            if ( ((k % mod) == 0)) {
+                fireProgressStateChanged((int) (((float) (k - botZ) / (topZ - botZ) * 100) + .5));
             }
 
             kmm = k * oZres;

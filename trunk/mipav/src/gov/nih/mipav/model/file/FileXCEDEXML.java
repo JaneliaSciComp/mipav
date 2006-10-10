@@ -45,9 +45,8 @@ public class FileXCEDEXML extends FileXML {
         return null;
     }
     
-    public FileXCEDEXML(ViewUserInterface _UI, String fName, String fDir,
-            boolean show) {
-        super(_UI, fName, fDir, show);
+    public FileXCEDEXML(ViewUserInterface _UI, String fName, String fDir) {
+        super(_UI, fName, fDir);
         m_kHandler = new XCEDEHandler();
     }
 

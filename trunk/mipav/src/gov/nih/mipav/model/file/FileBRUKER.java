@@ -311,11 +311,7 @@ public class FileBRUKER extends FileBase {
             }
 
             imgBuffer = new float[length];
-            progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                               ViewUserInterface.getReference().getProgressBarPrefix() +
-                                               "BRUKER image(s) ...", 0, 100, false, null, null);
-            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
-            
+                     
             image = new ModelImage(fileInfo.getDataType(), imageExtents, fileName, UI);
 
             for (i = 0; i < imageSlice; i++) {
@@ -337,7 +333,7 @@ public class FileBRUKER extends FileBase {
             }
 
             raFile.close();
-            progressBar.dispose();
+            
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -524,11 +520,11 @@ public class FileBRUKER extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * imageSlice;
                     mod = progressLength / 10;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
                     for (j = 0; j < nBytes; j++, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[i] = byteBuffer[j] & 0xff;
@@ -541,11 +537,11 @@ public class FileBRUKER extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * imageSlice;
                     mod = progressLength / 10;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
                     for (j = 0; j < nBytes; j += 2, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -568,11 +564,11 @@ public class FileBRUKER extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * imageSlice;
                     mod = progressLength / 10;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
                     for (j = 0; j < nBytes; j += 4, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);

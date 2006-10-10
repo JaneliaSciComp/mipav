@@ -46,8 +46,8 @@ public class FileSurfaceXML extends FileXML {
      * @param  fDir   File directory.
      * @param  show   Flag for showing the progress bar.
      */
-    public FileSurfaceXML(ViewUserInterface _UI, String fName, String fDir, boolean show) {
-        super(_UI, fName, fDir, show);
+    public FileSurfaceXML(ViewUserInterface _UI, String fName, String fDir) {
+        super(_UI, fName, fDir);
         fileInfo = new FileInfoSurfaceXML(fName, fDir, FileBase.SURFACE_XML);
     }
 

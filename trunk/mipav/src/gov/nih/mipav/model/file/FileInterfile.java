@@ -1183,10 +1183,6 @@ public class FileInterfile extends FileBase {
             raFile = new RandomAccessFile(file, "r");
             fileLength = raFile.length();
 
-            progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                               ViewUserInterface.getReference().getProgressBarPrefix() +
-                                               "Interfile image(s) ...", 0, 100, false, null, null);
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
             bufferSize = xDim * yDim;
             numberSlices = zDim * tDim;
 
@@ -1208,7 +1204,7 @@ public class FileInterfile extends FileBase {
                 numberSlices = 1;
             }
             
-            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
+            
 
             raFile.seek(dataByteOffset);
 
@@ -1255,7 +1251,7 @@ public class FileInterfile extends FileBase {
                 image.setFileInfo(fileInfo, i);
             }
 
-            progressBar.dispose();
+            
 
 
             return image;
@@ -1580,14 +1576,7 @@ public class FileInterfile extends FileBase {
 
         lineBytes = new String("name of data file := " + dataFileName + "\r\n").getBytes();
         raFile.write(lineBytes);
-
-        progressBar = new ViewJProgressBar(dataFileName, "Writing Interfile file...", 0, 100, true, null, null);
-
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-        progressBar.setVisible(isProgressBarVisible());
-
+      
         if (!simple) {
             patientName = fileInfo.getPatientName();
 
@@ -2713,7 +2702,7 @@ public class FileInterfile extends FileBase {
                         throw error;
                     }
 
-                    progressBar.updateValue(100 * sliceNum / sliceTotal, false);
+                    fireProgressStateChanged(100 * sliceNum / sliceTotal);
                 }
             }
         } // if (image.getType() == ModelStorageBase.BOOLEAN)
@@ -2725,13 +2714,13 @@ public class FileInterfile extends FileBase {
                 for (z = zBegin; z <= zEnd; z++, sliceNum++) {
                     fileRW.writeImage(image, timeOffset + (z * bufferSize), timeOffset + (z * bufferSize) + bufferSize,
                                       0);
-                    progressBar.updateValue(100 * sliceNum / sliceTotal, false);
+                    fireProgressStateChanged(100 * sliceNum / sliceTotal);
                 }
             }
         } // not ModelStorageBase.BOOLEAN
 
         raFile.close();
-        progressBar.dispose();
+        
     }
 
     /**
@@ -2825,12 +2814,12 @@ public class FileInterfile extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 100;
-        progressBar.setVisible(isProgressBarVisible());
+        
 
         for (j = 0; j < buffer.length; j++, i++) {
 
             if (((i + progress) % mod) == 0) {
-                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
             buffer[i] = byteBuffer[j >> 3] & (1 << (j % 8));
@@ -2863,11 +2852,11 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = byteBuffer[j];
@@ -2882,11 +2871,11 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = byteBuffer[j] & 0xff;
@@ -2901,11 +2890,11 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -2928,11 +2917,11 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -2955,11 +2944,11 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -2983,11 +2972,11 @@ public class FileInterfile extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -3033,12 +3022,12 @@ public class FileInterfile extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 10;
-        progressBar.setVisible(isProgressBarVisible());
+        
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
             if (((i + progress) % mod) == 0) {
-                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
             b1 = getUnsignedByte(byteBuffer, j);
@@ -3087,12 +3076,12 @@ public class FileInterfile extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            progressBar.setVisible(isProgressBarVisible());
+            
 
             for (j = 0; j < nBytes; j += 4, i++) {
 
                 if (((i + progress) % mod) == 0) {
-                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                 }
 
                 b1 = getUnsignedByte(byteBuffer, j);
@@ -3114,12 +3103,12 @@ public class FileInterfile extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            progressBar.setVisible(isProgressBarVisible());
+            
 
             for (j = 0; j < nBytes; j += 8, i++) {
 
                 if (((i + progress) % mod) == 0) {
-                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                 }
 
                 b1 = getUnsignedByte(byteBuffer, j);

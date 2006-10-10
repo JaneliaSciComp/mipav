@@ -510,18 +510,18 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                 break;
 
             case CLOSE:
-            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
+            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 dilate(true, iterationsD);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
-                		generateProgressValue(progressValues[0], progressValues[1], 100));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 erode(false, iterationsE);
                 break;
 
             case OPEN:
-            	setMaxProgressValue(generateProgressValue(progressValues[0], progressValues[1], 50));
+            	setMaxProgressValue(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50));
                 erode(true, iterationsE);
-                setProgressValues(generateProgressValue(progressValues[0], progressValues[1], 50),
-                		generateProgressValue(progressValues[0], progressValues[1], 100));
+                setProgressValues(ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 50),
+                		ViewJProgressBar.getProgressFromInt(progressValues[0], progressValues[1], 100));
                 dilate(false, iterationsD);
                 break;
 

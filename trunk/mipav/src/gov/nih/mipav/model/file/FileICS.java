@@ -359,12 +359,6 @@ public class FileICS extends FileBase {
         int s;
         int x, y;
         FileInputStream fis;
-
-        progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                           ViewUserInterface.getReference().getProgressBarPrefix() + "ICS image(s) ...",
-                                           0, 100, false, null, null);
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
         
         readHeader();
         s = fileName.lastIndexOf(".");
@@ -377,8 +371,8 @@ public class FileICS extends FileBase {
 
         if (useGZIP) {
             int totalBytesRead = 0;
-            progressBar.setVisible(isProgressBarVisible());
-            progressBar.setMessage("Uncompressing GZIP file ...");
+            
+            fireProgressStateChanged("Uncompressing GZIP file ...");
             fis = new FileInputStream(file);
             fis.skip(dataOffset);
 
@@ -400,7 +394,7 @@ public class FileICS extends FileBase {
 
             out.close();
             file = new File(uncompressedName);
-            progressBar.setMessage("Loading ICS image(s)...");
+            fireProgressStateChanged("Loading ICS image(s)...");
             dataOffset = 0L;
         } // if (useGZIP)
 
@@ -680,7 +674,7 @@ public class FileICS extends FileBase {
         } // else dataType == ModelStorageBase.DOUBLE
 
         raFile.close();
-        progressBar.dispose();
+        
 
         return image;
     }
@@ -729,11 +723,6 @@ public class FileICS extends FileBase {
         lastPeriod = fileName.lastIndexOf(".");
         fileHeaderName = fileName.substring(0, lastPeriod + 1) + "ICS";
         fileDataName = fileName.substring(0, lastPeriod + 1) + "IDS";
-
-        progressBar = new ViewJProgressBar(fileName, "Writing ICS header file...", 0, 100, true, null, null);
-
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
 
         zBegin = options.getBeginSlice();
         zEnd = options.getEndSlice();
@@ -1047,7 +1036,7 @@ public class FileICS extends FileBase {
 
         raFile.close();
 
-        progressBar.setMessage("Writing data file");
+        fireProgressStateChanged("Writing data file");
         file = new File(fileDir + fileDataName);
         raFile = new RandomAccessFile(file, "rw");
 
@@ -1070,7 +1059,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, byteBuffer);
                         raFile.write(byteBuffer);
                     }
@@ -1085,7 +1074,7 @@ public class FileICS extends FileBase {
                 for (t = 0; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, shortBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1106,7 +1095,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, intBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1128,7 +1117,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, longBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1154,7 +1143,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, floatBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1177,7 +1166,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportSliceXY((t * zDim) + z, doubleBuffer);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1205,7 +1194,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportComplexData(2 * ((t * zDim) + z) * sliceSize, sliceSize, floatBuffer, floatBufferI);
 
                         for (j = 0; j < sliceSize; j++) {
@@ -1234,7 +1223,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / numberSlices);
                         image.exportDComplexData(2 * ((t * zDim) + z) * sliceSize, sliceSize, doubleBuffer,
                                                  doubleBufferI);
 
@@ -1270,7 +1259,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / (numColors * numberSlices));
 
                         if (haveRed) {
                             image.exportRGBData(1, 4 * ((t * zDim) + z) * sliceSize, sliceSize, byteBuffer);
@@ -1285,7 +1274,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / (numColors * numberSlices));
 
                         if (haveRed && haveGreen) {
                             image.exportRGBData(2, 4 * ((t * zDim) + z) * sliceSize, sliceSize, byteBuffer);
@@ -1302,8 +1291,7 @@ public class FileICS extends FileBase {
                     for (t = tBegin; t <= tEnd; t++) {
 
                         for (z = zBegin; z <= zEnd; z++) {
-                            progressBar.updateValue((100 * count++) / (numColors * numberSlices),
-                                                    options.isRunningInSeparateThread());
+                            fireProgressStateChanged((100 * count++) / (numColors * numberSlices));
                             image.exportRGBData(3, 4 * ((t * zDim) + z) * sliceSize, sliceSize, byteBuffer);
                             raFile.write(byteBuffer);
                         }
@@ -1318,7 +1306,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / (numColors * numberSlices));
 
                         if (haveRed) {
                             image.exportRGBData(1, 4 * ((t * zDim) + z) * sliceSize, sliceSize, shortBuffer);
@@ -1338,7 +1326,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / (numColors * numberSlices));
 
                         if (haveRed && haveGreen) {
                             image.exportRGBData(2, 4 * ((t * zDim) + z) * sliceSize, sliceSize, shortBuffer);
@@ -1360,8 +1348,7 @@ public class FileICS extends FileBase {
                     for (t = tBegin; t <= tEnd; t++) {
 
                         for (z = zBegin; z <= zEnd; z++) {
-                            progressBar.updateValue((100 * count++) / (numColors * numberSlices),
-                                                    options.isRunningInSeparateThread());
+                            fireProgressStateChanged((100 * count++) / (numColors * numberSlices));
                             image.exportRGBData(3, 4 * ((t * zDim) + z) * sliceSize, sliceSize, shortBuffer);
 
                             for (j = 0; j < sliceSize; j++) {
@@ -1382,7 +1369,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / (numColors * numberSlices));
 
                         if (haveRed) {
                             image.exportRGBData(1, 4 * ((t * zDim) + z) * sliceSize, sliceSize, floatBuffer);
@@ -1405,7 +1392,7 @@ public class FileICS extends FileBase {
                 for (t = tBegin; t <= tEnd; t++) {
 
                     for (z = zBegin; z <= zEnd; z++) {
-                        progressBar.updateValue((100 * count++) / (numColors * numberSlices), options.isRunningInSeparateThread());
+                        fireProgressStateChanged((100 * count++) / (numColors * numberSlices));
 
                         if (haveRed && haveGreen) {
                             image.exportRGBData(2, 4 * ((t * zDim) + z) * sliceSize, sliceSize, floatBuffer);
@@ -1430,8 +1417,7 @@ public class FileICS extends FileBase {
                     for (t = tBegin; t <= tEnd; t++) {
 
                         for (z = zBegin; z <= zEnd; z++) {
-                            progressBar.updateValue((100 * count++) / (numColors * numberSlices),
-                                                    options.isRunningInSeparateThread());
+                            fireProgressStateChanged((100 * count++) / (numColors * numberSlices));
                             image.exportRGBData(3, 4 * ((t * zDim) + z) * sliceSize, sliceSize, floatBuffer);
 
                             for (j = 0; j < sliceSize; j++) {
@@ -1451,7 +1437,7 @@ public class FileICS extends FileBase {
         } // switch(mage.getFileInfo()[0].getDataType())
 
         raFile.close();
-        progressBar.dispose();
+        
     }
 
     /**
@@ -1483,11 +1469,11 @@ public class FileICS extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = byteBuffer[j];
@@ -1503,12 +1489,12 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 100;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j++, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[i] = byteBuffer[j] & 0xff;
@@ -1526,12 +1512,12 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 100;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (i = 0; i < (nBytes - 1); i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[i] = raFile.readUnsignedByte();
@@ -1542,7 +1528,7 @@ public class FileICS extends FileBase {
                     } // for (i = 0; i < nBytes-1; i++)
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = raFile.readUnsignedByte();
@@ -1568,12 +1554,12 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 100;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j++, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[i] = byteBuffer[j] & 0xff;
@@ -1592,11 +1578,11 @@ public class FileICS extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -1620,12 +1606,12 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j += 2, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -1652,12 +1638,12 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (i = 0; i < (nShorts - 1); i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[i] = getUnsignedShort(endianess);
@@ -1668,7 +1654,7 @@ public class FileICS extends FileBase {
                     } // for (i = 0; i < nShorts-1; i++)
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = getUnsignedShort(endianess);
@@ -1694,12 +1680,12 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j += 2, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -1726,11 +1712,11 @@ public class FileICS extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -1755,12 +1741,12 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j += 4, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -1790,12 +1776,12 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (i = 0; i < (nFloats - 1); i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[i] = getFloat(endianess);
@@ -1806,7 +1792,7 @@ public class FileICS extends FileBase {
                     } // for (i = 0; i < nFloats-1; i++)
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = getFloat(endianess);
@@ -1832,12 +1818,12 @@ public class FileICS extends FileBase {
                     progress = slice * buffer.length;
                     progressLength = buffer.length * numberSlices;
                     mod = progressLength / 10;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j += 4, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -1868,12 +1854,12 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j++, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[(4 * i) + 1] = byteBuffer[j] & 0xff;
@@ -1887,7 +1873,7 @@ public class FileICS extends FileBase {
                     for (i = 0, j = 0; j < nBytes; j++, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[(4 * i) + 2] = byteBuffer[j] & 0xff;
@@ -1901,8 +1887,7 @@ public class FileICS extends FileBase {
                         for (i = 0, j = 0; j < nBytes; j++, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             buffer[(4 * i) + 3] = byteBuffer[j] & 0xff;
@@ -1920,13 +1905,12 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
 
                         for (j = 0; j < nBytes; j += 2, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             buffer[(4 * i) + 1] = byteBuffer[j] & 0xff;
@@ -1941,13 +1925,12 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
 
                         for (j = 0; j < nBytes; j += 3, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             buffer[(4 * i) + 1] = byteBuffer[j] & 0xff;
@@ -1963,12 +1946,12 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j++, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[(4 * i) + 1] = byteBuffer[j] & 0xff;
@@ -1982,7 +1965,7 @@ public class FileICS extends FileBase {
                     for (i = 0, j = 0; j < nBytes; j++, i++) {
 
                         if (((i + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                         }
 
                         buffer[(4 * i) + 2] = byteBuffer[j] & 0xff;
@@ -1996,8 +1979,7 @@ public class FileICS extends FileBase {
                         for (i = 0, j = 0; j < nBytes; j++, i++) {
 
                             if (((i + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                             }
 
                             buffer[(4 * i) + 3] = byteBuffer[j] & 0xff;
@@ -2020,12 +2002,12 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j += 2, i++) {
 
                         if (((j + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -2046,7 +2028,7 @@ public class FileICS extends FileBase {
                     for (i = 0, j = 0; j < nBytes; j += 2, i++) {
 
                         if (((j + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -2067,8 +2049,7 @@ public class FileICS extends FileBase {
                         for (i = 0, j = 0; j < nBytes; j += 2, i++) {
 
                             if (((j + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2093,13 +2074,12 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
 
                         for (j = 0; j < nBytes; j += 4, i++) {
 
                             if (((j + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2123,13 +2103,12 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
 
                         for (j = 0; j < nBytes; j += 6, i++) {
 
                             if (((j + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2158,12 +2137,12 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j += 2, i++) {
 
                         if (((j + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -2184,7 +2163,7 @@ public class FileICS extends FileBase {
                     for (i = 0, j = 0; j < nBytes; j += 2, i++) {
 
                         if (((j + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -2205,8 +2184,7 @@ public class FileICS extends FileBase {
                         for (i = 0, j = 0; j < nBytes; j += 2, i++) {
 
                             if (((j + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2236,12 +2214,12 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j += 4, i++) {
 
                         if (((j + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -2266,7 +2244,7 @@ public class FileICS extends FileBase {
                     for (i = 0, j = 0; j < nBytes; j += 4, i++) {
 
                         if (((j + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -2291,8 +2269,7 @@ public class FileICS extends FileBase {
                         for (i = 0, j = 0; j < nBytes; j += 4, i++) {
 
                             if (((j + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2321,13 +2298,12 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
 
                         for (j = 0; j < nBytes; j += 8, i++) {
 
                             if (((j + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2358,13 +2334,12 @@ public class FileICS extends FileBase {
                         progress = slice * nBytes;
                         progressLength = nBytes * numberSlices;
                         mod = progressLength / 100;
-                        progressBar.setVisible(isProgressBarVisible());
+                        
 
                         for (j = 0; j < nBytes; j += 12, i++) {
 
                             if (((j + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2403,12 +2378,12 @@ public class FileICS extends FileBase {
                     progress = numColors * slice * nBytes;
                     progressLength = numColors * nBytes * numberSlices;
                     mod = progressLength / 100;
-                    progressBar.setVisible(isProgressBarVisible());
+                    
 
                     for (j = 0; j < nBytes; j += 4, i++) {
 
                         if (((j + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -2433,7 +2408,7 @@ public class FileICS extends FileBase {
                     for (i = 0, j = 0; j < nBytes; j += 4, i++) {
 
                         if (((j + progress) % mod) == 0) {
-                            progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100), false);
+                            fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                         }
 
                         b1 = getUnsignedByte(byteBuffer, j);
@@ -2458,8 +2433,7 @@ public class FileICS extends FileBase {
                         for (i = 0, j = 0; j < nBytes; j += 4, i++) {
 
                             if (((j + progress) % mod) == 0) {
-                                progressBar.updateValue(Math.round((float) (j + progress) / progressLength * 100),
-                                                        false);
+                                fireProgressStateChanged(Math.round((float) (j + progress) / progressLength * 100));
                             }
 
                             b1 = getUnsignedByte(byteBuffer, j);
@@ -2512,12 +2486,12 @@ public class FileICS extends FileBase {
         progress = slice * bufferR.length;
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
-        progressBar.setVisible(isProgressBarVisible());
+        
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
             if (((i + progress) % mod) == 0) {
-                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
             b1 = getUnsignedByte(byteBuffer, j);
@@ -2572,12 +2546,12 @@ public class FileICS extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 10;
-        progressBar.setVisible(isProgressBarVisible());
+        
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
             if (((i + progress) % mod) == 0) {
-                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
             b1 = getUnsignedByte(byteBuffer, j);
@@ -2627,12 +2601,12 @@ public class FileICS extends FileBase {
         progress = slice * bufferR.length;
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
-        progressBar.setVisible(isProgressBarVisible());
+        
 
         for (j = 0; j < nBytes; j += 16, i++) {
 
             if (((i + progress) % mod) == 0) {
-                progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
             b1 = getUnsignedByte(byteBuffer, j);
@@ -3534,12 +3508,12 @@ public class FileICS extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            progressBar.setVisible(isProgressBarVisible());
+            
 
             for (j = 0; j < nBytes; j += 4, i++) {
 
                 if (((i + progress) % mod) == 0) {
-                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                 }
 
                 b1 = getUnsignedByte(byteBuffer, j);
@@ -3561,12 +3535,12 @@ public class FileICS extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            progressBar.setVisible(isProgressBarVisible());
+            
 
             for (j = 0; j < nBytes; j += 8, i++) {
 
                 if (((i + progress) % mod) == 0) {
-                    progressBar.updateValue(Math.round((float) (i + progress) / progressLength * 100), false);
+                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                 }
 
                 b1 = getUnsignedByte(byteBuffer, j);

@@ -43,6 +43,9 @@ public class FileIO {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+	private static final String FILE_READ = "Opening ";
+	private static final String FILE_WRITE = "Saving ";
+	
     /** Directory where the image file can be found. */
     private String fileDir;
 
@@ -61,6 +64,8 @@ public class FileIO {
      */
     private ProgressBarInterface pInterface = null;
 
+    private ViewJProgressBar progressBar = null;
+    
     /** Refers to whether or not the FileIO reports progress or errors. */
     private boolean quiet = false;
 
@@ -1214,7 +1219,12 @@ public class FileIO {
      * @return  DOCUMENT ME!
      */
     public ModelImage readDicom(String[] fileList) {
-        return readDicom(fileList, false);
+    	ModelImage dicomImage = readDicom(fileList, false);
+    	if (progressBar != null) {
+    		progressBar.dispose();
+    	}
+    	
+    	return dicomImage;
     }
 
     /**
@@ -1267,7 +1277,12 @@ public class FileIO {
      * @return  The image that was read in, or null if failure.
      */
     public ModelImage readDicom(String[] fileList, boolean performSort) {
-        return readDicom(fileList[0], fileList, performSort);
+    	ModelImage dicomImage = readDicom(fileList[0], fileList, performSort);
+    		
+    	if (progressBar != null) {
+    		progressBar.dispose();
+    	}
+        return dicomImage;
     }
 
     /**
@@ -1417,20 +1432,9 @@ public class FileIO {
                 seriesNoMaster = "";
                 seriesNoRef = "";
             }
-
-            if (pInterface == null) {
-
-                // Progress bar shows what % of images have been read.
-                pInterface = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                                                  UI.getProgressBarPrefix() + "DICOM image(s) ...", 0, 100, false, null,
-                                                  null);
-            }
-
-            pInterface.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
-
-            if (pInterface != null) {
-                pInterface.updateValue(0, true);
-            }
+            
+            createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
+          
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -2180,7 +2184,9 @@ public class FileIO {
             LUT = imageFile.getLUT();
         }
 
-        pInterface.dispose();
+        if (progressBar != null) {
+        	progressBar.dispose();
+        }
         imageFile = null;
         matrix = null;
 
@@ -2525,7 +2531,9 @@ public class FileIO {
             }
 
             if (image != null) {
-
+            	if (progressBar != null) {
+            		progressBar.dispose();
+            	}
                 if ((image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
                     image.calcMinMaxMag(true);
                 } else {
@@ -2534,6 +2542,9 @@ public class FileIO {
                 }
             }
         } catch (Exception error) {
+        	if (progressBar != null) {
+        		progressBar.dispose();
+        	}
             error.printStackTrace();
 
             if (!quiet) {
@@ -2640,13 +2651,8 @@ public class FileIO {
             return null;
         }
 
-        ViewJProgressBar progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "files ...",
-                                                            UI.getProgressBarPrefix() + "...", 0, 100, false, null,
-                                                            null);
-        MipavUtil.centerOnScreen(progressBar);
-        progressBar.setVisible(showOrderedProgressBar);
-        progressBar.updateValue(0, false);
-
+        createProgressBar(null, "files", FILE_READ);
+       
         // allocate memory for the result ModelImage.
         int[] extents = { imageExtents[0], imageExtents[1], fileList.length / numChannels };
 
@@ -2700,7 +2706,7 @@ public class FileIO {
 
         modelImageResult.calcMinMax();
 
-        progressBar.dispose();
+        
         progressBar = null;
         resultImageBuffer = null;
         oneSliceBuffer = null;
@@ -2738,12 +2744,7 @@ public class FileIO {
         ModelImage modelImageResult = null;
         float[] oneSliceBuffer;
 
-        ViewJProgressBar progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "files ...",
-                                                            UI.getProgressBarPrefix() + "...", 0, 100, false, null,
-                                                            null);
-        MipavUtil.centerOnScreen(progressBar);
-        progressBar.setVisible(showLocalProgressBar);
-        progressBar.updateValue(0, false);
+        createProgressBar(null, "files", FILE_READ);
 
         try {
 
@@ -2824,8 +2825,9 @@ public class FileIO {
 
             return null;
         } finally {
-            progressBar.dispose();
-            progressBar = null;
+            if (progressBar != null) {
+            	progressBar.dispose();
+            }
             modelImageTemp.disposeLocal();
             modelImageTemp = null;
             oneSliceBuffer = null;
@@ -2842,8 +2844,7 @@ public class FileIO {
      */
     public XCEDEElement readXCEDE(String fileName, String directory){
         FileXCEDEXML xcedeFile;
-        boolean showProgressBar = ( !quiet ) ? true : false;
-        xcedeFile = new FileXCEDEXML(UI, fileName, directory, showProgressBar);
+        xcedeFile = new FileXCEDEXML(UI, fileName, directory);
         return xcedeFile.parse();
     }
 
@@ -2856,7 +2857,7 @@ public class FileIO {
      * @return  FileImageXML containing thumbnail or null
      */
     public FileImageXML readXMLThumbnail(String name, String directory) {
-        FileImageXML xmlTemp = new FileImageXML(UI, name, directory, true);
+        FileImageXML xmlTemp = new FileImageXML(UI, name, directory);
         float[][] res = null;
 
         try {
@@ -3004,39 +3005,34 @@ public class FileIO {
             }
         }
 
+        boolean success = false;
+        
         switch (fileType) {
 
             case FileBase.RAW:
-                if (!writeRaw(image, options)) {
-                    return;
-                }
-
+            	success = writeRaw(image, options);
                 break;
 
             case FileBase.ANALYZE:
-                if (!writeAnalyze(image, options)) {
-                    return;
-                }
-
-                if (image.getFileInfo(0) instanceof FileInfoImageXML) {
-                    FileInfoAnalyze[] info = new FileInfoAnalyze[image.getFileInfo().length];
-
-                    for (int i = 0; i < info.length; i++) {
-                        info[i] = new FileInfoAnalyze(image.getFileInfo(0).getFileName(),
-                                                      image.getFileInfo(0).getFileDirectory(), FileBase.ANALYZE);
-                    }
-
-                    FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
-                    image.setFileInfo(info);
-                }
-
+            	success = writeAnalyze(image, options);
+            	if (success) {
+            		if (image.getFileInfo(0) instanceof FileInfoImageXML) {
+            			FileInfoAnalyze[] info = new FileInfoAnalyze[image.getFileInfo().length];
+            			
+            			for (int i = 0; i < info.length; i++) {
+            				info[i] = new FileInfoAnalyze(image.getFileInfo(0).getFileName(),
+            						image.getFileInfo(0).getFileDirectory(), FileBase.ANALYZE);
+            			}
+            			
+            			FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
+            			image.setFileInfo(info);
+            		}
+            	}
                 break;
 
             case FileBase.NIFTI:
-                if (!writeNIFTI(image, options)) {
-                    return;
-                }
-
+            	success = writeNIFTI(image, options);
+            	if (success) {
                 if (image.getFileInfo(0) instanceof FileInfoImageXML) {
                     FileInfoNIFTI[] info = new FileInfoNIFTI[image.getFileInfo().length];
 
@@ -3048,14 +3044,12 @@ public class FileIO {
                     FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
                     image.setFileInfo(info);
                 }
-
+            	}
                 break;
 
             case FileBase.SPM:
-                if (!writeSPM(image, options)) {
-                    return;
-                }
-
+            	success =  writeSPM(image, options);
+            	if (success) {
                 if (image.getFileInfo(0) instanceof FileInfoImageXML) {
                     FileInfoSPM[] info = new FileInfoSPM[image.getFileInfo().length];
 
@@ -3067,106 +3061,64 @@ public class FileIO {
                     FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
                     image.setFileInfo(info);
                 }
-
+            	}
                 break;
 
             case FileBase.TIFF:
-                if (!writeTiff(image, options)) {
-                    return;
-                }
-
+            	success = writeTiff(image, options);
                 break;
 
             case FileBase.MGH:
-                if (!writeMGH(image, options)) {
-                    return;
-                }
-
+            	success = writeMGH(image, options);
                 break;
 
             case FileBase.DICOM:
-                if (!writeDicom(image, options)) {
-                    return;
-                }
-
+            	success = writeDicom(image, options);
                 break;
 
             case FileBase.JIMI:
-                if (!writeJimi(image, options)) {
-                    return;
-                }
-
+            	success = writeJimi(image, options);
                 break;
 
             case FileBase.MINC:
-                if (!writeMinc(image, options)) {
-                    return;
-                }
-
+            	success = writeMinc(image, options);
                 break;
 
             case FileBase.INTERFILE:
-                if (!writeInterfile(image, options)) {
-                    return;
-                }
-
+            	success = writeInterfile(image, options);
                 break;
 
             case FileBase.FITS:
-                if (!writeFits(image, options)) {
-                    return;
-                }
-
+            	success = writeFits(image, options);
                 break;
 
             case FileBase.MRC:
-                if (!writeMRC(image, options)) {
-                    return;
-                }
-
+            	success = writeMRC(image, options);
                 break;
 
             case FileBase.OSM:
-                if (!writeOSM(image, options)) {
-                    return;
-                }
-
+            	success = writeOSM(image, options);
                 break;
 
 
             case FileBase.COR:
-                if (!writeCOR(image, options)) {
-                    return;
-                }
-
+            	success = writeCOR(image, options);
                 break;
 
             case FileBase.AFNI:
-                if (!writeAfni(image, options)) {
-                    return;
-                }
-
+            	success = writeAfni(image, options);
                 break;
 
             case FileBase.ICS:
-                if (!writeICS(image, options)) {
-                    return;
-                }
-
+            	success = writeICS(image, options);
                 break;
 
             case FileBase.XML:
-                if (!writeXML(image, options)) {
-                    return;
-                }
-
+            	success = writeXML(image, options);
                 break;
 
             case FileBase.AVI:
-                if (!writeAvi(image, options)) {
-                    return;
-                }
-
+            	success = writeAvi(image, options);
                 break;
 
             default:
@@ -3177,13 +3129,49 @@ public class FileIO {
                 return;
         }
 
-        ScriptableActionInterface action;
-        if (options.isSaveAs()) {
-            action = new ActionSaveImageAs(image, options);
-        } else {
-            action = new ActionSaveImage(image, options);
+        if (progressBar != null) {
+        	progressBar.dispose();
         }
-        ScriptRecorder.getReference().addLine(action);
+        
+        
+        if (success) {
+        	if (options.isMultiFile()) {
+        		String fName = options.getFileName();
+        		String start = Integer.toString(options.getStartNumber());
+        		int numDig = options.getDigitNumber();
+        		for (int i = 1; i < numDig; i++) {
+        			start = "0" + start;
+        		}
+        		fName = fName.substring(0, fName.indexOf(".")) + start + fName.substring(fName.indexOf("."), fName.length());
+        		Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
+        	} else {
+        		Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
+        	}
+            //updates menubar for each image
+            Vector imageFrames = UI.getImageFrameVector();
+
+            if (imageFrames.size() < 1) {
+                UI.buildMenu();
+                UI.setControls();
+            } else {
+                UI.buildMenu();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
+                        ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
+                    }
+                }
+
+                UI.getActiveImageFrame().setControls();
+            }
+        	ScriptableActionInterface action;
+        	if (options.isSaveAs()) {
+        		action = new ActionSaveImageAs(image, options);
+        	} else {
+        		action = new ActionSaveImage(image, options);
+        	}
+        	ScriptRecorder.getReference().addLine(action);
+        }
     }
 
 
@@ -3469,6 +3457,25 @@ public class FileIO {
     }
 
     /**
+     * Creates the progress bar and links (if not null) the progress bar to a FileBase for reading/writing
+     * if the progress bar should not be updated within the FileBase's readImage/writeImage,
+     * pass in null to the fBase and update within FileIO's read[ImageType] or write[ImageType] methods
+     * @param fBase the FileBase that will add the Progress Bar as a listener (for fireProgressStateChanged())
+     * @param fName the filename (will be displayed in the title and part of the message)
+     * @param message this message should FILE_READ, FILE_OPEN
+     */
+    private void createProgressBar(FileBase fBase, String fName, String message) {
+    //	System.err.println("title is: " + fName + ", message is: " + message);
+    	progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
+        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
+        progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
+        if (fBase != null) {
+        	fBase.addProgressChangeListener(progressBar);
+        }	
+	}
+
+    
+    /**
      * DOCUMENT ME!
      *
      * @param  modelImageSrc     DOCUMENT ME!
@@ -3672,16 +3679,7 @@ public class FileIO {
      */
     private ModelImage readAnalyze(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
-        boolean showProgressBar = (!quiet) ? true : false;
         FileAnalyze imageFile;
-
-        if (fileName.equals("splash.img") || (one == true)) {
-            showProgressBar = false;
-        }
-
-        if (!UI.isAppFrameVisible()) {
-            showProgressBar = false;
-        }
 
         String headerFile = FileInterfile.isInterfile(fileName, fileDir);
 
@@ -3696,6 +3694,7 @@ public class FileIO {
             // most likely an Analyze file
             try {
                 imageFile = new FileAnalyze(fileName, fileDir);
+                createProgressBar(imageFile, fileName, FILE_READ);
                 image = imageFile.readImage(one);
             } catch (IOException error) {
 
@@ -3743,7 +3742,7 @@ public class FileIO {
         ModelImage image = null;
         FileAnalyze imageFile;
         FileInfoBase fileInfo;
-        ViewJProgressBar progressBar;
+        
         int length = 0;
         float[] buffer;
         String[] fileList;
@@ -3784,18 +3783,8 @@ public class FileIO {
             return readAnalyze(fileName, fileDir, false);
         }
 
-        progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                                           UI.getProgressBarPrefix() + "Analyze image(s) ...", 0, 100, false, null,
-                                           null);
-
-        progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
-
-        progressBar.updateValue(0, true);
-
-
-        // System.out.println("nImage = " + i);
-        // System.out.println(" filelist[0] = " + fileList[0]);
-        // System.out.println(" filelist[1] = " + fileList[1]);
+        createProgressBar(null, fileName, FILE_READ);
+        
         // if one of the images has the wrong extents, the following must be changed.
         // (ei., too many images!)
         // for simplicity of setup, read in the first file hdr
@@ -3927,7 +3916,7 @@ public class FileIO {
                 imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
 
             } catch (IOException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -3942,7 +3931,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
@@ -3958,7 +3947,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -4015,7 +4004,7 @@ public class FileIO {
             }
         }
 
-        progressBar.dispose();
+        
 
         return image;
 
@@ -4274,6 +4263,7 @@ public class FileIO {
 
         try {
             imageFile = new FileCheshire(UI, fileName, fileDir, true);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
         } catch (IOException error) {
 
@@ -4327,7 +4317,7 @@ public class FileIO {
         String[] fileList = null;
         FileCOR imageFile = null;
         ModelImage image = null;
-        ViewJProgressBar progressBar;
+        
         String origName = null;
         boolean tryAgain = false;
         int nImages;
@@ -4414,13 +4404,8 @@ public class FileIO {
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName(), UI);
 
             // Progress bar shows what % of images have been read.
-            progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + fileName,
-                                               UI.getProgressBarPrefix() + "COR image(s) ...", 0, 100, false, null,
-                                               null);
-
-            progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
-
-            progressBar.updateValue(0, true);
+            createProgressBar(null, fileName, FILE_READ);
+            
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -4442,7 +4427,7 @@ public class FileIO {
         try {
             imageFile = new FileCOR(UI, fileList[0], fileDir);
         } catch (IOException error) {
-            progressBar.dispose();
+            
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -4458,7 +4443,6 @@ public class FileIO {
             return null;
         }
 
-        imageFile.setProgressBarVisible(false);
 
         // loop through image and store data in image model
         for (i = 0; i < nImages; i++) {
@@ -4476,7 +4460,7 @@ public class FileIO {
                     image.importData(i * length, ((FileCOR) imageFile).getImageBuffer(), false);
                 }
             } catch (IOException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -4491,7 +4475,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
@@ -4507,7 +4491,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
@@ -4525,7 +4509,7 @@ public class FileIO {
             }
         }
 
-        progressBar.dispose();
+        
 
         return image;
 
@@ -4601,6 +4585,7 @@ public class FileIO {
 
         try {
             imageFile = new FileFits(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
             // LUT      = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -4699,19 +4684,8 @@ public class FileIO {
                 return null;
             }
 
-            progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                                               UI.getProgressBarPrefix() + "GE formatted image(s) ...", 0, 100, false,
-                                               null, null);
-
-            if (!quiet) {
-                progressBar.setVisible(true);
-            }
-
-            if (!UI.isAppFrameVisible()) {
-                progressBar.setVisible(false);
-            }
-
-            progressBar.updateValue(0, true);
+            createProgressBar(null, fileName, FILE_READ);
+            
             width = imageFile.getWidth();
             height = imageFile.getHeight();
             length = width * height;
@@ -4743,7 +4717,7 @@ public class FileIO {
             }
 
             if (progressBar != null) {
-                progressBar.dispose();
+                
             }
 
             return null;
@@ -4754,7 +4728,7 @@ public class FileIO {
             }
 
             if (progressBar != null) {
-                progressBar.dispose();
+                
             }
 
             return null;
@@ -4851,7 +4825,7 @@ public class FileIO {
                 } // if (fileList[i] != null)
             } // try
             catch (IOException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -4866,7 +4840,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -4886,7 +4860,7 @@ public class FileIO {
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
-        progressBar.dispose();
+        
 
         return image;
     }
@@ -4953,19 +4927,8 @@ public class FileIO {
                 return null;
             }
 
-            progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                                               UI.getProgressBarPrefix() + "GE formatted image(s) ...", 0, 100, false,
-                                               null, null);
-
-            if (!quiet) {
-                progressBar.setVisible(true);
-            }
-
-            if (!UI.isAppFrameVisible()) {
-                progressBar.setVisible(false);
-            }
-
-            progressBar.updateValue(0, true);
+            createProgressBar(null, fileName, FILE_READ);
+            
             width = imageFile.getWidth();
             height = imageFile.getHeight();
             length = width * height;
@@ -4997,7 +4960,7 @@ public class FileIO {
             }
 
             if (progressBar != null) {
-                progressBar.dispose();
+                
             }
 
             return null;
@@ -5008,7 +4971,7 @@ public class FileIO {
             }
 
             if (progressBar != null) {
-                progressBar.dispose();
+                
             }
 
             return null;
@@ -5107,7 +5070,7 @@ public class FileIO {
                 } // if (fileList[i] != null)
             } // try
             catch (IOException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -5122,7 +5085,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -5142,7 +5105,7 @@ public class FileIO {
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
-        progressBar.dispose();
+        
 
         return image;
     }
@@ -5158,10 +5121,10 @@ public class FileIO {
     private ModelImage readICS(String fileName, String fileDir) {
         ModelImage image = null;
         FileICS imageFile;
-        boolean doRead = true;
 
         try {
             imageFile = new FileICS(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -5215,6 +5178,7 @@ public class FileIO {
 
         try {
             imageFile = new FileInterfile(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
             // LUT      = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -5431,6 +5395,7 @@ public class FileIO {
 
         try {
             imageFile = new FileLSM(UI, fileName, fileDir, secondAddress);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
             secondImage = imageFile.getSecondImage();
@@ -5489,7 +5454,7 @@ public class FileIO {
         String[] fileList;
         FileLSM imageFile;
         ModelImage image = null;
-        ViewJProgressBar progressBar;
+        
         int nImages;
         int secondAddress = 0;
         int singleDims;
@@ -5581,14 +5546,8 @@ public class FileIO {
             myFileInfo.setResolutions(resols); // ??
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName(), UI);
 
-            // Progress bar shows what % of images have been read.
-            progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + fileName,
-                                               UI.getProgressBarPrefix() + "LSM image(s) ...", 0, 100, false, null,
-                                               null);
-
-            progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
-
-            progressBar.updateValue(0, true);
+            createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
+            
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -5610,7 +5569,7 @@ public class FileIO {
         try {
             imageFile = new FileLSM(UI, fileList[0], fileDir, secondAddress);
         } catch (IOException error) {
-            progressBar.dispose();
+            
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -5625,8 +5584,6 @@ public class FileIO {
 
             return null;
         }
-
-        imageFile.setProgressBarVisible(false);
 
         // loop through image and store data in image model
         if (singleDims == 2) {
@@ -5667,7 +5624,7 @@ public class FileIO {
                     }
 
                 } catch (IOException error) {
-                    progressBar.dispose();
+                    
 
                     if (!quiet) {
                         MipavUtil.displayError("FileIO: " + error);
@@ -5682,7 +5639,7 @@ public class FileIO {
 
                     return null;
                 } catch (ArrayIndexOutOfBoundsException error) {
-                    progressBar.dispose();
+                    
 
                     if (!quiet) {
                         MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
@@ -5698,7 +5655,7 @@ public class FileIO {
 
                     return null;
                 } catch (OutOfMemoryError error) {
-                    progressBar.dispose();
+                    
 
                     if (!quiet) {
                         MipavUtil.displayError("Out of memory: " + error);
@@ -5756,7 +5713,7 @@ public class FileIO {
                         }
                     } // for (j = 0; j < extents[2]; j++) {
                 } catch (IOException error) {
-                    progressBar.dispose();
+                    
 
                     if (!quiet) {
                         MipavUtil.displayError("FileIO: " + error);
@@ -5771,7 +5728,7 @@ public class FileIO {
 
                     return null;
                 } catch (ArrayIndexOutOfBoundsException error) {
-                    progressBar.dispose();
+                    
 
                     if (!quiet) {
                         MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
@@ -5787,7 +5744,7 @@ public class FileIO {
 
                     return null;
                 } catch (OutOfMemoryError error) {
-                    progressBar.dispose();
+                    
 
                     if (!quiet) {
                         MipavUtil.displayError("Out of memory: " + error);
@@ -5849,7 +5806,7 @@ public class FileIO {
             }
         } // else for singleDims == 3
 
-        progressBar.dispose();
+        
 
         return image;
 
@@ -5871,7 +5828,7 @@ public class FileIO {
         ModelImage image = null;
         FileMagnetomVision imageFile;
         FileInfoBase myFileInfo;
-        ViewJProgressBar progressBar;
+        
         String[] fileList;
         short[] buffer;
         int[] extents;
@@ -5891,13 +5848,9 @@ public class FileIO {
             imageFile = new FileMagnetomVision(fileName, fileDir);
 
             imageFile.setFileName(fileList[0]);
-            progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + fileName,
-                                               UI.getProgressBarPrefix() + "Magnetom Vision files ...", 0, 100, false,
-                                               null, null);
-
-            progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
-
-            progressBar.updateValue(0, true);
+            
+            createProgressBar(null, fileName, FILE_READ);
+            
             myFileInfo = imageFile.readHeader();
             width = myFileInfo.getExtents()[0];
             height = myFileInfo.getExtents()[1];
@@ -5976,7 +5929,7 @@ public class FileIO {
 
             imageFile.close();
         } catch (IOException error) {
-            progressBar.dispose();
+            
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -5991,7 +5944,7 @@ public class FileIO {
 
             return null;
         } catch (OutOfMemoryError error) {
-            progressBar.dispose();
+            
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -6010,7 +5963,7 @@ public class FileIO {
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
-        progressBar.dispose();
+        
 
         return image;
     }
@@ -6072,6 +6025,7 @@ public class FileIO {
 
         try {
             imageFile = new FileMap(UI, fileName, fileDir, fileInfo, FileBase.READ);
+            createProgressBar(imageFile, fileName, FILE_READ);
             imageFile.readImage(image, mapIODialog.getOffset());
         } catch (IOException error) {
 
@@ -6121,6 +6075,7 @@ public class FileIO {
 
         try {
             imageFile = new FileMedVision(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
         } catch (IOException error) {
 
@@ -6260,6 +6215,7 @@ public class FileIO {
 
         try {
             imageFile = new FileMinc(fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
         } catch (IOException error) {
 
@@ -6312,6 +6268,7 @@ public class FileIO {
 
         try {
             imageFile = new FileMRC(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -6369,7 +6326,8 @@ public class FileIO {
         }
 
         try {
-            imageFile = new FileMGH(UI, fileName, fileDir, showProgressBar);
+            imageFile = new FileMGH(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
         } catch (IOException error) {
 
@@ -6417,15 +6375,11 @@ public class FileIO {
      */
     private ModelImage readNIFTI(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
-        boolean showProgressBar = (!quiet) ? true : false;
         FileNIFTI imageFile;
 
-        if (!UI.isAppFrameVisible()) {
-            showProgressBar = false;
-        }
-
         try {
-            imageFile = new FileNIFTI(UI, fileName, fileDir, showProgressBar);
+            imageFile = new FileNIFTI(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
         } catch (IOException error) {
 
@@ -6472,7 +6426,7 @@ public class FileIO {
         ModelImage image = null;
         FileNIFTI imageFile;
         FileInfoBase fileInfo;
-        ViewJProgressBar progressBar;
+        
         int length = 0;
         float[] buffer;
         String[] fileList;
@@ -6511,22 +6465,15 @@ public class FileIO {
         if (nImages == 1) {
             return readNIFTI(fileName, fileDir, false);
         }
-
-        progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + fileName,
-                                           UI.getProgressBarPrefix() + "NIFTI image(s) ...", 0, 100, false, null, null);
-
-        progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
-
-        progressBar.updateValue(0, true);
-
-
+        createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
+        
         // System.out.println("nImage = " + i);
         // System.out.println(" filelist[0] = " + fileList[0]);
         // System.out.println(" filelist[1] = " + fileList[1]);
         // if one of the images has the wrong extents, the following must be changed.
         // (ei., too many images!)
         // for simplicity of setup, read in the first file hdr
-        imageFile = new FileNIFTI(UI, fileList[0], fileDir, false);
+        imageFile = new FileNIFTI(UI, fileList[0], fileDir);
 
         try {
 
@@ -6578,7 +6525,7 @@ public class FileIO {
             try {
                 progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
-                imageFile = new FileNIFTI(UI, fileList[i], fileDir, false);
+                imageFile = new FileNIFTI(UI, fileList[i], fileDir);
 
                 if (!((FileNIFTI) imageFile).readHeader(fileList[i], fileDir)) {
                     throw (new IOException(" NIFTI header file error"));
@@ -6655,7 +6602,7 @@ public class FileIO {
                 imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
 
             } catch (IOException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -6670,7 +6617,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
@@ -6686,7 +6633,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -6743,7 +6690,7 @@ public class FileIO {
             }
         }
 
-        progressBar.dispose();
+        
 
         return image;
 
@@ -6770,7 +6717,8 @@ public class FileIO {
         }
 
         try {
-            imageFile = new FileNRRD(UI, fileName, fileDir, showProgressBar);
+            imageFile = new FileNRRD(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
         } catch (IOException error) {
 
@@ -7068,6 +7016,7 @@ public class FileIO {
 
         try {
             imageFile = new FileOSM(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -7190,7 +7139,8 @@ public class FileIO {
         }
 
         try {
-            imageFile = new FileRaw(fileName, fileDir, fileInfo, true, FileBase.READ);
+            imageFile = new FileRaw(fileName, fileDir, fileInfo, FileBase.READ);
+           
             imageFile.readImage(image, fileInfo.getOffset());
         } catch (IOException error) {
 
@@ -7242,7 +7192,7 @@ public class FileIO {
         FileInfoImageXML[] nFileInfos;
         String[] fileList;
         int i;
-        ViewJProgressBar progressBar;
+        
         int nImages;
 
         if (fileInfo == null) {
@@ -7286,12 +7236,8 @@ public class FileIO {
             fileInfo.setMultiFile(true);
         }
 
-        progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + fileName,
-                                           UI.getProgressBarPrefix() + "Raw image(s) ...", 0, 100, false, null, null);
-
-        progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
-        progressBar.updateValue(0, false);
-
+        createProgressBar(null, fileName, FILE_READ);
+        
         nFileInfos = new FileInfoImageXML[nImages];
 
         if (nImages > 1) {
@@ -7323,7 +7269,7 @@ public class FileIO {
             }
 
             buffer = null;
-            progressBar.dispose();
+            
             System.gc();
 
             if (!quiet) {
@@ -7348,7 +7294,7 @@ public class FileIO {
         for (int m = 0; m < nImages; m++) {
 
             try {
-                imageFile = new FileRaw(fileList[m], fileDir, fileInfo, true, FileBase.READ);
+                imageFile = new FileRaw(fileList[m], fileDir, fileInfo, FileBase.READ);
                 progressBar.updateValue((int) (((float) m / (float) nImages) * 100.0f), false);
                 imageFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
                 image.importData(m * length, buffer, false);
@@ -7360,7 +7306,7 @@ public class FileIO {
                 }
 
                 buffer = null;
-                progressBar.dispose();
+                
                 System.gc();
 
                 if (!quiet) {
@@ -7376,7 +7322,7 @@ public class FileIO {
                 }
 
                 buffer = null;
-                progressBar.dispose();
+                
                 System.gc();
 
                 if (!quiet) {
@@ -7387,7 +7333,7 @@ public class FileIO {
             }
         }
 
-        progressBar.dispose();
+        
 
         return image;
 
@@ -7406,19 +7352,11 @@ public class FileIO {
      */
     private ModelImage readSPM(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
-        boolean showProgressBar = (!quiet) ? true : false;
         FileSPM imageFile;
 
-        if (fileName.equals("splash.img") || (one == true)) {
-            showProgressBar = false;
-        }
-
-        if (!UI.isAppFrameVisible()) {
-            showProgressBar = false;
-        }
-
         try {
-            imageFile = new FileSPM(UI, fileName, fileDir, showProgressBar);
+            imageFile = new FileSPM(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
         } catch (IOException error) {
 
@@ -7470,6 +7408,7 @@ public class FileIO {
 
         try {
             imageFile = new FileSTK(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -7522,8 +7461,7 @@ public class FileIO {
         FileTiff imageFile;
 
         try {
-            imageFile = new FileTiff(UI, fileName, fileDir, !quiet);
-            imageFile.setProgressBar(pInterface);
+            imageFile = new FileTiff(UI, fileName, fileDir);
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
 
@@ -7573,19 +7511,17 @@ public class FileIO {
         int[] extents; // extent of image  (!def!)
         int length = 0;
         int i;
-        float[] buffer;
         FileInfoBase myFileInfo;
         String[] fileList;
         FileTiff imageFile;
         ModelImage image = null;
-        ViewJProgressBar progressBar;
+        
         int nImages;
-        boolean showProgressBar = (!quiet) ? true : false;
 
         try {
             fileList = getFileList(fileDir, fileName); // get series of files in the chosen dir
             nImages = fileList.length;
-            imageFile = new FileTiff(UI, fileName, fileDir, !quiet); // read in files
+            imageFile = new FileTiff(UI, fileName, fileDir); // read in files
             imageFile.setFileName(fileList[0]);
             imageFile.readImage(true, false);
         } catch (IOException error) {
@@ -7606,19 +7542,8 @@ public class FileIO {
 
         myFileInfo = imageFile.getFileInfo();
 
-        try {
-            length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
-            buffer = new float[length];
-        } catch (OutOfMemoryError error) {
-            buffer = null;
-            System.gc();
-
-            if (!quiet) {
-                MipavUtil.displayError("Out of memory: " + error);
-            }
-
-            return null;
-        }
+        length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
+       
 
         try {
             resols = new float[5];
@@ -7639,14 +7564,8 @@ public class FileIO {
             myFileInfo.setResolutions(resols); // ??
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName(), UI);
 
-            // Progress bar shows what % of images have been read.
-            progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + "" + fileName,
-                                               UI.getProgressBarPrefix() + "TIFF image(s) ...", 0, 100, false, null,
-                                               null);
-
-            progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
-
-            progressBar.updateValue(0, true);
+            createProgressBar(null, trim(fileName) + getSuffixFrom(fileName) , FILE_READ);
+          
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -7666,9 +7585,9 @@ public class FileIO {
         image.setFileInfo(myFileInfo, 0);
 
         try {
-            imageFile = new FileTiff(UI, fileList[0], fileDir, showProgressBar);
+            imageFile = new FileTiff(UI, fileList[0], fileDir);
         } catch (IOException error) {
-            progressBar.dispose();
+            
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -7683,8 +7602,6 @@ public class FileIO {
 
             return null;
         }
-
-        imageFile.setProgressBarVisible(false);
 
         // loop through image and store data in image model
         for (i = 0; i < nImages; i++) {
@@ -7711,7 +7628,7 @@ public class FileIO {
                     image.importData(i * length, ((FileTiff) imageFile).getImageBuffer(), false);
                 }
             } catch (IOException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -7726,7 +7643,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
@@ -7742,7 +7659,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
@@ -7760,7 +7677,7 @@ public class FileIO {
             }
         }
 
-        progressBar.dispose();
+        
 
         return image;
 
@@ -7781,6 +7698,7 @@ public class FileIO {
 
         try {
             imageFile = new FileTMG(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage();
             // LUT      = imageFile.getModelLUT();
         } catch (IOException error) {
@@ -7832,16 +7750,15 @@ public class FileIO {
     private ModelImage readXML(String fileName, String fileDir, boolean one) {
         ModelImage image = null;
         FileImageXML imageFile;
-        boolean showProgressBar = (!quiet) ? true : false;
-
         // don't show splash screen:
-        if (fileName.equals("splash.xml") || (one == true)) {
-            showProgressBar = false;
-        }
+        
 
         try {
-            imageFile = new FileImageXML(UI, fileName, fileDir, showProgressBar);
-            //imageFile.addProgressChangeListener(progressBar);
+            imageFile = new FileImageXML(UI, fileName, fileDir);
+            
+            if (!(fileName.equals("splash.xml") || (one == true))) {
+            	createProgressBar(imageFile, fileName, FILE_READ);
+            }
             image = imageFile.readImage(one);
             LUT = imageFile.getModelLUT();
             modelRGB = imageFile.getModelRGB();
@@ -7891,7 +7808,7 @@ public class FileIO {
         ModelImage image = null;
         FileImageXML imageFile;
         FileInfoImageXML fileInfo;
-        ViewJProgressBar progressBar;
+        
         int length = 0;
         float[] buffer;
         String[] fileList;
@@ -7931,27 +7848,15 @@ public class FileIO {
             return readXML(fileName, fileDir, false);
         }
 
-        progressBar = new ViewJProgressBar(UI.getProgressBarPrefix() + fileName,
-                                           UI.getProgressBarPrefix() + "XML image(s) ...", 0, 100, false, null, null);
-
-        if (!quiet) {
-            progressBar.setVisible(true);
-        }
-
-        if (!UI.isAppFrameVisible()) {
-            progressBar.setVisible(false);
-        }
-
-        progressBar.updateValue(0, true);
-
-
+        createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
+        
         // System.out.println(" filelist[1] = " + fileList[1]);
         // if one of the images has the wrong extents, the following must be changed.
         // (ei., too many images!)
         // for simplicity of setup, read in the first file hdr
         float[][] res = null;
 
-        imageFile = new FileImageXML(UI, fileList[0], fileDir, false);
+        imageFile = new FileImageXML(UI, fileList[0], fileDir);
 
         try {
             TalairachTransformInfo talairach = new TalairachTransformInfo();
@@ -8003,7 +7908,7 @@ public class FileIO {
         for (i = 0; i < nImages; i++) {
 
             try {
-                progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                //progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
                 imageFile.setFileName(fileList[i]);
                 //imageFile = new FileImageXML(UI, fileList[i], fileDir, false);
@@ -8085,7 +7990,7 @@ public class FileIO {
                 imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
 
             } catch (IOException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     Preferences.debug("Failed to read XML multifile. This error can be caused by attempting to read an XML file that is not actually a multi-file.\n",
@@ -8102,7 +8007,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
@@ -8118,7 +8023,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                progressBar.dispose();
+                
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -8175,7 +8080,7 @@ public class FileIO {
             }
         }
 
-        progressBar.dispose();
+        
 
         return image;
 
@@ -8341,7 +8246,7 @@ public class FileIO {
             FileImageXML xmlFile;
 
             try {
-                xmlFile = new FileImageXML(UI, options.getFileName(), options.getFileDirectory(), true);
+                xmlFile = new FileImageXML(UI, options.getFileName(), options.getFileDirectory());
 
                 String fBase, fName = options.getFileName();
                 int index = fName.lastIndexOf(".");
@@ -8373,6 +8278,7 @@ public class FileIO {
 
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
+            createProgressBar(analyzeFile,options.getFileName(), FILE_WRITE);
             analyzeFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -8545,7 +8451,6 @@ public class FileIO {
         FileInfoDicom myFileInfo = null;
         FileInfoBase[] originalFileInfos;
         FileDicom dicomFile;
-        ViewJProgressBar progressBar = null;
         String fileDir = null;
         String fileName = null;
 
@@ -8802,29 +8707,13 @@ public class FileIO {
 
         imageSize = extents[0] * extents[1];
 
-        try {
-            progressBar = new ViewJProgressBar("Saving " + options.getFileName(), "Saving DICOM image(s) ...", 0, 100,
-                                               false, null, null);
-        } catch (OutOfMemoryError error) {
-            image.setFileInfo(originalFileInfos);
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            progressBar.dispose();
-
-            return false;
-        }
-
-
+        createProgressBar(null,options.getFileName(), FILE_WRITE);
+       
         if (options.isSaveAs()) {
             index = options.getFileName().indexOf(".");
             prefix = options.getFileName().substring(0, index); // Used for setting file name
             fileSuffix = options.getFileName().substring(index);
         }
-
-        progressBar.setVisible(!quiet && ViewUserInterface.getReference().isAppFrameVisible());
 
         try {
             String name;
@@ -8873,7 +8762,7 @@ public class FileIO {
                 dicomFile.writeMultiFrameImage(image, options.getBeginSlice(), options.getEndSlice());
             }
 
-            progressBar.dispose();
+            
         } catch (IOException error) {
             image.setFileInfo(originalFileInfos);
 
@@ -8881,7 +8770,7 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
-            progressBar.dispose();
+            
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8891,7 +8780,7 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
-            progressBar.dispose();
+            
 
             return false;
         }
@@ -8913,7 +8802,8 @@ public class FileIO {
         FileMGH mghFile;
 
         try { // Construct a new file object
-            mghFile = new FileMGH(UI, options.getFileName(), options.getFileDirectory(), true);
+            mghFile = new FileMGH(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(mghFile, options.getFileName(), FILE_WRITE);
             mghFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -8947,6 +8837,7 @@ public class FileIO {
 
         try { // Construct a new file object
             fitsFile = new FileFits(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(fitsFile, options.getFileName(), FILE_WRITE);
             fitsFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -8981,6 +8872,7 @@ public class FileIO {
         try { // Construct a new file object
 
             ICSFile = new FileICS(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(ICSFile, fileName, FILE_WRITE);
             ICSFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9014,6 +8906,7 @@ public class FileIO {
 
         try { // Construct a new file object
             interfileFile = new FileInterfile(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(interfileFile, fileName, FILE_WRITE);
             interfileFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9117,6 +9010,7 @@ public class FileIO {
             }
 
             mincFile = new FileMinc(options.getFileName(), options.getFileDirectory());
+            createProgressBar(mincFile, fileName, FILE_READ);
             mincFile.writeImage(image, options);
 
             return true;
@@ -9155,6 +9049,7 @@ public class FileIO {
 
         try { // Construct a new file object
             mrcFile = new FileMRC(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(mrcFile, options.getFileName(), FILE_WRITE);
             mrcFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9187,7 +9082,8 @@ public class FileIO {
         FileNIFTI NIFTIFile;
 
         try { // Construct a new file object
-            NIFTIFile = new FileNIFTI(UI, options.getFileName(), options.getFileDirectory(), true);
+            NIFTIFile = new FileNIFTI(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(NIFTIFile, options.getFileName(), FILE_WRITE);
             NIFTIFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9221,6 +9117,7 @@ public class FileIO {
 
         try { // Construct a new file object
             osmFile = new FileOSM(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(osmFile, fileName, FILE_READ);
             osmFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9255,8 +9152,8 @@ public class FileIO {
 
         try { // Construct new file info and file objects
             fileInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileBase.RAW);
-            rawFile = new FileRaw(options.getFileName(), options.getFileDirectory(), fileInfo, true,
-                                  FileBase.READ_WRITE);
+            rawFile = new FileRaw(options.getFileName(), options.getFileDirectory(), fileInfo, FileBase.READ_WRITE);
+            createProgressBar(rawFile, options.getFileName(), FILE_WRITE);
             rawFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9289,7 +9186,8 @@ public class FileIO {
         FileSPM spmFile;
 
         try { // Construct a new file object
-            spmFile = new FileSPM(UI, options.getFileName(), options.getFileDirectory(), true);
+            spmFile = new FileSPM(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(spmFile, options.getFileName(), FILE_WRITE);
             spmFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -9323,8 +9221,8 @@ public class FileIO {
         int[] extents;
 
         try { // Construct a new file object
-            imageFile = new FileTiff(UI, options.getFileName(), options.getFileDirectory(), !quiet);
-
+            imageFile = new FileTiff(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(imageFile, options.getFileName(), FILE_WRITE);
             if (LUT == null) {
                 extents = new int[2];
                 extents[0] = 4;
@@ -9362,20 +9260,10 @@ public class FileIO {
      */
     private boolean writeXML(ModelImage image, FileWriteOptions options) {
         FileImageXML xmlFile;
-        boolean showProgressBar = (!quiet) ? true : false;
-
-        if (!UI.isAppFrameVisible()) {
-            showProgressBar = false;
-        }
-
-        if (pInterface != null) {
-            showProgressBar = true;
-        }
 
         try {
-            xmlFile = new FileImageXML(UI, options.getFileName(), options.getFileDirectory(), showProgressBar);
-            xmlFile.setPBar(pInterface);
-
+            xmlFile = new FileImageXML(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(xmlFile, options.getFileName(), FILE_WRITE);
             /**
              * Set the LUT (for grayscale) and ModelRGB (for color) doesn't matter if either is null
              */

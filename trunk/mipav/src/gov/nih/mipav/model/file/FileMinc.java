@@ -466,9 +466,9 @@ public class FileMinc extends FileBase {
                                            ViewUserInterface.getReference().getProgressBarPrefix() + "image(s) ...", 0,
                                            100, false, null, null);
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
-        progressBar.setVisible(isProgressBarVisible());
-        progressBar.updateValue(5, true);
+        
+        
+        fireProgressStateChanged(5);
 
         try {
             fileInfo = readHeader();
@@ -477,7 +477,7 @@ public class FileMinc extends FileBase {
             throw error;
         }
 
-        progressBar.updateValue(10, true);
+        fireProgressStateChanged(10);
 
 
         float[] buffer;
@@ -499,7 +499,7 @@ public class FileMinc extends FileBase {
                 image = new ModelImage(ModelImage.FLOAT, fileInfo.getExtents(), fileName);
             }
 
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, false, FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
             buffer = new float[fileInfo.getExtents()[0] * fileInfo.getExtents()[1]];
         } catch (OutOfMemoryError error) {
@@ -565,7 +565,7 @@ public class FileMinc extends FileBase {
             }
         }
 
-        progressBar.updateValue(15, true);
+        fireProgressStateChanged(15);
         raFile.close();
 
         if ((fileInfo.vmax == -1) && (fileInfo.vmin == -1)) {
@@ -597,7 +597,7 @@ public class FileMinc extends FileBase {
             FileInfoMinc fileInfo0 = (FileInfoMinc) fileInfo.clone();
 
             for (int k = 0; k < image.getExtents()[2]; k++) {
-                progressBar.updateValueImmed(Math.round(15 + ((float) k / image.getExtents()[2] * 10)));
+                fireProgressStateChanged(Math.round(15 + ((float) k / image.getExtents()[2] * 10)));
                 fileInfo.setRescaleIntercept(rescaleIntercept[k]);
                 fileInfo.setRescaleSlope(rescaleSlope[k]);
                 fileInfo.setStartLocations(fileInfo0.getConvertStartLocationsToDICOM(k));
@@ -605,7 +605,7 @@ public class FileMinc extends FileBase {
             }
         }
 
-        progressBar.updateValue(25, true);
+        fireProgressStateChanged(25);
 
 
         try {
@@ -642,7 +642,7 @@ public class FileMinc extends FileBase {
             }
 
             for (int n = 0; n < nImgs; n++) {
-                progressBar.updateValueImmed(Math.round(25 + ((float) n / nImgs * 75)));
+                fireProgressStateChanged(Math.round(25 + ((float) n / nImgs * 75)));
 
                 // ***** Read image slice
                 if (one) {
@@ -687,8 +687,8 @@ public class FileMinc extends FileBase {
         }
 
         if (fileInfo.getExtents().length == 3) {
-            progressBar.updateValueImmed(100);
-            progressBar.dispose();
+            fireProgressStateChanged(100);
+            
         }
 
         buffer = null;
@@ -765,14 +765,14 @@ public class FileMinc extends FileBase {
         ViewJProgressBar progressBar = new ViewJProgressBar("Saving " + fileName, "Writing header", 0, 100, false, null,
                                                             null);
         progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-        progressBar.setVisible(isProgressBarVisible());
-        progressBar.updateValue(5, true);
+        
+        
+        fireProgressStateChanged(5);
         
         raFile.setLength(0);
 
         ModelImage image = null;
-        progressBar.updateValue(10, options.isRunningInSeparateThread());
+        fireProgressStateChanged(10);
 
         try {
   
@@ -849,7 +849,7 @@ public class FileMinc extends FileBase {
                 FileInfoMinc fileInfoMinc = (FileInfoMinc) _image.getFileInfo(0);
 
                 writeHeader(fileInfoMinc);
-                progressBar.updateValue(15, options.isRunningInSeparateThread());
+                fireProgressStateChanged(15);
 
                 // for each variable, get its corresponding data - possibly after image
                 for (int i = 0; i < fileInfoMinc.getVarArray().length; i++) {
@@ -858,16 +858,15 @@ public class FileMinc extends FileBase {
                     if (fileInfoMinc.getVarElem(i).name.equals("image")) {
                         FileRawChunk rawChunkFile;
                         rawChunkFile = new FileRawChunk(raFile, fileInfoMinc);
-                        progressBar.setMessage("Saving image(s) ...");
+                        fireProgressStateChanged("Saving image(s) ...");
                         sliceSize = fileInfoMinc.getExtents()[0] * fileInfoMinc.getExtents()[1];
 
                         if (image.getNDims() == 3) {
 
                             for (int j = 0; j < image.getExtents()[2]; j++) {
                                 _image.exportData(j * sliceSize, sliceSize, sliceData);
-                                progressBar.updateValue(15 +
-                                                        Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 35),
-                                                        options.isRunningInSeparateThread());
+                                fireProgressStateChanged(15 +
+                                                        Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 35));
 
                                 for (int k = 0; k < sliceSize; k++) {
                                     sliceData[k] = (float) ((sliceData[k] - intercepts[j]) / slopes[j]);
@@ -878,20 +877,19 @@ public class FileMinc extends FileBase {
 
                             for (int j = 0; j < image.getExtents()[2]; j++) {
                                 rawChunkFile.writeImage(image, j * sliceSize, (j + 1) * sliceSize, j);
-                                progressBar.updateValue(50 +
-                                                        Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 50),
-                                                        options.isRunningInSeparateThread());
+                                fireProgressStateChanged(50 +
+                                                        Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 50));
                             }
 
-                            progressBar.updateValue(100, options.isRunningInSeparateThread());
-                            progressBar.dispose();
+                            fireProgressStateChanged(100);
+                            
                         } else {
                             // TODO: is this correct?  don't 2D/4D images need to be rescaled too?
                             rawChunkFile.writeImage(image, 0, sliceSize, 0);
                         }
 
-                        progressBar.updateValue(100, options.isRunningInSeparateThread());
-                        progressBar.dispose();
+                        fireProgressStateChanged(100);
+                        
                         location = fileInfoMinc.getVarElem(i).vsize;
                         writePadding();
                     } else if (fileInfoMinc.getVarElem(i).name.equals("image-min")) {
@@ -957,21 +955,20 @@ public class FileMinc extends FileBase {
                     writeDouble(0, endianess);
                 }
 
-                progressBar.updateValueImmed(2);
+                fireProgressStateChanged(2);
                 fileInfo.setExtents(extents); // reset extents to proper value
 
                 FileRawChunk rawChunkFile;
                 rawChunkFile = new FileRawChunk(raFile, fileInfo);
 
-                progressBar.setMessage("Rescaling data");
-                progressBar.updateValue(10, options.isRunningInSeparateThread());
+                fireProgressStateChanged("Rescaling data");
+                fireProgressStateChanged(10);
 
                 int count = 1;
 
                 for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
                     jp = j - options.getBeginSlice();
-                    progressBar.updateValue(10 + Math.round((float) count / (nImages - 1) * 40),
-                                            options.isRunningInSeparateThread());
+                    fireProgressStateChanged(10 + Math.round((float) count / (nImages - 1) * 40));
                     _image.exportData(j * sliceSize, sliceSize, sliceData);
 
                     for (int k = 0; k < sliceData.length; k++) {
@@ -983,7 +980,7 @@ public class FileMinc extends FileBase {
                 }
 
                 image.getFileInfo(0).setEndianess(FileBase.BIG_ENDIAN);
-                progressBar.setMessage("Saving image(s) ...");
+                fireProgressStateChanged("Saving image(s) ...");
                 count = 1;
 
                 for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
@@ -991,8 +988,7 @@ public class FileMinc extends FileBase {
 
                     // System.out.println(" j = " + j);
                     rawChunkFile.writeImage(image, jp * sliceSize, (jp + 1) * sliceSize, jp);
-                    progressBar.updateValue(50 + Math.round((float) count / (nImages - 1) * 50),
-                                            options.isRunningInSeparateThread());
+                    fireProgressStateChanged(50 + Math.round((float) count / (nImages - 1) * 50));
                     count++;
                 }
 
@@ -1018,11 +1014,11 @@ public class FileMinc extends FileBase {
                     writeInt(0, FileBase.BIG_ENDIAN);
                 }
 
-                progressBar.updateValue(100, options.isRunningInSeparateThread());
+                fireProgressStateChanged(100);
             }
         } catch (OutOfMemoryError e) {
             raFile.close();
-            progressBar.dispose();
+            
 
             if (image != null) {
                 image.disposeLocal();
@@ -1032,7 +1028,7 @@ public class FileMinc extends FileBase {
         }
 
         raFile.close();
-        progressBar.dispose();
+        
         image.disposeLocal();
         image = null;
     }

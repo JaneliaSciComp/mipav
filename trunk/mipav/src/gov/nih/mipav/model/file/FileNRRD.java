@@ -259,7 +259,7 @@ public class FileNRRD extends FileBase {
 
 
     /** DOCUMENT ME! */
-    private boolean showProgress = true;
+    
 
     /** DOCUMENT ME! */
     private int skippedBytes = 0;
@@ -313,11 +313,10 @@ public class FileNRRD extends FileBase {
      * @param  fDir   File directory.
      * @param  show   Flag for showing the progress bar.
      */
-    public FileNRRD(ViewUserInterface _UI, String fName, String fDir, boolean show) {
+    public FileNRRD(ViewUserInterface _UI, String fName, String fDir) {
         UI = _UI;
         fileName = fName;
         fileDir = fDir;
-        showProgress = show;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -2100,12 +2099,6 @@ public class FileNRRD extends FileBase {
         int[] newUnits;
         String[] newLabels = null;
 
-        progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                           ViewUserInterface.getReference().getProgressBarPrefix() +
-                                           "NRRD image(s) ...", 0, 100, false, null, null);
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" NRRD header file error"));
         }
@@ -2215,7 +2208,7 @@ public class FileNRRD extends FileBase {
             }
 
             for (i = sequenceStart; i <= sequenceFinish; i += sequenceStep) {
-                progressBar.updateValue((i - sequenceStart) * 100 / sequenceStep, true);
+                fireProgressStateChanged((i - sequenceStart) * 100 / sequenceStep);
 
                 if (autoSequence) {
 
@@ -2283,8 +2276,8 @@ public class FileNRRD extends FileBase {
 
                 if (gunzip) {
                     int totalBytesRead = 0;
-                    progressBar.setVisible(isProgressBarVisible());
-                    progressBar.setMessage("Uncompressing GZIP file ...");
+                    
+                    fireProgressStateChanged("Uncompressing GZIP file ...");
                     fis = new FileInputStream(file);
                     fis.skip(offset1);
 
@@ -2327,7 +2320,7 @@ public class FileNRRD extends FileBase {
                 try { // Construct a FileRaw to actually read the image.
 
                     FileRaw rawFile;
-                    rawFile = new FileRaw(fileInfoSub.getFileName(), fileInfoSub.getFileDirectory(), fileInfoSub, false,
+                    rawFile = new FileRaw(fileInfoSub.getFileName(), fileInfoSub.getFileDirectory(), fileInfoSub,
                                           FileBase.READ);
 
                     if (image.isColorImage()) {
@@ -2380,8 +2373,8 @@ public class FileNRRD extends FileBase {
 
             if (gunzip) {
                 int totalBytesRead = 0;
-                progressBar.setVisible(isProgressBarVisible());
-                progressBar.setMessage("Uncompressing GZIP file ...");
+                
+                fireProgressStateChanged("Uncompressing GZIP file ...");
                 fis = new FileInputStream(file);
                 fis.skip(offset1);
 
@@ -2490,7 +2483,7 @@ public class FileNRRD extends FileBase {
             try { // Construct a FileRaw to actually read the image.
 
                 FileRaw rawFile;
-                rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, showProgress,
+                rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
                                       FileBase.READ);
 
                 if (image.isColorImage()) {
@@ -2507,8 +2500,8 @@ public class FileNRRD extends FileBase {
                     }
                 }
 
-                progressBar.setVisible(isProgressBarVisible());
-                progressBar.setMessage("Reading in data ...");
+                
+                fireProgressStateChanged("Reading in data ...");
                 rawFile.readImage(image, offset);
                 rawFile.close();
 
@@ -2643,10 +2636,6 @@ public class FileNRRD extends FileBase {
                 throw new IOException("FileNRRD: " + error);
             }
         } // if (reorder)
-
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
 
         return image;
     }

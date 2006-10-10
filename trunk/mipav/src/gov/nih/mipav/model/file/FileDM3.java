@@ -233,7 +233,7 @@ public class FileDM3 extends FileBase {
             progressBar = new ViewJProgressBar(fileName, "Reading DM3 file...", 0, 100, false, null, null);
 
             progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(!one && ViewUserInterface.getReference().isAppFrameVisible());
+            
 
             file = new File(fileDir + fileName);
 
@@ -246,7 +246,7 @@ public class FileDM3 extends FileBase {
 
             if (fileVersion != 3) {
                 raFile.close();
-                progressBar.dispose();
+                
                 MipavUtil.displayError("File version number = " + fileVersion + " instead of required 3");
                 throw new IOException();
             }
@@ -269,7 +269,7 @@ public class FileDM3 extends FileBase {
             } else {
                 Preferences.debug("byteOrder is an illegal = " + byteOrder + "\n");
                 raFile.close();
-                progressBar.dispose();
+                
                 MipavUtil.displayError("Byte order is an illegal = " + byteOrder);
                 throw new IOException();
             }
@@ -564,7 +564,7 @@ public class FileDM3 extends FileBase {
 
             image.calcMinMax();
             raFile.close();
-            progressBar.dispose();
+            
 
             return image;
         } catch (Exception e) {
@@ -671,7 +671,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw new IOException();
         }
 
@@ -710,7 +710,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw new IOException();
         }
 
@@ -742,11 +742,11 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = byteBuffer[j];
@@ -761,11 +761,11 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 100;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j++, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[i] = byteBuffer[j] & 0xff;
@@ -780,11 +780,11 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -807,11 +807,11 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -838,11 +838,11 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 2, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -865,11 +865,11 @@ public class FileDM3 extends FileBase {
                 progress = slice * buffer.length;
                 progressLength = buffer.length * numberSlices;
                 mod = progressLength / 10;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     b1 = getUnsignedByte(byteBuffer, j);
@@ -893,11 +893,11 @@ public class FileDM3 extends FileBase {
                 progress = slice * nBytes;
                 progressLength = nBytes * numberSlices;
                 mod = progressLength / 100;
-                progressBar.setVisible(isProgressBarVisible());
+                
                 for (j = 0; j < nBytes; j += 4, i++) {
 
                     if (((i + progress) % mod) == 0) {
-                        progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                        fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                     }
 
                     buffer[(4 * i) + 1] = byteBuffer[j] & 0xff;
@@ -935,12 +935,12 @@ public class FileDM3 extends FileBase {
         progress = slice * bufferR.length;
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
-        progressBar.setVisible(isProgressBarVisible());
+        
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
             if (((i + progress) % mod) == 0) {
-                progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
             b1 = getUnsignedByte(byteBuffer, j);
@@ -994,12 +994,12 @@ public class FileDM3 extends FileBase {
         progress = slice * buffer.length;
         progressLength = buffer.length * numberSlices;
         mod = progressLength / 10;
-        progressBar.setVisible(isProgressBarVisible());
+        
 
         for (j = 0; j < nBytes; j += 8, i++) {
 
             if (((i + progress) % mod) == 0) {
-                progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
             b1 = getUnsignedByte(byteBuffer, j);
@@ -1049,12 +1049,12 @@ public class FileDM3 extends FileBase {
         progress = slice * bufferR.length;
         progressLength = bufferR.length * numberSlices;
         mod = progressLength / 10;
-        progressBar.setVisible(isProgressBarVisible());
+        
 
         for (j = 0; j < nBytes; j += 16, i++) {
 
             if (((i + progress) % mod) == 0) {
-                progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
             }
 
             b1 = getUnsignedByte(byteBuffer, j);
@@ -1120,12 +1120,12 @@ public class FileDM3 extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            progressBar.setVisible(isProgressBarVisible());
+            
 
             for (j = 0; j < nBytes; j += 4, i++) {
 
                 if (((i + progress) % mod) == 0) {
-                    progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                 }
 
                 b1 = getUnsignedByte(byteBuffer, j);
@@ -1147,12 +1147,12 @@ public class FileDM3 extends FileBase {
             progress = slice * buffer.length;
             progressLength = buffer.length * numberSlices;
             mod = progressLength / 10;
-            progressBar.setVisible(isProgressBarVisible());
+            
 
             for (j = 0; j < nBytes; j += 8, i++) {
 
                 if (((i + progress) % mod) == 0) {
-                    progressBar.updateValueImmed(Math.round((float) (i + progress) / progressLength * 100));
+                    fireProgressStateChanged(Math.round((float) (i + progress) / progressLength * 100));
                 }
 
                 b1 = getUnsignedByte(byteBuffer, j);
@@ -1297,7 +1297,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw new IOException();
         }
 
@@ -1334,7 +1334,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw new IOException();
         }
 
@@ -1375,7 +1375,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw new IOException();
         }
 
@@ -1413,7 +1413,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw new IOException();
         }
 
@@ -1504,7 +1504,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw new IOException();
         }
 
@@ -1554,7 +1554,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw new IOException();
         }
 
@@ -1630,7 +1630,7 @@ public class FileDM3 extends FileBase {
 
             System.gc();
             raFile.close();
-            progressBar.dispose();
+            
             throw new IOException();
         }
 

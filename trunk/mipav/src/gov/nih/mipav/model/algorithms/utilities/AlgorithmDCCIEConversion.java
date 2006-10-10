@@ -383,8 +383,6 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
                     aviFile = new FileAvi(userInterface, name, newDirectory);
                     aviFile.setCompressionQuality(quality);
 
-                    aviFile.setProgressBarVisible(false);
-
                     if (compression != 0) {
                         fireProgressStateChanged("Encoding image as compressed avi...");
                     } else {

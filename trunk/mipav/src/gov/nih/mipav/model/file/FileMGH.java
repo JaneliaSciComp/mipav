@@ -180,7 +180,7 @@ public class FileMGH extends FileBase {
     
     
     /** DOCUMENT ME! */
-    private boolean showProgress = true;
+    
     
     String cmdlines[] = new String[MAX_CMDS];
 
@@ -200,11 +200,10 @@ public class FileMGH extends FileBase {
      * @param  fDir   File directory.
      * @param  show   Flag for showing the progress bar.
      */
-    public FileMGH(ViewUserInterface _UI, String fName, String fDir, boolean show) {
+    public FileMGH(ViewUserInterface _UI, String fName, String fDir) {
         UI = _UI;
         fileName = fName;
         fileDir = fDir;
-        showProgress = show;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -258,10 +257,8 @@ public class FileMGH extends FileBase {
 
         if (gunzip) {
             int totalBytesRead = 0;
-            if (showProgress) {
-                progressBar.setVisible(isProgressBarVisible());
-                progressBar.setMessage("Uncompressing GZIP file ...");
-            }
+            fireProgressStateChanged("Uncompressing GZIP file ...");
+            
             fis = new FileInputStream(file);
 
             GZIPInputStream gzin = new GZIPInputStream(new BufferedInputStream(fis));
@@ -633,15 +630,7 @@ public class FileMGH extends FileBase {
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
         int offset;
-        
-        if (showProgress) {
-            progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                ViewUserInterface.getReference().getProgressBarPrefix() + "MGH image(s) ...",
-                0, 100, false, null, null);
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-        }
-        
+                      
         fileInfo = new FileInfoMGH(fileName, fileDir, FileBase.MGH);
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
@@ -675,7 +664,7 @@ public class FileMGH extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, showProgress,
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
                                   FileBase.READ);
 
             offset = 284;
@@ -693,9 +682,6 @@ public class FileMGH extends FileBase {
                 fileInfo.setExtents(extents);
             }
             
-            if (progressBar != null) {
-                progressBar.dispose();
-            }
         } catch (IOException error) {
             throw new IOException("FileMGH: " + error);
         } catch (OutOfMemoryError e) {
@@ -730,8 +716,7 @@ public class FileMGH extends FileBase {
         try { // Construct a FileRaw to actually read the image.
 
             FileRaw rawFile;
-            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, showProgress,
-                                  FileBase.READ);
+            rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
 
             offset = 284;
 
@@ -1332,13 +1317,6 @@ public class FileMGH extends FileBase {
             gzip = false;
         }  
         
-        if (showProgress) {
-            progressBar = new ViewJProgressBar(fileName, "Writing AFNI header file...", 0, 100, true, null, null);
-
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-            setProgressBarVisible(ViewUserInterface.getReference().isAppFrameVisible());
-        }
-
         zBegin = options.getBeginSlice();
         zEnd = options.getEndSlice();
 
@@ -1469,9 +1447,8 @@ public class FileMGH extends FileBase {
             for (t = tBegin; t <= tEnd; t++) {
 
                 for (z = zBegin; z <= zEnd; z++) {
-                    if (showProgress) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
-                    }
+                    fireProgressStateChanged((100 * count++) / numberSlices);
+                    
                     image.exportSliceXY((t * zDim) + z, byteBuffer);
                     raFile.write(byteBuffer);
                 }
@@ -1485,9 +1462,8 @@ public class FileMGH extends FileBase {
             for (t = 0; t <= tEnd; t++) {
 
                 for (z = zBegin; z <= zEnd; z++) {
-                    if (showProgress) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
-                    }
+                    fireProgressStateChanged((100 * count++) / numberSlices);
+                    
                     image.exportSliceXY((t * zDim) + z, shortBuffer);
 
                     for (j = 0; j < sliceSize; j++) {
@@ -1507,9 +1483,8 @@ public class FileMGH extends FileBase {
             for (t = tBegin; t <= tEnd; t++) {
 
                 for (z = zBegin; z <= zEnd; z++) {
-                    if (showProgress) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
-                    }
+                    fireProgressStateChanged((100 * count++) / numberSlices);
+                    
                     image.exportSliceXY((t * zDim) + z, intBuffer);
 
                     for (j = 0; j < sliceSize; j++) {
@@ -1532,9 +1507,8 @@ public class FileMGH extends FileBase {
             for (t = tBegin; t <= tEnd; t++) {
 
                 for (z = zBegin; z <= zEnd; z++) {
-                    if (showProgress) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
-                    }
+                    fireProgressStateChanged((100 * count++) / numberSlices);
+                    
                     image.exportSliceXY((t * zDim) + z, longBuffer);
 
                     for (j = 0; j < sliceSize; j++) {
@@ -1559,9 +1533,8 @@ public class FileMGH extends FileBase {
             byteBuffer = new byte[4 * sliceSize];
             for (t = tBegin; t <= tEnd; t++) {
                 for (z = zBegin; z <= zEnd; z++) {
-                    if (showProgress) {
-                        progressBar.updateValue((100 * count++) / numberSlices, options.isRunningInSeparateThread());
-                    }
+                    fireProgressStateChanged((100 * count++) / numberSlices);
+                    
                     image.exportSliceXY((t * zDim) + z, floatBuffer);
 
                     for (j = 0; j < sliceSize; j++) {
@@ -1582,10 +1555,8 @@ public class FileMGH extends FileBase {
         } // switch(dataType)
         raFile.close();
         if (gzip) {
-            if (showProgress) {
-                progressBar.setVisible(isProgressBarVisible());
-                progressBar.setMessage("Compressing GZIP file ...");
-            }
+           fireProgressStateChanged("Compressing GZIP file ...");
+            
             GZIPOutputStream out = new GZIPOutputStream(new FileOutputStream(fileDir + fileName));
             
             FileInputStream in = new FileInputStream(fileDir + fileName.substring(0,index+1) + "mgh");
@@ -1600,10 +1571,6 @@ public class FileMGH extends FileBase {
             out.close();
         } // if (gzip)
     
-        if (progressBar != null) {
-            progressBar.dispose();
-        }
-
     } // writeImage
 
     
