@@ -349,7 +349,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         while (bf.hasMoreElements()) {
             ScriptTreeNode node = node = (ScriptTreeNode) bf.nextElement();
 
-            if ((node.toString().startsWith("$")) || ((node.toString().indexOf("VOI Needed") != -1))) {
+            if ((node.toString().startsWith("$")) || (node.toString().indexOf("VOI Needed") != -1)) {
                 tree.addSelectionPath(new TreePath(node.getPath()));
                 MipavUtil.displayWarning("Image or VOI placeholders still found.  Script execution aborted.");
 
@@ -523,7 +523,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             };
         frame.setSize(frame_size);
         frame.setTitle("MIPAV Script Tool: " + model.getScriptFile());
-        frame.setIconImage(gov.nih.mipav.view.MipavUtil.getIcon("gear.gif").getImage());
+        frame.setIconImage(MipavUtil.getIcon("gear.gif").getImage());
         contentPane = frame.getContentPane();
         layout = new SpringLayout();
         contentPane.setLayout(layout);
@@ -587,7 +587,10 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             addButton(buttonNames[c]);
         }
 
-        String[] menuItems = { "File", "Open Script...", "Save..." };
+        String[] menuItems = {
+            "File", "Open saved image and VOI selections", "Save current image and VOI selections",
+            "View current script contents", "Close"
+        };
         addMenu(menuItems);
 
         for (int i = 0; i < frame.getContentPane().getComponents().length; i++) {
@@ -1084,8 +1087,8 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                 this.setForeground(Color.GRAY);
             }
 
-            if (((node.getUserObject().toString().indexOf("$Image") != -1)) ||
-                ((node.getUserObject().toString().indexOf("$image") != -1))) {
+            if ((node.getUserObject().toString().indexOf("$Image") != -1) ||
+                    (node.getUserObject().toString().indexOf("$image") != -1)) {
                 setIcon(imageIcon);
             } else if (model.isImage(node.getUserObject().toString())) {
                 setIcon(imageIcon);

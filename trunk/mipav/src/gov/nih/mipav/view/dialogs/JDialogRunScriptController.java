@@ -114,7 +114,7 @@ public class JDialogRunScriptController implements ActionListener {
             }
 
             model.addVOI(fileName, directory, selectedIndex);
-        } else if (command.equalsIgnoreCase("Save...")) {
+        } else if (command.equalsIgnoreCase("Save current image and VOI selections")) {
             String xmlTree = parseTreeToXML(view.getTreeRoot());
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Save script to XML");
@@ -130,9 +130,9 @@ public class JDialogRunScriptController implements ActionListener {
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
-        } else if (command.equalsIgnoreCase("Open Script...")) {
+        } else if (command.equalsIgnoreCase("Open saved image and VOI selections")) {
             JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Open script");
+            chooser.setDialogTitle("Open saved image and VOI selections");
             chooser.showOpenDialog(view.getFrame());
 
             try {
@@ -148,6 +148,38 @@ public class JDialogRunScriptController implements ActionListener {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        } else if (command.equalsIgnoreCase("View current script contents")) {
+            JDialog scriptContentsDialog = new JDialog(view.getFrame(), "Script contents: " + model.getScriptFile(),
+                                                       false);
+
+            String contents = new String();
+
+            try {
+                BufferedReader scriptReader = new BufferedReader(new FileReader(model.getScriptFile()));
+
+                while (scriptReader.ready()) {
+                    contents += scriptReader.readLine() + "\n";
+                }
+            } catch (FileNotFoundException fnfe) {
+                MipavUtil.displayError("File not found: " + model.getScriptFile());
+                fnfe.printStackTrace();
+            } catch (IOException ioe) {
+                MipavUtil.displayError("Error encountered while reading script file contents: " +
+                                       model.getScriptFile());
+                ioe.printStackTrace();
+            }
+
+            JTextArea contentsArea = new JTextArea(contents, 20, 80);
+            contentsArea.setEditable(false);
+
+            JScrollPane scrollPane = new JScrollPane(contentsArea);
+
+            scriptContentsDialog.getContentPane().add(scrollPane);
+            scriptContentsDialog.pack();
+            MipavUtil.centerInWindow(view.getFrame(), scriptContentsDialog);
+            scriptContentsDialog.setVisible(true);
+        } else if (command.equalsIgnoreCase("Close")) {
+            view.getFrame().dispose();
         }
     }
 
