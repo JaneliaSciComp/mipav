@@ -1564,7 +1564,8 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
             }
 
             try {
-                mi = io.readDicom(imageFile);
+            	io.setFileDir(imageFile.getParent() + File.separator);
+                mi = io.readDicom(imageFile.getName(), new String[] {imageFile.getName()}, false);
                 writeToLog(imageFile.getAbsolutePath(), false);
 
                 if (mi != null) {
@@ -1634,12 +1635,6 @@ public class JDialogAnonymizeDirectory extends JDialogBase {
 
                     return false;
                 }
-            } catch (IOException ioe) {
-                Preferences.debug("anonymizeImage: file not dicom: >" + imageFile + "< .  try on different file.\n");
-                writeToLog(imageFile.getAbsolutePath() + "  -- Not a DICOM file.  File not Touched.", true);
-                mi = null;
-
-                return false;
             } catch (OutOfMemoryError oome) {
                 Preferences.debug("System out of memory.  level too deep.  coming up to a higher level.\n");
                 writeToLog("System out of memory.  Will attempt to process other directories.", true);

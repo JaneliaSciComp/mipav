@@ -1209,84 +1209,6 @@ public class FileIO {
 
     /**
      * Reads a list of DICOM files. DICOM images have all their slices in separate files (except multi-frame), with
-     * different information in each header. Slices are positioned as they are listed in the <code>fileList</code>.
-     * without regard to the positional data stored in the image. However, some positional data must be included in the
-     * image -- even if not acted upon -- so the headers are read twice. This method is identical (indeed, it calls)
-     * <code>readDicom(fileList, false)</code>.
-     *
-     * @param   fileList  DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public ModelImage readDicom(String[] fileList) {
-    	ModelImage dicomImage = readDicom(fileList, false);
-    	if (progressBar != null) {
-    		progressBar.dispose();
-    	}
-    	
-    	return dicomImage;
-    }
-
-    /**
-     * Reads a DICOM file. DICOM images store slices in separate files or as a 'multi-frame' image, with different
-     * information in each header. The position of the slice in the image is determined by information found in the
-     * header so all the headers must be read before the images can be read.
-     *
-     * <p>This method does not read any other images in the directory; returns a modelImage with 3 dimensions read in
-     * only when a multiple slices are stored as a multi-frame image.</p>
-     *
-     * @param      f  DOCUMENT ME!
-     *
-     * @return     The image that was read in, or null if failure.
-     *
-     * @throws     IOException               DOCUMENT ME!
-     * @exception  IllegalArgumentException  if File f is null, does not exist, or cannot be read.
-     * @throws     NullPointerException      DOCUMENT ME!
-     */
-    public ModelImage readDicom(File f) throws IOException, IllegalArgumentException, NullPointerException {
-
-        // System.err.println( "read dicom" );
-        if (f == null) {
-            throw new NullPointerException("File null");
-        }
-
-        if (!f.exists() || !f.canRead()) {
-            throw new IllegalArgumentException("\"" + f.getAbsolutePath() + "\"" + " is not available");
-        }
-
-        this.fileDir = f.getParent() + File.separator;
-
-        String[] list = new String[1];
-
-        list[0] = /* fileDir +*/ f.getName();
-
-        return readDicom(list, false);
-    }
-
-    /**
-     * Reads a list of DICOM files. DICOM images have all their slices in separate files (except multi-frame), with
-     * different information in each header. The position of the slice in the image is determined by information found
-     * in the header so all the headers must be read before the images can be read. That's why this method goes through
-     * all the images twice.
-     *
-     * @param   fileList     Names of the image files residing in <code>this#fileDir</code> to read.
-     * @param   performSort  <code>true</code> if this method is to sort the files in the list, or, <code>false</code>
-     *                       will apply the images in each file in the order they appear as the order to use in the
-     *                       ModelImage.
-     *
-     * @return  The image that was read in, or null if failure.
-     */
-    public ModelImage readDicom(String[] fileList, boolean performSort) {
-    	ModelImage dicomImage = readDicom(fileList[0], fileList, performSort);
-    		
-    	if (progressBar != null) {
-    		progressBar.dispose();
-    	}
-        return dicomImage;
-    }
-
-    /**
-     * Reads a list of DICOM files. DICOM images have all their slices in separate files (except multi-frame), with
      * different information in each header. The position of the slice in the image is determined by information found
      * in the header so all the headers must be read before the images can be read. That's why this method goes through
      * all the images twice.
@@ -2439,7 +2361,8 @@ public class FileIO {
 
                 case FileBase.DICOM:
                     if (!multiFile) {
-                        image = readOneDicom(fileName, fileDir);
+                    	this.fileDir = fileDir;
+                    	image = readDicom(fileName, new String[]{fileName.trim()}, false);
                     } else {
                         image = readDicom(fileName, getFileList(fileDir, fileName), true);
                     }
@@ -2553,29 +2476,6 @@ public class FileIO {
         }
 
         return image;
-    }
-
-    /**
-     * Reads a single DICOM image by calling the read method of the file. fileDir is set and If it cannot read the
-     * header, null will be returned.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
-     */
-    public ModelImage readOneDicom(String fileName, String fileDir) {
-        String[] fname = new String[1];
-
-        // System.err.println("Read one dicom");
-        this.fileDir = fileDir;
-        fname[0] = /* fileDir + */ fileName.trim();
-
-        ModelImage image;
-
-        image = readDicom(fname);
-
-        return (image);
     }
 
     /**

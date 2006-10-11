@@ -168,7 +168,9 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
             File dicomFile = new File(fileName);
             System.err.println("filename: " + fileName);
 
-            ModelImage dicomImage = fileIO.readDicom(dicomFile);
+            fileIO.setFileDir(dicomFile.getParent() + File.separator);
+            ModelImage dicomImage = fileIO.readDicom(dicomFile.getName(), new String[] {dicomFile.getName()}, false);
+            
             dicomFile = null;
 
             if (dicomImage == null) {
