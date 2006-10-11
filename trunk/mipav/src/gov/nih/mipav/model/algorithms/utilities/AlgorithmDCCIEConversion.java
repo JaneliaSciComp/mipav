@@ -223,7 +223,8 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
             System.err.println("filename: " + fileName);
 
             if (inputDICOM) {
-                inputImage = fileIO.readDicom(inputFile);
+            	fileIO.setFileDir(inputFile.getParent() + File.separator);
+            	inputImage = fileIO.readDicom(inputFile.getName(), new String[] {inputFile.getName()}, false);
             } else {
                 inputImage = fileIO.readImage(inputFile.getName(), inputFile.getParent() + File.separator);
             }

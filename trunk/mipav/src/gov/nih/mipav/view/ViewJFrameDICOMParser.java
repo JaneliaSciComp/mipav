@@ -246,7 +246,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
             io.setFileDir(fileInfoDICOM.getFileDirectory() + File.separatorChar);
 
-            ModelImage image = io.readDicom(fileNames);
+            ModelImage image = io.readDicom(fileNames[0], fileNames, false);
 
             if (image == null) {
                 return;
@@ -324,7 +324,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
             io.setFileDir(fileInfoDICOM.getFileDirectory() + File.separatorChar);
 
-            ModelImage image = io.readDicom(fileNames);
+            ModelImage image = io.readDicom(fileNames[0], fileNames, false);
 
             if (image == null) {
                 return;
@@ -544,8 +544,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 // set the progess background color to dark gray
                 // System.err.println("setting to dark gray");
-                progressPanel.setValueImmed(0);
-                progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
+             //   progressPanel.setValueImmed(0);
+             //   progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
 
                 // progressPanel.repaint();
                 // this.repaint();
@@ -686,10 +686,10 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                         }
 
-                        if ((i % mod) == 0) {
-                            progressPanel.setValueImmed(100 * (i + 1) / (fileInfoVector.size()));
+                       // if ((i % mod) == 0) {
+                       //     progressPanel.setValueImmed(100 * (i + 1) / (fileInfoVector.size()));
                             // System.err.println("pbar val to: " + (100 * (i + 1) / (fileInfoVector.size())));
-                        }
+                      //  }
 
                         imageTableModel.addRow(newRow); // the new row, after all column values have been added, is
                                                         // added to the table
@@ -698,9 +698,9 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 // imageTableSorter.fireTableDataChanged();
                 // this.repaint();
-                progressPanel.getProgressBar().setBorderPainted(false);
-                progressPanel.getProgressBar().setBackground(this.getBackground());
-                progressPanel.getProgressBar().setForeground(this.getBackground());
+            //    progressPanel.getProgressBar().setBorderPainted(false);
+            //    progressPanel.getProgressBar().setBackground(this.getBackground());
+            //    progressPanel.getProgressBar().setForeground(this.getBackground());
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1260,12 +1260,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         gbc2.gridheight = 1;
         gbc2.gridy = 4;
 
-        progressPanel = new JPanelProgressBar(0, 100);
-        centerPanel.add(progressPanel, gbc2);
+      //  progressPanel = new JPanelProgressBar(0, 100);
+      //  centerPanel.add(progressPanel, gbc2);
 
-        progressPanel.getProgressBar().setBackground(this.getBackground());
-        progressPanel.getProgressBar().setForeground(this.getBackground());
-        progressPanel.getProgressBar().setBorderPainted(false);
+      //  progressPanel.getProgressBar().setBackground(this.getBackground());
+       // progressPanel.getProgressBar().setForeground(this.getBackground());
+      //  progressPanel.getProgressBar().setBorderPainted(false);
         // progressPanel.getProgressBar().setIndeterminate(true);
 
         brightnessContrastPanel = new JPanel(new BorderLayout());
@@ -1476,8 +1476,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
 
             // set the progressPanel (bar) to dark gray
-            progressPanel.setValueImmed(0);
-            progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
+          //  progressPanel.setValueImmed(0);
+          //  progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
             // progressPanel.repaint();
             // this.repaint();
 
@@ -1561,7 +1561,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                     addSeries = false;
 
                     // System.err.println("updating to: " + (100 * (j + 1) / (grandparent.length)));
-                    progressPanel.updateValueImmed(100 * (j + 1) / (grandparent.length));
+                    //progressPanel.updateValueImmed(100 * (j + 1) / (grandparent.length));
                     //                    progressBar.updateValue(100 * (j + 1) / (grandparent.length), false);
                 }
 
@@ -1618,7 +1618,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                     }
 
                     // System.err.println("updating to: " + (100 * (i + 1) / (children.length)));
-                    progressPanel.updateValueImmed(100 * (i + 1) / (children.length));
+                  //  progressPanel.updateValueImmed(100 * (i + 1) / (children.length));
                 }
 
                 if (fileInfoRef != null) {
@@ -1637,9 +1637,9 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 }
             }
 
-            progressPanel.getProgressBar().setBorderPainted(false);
-            progressPanel.getProgressBar().setBackground(this.getBackground());
-            progressPanel.getProgressBar().setForeground(this.getBackground());
+           // progressPanel.getProgressBar().setBorderPainted(false);
+          //  progressPanel.getProgressBar().setBackground(this.getBackground());
+           // progressPanel.getProgressBar().setForeground(this.getBackground());
 
             imageTableSorter.fireTableDataChanged();
         } catch (Exception err) {

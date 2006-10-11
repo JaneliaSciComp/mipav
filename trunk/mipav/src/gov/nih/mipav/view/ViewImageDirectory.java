@@ -68,7 +68,7 @@ public class ViewImageDirectory extends JFrame
     protected ViewFileTreeNode node;
 
     /** DOCUMENT ME! */
-    protected JPanelProgressBar progressPanel;
+    //protected JPanelProgressBar progressPanel;
 
     /** DOCUMENT ME! */
     protected Font serif12, serif12B;
@@ -144,9 +144,6 @@ public class ViewImageDirectory extends JFrame
 
     /** DOCUMENT ME! */
     private JPanel sliderPanel = null;
-
-    /** DOCUMENT ME! */
-    private boolean smaller;
 
     /** DOCUMENT ME! */
     private JCheckBoxMenuItem thumbnailOption;
@@ -284,7 +281,7 @@ public class ViewImageDirectory extends JFrame
             TreePath[] selected = directoryTree.getSelectionPaths();
             FileIO io = new FileIO();
 
-            progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
+            //progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
 
             if (command.equals("OpenToSingle")) {
                 openSeparateOption.setSelected(false);
@@ -305,7 +302,7 @@ public class ViewImageDirectory extends JFrame
 
                 fileName = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getName();
                 directory = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getDirectory();
-                io.setPBar(progressPanel);
+               // io.setPBar(progressPanel);
 
                 ModelImage image = io.readImage(fileName, directory + File.separatorChar);
 
@@ -314,9 +311,9 @@ public class ViewImageDirectory extends JFrame
                 }
 
                 new ViewJFrameImage(image, io.getModelLUT());
-                progressPanel.getProgressBar().setBorderPainted(false);
-                progressPanel.getProgressBar().setBackground(this.getBackground());
-                progressPanel.getProgressBar().setForeground(this.getBackground());
+               // progressPanel.getProgressBar().setBorderPainted(false);
+             //   progressPanel.getProgressBar().setBackground(this.getBackground());
+              //  progressPanel.getProgressBar().setForeground(this.getBackground());
 
                 return;
             } else {
@@ -328,12 +325,12 @@ public class ViewImageDirectory extends JFrame
                 Vector matchingImageNames = new Vector();
                 String newDir;
                 io.setQuiet(true);
-                io.setPBar(null);
+              //  io.setPBar(null);
 
                 int progress = 0;
                 int add = 100 / selected.length;
 
-                progressPanel.setValueImmed(progress);
+               // progressPanel.setValueImmed(progress);
 
                 /**
                  * Add images from FileIO into hashtable
@@ -344,14 +341,14 @@ public class ViewImageDirectory extends JFrame
                     newImage = io.readImage(newName, newDir + File.separatorChar);
                     table.put(newName, newImage);
                     progress += add;
-                    progressPanel.setValueImmed(progress);
+               //     progressPanel.setValueImmed(progress);
                 }
 
-                progressPanel.setValueImmed(100);
+              //  progressPanel.setValueImmed(100);
 
-                progressPanel.getProgressBar().setBorderPainted(false);
-                progressPanel.getProgressBar().setBackground(this.getBackground());
-                progressPanel.getProgressBar().setForeground(this.getBackground());
+              //  progressPanel.getProgressBar().setBorderPainted(false);
+              //  progressPanel.getProgressBar().setBackground(this.getBackground());
+              //  progressPanel.getProgressBar().setForeground(this.getBackground());
 
                 ModelImage secondImage = null;
 
@@ -786,10 +783,10 @@ public class ViewImageDirectory extends JFrame
 
         // this is used to pass in our progress bar panel to the file IO to tell
         // it to use
-        if (progressPanel != null) {
-            progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
-            io.setPBar(this.progressPanel);
-        }
+    //   if (progressPanel != null) {
+      //      progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
+     //       io.setPBar(this.progressPanel);
+     //   }
 
         ModelImage image = io.readOneImage(fileName, directory);
 
@@ -797,11 +794,11 @@ public class ViewImageDirectory extends JFrame
             return null;
         }
 
-        if (progressPanel != null) {
-            progressPanel.getProgressBar().setBorderPainted(false);
-            progressPanel.getProgressBar().setBackground(this.getBackground());
-            progressPanel.getProgressBar().setForeground(this.getBackground());
-        }
+      //  if (progressPanel != null) {
+      //      progressPanel.getProgressBar().setBorderPainted(false);
+       //     progressPanel.getProgressBar().setBackground(this.getBackground());
+     //       progressPanel.getProgressBar().setForeground(this.getBackground());
+      //  }
 
         int[] extents = new int[] { image.getExtents()[0], image.getExtents()[1] };
 
@@ -1122,12 +1119,12 @@ public class ViewImageDirectory extends JFrame
         gbc2.gridheight = 1;
         gbc2.gridy = 4;
 
-        progressPanel = new JPanelProgressBar(0, 100);
-        centerPanel.add(progressPanel, gbc2);
+       // progressPanel = new JPanelProgressBar(0, 100);
+       // centerPanel.add(progressPanel, gbc2);
 
-        progressPanel.getProgressBar().setBackground(this.getBackground());
-        progressPanel.getProgressBar().setForeground(this.getBackground());
-        progressPanel.getProgressBar().setBorderPainted(false);
+       // progressPanel.getProgressBar().setBackground(this.getBackground());
+      //  progressPanel.getProgressBar().setForeground(this.getBackground());
+      //  progressPanel.getProgressBar().setBorderPainted(false);
 
         brightPanel = new JPanel(new BorderLayout());
         brightPanel.add(centerPanel);
@@ -1149,7 +1146,6 @@ public class ViewImageDirectory extends JFrame
         JPanel tablePanel = new JPanel(new BorderLayout());
 
         defaultImageSize = new Dimension(300, 190);
-        smaller = false;
         imagePanel.setPreferredSize(defaultImageSize);
 
         Box scrollingBox;
