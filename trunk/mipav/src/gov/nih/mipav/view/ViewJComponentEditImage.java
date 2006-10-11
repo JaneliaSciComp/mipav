@@ -147,12 +147,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     protected float[] imageBufferB = null;
 
     /** DOCUMENT ME! */
-    protected float[] imageBufferColocalize = null;
-
-    /** DOCUMENT ME! */
-    protected ModelImage imageColocalize = null;
-
-    /** DOCUMENT ME! */
     protected int[] imageExtents;
 
     /** DOCUMENT ME! */
@@ -731,8 +725,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100, true);
         progressBar.setSeparateThread(false);
-        
-        
+
+
         imageACopy = (ModelImage) imageA.clone();
 
         if (imageB != null) {
@@ -766,7 +760,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             maskAlgo.addProgressChangeListener(progressBar);
             progressBar.setVisible(imageA.getUserInterface().isAppFrameVisible());
             maskAlgo.calcInPlace25DCShortMask((BitSet) paintBitmap.clone(), fillColor, timeSlice);
-            
+
         } else { // not color
 
             if (imageB == null) {
@@ -3143,8 +3137,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param  imageColocalize  the colocalization image
      */
     public void setImageColocalize(ModelImage imageColocalize) {
-        this.imageColocalize = imageColocalize;
-        imageBufferColocalize = new float[imageBufferA.length];
+        m_kPatientSlice.setImageColocalize( imageColocalize );
     }
 
     /* ********************************************************************** */
@@ -3920,7 +3913,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      * @param reverse, for reverse zoom
      * @return the calculated zoom factor
      */
-    protected float getZoomMagnitude( float zoom, boolean reverse )
+    private float getZoomMagnitude( float zoom, boolean reverse )
     {
         if (zoomMode == LINEAR) {
             if (mode == ZOOMING_IN) {
@@ -4560,7 +4553,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (imageActive.getOrigin()[0] != 0 || imageActive.getOrigin()[1] != 0
                 || (imageActive.getNDims() > 2 && imageActive.getOrigin()[2] != 0)) {
                 String[] values = setScannerPosition( xS, yS, slice );
-                
+
             	if (values != null) {
                     if (imageActive.isColorImage()) {
                         str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  R:  "
@@ -4576,7 +4569,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                             + String.valueOf(imageBufferActive[yS * imageActive.getExtents()[0] + xS])
                             + " Position: " + values[0] + " " + values[1] + " " + values[2];
                     }
-                    
+
                     frame.setMessageText(str);
                 }
                 else {

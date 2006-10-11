@@ -779,50 +779,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         super.finalize();
     }
 
-
-    /**
-     * Blends between two packed int colors. First separates the RGB components, then multiplies each by opacity value
-     * from the parent's blending slider and adds them together individually, the final result is an RGB packed int.
-     *
-     * @param   iColor1  pixel color from imageA.
-     * @param   iColor2  pixel color from imageB.
-     *
-     * @return  blended pixel color
-     */
-    private int blend(int iColor1, int iColor2) {
-        float alphaBlend = (100.0f - (float) m_kParent.getBlendValue()) / 100.0f;
-        float alphaPrime = 1 - alphaBlend;
-
-        int iColor1Red = ((iColor1 >> 16) & 0xFF);
-        int iColor1Green = ((iColor1 >> 8) & 0xFF);
-        int iColor1Blue = (iColor1 & 0xFF);
-
-        iColor1Red = (int) (((float) iColor1Red) * alphaBlend);
-        iColor1Green = (int) (((float) iColor1Green) * alphaBlend);
-        iColor1Blue = (int) (((float) iColor1Blue) * alphaBlend);
-
-        int iColor2Red = ((iColor2 >> 16) & 0xFF);
-        int iColor2Green = ((iColor2 >> 8) & 0xFF);
-        int iColor2Blue = (iColor2 & 0xFF);
-
-        iColor2Red = (int) (((float) iColor2Red) * alphaPrime);
-        iColor2Green = (int) (((float) iColor2Green) * alphaPrime);
-        iColor2Blue = (int) (((float) iColor2Blue) * alphaPrime);
-
-        int iRed = (iColor1Red + iColor2Red);
-        int iGreen = (iColor1Green + iColor2Green);
-        int iBlue = (iColor1Blue + iColor2Blue);
-
-        iRed = iRed << 16;
-        iGreen = iGreen << 8;
-
-        int iNewColor = (iRed & 0x00ff0000) | (iGreen & 0x0000ff00) | (iBlue & 0x000000ff);
-
-        iNewColor = (iNewColor | 0xff000000);
-
-        return iNewColor;
-    }
-
     /**
      * Creates the scene graph, made up of a branch group parent, a transform group under that which applies mouse
      * behaviors to the scene, and a branch groups under the transform group for the texture-mapped polygon.
@@ -1538,12 +1494,6 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             }
         }
     }
-
-    public int getViewOrientation()
-    {
-        return m_iPlaneOrientation;
-    }
-
 
     /**
      * This function calculates the scale factor for zooming in parallel projection. The scenario is to calculate the

@@ -359,6 +359,19 @@ public class MipavCoordinateSystems
         return aiAxisOrder;
     }
 
+    public static final boolean[] getModelFlip(  ModelStorageBase kImage )
+    {
+        boolean[] axialFlip = getAxisFlip( kImage, FileInfoBase.AXIAL );
+        boolean[] coronalFlip = getAxisFlip( kImage, FileInfoBase.CORONAL );
+        boolean[] sagittalFlip = getAxisFlip( kImage, FileInfoBase.SAGITTAL );
+
+        boolean[] aiModelFlip = new boolean[3];
+        aiModelFlip[0] = coronalFlip[2];
+        aiModelFlip[1] = sagittalFlip[2];
+        aiModelFlip[2] = axialFlip[2];
+        return aiModelFlip;
+    }
+
     /** Translates the input point into model scanner coordinates, based on the input image, kImage.
      * @param kInput, the input point in FileCoordinates
      * @param kOutput, the transformed point in ScannerCoordinates
