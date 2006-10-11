@@ -2966,6 +2966,35 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         }
     }
 
+    /**
+     * Invert the mesh z-coord, reorder the triangles, and recompute the
+     * normals:
+     */
+    public void invertMesh()
+    {
+        /* Reorder the triangles: */
+        int[] aiConnect = this.getIndexCopy();
+        for (int j = 0; j < aiConnect.length; j+=3 )
+        {
+            /* swap triangle points 2 and 1: (leave 0 untouched)*/
+            int temp = aiConnect[j + 2];
+            aiConnect[j + 2] = aiConnect[j + 1];
+            aiConnect[j + 1] = temp;
+        }
+        /* set the mesh: */
+        this.setCoordinateIndices(0,aiConnect);
+
+        Point3f[] akVertex = this.getVertexCopy();
+        /* Invert the z-coord: */
+        for (int j = 0; j < akVertex.length; j++) {
+            akVertex[j].z *= -1;
+        }
+        this.setVerticies(akVertex);
+        setNormalIndices(0, aiConnect);
+    }
+
+
+
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
 

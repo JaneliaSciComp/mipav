@@ -106,7 +106,7 @@ public class ViewJComponentTriSliceImage {
         imageA = null;
         imageB = null;
         localImageExtents = null;
-        m_kPatientSlice.disposeLocal(true);
+        m_kPatientSlice.disposeLocal();
         m_kPatientSlice = null;
     }
 

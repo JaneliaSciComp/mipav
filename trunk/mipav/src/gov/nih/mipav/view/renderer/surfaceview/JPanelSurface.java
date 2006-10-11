@@ -1,6 +1,8 @@
 package gov.nih.mipav.view.renderer.surfaceview;
 
 
+import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
@@ -3458,9 +3460,9 @@ public class JPanelSurface extends JPanelRendererBase
             kV2.y = ( (kV2.y - m_fY0) / (m_fY1 - m_fY0)) * (yDim - 1);
             kV2.z = ( (kV2.z - m_fZ0) / (m_fZ1 - m_fZ0)) * (zDim - 1);
 
-            kV0.z = zDim - 1 - kV0.z;
-            kV1.z = zDim - 1 - kV1.z;
-            kV2.z = zDim - 1 - kV2.z;
+//             kV0.z = zDim - 1 - kV0.z;
+//             kV1.z = zDim - 1 - kV1.z;
+//             kV2.z = zDim - 1 - kV2.z;
 
             kV0.y = yDim - 1 - kV0.y;
             kV1.y = yDim - 1 - kV1.y;
@@ -3978,11 +3980,14 @@ public class JPanelSurface extends JPanelRendererBase
                     }
 
                     direction = ModelTriangleMesh.getDirection();
+//                     System.err.println( "DIRECTION: " + direction[0] + " " + direction[1] + " " + direction[2] );
+//                     boolean[] aiFlip = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
+//                     System.err.println( "MODEL FLIP: " + aiFlip[0] + " " + aiFlip[1] + " " + aiFlip[2] );
+
                     startLocation = ModelTriangleMesh.getStartLocation();
                     akVertex = akComponent[i].getVertexCopy();
                     aiConnect = akComponent[i].getIndexCopy();
                     akTriangle = new Point3f[aiConnect.length / 3][3];
-
                     for (j = 0; j < (aiConnect.length / 3); j++) {
 
                         for (k = 0; k < 3; k++) {
@@ -4036,7 +4041,6 @@ public class JPanelSurface extends JPanelRendererBase
                     }
 
                     float xSum = 0f, ySum = 0f, zSum = 0f;
-
                     for (j = 0; j < akVertex.length; j++) {
                         xSum += akVertex[j].x;
                         ySum += akVertex[j].y;
@@ -4050,6 +4054,8 @@ public class JPanelSurface extends JPanelRendererBase
                     area += akComponent[i].area();
                     akComponent[i].setVerticies(akVertex);
                     numTriangles += akComponent[i].getIndexCount();
+
+                    akComponent[i].invertMesh();
                 }
             } else {
 
@@ -4137,6 +4143,8 @@ public class JPanelSurface extends JPanelRendererBase
                     akComponent[i].setVerticies(akVertex);
                     kClod.setVerticies(akVertex);
                     numTriangles += akComponent[i].getIndexCount();
+
+                    akComponent[i].invertMesh();
                 }
             }
         } catch (IOException e) {
@@ -4710,7 +4718,6 @@ public class JPanelSurface extends JPanelRendererBase
         for (int j = 0; j < meshes.length; j++) {
             Point3f[] akVertex = meshes[j].getVertexCopy();
             int[] aiConnect = meshes[j].getIndexCopy();
-
             kDecimator.decimate(akVertex, aiConnect, progressBar, j * 100 / meshes.length, meshes.length);
             akClod[j] = new ModelClodMesh(akVertex, aiConnect, kDecimator.getRecords());
             akClod[j].setLOD(akClod[j].getMaximumLOD());
@@ -5032,8 +5039,9 @@ public class JPanelSurface extends JPanelRendererBase
             progress.updateValueImmed(50);
 
             ModelTriangleMesh[] akComponent = new ModelTriangleMesh[1];
-
             akComponent[0] = new ModelTriangleMesh(vertex, triangle);
+            akComponent[0].invertMesh();
+
             volume = akComponent[0].volume();
             area = akComponent[0].area();
 
@@ -5613,6 +5621,7 @@ public class JPanelSurface extends JPanelRendererBase
             for (i = 0; i < meshes.length; i++) {
                 meshCopy = new ModelTriangleMesh(meshes[i].getVertexCopy(), meshes[i].getNormalCopy(),
                                                  meshes[i].getIndexCopy());
+                meshCopy.invertMesh();
                 akVertex = meshCopy.getVertexCopy();
 
                 // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
@@ -5713,6 +5722,7 @@ public class JPanelSurface extends JPanelRendererBase
                 for (i = 0; i < meshes.length; i++) {
                     meshCopy = new ModelTriangleMesh(meshes[i].getVertexCopy(), meshes[i].getNormalCopy(),
                                                      meshes[i].getIndexCopy());
+                    meshCopy.invertMesh();
                     akVertex = meshCopy.getVertexCopy();
 
                     // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
@@ -5847,6 +5857,7 @@ public class JPanelSurface extends JPanelRendererBase
                     ModelTriangleMesh meshCopy;
                     meshCopy = new ModelTriangleMesh(meshes[i].getVertexCopy(), meshes[i].getNormalCopy(),
                                                      meshes[i].getIndexCopy());
+                    meshCopy.invertMesh();
                     akVertex = meshCopy.getVertexCopy();
 
                     // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox

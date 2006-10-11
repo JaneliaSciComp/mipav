@@ -17,54 +17,90 @@ import javax.vecmath.*;
  * data in Patient Coordinates for the following classes:
  * ViewJComponentTriImage, ViewJComponentTriSliceImage, PlaneRender
  */
-public class PatientSlice 
+public class PatientSlice
 {
-    private int timeSliceA = 0;
-    private int timeSliceB = 0;
+    /** The 2D slice to extract from the ModelImage: */
     private int slice = 0;
+    /** For 4D data, the timeSlice multiplier for imageA: */
+    private int timeSliceA = 0;
+    /** For 4D data, the timeSlice multiplier for imageB: */
+    private int timeSliceB = 0;
+    /** The imageBuffer that stores the current ModelImage slice data for imageA: */
     private float[] imageBufferA;
+    /** The imageBuffer that stores the current ModelImage slice data for imageB: */
     private float[] imageBufferB;
+    /** The current active image: */
     private ModelImage imageActive;
+    /** imageA: */
     private ModelImage imageA;
+    /** imageB: */
     private ModelImage imageB;
+    /** ModelLUT lookup table for gray-scale ModelImages: imageA lut*/
     private ModelLUT LUTa = null;
+    /** ModelLUT lookup table for gray-scale ModelImages: imageB lut*/
     private ModelLUT LUTb = null;
+    /** ModelRGB lookup table for color ModelImages: imageA rgb table*/
     private ModelRGB RGBTA = null;
+    /** ModelRGB lookup table for color ModelImages: imageB rgb table*/
     private ModelRGB RGBTB = null;
+    /** lookup table for mapping ModelImage data values to color for imageA: */
     private int[] m_aiRGBIndexBufferA = null;
+    /** lookup table for mapping ModelImage data values to color for imageB: */
     private int[] m_aiRGBIndexBufferB = null;
-
+    /** Color normalization factor: */
     private float[] m_afNormColor = { 1, 1 };
-    private Color3f[] m_akOffset = { new Color3f( 0.0f, 0.0f, 0.0f ), 
+    /** Color offset factor: */
+    private Color3f[] m_akOffset = { new Color3f( 0.0f, 0.0f, 0.0f ),
                                      new Color3f( 0.0f, 0.0f, 0.0f ) };
-
+    /** Flag indicating whether to threshold the blue color channel: */
     private boolean useBlueThreshold = false;
+    /** Flag indicating whether to threshold the green color channel: */
     private boolean useGreenThreshold = false;
+    /** Flag indicating whether to threshold the red color channel: */
     private boolean useRedThreshold = false;
+    /** Threshold value: */
     private float threshold1;
+    /** Threshold value: */
     private float threshold2;
+    /** Flag indicating whether to use the threshold1 value: */
     private boolean hasThreshold1 = false;
+    /** Flag indicating whether to use the threshold2 value: */
     private boolean hasThreshold2 = false;
+    /** colocalization image: */
     private ModelImage imageColocalize;
+    /** colocalization imageBuffer: */
     private float[] imageBufferColocalize;
 
 
-    /** This indicates which of the 3 tri-image components we are currently
-     * in; either AXIAL, SAGITTAL, or CORONAL. */
+    /** This indicates which of the Patient coordinate systems the slice
+     * represents: either AXIAL, SAGITTAL, CORONAL, or UNKNOWN. */
     private int orientation;
 
-    /** image extents in the local (Patient) coordinate system: */
+    /** image extents in the local coordinate system: */
     private int[] localImageExtents = new int[3];
 
+    /** current slice positions in FileCoordinates: */
     private Point3Df m_kFilePoint = new Point3Df();
+
+    /** current slice positions in local coordinates: */
     private Point3Df m_kPatientPoint = new Point3Df();
 
-    private Point3Df[] m_kFourCorners = new Point3Df[4];
+    /** Flag indicating whether or not the slice represents an axis-aligned
+     * orientation or a diagonal orientation through the ModelImage volume:
+     * true when the RFA probe is activated in the SurfaceRender: */
     private boolean m_bShowDiagonal = false;
+    /** The rotated non-axis aligned corners of the slice, from the RFA probe
+     * rotation in the SurfaceRender: */
+    private Point3Df[] m_kFourCorners = new Point3Df[4];
 
+    /** Flag indicating whether the slice or LUT changed: */
     private boolean m_bUpdateImage = true;
 
+    /** Mask data when a surface is loaded into the SurfaceRender, for
+     * blending with the PlaneRender image. Included here for rendering
+     * performance */
     private float[] m_afMask = null;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -84,7 +120,7 @@ public class PatientSlice
         imageB = _imageB;
         LUTa = _LUTa;
         LUTb = _LUTb;
-        
+
         orientation = _orientation;
         localImageExtents = imageA.getExtents( orientation );
         if ( localImageExtents.length < 3 )
@@ -111,15 +147,9 @@ public class PatientSlice
 
 
     /**
-     * Sets all variables to null, disposes, and garbage collects (sometimes).
-     *
-     * @param  flag  if true garbage collector should be called.
+     * Default dispose
      */
-    public void disposeLocal(boolean flag)
-    {
-        m_kPatientPoint = null;
-        m_kFourCorners = null;
-    }
+    public void disposeLocal() {}
 
     /**
      * @param i, FileCoordinates
@@ -260,7 +290,10 @@ public class PatientSlice
      * @param  useGreenThreshold  whether to threshold the green paint buffer
      * @param  useBlueThreshold   whether to threshold the blue paint buffer
      */
-    public void setThresholdColors(boolean useRedThreshold, boolean useGreenThreshold, boolean useBlueThreshold) {
+    public void setThresholdColors( boolean useRedThreshold,
+                                    boolean useGreenThreshold,
+                                    boolean useBlueThreshold )
+    {
         this.useRedThreshold = useRedThreshold;
         this.useGreenThreshold = useGreenThreshold;
         this.useBlueThreshold = useBlueThreshold;
@@ -540,21 +573,21 @@ public class PatientSlice
         {
             Color4f colorMappedA = new Color4f();
             Color4f colorMappedB = null;
-            
+
             if (imageB != null)
             {
                 colorMappedB = new Color4f();
             }
-            
+
             fillImageBuffer(slice);
-            
+
             for ( int j = 0; j < localImageExtents[1]; j++ )
             {
                 for ( int i = 0; i < localImageExtents[0]; i++ )
                 {
                     int ind4 = (j * localImageExtents[0]) + i;
                     int index = 4 * ind4;
-                    int pixValue;                    
+                    int pixValue;
                     getColorMapped( RGBTA, m_aiRGBIndexBufferA, 0, imageBufferA, index, colorMappedA );
                     /* Get imageB color and blend if necessary: */
                     if ( imageB != null )
@@ -593,15 +626,15 @@ public class PatientSlice
                         ((int) (colorMappedA.y) <<  8) |
                         ((int) (colorMappedA.z) );
                     bufferA[ind4] = pixValue;
-                } 
-            } 
+                }
+            }
         }
         else if ( LUTa != null )
         {
             float[][] RGB_LUTa = null;
             float[][] RGB_LUTb = null;
             int[] lutBufferRemapped = null;;
-            
+
             TransferFunction tf_imgA = LUTa.getTransferFunction();
             TransferFunction tf_imgB = null;
 
@@ -617,7 +650,7 @@ public class PatientSlice
                 lutBufferRemapped = new int[lutHeightA];
                 LUTa.exportIndexedLUT(lutBufferRemapped);
             }
-            
+
             fillImageBuffer(slice);
 
             float imageMinA = (float)Math.min( 0, imageA.getMin() );
@@ -648,19 +681,19 @@ public class PatientSlice
                     if (imageB == null) {
                         int pixValueA = (int) (tf_imgA.getRemappedValue(imageBufferA[ind4], 256) + 0.5f);
                         bufferA[ind4] = lutBufferRemapped[pixValueA];
-                    } 
-                    else 
+                    }
+                    else
                     {
                         int indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[ind4], 256) + 0.5f);
                         int indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[ind4], 256) + 0.5f);
-                        
+
                         float Ra = RGB_LUTa[0][indexA];
                         float Ga = RGB_LUTa[1][indexA];
                         float Ba = RGB_LUTa[2][indexA];
                         float Rb = RGB_LUTb[0][indexB];
                         float Gb = RGB_LUTb[1][indexB];
                         float Bb = RGB_LUTb[2][indexB];
-                        
+
                         if ( bBlend )
                         {
                             Ra = fAlpha * Ra + (1.0f - fAlpha) * Rb;
@@ -675,7 +708,7 @@ public class PatientSlice
                         int pixValueA = 0xff000000 | (((int)Ra) << 16) | (((int)Ga) << 8) | ((int)Ba);
                         bufferA[ind4] = pixValueA;
                     }
-            
+
                     /* Blend in mask: */
                     if ( bShowMask && (m_afMask != null) )
                     {
@@ -688,11 +721,11 @@ public class PatientSlice
                             int iMaskRa = (int)(alpha * m_afMask[index + 1]);
                             int iMaskGa = (int)(alpha * m_afMask[index + 2]);
                             int iMaskBa = (int)(alpha * m_afMask[index + 3]);
-                            
+
                             int iRa = (int)((1 - alpha)*((bufferA[ind4] & 0x00ff0000) >> 16));
                             int iGa = (int)((1 - alpha)*((bufferA[ind4] & 0x0000ff00) >>  8));
                             int iBa = (int)((1 - alpha)*((bufferA[ind4] & 0x000000ff)));
-                            
+
                             int pixValue = 0xff000000 | ((iMaskRa + iRa) << 16) | ((iMaskGa + iGa) << 8) | (iMaskBa + iBa);
                             bufferA[ind4] = pixValue;
                         }
@@ -718,7 +751,7 @@ public class PatientSlice
      */
     public void finalize() throws Throwable
     {
-        disposeLocal(true);
+        disposeLocal();
     }
 
     /**
@@ -792,7 +825,7 @@ public class PatientSlice
             return;
         }
     }
-    
+
     /** Get the color from the RGB lookup table: */
     private void getColorMapped( ModelRGB modelRGBTA, int[] RGBIndexBuffer, int imageIndex,
                                  float[] imageBuffer, int index, Color4f colorMapped )
@@ -819,7 +852,7 @@ public class PatientSlice
                 colorMapped.z = (RGBIndexBuffer[(int)((imageBuffer[index + 3] + m_akOffset[imageIndex].z) *
                                                 m_afNormColor[imageIndex])] & 0x000000ff);
             }
-        } 
+        }
         else
         {
             colorMapped.x = (imageBuffer[index + 1] + m_akOffset[imageIndex].x) * m_afNormColor[imageIndex];
@@ -850,7 +883,7 @@ public class PatientSlice
         else if (useGreenThreshold && useBlueThreshold)
         {
             if ((imageBuffer[index + 2] < threshold1) ||
-                (imageBuffer[index + 3] < threshold2)) 
+                (imageBuffer[index + 3] < threshold2))
             {
                 colorMapped.x = 0;
                 colorMapped.y = 0;
