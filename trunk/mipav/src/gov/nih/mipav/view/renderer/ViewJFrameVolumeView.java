@@ -2810,7 +2810,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * Repaint the volume.
      */
     public void volumeRepaint() {
-        surRender.updateVolume(null, null, false);
+        surRender.updateVolume(LUTa, LUTb, false);
         updateImages(true);
     }
 
