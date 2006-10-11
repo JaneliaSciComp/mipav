@@ -8,10 +8,13 @@ import java.io.*;
 
 
 /**
- * Class that sets the window and level for the ViewJComponentEditImage,
- * classes derived from ViewJComponentEditImage and the PlaneRender classes.
- * 
+ * The WindowLevel class provides mouse-driven window-level controls for the
+ * ModelLUT or ModelRGB lookup tables.  The WindowLevel class can be used to
+ * attach mouse-control or any user-interface control to both the ModelLUT and
+ * ModelRGB classes.
  *
+ * @see ViewJComponentEditImage.java
+ * @see PlaneRender.java
  */
 public class WindowLevel
 {
@@ -65,26 +68,33 @@ public class WindowLevel
 
 
     /**
-     * If the right mouse button is pressed and dragged. updateWinLevel
-     * updates the HistoLUT window and level (contrast and brightness) for the
+     * updateWinLevel updates the window-level for the input lookup table
+     * based on two normalized parameters (fX, fY). These parameters may be
+     * derived from a normalized x,y mouse position, from slider values, or
+     * from any variable.
+     *
+     * In ViewJComponentEditImage and PlaneRender classesL If the right mouse
+     * button is pressed and dragged. updateWinLevel updates the HistoLUT
+     * window and level (contrast and brightness) for the
      * ViewJComponentEditImage and PlaneRender classes. The input parameters
      * fX and fY must be in normalized screen space (0-1).
-     * @param fX, the mouse x-position in normalized screen space (0-1)
-     * @param fY, the mouse y-position in normalized screen space (0-1)
-     * @param bFirstDrag, when true initialize the WindowLevel function
+     *
+     *
+     * @param fX, the normalized window parameter (0-1)
+     * @param fY, the normalized level parameter (0-1)
+     * @param bFirstUpdate, when true initialize the WindowLevel function
      * @param kLookupTable, either the ModelLUT or the ModelRGB being modified
      * @param kImage, the ModelImage the lookup table describes. 
      * @return true when the lookup table changes, false when no change
      */
-    public boolean updateWinLevel( float fX, float fY, boolean bFirstDrag,
+    public boolean updateWinLevel( float fX, float fY, boolean bFirstUpdate,
                                    ModelStorageBase kLookupTable,
                                    ModelImage kImage )
     {
-        /* If this is the first time the mouse is dragged after the right
-         * mouse button has been pressed, setup the member variables to change
-         * the HistoLUT. This setup happens each time after the right mouse
-         * button is pressed and relased: */
-        if (bFirstDrag)
+        /* If this is the first time the kLookupTable is updated for
+         * window-level contrl, setup the member variables to change the
+         * HistoLUT. */
+        if (bFirstUpdate)
         {
             if ( kImage.isColorImage() )
             {
@@ -99,8 +109,8 @@ public class WindowLevel
             m_fOldX = fX;
             m_fOldY = fY;
         }
-        /* Dragging has been initialized on the previous call, this changes
-         * the HistoLUT: */
+        /* Updating window-level has been initialized on the previous call,
+         * this changes the HistoLUT: */
         else if ((kImage != null) && (kLookupTable != null) &&
                  ((m_fOldX != fX) || (m_fOldY != fY)))
         {
@@ -109,8 +119,7 @@ public class WindowLevel
             float fMinImageWin = m_fMin;
             float fMaxImageWin = m_fMax;
 
-            /* The new window value is based on the x coordinate position of
-             * the mouse in the PlaneRender window: */
+            /* The new window value is based on the fX parameter: */
             float fWindow = 2.0f * fX * (fMaxImageWin - fMinImageWin);
 
             if (fWindow > (2.0f * (fMaxImageWin - fMinImageWin))) {
@@ -119,8 +128,7 @@ public class WindowLevel
                 fWindow = 0;
             }
 
-            /* The new level value is based on the y coordinate of the mouse
-             * in the PlaneRender window: */
+            /* The new level value is based on the fY parameter: */
             float fLevel = fY * (fMaxImageWin - fMinImageWin);
 
             if ( fLevel > fMaxImageWin) {
@@ -163,7 +171,7 @@ public class WindowLevel
                 updateWinLevelGray( (ModelLUT)kLookupTable, kImage, m_afXWin, m_afYWin );
             }
 
-            /* Store old change in X,Y positions: */
+            /* Store old change in fX,fY positions: */
             m_fOldX = fX;
             m_fOldY = fY;
             

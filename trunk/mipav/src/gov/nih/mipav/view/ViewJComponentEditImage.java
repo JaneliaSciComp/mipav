@@ -24,8 +24,9 @@ import javax.swing.*;
 
 
 /**
- * Basic displayable image object in MIPAV. Contains the viewable objects such as VOIs and carries listeners to most any
- * action that can happen in a window.
+ * Basic displayable image object in MIPAV. Contains the viewable objects such
+ * as VOIs and carries listeners to most any action that can happen in a
+ * window.
  *
  * @version  0.1 Nov 18, 1997
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -206,7 +207,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** for the use of the user-notifier. */
     protected boolean onTop = false;
 
-    /** DOCUMENT ME! */
+    /** orientation of the slice, may be AXIAL, CORONAL, SAGITTAL, or UNKNOWN_ORIENT */
     protected int orientation = FileInfoBase.UNKNOWN_ORIENT;
 
     /** DOCUMENT ME! */

@@ -19,13 +19,19 @@ import javax.vecmath.*;
 
 
 /**
- * Image plane displayed in the surface renderer. There are three image planes, the XY plane, the XZ plane, and the ZX
- * plane. This image component represents one of those. This is where the image data, pizel data, and paint buffer are
- * stored.
+ * Image plane displayed in the surface renderer.  The image plane is
+ * initialized with one of the following orientations: FileInfoBase.AXIAL,
+ * FileInfoBase.CORONAL, FileInfoBase.SAGITTAL.
+ *
+ * ViewJComponentTriSliceImage contains oriented 2D slices of the ModelImage
+ * data, reconfigured to the axial, sagittal, and coronal coordinates. It
+ * passes the oriented 2D ModelImage slice buffer to the SurfaceRender object
+ * where it is used as a Texture2D object on a texture-mapped polygon.
  *
  * @version  0.1 Nov 18, 1997
  * @author   Matthew J. McAuliffe, Ph.D. (primary)
  * @see      SurfaceRender
+ * @see PatientSlice.java
  */
 public class ViewJComponentTriSliceImage {
 
@@ -54,12 +60,6 @@ public class ViewJComponentTriSliceImage {
     /** BufferedImage to hold the slice image. */
     private BufferedImage img = null;
 
-    /**
-     * OPACITY - opacity value used by the paint brush. value = 1.0 - opaque
-     * value = 0.25 - default (mostly see through)
-     */
-    private float OPACITY = 0.25f;
-
     /** Orientation of this component image. */
     private int orientation = 0;
 
@@ -73,11 +73,14 @@ public class ViewJComponentTriSliceImage {
     /**
      * Constructs new component image plane with the appropriate arrays.
      *
+     * @param  _frame        The SurfaceRender parent frame
      * @param  _imageA       Model of the image that will be displayed.
      * @param  _imageB       Model of the image that will be displayed.
      * @param  _orientation  Orientation of the image.
      */
-    public ViewJComponentTriSliceImage( SurfaceRender _frame, ModelImage _imageA, ModelImage _imageB, int _orientation )
+    public ViewJComponentTriSliceImage( SurfaceRender _frame,
+                                        ModelImage _imageA, ModelImage _imageB,
+                                        int _orientation )
     {
         frame = _frame;
         imageA = _imageA;
@@ -87,7 +90,9 @@ public class ViewJComponentTriSliceImage {
         orientation = _orientation;
         localImageExtents = imageActive.getExtents( orientation );
 
-        img = new BufferedImage( localImageExtents[0], localImageExtents[1], BufferedImage.TYPE_INT_ARGB);
+        img = new BufferedImage( localImageExtents[0],
+                                 localImageExtents[1],
+                                 BufferedImage.TYPE_INT_ARGB);
 
         m_kPatientSlice = new PatientSlice( imageA, null,
                                             imageB, null,
@@ -119,15 +124,6 @@ public class ViewJComponentTriSliceImage {
         return alphaBlend;
     }
 
-
-    /************************************************************************/
-    /**
-     * Accessors.
-     *
-     * @return  DOCUMENT ME!
-     */
-    /************************************************************************/
-
     /**
      * Get the buffered image.
      *
@@ -156,18 +152,11 @@ public class ViewJComponentTriSliceImage {
     }
 
     /**
-     * Accessor that returns the opacity of the paint.
+     * Accessor that returns the component's orientation either
+     * FileInfoBase.AXIAL, FileInfoBase.CORONAL, FileInfoBase.SAGITTAL, or
+     * FileInfoBase.UNKNOWN_ORIENT
      *
-     * @return  Opacity of paint.
-     */
-    public float getOPACITY() {
-        return OPACITY;
-    }
-
-    /**
-     * Accessor that returns the component's orientation (i.e., XY, ZY, XZ, or NA).
-     *
-     * @return  Image orientation (i.e., XY, ZY, XZ, or NA).
+     * @return  Image orientation (AXIAL, CORONAL, SAGITTAL)
      */
     public int getOrientation() {
         return orientation;
@@ -175,10 +164,11 @@ public class ViewJComponentTriSliceImage {
 
 
     /**
-     * Sets the member variable m_bInterpolate. When set to true, the showDiagonal function does tri-linear
-     * interpolation of the ModelImage data:
+     * Sets the member variable m_bInterpolate. When set to true, the
+     * showDiagonal function does tri-linear interpolation of the ModelImage
+     * data:
      *
-     * @param  bSample  DOCUMENT ME!
+     * @param  bSample  when true interpolate the ModelImage data
      */
     public void Interpolate(boolean bSample) {
         //m_bInterpolate = bSample;
@@ -250,7 +240,9 @@ public class ViewJComponentTriSliceImage {
     }
 
     /**
-     * Accessor that sets the orientation of the component (i.e., XY, ZY, XZ, or NA).
+     * Accessor that sets the orientation of the component either
+     * FileInfoBase.AXIAL, FileInfoBase.CORONAL, FileInfoBase.SAGITTAL, or
+     * FileInfoBase.UNKNOWN_ORIENT
      *
      * @param  _orientation  Orientaiton of image slice to be displayed.
      */
@@ -258,7 +250,6 @@ public class ViewJComponentTriSliceImage {
         orientation = _orientation;
     }
 
-    // The following 2 functions set the RGB tables for ARGB images A and B.
     /**
      * Sets the RGB table for ARGB image A.
      *
@@ -300,24 +291,29 @@ public class ViewJComponentTriSliceImage {
     /**
      * Shows the image.
      *
-     * @param   tSlice      t (time) slice to show
-     * @param   zSlice      z slice to show
-     * @param   _LUTa       LUTa - to change to new LUT for imageA else null.
-     * @param   _LUTb       LUTb - to change to new LUT for imageB else null.
-     * @param   forceShow   Forces this method to import image and recalculate java image.
-     * @param   kTransform  DOCUMENT ME!
-     * @param   akVertices  DOCUMENT ME!
+     * @param tSlice t (time) slice to show
+     * @param zSlice z slice to show
+     * @param _LUTa LUTa - to change to new LUT for imageA else null.
+     * @param _LUTb LUTb - to change to new LUT for imageB else null.
+     * @param forceShow Forces this method to import image and recalculate
+     * java image.
+     * @param akVertices four corners of the cut-plane bounding box for
+     * diagonal slices
      *
-     * @return  Confirms if the show was successful.
+     * @return Confirms if the show updated the image
      */
-    public boolean show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow, Point3Df[] akVertices) {
+    public boolean show(int tSlice, int zSlice,
+                        ModelLUT _LUTa, ModelLUT _LUTb,
+                        boolean forceShow, Point3Df[] akVertices)
+    {
 
         if ( imageA == null )
         {
             return false;
         }
         int buffFactor = imageA.isColorImage() ? 4 : 1;
-        int[] imageBufferA = new int[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
+        int[] imageBufferA =
+            new int[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
 
         m_kPatientSlice.setDiagonalVerts( akVertices );
         m_kPatientSlice.setLUTa( _LUTa );
@@ -339,7 +335,7 @@ public class ViewJComponentTriSliceImage {
     /**
      * Calls garbage collector to release system resources.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable  if there is a problem encountered during memory clean-up
      */
     protected void finalize() throws Throwable {
         disposeLocal();
