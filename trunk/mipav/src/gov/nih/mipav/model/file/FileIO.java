@@ -3361,7 +3361,7 @@ public class FileIO {
      * @param message this message should FILE_READ, FILE_OPEN
      */
     private void createProgressBar(FileBase fBase, String fName, String message) {
-    //	System.err.println("title is: " + fName + ", message is: " + message);
+    	//System.err.println("title is: " + fName + ", message is: " + message);
     	progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
         progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
         progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
@@ -4534,7 +4534,6 @@ public class FileIO {
         FileGESigna4X imageFile;
         FileInfoBase myFileInfo0 = null;
         FileInfoBase myFileInfo;
-        ViewJProgressBar progressBar = null;
         String[] fileList;
         float[] buffer;
         int[] extents;
@@ -4581,9 +4580,7 @@ public class FileIO {
 
                 return null;
             }
-
-            createProgressBar(null, fileName, FILE_READ);
-            
+                        
             width = imageFile.getWidth();
             height = imageFile.getHeight();
             length = width * height;
@@ -4614,32 +4611,26 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
-            if (progressBar != null) {
-                
-            }
-
             return null;
         } catch (IOException error) {
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
-
-            if (progressBar != null) {
-                
-            }
-
+           
             return null;
         }
 
 
         nImages = fileList.length;
 
+        createProgressBar(null, fileName, FILE_READ);
+        
         // loop through files, place them in image array
         for (i = 0; i < nImages; i++) {
 
             try {
-                progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+              //  progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
 
                 if (fileList[i] != null) {
@@ -4777,7 +4768,6 @@ public class FileIO {
         FileGESigna5X imageFile;
         FileInfoBase myFileInfo;
         FileInfoBase myFileInfo0 = null;
-        ViewJProgressBar progressBar = null;
         String[] fileList;
         float[] buffer;
         int[] extents;
