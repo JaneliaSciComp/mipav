@@ -62,7 +62,7 @@ public class FileIO {
      * Link to either progress bar frame or panel passed in to update progress while reading an image. Which must then
      * be passed into read function for specific file type.
      */
-    private ProgressBarInterface pInterface = null;
+    //private ProgressBarInterface pInterface = null;
 
     private ViewJProgressBar progressBar = null;
     
@@ -1477,7 +1477,7 @@ public class FileIO {
             int[] rint = new int[nListImages]; // sorted image instance values.
             float[] zOrients = new float[nListImages]; // image orientation values as read in.
             float[] instanceNums = new float[nListImages]; // image instance numbers as read in.
-            pInterface.setTitle("Reading headers");
+            progressBar.setTitle("Reading headers");
 
             for (i = 0, nImages = 0; i < nListImages; i++) {
                 FileInfoDicom fileInfoTemp;
@@ -1486,7 +1486,7 @@ public class FileIO {
 
                     if (((float) i / (nListImages - 1) * 100) > pBarVal) {
                         pBarVal += 10;
-                        pInterface.updateValue(Math.round((float) i / (10 * (nListImages - 1)) * 100), false);
+                        progressBar.updateValue(Math.round((float) i / (10 * (nListImages - 1)) * 100), false);
                     }
 
                     ((FileDicom) imageFile).setFileName(fileList[i]);
@@ -1567,8 +1567,7 @@ public class FileIO {
                     }
 
                 } catch (IOException error) {
-                    pInterface.dispose();
-
+                    
                     if (!quiet) {
                         MipavUtil.displayError("FileIO: " + error);
                         Preferences.debug("FileIO: " + error + "\n");
@@ -1894,7 +1893,7 @@ public class FileIO {
         boolean multiframe = ((FileInfoDicom) (myFileInfo)).isMultiFrame();
 
         // loop through files, place them in image array
-        pInterface.setTitle(UI.getProgressBarPrefix() + "image " + fileList[0]);
+       // pInterface.setTitle(UI.getProgressBarPrefix() + "image " + fileList[0]);
         //myFileInfo.finalize();
         pBarVal = 0;
 
@@ -1919,10 +1918,10 @@ public class FileIO {
             try {
 
                 if (i == (nImages - 1)) {
-                    pInterface.updateValue(100, false);
+                	progressBar.updateValue(100, false);
                 } else if (((float) i / (nImages - 1) * 100) > pBarVal) {
                     pBarVal += 10;
-                    pInterface.updateValue(10 + Math.round((float) i / (nImages - 1) * 90), false);
+                    progressBar.updateValue(10 + Math.round((float) i / (nImages - 1) * 90), false);
                 }
 
                 ((FileDicom) imageFile).setFileName(filename);
@@ -1985,8 +1984,6 @@ public class FileIO {
                     image.importData(location * length, bufferShort, false);
                 }
             } catch (IOException error) {
-                pInterface.dispose();
-
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                     Preferences.debug("FileIO: " + error + "\n");
@@ -2005,7 +2002,6 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                pInterface.dispose();
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -2907,7 +2903,7 @@ public class FileIO {
      * @param  pBar  ProgressBarInterface
      */
     public void setPBar(ProgressBarInterface pBar) {
-        this.pInterface = pBar;
+       // this.pInterface = pBar;
     }
 
     /**
@@ -4030,7 +4026,9 @@ public class FileIO {
         try {
             imageFile = new FileAvi(UI, fileName, fileDir);
             imageFile.setReadQT(readQT);
-            imageFile.setProgressBar(pInterface);
+           // imageFile.setProgressBar(pInterface);
+            
+            createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
 
             // LUT used in compressed RLE8 files
