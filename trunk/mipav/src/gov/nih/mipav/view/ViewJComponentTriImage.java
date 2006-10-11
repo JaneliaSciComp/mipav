@@ -16,21 +16,27 @@ import javax.swing.*;
 
 
 /**
- * One of the component images that make up the triplanar view (AXIAL, SAGITTAL, and CORONAL views).
+ * One of the component images that make up the triplanar view (AXIAL,
+ * SAGITTAL, and CORONAL views).
  *
- * <p>Notes:<br>
- * The protractor does not show up in ViewJComponentEditImage because it is not registered. If newVOI is hit, then the
- * VOI must be registered for the points to show up in EditImage.</p>
+ * <p>Notes:<br> The protractor does not show up in ViewJComponentEditImage
+ * because it is not registered. If newVOI is hit, then the VOI must be
+ * registered for the points to show up in EditImage.</p>
  *
- * <p>For the ViewJFrameTriImage addPoint command, that the ViewJComponentEditImage mode is set to DEFAULT while the
- * ViewJComponentTriImage mode is set to POINT_VOI. For the Protractor command, the ViewJComponentTriImage mode is set
- * to PROTRACTOR while the ViewJComponentEditImage mode is set to DEFAULT. For the Line command, the
- * ViewJComponentTriImage mode is set to LINE while the ViewJComponentEditImage mode is set to DEFAULT. For the
- * ViewJFrameTriImage center command, the ViewJComponentEditImage mode is set to DEFAULT while the
- * ViewJComponentTriImage mode is set to CENTER_VOI. For the boundingBox command, the ViewJComponentEdit image mode is
- * set to DEFAULT while the ViewJComponentTriImage mode is set to CUBE_BOUNDS. For the traverse command, both EditImage
- * and TriImage have their modes set to DEFAULT. NEW_VOI, PAINT_VOI, DROPPER_PAINT, ERASER_PAINT, and PAINT_CAN are set
- * in both EditImage and TriImage.</p>
+ * <p>For the ViewJFrameTriImage addPoint command, that the
+ * ViewJComponentEditImage mode is set to DEFAULT while the
+ * ViewJComponentTriImage mode is set to POINT_VOI. For the Protractor
+ * command, the ViewJComponentTriImage mode is set to PROTRACTOR while the
+ * ViewJComponentEditImage mode is set to DEFAULT. For the Line command, the
+ * ViewJComponentTriImage mode is set to LINE while the
+ * ViewJComponentEditImage mode is set to DEFAULT. For the ViewJFrameTriImage
+ * center command, the ViewJComponentEditImage mode is set to DEFAULT while
+ * the ViewJComponentTriImage mode is set to CENTER_VOI. For the boundingBox
+ * command, the ViewJComponentEdit image mode is set to DEFAULT while the
+ * ViewJComponentTriImage mode is set to CUBE_BOUNDS. For the traverse
+ * command, both EditImage and TriImage have their modes set to
+ * DEFAULT. NEW_VOI, PAINT_VOI, DROPPER_PAINT, ERASER_PAINT, and PAINT_CAN are
+ * set in both EditImage and TriImage.</p>
  *
  * @author  William Gandler
  * @see     ViewJFrameTriImage
@@ -214,13 +220,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     /** imageActive extents in the local (Patient) coordinate system: */
     private int[] localImageExtents = new int[3];
 
-    /** true if the imageActive has an orientation, false if imageActive is of UNKNOWN_ORIENT */
+    /** true if the imageActive has an orientation, false if imageActive is of
+     * UNKNOWN_ORIENT */
     private boolean hasOrientation = false;
 
     /** Cursor 3D point in ModelImage-Coordinates */
     private Point3Df m_kVolumePoint = new Point3Df();
 
-    /** The x and y coordinate of the cursor position in screen space of this component. */
+    /** The x and y coordinate of the cursor position in screen space of this
+     * component. */
     private Point2Df crosshairPt = new Point2Df(0.0f, 0.0f);
 
     /** Screen Scale factor in x,y = zoomX * resolutionsX, zoomY * resolutionsY */

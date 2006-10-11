@@ -188,8 +188,9 @@ public abstract class ViewJComponentBase extends JComponent {
     protected MemoryImageSource memImageB = null;
 
     /**
-     * resolutionX and Y are used to correct difference in intra and inter plane voxel resolution These represent the
-     * aspect ratio of the image These are NOT to be confused with the pixel resolutions.
+     * resolutionX and Y are used to correct difference in intra and inter
+     * plane voxel resolution These represent the aspect ratio of the image
+     * These are NOT to be confused with the pixel resolutions.
      */
     protected float resolutionX = 1;
 
@@ -214,11 +215,11 @@ public abstract class ViewJComponentBase extends JComponent {
     /** DOCUMENT ME! */
     protected int OUT_OF_BOUNDS = -9999;
 
-    /** DOCUMENT ME! */
-    protected int lastMouseX = OUT_OF_BOUNDS; // used by the repaintPaintBrushCursorFast method
+    /** used by the repaintPaintBrushCursorFast method */
+    protected int lastMouseX = OUT_OF_BOUNDS;
 
-    /** DOCUMENT ME! */
-    protected int lastMouseY = OUT_OF_BOUNDS; // used by the repaintPaintBrushCursorFast method
+    /** used by the repaintPaintBrushCursorFast method */
+    protected int lastMouseY = OUT_OF_BOUNDS;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
     /**

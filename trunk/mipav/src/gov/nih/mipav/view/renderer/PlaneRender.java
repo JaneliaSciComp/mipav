@@ -71,7 +71,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /** Actual image orietation. */
     private boolean m_bPatientOrientation = true;
 
-    /** DOCUMENT ME! */
+    /** Flag indicating if the right mouse button is currently pressed
+     * down: */
     private boolean m_bRightMousePressed = false;
 
     /** The center of the X,Y bar cross hairs, in plane coordinates:. */
@@ -79,28 +80,29 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
     private ModelStorageBase m_kActiveLookupTable;
 
-    /** The plane coordinate x,y dimensions:. */
+    /** lower x-bound of the texture-mapped polygon: */
     private float m_fX0;
 
-    /** DOCUMENT ME! */
+    /** upper x-bound of the texture-mapped polygon: */
     private float m_fX1;
 
-    /** Numbers dicatating the size of the plane based on the extents and resolutions of the image. */
+    /** Numbers dicatating the size of the plane based on the extents and
+     * resolutions of the image. */
     private float m_fXBox, m_fYBox, m_fMaxBox;
 
-    /** DOCUMENT ME! */
+    /** Width of the texture-mapped polygon: */
     private float m_fXRange;
 
     /** X direction mouse translation. */
     private float m_fXTranslate = 0.0f;
 
-    /** DOCUMENT ME! */
+    /** lower y-bound of the texture-mapped polygon: */
     private float m_fY0;
 
-    /** DOCUMENT ME! */
+    /** upper y-bound of the texture-mapped polygon: */
     private float m_fY1;
 
-    /** DOCUMENT ME! */
+    /** Height of the texture-mapped polygon: */
     private float m_fYRange;
 
     /** Y direction mouse translatioin. */
@@ -115,13 +117,14 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /** Which slice is currently displayed in the XY plane. */
     private int m_iSlice;
 
-    /** Current active image for manipulating the LUT by dragging with the right-mouse down. */
+    /** Current active image for manipulating the LUT by dragging with the
+     * right-mouse down. */
     private ModelImage m_kActiveImage;
 
     /** The Canvas3D object on which the plane is drawn. */
     private VolumeCanvas3D m_kCanvas;
 
-    /** DOCUMENT ME! */
+    /** current zoom transformation */
     private Transform3D m_kCurrentTransform;
 
     /** The current displayed texture, based on the value of m_iSlice. */
@@ -133,10 +136,10 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /** Current image B. */
     private ModelImage m_kImageB;
 
-    /** DOCUMENT ME! */
+    /** x-axis label: */
     private String m_kLabelX = new String("X");
 
-    /** DOCUMENT ME! */
+    /** y-axis label: */
     private String m_kLabelY = new String("Y");
 
     /** Mouse translate behavior. */
@@ -195,10 +198,14 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
      * @param  kLUTb    LUT of the imageB, may be null.
      * @param  kConfig  GraphicsConfiguration
      * @param  iPlane   Image dimension to be displayed.
-     * @param  bMemory  when true store all the data in memory, when false, write textues as the slices change
+     * @param bMemory when true store all the data in memory, when false,
+     * write textues as the slices change
      */
-    public PlaneRender(ViewJFrameVolumeView kParent, ModelImage kImageA, ModelLUT kLUTa, ModelImage kImageB,
-                       ModelLUT kLUTb, GraphicsConfiguration kConfig, int iPlane, boolean bMemory) {
+    public PlaneRender(ViewJFrameVolumeView kParent,
+                       ModelImage kImageA, ModelLUT kLUTa,
+                       ModelImage kImageB, ModelLUT kLUTb,
+                       GraphicsConfiguration kConfig, int iPlane, boolean bMemory)
+    {
         super(kConfig);
         m_kParent = kParent;
         m_iPlaneOrientation = iPlane;
@@ -291,15 +298,19 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * Given a point in ModelImage coordinates, draw it in the local coordinates with a red sphere:
+     * Given a point in ModelImage coordinates, draw it in the local
+     * coordinates with a red sphere:
      *
      * @param  kPoint  RFA indicator point coordinate
      */
     public void drawRFAPoint(Point3f kPoint) {
 
         Point3Df kRFAPoint = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( new Point3Df( kPoint.x, kPoint.y, kPoint.z ),
-                                              kRFAPoint, m_kImageA, m_iPlaneOrientation );
+        MipavCoordinateSystems.FileToPatient( new Point3Df( kPoint.x,
+                                                            kPoint.y,
+                                                            kPoint.z ),
+                                              kRFAPoint, m_kImageA,
+                                              m_iPlaneOrientation );
 
         kRFAPoint.x = (kRFAPoint.x * m_fXRange) + m_fX0;
         kRFAPoint.y = (kRFAPoint.y * m_fYRange) + m_fY0;
@@ -309,7 +320,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         if (m_kRFA_BranchGroup == null) {
             Shape3D kSphere = new Sphere(0.025f).getShape();
 
-            kSphere.getAppearance().getMaterial().setEmissiveColor(new Color3f(1f, 0f, 0f));
+            kSphere.getAppearance().
+                getMaterial().setEmissiveColor(new Color3f(1f, 0f, 0f));
             kSphere.setPickable(false);
 
             Transform3D kTransform = new Transform3D();
@@ -335,14 +347,16 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
             kTransform.set(new Vector3f(kRFAPoint.x, kRFAPoint.y, kRFAPoint.z));
 
-            TransformGroup kTransformGroup = (TransformGroup) (m_kRFA_BranchGroup.getChild(0));
+            TransformGroup kTransformGroup =
+                (TransformGroup) (m_kRFA_BranchGroup.getChild(0));
 
             kTransformGroup.setTransform(kTransform);
         }
     }
 
     /**
-     * Enable or disable target point for the RFA probe from within the plane renderer:
+     * Enable or disable target point for the RFA probe from within the plane
+     * renderer:
      *
      * @param  bEnable  true enable target point, false not.
      */
@@ -366,7 +380,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Returns the VolumeCanvas3D object.
      *
-     * @return  DOCUMENT ME!
+     * @return  the volume canvas
      */
     public VolumeCanvas3D getCanvas() {
         return m_kCanvas;
@@ -392,7 +406,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
 
 
     /**
-     * One of the overrides necessary to be a MouseListener. This function is called when there is a double-click event.
+     * One of the overrides necessary to be a MouseListener. This function is
+     * called when there is a double-click event.
      *
      * @param  kEvent  the mouse event generated by a mouse clicked
      */
@@ -400,8 +415,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * One of the overrides necessary to be a MouseListener. This function is invoked when a mouse button is held down
-     * and the mouse is dragged in the active window area.
+     * One of the overrides necessary to be a MouseListener. This function is
+     * invoked when a mouse button is held down and the mouse is dragged in
+     * the active window area.
      *
      * @param  kEvent  the mouse event generated by a mouse drag
      */
@@ -424,8 +440,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * One of the overrides necessary to be a MouseListener. This function is called when the mouse enters the active
-     * area.
+     * One of the overrides necessary to be a MouseListener. This function is
+     * called when the mouse enters the active area.
      *
      * @param  kEvent  the mouse event generated by a mouse entered
      */
@@ -433,8 +449,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * One of the overrides necessary to be a mouselistener. This function is called when the mouse leaves the active
-     * area.
+     * One of the overrides necessary to be a mouselistener. This function is
+     * called when the mouse leaves the active area.
      *
      * @param  kEvent  the mouse event generated by a mouse exit
      */
@@ -442,8 +458,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * One of the overrides necessary to be a MouseMotionListener. This function is called when the mouse is moved
-     * (without holding any buttons down).
+     * One of the overrides necessary to be a MouseMotionListener. This
+     * function is called when the mouse is moved (without holding any buttons
+     * down).
      *
      * @param  kEvent  the event generated by a mouse movement
      */
@@ -452,8 +469,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * One of the overrides necessary to be a MouseListener.
      *
-     * <p>If the left mouse button is pressed, the function sets the m_bLeftMousePressed to be true, and records the
-     * current canvas width and height.</p>
+     * <p>If the left mouse button is pressed, the function sets the
+     * m_bLeftMousePressed to be true, and records the current canvas width
+     * and height.</p>
      *
      * @param  kEvent  the mouse event generated by a mouse press
      */
@@ -481,11 +499,14 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         if ((kEvent.getButton() == MouseEvent.BUTTON3) && !kEvent.isShiftDown()) {
             if ( m_kActiveImage.isColorImage() )
             {
-                m_kActiveImage.notifyImageDisplayListeners(false, 0, (ModelRGB)m_kActiveLookupTable);
+                m_kActiveImage.
+                    notifyImageDisplayListeners(false, 0,
+                                                (ModelRGB)m_kActiveLookupTable);
             }
             else
             {
-                m_kActiveImage.notifyImageDisplayListeners((ModelLUT)m_kActiveLookupTable, false);
+                m_kActiveImage.
+                    notifyImageDisplayListeners((ModelLUT)m_kActiveLookupTable, false);
             }
             m_bRightMousePressed = false;
         }
@@ -514,10 +535,14 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
                 float fZ = (float) (m_iSlice) / (float) (m_aiLocalImageExtents[2] - 1);
 
                 Point3Df kRFAPoint = new Point3Df();
-                MipavCoordinateSystems.PatientToFile( new Point3Df( fCenterX, fCenterY, fZ ),
-                                                      kRFAPoint, m_kImageA, m_iPlaneOrientation );
+                MipavCoordinateSystems.PatientToFile( new Point3Df( fCenterX,
+                                                                    fCenterY,
+                                                                    fZ ),
+                                                      kRFAPoint, m_kImageA,
+                                                      m_iPlaneOrientation );
                 /* Tell the parent to draw the RFA point: */
-                m_kParent.drawRFAPoint( new Point3f( kRFAPoint.x, kRFAPoint.y, kRFAPoint.z ) );
+                m_kParent.
+                    drawRFAPoint( new Point3f( kRFAPoint.x, kRFAPoint.y, kRFAPoint.z ) );
             }
         }
         m_bFirstDrag = true;
@@ -560,7 +585,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Accessor that sets the RGB lookup table for image A.
      *
-     * @param  RGBT  DOCUMENT ME!
+     * @param  RGBT  the new ModelRGB for PatientSlice.imageA
      */
     public void setRGBTA(ModelRGB RGBT)
     {
@@ -569,9 +594,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * Accessor that sets the RGB lookup table for image A.
+     * Accessor that sets the RGB lookup table for image B.
      *
-     * @param  RGBT  DOCUMENT ME!
+     * @param  RGBT  the new ModelRGB for PatientSlice.imageB
      */
     public void setRGBTB(ModelRGB RGBT)
     {
@@ -582,7 +607,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Changes the displayed texture based on the new value for m_iSlice.
      *
-     * @param  fSlice  The relative position along the actual m_aiLocalImageExtents[2] dimension of the new slice.
+     * @param fSlice The relative position along the actual
+     * m_aiLocalImageExtents[2] dimension of the new slice.
      */
     public void setSlice(float fSlice) {
         int iSlice = (int)fSlice;
@@ -655,7 +681,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Turns displaying the Axis labes on or off:
      *
-     * @param  bShow  DOCUMENT ME!
+     * @param bShow when true display the axis lables, when false hide the
+     * axis labels
      */
     public void showAxes(boolean bShow) {
 
@@ -673,7 +700,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Turns displaying the X and Y bars on or off:
      *
-     * @param  bShow  DOCUMENT ME!
+     * @param  bShow when true show the cross-hairs when false hide the cross-hairs
      */
     public void showXHairs(boolean bShow) {
         m_bDrawXHairs = bShow;
@@ -740,8 +767,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Causes the data to be redrawn with new LUT values:
      *
-     * @param  LUTa  DOCUMENT ME!
-     * @param  LUTb  DOCUMENT ME!
+     * @param  LUTa  imageA LUT
+     * @param  LUTb  imageB LUT
      */
     public void updateLut(ModelLUT LUTa, ModelLUT LUTb) {
         m_kPatientSlice.setLUTa( LUTa );
@@ -752,7 +779,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Causes the data to be redrawn with new RGBTA values:
      *
-     * @param  RGBT  DOCUMENT ME!
+     * @param  RGBT  imageA ModelRGB
      */
     public void updateRGBTA(ModelRGB RGBT) {
         m_kPatientSlice.setRGBTA( RGBT );
@@ -762,7 +789,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Causes the data to be redrawn with new RGBTA values:
      *
-     * @param  RGBT  DOCUMENT ME!
+     * @param  RGBT  imageB ModelRGB
      */
     public void updateRGBTB(ModelRGB RGBT) {
         m_kPatientSlice.setRGBTB( RGBT );
@@ -772,7 +799,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     /**
      * Cleans memory.
      *
-     * @throws  Throwable  DOCUMENT ME!
+     * @throws  Throwable  if there is a problem encountered during memory clean-up
      */
     protected void finalize() throws Throwable {
         disposeLocal();
@@ -780,8 +807,9 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * Creates the scene graph, made up of a branch group parent, a transform group under that which applies mouse
-     * behaviors to the scene, and a branch groups under the transform group for the texture-mapped polygon.
+     * Creates the scene graph, made up of a branch group parent, a transform
+     * group under that which applies mouse behaviors to the scene, and a
+     * branch groups under the transform group for the texture-mapped polygon.
      */
     private void createImageSceneGraph() {
 

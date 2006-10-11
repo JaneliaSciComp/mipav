@@ -10,12 +10,33 @@ import java.io.*;
 import javax.vecmath.*;
 
 /**
- * PatientSlice provides oriented access to the ModelImage data for
- * rendering. The ModelImage data is written into float[] arrays that are then
- * used as textures for displaying the data as texture-mapped polygons in the
- * PlaneRender and ViewJComponentTriSliceImage classes or as Renders Slice
- * data in Patient Coordinates for the following classes:
- * ViewJComponentTriImage, ViewJComponentTriSliceImage, PlaneRender
+ *
+ * PatientSlice provides oriented or non-oriented interface to the ModelImage
+ * data for rendering.
+ *
+ * The PatientSlice class should be used any time a 2D slice of the ModelImage
+ * is needed.
+ *
+ * The PatientSlice class can be used to extract any axial, coronal, sagittal
+ * slice from the ModelImage, or slices in the native file coordinates.
+ *
+ * The PatientSlice class can also be used to extract diagonal slices through
+ * the ModelImage. This is done by setting the four corners of the diagonal
+ * cut-plane, using file coordinates for the four points of the cut-plane
+ * bounding box.
+ *
+ * The PatientSlice.showUsingOrientation() function extracts a 2D slice from
+ * the ModelImage into a 2D packed-int array. This array can be passed to the
+ * BufferImage class for viewing 2D images, or it can be passed to the
+ * Texture2D class to create texture-mapped polygons. Or the 2D array can be
+ * used for algorithms that operate on the 2D ModelImage slices.
+ *
+ * @see FileInfoBase.java
+ * @see ModelStorageBase.java
+ * @see ViewJComponentEditImage.java
+ * @see ViewJComponentTriImage.java
+ * @see ViewJComponentTriSliceImage.java
+ * @see PlaneRender.java
  */
 public class PatientSlice
 {
@@ -71,7 +92,6 @@ public class PatientSlice
     /** colocalization imageBuffer: */
     private float[] imageBufferColocalize;
 
-
     /** This indicates which of the Patient coordinate systems the slice
      * represents: either AXIAL, SAGITTAL, CORONAL, or UNKNOWN. */
     private int orientation;
@@ -104,11 +124,15 @@ public class PatientSlice
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Constructs a PatientSlice with the given ModelImages, LUTs, and
+     * orientation. The orientation parameter may take on any of the following
+     * values: FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT
      *
-     * @param  _imageA                   Model of the image that will be displayed
-     * @param  _LUTa                     LUT used to display imageA
-     * @param  _imageB                   Model of the image that will be displayed
-     * @param  _LUTb                     LUT used to display imageB
+     * @param  _imageA  Model of the image that will be displayed
+     * @param  _LUTa    LUT used to display imageA
+     * @param  _imageB  Model of the image that will be displayed
+     * @param  _LUTb    LUT used to display imageB
      * @param  _orientation  display orientation of the image
      */
     public PatientSlice( ModelImage _imageA, ModelLUT _LUTa,
@@ -152,9 +176,9 @@ public class PatientSlice
     public void disposeLocal() {}
 
     /**
-     * @param i, FileCoordinates
-     * @param j, FileCoordinates
-     * @param k, FileCoordinates
+     * @param i, FileCoordinates volume center i
+     * @param j, FileCoordinates volume center j
+     * @param k, FileCoordinates volume center k
      */
     public void setCenter( int i, int j, int k )
     {
@@ -207,6 +231,8 @@ public class PatientSlice
      *  the current slice value. Sets the new position and updates the
      *  triImageFrame.
      * @param newSlice the new slice value
+     * @return true if the slice is updated and the image should be
+     * re-rendered, false otherwise
      */
     public boolean updateSlice( int newSlice )
     {
@@ -222,7 +248,9 @@ public class PatientSlice
         {
             m_kPatientPoint.z = newSlice;
             slice = newSlice;
-            MipavCoordinateSystems.PatientToFile( m_kPatientPoint, m_kFilePoint, imageA, orientation );
+            MipavCoordinateSystems.PatientToFile( m_kPatientPoint,
+                                                  m_kFilePoint,
+                                                  imageA, orientation );
             m_bUpdateImage = true;
             return true;
         }
@@ -328,6 +356,10 @@ public class PatientSlice
         this.hasThreshold2 = hasThreshold2;
     }
 
+    /**
+     * Sets which image is currently active.
+     * @param kImage, the currently active image.
+     */
     public void setActiveImage( ModelImage kImage )
     {
         this.imageActive = kImage;
@@ -366,7 +398,7 @@ public class PatientSlice
     /**
      * Accessor that sets the LUT for image A.
      *
-     * @param  LUT  The LUT.
+     * @param  LUT  New LUTa
      */
     public void setLUTa(ModelLUT LUT)
     {
@@ -380,7 +412,7 @@ public class PatientSlice
     /**
      * Accessor that sets the LUT for image B.
      *
-     * @param  LUT  The LUT.
+     * @param  LUT  New LUTb
      */
     public void setLUTb(ModelLUT LUT)
     {
@@ -411,6 +443,12 @@ public class PatientSlice
         return LUTb;
     }
 
+    /**
+     * Returns the ModelLUT or ModelRGB based on which image is currently
+     * active, either imageA or imageB and they type of image (color or
+     * grayscale).
+     * @return the active LUT/RGB table.
+     */ 
     public ModelStorageBase getActiveLookupTable()
     {
         if ( imageActive == imageA )
@@ -452,7 +490,7 @@ public class PatientSlice
     /**
      * Causes the data to be redrawn with new RGBTA values:
      *
-     * @param  RGBT  DOCUMENT ME!
+     * @param  RGBT  the new RGBT for imageA
      */
     public void setRGBTA(ModelRGB RGBT)
     {
@@ -471,7 +509,7 @@ public class PatientSlice
     /**
      * Causes the data to be redrawn with new RGBTB values:
      *
-     * @param  RGBT  DOCUMENT ME!
+     * @param  RGBT  the new RGBT for imageB
      */
     public void setRGBTB(ModelRGB RGBT)
     {
@@ -487,6 +525,12 @@ public class PatientSlice
         m_bUpdateImage = true;
     }
 
+    /**
+     * calculates the color normalization factors
+     * @param kImage, the model image from which the normalization factors are
+     * calculated
+     * @param index, index for storing one of two colors normalization factors
+     */
     private void calcMaxNormColors( ModelImage kImage, int index )
     {
         float fMaxColor = 255;
@@ -504,14 +548,16 @@ public class PatientSlice
             }
 
             if (kImage.getMinG() < 0.0) {
-                fMaxColor = Math.max((float) (kImage.getMaxG() - kImage.getMinG()), fMaxColor);
+                fMaxColor = Math.max((float)(kImage.getMaxG() - kImage.getMinG()),
+                                     fMaxColor);
                 m_akOffset[index].y= (float) (-kImage.getMinG());
             } else {
                 fMaxColor = Math.max((float) kImage.getMaxG(), fMaxColor);
             }
 
             if (kImage.getMinB() < 0.0) {
-                fMaxColor = Math.max((float) (kImage.getMaxB() - kImage.getMinB()), fMaxColor);
+                fMaxColor = Math.max((float)(kImage.getMaxB() - kImage.getMinB()),
+                                     fMaxColor);
                 m_akOffset[index].z = (float) (-kImage.getMinB());
             } else {
                 fMaxColor = Math.max((float) kImage.getMaxB(), fMaxColor);
@@ -519,7 +565,6 @@ public class PatientSlice
         }
 
         m_afNormColor[index] = 255 / fMaxColor;
-
     }
 
 
@@ -548,14 +593,26 @@ public class PatientSlice
     }
 
     /**
-     * For generating the display of 1 or 2 RGB images.
+     * For generating the display of one or two ModelImages (imageA and
+     * imageB). Images may be oriented or non-oriented, axis-aligned or
+     * diagonal cut plans through the ModelImage volume.
      *
-     * @param   tSlice     t (time) slice to show
-     *
-     * @return  boolean to indicate if the show was successful
+     * @param tSlice, t (time) slice to show
+     * @param bufferA, the outbuffer for imageA
+     * @param bufferB, the outbuffer for imageB
+     * @param forceShow, when true the image is re-rendered regardless of
+     * whether the slice value displayed or LUT has changed.
+     * @param bBlend, when true bufferA and bufferB are blended together
+     * @param fAlpha, the blend factor for blending bufferA and bufferB @
+     @param bShowMask, when true the surface voxel mask (if any) is blended
+     into the buffer.
+     * @return boolean to indicate whether or not the show function updated
      */
-    public boolean showUsingOrientation(int tSlice, int[] bufferA, int[] bufferB, boolean forceShow,
-                                        boolean bBlend, float fAlpha, boolean bShowMask )
+    public boolean showUsingOrientation(int tSlice,
+                                        int[] bufferA, int[] bufferB,
+                                        boolean forceShow,
+                                        boolean bBlend, float fAlpha,
+                                        boolean bShowMask )
     {
         if ( !m_bUpdateImage && !forceShow || (imageA == null) )
         {
@@ -588,16 +645,21 @@ public class PatientSlice
                     int ind4 = (j * localImageExtents[0]) + i;
                     int index = 4 * ind4;
                     int pixValue;
-                    getColorMapped( RGBTA, m_aiRGBIndexBufferA, 0, imageBufferA, index, colorMappedA );
+                    getColorMapped( RGBTA, m_aiRGBIndexBufferA, 0,
+                                    imageBufferA, index, colorMappedA );
                     /* Get imageB color and blend if necessary: */
                     if ( imageB != null )
                     {
-                        getColorMapped( RGBTB, m_aiRGBIndexBufferB, 1, imageBufferB, index, colorMappedB );
+                        getColorMapped( RGBTB, m_aiRGBIndexBufferB, 1,
+                                        imageBufferB, index, colorMappedB );
                         if ( bBlend )
                         {
-                            colorMappedA.x = fAlpha * colorMappedA.x + (1.0f - fAlpha) * colorMappedB.x;
-                            colorMappedA.y = fAlpha * colorMappedA.y + (1.0f - fAlpha) * colorMappedB.y;
-                            colorMappedA.z = fAlpha * colorMappedA.z + (1.0f - fAlpha) * colorMappedB.z;
+                            colorMappedA.x = fAlpha * colorMappedA.x +
+                                (1.0f - fAlpha) * colorMappedB.x;
+                            colorMappedA.y = fAlpha * colorMappedA.y +
+                                (1.0f - fAlpha) * colorMappedB.y;
+                            colorMappedA.z = fAlpha * colorMappedA.z +
+                                (1.0f - fAlpha) * colorMappedB.z;
                         }
                         else
                         {
@@ -616,9 +678,12 @@ public class PatientSlice
                               (m_afMask[index + 2] != 0) ||
                               (m_afMask[index + 3] != 0)) )
                         {
-                            colorMappedA.x = m_afMask[index] * m_afMask[index + 1] + (1.0f - m_afMask[index]) * colorMappedA.x;
-                            colorMappedA.y = m_afMask[index] * m_afMask[index + 2] + (1.0f - m_afMask[index]) * colorMappedA.y;
-                            colorMappedA.z = m_afMask[index] * m_afMask[index + 3] + (1.0f - m_afMask[index]) * colorMappedA.z;
+                            colorMappedA.x = m_afMask[index] * m_afMask[index + 1] +
+                                (1.0f - m_afMask[index]) * colorMappedA.x;
+                            colorMappedA.y = m_afMask[index] * m_afMask[index + 2] +
+                                (1.0f - m_afMask[index]) * colorMappedA.y;
+                            colorMappedA.z = m_afMask[index] * m_afMask[index + 3] +
+                                (1.0f - m_afMask[index]) * colorMappedA.z;
                         }
                     }
                     pixValue = 0xff000000 |
@@ -679,13 +744,19 @@ public class PatientSlice
                     }
 
                     if (imageB == null) {
-                        int pixValueA = (int) (tf_imgA.getRemappedValue(imageBufferA[ind4], 256) + 0.5f);
+                        int pixValueA =
+                            (int)(tf_imgA.getRemappedValue(imageBufferA[ind4], 256) +
+                                  0.5f);
                         bufferA[ind4] = lutBufferRemapped[pixValueA];
                     }
                     else
                     {
-                        int indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[ind4], 256) + 0.5f);
-                        int indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[ind4], 256) + 0.5f);
+                        int indexA =
+                            (int)(tf_imgA.getRemappedValue(imageBufferA[ind4], 256) +
+                                  0.5f);
+                        int indexB =
+                            (int)(tf_imgB.getRemappedValue(imageBufferB[ind4], 256) +
+                                  0.5f);
 
                         float Ra = RGB_LUTa[0][indexA];
                         float Ga = RGB_LUTa[1][indexA];
@@ -702,10 +773,12 @@ public class PatientSlice
                         }
                         else
                         {
-                            int pixValueB = 0xff000000 | (((int)Rb) << 16) | (((int)Gb) << 8) | ((int)Bb);
+                            int pixValueB = 0xff000000 | (((int)Rb) << 16) |
+                                (((int)Gb) << 8) | ((int)Bb);
                             bufferB[ind4] = pixValueB;
                         }
-                        int pixValueA = 0xff000000 | (((int)Ra) << 16) | (((int)Ga) << 8) | ((int)Ba);
+                        int pixValueA = 0xff000000 | (((int)Ra) << 16) |
+                            (((int)Ga) << 8) | ((int)Ba);
                         bufferA[ind4] = pixValueA;
                     }
 
@@ -722,11 +795,15 @@ public class PatientSlice
                             int iMaskGa = (int)(alpha * m_afMask[index + 2]);
                             int iMaskBa = (int)(alpha * m_afMask[index + 3]);
 
-                            int iRa = (int)((1 - alpha)*((bufferA[ind4] & 0x00ff0000) >> 16));
-                            int iGa = (int)((1 - alpha)*((bufferA[ind4] & 0x0000ff00) >>  8));
-                            int iBa = (int)((1 - alpha)*((bufferA[ind4] & 0x000000ff)));
+                            int iRa =
+                                (int)((1 - alpha)*((bufferA[ind4] & 0x00ff0000) >> 16));
+                            int iGa =
+                                (int)((1 - alpha)*((bufferA[ind4] & 0x0000ff00) >>  8));
+                            int iBa =
+                                (int)((1 - alpha)*((bufferA[ind4] & 0x000000ff)));
 
-                            int pixValue = 0xff000000 | ((iMaskRa + iRa) << 16) | ((iMaskGa + iGa) << 8) | (iMaskBa + iBa);
+                            int pixValue = 0xff000000 | ((iMaskRa + iRa) << 16) |
+                                ((iMaskGa + iGa) << 8) | (iMaskBa + iBa);
                             bufferA[ind4] = pixValue;
                         }
                     }
@@ -755,20 +832,19 @@ public class PatientSlice
     }
 
     /**
-     * Returns the extents of the tri planar component (in the component's order, not the image volume's).
+     * Returns the local image extents for the PatientSlice orientation.
      *
-     * @return  the extents of the tri image component
+     * @return  image extents in local coordinates.
      */
     public int[] getExtents()
     {
         return localImageExtents;
     }
 
-
-
-    /* MipavCoordinateSystems upgrade: TODO: */
     /**
-     * Gets the image data based on the orientation
+     * Gets the image data based on the orientation, either AXIAL, CORONAL,
+     * SAGITTAL, UNKNOWN_ORIENT, or a diagonal slice if the plane is a
+     * diagonal cut-plane through the ModelImage.
      *
      * @param  slice  data slize
      */
@@ -778,25 +854,31 @@ public class PatientSlice
             int buffFactor = imageA.isColorImage() ? 4 : 1;
             if ( imageBufferA == null )
             {
-                imageBufferA = new float[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
+                imageBufferA = new float[ localImageExtents[0] *
+                                          localImageExtents[1] * buffFactor ];
             }
             if ( (imageB != null) && (imageBufferB == null) )
             {
                 buffFactor = imageB.isColorImage() ? 4 : 1;
-                imageBufferB = new float[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
+                imageBufferB = new float[ localImageExtents[0] *
+                                          localImageExtents[1] * buffFactor ];
             }
             if ( (imageColocalize != null) && (imageBufferColocalize == null) )
             {
                 buffFactor = imageColocalize.isColorImage() ? 4 : 1;
-                imageBufferColocalize = new float[ localImageExtents[0] * localImageExtents[1] * buffFactor ];
+                imageBufferColocalize = new float[ localImageExtents[0] *
+                                                   localImageExtents[1] * buffFactor ];
             }
 
             if ( m_bShowDiagonal )
             {
-                imageA.exportDiagonal( orientation, timeSliceA, slice, localImageExtents, m_kFourCorners, imageBufferA );
+                imageA.exportDiagonal( orientation, timeSliceA, slice,
+                                       localImageExtents, m_kFourCorners, imageBufferA );
                 if (imageB != null)
                 {
-                    imageB.exportDiagonal( orientation, timeSliceB, slice, localImageExtents, m_kFourCorners, imageBufferB );
+                    imageB.exportDiagonal( orientation, timeSliceB, slice,
+                                           localImageExtents, m_kFourCorners,
+                                           imageBufferB );
                 }
                 if ( (imageColocalize != null) && (hasThreshold1 || hasThreshold2) )
                 {
@@ -826,38 +908,55 @@ public class PatientSlice
         }
     }
 
-    /** Get the color from the RGB lookup table: */
-    private void getColorMapped( ModelRGB modelRGBTA, int[] RGBIndexBuffer, int imageIndex,
-                                 float[] imageBuffer, int index, Color4f colorMapped )
+    /** Get the color from the RGB lookup table:
+     * @param modelRGBT the color lookup table
+     * @param RGBIndexBuffer the color lookup table index buffer
+     * @param imageIndex, which color normalization factor to use
+     * @param imageBuffer, the imageBuffer the LUT is changing
+     * @param index, the current imageBuffer pixel
+     * @param colorMapped, the new color value
+     */
+    private void getColorMapped( ModelRGB modelRGBT, int[] RGBIndexBuffer,
+                                 int imageIndex, float[] imageBuffer,
+                                 int index, Color4f colorMapped )
     {
 
         colorMapped.x = 0;
         colorMapped.y = 0;
         colorMapped.z = 0;
         colorMapped.w = imageBuffer[index];
-        if ( modelRGBTA != null )
+        if ( modelRGBT != null )
         {
-            if ( modelRGBTA.getROn() )
+            if ( modelRGBT.getROn() )
             {
-                colorMapped.x = (RGBIndexBuffer[(int)((imageBuffer[index + 1] + m_akOffset[imageIndex].x) *
-                                                m_afNormColor[imageIndex])] & 0x00ff0000) >> 16;
+                colorMapped.x =
+                    (RGBIndexBuffer[(int)((imageBuffer[index + 1] +
+                                           m_akOffset[imageIndex].x) *
+                                          m_afNormColor[imageIndex])] & 0x00ff0000) >> 16;
             }
-            if ( modelRGBTA.getGOn() )
+            if ( modelRGBT.getGOn() )
             {
-                colorMapped.y = (RGBIndexBuffer[(int)((imageBuffer[index + 2] + m_akOffset[imageIndex].y) *
-                                                m_afNormColor[imageIndex])] &  0x0000ff00) >> 8;
+                colorMapped.y =
+                    (RGBIndexBuffer[(int)((imageBuffer[index + 2] +
+                                           m_akOffset[imageIndex].y) *
+                                          m_afNormColor[imageIndex])] &  0x0000ff00) >> 8;
             }
-            if ( modelRGBTA.getBOn() )
+            if ( modelRGBT.getBOn() )
             {
-                colorMapped.z = (RGBIndexBuffer[(int)((imageBuffer[index + 3] + m_akOffset[imageIndex].z) *
-                                                m_afNormColor[imageIndex])] & 0x000000ff);
+                colorMapped.z =
+                    (RGBIndexBuffer[(int)((imageBuffer[index + 3] +
+                                           m_akOffset[imageIndex].z) *
+                                          m_afNormColor[imageIndex])] & 0x000000ff);
             }
         }
         else
         {
-            colorMapped.x = (imageBuffer[index + 1] + m_akOffset[imageIndex].x) * m_afNormColor[imageIndex];
-            colorMapped.y = (imageBuffer[index + 2] + m_akOffset[imageIndex].y) * m_afNormColor[imageIndex];
-            colorMapped.z = (imageBuffer[index + 3] + m_akOffset[imageIndex].z) * m_afNormColor[imageIndex];
+            colorMapped.x = (imageBuffer[index + 1] + m_akOffset[imageIndex].x) *
+                m_afNormColor[imageIndex];
+            colorMapped.y = (imageBuffer[index + 2] + m_akOffset[imageIndex].y) *
+                m_afNormColor[imageIndex];
+            colorMapped.z = (imageBuffer[index + 3] + m_akOffset[imageIndex].z) *
+                m_afNormColor[imageIndex];
         }
         /* Threshold colors: */
         if (useRedThreshold && useGreenThreshold)
@@ -891,5 +990,4 @@ public class PatientSlice
             }
         }
     }
-
 }
