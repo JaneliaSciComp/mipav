@@ -27,7 +27,7 @@ import javax.swing.*;
  * @see      JDialogBase
  * @see      AlgorithmInterface
  */
-public class JDialogMultiPaint extends JDialogBase {
+public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -115,7 +115,7 @@ public class JDialogMultiPaint extends JDialogBase {
      * private boolean displayMask,displayPaint; // check whether the mask and paint are displayed private boolean
      * editable; // wether or not you can edit the object names.
      */
-    private Color nullColor = Color.gray;
+    //private Color nullColor = Color.gray;
 
     /** DOCUMENT ME! */
     private JLabel numberLabel;
@@ -155,6 +155,10 @@ public class JDialogMultiPaint extends JDialogBase {
 
     /** private int destExtents[];. */
     private ViewUserInterface userInterface;
+    
+    /** this is the array list of texts for the mask number buttons */
+    private ArrayList buttonTextArrayList;
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -181,7 +185,6 @@ public class JDialogMultiPaint extends JDialogBase {
         userInterface = ViewUserInterface.getReference();
         image = im;
         init();
-
         if (theParentFrame instanceof ViewJFrameImage) {
             ViewJFrameImage vjfi = (ViewJFrameImage) theParentFrame;
 
@@ -373,7 +376,6 @@ public class JDialogMultiPaint extends JDialogBase {
      * @param  filename  DOCUMENT ME!
      */
     public void readLabelsFromFile(String filename) {
-
         try {
             File f = new File(filename);
             FileReader fr = new FileReader(f);
@@ -409,11 +411,46 @@ public class JDialogMultiPaint extends JDialogBase {
 
                 for (int n = 1; n < ((nbx * nby) + 1); n++) {
                     line = br.readLine();
+                    /*
                     num = Integer.valueOf(line.substring(0, line.indexOf("|") - 1)).intValue();
 
                     if (num == n) {
                         label[n] = line.substring(line.indexOf("|") + 2, line.lastIndexOf("|") - 1);
                         color[n] = new Color(Integer.valueOf(line.substring(line.lastIndexOf("|") + 2)).intValue());
+                        
+                    }
+                    */
+                    String[] maskLabelInfo = line.split(":");
+                    if(maskLabelInfo.length == 4) {
+                    	num = new Integer(maskLabelInfo[0].trim()).intValue();
+                    }
+                    else {
+                        num = Integer.valueOf(line.substring(0, line.indexOf("|") - 1)).intValue();
+                    }
+                    if (num == n) {
+                    	if (maskLabelInfo.length == 4) {
+                    		buttonTextArrayList.set(n-1, new Integer(maskLabelInfo[1].trim()));
+                    		label[n] =  maskLabelInfo[2].trim();
+                    		if (maskLabelInfo[3].trim().equals("null")) {
+                    			color[n] = null;
+                    		}
+                    		else {
+                    			color[n] = new Color(new Integer(maskLabelInfo[3].trim()).intValue());
+                    		}
+                    	}
+                    	//need to handle the old labels files also since i added another column for button text
+                    	else {
+                    		buttonTextArrayList.set(n-1, new Integer(n));
+                            label[n] = line.substring(line.indexOf("|") + 2, line.lastIndexOf("|") - 1);
+                            //since the old files were saving the grey value of the button, we need to check b/c we dont
+                            //want the buttons grey
+                            if (Integer.valueOf(line.substring(line.lastIndexOf("|") + 2)).intValue() == -8355712) {
+                            	color[n] = null;
+                            }
+                            else {
+                            	color[n] = new Color(Integer.valueOf(line.substring(line.lastIndexOf("|") + 2)).intValue());
+                            }
+                    	}
                     }
                 }
 
@@ -565,6 +602,7 @@ public class JDialogMultiPaint extends JDialogBase {
         preserved = new boolean[(nbx * nby) + 1];
         preserveBox = new JCheckBox[(nbx * nby) + 1];
         color = new Color[(nbx * nby) + 1];
+        buttonTextArrayList = new ArrayList();
 
         for (int n = 1; n < ((nbx * nby) + 1); n++) {
             label[n] = new String("Label " + n);
@@ -575,30 +613,37 @@ public class JDialogMultiPaint extends JDialogBase {
             labelField[n].setActionCommand("Label " + n);
 
             multiButton[n] = new BorderedButton(String.valueOf(n));
+            multiButton[n].setName("multiButton:" + n);
             multiButton[n].addActionListener(this);
+            multiButton[n].addMouseListener(this);
             multiButton[n].setActionCommand("PaintMask " + n);
             multiButton[n].setFont(MipavUtil.font10);
             multiButton[n].setSelected(false);
             multiButton[n].setMaximumSize(new Dimension(48, 20));
             multiButton[n].setPreferredSize(new Dimension(48, 20));
-            multiButton[n].setToolTipText(label[n]);
+            //multiButton[n].setToolTipText(label[n]);
 
             listButton[n] = new BorderedButton(String.valueOf(n));
+            listButton[n].setName("listButton:" + n);
             listButton[n].addActionListener(this);
+            listButton[n].addMouseListener(this);
             listButton[n].setActionCommand("PaintMask " + n);
             listButton[n].setFont(MipavUtil.font10);
             listButton[n].setSelected(false);
             listButton[n].setMaximumSize(new Dimension(50, 18));
             listButton[n].setPreferredSize(new Dimension(50, 18));
-            listButton[n].setBackground(nullColor);
+            //listButton[n].setBackground(nullColor);
 
-            color[n] = nullColor;
+            //color[n] = nullColor;
+            color[n] = null;
 
             preserved[n] = false;
             preserveBox[n] = new JCheckBox("");
             preserveBox[n].addActionListener(this);
             preserveBox[n].setActionCommand("Preserve " + n);
             preserveBox[n].setToolTipText("Lock the paint mask");
+            
+            buttonTextArrayList.add(new Integer(n));
         }
 
         multiButton[selected].setSelected(true);
@@ -681,6 +726,7 @@ public class JDialogMultiPaint extends JDialogBase {
         gbc.insets = new Insets(2, 2, 2, 2);
 
         multiPanel = new JPanel(new GridBagLayout());
+        multiPanel.setName("multiPanel");
         multiPanel.setBorder(buildTitledBorder("Paint Mask Palette"));
 
         gbc.insets = new Insets(0, 0, 0, 0);
@@ -698,6 +744,7 @@ public class JDialogMultiPaint extends JDialogBase {
         }
 
         listPanel = new JPanel(new GridBagLayout());
+        listPanel.setName("listPanel");
         listPanel.setBorder(buildTitledBorder("Label list"));
 
         for (int i = 0; i < nbx; i++) {
@@ -782,6 +829,7 @@ public class JDialogMultiPaint extends JDialogBase {
         optionPanel.add(displayPanel, gbc);
 
         mainPanel = new JPanel(new GridBagLayout());
+        mainPanel.setName("mainPanel");
         mainPanel.setForeground(Color.black);
 
         gbc.gridx = 0;
@@ -819,6 +867,7 @@ public class JDialogMultiPaint extends JDialogBase {
         setVisible(true);
         setResizable(false);
         System.gc();
+       
     } // end init()
 
     /**
@@ -859,6 +908,7 @@ public class JDialogMultiPaint extends JDialogBase {
         color[num] = image.getParentFrame().getLUTb().getColor(num);
         multiButton[num].setBackground(color[num]);
         listButton[num].setBackground(color[num]);
+        	
 
         // call the paint to mask program for exiting mask
         image.getParentFrame().getComponentImage().setIntensityDropper((float) num);
@@ -912,7 +962,8 @@ public class JDialogMultiPaint extends JDialogBase {
                 newcolor[n] = color[n];
             } else {
                 newlabel[n] = new String("Label " + n);
-                newcolor[n] = nullColor;
+                //newcolor[n] = nullColor;
+                newcolor[n] = null;
                 newpreserved[n] = false;
             }
         }
@@ -963,25 +1014,40 @@ public class JDialogMultiPaint extends JDialogBase {
             labelField[n].setFont(serif12);
             labelField[n].addActionListener(this);
             labelField[n].setActionCommand("Label " + n);
-
-            multiButton[n] = new BorderedButton(String.valueOf(n));
+            if(n < buttonTextArrayList.size()) {
+            	multiButton[n] = new BorderedButton(((Integer)buttonTextArrayList.get(n-1)).toString());
+            }
+            else {
+            	multiButton[n] = new BorderedButton(String.valueOf(n));
+            }
+            multiButton[n].setName("multiButton:" + n);
             multiButton[n].addActionListener(this);
+            multiButton[n].addMouseListener(this);
             multiButton[n].setActionCommand("PaintMask " + n);
             multiButton[n].setFont(MipavUtil.font10);
             multiButton[n].setSelected(false);
             multiButton[n].setMaximumSize(new Dimension(48, 20));
             multiButton[n].setPreferredSize(new Dimension(48, 20));
-            multiButton[n].setToolTipText(label[n]);
+            //multiButton[n].setToolTipText(label[n]);
             multiButton[n].setBackground(color[n]);
 
-            listButton[n] = new BorderedButton(String.valueOf(n));
+
+            if(n < buttonTextArrayList.size()) {
+            	listButton[n] = new BorderedButton(((Integer)buttonTextArrayList.get(n-1)).toString());
+            }
+            else {
+            	listButton[n] = new BorderedButton(String.valueOf(n));
+            }
+            listButton[n].setName("listButton:" + n);
             listButton[n].addActionListener(this);
+            listButton[n].addMouseListener(this);
             listButton[n].setActionCommand("PaintMask " + n);
             listButton[n].setFont(MipavUtil.font10);
             listButton[n].setSelected(false);
             listButton[n].setMaximumSize(new Dimension(50, 18));
             listButton[n].setPreferredSize(new Dimension(50, 18));
             listButton[n].setBackground(color[n]);
+
 
             preserveBox[n] = new JCheckBox("");
             preserveBox[n].addActionListener(this);
@@ -992,6 +1058,7 @@ public class JDialogMultiPaint extends JDialogBase {
         mainPanel.remove(multiPanel);
 
         multiPanel = new JPanel(new GridBagLayout());
+        multiPanel.setName("multiPanel");
         multiPanel.setBorder(buildTitledBorder("Mask Palette"));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -1014,6 +1081,7 @@ public class JDialogMultiPaint extends JDialogBase {
         mainPanel.remove(listPanel);
 
         listPanel = new JPanel(new GridBagLayout());
+        listPanel.setName("listPanel");
         listPanel.setBorder(buildTitledBorder("Label list"));
 
         for (int i = 0; i < nbx; i++) {
@@ -1116,7 +1184,8 @@ public class JDialogMultiPaint extends JDialogBase {
                 newlistButton[n].setMaximumSize(new Dimension(50, 18));
                 newlistButton[n].setPreferredSize(new Dimension(50, 18));
 
-                newcolor[n] = nullColor;
+                //newcolor[n] = nullColor;
+                newcolor[n] = null;
 
                 newpreserved[n] = false;
                 newpreserveBox[n] = new JCheckBox("");
@@ -1290,7 +1359,7 @@ public class JDialogMultiPaint extends JDialogBase {
     private void switchPaintAndMask(int from, int to) {
         multiButton[from].setSelected(false);
         listButton[from].setSelected(false);
-
+        
         if (image == null) {
             System.gc();
             MipavUtil.displayError("Error: image not found");
@@ -1388,13 +1457,19 @@ public class JDialogMultiPaint extends JDialogBase {
             // write the parameters
             pw.println("Labels for MultiPaint (edit with care)");
             pw.println("Number of labels: " + nbx + " x " + nby);
-            pw.println("Id | name | color");
+            pw.println("Id:buttonText:name:color");
 
             for (int n = 1; n < ((nbx * nby) + 1); n++) {
 
                 // make sure the labels are consistent with the display
                 label[n] = labelField[n].getText();
-                pw.println("" + n + " | " + label[n] + " | " + color[n].getRGB());
+                int maskNum = new Integer(listButton[n].getText()).intValue();
+                //I wanted to use  "|" as a separator but the split() did not like to split it using that so i used ":"
+                if (color[n] == null) {
+                	pw.println("" + n + ":" + maskNum + ":" + label[n] + ":null");
+                }else {
+                	pw.println("" + n + ":" + maskNum + ":" + label[n] + ":" + color[n].getRGB());
+                }
             }
 
             // close the file
@@ -1404,4 +1479,95 @@ public class JDialogMultiPaint extends JDialogBase {
         }
 
     }
+
+	public void mouseClicked(MouseEvent e) {
+		if (e.getButton() == MouseEvent.BUTTON3) {
+			if (e.getSource() instanceof JButton) {
+				JPanel correspondingPanel = null;
+				String correspondingButtonName = "";
+				JButton correspondingButton = null;
+				JPanel muPanel = null;
+				JPanel liPanel = null;
+				
+				//get Source Button and Source Panel
+				JButton sourceButton = (JButton) e.getSource();
+				JPanel srcPanel = (JPanel)sourceButton.getParent();
+				String srcPanelName = srcPanel.getName();
+
+				//get ContentPane
+				Container contentPane = this.getContentPane();
+				
+				//get Main Panel
+				JPanel mPanel = (JPanel)contentPane.getComponents()[0];
+
+				//get Correponding Panel 
+				for(int k=0;k<mPanel.getComponentCount();k++) {
+					if(mPanel.getComponents()[k].getName() != null) {
+						if(mPanel.getComponents()[k].getName().equals("multiPanel")) {
+							muPanel = (JPanel)mPanel.getComponents()[k];
+						}
+						else if(mPanel.getComponents()[k].getName().equals("listPanel")) {
+							liPanel = (JPanel)mPanel.getComponents()[k];
+						}
+					}
+				}
+				if (srcPanelName.equals("multiPanel")) {
+					correspondingPanel = liPanel;
+				}
+				else if(srcPanelName.equals("listPanel")) {
+					correspondingPanel = muPanel;
+				}
+				
+				//get Corresponding Button Name
+				String sourceButtonName = sourceButton.getName();
+				if (sourceButtonName.split(":")[0].equals("multiButton")) {
+					correspondingButtonName = "listButton:" + sourceButtonName.split(":")[1];
+				}
+				else {
+					correspondingButtonName = "multiButton:" + sourceButtonName.split(":")[1];
+				}
+				
+				//get Corresponding Button
+				for(int i=0;i<correspondingPanel.getComponentCount();i++) {
+					if (correspondingPanel.getComponents()[i].getName() != null) {
+						if (correspondingPanel.getComponents()[i].getName().equals(correspondingButtonName)) {
+							correspondingButton = (JButton)correspondingPanel.getComponents()[i];
+						}
+					}
+				}
+				
+				JDialogChangeMaskNumber changeMaskNumberDialog = new JDialogChangeMaskNumber(sourceButton, correspondingButton, buttonTextArrayList);
+				changeMaskNumberDialog.pack();
+				//MipavUtil.centerOnScreen(changeMaskNumberDialog);
+				MipavUtil.centerInComponent(this,changeMaskNumberDialog);
+				//changeMaskNumberDialog.setAlwaysOnTop(true);
+				changeMaskNumberDialog.setVisible();
+			}
+		}
+		
+	}
+
+	public void mouseEntered(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseExited(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mousePressed(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	public void mouseReleased(MouseEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+    
+    
+    
+    
 }
