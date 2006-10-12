@@ -321,7 +321,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("PropagatePaintAll")) {
             propagatePaintToAllSlices();
         } else if (command.equals("PowerPaint")) {
-            new JDialogPowerPaint(this, getActiveImage());
+            new JDialogPowerPaint(this, getImageA());
         } else if (command.equals("ShowPaintBorder")) {
 
             // swap the border painting
@@ -2806,6 +2806,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return null;
         }
     }
+    
+    
+    
+    
 
     /**
      * Returns the reference to the component image.
