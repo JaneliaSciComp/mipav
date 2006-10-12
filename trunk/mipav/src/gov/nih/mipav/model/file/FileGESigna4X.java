@@ -679,6 +679,59 @@ public class FileGESigna4X extends FileBase {
          return imgBLHC_S;
     }
 
+    
+    /**
+     * Looks for the image header ID "IMAGE HEADER" and number of image header blocks
+     * (usually 2 in units of 512 bytes )in GE Signa 4.X file in the File header.
+     * If present, the image is GE SIGNA 4.X format.
+     *
+     * @throws  IOException  Indicates error reading the file
+     *
+     * @return  boolean true if the image header ID and 2 image header blocks
+     * was found in the image header.
+     */
+    public boolean isGESigna4X() throws IOException {
+    	
+    	try {
+
+            if (raFile != null) {
+                raFile.close();
+            }
+
+            fileHeader = new File(fileDir + fileName);
+            raFile = new RandomAccessFile(fileHeader, "r");
+            
+    	} catch (OutOfMemoryError e) {
+            MipavUtil.displayError("Out of memory in FileGESigna4X.isGESigna4X.");
+            throw new IOException();
+        }
+    	
+    	if (raFile == null) {
+            return false;
+        }
+
+        if (raFile.length() <= 143336) {
+            return false;
+        }
+//      block 10 - image header
+        raFile.seek(10*512 + 2*0);
+        // "IMAGE HEADER"
+        String imHeaderID = getString(14);
+                
+        raFile.seek(10*512 + 2*11);
+        // Number of image header blocks in units of 512 bytes; value of 2 expected
+        short imHeaderBlocks = (short)getSignedShort(endianess);
+        
+        
+        if (imHeaderID.equals("IMAGE HEADER  ") && imHeaderBlocks == 2){
+        	return true;
+        } else {
+        	return false;
+        }
+        
+        
+    }
+    
     /**
      * reads the Signa 4X file header and data.
      *
