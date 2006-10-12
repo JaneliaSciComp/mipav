@@ -322,7 +322,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             propagatePaintToAllSlices();
         } else if (command.equals("PowerPaint")) {
             new JDialogPowerPaint(this, getImageA());
-        } else if (command.equals("ShowPaintBorder")) {
+        } else if (command.equals("AdvancedPaint")) {
+            new JDialogMultiPaint(this, getImageA());
+        }else if (command.equals("ShowPaintBorder")) {
 
             // swap the border painting
             Preferences.setProperty("ShowPaintBorder",

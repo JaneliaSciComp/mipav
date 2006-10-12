@@ -42,13 +42,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** DOCUMENT ME! */
     private JPanel bottomPanel;
 
-    /** DOCUMENT ME! */
-    private Color[] color; // colors to use for the labels
+    /** array of colors to use for the labels */
+    private Color[] color;
 
     /** private String title; private boolean useTriplanar=false;. */
     private BitSet currentMask;
 
-    /** DOCUMENT ME! */
+    /** display masks toggle button */
     private JToggleButton displayMasksButton;
 
     /** DOCUMENT ME! */
@@ -66,8 +66,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** DOCUMENT ME! */
     private JPanel filePanel;
 
-    /** DOCUMENT ME! */
-    private ModelImage image; // source image
+    /** source image */
+    private ModelImage image;
 
     /** DOCUMENT ME! */
     private JProgressBar indeterminateProgressBar = new JProgressBar();
@@ -75,8 +75,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** DOCUMENT ME! */
     private Vector intensityLockVector = new Vector();
 
-    /** DOCUMENT ME! */
-    private String[] label; // labels for the painted objects
+    /** labels for the painted objects */
+    private String[] label;
 
     /** DOCUMENT ME! */
     private JTextField[] labelField;
@@ -108,8 +108,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** DOCUMENT ME! */
     private JPanel multiPanel;
 
-    /** DOCUMENT ME! */
-    private int nbx = 4, nby = 6; // number of paint masks -x and -y
+    /** number of paint masks initially */
+    private int nbx = 4, nby = 6;
 
     /**
      * private boolean displayMask,displayPaint; // check whether the mask and paint are displayed private boolean
@@ -123,10 +123,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** DOCUMENT ME! */
     private JPanel numberPanel;
 
-    /** DOCUMENT ME! */
+    /** resize x value */
     private JTextField numberXField;
 
-    /** DOCUMENT ME! */
+    /** resize y value */
     private JTextField numberYField;
 
     /** DOCUMENT ME! */
@@ -135,23 +135,23 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** DOCUMENT ME! */
     private JCheckBox[] preserveBox;
 
-    /** DOCUMENT ME! */
-    private boolean[] preserved; // check whether the mask can be affected by new paint or not
+    /** check whether the mask can be affected by new paint or not */
+    private boolean[] preserved; 
 
-    /** DOCUMENT ME! */
+    /** resize button */
     private JButton resizeButton;
 
     /** DOCUMENT ME! */
     private JFileChooser saveDialog;
 
-    /** DOCUMENT ME! */
+    /** save labels button */
     private JButton saveLabelsButton;
 
-    /** DOCUMENT ME! */
+    /** save mask button */
     private JButton saveMaskButton;
 
-    /** DOCUMENT ME! */
-    private int selected = 1; // id for the selected paint mask
+    /** id for the selected paint mask */
+    private int selected = 1;
 
     /** private int destExtents[];. */
     private ViewUserInterface userInterface;
