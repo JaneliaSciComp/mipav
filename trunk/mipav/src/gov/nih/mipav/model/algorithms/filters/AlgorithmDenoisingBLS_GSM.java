@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms.filters;
 
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 import java.util.*;
@@ -27,14 +28,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * D.C., vol. III, pp. 444-447, October, 1995.
      */
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    
-    private static final int INVERSE = -1;
-    
-    private static final int FILTER = 0;
-
-    /** DOCUMENT ME! */
-    private static final int FORWARD = 1;
     
     // Possible repres1 values
     private static final int ORTHOGONAL_WAVELET = 1;
@@ -257,6 +250,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
     /**
      * Starts the program.
+     * This contains a port of the code contained in denoi_BLS_GSM.m written by
+     * Javier Portilla, Univ. de Granada, 11/15/2004
      */
     public void runAlgorithm() {
         int k;
@@ -699,7 +694,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double var;
         int i, j;
         int index;
-        double imagArray[];
+        double imagArray[] = null;
+        double sy2;
+        double sn2;
+        double SNRin;
+        
         pyr = buildSFpyr(fn, fnx, fny, nScales, nOrientations-1, 1.0, pind);
         if (error == 1) {
             return null;
@@ -735,11 +734,594 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             if (prnt) {
                 aux = pyrBand(pyr, pind, nband+nOrientations-1, nsxn, nsyn);
-                imagArray = new double[aux.length];
                 expand(aux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
+                auxn = pyrBand(pyrN, pind, nband+nOrientations-1, nsxn, nsyn);
+                expand(auxn, 2.0, nsxn[0], nsyn[0], auxn, imagArray);
+                for (j = 0; j < nsy[0]; j++) {
+                    for (i = 0; i < nsx[0]; i++) {
+                        index = i + j * nsx[0];
+                        BL[i][j][1] = aux[index];
+                        BLn[i][j][1] = auxn[index]*var;
+                    }
+                }
             } // if (prnt)
+            
+            sy2 = 0.0;
+            sn2 = 0.0;
+            for (j = 0; j < nsy[0]; j++) {
+                for (i = 0; i < nsx[0]; i++) {
+                    sy2 = sy2 + BL[i][j][0]*BL[i][j][0];
+                    sn2 = sn2 + BLn[i][j][0]*BLn[i][j][0];
+                }
+            }
+            sy2 = sy2/(nsx[0]*nsy[0]);
+            sn2 = sn2/(nsx[0]*nsy[0]);
+            if (sy2 > sn2) {
+                SNRin = 4.342944819*Math.log((sy2-sn2)/sn2);
+            }
+            else {
+                Preferences.debug(
+                "decompReconst: Signal is not detectable in noisy subband");
+            }
+            
+            // main
         } // for (nband = 1; nband <= bandNum-1; nband++)
         return fh;
+    }
+    
+    /**
+     * This is a port of denoi_BLS_GSM_band by JPM, Univ. de Granada, 4/03
+     * It solves for the BLS global optimum solution, using a flat (pseudo)
+     * prior for log(z)
+     * includeCovar Include/ not include covariance in the GSM model
+     * optimize BLS/ MAP-Wiener (2-step)
+     * @param y
+     * @param noise
+     * @param prnt Inlcude/ not include parent
+     * @return
+     */
+    private double[][][] denoi_BLS_GSM_band(double y[][][], double noise[][][],
+            boolean prnt) {
+        double x_hat[][][] = null;
+        int nx, ny, nz;
+        int nblx, nbly;
+        int nexp;
+        double zM[][] = null;
+        int N;
+        int Lx;
+        int Ly;
+        int cent;
+        double Y[][] = null;
+        double W[][] = null;
+        double foo[][] = null;
+        int n;
+        int offset[] = new int[2];
+        int i,j,kx,ky,index;
+        double mtxr[];
+        double mtxi[];
+        double resr[] = null;
+        double resi[] = null;
+        int indexW;
+        double C_w[][] = null;
+        int inum;
+        double sig2;
+        double var;
+        EigenvalueDecomposition eig;
+        double[] eigenvalue;
+        double[][] S;
+        double[][] iS;
+        double C_y[][] = null;
+        double sy2;
+        double C_x[][] = null;
+        double Q[][] = null;
+        double L[][] = null;
+        double sumL;
+        double sumPosL;
+        double sx2;
+        double la[];
+        double V[][];
+        double V2[][];
+        double M[][];
+        double m[];
+        double lzmin;
+        double lzmax;
+        double step;
+        int nsamp_z;
+        double lzi[];
+        double zi[];
+        double laz[][];
+        double p_lz[][];
+        double mu_x[][];
+        double z_w[] = null;
+        double pg1_lz[];
+        double laz2[][];
+        double aux[][];
+        int ind[];
+        double z[];
+        int uv;
+        int lh;
+        int dv;
+        int rh;
+        double ul1[][];
+        double u1[][];
+        double l1[][];
+        double ur1[][];
+        double dl1[][];
+        double dr1[][];
+        double d1[][];
+        double r1[][];
+        
+        nx = y.length;
+        ny = y[0].length;
+        nz = y[0][0].length;
+        
+        // Discard the outer coefficients for the reference (central) coefficients
+        // to avoid boundary effects
+        nblx = nx - blockSizeX + 1;
+        nbly = ny - blockSizeY + 1;
+        nexp = nblx * nbly; // number of coefficients considered
+        zM = new double[nx][ny]; // hidden variable z
+        x_hat = new double[nx][ny][1]; // coefficient estimation
+        N = blockSizeX * blockSizeY; // size of the neighborhood
+        if (prnt) {
+            N = N + 1; 
+        }
+        
+        Lx = (blockSizeX - 1)/2;
+        Ly = (blockSizeY - 1)/2;
+        // reference coefficient in the neighborhood
+        // central coef in the fine band
+        cent = (blockSizeX*blockSizeY + 1)/2;
+        
+        // It will be the observed signal (rearranged in nexp neighborhoods)
+        Y = new double[nexp][N];
+        // It will be a signal with the same autocorrelation as the noise
+        W = new double[nexp][N];
+        
+        foo = new double[nexp][N];
+        
+        // Compute covariance of noise from 'noise'
+        n = 0;
+        for (i = -Lx; i <= Lx; i++) {
+            for (j = -Ly; j <= Ly; j++) {
+                n = n + 1;
+                mtxr = new double[nx*ny];
+                mtxi = new double[nx*ny];
+                for (ky = 0; ky < ny; ky++) {
+                    for (kx = 0; kx < nx; kx++) {
+                        index = kx + ky * nx;
+                        mtxr[index] = noise[kx][ky][0];
+                    }
+                }
+                offset[0] = i;
+                offset[1] = j;
+                shift(mtxr, mtxi, nx, ny, offset, resr, resi);
+                foo = new double[nblx][nbly];
+                for (ky = 0, indexW = 0; ky < nbly; ky++) {
+                    for (kx = 0; kx < nblx; kx++) {
+                        index = (kx + Lx)+ (ky + Ly) * nblx;
+                        foo[kx][ky] = resr[index];
+                        W[indexW++][n-1] = foo[kx][ky];
+                    }
+                }
+            } // for (j = -Ly; j <= Ly; j++)
+        } // for (i = -Lx; i <= Lx; i++)
+        
+        if (prnt) { // parent
+            n = n +1;
+            foo = new double[nblx][nbly];
+            for (ky = 0, indexW = 0; ky < nbly; ky++) {
+                for (kx = 0; kx < nblx; kx++) {
+                    foo[kx][ky] = noise[kx+Lx][ky+Ly][1];
+                    W[indexW++][n-1] = foo[kx][ky];
+                }
+            }
+        } // if (prnt)
+        
+        C_w = innerProd(W);
+        for (j = 0; j < N; j++) {
+            for (i = 0; i < N; i++) {
+                C_w[i][j] = C_w[i][j]/nexp;
+            }
+        }
+        
+        inum = N;
+        if (prnt) {
+            inum = inum - 1;
+        }
+        sig2 = 0.0;
+        for (i = 0; i < inum; i++) {
+            sig2 += C_w[i][i];
+        }
+        // Noise variance in the (fine) subband
+        sig2 = sig2/inum;
+        
+        W = null;
+        if (!includeCovar) {
+            if (prnt) {
+                var = C_w[N-1][N-1];
+                C_w = new double[N][N];
+                for (i = 0; i < N-1; i++) {
+                    C_w[i][i] = sig2;
+                }
+                C_w[N-1][N-1] = var;
+            }
+            else {
+                C_w = new double[N][N];
+                for (i = 0; i < N; i++) {
+                    C_w[i][i] = sig2;
+                }
+            }
+        } // if (!inlcudeCovar)
+        
+        // Rearrange observed samples in 'nexp' neighborhoods
+        n = 0;
+        for (i = -Lx; i <= Lx; i++) {
+            for (j = -Ly; j <= Ly; j++) {
+                n = n + 1;
+                mtxr = new double[nx*ny];
+                mtxi = new double[nx*ny];
+                for (ky = 0; ky < ny; ky++) {
+                    for (kx = 0; kx < nx; kx++) {
+                        index = kx + ky * nx;
+                        mtxr[index] = y[kx][ky][0];
+                    }
+                }
+                offset[0] = i;
+                offset[1] = j;
+                shift(mtxr, mtxi, nx, ny, offset, resr, resi);
+                foo = new double[nblx][nbly];
+                for (ky = 0, indexW = 0; ky < nbly; ky++) {
+                    for (kx = 0; kx < nblx; kx++) {
+                        index = (kx + Lx)+ (ky + Ly) * nblx;
+                        foo[kx][ky] = resr[index];
+                        Y[indexW++][n-1] = foo[kx][ky];
+                    }
+                }
+            } // for (j = -Ly; j <= Ly; j++)
+        } // for (i = -Lx; i <= Lx; i++)
+        
+        if (prnt) { // parent
+            n = n +1;
+            foo = new double[nblx][nbly];
+            for (ky = 0, indexW = 0; ky < nbly; ky++) {
+                for (kx = 0; kx < nblx; kx++) {
+                    foo[kx][ky] = y[kx+Lx][ky+Ly][1];
+                    Y[indexW++][n-1] = foo[kx][ky];
+                }
+            }
+        } // if (prnt)
+        foo = null;
+        
+        // For modulating the local stdv of noise
+        // For now leave out code for case with sig a vector
+
+        eig = new EigenvalueDecomposition(new Matrix(C_w));
+        eigenvalue = eig.getRealEigenvalues();
+
+        // In EigenvalueDecomposition the columns represent the
+        // eigenvectors
+        S = eig.getV().getArray();
+        for (j = 0; j < N; j++) {
+            var = Math.sqrt(eigenvalue[j]);
+            for (i = 0; i < N; i++) {
+                if (eigenvalue[j] > 0) {
+                    S[i][j] = S[i][j] * var;
+                }
+                else {
+                    S[i][j] = 0;
+                }
+            }
+        }
+        iS = (new Matrix(S)).inverse().getArray();
+        noise = null;
+        
+        C_y = innerProd(Y);
+        for (j = 0; j < N; j++) {
+            for (i = 0; i < N; i++) {
+                C_y[i][j] = C_y[i][j]/nexp;
+            }
+        }
+        // sy2 = observed (signal + noise) variance in the subband
+        sy2 = 0.0;
+        for (i = 0; i < N-1; i++) {
+            sy2 += C_y[i][i];
+        }
+        if (!prnt) {
+            sy2 += C_y[N-1][N-1];
+            sy2 = sy2/N;
+        }
+        else {
+            sy2 = sy2/(N-1);
+        }
+        
+        // C_x = C_y - C_w as signal and noise are assumed to be independent
+        for (j = 0; j < N; j++) {
+            for (i = 0; i < N; i++) {
+                C_x[i][j] = C_y[i][j] - C_w[i][j];
+            }
+        }
+        eig = new EigenvalueDecomposition(new Matrix(C_x));
+        eigenvalue = eig.getRealEigenvalues();
+
+        // In EigenvalueDecomposition the columns represent the
+        // eigenvectors
+        Q = eig.getV().getArray();
+        // Correct possible negative eigenvalues, without changing
+        // the overall variance
+        L = new double[N][N];
+        sumL = 0.0;
+        sumPosL = 0.0;
+        for (i = 0; i < N; i++) {
+            sumL += eigenvalue[i];
+            if (eigenvalue[i] > 0.0) {
+                sumPosL += eigenvalue[i];
+            }
+        }
+        if (sumPosL == 0) {
+            sumPosL = 1;
+        }
+        for (i = 0; i < N; i++) {
+            if (eigenvalue[i] > 0) {
+                L[i][i] = eigenvalue[i]*sumL/sumPosL;
+            }
+        }
+        C_x = ((new Matrix(Q)).times(new Matrix(L))).times((new Matrix(Q)).transpose()).getArray();
+        
+        // Estimated signal variance in the subband
+        sx2 = sy2 - sig2;
+        if (sx2 < 0.0) {
+            sx2 = 0.0;
+        }
+        if (!includeCovar) {
+            if (prnt) {
+                var = C_x[N-1][N-1];
+                C_x = new double[N][N];
+                for (i = 0; i < N-1; i++) {
+                    C_x[i][i] = sx2;
+                }
+                C_x[N-1][N-1] = var;
+            } // if (prnt)
+            else {
+                C_x = new double[N][N];
+                for (i = 0; i < N; i++) {
+                    C_x[i][i] = sx2;
+                }
+            } // else
+        } // if (!includeCovar)
+        
+        // Double diagonalization of signal and noise eigenvlaues:
+        // energy in the new representation
+        eig = new EigenvalueDecomposition(((new Matrix(iS)).times(new Matrix(C_x))).times((new Matrix(iS)).transpose()));
+        la = eig.getRealEigenvalues();
+        for (i = 0; i < N; i++) {
+            if (la[i] < 0.0) {
+                la[i] = 0.0;
+            }
+        }
+        // In EigenvalueDecomposition the columns represent the
+        // eigenvectors
+        Q = eig.getV().getArray();
+        
+        // Linearly transform the observations, and keep the quadratic
+        // values (we do not model phase).
+        V = (((new Matrix(Q)).transpose()).times(new Matrix(iS))).times((new Matrix(Y)).transpose()).getArray();
+        Y = null;
+        V2 = new double[nexp][N];
+        for (j = 0; j < nexp; j++) {
+            for (i = 0; i < N; i++) {
+                V2[j][i] = V[i][j]*V[i][j];
+            }
+        }
+        M = (new Matrix(S)).times(new Matrix(Q)).getArray();
+        m = new double[N];
+        for (i = 0; i < N; i++) {
+            m[i] = M[cent-1][i];
+        }
+        
+        // Compute p(Y|log(z))
+        // Non-informative prior
+        lzmin = -20.5;
+        lzmax = 3.5;
+        step = 2;
+        nsamp_z = 13;
+        
+        lzi = new double[nsamp_z];
+        zi = new double[nsamp_z];
+        for (i = 0; i < nsamp_z; i++) {
+            lzi[i] = -20.5 + i*step;
+            zi[i] = Math.exp(lzi[i]);
+        }
+        
+        laz = new double[N][nsamp_z];
+        for (i = 0; i < N; i++) {
+            for (j = 0; j < nsamp_z; j++) {
+                laz[i][j] = la[i] * zi[j];
+            }
+        }
+        p_lz = new double[nexp][nsamp_z];
+        // mu_x = new double[nexp][nsamp_z] obtained later in multiplication
+        
+        if (z_w == null) { // Spatially invariant noise
+            // Normalization term (depends on z, but not on Y)
+            pg1_lz = new double[nsamp_z];
+            for (j = 0; j < nsamp_z; j++) {
+                pg1_lz[j] = laz[0][j] + 1.0;
+                for (i = 1; i < N; i++) {
+                   pg1_lz[j] *= (laz[i][j] + 1.0); 
+                }
+                pg1_lz[j] = 1.0/Math.sqrt(pg1_lz[j]);
+            }
+            laz2 = new double[N][nsamp_z];
+            for (j = 0; j < nsamp_z; j++) {
+                for (i = 0; i < N; i++) {
+                    laz2[i][j] = 1.0/(1.0 + laz[i][j]);
+                }
+            }
+            aux = (new Matrix(V2)).times(new Matrix(laz2)).getArray();
+            laz2 = null;
+            for (j = 0; j < nsamp_z; j++) {
+                for (i = 0; i < nexp; i++) {
+                    aux[i][j] = Math.exp(-0.5*aux[i][j]);
+                }
+            }
+            // p_lz gives us the conditional Gaussian density values
+            // for the observed samples and the considered samples of z
+            for (j = 0; j < nsamp_z; j++) {
+                for (i = 0; i < nexp; i++) {
+                    p_lz[i][j] = aux[i][j] * pg1_lz[j];
+                }
+            }
+            // Compute mu_x(z) = E{x|log(z), Y}
+            aux = new double[N][nsamp_z];
+            for (j = 0; j < nsamp_z; j++) {
+                for (i = 0; i < N; i++) {
+                    aux[i][j] = m[i]*laz[i][j]/(1.0 + laz[i][j]);
+                }
+            }
+            // Wiener estimation, for each considered sample of z
+            mu_x = ((new Matrix(V)).transpose()).times(new Matrix(aux)).getArray();
+        } // if (z_w == null)
+        else { // Spatially variant noise
+            // Do not fill in at this time
+        }
+        
+        // Use ML estimation of z only for the boundaries
+        // ind contains the column index of the maximum
+        // value in each row of p_lz
+        ind = new int[nexp];
+        for (i = 0; i < nexp; i++) {
+            ind[i] = 0;
+            for (j = 1; j < nsamp_z; j++) {
+                if (p_lz[i][j] > ind[i]) {
+                    ind[i] = j;
+                }
+            }
+        } // for (i = 0; i < nexp; i++)
+        z = new double[nexp];
+        for (i = 0; i < nexp; i++) {
+            z[i] = zi[ind[i]];
+        }
+        V2 = null;
+        aux = null;
+        
+        // For boundary handling
+        uv = 1 + Lx;
+        lh = 1 + Ly;
+        dv = nblx + Lx;
+        rh = nbly + Ly;
+        ul1 = new double[uv][lh];
+        for (j = 0; j < lh; j++) {
+            for (i = 0; i < uv; i++) {
+                ul1[i][j] = 1.0;
+            }
+        }
+        u1 = new double[uv-1][1];
+        for (i = 0; i < uv-1; i++) {
+            u1[i][0] = 1.0;
+        }
+        l1 = new double[1][lh-1];
+        for (j = 0; j < lh-1; j++) {
+            l1[0][j] = 1.0;
+        }
+        ur1 = ul1;
+        dl1 = ul1;
+        dr1 = ul1;
+        d1 = u1;
+        r1 = l1;
+        
+        for (j = lh-1, index = 0; j < rh; j++) {
+            for (i = uv-1; i < dv; i++) {
+                zM[i][j] = z[index++];
+            }
+        }
+        
+        // Propagation of the ML-estimated z to the boundaries
+        
+        // a) Corners
+        for (j = 0; j < lh; j++) {
+            for (i = 0; i < uv; i++) {
+                zM[i][j] = zM[uv-1][lh-1];
+            }
+        }
+        for (j = rh-1; j < ny; j++) {
+            for (i = 0; i < uv; i++) {
+                zM[i][j] = zM[uv-1][rh-1];
+            }
+        }
+        for (j = 0; j < lh; j++) {
+            for (i = dv-1; i < nx; i++) {
+                zM[i][j] = zM[dv-1][lh-1];
+            }
+        }
+        for (j = rh-1; j < ny; j++) {
+            for (i = dv-1; i < nx; i++) {
+                zM[i][j] = zM[dv-1][rh-1];
+            }
+        }
+        // b) Bands
+        for (j = lh; j < rh-1; j++) {
+            for (i = 0; i < uv-1; i++) {
+                zM[i][j] = zM[uv-1][j];
+            }
+        }
+        for (j = lh; j < rh-1; j++) {
+            for (i = dv; i < nx; i++) {
+                zM[i][j] = zM[dv-1][j];
+            }
+        }
+        for (j = 0; j < lh-1; j++) {
+            for (i = uv; i < dv-1; i++) {
+                zM[i][j] = zM[i][lh-1];
+            }
+        }
+        for (j = rh; j < ny; j++) {
+            for (i = uv; i < dv-1; i++) {
+                zM[i][j] = zM[i][rh-1];
+            }
+        }
+        
+        // Do scalar Wiener for the boundary coefficients
+        if (z_w != null) {
+            // Spatially varying noise
+        }
+        else {
+            // Spatially invariant noise
+            for (j = 0; j < ny; j++) {
+                for(i = 0; i < nx; i++) {
+                    x_hat[i][j][0] = y[i][j][0]*sx2*zM[i][j]/(sx2*zM[i][j] + sig2);  
+                }
+            }
+        } // else
+        
+        // Prior for log(z)
+        return x_hat;
+    }
+    
+    /**
+     * Computes mat'*mat
+     * @param mat
+     * @return
+     */
+    private double[][] innerProd(double mat[][]) {
+        int xdim = mat.length;
+        int ydim = mat[0].length;
+        double res[][] = new double[ydim][ydim];
+        int i,j;
+        double tmp;
+        int k;
+        
+        for (i = 0; i < ydim; i++) {
+            for (j = i; j < ydim; j++) {
+                tmp = 0.0;
+                for (k = 0; k < xdim; k++) {
+                    tmp += mat[i][k] * mat[k][j];
+                }
+                res[i][j] = tmp;
+                res[j][i] = tmp;
+            }
+        }
+        return res;
     }
     
     /**
@@ -775,15 +1357,15 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         mx = (int)Math.round(f*mx);
         my = (int)Math.round(f*my);
-        ter = new double[mx*my];
-        tei = new double[mx*my];
         
-        //forward FFT
         tr = new double[mx*my];
         ti = new double[mx*my];
         for (i = 0; i < tr.length; i++) {
             tr[i] = t[i];
         }
+        ter = new double[mx*my];
+        tei = new double[mx*my];
+        // forward FFT
         fftUtil = new FFTUtility(tr, ti, my, mx, 1, -1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
