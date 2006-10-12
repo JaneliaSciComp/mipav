@@ -902,10 +902,18 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         dataViewGroup.add( radiologicalView );
         dataViewGroup.add( neurologicalView );
 
-        JPanel viewPanel = new JPanel();
-        viewPanel.setLayout( new GridLayout( 2, 1 ) );
-        viewPanel.add( radiologicalView );
-        viewPanel.add( neurologicalView );
+   
+        JPanel viewPanel = new JPanel(new GridBagLayout());
+        gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.CENTER;
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.gridwidth = 1;
+        gbc2.gridheight = 1;
+        viewPanel.setBorder( JPanelRendererBase.buildTitledBorder("Viewing Convention") );
+        viewPanel.add( radiologicalView, gbc2);
+        gbc2.gridy = 1;
+        viewPanel.add( neurologicalView, gbc2);
 
         JPanel panelLabelsModel = new JPanel();
         panelLabelsModel.setLayout(new GridLayout( 1, 2 ));
