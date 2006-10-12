@@ -433,7 +433,7 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 save = null;
                 saver = null;
             }
-        } else if (command.equals("show advanced")) {
+        } /*else if (command.equals("show advanced")) {
 
             if (multiPaintDialog == null) {
                 multiPaintDialog = new JDialogMultiPaint(parentFrame, image);
@@ -441,7 +441,8 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
                 MipavUtil.centerOnScreen(multiPaintDialog);
                 multiPaintDialog.setVisible(true);
             }
-        } else if (command.equals("Shortkeys")) {
+        } */
+        else if (command.equals("Shortkeys")) {
 			if (buttonShortkeys.isSelected()) {
 				setFocusable(true);
 				addKeyListener(this);
@@ -2862,13 +2863,15 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         buttonRevert.addActionListener(this);
         buttonRevert.setActionCommand("Revert");
         buttonRevert.setFont(serif12);
-
+        
+        /*
         buttonShowAdvancedPaintControls = new JButton("Show advanced paint controls");
         buttonShowAdvancedPaintControls.addActionListener(this);
         buttonShowAdvancedPaintControls.setActionCommand("show advanced");
         buttonShowAdvancedPaintControls.setFont(serif12);
         buttonShowAdvancedPaintControls.setEnabled(!image.isColorImage());
-
+        */
+        
         buttonShortkeys = new JToggleButton("Use shortkeys");
         buttonShortkeys.addActionListener(this);
         buttonShortkeys.setActionCommand("Shortkeys");
@@ -3084,9 +3087,9 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
         mainPanel.add(movePanel, gbc);
         gbc.gridy = 4;
         mainPanel.add(exportPanel, gbc);
-        gbc.gridy = 5;
-        gbc.insets = new Insets(2, 2, 2, 2);
-        mainPanel.add(buttonShowAdvancedPaintControls, gbc);
+        //gbc.gridy = 5;
+        //gbc.insets = new Insets(2, 2, 2, 2);
+        //mainPanel.add(buttonShowAdvancedPaintControls, gbc);
         gbc.gridy = 6;
         mainPanel.add(buttonShortkeys, gbc);
 
