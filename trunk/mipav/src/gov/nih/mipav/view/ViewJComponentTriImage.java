@@ -289,8 +289,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             axisLabels[0][1] = new String("Y");
             axisLabels[1][0] = new String("X");
             axisLabels[1][1] = new String("Z");
-            axisLabels[2][0] = new String("Y");
-            axisLabels[2][1] = new String("Z");
+            axisLabels[2][0] = new String("Z");
+            axisLabels[2][1] = new String("Y");
         }
         else
         {

@@ -1512,8 +1512,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             m_bPatientOrientation = false;
             if ( m_iPlaneOrientation == FileInfoBase.SAGITTAL )
             {
-                m_kLabelX = new String("Y");
-                m_kLabelY = new String("Z");
+                m_kLabelX = new String("Z");
+                m_kLabelY = new String("Y");
             }
             else if ( m_iPlaneOrientation == FileInfoBase.CORONAL )
             {
