@@ -172,13 +172,16 @@ public class MipavCoordinateSystems
      * based on the image orientation: */
     public static final int[] getAxisOrientation( ModelStorageBase image  )
     {
-        int[] aiAxisOrientation = image.getAxisOrientation();
-
         int imageOrientation = image.getImageOrientation();
+        if (imageOrientation == FileInfoBase.UNKNOWN_ORIENT )
+        {
+            return null;
+        }
 
+        int[] aiAxisOrientation = image.getAxisOrientation();
         if ( aiAxisOrientation[0] == FileInfoBase.ORI_UNKNOWN_TYPE )
         {
-            if ( (imageOrientation == FileInfoBase.AXIAL) || (imageOrientation == FileInfoBase.UNKNOWN_ORIENT) )
+            if ( imageOrientation == FileInfoBase.AXIAL )
             {
                 aiAxisOrientation[0] = FileInfoBase.ORI_R2L_TYPE;
                 aiAxisOrientation[1] = FileInfoBase.ORI_A2P_TYPE;
