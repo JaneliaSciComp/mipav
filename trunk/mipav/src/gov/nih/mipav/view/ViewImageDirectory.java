@@ -303,7 +303,7 @@ public class ViewImageDirectory extends JFrame
                 fileName = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getName();
                 directory = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getDirectory();
                // io.setPBar(progressPanel);
-
+                //io.setQuiet(true);
                 ModelImage image = io.readImage(fileName, directory + File.separatorChar);
 
                 if (image == null) {
@@ -338,6 +338,7 @@ public class ViewImageDirectory extends JFrame
                 for (i = 0; i < selected.length; i++) {
                     newName = ((ViewFileTreeNode) selected[i].getLastPathComponent()).getName();
                     newDir = ((ViewFileTreeNode) selected[i].getLastPathComponent()).getDirectory();
+                    //io.setQuiet(true);
                     newImage = io.readImage(newName, newDir + File.separatorChar);
                     table.put(newName, newImage);
                     progress += add;
@@ -788,6 +789,7 @@ public class ViewImageDirectory extends JFrame
      //       io.setPBar(this.progressPanel);
      //   }
 
+        io.setQuiet(true);
         ModelImage image = io.readOneImage(fileName, directory);
 
         if (image == null) {

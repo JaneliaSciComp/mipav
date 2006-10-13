@@ -243,9 +243,9 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             }
 
             FileIO io = new FileIO();
-
+            io.setQuiet(true);
             io.setFileDir(fileInfoDICOM.getFileDirectory() + File.separatorChar);
-
+System.err.println("HERE");
             ModelImage image = io.readDicom(fileNames[0], fileNames, false);
 
             if (image == null) {
@@ -321,9 +321,9 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             }
 
             FileIO io = new FileIO();
-
+            io.setQuiet(true);
             io.setFileDir(fileInfoDICOM.getFileDirectory() + File.separatorChar);
-
+            System.err.println("HERE2");
             ModelImage image = io.readDicom(fileNames[0], fileNames, false);
 
             if (image == null) {

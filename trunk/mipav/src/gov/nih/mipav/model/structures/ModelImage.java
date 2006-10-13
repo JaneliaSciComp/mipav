@@ -554,7 +554,6 @@ public class ModelImage extends ModelStorageBase {
      */
     public void copyFileTypeInfoSansBufferType(ModelImage fromImage) {
         FileInfoBase fileInfo;
-
         for (int i = 0; i < fromImage.getFileInfo().length; i++) {
             fileInfo = (FileInfoBase) (fromImage.getFileInfo(i).cloneItself());
             fileInfo.setDataType(getType());

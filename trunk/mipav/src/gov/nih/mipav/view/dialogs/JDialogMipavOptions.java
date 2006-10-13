@@ -163,6 +163,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     /** DOCUMENT ME! */
     private JCheckBox showLineVOIAngleBox;
 
+    private JCheckBox continuousVOIBox;
+    
     /** DOCUMENT ME! */
     private JCheckBox showOutputWindow;
 
@@ -244,6 +246,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
         displayColorPanel.setLayout(gbl);
         displayColorPanel.setBorder(buildTitledBorder("Color\\VOI"));
+        makeVOIContinuousOptions(gbc, gbl);
         makeVOILineAngleOptions(gbc, gbl);
         makeCrosshairOptions(gbc, gbl);
         makeActiveColorOptions(gbc, gbl);
@@ -1603,6 +1606,27 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         showLineVOIAngleBox.setSelected(Preferences.is(Preferences.PREF_SHOW_LINE_ANGLE));
     }
 
+    /**
+     * Makes the options for displaying the angle for active line VOIs.
+     *
+     * @param  gbc  GridBagConstraints
+     * @param  gbl  GridBagLayout
+     */
+    protected void makeVOIContinuousOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+        continuousVOIBox = new JCheckBox("Draw continuous contours w/o holding [SHIFT]");
+        continuousVOIBox.setFont(MipavUtil.font12);
+        continuousVOIBox.setForeground(Color.black);
+        continuousVOIBox.addActionListener(this);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(continuousVOIBox, gbc);
+        displayColorPanel.add(continuousVOIBox);
+
+        // preset the choices:
+        continuousVOIBox.setSelected(Preferences.is(Preferences.PREF_SHOW_LINE_ANGLE));
+    }
+    
     /**
      * Sets the graphic type for VOI points (4 types, each with a corresponding gif).
      *
