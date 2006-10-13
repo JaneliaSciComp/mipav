@@ -58,12 +58,7 @@ public class FileIO {
     /** DOCUMENT ME! */
     private ModelRGB modelRGB = null;
 
-    /**
-     * Link to either progress bar frame or panel passed in to update progress while reading an image. Which must then
-     * be passed into read function for specific file type.
-     */
-    //private ProgressBarInterface pInterface = null;
-
+   
     private ViewJProgressBar progressBar = null;
     
     /** Refers to whether or not the FileIO reports progress or errors. */
@@ -1289,7 +1284,7 @@ public class FileIO {
         if (fileList.length == 0) {
             return null;
         }
-
+//System.err.println("quiet: " + quiet);
         /*System.out.println("selectedFileName = " + selectedFileName);
          * for (int m = 0; m < fileList.length; m++) { System.out.println("Filelist = " + m + "  " + fileList[m]);}*/
 
@@ -1394,7 +1389,7 @@ public class FileIO {
                 seriesNoMaster = "";
                 seriesNoRef = "";
             }
-            
+
             createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
           
         } catch (OutOfMemoryError error) {
@@ -1439,7 +1434,7 @@ public class FileIO {
             int[] rint = new int[nListImages]; // sorted image instance values.
             float[] zOrients = new float[nListImages]; // image orientation values as read in.
             float[] instanceNums = new float[nListImages]; // image instance numbers as read in.
-            progressBar.setTitle("Reading headers");
+            //progressBar.setTitle("Reading headers");
 
             for (i = 0, nImages = 0; i < nListImages; i++) {
                 FileInfoDicom fileInfoTemp;
@@ -3408,6 +3403,7 @@ public class FileIO {
     	//System.err.println("title is: " + fName + ", message is: " + message);
     	progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
         progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
+        //System.err.println("quiet: " + quiet + " pbar vis: " + progressBar.isVisible());
         progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
         if (fBase != null) {
         	fBase.addProgressChangeListener(progressBar);
@@ -3778,7 +3774,7 @@ public class FileIO {
         for (i = 0; i < nImages; i++) {
 
             try {
-                progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                //progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
                 imageFile = new FileAnalyze(fileList[i], fileDir);
 
@@ -3791,7 +3787,6 @@ public class FileIO {
                 fileInfo = ((FileAnalyze) imageFile).getFileInfo();
 
                 if (extents.length != fileInfo.getExtents().length) {
-
                     if (!quiet) {
                         MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
                     }
@@ -3803,7 +3798,6 @@ public class FileIO {
 
                         case 2:
                             if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
-
                                 if (!quiet) {
                                     MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
                                 }
@@ -3816,7 +3810,6 @@ public class FileIO {
                         case 3:
                             if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1]) ||
                                     (extents[2] != fileInfo.getExtents()[2])) {
-
                                 if (!quiet) {
                                     MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
                                 }
@@ -3935,13 +3928,13 @@ public class FileIO {
                 return null;
             }
 
+            FileInfoBase [] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
+            
             for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
                 fileInfoArr[i].setExtents(imgExtents); // update extents
-
-                // fineInfoArr[i].setN
-
-                image.setFileInfo(fileInfoArr[i], i); // copying...
+                fileInfoArrCopy[i] = fileInfoArr[i];
             }
+            image.setFileInfo(fileInfoArrCopy);
         }
 
         
@@ -4390,7 +4383,7 @@ public class FileIO {
         for (i = 0; i < nImages; i++) {
 
             try {
-                progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                //progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
                 ((FileCOR) imageFile).setFileName(fileList[i]);
                 ((FileCOR) imageFile).readImage(length);

@@ -1632,7 +1632,6 @@ public class ViewOpenImageSequence extends JFrame
 
         FileIO fileIO = new FileIO();
         fileIO.setQuiet(true);
-
         ModelImage modelImage = fileIO.readOneImage(selectedFilename, currentPath);
 
         if (modelImage == null) {

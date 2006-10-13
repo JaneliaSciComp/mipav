@@ -96,6 +96,9 @@ public class Preferences {
     /** Constant that indicates whether the angle of line VOIs should be shown on screen. */
     public static final String PREF_SHOW_LINE_ANGLE = "ShowLineVOIAngle";
 
+    /** Constant that indicates whether [SHIFT] must be held down to draw continuous contours (false = hold-shift) */
+    public static final String PREF_CONTINUOUS_VOI_CONTOUR = "ContinuousVOIContours";
+    
     /** Constant that indicates whether the triplanar frame should use the old 2x2 layout or the newer 3x1 layout. */
     public static final String PREF_TRIPLANAR_2X2_LAYOUT = "TriPlanar2x2Layout";
 
