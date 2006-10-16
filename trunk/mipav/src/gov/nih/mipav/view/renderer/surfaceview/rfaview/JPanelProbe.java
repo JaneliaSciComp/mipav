@@ -2843,9 +2843,12 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         openFile.setFilterType(filter);
 
         // Matt through in a _false_ to get it to compile - 12/31/2002
-        Vector imageNames = openFile.open(false, false);
-
+        //Vector imageNames = openFile.open(false, false);
+        //This arrayLIst allows multiple selections but i am only accessing the zeroth element 
+        //to load the region map
+        ArrayList openImagesArrayList = openFile.open(false, false);
         // if open failed, then imageNames will be null
+        Vector imageNames = (Vector)openImagesArrayList.get(0);
         if (imageNames == null) {
             return null;
         }

@@ -211,8 +211,15 @@ public class JDialogRunScriptController implements ActionListener {
         openFile.setPutInFrame(false);
 
         // Matt through in a _false_ to get it to compile - 12/31/2002
-        Vector openImageNames = openFile.open(stackFlag, false);
-
+        //Vector openImageNames = openFile.open(stackFlag, false);
+        // This arraylist allows multiple selections but in order for this method to compile as it is , i only
+        // used the zero'th element to return the Model Image
+        ArrayList openImagesArrayList = openFile.open(stackFlag, false);
+        if(openImagesArrayList == null) {
+        	return null;
+        }
+        
+        Vector openImageNames = (Vector)openImagesArrayList.get(0);
         // if open failed, then imageNames will be null
         if (openImageNames == null) {
             return null;
