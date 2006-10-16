@@ -142,13 +142,22 @@ public class ScriptRunner {
         scriptFile = file;
         imageTable = new ImageVariableTable();
 
+        // ScriptThread thread;
+
         try {
             fillImageTable(imageNameList);
 
             voiTable = new VOITable(scriptFile, voiPathList);
 
-            ScriptThread thread = new ScriptThread(scriptFile);
-            thread.start();
+            // thread = new ScriptThread(scriptFile);
+            // thread.start();
+
+            Parser.runScript(scriptFile);
+
+            Preferences.debug("script runner:\tFinished script execution:\t" + scriptFile + "\n",
+                              Preferences.DEBUG_SCRIPTING);
+
+            setRunning(false);
         } catch (ParserException pe) {
             handleParserException(pe);
 
@@ -259,10 +268,10 @@ public class ScriptRunner {
                                   Preferences.DEBUG_SCRIPTING);
             } catch (ParserException pe) {
                 handleParserException(pe);
+            }
 
-                synchronized (ScriptRunner.getReference()) {
-                    ScriptRunner.getReference().notifyAll();
-                }
+            synchronized (ScriptRunner.getReference()) {
+                ScriptRunner.getReference().notifyAll();
             }
         }
     }

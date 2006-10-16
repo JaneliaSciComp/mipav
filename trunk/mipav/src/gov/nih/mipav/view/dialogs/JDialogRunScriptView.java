@@ -913,17 +913,19 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                         } // new ActionListener
                                                     ); // addActionListener
 
-                    JMenuItem applyAllMenuItem = new JMenuItem("Apply to all script executers");
-                    applyAllMenuItem.addActionListener(new java.awt.event.ActionListener() {
-                            public void actionPerformed(java.awt.event.ActionEvent e) {
-                                applyToAllNodes(selectedNode);
-                            } // actionPerformed
-                        } // new ActionListener
-                                                      ); // addActionListener
+                    // TODO: Apply to all script executers does not work currently.  null pointer exception on first
+                    // line of updateNode()
+
+                    // JMenuItem applyAllMenuItem = new JMenuItem("Apply to all script executers");
+                    // applyAllMenuItem.addActionListener(new java.awt.event.ActionListener() {        public void
+                    // actionPerformed(java.awt.event.ActionEvent e) {            applyToAllNodes(selectedNode);
+                    // } // actionPerformed    } // new ActionListener                                  ); //
+                    // addActionListener
 
                     JPopupMenu popup = new JPopupMenu();
                     popup.add(deleteMenuItem);
-                    popup.add(applyAllMenuItem);
+
+                    // popup.add(applyAllMenuItem);
                     popup.show(tree, pt.x + 10, pt.y + 10);
                 } // right mouse button clicked
 
