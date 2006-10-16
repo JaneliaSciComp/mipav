@@ -1420,7 +1420,6 @@ public class VOIHandler extends JComponent
         if (compImage.getModifyFlag() == false) {
             return;
         }
-
         int xS = compImage.getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         int yS = compImage.getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
         int xR = mouseEvent.getX();
@@ -1495,7 +1494,7 @@ public class VOIHandler extends JComponent
 
                     graphPointVOI(newPtVOI, ( (VOIPoint) (VOIs.VOIAt(voiID).getCurves()[compImage.getSlice()].elementAt(0))), 0);
 
-                    if (mouseEvent.isShiftDown() != true) {
+                    if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                         compImage.setMode(ViewJComponentEditImage.DEFAULT);
                     }
 
@@ -1551,7 +1550,7 @@ public class VOIHandler extends JComponent
                                       ( (VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(index - 1))), index - 1);
                     }
 
-                    if (mouseEvent.isShiftDown() != true) {
+                    if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                         compImage.setMode(ViewJComponentEditImage.DEFAULT);
                     }
                     return;
@@ -1607,7 +1606,7 @@ public class VOIHandler extends JComponent
 
                     //System.err.println("click count: " + mouseEvent.getClickCount());
 
-                    if (mouseEvent.isShiftDown() != true) {
+                    if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                         compImage.setMode(ViewJComponentEditImage.DEFAULT);
                     }
 
@@ -1642,7 +1641,7 @@ public class VOIHandler extends JComponent
                     allActive = true;
                     compImage.getActiveImage().notifyImageDisplayListeners();
 
-                    if (mouseEvent.isShiftDown() != true) {
+                    if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                         compImage.setMode(ViewJComponentEditImage.DEFAULT);
                     }
                     return;
@@ -1692,7 +1691,7 @@ public class VOIHandler extends JComponent
                 // pop up a dialog that allows text input, color, and font formatting
                 new JDialogAnnotation(compImage.getActiveImage(), newTextVOI, compImage.getSlice(), false);
 
-                if (mouseEvent.isShiftDown() != true) {
+                if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                     compImage.setMode(ViewJComponentEditImage.DEFAULT);
                 }
 
@@ -1711,8 +1710,8 @@ public class VOIHandler extends JComponent
         else if (mode == ViewJComponentEditImage.PROTRACTOR) {}
         else if (mode == ViewJComponentEditImage.NEW_POINT) { // impossible for LINE
 
-            if (mouseEvent.isShiftDown()) {
-              //  System.err.println("SHIFT IS DOWN!");
+            if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
+               System.err.println("SHIFT IS DOWN!");
                 nVOI = VOIs.size();
                 for (i = 0; i < nVOI; i++) {
                     if (VOIs.VOIAt(i).isActive()) {
@@ -1726,7 +1725,7 @@ public class VOIHandler extends JComponent
                 // Handle differently for POLYLINE_SLICE type VOIs...insert new VOIPoint structures
                 if (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE_SLICE) {
 
-                    if (mouseEvent.isShiftDown()) {
+                    if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                         VOIs.VOIAt(i).insertPSlicePt(new Point3Df(xS, yS, 0), compImage.getSlice());
                         compImage.getActiveImage().notifyImageDisplayListeners(null, true);
                     }
