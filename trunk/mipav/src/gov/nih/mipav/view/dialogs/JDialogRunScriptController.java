@@ -211,15 +211,15 @@ public class JDialogRunScriptController implements ActionListener {
         openFile.setPutInFrame(false);
 
         // Matt through in a _false_ to get it to compile - 12/31/2002
-        //Vector openImageNames = openFile.open(stackFlag, false);
+        // Vector openImageNames = openFile.open(stackFlag, false);
         // This arraylist allows multiple selections but in order for this method to compile as it is , i only
         // used the zero'th element to return the Model Image
-        ArrayList openImagesArrayList = openFile.open(stackFlag, false);
-        if(openImagesArrayList == null) {
-        	return null;
+        ArrayList openImageNames = openFile.open(stackFlag, false);
+
+        if (openImageNames == null) {
+            return null;
         }
-        
-        Vector openImageNames = (Vector)openImagesArrayList.get(0);
+
         // if open failed, then imageNames will be null
         if (openImageNames == null) {
             return null;
@@ -230,12 +230,11 @@ public class JDialogRunScriptController implements ActionListener {
         // if the SaveAllOnSave preference flag is set, then
         // load all the files associated with this image (VOIs, LUTs, etc.)
         if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
-            Enumeration e = openImageNames.elements();
 
-            while (e.hasMoreElements()) {
+            for (int i = 0; i < openImageNames.size(); i++) {
 
                 try {
-                    String name = (String) e.nextElement();
+                    String name = (String) openImageNames.get(i);
                     ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
 
                     // get frame for image
@@ -524,9 +523,9 @@ public class JDialogRunScriptController implements ActionListener {
                 ScriptRunner.getReference().runScript(model.getScriptFile(), scriptImages, scriptVOIs);
                 Preferences.debug("run dialog:\tFinished script execution #" + i + "\n", Preferences.DEBUG_SCRIPTING);
 
-                for (int j = 0; j < imagesOpenedByDialog.size(); j++) {
-                    ((ModelImage) imagesOpenedByDialog.elementAt(j)).getParentFrame().close();
-                }
+                // for (int j = 0; j < imagesOpenedByDialog.size(); j++) {
+                // ((ModelImage) imagesOpenedByDialog.elementAt(j)).getParentFrame().close();
+                // }
 
                 System.gc();
             }
