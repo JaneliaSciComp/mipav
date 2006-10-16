@@ -167,7 +167,7 @@ public class RubberbandLine extends Rubberband {
 
                 image.notifyImageDisplayListeners();
 
-                if (mouseEvent.isShiftDown() != true) {
+                if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                     ((ViewJComponentEditImage) (component)).setMode(((ViewJComponentEditImage) (component)).DEFAULT);
                 }
 
@@ -194,7 +194,7 @@ public class RubberbandLine extends Rubberband {
 
                 image.notifyImageDisplayListeners();
 
-                if (mouseEvent.isShiftDown() != true) {
+                if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                     ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
                 }
 

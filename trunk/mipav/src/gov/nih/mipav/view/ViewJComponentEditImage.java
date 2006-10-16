@@ -1993,7 +1993,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                     imageActive.notifyImageDisplayListeners(true, 1, RGBTB);
                 }
             }
-            if (mouseEvent.isShiftDown() != true) {
+            if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                 setMode(DEFAULT);
             }
         }

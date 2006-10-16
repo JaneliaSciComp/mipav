@@ -382,7 +382,8 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty("VOIColor", String.valueOf(voiColorChoices.getSelectedIndex()));
             Preferences.setProperty("VOIDrawColor", MipavUtil.makeColorString(voiDrawColor));
             Preferences.setProperty("VOIPointDrawType", String.valueOf(pointVOIChoices.getSelectedIndex()));
-
+            Preferences.setProperty(Preferences.PREF_CONTINUOUS_VOI_CONTOUR, String.valueOf(continuousVOIBox.isSelected()));
+            
             Preferences.setProperty(Preferences.PREF_MENU_FONT, fontNames[fontChooser.getSelectedIndex()]);
             Preferences.setProperty(Preferences.PREF_MENU_FONT_SIZE, fontSizeField.getText());
 
@@ -1613,7 +1614,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  GridBagLayout
      */
     protected void makeVOIContinuousOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        continuousVOIBox = new JCheckBox("Draw continuous contours w/o holding [SHIFT]");
+        continuousVOIBox = new JCheckBox("Draw continuous contours");
         continuousVOIBox.setFont(MipavUtil.font12);
         continuousVOIBox.setForeground(Color.black);
         continuousVOIBox.addActionListener(this);
@@ -1624,7 +1625,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         displayColorPanel.add(continuousVOIBox);
 
         // preset the choices:
-        continuousVOIBox.setSelected(Preferences.is(Preferences.PREF_SHOW_LINE_ANGLE));
+        continuousVOIBox.setSelected(Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR));
     }
     
     /**

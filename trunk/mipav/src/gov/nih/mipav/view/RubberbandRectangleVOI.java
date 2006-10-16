@@ -320,7 +320,7 @@ public class RubberbandRectangleVOI extends RubberbandRectangle {
                 image.notifyImageDisplayListeners();
             }
 
-            if (mouseEvent.isShiftDown() != true) {
+            if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
 
                 // System.err.println("Rect Shift down is NOT true");
                 ((ViewJComponentEditImage) (component)).setMode(ViewJComponentEditImage.DEFAULT);
