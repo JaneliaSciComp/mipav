@@ -1032,7 +1032,50 @@ public class FileMinc extends FileBase {
         image.disposeLocal();
         image = null;
     }
+    
+    /**
+     * Looks for the CDF tag at the start of the image 'C''D''F''\001' in image header ID.
+     * If present, the image is a MINC format.
+     *
+     * @throws  IOException  Indicates error reading the file
+     *
+     * @return  boolean true if the header contains CDF tag 'C''D''F''\001' 
+     */
+    public boolean isMinc() throws IOException {
+    	
+    	File fileHeader;
+    	    	
+    	try {
 
+            if (raFile != null) {
+                raFile.close();
+            }
+
+            fileHeader = new File(fileDir + fileName);
+            raFile = new RandomAccessFile(fileHeader, "r");
+            
+    	if (raFile == null) {
+            return false;
+        }
+    	
+        raFile.seek(0);
+        //endianess = FileBase.BIG_ENDIAN;
+        //fileInfo.setEndianess(endianess);
+
+        String magic = getString(4);
+
+        // Every MINC image starts with the CDF tag
+        if (magic.equals("CDF" + '\001')) {
+        	return true;
+        } else {
+        	return false;
+        }
+    	    	
+    	} catch (OutOfMemoryError e) {
+            MipavUtil.displayError("Out of memory in FileMinc.isMinc.");
+            throw new IOException();
+        }
+    }
     /**
      * Extracts any Dicom tags from a given FileInfoBase (if the file info is dicom) and puts them into a Hashtable.
      *
@@ -1583,6 +1626,8 @@ public class FileMinc extends FileBase {
      *
      * @throws  IOException  If an error is encountered while writing to the file
      */
+    
+    
     private void writeHeader(FileInfoBase fileInfo, FileWriteOptions options) throws IOException {
         int currentNonHeaderStartLocation = DEFAULT_NON_HEADER_START_LOCATION;
 
