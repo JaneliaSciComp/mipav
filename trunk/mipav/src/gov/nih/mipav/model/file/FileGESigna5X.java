@@ -963,6 +963,41 @@ public class FileGESigna5X extends FileBase {
         fileInfo.setFileName(fileName);
         fileInfo.setDataType(ModelImage.USHORT);
     }
+    
+    /**
+     * Looks for the magic number "IMGF" in image header for GE Signa 5.X type file.
+     * If present, the image is GE SIGNA 5.X format.
+     *
+     * @throws  IOException  Indicates error reading the file
+     *
+     * @return  boolean true if the magic number was found in the image header.
+     */
+    public boolean isGESigna5X() throws IOException {
+    	
+    	try {
+
+            if (raFile != null) {
+                raFile.close();
+            }
+
+            fileHeader = new File(fileDir + fileName);
+            raFile = new RandomAccessFile(fileHeader, "r");
+            
+    	} catch (OutOfMemoryError e) {
+            MipavUtil.displayError("Out of memory in FileGESigna4X.isGESigna4X.");
+            throw new IOException();
+    	}
+    	if (raFile == null) {
+            return false;
+        }
+    	
+    	if(checkMagicNumber()== true){
+    		return true;
+    	} else {
+    		return false;
+    	}
+   	}
+      
 
     /**
      * DOCUMENT ME!
