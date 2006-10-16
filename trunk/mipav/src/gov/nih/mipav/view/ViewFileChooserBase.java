@@ -145,6 +145,7 @@ public class ViewFileChooserBase {
 
             } else {
                 chooser = new JFileChooser();
+                chooser.setMultiSelectionEnabled(true);
                 chooser.setFont(MipavUtil.defaultMenuFont);
 
                 // chooser.setAccessory(this);
