@@ -520,12 +520,18 @@ public class JDialogRunScriptController implements ActionListener {
                 }
 
                 Preferences.debug("run dialog:\tStarting script execution #" + i + "\n", Preferences.DEBUG_SCRIPTING);
-                ScriptRunner.getReference().runScript(model.getScriptFile(), scriptImages, scriptVOIs);
-                Preferences.debug("run dialog:\tFinished script execution #" + i + "\n", Preferences.DEBUG_SCRIPTING);
 
-                // for (int j = 0; j < imagesOpenedByDialog.size(); j++) {
-                // ((ModelImage) imagesOpenedByDialog.elementAt(j)).getParentFrame().close();
-                // }
+                if (ScriptRunner.getReference().runScript(model.getScriptFile(), scriptImages, scriptVOIs)) {
+                    Preferences.debug("run dialog:\tFinished script execution #" + i + "\n",
+                                      Preferences.DEBUG_SCRIPTING);
+                } else {
+                    Preferences.debug("run dialog:\tError during script execution #" + i + "\n",
+                                      Preferences.DEBUG_SCRIPTING);
+                }
+
+                for (int j = 0; j < imagesOpenedByDialog.size(); j++) {
+                    ((ModelImage) imagesOpenedByDialog.elementAt(j)).getParentFrame().close();
+                }
 
                 System.gc();
             }
