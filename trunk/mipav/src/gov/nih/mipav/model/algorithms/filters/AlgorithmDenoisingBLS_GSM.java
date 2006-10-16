@@ -698,6 +698,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double sy2;
         double sn2;
         double SNRin;
+        double BLT[];
+        int blx;
+        int bly;
         
         pyr = buildSFpyr(fn, fnx, fny, nScales, nOrientations-1, 1.0, pind);
         if (error == 1) {
@@ -765,8 +768,254 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             
             // main
+            BL = denoi_BLS_GSM_band(BL, BLn, prnt);
+            blx = BL.length;
+            bly = BL[0].length;
+            // Create BL transpose
+            BLT = new double[bly * blx];
+            for (j = 0; j < bly; j++) {
+                for (i = 0; i < blx; i++) {
+                    index = j + i*bly;
+                    BLT[index] = BL[i][j][0];
+                }
+            }
+            pyrh.setElementAt(BLT, nband-1);
+            pind.setElementAt(Integer.valueOf(bly), 2*(nband-1));
+            pind.setElementAt(Integer.valueOf(blx), 2*(nband-1)+1);
         } // for (nband = 1; nband <= bandNum-1; nband++)
+        fh = reconSFpyr(pyrh, pind, null, null, 1.0);
+        if (error == 1) {
+            return null;
+        }
         return fh;
+    }
+    
+    /**
+     * This is a port of reconSFpyr.m by Eero Simoncelli, 5/97.
+     * Reconstruct image from its steerable pyramid representation, in the
+     * Fourier domain, as created by buildSFpyr.
+     * @param pyr  A vector containing the N pyramid subbands, ordered from
+     *             fine to coarse
+     * @param pind     A vector with a NX2 Integer set of the sizes of each
+     *                 subband
+     * @param levs   Optional.  A list of the levels to include or null
+     *               for all levels.  0 corresponds to the residual highpass
+     *               subband.  1 corresponds to the finest oriented scale.
+     *               The lowpass band corresponds to number spyrHt(indices+1)
+     * @param band  Optional.  Should be a list of the bands to include or
+     *              null for all bands.  1 = vertical, rest proceeding anti-
+     *              clockwise.
+     * @param twidth  The width of the transition region of the radial lowpass
+     *                function, in octaves.  Default = 1, which gives a raised
+     *                cosine for the bandpass filters.
+     * @return
+     */
+    private double[] reconSFpyr(Vector pyr, Vector pind, int levs[],
+                                int bands[], double twidth) {
+        double res[] = null;
+        boolean allLevs = false;
+        boolean allBands = false;
+        int nbands;
+        int maxLev;
+        int i;
+        int j;
+        int dimX;
+        int dimY;
+        int ctrX;
+        int ctrY;
+        double xramp[][];
+        double yramp[][];
+        double var;
+        double angle[][];
+        double log_rad[][];
+        double xrcos[] = null;;
+        double yrcos[] = null;
+        double yircos[];
+        boolean haveOne;
+        int rows[] = new int[1];
+        int columns[] = new int[1];
+        double resdftr[];
+        double resdfti[];
+        FFTUtility fftUtil;
+        
+        if (levs == null) {
+            allLevs = true;
+        }
+        if (bands == null) {
+            allBands = true;
+        }
+        if (twidth <= 0) {
+            MipavUtil.displayWarning("Warning.  twidth must be positive.  Setting to 1");
+            twidth = 1.0;
+        }
+         
+        nbands = spyrNumBands(pind);
+         
+        maxLev = 1 + spyrHt(pind);
+        if (allLevs) {
+            levs = new int[maxLev+1];
+            for (i = 0; i <= maxLev; i++) {
+                levs[i] = i;
+            }
+        } // if (allLevs)
+        else {
+            for (i = 0; i < levs.length; i++) {
+                if ((levs[i] > maxLev) || (levs[i] < 0)) {
+                    MipavUtil.displayError(
+                    "Level numbers must be in the range 0 to " + maxLev);
+                    error = 1;
+                    return null;
+                }
+            }
+        } //  else 
+         
+        if (allBands) {
+            bands = new int[nbands];
+            for (i = 1; i <= nbands; i++) {
+                bands[i] = i;
+            }
+        } // if (allBands)
+        else {
+            for (i = 0; i < bands.length; i++) {
+                if ((levs[i] < 1) || (levs[i] > nbands)) {
+                    MipavUtil.displayError(
+                    "Band numbers must be in the range 1 to " + nbands);
+                    error = 1;
+                    return null;
+                }
+            }
+        } // else
+         
+        dimX = ((Integer)pind.get(0)).intValue();
+        dimY = ((Integer)pind.get(1)).intValue();
+        ctrX = (int)Math.ceil((dimX + 0.5)/2);
+        ctrY = (int)Math.ceil((dimY + 0.5)/2);
+        
+        xramp = new double[dimX][dimY];
+        yramp = new double[dimX][dimY];
+        for (j = 0; j < dimY; j++) {
+            var = ((j+1.0)-ctrY)/(dimY/2.0);
+            for (i = 0; i < dimX; i++) {
+                xramp[i][j] = var;
+            }
+        }
+        for (i = 0; i < dimX; i++) {
+            var = ((i+1.0)-ctrX)/(dimX/2.0);
+            for (j = 0; j < dimY; j++) {
+                yramp[i][j]= var;
+            }
+        }
+        angle = new double[dimX][dimY];
+        log_rad = new double[dimX][dimY];
+        for (j = 0; j < dimY; j++) {
+            for (i = 0; i < dimX; i++) {
+                angle[i][j] = Math.atan2(yramp[i][j],xramp[i][j]);
+                log_rad[i][j] = Math.sqrt(xramp[i][j]*xramp[i][j] + yramp[i][j]*yramp[i][j]);
+            }
+        }
+        log_rad[ctrX-1][ctrY-1] = log_rad[ctrX-1][ctrY-2];
+        // log2(x) = loge(x)/loge(2)
+        var = 1.0/Math.log(2.0);
+        for (j = 0; j < dimY; j++) {
+            for (i = 0; i < dimX; i++) {
+                log_rad[i][j] = var * Math.log(log_rad[i][j]);
+            }
+        }
+        
+        // Radial transition function (a raised cosine in log-frequency)
+        rcosFn(twidth, (-twidth/2.0), 0.0, 1.0, xrcos, yrcos);
+        for (i = 0; i < yrcos.length; i++) {
+            yrcos[i] = Math.sqrt(yrcos[i]);
+        }
+        yircos = new double[yrcos.length];
+        for (i = 0; i < yrcos.length; i++) {
+            yircos[i] = Math.sqrt(Math.abs(1.0 - yrcos[i]*yrcos[i]));
+        }
+        
+        if (pind.size()/2 == 2) {
+            haveOne = false;
+            for (i = 0; i < levs.length; i++) {
+                if (levs[i] == 1) {
+                    haveOne = true;
+                }
+            }
+            if (haveOne) {
+                resdftr = pyrBand(pyr, pind, 1, rows, columns);
+                resdfti = new double[rows[0]*columns[0]];
+                fftUtil = new FFTUtility(resdftr, resdfti, columns[0], rows[0], 1, -1, FFTUtility.FFT);
+                fftUtil.setProgressBarVisible(false);
+                fftUtil.run();
+                fftUtil.finalize();
+                fftUtil = new FFTUtility(resdftr, resdfti, 1, columns[0], rows[0], -1, FFTUtility.FFT);
+                fftUtil.setProgressBarVisible(false);
+                fftUtil.run();
+                fftUtil.finalize();
+                center(resdftr, resdfti, rows[0], columns[0]);
+            }
+            else {
+                rows[0] = ((Integer)pind.get(2)).intValue();
+                columns[0] = ((Integer)pind.get(3)).intValue();
+                resdftr = new double[rows[0]*columns[0]];
+                resdfti = new double[rows[0]*columns[0]];
+            }
+        } // if (pind.size()/2 == 2)
+        else {
+            
+        } // else
+        return res;
+    }
+    
+    /**
+     * This is a port of spyrHt.m by Eero Simoncelli, 6/96.
+     * Compute height of steerable pyramid with given index matrix.
+     * @param pind
+     * @return
+     */
+    private int spyrHt(Vector pind) {
+        int ht = 0;
+        int nbands;
+        
+        nbands = spyrNumBands(pind);
+        
+        // Don't count lowpass or highpass residual bands
+        if (pind.size()/2 > 2) {
+            ht = (pind.size()/2 - 2)/nbands;
+        }
+        else {
+            ht = 0;
+        }
+        return ht;
+    }
+    
+    /**
+     * This is a port of spyrNumbands.m by Eero Simoncelli, 2/97.
+     * Compute number of orientation bands in a steerable pyrmaid with
+     * given index matrix.  If the pryamid contains only highpass and
+     * lowpass bands (i.e., zero levels), returns 0.
+     * @param pind
+     * @return
+     */
+    private int spyrNumBands(Vector pind) {
+        int nbands = 0;
+        int b;
+        int x;
+        int y;
+        if (pind.size()/2 == 2) {
+            nbands = 0;
+        }
+        else {
+            // Count number of orientation bands
+            b = 3;
+            x = ((Integer)pind.get(2)).intValue();
+            y = ((Integer)pind.get(3)).intValue();
+            while ((b <= pind.size()/2) && 
+                    (((Integer)pind.get(2*(b-1))).intValue() == x) &&
+                    (((Integer)pind.get(2*(b-1)+1)).intValue() == y)) {
+                     b = b+1;   
+            }
+            nbands = b - 2;
+        }
+        return nbands;
     }
     
     /**
@@ -783,7 +1032,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private double[][][] denoi_BLS_GSM_band(double y[][][], double noise[][][],
             boolean prnt) {
         double x_hat[][][] = null;
-        int nx, ny, nz;
+        int nx, ny;
         int nblx, nbly;
         int nexp;
         double zM[][] = null;
@@ -831,7 +1080,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double zi[];
         double laz[][];
         double p_lz[][];
-        double mu_x[][];
+        double mu_x[][] = null;
         double z_w[] = null;
         double pg1_lz[];
         double laz2[][];
@@ -842,18 +1091,18 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int lh;
         int dv;
         int rh;
-        double ul1[][];
-        double u1[][];
-        double l1[][];
-        double ur1[][];
-        double dl1[][];
-        double dr1[][];
-        double d1[][];
-        double r1[][];
+        double p_z[][];
+        double p_lz_y[][];
+        double maxp;
+        boolean zeroFound;
+        double rmat1[][];
+        double rmat2[][];
+        double rmat3[][];
+        double rmat4[][];
+        int i2, j2;
         
         nx = y.length;
         ny = y[0].length;
-        nz = y[0][0].length;
         
         // Discard the outer coefficients for the reference (central) coefficients
         // to avoid boundary effects
@@ -1129,7 +1378,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         lzi = new double[nsamp_z];
         zi = new double[nsamp_z];
         for (i = 0; i < nsamp_z; i++) {
-            lzi[i] = -20.5 + i*step;
+            lzi[i] = lzmin + i*step;
             zi[i] = Math.exp(lzi[i]);
         }
         
@@ -1210,25 +1459,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         lh = 1 + Ly;
         dv = nblx + Lx;
         rh = nbly + Ly;
-        ul1 = new double[uv][lh];
-        for (j = 0; j < lh; j++) {
-            for (i = 0; i < uv; i++) {
-                ul1[i][j] = 1.0;
-            }
-        }
-        u1 = new double[uv-1][1];
-        for (i = 0; i < uv-1; i++) {
-            u1[i][0] = 1.0;
-        }
-        l1 = new double[1][lh-1];
-        for (j = 0; j < lh-1; j++) {
-            l1[0][j] = 1.0;
-        }
-        ur1 = ul1;
-        dl1 = ul1;
-        dr1 = ul1;
-        d1 = u1;
-        r1 = l1;
         
         for (j = lh-1, index = 0; j < rh; j++) {
             for (i = uv-1; i < dv; i++) {
@@ -1295,6 +1525,146 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         } // else
         
         // Prior for log(z)
+        p_z = new double[nsamp_z][1];
+        // Flat log-prior (non-informative for GSM)
+        for (i = 0; i < nsamp_z; i++) {
+            p_z[i][0] = 1.0/nsamp_z;
+        }
+        // Compute p(log(z)|Y) from p(Y|log(z)) and p(log(z)) (Bayes rule)
+        p_lz_y = new double[nexp][nsamp_z];
+        for (j = 0; j < nsamp_z; j++) {
+            for (i = 0; i < nexp; i++) {
+                p_lz_y[i][j] = p_lz[i][j] / nsamp_z;
+            }
+        }
+        for (i = 0; i < nexp; i++) {
+            p_lz[i] = null;
+        }
+        p_lz = null;
+        if (!optimize) {
+            // Maximum likelihood in log(z): p_lz_y becomes a delta function
+            for (i = 0; i < nexp; i++) {
+               maxp = p_lz_y[i][0];
+               for (j = 1; j < nsamp_z; j++) {
+                   if (p_lz_y[i][j] > maxp) {
+                       maxp = p_lz_y[i][j];
+                   }
+               }
+               for (j = 0; j < nsamp_z; j++) {
+                   if (p_lz_y[i][j] == maxp) {
+                       p_lz_y[i][j] = 1.0;
+                   }
+                   else {
+                       p_lz_y[i][j] = 0.0;
+                   }
+               }
+            }
+        } // if (!optimize)
+        
+        aux = new double[nexp][1];
+        for (i = 0; i < nexp; i++) {
+            aux[i][0] = p_lz_y[i][0];
+            for (j = 1; j < nsamp_z; j++) {
+                aux[i][0] += p_lz_y[i][j];
+            }
+        }
+        zeroFound = false;
+        for (i = 0; i < nexp; i++) {
+            if (aux[i][0] == 0.0) {
+                zeroFound = true;
+            }
+        }
+        if (zeroFound) {
+            foo = new double[nexp][1];
+            for (i = 0; i < nexp; i++) {
+                if (aux[i][0] == 0.0) {
+                    foo[i][0] = 1.0;
+                }
+            }
+            // Normalizing: p(log(z)|Y)
+            rmat1 = new double[nexp][nsamp_z];
+            for (i = 0; i < nexp; i++) {
+                if (foo[i][0] == 0.0) {
+                    for (j = 0; j < nsamp_z; j++) {
+                        rmat1[i][j] = 1.0;
+                    }
+                }
+            }
+            rmat2 = new double[nexp][nsamp_z];
+            for (i = 0; i < nexp; i++) {
+                rmat2[i][0] = aux[i][0] + foo[i][0];
+                for (j = 1; j < nsamp_z; j++) {
+                    rmat2[i][j] = rmat2[i][0];
+                }
+            }
+            rmat3 = new double[nexp][nsamp_z];
+            for (i = 0; i <nexp; i++) {
+                for (j = 0; j < nsamp_z; j++) {
+                    rmat3[i][j] = foo[i][0];
+                }
+            }
+            rmat4 = new double[nexp][nsamp_z];
+            for (i = 0; i < nexp; i++) {
+                for (j = 0; j <nsamp_z; j++) {
+                    rmat4[i][j] = p_z[j][0];
+                }
+            }
+            for (i = 0; i < nexp; i++) {
+                for (j = 0; j < nsamp_z; j++) {
+                    p_lz_y[i][j] = rmat1[i][j]*p_lz_y[i][j]/rmat2[i][j] +
+                    rmat3[i][j]*rmat4[i][j];
+                }
+            }
+            for (i = 0; i < nexp; i++) {
+                rmat1[i] = null;
+                rmat2[i] = null;
+                rmat3[i] = null;
+                rmat4[i] = null;
+            }
+            rmat1 = null;
+            rmat2 = null;
+            rmat3 = null;
+            rmat4 = null;
+        } // if (zeroFound)
+        else {
+            rmat1 = new double[nexp][nsamp_z];
+            for (i = 0; i < nexp; i++) {
+                for (j = 0; j < nsamp_z; j++) {
+                    rmat1[i][j] = aux[i][0];
+                }
+            }
+            for (i = 0; i < nexp; i++) {
+                for (j = 0; j < nsamp_z; j++) {
+                    p_lz_y[i][j] = p_lz_y[i][j]/rmat1[i][j];
+                }
+            }
+            for (i = 0; i < nexp; i++) {
+                rmat1[i] = null;
+            }
+            rmat1 = null;
+        } // else
+        aux[0] = null;
+        aux = null;
+        
+        // Compute E{x|Y} = int_log(z){ E{x|log(z), Y} p(log(z)|Y) d(log(z)) }
+        for (i = 0; i < nexp; i++) {
+            for (j = 0; j < nsamp_z; j++) {
+                mu_x[i][j] = mu_x[i][j] * p_lz_y[i][j];
+            }
+        }
+        aux = new double[nexp][1];
+        for (i = 0; i < nexp; i++) {
+            aux[i][0] = mu_x[i][0];
+            for (j = 1; j < nsamp_z; j++) {
+                aux[i][0] += mu_x[i][j];
+            }
+        }
+        
+        for (j = Ly, j2 = 0; j < nbly + Ly; j++, j2++) {
+           for (i = Lx, i2 = 0; i < nblx + Lx; i++, i2++) {
+               x_hat[i][j][0] = aux[i2][j2];
+           }
+        }
         return x_hat;
     }
     
