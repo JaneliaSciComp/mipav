@@ -1234,6 +1234,45 @@ public class FileIO {
     
     
     /**
+     * DOCUMENT ME!
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     *
+     * @return  <code>FileBase.sig</code> if the file is a GE MR Signa 5.x file, and <code>FileBase.UNDEFINED</code> otherwise
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public int isGESigna5X(String fileName, String fileDir) throws IOException {
+
+        try {
+            FileGESigna5X imageFile = new FileGESigna5X(fileName, fileDir);
+
+            if (imageFile != null) {
+                boolean isGESigna5X = imageFile.isGESigna5X();
+
+                
+                if (isGESigna5X) {
+                    return FileBase.GE_GENESIS;
+                }
+            }
+
+            return FileBase.UNDEFINED;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug("FileIO: " + error + "\n");
+            } else {
+                Preferences.debug("FileIO: " + error + "\n");
+            }
+
+            return FileBase.UNDEFINED;
+        }
+
+    }
+    
+    /**
      * Refers to whether or not the FileIO will send alerts to the user about progress or errors.
      *
      * @return  DOCUMENT ME!
@@ -2291,6 +2330,10 @@ public class FileIO {
                 
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isGESigna4X(fileName, fileDir);
+                }
+                
+                if (fileType == FileBase.UNDEFINED) {
+                    fileType = isGESigna5X(fileName, fileDir);
                 }
                 
                 if (fileType == FileBase.UNDEFINED) { // if image type not defined by extension, popup
