@@ -1273,6 +1273,85 @@ public class FileIO {
     }
     
     /**
+     * DOCUMENT ME!
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     *
+     * @return  <code>FileBase.ima</code> if the file is a Siemens Magnetom Vision type, and <code>FileBase.UNDEFINED</code> otherwise
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public int isMagnetomVision(String fileName, String fileDir) throws IOException {
+
+        try {
+            FileMagnetomVision imageFile = new FileMagnetomVision(fileName, fileDir);
+
+            if (imageFile != null) {
+                boolean isMagnetomVision = imageFile.isMagnetomVision();
+
+                
+                if (isMagnetomVision) {
+                    return FileBase.MAGNETOM_VISION;
+                }
+            }
+
+            return FileBase.UNDEFINED;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug("FileIO: " + error + "\n");
+            } else {
+                Preferences.debug("FileIO: " + error + "\n");
+            }
+
+            return FileBase.UNDEFINED;
+        }
+
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     *
+     * @return  <code>FileBase.mnc</code> if the file is a MINC type, and <code>FileBase.UNDEFINED</code> otherwise
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public int isMinc(String fileName, String fileDir) throws IOException {
+
+        try {
+            FileMinc imageFile = new FileMinc(fileName, fileDir);
+
+            if (imageFile != null) {
+                boolean isMinc = imageFile.isMinc();
+
+                
+                if (isMinc) {
+                    return FileBase.MINC;
+                }
+            }
+
+            return FileBase.UNDEFINED;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug("FileIO: " + error + "\n");
+            } else {
+                Preferences.debug("FileIO: " + error + "\n");
+            }
+
+            return FileBase.UNDEFINED;
+        }
+
+    }
+
+    
+    /**
      * Refers to whether or not the FileIO will send alerts to the user about progress or errors.
      *
      * @return  DOCUMENT ME!
@@ -2334,6 +2413,14 @@ public class FileIO {
                 
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isGESigna5X(fileName, fileDir);
+                }
+                
+                if (fileType == FileBase.UNDEFINED) {
+                    fileType = isMagnetomVision(fileName, fileDir);
+                }
+                
+                if (fileType == FileBase.UNDEFINED) {
+                    fileType = isMinc(fileName, fileDir);
                 }
                 
                 if (fileType == FileBase.UNDEFINED) { // if image type not defined by extension, popup
