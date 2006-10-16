@@ -800,6 +800,55 @@ public class FileMagnetomVision extends FileBase {
         return fileInfo;
     }
 
+    /**
+     * Looks for the string "MAGNETOM VISION" in image header ID.
+     * If present, the image is a Siemens Magnetom Vision  format.
+     *
+     * @throws  IOException  Indicates error reading the file
+     *
+     * @return  boolean true if the string "MAGNETOM VISION" 
+     * was found in the image header.
+     */
+    public boolean isMagnetomVision() throws IOException {
+    	int i;
+    	
+    	try {
+
+            if (raFile != null) {
+                raFile.close();
+            }
+
+            fileHeader = new File(fileDir + fileName);
+            raFile = new RandomAccessFile(fileHeader, "r");
+            
+    	if (raFile == null) {
+            return false;
+        }
+    	
+    	raFile.seek(281L);
+    	
+    	char[] ModelName = new char[15];
+
+        for (i = 0; i < 15; i++) {
+            ModelName[i] = (char) raFile.readUnsignedByte();
+        }
+
+        raFile.close();
+
+        String ModelNameString = new String(ModelName);
+
+        if (ModelNameString.equals("MAGNETOM VISION")) {
+            return true;
+        } else {
+        	return false;
+        }
+        
+    } catch (OutOfMemoryError e) {
+        MipavUtil.displayError("Out of memory in FileMagnetomVision.isMagnetomVision.");
+        throw new IOException();
+    }
+    	
+    }
 
     /**
      * Reads a slice of data at a time and stores the results in the buffer.
