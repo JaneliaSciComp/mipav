@@ -54,8 +54,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /** DOCUMENT ME! */
     private boolean xmlLinked = false;
-    
-    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -68,14 +66,15 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
     public ViewOpenFileUI(boolean openDialog) {
         super(ViewUserInterface.getReference(), openDialog, false);
     }
-    
+
     /**
      * Creates the way to open and verify files before they are loaded by the FileIO.
      *
-     * @param  ui          Main user interface.
-     * @param  openDialog  a boolean that selects whether this UI should be built and displayed. <code>true</code>
-     *                     indicates the UI will be displayed, and <code>false</code> is that it will not be displayed.
-     *                     
+     * @param       ui          Main user interface.
+     * @param       openDialog  a boolean that selects whether this UI should be built and displayed. <code>true</code>
+     *                          indicates the UI will be displayed, and <code>false</code> is that it will not be
+     *                          displayed.
+     *
      * @deprecated  Shouldn't pass around the UI since it's a singleton.
      */
     public ViewOpenFileUI(ViewUserInterface ui, boolean openDialog) {
@@ -182,7 +181,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
      *                     is stored in a single file (<code>false</code>).
      * @param   imageset   DOCUMENT ME!
      *
-     * @return  Vector Vector of the names of the images that were opened.
+     * @return  List of the names of the images that were opened.
      */
     public ArrayList open(boolean multiFile, boolean imageset) {
         ViewJFrameImage imageFrame;
@@ -269,8 +268,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     fileIO = new FileIO();
-                    //fileName = chooser.getSelectedFile().getName();
-                    //openedFile = chooser.getSelectedFile();
+
+                    // fileName = chooser.getSelectedFile().getName();
+                    // openedFile = chooser.getSelectedFile();
                     openedFiles = chooser.getSelectedFiles();
                     directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                     UI.setDefaultDirectory(directory);
@@ -285,139 +285,144 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 return null;
             }
         }
-        for(int k=0;k<openedFiles.length;k++) {
-	        try {
-	        	fileName = openedFiles[k].getName();
-	            image = fileIO.readImage(fileName, directory, multiFile, null);
-	
-	            if (image == null) {
-	                System.err.println("ViewOpenFileUI: image = null");
-	
-	                return null;
-	            }
-	
-	            LUT = fileIO.getModelLUT();
-	            modelRGB = fileIO.getModelRGB();
-	
-	            linkedImage = readLinkedImage();
-	
-	            if (linkedImage != null) {
-	                xmlLinked = true;
-	
-	                LUT2 = fileIO.getModelLUT();
-	                modelRGB2 = fileIO.getModelRGB();
-	
-	                // in the case of iaso running, put in frame will be false
-	                // this must be changed to true if the modalities are already set up
-	                // in the image and linkedImage
-	                if ((((image.getFileInfo(0).getModality() == FileInfoBase.RED_FREE) &&
-	                          (linkedImage.getFileInfo(0).getModality() == FileInfoBase.ICG)) ||
-	                         ((image.getFileInfo(0).getModality() == FileInfoBase.ICG) &&
-	                              (linkedImage.getFileInfo(0).getModality() == FileInfoBase.RED_FREE))) && !imageset) {
-	
-	                    this.putInFrame = true;
-	                }
-	            }
-	        } catch (OutOfMemoryError e) {
-	            MipavUtil.displayError("Out of memory!");
-	
-	            return null;
-	        }
-	
-	        try {
-	
-	            if (putInFrame == true) {
-	                imageFrame = new ViewJFrameImage(image, LUT, ViewUserInterface.getReference().getNewFrameLocation());
-	
-	                if (modelRGB != null) {
-	                    imageFrame.setRGBTA(modelRGB);
-	                }
-	
-	                if (xmlLinked && (linkedImage != null) && !imageset) {
-	                    imageFrame.setAndLoad(linkedImage);
-	
-	                    if (LUT2 != null) {
-	
-	                        if (modelRGB2 != null) {
-	                            imageFrame.setRGBTB(modelRGB2);
-	                        }
-	
-	                        imageFrame.setLUTb(LUT2);
-	                        imageFrame.updateImages(LUT, LUT2, true, 0);
-	                    }
-	                }
-	            }
-	
-	            images.addElement(image.getImageName());
-	
-	            if (xmlLinked) {
-	                images.addElement(linkedImage.getImageName());
-	            }
-	        } catch (OutOfMemoryError e) {
-	            MipavUtil.displayError("Out of memory!");
-	
-	            return null;
-	        }
-	
-	        secondImage = fileIO.getSecondImage();
-	
-	        if (secondImage != 0) {
-	
-	            try {
-	                fileIO2 = new FileIO();
-	                image2 = fileIO2.readImage(fileName, directory, multiFile, null, secondImage);
-	            } catch (OutOfMemoryError e) {
-	                MipavUtil.displayError("Out of memory!");
-	                image2 = null;
-	            }
-	
-	            if (image2 != null) {
-	                LUT2 = fileIO2.getModelLUT(); // LUT is not null if TIFF image has a LUT
-	
-	                // or compressed AVI image has a LUT
-	                // else it is null
-	                // and create in ViewFrameImage
-	                try {
-	
-	                    if (putInFrame == true) {
-	                        new ViewJFrameImage(image2, LUT2, ViewUserInterface.getReference().getNewFrameLocation());
-	                    }
-	
-	                    images.addElement(image2.getImageName());
-	                } catch (OutOfMemoryError e) {
-	                    MipavUtil.displayError("Out of memory!");
-	
-	                    return imagesArrayList; // we did successfully open the first image
-	                }
-	            }
-	        } // if (secondImage != 0)
-	
-	        // System.err.println("Getting to set last image flag");
-	        if (setLastImageFlag) {
-	            Preferences.setLastImage(directory + fileName, image.getFileInfo()[0].getMultiFile(), image.getNDims());
-	        }
-	
-	        // updates menubar for each image
-	        Vector imageFrames = UI.getImageFrameVector();
-	
-	        if (imageFrames.size() < 1) {
-	            UI.buildMenu();
-	            UI.setControls();
-	        } else {
-	            UI.buildMenu();
-	
-	            for (int i = 0; i < imageFrames.size(); i++) {
-	
-	                if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
-	                    ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
-	                }
-	            }
-	
-	            UI.getActiveImageFrame().setControls();
-	        }
-	        
+
+        for (int k = 0; k < openedFiles.length; k++) {
+
+            try {
+                fileName = openedFiles[k].getName();
+                image = fileIO.readImage(fileName, directory, multiFile, null);
+
+                if (image == null) {
+                    System.err.println("ViewOpenFileUI: image = null");
+
+                    return null;
+                }
+
+                imagesArrayList.add(image.getImageName());
+
+                LUT = fileIO.getModelLUT();
+                modelRGB = fileIO.getModelRGB();
+
+                linkedImage = readLinkedImage();
+
+                if (linkedImage != null) {
+                    xmlLinked = true;
+
+                    LUT2 = fileIO.getModelLUT();
+                    modelRGB2 = fileIO.getModelRGB();
+
+                    // in the case of iaso running, put in frame will be false
+                    // this must be changed to true if the modalities are already set up
+                    // in the image and linkedImage
+                    if ((((image.getFileInfo(0).getModality() == FileInfoBase.RED_FREE) &&
+                              (linkedImage.getFileInfo(0).getModality() == FileInfoBase.ICG)) ||
+                             ((image.getFileInfo(0).getModality() == FileInfoBase.ICG) &&
+                                  (linkedImage.getFileInfo(0).getModality() == FileInfoBase.RED_FREE))) && !imageset) {
+
+                        this.putInFrame = true;
+                    }
+                }
+            } catch (OutOfMemoryError e) {
+                MipavUtil.displayError("Out of memory!");
+
+                return null;
+            }
+
+            try {
+
+                if (putInFrame == true) {
+                    imageFrame = new ViewJFrameImage(image, LUT,
+                                                     ViewUserInterface.getReference().getNewFrameLocation());
+
+                    if (modelRGB != null) {
+                        imageFrame.setRGBTA(modelRGB);
+                    }
+
+                    if (xmlLinked && (linkedImage != null) && !imageset) {
+                        imageFrame.setAndLoad(linkedImage);
+
+                        if (LUT2 != null) {
+
+                            if (modelRGB2 != null) {
+                                imageFrame.setRGBTB(modelRGB2);
+                            }
+
+                            imageFrame.setLUTb(LUT2);
+                            imageFrame.updateImages(LUT, LUT2, true, 0);
+                        }
+                    }
+                }
+
+                images.addElement(image.getImageName());
+
+                if (xmlLinked) {
+                    images.addElement(linkedImage.getImageName());
+                }
+            } catch (OutOfMemoryError e) {
+                MipavUtil.displayError("Out of memory!");
+
+                return null;
+            }
+
+            secondImage = fileIO.getSecondImage();
+
+            if (secondImage != 0) {
+
+                try {
+                    fileIO2 = new FileIO();
+                    image2 = fileIO2.readImage(fileName, directory, multiFile, null, secondImage);
+                } catch (OutOfMemoryError e) {
+                    MipavUtil.displayError("Out of memory!");
+                    image2 = null;
+                }
+
+                if (image2 != null) {
+                    LUT2 = fileIO2.getModelLUT(); // LUT is not null if TIFF image has a LUT
+
+                    // or compressed AVI image has a LUT
+                    // else it is null
+                    // and create in ViewFrameImage
+                    try {
+
+                        if (putInFrame == true) {
+                            new ViewJFrameImage(image2, LUT2, ViewUserInterface.getReference().getNewFrameLocation());
+                        }
+
+                        images.addElement(image2.getImageName());
+                    } catch (OutOfMemoryError e) {
+                        MipavUtil.displayError("Out of memory!");
+
+                        return imagesArrayList; // we did successfully open the first image
+                    }
+                }
+            } // if (secondImage != 0)
+
+            // System.err.println("Getting to set last image flag");
+            if (setLastImageFlag) {
+                Preferences.setLastImage(directory + fileName, image.getFileInfo()[0].getMultiFile(), image.getNDims());
+            }
+
+            // updates menubar for each image
+            Vector imageFrames = UI.getImageFrameVector();
+
+            if (imageFrames.size() < 1) {
+                UI.buildMenu();
+                UI.setControls();
+            } else {
+                UI.buildMenu();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+
+                    if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
+                        ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
+                    }
+                }
+
+                UI.getActiveImageFrame().setControls();
+            }
+
         }
-	        
+
         return imagesArrayList;
     }
 
@@ -504,7 +509,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
             return null;
         }
-        
+
         if (secondImage != 0) {
 
             try {
