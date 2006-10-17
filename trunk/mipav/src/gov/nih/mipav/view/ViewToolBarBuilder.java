@@ -398,11 +398,12 @@ public class ViewToolBarBuilder implements ItemListener {
         paintToolBar.add(makeSeparator());
 
         paintToolBar.add(buildToggleButton("PaintBrush", "Draw using a brush.", "brush", VOIGroup));
+        paintToolBar.add(buildButton("AdvancedPaint", "Load advanced paint tools", "advancedpaint"));
         paintToolBar.add(buildToggleButton("Dropper", "Picks up a color from the image.", "dropper", VOIGroup));
         paintToolBar.add(buildToggleButton("PaintCan", "Fills an area with desired color.", "paintcan", VOIGroup));
         paintToolBar.add(buildToggleButton("Eraser", "Erases paint.", "eraser", VOIGroup));
         //using a diff icon until an icon is ready for me to use
-        paintToolBar.add(buildButton("AdvancedPaint", "Load advanced paint tools", "advancedpaint"));
+        
         if (nDim > 2) {
             paintToolBar.add(buildButton("EraseCurrent", "Erase paint from current frame", "clearcurrent"));
         }
