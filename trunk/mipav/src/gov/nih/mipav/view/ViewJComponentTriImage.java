@@ -570,6 +570,21 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         crosshairPt.y = kLocalPoint.y * m_kScreenScale.y;
     }
 
+    /*
+     * Returns the current center point in File Coordinates:
+     * @return the current center point
+     */
+    public Point3Df getCenter()
+    {
+        Point3Df patientMousePoint = new Point3Df( crosshairPt.x/m_kScreenScale.x,
+                                                   crosshairPt.y/m_kScreenScale.y,
+                                                   slice  );
+        MipavCoordinateSystems.PatientToFile( patientMousePoint, m_kVolumePoint,
+                                              imageActive, orientation );
+
+        return new Point3Df( m_kVolumePoint.x, m_kVolumePoint.y, m_kVolumePoint.z );
+    }
+
     /**
      * Sets the crop volume.
      * @param lower the lower corner of the crop volume in File Coordinates
@@ -2166,7 +2181,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      */
     private void drawAxes(Graphics2D offscreenGraphics2d)
     {
-        offscreenGraphics2d.scale( zoomX, zoomY );
         String labelX = new String( axisLabels[orientation][0] );
         if ( !imageActive.getRadiologicalView() && (orientation != FileInfoBase.SAGITTAL) )
         {
@@ -2202,7 +2216,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         {
             offscreenGraphics2d.setColor(xColor[orientation]);
 
-            int componentHeight = img.getHeight(this);
+            int componentHeight = getSize().height;
             offscreenGraphics2d.drawString( labelX, 45, componentHeight - 6);
             offscreenGraphics2d.drawLine(10, componentHeight - 12, 39, componentHeight - 12);
             offscreenGraphics2d.drawLine(10, componentHeight - 11, 40, componentHeight - 11);
@@ -2218,7 +2232,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             offscreenGraphics2d.drawLine(5, componentHeight - 36, 10, componentHeight - 41);
             offscreenGraphics2d.drawLine(15, componentHeight - 36, 10, componentHeight - 41);
         }
-        offscreenGraphics2d.scale( 1f/zoomX, 1f/zoomY );
     }
 
     /**
