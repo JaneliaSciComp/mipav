@@ -2717,7 +2717,6 @@ public class SurfaceRender extends RenderViewBase {
         }
 
         TextureLoader textLoadFront = null;
-
         try {
             textLoadFront = new TextureLoader(MipavUtil.getIconImage("a.gif"), this);
         } catch (FileNotFoundException error) {
@@ -2726,23 +2725,17 @@ public class SurfaceRender extends RenderViewBase {
             System.err.println("Exception ocurred while getting <" + error.getMessage() +
                                ">.  Check that this file is available.\n");
         }
-
         Shape3D shapeFront = cubic.getShape(Box.FRONT);
         TextureAttributes textAttrFront = new TextureAttributes();
-
         textAttrFront.setTextureMode(TextureAttributes.DECAL);
-
         TextureUnitState[] textUnitStateFront = new TextureUnitState[1];
-
         textUnitStateFront[0] = new TextureUnitState(textLoadFront.getTexture(), textAttrFront, null);
         textUnitStateFront[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-
         Appearance appFront = new Appearance();
-
         appFront.setTextureUnitState(textUnitStateFront);
 
-        TextureLoader textLoadBack = null;
 
+        TextureLoader textLoadBack = null;
         try {
             textLoadBack = new TextureLoader(MipavUtil.getIconImage("p.gif"), this);
         } catch (FileNotFoundException error) {
@@ -2751,23 +2744,17 @@ public class SurfaceRender extends RenderViewBase {
             System.err.println("Exception ocurred while getting <" + error.getMessage() +
                                ">.  Check that this file is available.\n");
         }
-
         Shape3D shapeBack = cubic.getShape(Box.BACK);
         TextureAttributes textAttrBack = new TextureAttributes();
-
         textAttrBack.setTextureMode(TextureAttributes.DECAL);
-
         TextureUnitState[] textUnitStateBack = new TextureUnitState[1];
-
         textUnitStateBack[0] = new TextureUnitState(textLoadBack.getTexture(), textAttrBack, null);
         textUnitStateBack[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-
         Appearance appBack = new Appearance();
-
         appBack.setTextureUnitState(textUnitStateBack);
 
-        TextureLoader textLoadTop = null;
 
+        TextureLoader textLoadTop = null;
         try {
             textLoadTop = new TextureLoader(MipavUtil.getIconImage("s.gif"), this);
         } catch (FileNotFoundException error) {
@@ -2776,23 +2763,17 @@ public class SurfaceRender extends RenderViewBase {
             System.err.println("Exception ocurred while getting <" + error.getMessage() +
                                ">.  Check that this file is available.\n");
         }
-
         Shape3D shapeTop = cubic.getShape(Box.TOP);
         TextureAttributes textAttrTop = new TextureAttributes();
-
         textAttrTop.setTextureMode(TextureAttributes.DECAL);
-
         TextureUnitState[] textUnitStateTop = new TextureUnitState[1];
-
         textUnitStateTop[0] = new TextureUnitState(textLoadTop.getTexture(), textAttrTop, null);
         textUnitStateTop[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-
         Appearance appTop = new Appearance();
-
         appTop.setTextureUnitState(textUnitStateTop);
 
-        TextureLoader textLoadBottom = null;
 
+        TextureLoader textLoadBottom = null;
         try {
             textLoadBottom = new TextureLoader(MipavUtil.getIconImage("i.gif"), this);
         } catch (FileNotFoundException error) {
@@ -2801,23 +2782,17 @@ public class SurfaceRender extends RenderViewBase {
             System.err.println("Exception ocurred while getting <" + error.getMessage() +
                                ">.  Check that this file is available.\n");
         }
-
         Shape3D shapeBottom = cubic.getShape(Box.BOTTOM);
         TextureAttributes textAttrBottom = new TextureAttributes();
-
         textAttrBottom.setTextureMode(TextureAttributes.DECAL);
-
         TextureUnitState[] textUnitStateBottom = new TextureUnitState[1];
-
         textUnitStateBottom[0] = new TextureUnitState(textLoadBottom.getTexture(), textAttrBottom, null);
         textUnitStateBottom[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-
         Appearance appBottom = new Appearance();
-
         appBottom.setTextureUnitState(textUnitStateBottom);
 
-        TextureLoader textLoadLeft = null;
 
+        TextureLoader textLoadLeft = null;
         try {
             textLoadLeft = new TextureLoader(MipavUtil.getIconImage("l.gif"), this);
         } catch (FileNotFoundException error) {
@@ -2826,23 +2801,17 @@ public class SurfaceRender extends RenderViewBase {
             System.err.println("Exception ocurred while getting <" + error.getMessage() +
                                ">.  Check that this file is available.\n");
         }
-
         Shape3D shapeLeft = cubic.getShape(Box.LEFT);
         TextureAttributes textAttrLeft = new TextureAttributes();
-
         textAttrLeft.setTextureMode(TextureAttributes.DECAL);
-
         TextureUnitState[] textUnitStateLeft = new TextureUnitState[1];
-
         textUnitStateLeft[0] = new TextureUnitState(textLoadLeft.getTexture(), textAttrLeft, null);
         textUnitStateLeft[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-
         Appearance appLeft = new Appearance();
-
         appLeft.setTextureUnitState(textUnitStateLeft);
 
-        TextureLoader textLoadRight = null;
 
+        TextureLoader textLoadRight = null;
         try {
             textLoadRight = new TextureLoader(MipavUtil.getIconImage("r.gif"), this);
         } catch (FileNotFoundException error) {
@@ -2851,20 +2820,16 @@ public class SurfaceRender extends RenderViewBase {
             System.err.println("Exception ocurred while getting <" + error.getMessage() +
                                ">.  Check that this file is available.\n");
         }
-
         Shape3D shapeRight = cubic.getShape(Box.RIGHT);
         TextureAttributes textAttrRight = new TextureAttributes();
-
         textAttrRight.setTextureMode(TextureAttributes.DECAL);
-
         TextureUnitState[] textUnitStateRight = new TextureUnitState[1];
-
         textUnitStateRight[0] = new TextureUnitState(textLoadRight.getTexture(), textAttrRight, null);
         textUnitStateRight[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-
         Appearance appRight = new Appearance();
-
         appRight.setTextureUnitState(textUnitStateRight);
+
+
 
         switch (zOrient) {
 
