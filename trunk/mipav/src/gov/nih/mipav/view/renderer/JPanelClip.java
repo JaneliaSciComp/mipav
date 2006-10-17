@@ -43,27 +43,6 @@ public class JPanelClip extends JPanelRendererBase
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3342110506544352170L;
 
-    /** Axis orientation unknown. */
-    public static final int ORI_UNKNOWN_TYPE = 0;
-
-    /** Axis orientation Right to Left. */
-    public static final int ORI_R2L_TYPE = 1;
-
-    /** Axis orientation Left to Right. */
-    public static final int ORI_L2R_TYPE = 2;
-
-    /** Axis orientation Posterior to Anterior. */
-    public static final int ORI_P2A_TYPE = 3;
-
-    /** Axis orientation Anterior to Posterior. */
-    public static final int ORI_A2P_TYPE = 4;
-
-    /** Axis orientation Inferior to Superior. */
-    public static final int ORI_I2S_TYPE = 5;
-
-    /** Axis orientation Superior to Inferior. */
-    public static final int ORI_S2I_TYPE = 6;
-
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Enable flags for the 6 ( X, Y, Z and inverse ) clipping planes. */

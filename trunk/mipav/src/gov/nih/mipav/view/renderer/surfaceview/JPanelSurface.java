@@ -49,27 +49,6 @@ public class JPanelSurface extends JPanelRendererBase
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -4600563188022683359L;
 
-    /** Axis orientation unknown. */
-    public static final int ORI_UNKNOWN_TYPE = 0;
-
-    /** Axis orientation Right to Left. */
-    public static final int ORI_R2L_TYPE = 1;
-
-    /** Axis orientation Left to Right. */
-    public static final int ORI_L2R_TYPE = 2;
-
-    /** Axis orientation Posterior to Anterior. */
-    public static final int ORI_P2A_TYPE = 3;
-
-    /** Axis orientation Anterior to Posterior. */
-    public static final int ORI_A2P_TYPE = 4;
-
-    /** Axis orientation Inferior to Superior. */
-    public static final int ORI_I2S_TYPE = 5;
-
-    /** Axis orientation Superior to Inferior. */
-    public static final int ORI_S2I_TYPE = 6;
-
     /** The colors for the first six surfaces are fixed. */
     private static Color3f[] fixedColor = {
         new Color3f(0.0f, 0.0f, 0.5f), // blue
@@ -778,16 +757,17 @@ public class JPanelSurface extends JPanelRendererBase
                 box[2] = extents[2] * resolution[2];
                 maxBox = Math.max(box[0], Math.max(box[1], box[2]));
 
-                int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
-                int[] direction = new int[] { 1, 1, 1 };
+//                 int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
+                int[] direction = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
+//                 int[] direction = new int[] { 1, 1, 1 };
 
-                for (i = 0; i <= 2; i++) {
+//                 for (i = 0; i <= 2; i++) {
 
-                    if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-                            (axisOrientation[i] == ORI_S2I_TYPE)) {
-                        direction[i] = -1;
-                    }
-                }
+//                     if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
+//                             (axisOrientation[i] == ORI_S2I_TYPE)) {
+//                         direction[i] = -1;
+//                     }
+//                 }
 
                 kOut.print("#direction { ");
                 kOut.print(direction[0]);
@@ -5604,17 +5584,19 @@ public class JPanelSurface extends JPanelRendererBase
             box[2] = extents[2] * resolution[2];
 
             float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-            int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
-            int[] direction = new int[] { 1, 1, 1 };
+            int[] direction = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
+
+//             int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
+//             int[] direction = new int[] { 1, 1, 1 };
             int j;
 
-            for (i = 0; i <= 2; i++) {
+//             for (i = 0; i <= 2; i++) {
 
-                if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-                        (axisOrientation[i] == ORI_S2I_TYPE)) {
-                    direction[i] = -1;
-                }
-            }
+//                 if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
+//                         (axisOrientation[i] == ORI_S2I_TYPE)) {
+//                     direction[i] = -1;
+//                 }
+//             }
 
             Point3f[] akVertex;
 
@@ -5705,17 +5687,19 @@ public class JPanelSurface extends JPanelRendererBase
                 box[2] = extents[2] * resolution[2];
 
                 float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-                int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
-                int[] direction = new int[] { 1, 1, 1 };
+                int[] direction = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
+
+//                 int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
+//                 int[] direction = new int[] { 1, 1, 1 };
                 int j;
 
-                for (i = 0; i <= 2; i++) {
+//                 for (i = 0; i <= 2; i++) {
 
-                    if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-                            (axisOrientation[i] == ORI_S2I_TYPE)) {
-                        direction[i] = -1;
-                    }
-                }
+//                     if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
+//                             (axisOrientation[i] == ORI_S2I_TYPE)) {
+//                         direction[i] = -1;
+//                     }
+//                 }
 
                 Point3f[] akVertex;
 
@@ -5839,17 +5823,19 @@ public class JPanelSurface extends JPanelRendererBase
                 box[2] = extents[2] * resolution[2];
 
                 float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-                int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
-                int[] direction = new int[] { 1, 1, 1 };
+                int[] direction = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
+
+//                 int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
+//                 int[] direction = new int[] { 1, 1, 1 };
                 int j;
 
-                for (i = 0; i <= 2; i++) {
+//                 for (i = 0; i <= 2; i++) {
 
-                    if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-                            (axisOrientation[i] == ORI_S2I_TYPE)) {
-                        direction[i] = -1;
-                    }
-                }
+//                     if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
+//                             (axisOrientation[i] == ORI_S2I_TYPE)) {
+//                         direction[i] = -1;
+//                     }
+//                 }
 
                 Point3f[] akVertex;
 
