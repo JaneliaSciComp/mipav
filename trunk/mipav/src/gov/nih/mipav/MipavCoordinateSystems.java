@@ -267,7 +267,7 @@ public class MipavCoordinateSystems
             }
         }
 
-        if ( image.getRadiologicalView() &&
+        if ( !image.getRadiologicalView() &&
              (iOrientation != FileInfoBase.SAGITTAL) &&
              (iOrientation != FileInfoBase.UNKNOWN_ORIENT) )
         {
@@ -362,16 +362,26 @@ public class MipavCoordinateSystems
         return aiAxisOrder;
     }
 
-    public static final boolean[] getModelFlip(  ModelStorageBase kImage )
+//     public static final boolean[] getModelFlip(  ModelStorageBase kImage )
+    public static final int[] getModelFlip(  ModelStorageBase kImage )
     {
         boolean[] axialFlip = getAxisFlip( kImage, FileInfoBase.AXIAL );
         boolean[] coronalFlip = getAxisFlip( kImage, FileInfoBase.CORONAL );
         boolean[] sagittalFlip = getAxisFlip( kImage, FileInfoBase.SAGITTAL );
 
-        boolean[] aiModelFlip = new boolean[3];
-        aiModelFlip[0] = coronalFlip[2];
-        aiModelFlip[1] = sagittalFlip[2];
-        aiModelFlip[2] = axialFlip[2];
+        int[] aiModelFlip = { 1, 1, 1 };
+        if ( coronalFlip[2] )
+        {
+            aiModelFlip[0] = -1;
+        }
+        if ( sagittalFlip[2] )
+        {
+            aiModelFlip[1] = -1;
+        }
+        if ( axialFlip[2] )
+        {
+            aiModelFlip[2] = -1;
+        }
         return aiModelFlip;
     }
 
