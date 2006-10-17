@@ -6239,22 +6239,31 @@ public abstract class ViewJFrameBase extends JFrame
         tCoord[2] = kOut.z;
 
         String[] labels = new String[3];
-        labels[0] = new String( "P-A: " );
-        labels[1] = new String( "R-L: " );
-        labels[2] = new String( "S-I: " );
+        labels[0] = new String( "A-P: " );
+        if ( imageA.getRadiologicalView() )
+        {
+            labels[1] = new String( "R-L: " );
+        }
+        else
+        {
+            tCoord[1] *= -1;
+            labels[1] = new String( "L-R: " );
+        }
+        labels[2] = new String( "I-S: " );
+
 
         for ( int i = 0; i < 3; i++ )
         {
             if (tCoord[i] < 0)
             {
                 scannerLabelVals[i].setText( labels[i] +
-                                             labels[i].charAt(2) + ": " +
+                                             labels[i].charAt(0) + ": " +
                                              String.valueOf(nf.format(-tCoord[i])));
             }
             else
             {
                 scannerLabelVals[i].setText( labels[i] +
-                                             labels[i].charAt(0) + ": " +
+                                             labels[i].charAt(2) + ": " +
                                              String.valueOf(nf.format(tCoord[i])));
             }
         }

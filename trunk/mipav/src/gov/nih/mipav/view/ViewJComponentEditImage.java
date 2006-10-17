@@ -1065,6 +1065,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
+     * Returns the active image.
+     *
+     * @return  active image
+     */
+    public ModelLUT getActiveLUT() {
+        return (ModelLUT)m_kPatientSlice.getActiveLookupTable();
+    }
+
+    /**
      * Returns the active image buffer.
      *
      * @return  active image buffer
@@ -1276,6 +1285,16 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public int[] getPixBufferB() {
         return pixBufferB;
     }
+
+    /**
+     * Gets the paint buffer.
+     *
+     * @return  int[] paint buffer
+     */
+    public int[] getPaintBuffer() {
+        return paintImageBuffer;
+    }
+
 
     /**
      * Returns the ModelRGB RGBTA for imageA.
@@ -3384,18 +3403,24 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         tCoord[1] = kOut.y;
         tCoord[2] = kOut.z;
 
-        String[] labels = { "P-A: ", "R-L: ", "S-I: " };
+        String[] labels = { "A-P: ", "R-L: ", "I-S: " };
+        if ( !imageActive.getRadiologicalView() )
+        {
+            tCoord[1] *= -1;
+            labels[1] = new String( "L-R: " );
+        }
+
         String[] strs = new String[3];
         for ( int i = 0; i < 3; i++ )
         {
             if (tCoord[i] < 0)
             {
-                strs[i] = new String( labels[i].charAt(2) + ": " +
+                strs[i] = new String( labels[i].charAt(0) + ": " +
                                       String.valueOf(nf.format(-tCoord[i])));
             }
             else
             {
-                strs[i] = new String( labels[i].charAt(0) + ": " +
+                strs[i] = new String( labels[i].charAt(2) + ": " +
                                       String.valueOf(nf.format(tCoord[i])));
             }
         }

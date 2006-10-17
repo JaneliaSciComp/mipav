@@ -1063,6 +1063,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             {
                 imageB.setRadiologicalView( true );
             }
+            Point3Df kCenter = triImage[0].getCenter();
+            setPositionLabels( (int)kCenter.x, (int)kCenter.y, (int)kCenter.z );
             updateImages( true );
         } else if (command.equals("NeurologicalView")) {
             imageA.setRadiologicalView( false );
@@ -1070,6 +1072,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             {
                 imageB.setRadiologicalView( false );
             }
+            Point3Df kCenter = triImage[0].getCenter();
+            setPositionLabels( (int)kCenter.x, (int)kCenter.y, (int)kCenter.z );
             updateImages( true );
         }
 
