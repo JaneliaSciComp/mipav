@@ -298,7 +298,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     return null;
                 }
 
-                imagesArrayList.add(image.getImageName());
+                //imagesArrayList.add(image.getImageName());
 
                 LUT = fileIO.getModelLUT();
                 modelRGB = fileIO.getModelRGB();
@@ -391,7 +391,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                         images.addElement(image2.getImageName());
                     } catch (OutOfMemoryError e) {
                         MipavUtil.displayError("Out of memory!");
-
+                        imagesArrayList.add(images);
                         return imagesArrayList; // we did successfully open the first image
                     }
                 }
@@ -420,7 +420,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
                 UI.getActiveImageFrame().setControls();
             }
-
+            imagesArrayList.add(images);
         }
 
         return imagesArrayList;
