@@ -65,10 +65,10 @@ public class FilenameSorter {
 
         substring2 = str2.substring(begin, end + 1);
 
-        Integer integer1 = new Integer(Integer.parseInt(substring1));
-        Integer integer2 = new Integer(Integer.parseInt(substring2));
+        Long long1 = new Long(Long.parseLong(substring1));
+        Long long2 = new Long(Long.parseLong(substring2));
 
-        return integer1.compareTo(integer2);
+        return long1.compareTo(long2);
     }
 
     /**
