@@ -2703,269 +2703,77 @@ public class SurfaceRender extends RenderViewBase {
     /**
      * Create the rotation control cubic box.
      *
-     * @return  DOCUMENT ME!
+     * @return A cube representing the image orientation, with labels painted
+     * on the cube faces showing which axis corresponds to which axis in
+     * patient coordinates.
      */
     private Box buildCubicBox() {
+
+        /* Read the axis strings from the FileInfo data structure: */
+        String[] akAxisLabels = new String[3];
+        String[][] aakAxisFiles = new String[3][2];
+        for ( int i = 0; i < 3; i++ )
+        {
+            akAxisLabels[i] = imageA.getFileInfo(0).getAxisOrientationStr( imageA.getFileInfo(0).getAxisOrientation(i) ).toLowerCase();
+
+            /* The file name correspond to the axis strings, read the file
+             * names from the axis strings: */
+            aakAxisFiles[i][0] = new String( String.valueOf( akAxisLabels[i].charAt(0) ) );
+            aakAxisFiles[i][1] = new String( String.valueOf( akAxisLabels[i].charAt( akAxisLabels[i].lastIndexOf( " " ) + 1 ) ) );
+            //System.err.println( aakAxisFiles[i][0] + " " + aakAxisFiles[i][1] );
+        }
+
+        /* Get the sides of the faces that correspond to the axis labels. Axis
+         * labels were read left-right, top-bottom, back-front, get the cube
+         * faces in that order so the appropriate axis texture can be applied
+         * to the cube face: */
         Appearance app = new Appearance();
         Box cubic = new Box(1.0f, 1.0f, 1.0f, Box.GENERATE_TEXTURE_COORDS, app, 1);
-        int xOrient = -1, yOrient = -1, zOrient = -1;
+        Shape3D[][] shapeCubic = new Shape3D[3][2];
+        /* Box.LEFT and Box.RIGHT map to the x-axis orientation strings: */
+        shapeCubic[0][0] = cubic.getShape(Box.LEFT);
+        shapeCubic[0][1] = cubic.getShape(Box.RIGHT);
+        /* Box.TOP and Box.BOTTOM map to the y-axis orientation strings: */
+        shapeCubic[1][0] = cubic.getShape(Box.TOP);
+        shapeCubic[1][1] = cubic.getShape(Box.BOTTOM);
+        /* Box.BACK and Box.FRONT map to the z-axis orientation strings: */
+        shapeCubic[2][0] = cubic.getShape(Box.BACK);
+        shapeCubic[2][1] = cubic.getShape(Box.FRONT);
 
-        if (imageA != null) {
-            xOrient = imageA.getFileInfo(0).getAxisOrientation()[0];
-            yOrient = imageA.getFileInfo(0).getAxisOrientation()[1];
-            zOrient = imageA.getFileInfo(0).getAxisOrientation()[2];
+        /* Loop over the sides of the cube, read the corresponding texture,
+         * and apply the texture to the cube face: */
+        /* For each axis: */
+        for ( int i = 0; i < 3; i++ )
+        {
+            /* For cube face along the current axis: */
+            for ( int j = 0; j < 2; j++ )
+            {
+                /* If the orientation isn't unknown (represented by the "u" ): */
+                if ( !aakAxisFiles[i][j].equals( "u" ) )
+                {
+                    /* Load the texture: */
+                    TextureLoader textLoad = null;
+                    try {
+                        textLoad = new TextureLoader(MipavUtil.getIconImage(aakAxisFiles[i][j] + ".gif"), this);
+                    } catch (FileNotFoundException error) {
+                        Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
+                                          ">.  Check that this file is available.\n");
+                        System.err.println("Exception ocurred while getting <" + error.getMessage() +
+                                           ">.  Check that this file is available.\n");
+                    }
+                    /* Apply the texture to the current cube face: */
+                    TextureAttributes textAttr = new TextureAttributes();
+                    textAttr.setTextureMode(TextureAttributes.DECAL);
+                    TextureUnitState[] textUnitState = new TextureUnitState[1];
+                    textUnitState[0] = new TextureUnitState(textLoad.getTexture(), textAttr, null);
+                    textUnitState[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
+                    app = new Appearance();
+                    app.setTextureUnitState(textUnitState);
+                    shapeCubic[i][j].setAppearance(app);
+                }
+            }
         }
-
-        TextureLoader textLoadFront = null;
-        try {
-            textLoadFront = new TextureLoader(MipavUtil.getIconImage("a.gif"), this);
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage() +
-                               ">.  Check that this file is available.\n");
-        }
-        Shape3D shapeFront = cubic.getShape(Box.FRONT);
-        TextureAttributes textAttrFront = new TextureAttributes();
-        textAttrFront.setTextureMode(TextureAttributes.DECAL);
-        TextureUnitState[] textUnitStateFront = new TextureUnitState[1];
-        textUnitStateFront[0] = new TextureUnitState(textLoadFront.getTexture(), textAttrFront, null);
-        textUnitStateFront[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-        Appearance appFront = new Appearance();
-        appFront.setTextureUnitState(textUnitStateFront);
-
-
-        TextureLoader textLoadBack = null;
-        try {
-            textLoadBack = new TextureLoader(MipavUtil.getIconImage("p.gif"), this);
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage() +
-                               ">.  Check that this file is available.\n");
-        }
-        Shape3D shapeBack = cubic.getShape(Box.BACK);
-        TextureAttributes textAttrBack = new TextureAttributes();
-        textAttrBack.setTextureMode(TextureAttributes.DECAL);
-        TextureUnitState[] textUnitStateBack = new TextureUnitState[1];
-        textUnitStateBack[0] = new TextureUnitState(textLoadBack.getTexture(), textAttrBack, null);
-        textUnitStateBack[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-        Appearance appBack = new Appearance();
-        appBack.setTextureUnitState(textUnitStateBack);
-
-
-        TextureLoader textLoadTop = null;
-        try {
-            textLoadTop = new TextureLoader(MipavUtil.getIconImage("s.gif"), this);
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage() +
-                               ">.  Check that this file is available.\n");
-        }
-        Shape3D shapeTop = cubic.getShape(Box.TOP);
-        TextureAttributes textAttrTop = new TextureAttributes();
-        textAttrTop.setTextureMode(TextureAttributes.DECAL);
-        TextureUnitState[] textUnitStateTop = new TextureUnitState[1];
-        textUnitStateTop[0] = new TextureUnitState(textLoadTop.getTexture(), textAttrTop, null);
-        textUnitStateTop[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-        Appearance appTop = new Appearance();
-        appTop.setTextureUnitState(textUnitStateTop);
-
-
-        TextureLoader textLoadBottom = null;
-        try {
-            textLoadBottom = new TextureLoader(MipavUtil.getIconImage("i.gif"), this);
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage() +
-                               ">.  Check that this file is available.\n");
-        }
-        Shape3D shapeBottom = cubic.getShape(Box.BOTTOM);
-        TextureAttributes textAttrBottom = new TextureAttributes();
-        textAttrBottom.setTextureMode(TextureAttributes.DECAL);
-        TextureUnitState[] textUnitStateBottom = new TextureUnitState[1];
-        textUnitStateBottom[0] = new TextureUnitState(textLoadBottom.getTexture(), textAttrBottom, null);
-        textUnitStateBottom[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-        Appearance appBottom = new Appearance();
-        appBottom.setTextureUnitState(textUnitStateBottom);
-
-
-        TextureLoader textLoadLeft = null;
-        try {
-            textLoadLeft = new TextureLoader(MipavUtil.getIconImage("l.gif"), this);
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage() +
-                               ">.  Check that this file is available.\n");
-        }
-        Shape3D shapeLeft = cubic.getShape(Box.LEFT);
-        TextureAttributes textAttrLeft = new TextureAttributes();
-        textAttrLeft.setTextureMode(TextureAttributes.DECAL);
-        TextureUnitState[] textUnitStateLeft = new TextureUnitState[1];
-        textUnitStateLeft[0] = new TextureUnitState(textLoadLeft.getTexture(), textAttrLeft, null);
-        textUnitStateLeft[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-        Appearance appLeft = new Appearance();
-        appLeft.setTextureUnitState(textUnitStateLeft);
-
-
-        TextureLoader textLoadRight = null;
-        try {
-            textLoadRight = new TextureLoader(MipavUtil.getIconImage("r.gif"), this);
-        } catch (FileNotFoundException error) {
-            Preferences.debug("Exception ocurred while getting <" + error.getMessage() +
-                              ">.  Check that this file is available.\n");
-            System.err.println("Exception ocurred while getting <" + error.getMessage() +
-                               ">.  Check that this file is available.\n");
-        }
-        Shape3D shapeRight = cubic.getShape(Box.RIGHT);
-        TextureAttributes textAttrRight = new TextureAttributes();
-        textAttrRight.setTextureMode(TextureAttributes.DECAL);
-        TextureUnitState[] textUnitStateRight = new TextureUnitState[1];
-        textUnitStateRight[0] = new TextureUnitState(textLoadRight.getTexture(), textAttrRight, null);
-        textUnitStateRight[0].setCapability(TextureUnitState.ALLOW_STATE_WRITE);
-        Appearance appRight = new Appearance();
-        appRight.setTextureUnitState(textUnitStateRight);
-
-
-
-        switch (zOrient) {
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                shapeFront.setAppearance(appBack);
-                shapeBack.setAppearance(appFront);
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                shapeFront.setAppearance(appFront);
-                shapeBack.setAppearance(appBack);
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                shapeFront.setAppearance(appTop);
-                shapeBack.setAppearance(appBottom);
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                shapeFront.setAppearance(appBottom);
-                shapeBack.setAppearance(appTop);
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                shapeFront.setAppearance(appLeft);
-                shapeBack.setAppearance(appRight);
-                break;
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                shapeFront.setAppearance(appRight);
-                shapeBack.setAppearance(appLeft);
-                break;
-
-            default:
-                break;
-        }
-
-        switch (yOrient) {
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                shapeTop.setAppearance(appBack);
-                shapeBottom.setAppearance(appFront);
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                shapeTop.setAppearance(appFront);
-
-                Vector4f planeSBack = new Vector4f(-0.5f, 0.0f, 0.0f, -0.5f);
-                Vector4f planeTBack = new Vector4f(0.0f, 0.0f, -0.5f, -0.5f);
-                TexCoordGeneration texGenBack = new TexCoordGeneration();
-
-                texGenBack.setPlaneS(planeSBack);
-                texGenBack.setPlaneT(planeTBack);
-                textUnitStateBack[0].setTexCoordGeneration(texGenBack);
-                appBack.setTextureUnitState(textUnitStateBack);
-                shapeBottom.setAppearance(appBack); // rotate
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                shapeTop.setAppearance(appTop);
-                shapeBottom.setAppearance(appBottom);
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                shapeTop.setAppearance(appBottom);
-                shapeBottom.setAppearance(appTop);
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                shapeTop.setAppearance(appLeft);
-                shapeBottom.setAppearance(appRight);
-                break;
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                shapeTop.setAppearance(appRight);
-                shapeBottom.setAppearance(appLeft);
-                break;
-
-            default:
-                break;
-        }
-
-        switch (xOrient) {
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                shapeLeft.setAppearance(appBack);
-                shapeRight.setAppearance(appFront);
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                shapeLeft.setAppearance(appFront);
-                shapeRight.setAppearance(appBack);
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                shapeLeft.setAppearance(appTop);
-                shapeRight.setAppearance(appBottom);
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                shapeLeft.setAppearance(appBottom);
-                shapeRight.setAppearance(appTop);
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                shapeLeft.setAppearance(appLeft);
-                shapeRight.setAppearance(appRight);
-                break;
-
-            case FileInfoBase.ORI_R2L_TYPE:
-
-                Vector4f planeS = new Vector4f(0.0f, 0.5f, 0.0f, -0.5f);
-                Vector4f planeT = new Vector4f(0.0f, 0.0f, -0.5f, -0.5f);
-                TexCoordGeneration texGen = new TexCoordGeneration();
-
-                texGen.setPlaneS(planeS);
-                texGen.setPlaneT(planeT);
-                textUnitStateRight[0].setTexCoordGeneration(texGen);
-                appRight.setTextureUnitState(textUnitStateRight);
-                shapeLeft.setAppearance(appRight); // rotate
-
-                Vector4f planeSLeft = new Vector4f(0.0f, -0.5f, 0.0f, 0.5f);
-                Vector4f planeTLeft = new Vector4f(0.0f, 0.0f, -0.5f, -0.5f);
-                TexCoordGeneration texGenLeft = new TexCoordGeneration();
-
-                texGenLeft.setPlaneS(planeSLeft);
-                texGenLeft.setPlaneT(planeTLeft);
-                textUnitStateLeft[0].setTexCoordGeneration(texGenLeft);
-                appLeft.setTextureUnitState(textUnitStateLeft);
-                shapeRight.setAppearance(appLeft); // rotate
-                break;
-
-            default:
-                break;
-        }
-
+        /* Return the texture-mapped cube: */
         return cubic;
     }
 
