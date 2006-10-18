@@ -57,11 +57,13 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private static final int QMF16 = 7;
     
     // Daubechies wavelet
-    private static final int DAUB2 = 8;
+    private static final int DAUB1 = 8;
     
-    private static final int DAUB3 = 9;
+    private static final int DAUB2 = 9;
     
-    private static final int DAUB4 = 10;
+    private static final int DAUB3 = 10;
+    
+    private static final int DAUB4 = 11;
     
     
     /**
@@ -117,10 +119,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     /**
      * repres1 = ORTHOGONAL_WAVELET
-     *           Here repres2 can be NONE, QMF5, QMF8, QMF9, QMF12, QMF13, QMF16, DAUB2, DAUB3, DAUB4
+     *           Here repres2 can be NONE, QMF5, QMF8, QMF9, QMF12, QMF13, QMF16, DAUB1, DAUB2, DAUB3, DAUB4
+     *           DAUB1 is default.
      *           
      * repres1 = UNDECIMATED_ORTHOGONAL_WAVELET
-     *           Here repres2 can be NONE, DAUB2, DAUB3, DAUB4
+     *           Here repres2 can be NONE, DAUB1, DAUB2, DAUB3, DAUB4
+     *           DAUB1 is default.
      *           
      * repres1 = STEERABLE_PYRAMID
      *           Here repres2 = NONE
@@ -285,6 +289,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double aux[];
         double mean;
         long time;
+        int filter;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -561,6 +566,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         else if (repres1 == FULL_STEERABLE_PYRAMID) {
             imD = decompReconstFull(im, imx, imy, delta, deltax, deltay);
         }
+        else if (repres1 == ORTHOGONAL_WAVELET) {
+            filter = repres2;
+            imD = decompReconstW(im, imx, imy, filter, delta, deltax, deltay);
+        }
 
         // clamp to mins and maxs allowed by data type
         if (destImage != null) {
@@ -681,6 +690,31 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         Vector pind = null;
         Vector pyr = null;
         Vector pyrN = null;
+        Vector pyrh;
+        int bandNum;
+        int nband;
+        double aux[] = null;
+        double auxn[] = null;
+        int nsx[] = new int[1];
+        int nsy[] = new int[1];
+        int nsxn[] = new int[1];
+        int nsyn[] = new int[1];
+        int nsxnn[] = new int[1];
+        int nsynn[] = new int[1];
+        boolean prnt;
+        double BL[][][];
+        double BLn[][][];
+        double var;
+        int i, j;
+        int index;
+        double imagArray[] = null;
+        double sy2;
+        double sn2;
+        double SNRin;
+        double BLT[];
+        int blx;
+        int bly;
+        int intMat[];
         
         pyr = buildFullSFpyr2(im, imx, imy, nScales, nOrientations-1, 1.0, pind);
         if (error == 1) {
@@ -690,7 +724,113 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (error == 1) {
             return null;
         }
+        pyrh = pyr;
+        bandNum = pind.size()-1;
+        // Everything except the low pass residual
+        for (nband = 2; nband <= bandNum; nband++) {
+            fireProgressStateChanged((100 * (nband-1))/ (bandNum-1));
+            aux = pyrBand(pyr, pind, nband-1,nsx, nsy);
+            auxn = pyrBand(pyrN, pind, nband-1, nsxn, nsyn);
+            prnt = useParent && (nband < bandNum - nOrientations);
+            if (prnt) {
+                BL = new double[nsx[0]][nsy[0]][2];
+                BLn = new double[nsx[0]][nsy[0]][2];
+            } // if (prnt)
+            else {
+                BL = new double[nsx[0]][nsy[0]][1];
+                BLn = new double[nsx[0]][nsy[0]][1];
+            } // else 
+            // Because we are discarding 2 coefficients on every dimension
+            var = Math.sqrt(((nsx[0]-2)*(nsy[0]-2))/(nsx[0]*nsy[0]));
+            for (j = 0; j < nsy[0]; j++) {
+                for (i = 0; i < nsx[0]; i++) {
+                    index = i + j * nsx[0];
+                    BL[i][j][0] = aux[index];
+                    BLn[i][j][0] = auxn[index]*var;
+                }
+            }
+            if (prnt) {
+                aux = pyrBand(pyr, pind, nband+nOrientations-1, nsxn, nsyn);
+                auxn = pyrBand(pyrN, pind, nband+nOrientations-1, nsxnn, nsynn);
+                // Resample 2x2 the parent if not in the high-pass oriented subbands.
+                if (nband > nOrientations+1) {
+                    expand(aux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
+                    expand(auxn, 2.0, nsxnn[0], nsynn[0], auxn, imagArray);    
+                } // if (nband > nOrientations+1)
+                for (j = 0; j < nsy[0]; j++) {
+                    for (i = 0; i < nsx[0]; i++) {
+                        index = i + j * nsx[0];
+                        BL[i][j][1] = aux[index];
+                        BLn[i][j][1] = auxn[index]*var;
+                    }
+                }
+            } // if (prnt)
+            
+            sy2 = 0.0;
+            sn2 = 0.0;
+            for (j = 0; j < nsy[0]; j++) {
+                for (i = 0; i < nsx[0]; i++) {
+                    sy2 = sy2 + BL[i][j][0]*BL[i][j][0];
+                    sn2 = sn2 + BLn[i][j][0]*BLn[i][j][0];
+                }
+            }
+            sy2 = sy2/(nsx[0]*nsy[0]);
+            sn2 = sn2/(nsx[0]*nsy[0]);
+            if (sy2 > sn2) {
+                SNRin = 4.342944819*Math.log((sy2-sn2)/sn2);
+            }
+            else {
+                Preferences.debug(
+                "decompReconst: Signal is not detectable in noisy subband");
+            }
+            
+            // main
+            BL = denoi_BLS_GSM_band(BL, BLn, prnt);
+            blx = BL.length;
+            bly = BL[0].length;
+            // Create BL transpose
+            BLT = new double[bly * blx];
+            for (j = 0; j < bly; j++) {
+                for (i = 0; i < blx; i++) {
+                    index = j + i*bly;
+                    BLT[index] = BL[i][j][0];
+                }
+            }
+            pyrh.setElementAt(BLT, nband-1);
+            intMat = new int[2];
+            intMat[0] = blx;
+            intMat[1] = bly;
+            pind.setElementAt(intMat, nband-1);
+        } // for (nband = 2; nband <= bandNum; nband++)
+        fh = reconFullSFpyr2(pyrh, pind, null, null, 1.0);
+        if (error == 1) {
+            return null;
+        }
         return fh;
+    }
+    
+    /**
+     * Port of decomp_reconst-W.m by JPM, Univ. de Granada, 3/03
+     * Decompose image into subbands, denoise using BLS-GSM method, and recompose again.
+     * Version using a critically sampled pyramid (orthogonal wavelet), as 
+     * implemented in MatlabPyrTools (Eero)
+     * @param im
+     * @param imx
+     * @param imy
+     * @param filter
+     * @param noise
+     * @param noisex
+     * @param noisey
+     * @return
+     */
+    private double[] decompReconstW(double im[], int imx, int imy, int filter, double noise[],
+            int noisex, int noisey) {
+            double fh[] = null;
+            
+            // Number of orientations: vertical, horizontal, and mixed diagonals
+            // (for compatibility)
+            nOrientations = 3;
+            return fh;
     }
     
     /**
@@ -826,6 +966,340 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     }
     
     /**
+     * This is a port of reconFullSFpyr2.m
+     * Reconstruct image from its steerable pyramid representation, in the
+     * Fourier domain, as created by buildSFpyr.
+     * Unlike the standard transform, subdivides the highpass band into
+     * orientations
+     * @param pyr
+     * @param pind
+     * @param levs
+     * @param bands
+     * @param twidth
+     * @return
+     */
+    private double[] reconFullSFpyr2(Vector pyr, Vector pind, int levs[],
+            int bands[], double twidth) {
+        double res[] = null;
+        boolean allLevs = false;
+        boolean allBands = false;
+        int nbands;
+        int maxLev;
+        int i;
+        int j;
+        int dimX;
+        int dimY;
+        int ctrX;
+        int ctrY;
+        int intArr[][];
+        int intMat[];
+        double xramp[][];
+        double yramp[][];
+        double var;
+        double angle[][];
+        double log_rad[][];
+        double xrcos[] = null;;
+        double yrcos[] = null;
+        double yircos[];
+        boolean haveOne;
+        int rows[] = new int[1];
+        int columns[] = new int[1];
+        double resdftr[] = null;;
+        double resdfti[] = null;
+        FFTUtility fftUtil;
+        double lo0mask[][];
+        int index;
+        boolean haveZero;
+        double hi0mask[][];
+        double arr[][];
+        int lutsize;
+        double xcosn[];
+        int order;
+        double consta;
+        double ycosn[];
+        int b;
+        boolean haveB;
+        double anglemask[][];
+        double bandr[];
+        double bandi[];
+        double maskr[][];
+        double maski[][];
+        
+        if (levs == null) {
+            allLevs = true;
+        }
+        if (bands == null) {
+            allBands = true;
+        }
+        if (twidth <= 0) {
+            MipavUtil.displayWarning("Warning.  twidth must be positive.  Setting to 1");
+            twidth = 1.0;
+        }
+         
+        nbands = spyrNumBands(pind)/2;
+        
+        intArr = new int[nbands][];
+        for (i = 0; i < nbands; i++) {
+            intArr[i] = (int[])pind.remove(0);
+        }
+        maxLev = 1 + spyrHt(pind);
+        for (i = nbands-1; i >= 0; i--) {
+            pind.insertElementAt(intArr[i], 0);
+        }
+        
+        if (allLevs) {
+            levs = new int[maxLev+1];
+            for (i = 0; i <= maxLev; i++) {
+                levs[i] = i;
+            }
+        } // if (allLevs)
+        else {
+            for (i = 0; i < levs.length; i++) {
+                if ((levs[i] > maxLev) || (levs[i] < 0)) {
+                    MipavUtil.displayError(
+                    "Level numbers must be in the range 0 to " + maxLev);
+                    error = 1;
+                    return null;
+                }
+            }
+        } //  else 
+         
+        if (allBands) {
+            bands = new int[nbands];
+            for (i = 1; i <= nbands; i++) {
+                bands[i] = i;
+            }
+        } // if (allBands)
+        else {
+            for (i = 0; i < bands.length; i++) {
+                if ((levs[i] < 1) || (levs[i] > nbands)) {
+                    MipavUtil.displayError(
+                    "Band numbers must be in the range 1 to " + nbands);
+                    error = 1;
+                    return null;
+                }
+            }
+        } // else
+         
+        intMat = (int[])pind.get(1);
+        dimX = intMat[0];
+        dimY = intMat[1];
+        ctrX = (int)Math.ceil((dimX + 0.5)/2);
+        ctrY = (int)Math.ceil((dimY + 0.5)/2);
+        
+        xramp = new double[dimX][dimY];
+        yramp = new double[dimX][dimY];
+        for (j = 0; j < dimY; j++) {
+            var = ((j+1.0)-ctrY)/(dimY/2.0);
+            for (i = 0; i < dimX; i++) {
+                xramp[i][j] = var;
+            }
+        }
+        for (i = 0; i < dimX; i++) {
+            var = ((i+1.0)-ctrX)/(dimX/2.0);
+            for (j = 0; j < dimY; j++) {
+                yramp[i][j]= var;
+            }
+        }
+        angle = new double[dimX][dimY];
+        log_rad = new double[dimX][dimY];
+        for (j = 0; j < dimY; j++) {
+            for (i = 0; i < dimX; i++) {
+                angle[i][j] = Math.atan2(yramp[i][j],xramp[i][j]);
+                log_rad[i][j] = Math.sqrt(xramp[i][j]*xramp[i][j] + yramp[i][j]*yramp[i][j]);
+            }
+        }
+        log_rad[ctrX-1][ctrY-1] = log_rad[ctrX-1][ctrY-2];
+        // log2(x) = loge(x)/loge(2)
+        var = 1.0/Math.log(2.0);
+        for (j = 0; j < dimY; j++) {
+            for (i = 0; i < dimX; i++) {
+                log_rad[i][j] = var * Math.log(log_rad[i][j]);
+            }
+        }
+        
+        // Radial transition function (a raised cosine in log-frequency)
+        rcosFn(twidth, (-twidth/2.0), 0.0, 1.0, xrcos, yrcos);
+        for (i = 0; i < yrcos.length; i++) {
+            yrcos[i] = Math.sqrt(yrcos[i]);
+        }
+        yircos = new double[yrcos.length];
+        for (i = 0; i < yrcos.length; i++) {
+            yircos[i] = Math.sqrt(1.0 - yrcos[i]*yrcos[i]);
+        }
+        
+        if (pind.size() == 2) {
+            haveOne = false;
+            for (i = 0; i < levs.length; i++) {
+                if (levs[i] == 1) {
+                    haveOne = true;
+                }
+            }
+            if (haveOne) {
+                resdftr = pyrBand(pyr, pind, 1, rows, columns);
+                resdfti = new double[rows[0]*columns[0]];
+                // forward FFT
+                fftUtil = new FFTUtility(resdftr, resdfti, columns[0], rows[0], 1, -1, FFTUtility.FFT);
+                fftUtil.setProgressBarVisible(false);
+                fftUtil.run();
+                fftUtil.finalize();
+                fftUtil = new FFTUtility(resdftr, resdfti, 1, columns[0], rows[0], -1, FFTUtility.FFT);
+                fftUtil.setProgressBarVisible(false);
+                fftUtil.run();
+                fftUtil.finalize();
+                center(resdftr, resdfti, rows[0], columns[0]);
+            }
+            else {
+                intMat = (int[])pind.get(1);
+                rows[0] = intMat[0];
+                columns[0] = intMat[1];
+                resdftr = new double[rows[0]*columns[0]];
+                resdfti = new double[rows[0]*columns[0]];
+            }
+        } // if (pind.size() == 2)
+        else {
+            arr = new double[nbands+1][];
+            intArr = new int[nbands+1][];
+            for (i = 0; i < nbands+1; i++) {
+                arr[i] = (double[])pyr.remove(0);
+                intArr[i] = (int[])pind.remove(0);
+            }
+            intMat = (int [])pind.get(0);
+            rows[0] = intMat[0];
+            columns[0] = intMat[1];
+            reconSFpyrLevs(pyr, pind, log_rad, xrcos, yrcos, angle, nbands, 
+                           levs, bands, resdftr, resdfti);
+            for (i = nbands; i >= 0; i--) {
+                pyr.insertElementAt(arr[i], 0);
+                pind.insertElementAt(intArr[i], 0);
+            }
+        } // else
+        
+        lo0mask = pointOp(log_rad, yircos, xrcos[0], (xrcos[1] - xrcos[0]), false);
+        for (j = 0; j < dimY; j++) {
+            for (i = 0; i < dimX; i++) {
+                index = i + j*dimX;
+                resdftr[index] = resdftr[index] * lo0mask[i][j];
+                resdfti[index] = resdfti[index] * lo0mask[i][j];
+            }
+        }
+        
+        haveZero = false;
+        for (i = 0; i < levs.length; i++) {
+            if (levs[i] == 0) {
+                haveZero = true;
+            }
+        }
+        
+        // Oriented highpass bands
+        if (haveZero) {
+            lutsize = 1024;
+            xcosn = new double[3*(lutsize+1)];
+            // -2*PI to PI
+            for (i = 0, j = -(2*lutsize+1); i < xcosn.length; i++, j++) {
+                xcosn[i] = j * Math.PI/lutsize;
+            }
+            order = nbands-1;
+            // Divide by sqrt(sum_(n=0)^(N-1) cos(pi*n/N)^(2(N-1)) )
+            var = factorial(order);
+            consta = Math.pow(2.0,(2.0*order))*var*var/(nbands*factorial(2*order));
+            consta = Math.sqrt(consta);
+            ycosn = new double[xcosn.length];
+            for (i = 0; i < xcosn.length; i++) {
+                ycosn[i] = consta * Math.pow(xcosn[i], order);
+            }
+            hi0mask = pointOp(log_rad, yrcos, xrcos[0], (xrcos[1]-xrcos[0]), false);
+            
+            index = 0;
+            for (b = 1; b <= nbands; b++) {
+                haveB = false;
+                for (i = 0; i < bands.length; b++) {
+                    if (bands[i] == b) {
+                        haveB = true;
+                    }
+                }
+                if (haveB) {
+                    anglemask = pointOp(angle, ycosn, (xcosn[0] + Math.PI*(b-1)/nbands),
+                                        (xcosn[1] - xcosn[0]), true);
+                    bandr = (double[])pyr.get(index);
+                    bandi = new double[dimX * dimY];
+                    // forward FFT
+                    fftUtil = new FFTUtility(bandr, bandi, dimY, dimX, 1, -1, FFTUtility.FFT);
+                    fftUtil.setProgressBarVisible(false);
+                    fftUtil.run();
+                    fftUtil.finalize();
+                    fftUtil = new FFTUtility(bandr, bandi, 1, dimY, dimX, -1, FFTUtility.FFT);
+                    fftUtil.setProgressBarVisible(false);
+                    fftUtil.run();
+                    fftUtil.finalize();
+                    center(bandr, bandi, dimX, dimY);
+                    // Make real the contents in the HF cross (to avoid information loss in these freqs.)
+                    // It distributes evenly these contents among the nbands orientations
+                    maskr = new double[dimX][dimY];
+                    maski = new double[dimX][dimY];
+                    if (((nbands-1) % 4) == 0) {
+                        for (j = 0; j < dimY; j++) {
+                            for (i = 0; i < dimX; i++) {
+                                maskr[i][j] = anglemask[i][j]*hi0mask[i][j];
+                            }
+                        }
+                    } // if (((nbands-1) % 4) == 0)
+                    else if (((nbands-1) %4) == 1) {
+                        for (j = 0; j < dimY; j++) {
+                            for (i = 0; i < dimX; i++) {
+                                maski[i][j] = anglemask[i][j]*hi0mask[i][j];
+                            }
+                        }    
+                    } // else if (((nbands-1) %4) == 1)
+                    else if (((nbands-1) %4) == 2) {
+                        for (j = 0; j < dimY; j++) {
+                            for (i = 0; i < dimX; i++) {
+                                maskr[i][j] = -anglemask[i][j]*hi0mask[i][j];
+                            }
+                        }    
+                    } // else if (((nbands-1) %4) == 2)
+                    else if (((nbands-1) %4) == 3) {
+                        for (j = 0; j < dimY; j++) {
+                            for (i = 0; i < dimX; i++) {
+                                maski[i][j] = -anglemask[i][j]*hi0mask[i][j];
+                            }
+                        }    
+                    } // else if (((nbands-1) %4) == 3)
+                    
+                    var = 1.0/Math.sqrt(nbands);
+                    for (j = 0; j < dimY; j++) {
+                        maskr[0][j] = var;
+                    }
+                    for (i = 1; i < dimX; i++) {
+                        maskr[i][0] = var;
+                    }
+                    
+                    for (j = 0; j < dimY; j++) {
+                        for (i = 0; i < dimX; i++) {
+                            index = i + j * dimX;
+                            resdftr[index] = resdftr[index] + bandr[index] * maskr[i][j] - bandi[index] * maski[i][j];
+                            resdfti[index] = resdfti[index] + bandr[index] * maski[i][j] + bandi[index] * maskr[i][j];
+                        }
+                    }
+                } // if (haveB)
+                index++;
+            } // for (b = 1; b <= nbands; b++)    
+        } // if (haveZero)
+        
+        center(resdftr, resdfti, rows[0], columns[0]);
+        // Inverse FFT
+        fftUtil = new FFTUtility(resdftr, resdfti, columns[0], rows[0], 1, +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        fftUtil = new FFTUtility(resdftr, resdfti, 1, columns[0], rows[0], +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        return resdftr;
+    }
+    
+    /**
      * This is a port of reconSFpyr.m by Eero Simoncelli, 5/97.
      * Reconstruct image from its steerable pyramid representation, in the
      * Fourier domain, as created by buildSFpyr.
@@ -872,8 +1346,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double resdfti[] = null;
         FFTUtility fftUtil;
         double lo0mask[][];
-        int lox;
-        int loy;
         int index;
         boolean haveZero;
         double hi0mask[][];
@@ -884,6 +1356,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int hix;
         int hiy;
         int intMat[];
+        int intMat2[];
         
         if (levs == null) {
             allLevs = true;
@@ -1012,8 +1485,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         else {
             arr = (double[])pyr.remove(0);
             intMat = (int[])pind.remove(0);
-            rows[0] = intMat[0];
-            columns[0] = intMat[1];
+            intMat2 = (int[])pind.get(0);
+            rows[0] = intMat2[0];
+            columns[0] = intMat2[1];
             reconSFpyrLevs(pyr, pind, log_rad, xrcos, yrcos, angle, nbands, 
                            levs, bands, resdftr, resdfti);
             pyr.insertElementAt(arr, 0);
@@ -1021,17 +1495,15 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         } // else
         
         lo0mask = pointOp(log_rad, yircos, xrcos[0], (xrcos[1] - xrcos[0]), false);
-        lox = lo0mask.length;
-        loy = lo0mask[0].length;
-        for (j = 0; j < loy; j++) {
-            for (i = 0; i < lox; i++) {
-                index = i + j*lox;
+        for (j = 0; j < dimY; j++) {
+            for (i = 0; i < dimX; i++) {
+                index = i + j*dimX;
                 resdftr[index] = resdftr[index] * lo0mask[i][j];
                 resdfti[index] = resdfti[index] * lo0mask[i][j];
             }
         }
         
-        // residual hgihpass subband
+        // residual highpass subband
         haveZero = false;
         for (i = 0; i < levs.length; i++) {
             if (levs[i] == 0) {
@@ -1296,6 +1768,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     fftUtil.run();
                     fftUtil.finalize();
                     center(bandr, bandi, dimX, dimY);
+                    
                     if (((nbands -1) % 4) == 0) {
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
@@ -2350,6 +2823,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double anglemask[][];
         double maskr[][];
         double maski[][];
+        double bandfftr[] = null;
+        double bandffti[] = null;
+        int intMat[];
         
         // log2(x) = loge(x)/loge(2)
         logC = 1.0/Math.log(2.0);
@@ -2469,7 +2945,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             ycosn[i] = consta * Math.pow(xcosn[i], order);
         }
         
-        bands = new double[imx*imy][nbands];
+        bands = new double[nbands][imx * imy];
         bind = new int[nbands][2];
         
         for (b = 1; b <= nbands; b++) {
@@ -2505,7 +2981,55 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     }
                 }    
             } // else if (((nbands-1) %4) == 3)
+            // Make real the contents in the HF cross (to avoid
+            // information loss in these frequencies.)
+            // It distributes evenly these contents among the nbands orientations
+            var = 1.0/Math.sqrt(nbands);
+            for (j = 0; j < imy; j++) {
+                maskr[0][j] = var;
+            }
+            for (i = 1; i < imx; i++) {
+                maskr[i][0] = var;
+            }
+            
+            if (bandfftr == null) {
+                bandfftr = new double[imx * imy];    
+            }
+            if (bandffti == null) {
+                bandffti = new double[imx * imy];
+            }
+            for (j = 0; j < imy; j++) {
+                for (i = 0; i < imx; i++) {
+                    index = i + j * imx;
+                    bandfftr[index] = imdftr[index] * maskr[i][j] - imdfti[index] * maski[i][j];
+                    bandffti[index] = imdftr[index] * maski[i][j] + imdfti[index] * maskr[i][j];
+                }
+            }
+            center(bandfftr, bandffti, imx, imy);
+            // Inverse FFT
+            fftUtil = new FFTUtility(bandfftr, bandffti, imy, imx, 1, +1, FFTUtility.FFT);
+            fftUtil.setProgressBarVisible(false);
+            fftUtil.run();
+            fftUtil.finalize();
+            fftUtil = new FFTUtility(bandfftr, bandffti, 1, imy, imx, +1, FFTUtility.FFT);
+            fftUtil.setProgressBarVisible(false);
+            fftUtil.run();
+            fftUtil.finalize();
+            for (i = 0; i < bandfftr.length; i++) {
+                bands[b-1][i] = bandfftr[i];
+            }
+            bind[b-1][0] = imx;
+            bind[b-1][1] = imy;
         } // for (b = 1; b <= nbands; b++)
+        
+        for (i = nbands-1; i >= 0; i--) {
+            pyr.insertElementAt(bands[i], 0);
+            pind.insertElementAt(bind[i], 0);
+        }
+        
+        intMat = new int[2];
+        // Dummy highpass [ [0 0]; pind]
+        pind.insertElementAt(intMat, 0);
         return pyr;
     }
     
