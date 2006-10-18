@@ -3,10 +3,10 @@ package gov.nih.mipav.model.file;
 
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.dicomcomm.*;
+import gov.nih.mipav.model.file.xcede.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.xcede.*;
 
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
@@ -41,11 +41,16 @@ import javax.swing.*;
  */
 public class FileIO {
 
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private static final String FILE_READ = "Opening ";
+
+    /** DOCUMENT ME! */
+    private static final String FILE_WRITE = "Saving ";
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-	private static final String FILE_READ = "Opening ";
-	private static final String FILE_WRITE = "Saving ";
-	
     /** Directory where the image file can be found. */
     private String fileDir;
 
@@ -58,9 +63,10 @@ public class FileIO {
     /** DOCUMENT ME! */
     private ModelRGB modelRGB = null;
 
-   
+
+    /** DOCUMENT ME! */
     private ViewJProgressBar progressBar = null;
-    
+
     /** Refers to whether or not the FileIO reports progress or errors. */
     private boolean quiet = false;
 
@@ -100,7 +106,6 @@ public class FileIO {
         LUT = _LUT;
         unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
     }
-
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -236,6 +241,170 @@ public class FileIO {
 
         return (new Integer(fName.substring((i + 1), length)).intValue());
 
+    }
+
+    /**
+     * Gets the file extension based on the filetype of the image.
+     *
+     * @param   fileType  Type of file, found in FileBase.
+     *
+     * @return  The appropriate file extension.
+     *
+     * @see     FileBase
+     */
+    public static final String getSuffix(int fileType) {
+        String suffix = null;
+
+        switch (fileType) {
+
+            case FileBase.JIMI:
+                suffix = ".jpg";
+                break;
+
+            case FileBase.RAW:
+                suffix = ".raw";
+                break;
+
+            case FileBase.DICOM:
+                suffix = ".dcm";
+                break;
+
+            case FileBase.MEDVISION:
+                suffix = ".bin";
+                break;
+
+            case FileBase.MAP:
+                suffix = ".map";
+                break;
+
+            case FileBase.MINC:
+                suffix = ".mnc";
+                break;
+
+            case FileBase.AVI:
+                suffix = ".avi";
+                break;
+
+            case FileBase.QT:
+                suffix = ".mov";
+                break;
+
+            case FileBase.CHESHIRE:
+                suffix = ".imc";
+                break;
+
+            case FileBase.CHESHIRE_OVERLAY:
+                suffix = ".oly";
+                break;
+
+            case FileBase.VOI_FILE:
+                suffix = ".voi";
+                break;
+
+            case FileBase.ANALYZE:
+                suffix = ".img";
+                break;
+
+            case FileBase.MGH:
+
+                // Uses .mgh for uncompressed storage
+                // Uses .mgz or .mgh.gz for compressed storage
+                suffix = ".mgh";
+                break;
+
+            case FileBase.NIFTI:
+
+                // uses .hdr and .img for 2 file storage
+                // uses .nii for 1 file storage
+                suffix = ".nii";
+                break;
+
+            case FileBase.NRRD:
+
+                // uses .nhdr for header and any nhdr designated extension for data
+                // in 2 file storage
+                // uses .nrrd for 1 file storage
+                suffix = ".nrrd";
+                break;
+
+            case FileBase.SPM:
+                suffix = ".spm";
+                break;
+
+            case FileBase.TIFF:
+                suffix = ".tiff";
+                break;
+
+            case FileBase.LSM:
+                suffix = ".lsm";
+                break;
+
+            case FileBase.STK:
+                suffix = ".stk";
+                break;
+
+            case FileBase.AFNI:
+                suffix = ".afni";
+                break;
+
+            case FileBase.ICS:
+                suffix = ".ics";
+                break;
+
+            case FileBase.INTERFILE:
+                suffix = ".hdr";
+                break;
+
+            case FileBase.BIORAD:
+                suffix = ".pic";
+                break;
+
+            case FileBase.FITS:
+                suffix = ".fits";
+                break;
+
+            case FileBase.DM3:
+                suffix = ".dm3";
+                break;
+
+            case FileBase.TMG:
+                suffix = ".tmg";
+                break;
+
+            case FileBase.MRC:
+                suffix = ".mrc";
+                break;
+
+            case FileBase.OSM:
+                suffix = ".wu";
+                break;
+
+            case FileBase.MAGNETOM_VISION:
+                suffix = ".ima";
+                break;
+
+            case FileBase.GE_GENESIS:
+                suffix = ".sig";
+                break;
+
+            case FileBase.GE_SIGNA4X:
+                suffix = ".gedno";
+                break;
+
+            case FileBase.MICRO_CAT:
+                suffix = ".log";
+                break;
+
+            case FileBase.XML:
+                suffix = ".xml";
+                break;
+
+            case FileBase.COR:
+                suffix = ".info";
+                break;
+        }
+
+        return suffix;
     }
 
     /**
@@ -992,166 +1161,6 @@ public class FileIO {
     }
 
     /**
-     * Gets the file extension based on the filetype of the image.
-     *
-     * @param   fileType  Type of file, found in FileBase.
-     *
-     * @return  The appropriate file extension.
-     *
-     * @see     FileBase
-     */
-    public static final String getSuffix(int fileType) {
-        String suffix = null;
-
-        switch (fileType) {
-
-            case FileBase.JIMI:
-                suffix = ".jpg";
-                break;
-
-            case FileBase.RAW:
-                suffix = ".raw";
-                break;
-
-            case FileBase.DICOM:
-                suffix = ".dcm";
-                break;
-
-            case FileBase.MEDVISION:
-                suffix = ".bin";
-                break;
-
-            case FileBase.MAP:
-                suffix = ".map";
-                break;
-
-            case FileBase.MINC:
-                suffix = ".mnc";
-                break;
-
-            case FileBase.AVI:
-                suffix = ".avi";
-                break;
-
-            case FileBase.QT:
-                suffix = ".mov";
-                break;
-
-            case FileBase.CHESHIRE:
-                suffix = ".imc";
-                break;
-
-            case FileBase.CHESHIRE_OVERLAY:
-                suffix = ".oly";
-                break;
-
-            case FileBase.VOI_FILE:
-                suffix = ".voi";
-                break;
-
-            case FileBase.ANALYZE:
-                suffix = ".img";
-                break;
-
-            case FileBase.MGH:
-                // Uses .mgh for uncompressed storage
-                // Uses .mgz or .mgh.gz for compressed storage
-                suffix = ".mgh";
-                break;
-
-            case FileBase.NIFTI:
-
-                // uses .hdr and .img for 2 file storage
-                // uses .nii for 1 file storage
-                suffix = ".nii";
-                break;
-            case FileBase.NRRD:
-                // uses .nhdr for header and any nhdr designated extension for data
-                // in 2 file storage
-                // uses .nrrd for 1 file storage
-                suffix = ".nrrd";
-                break;
-            case FileBase.SPM:
-                suffix = ".spm";
-                break;
-
-            case FileBase.TIFF:
-                suffix = ".tiff";
-                break;
-
-            case FileBase.LSM:
-                suffix = ".lsm";
-                break;
-
-            case FileBase.STK:
-                suffix = ".stk";
-                break;
-
-            case FileBase.AFNI:
-                suffix = ".afni";
-                break;
-
-            case FileBase.ICS:
-                suffix = ".ics";
-                break;
-
-            case FileBase.INTERFILE:
-                suffix = ".hdr";
-                break;
-
-            case FileBase.BIORAD:
-                suffix = ".pic";
-                break;
-
-            case FileBase.FITS:
-                suffix = ".fits";
-                break;
-
-            case FileBase.DM3:
-                suffix = ".dm3";
-                break;
-
-            case FileBase.TMG:
-                suffix = ".tmg";
-                break;
-
-            case FileBase.MRC:
-                suffix = ".mrc";
-                break;
-
-            case FileBase.OSM:
-                suffix = ".wu";
-                break;
-
-            case FileBase.MAGNETOM_VISION:
-                suffix = ".ima";
-                break;
-
-            case FileBase.GE_GENESIS:
-                suffix = ".sig";
-                break;
-
-            case FileBase.GE_SIGNA4X:
-                suffix = ".gedno";
-                break;
-
-            case FileBase.MICRO_CAT:
-                suffix = ".log";
-                break;
-
-            case FileBase.XML:
-                suffix = ".xml";
-                break;
-
-            case FileBase.COR:
-                suffix = ".info";
-                break;
-        }
-
-        return suffix;
-    }
-
-    /**
      * DOCUMENT ME!
      *
      * @param   fileName  Name of the image file to read.
@@ -1191,15 +1200,16 @@ public class FileIO {
         }
 
     }
-    
-    
+
+
     /**
      * DOCUMENT ME!
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
-     * @return  <code>FileBase.gedno</code> if the file is a GE MR Signa 4.x file, and <code>FileBase.UNDEFINED</code> otherwise
+     * @return  <code>FileBase.gedno</code> if the file is a GE MR Signa 4.x file, and <code>FileBase.UNDEFINED</code>
+     *          otherwise
      *
      * @throws  IOException  DOCUMENT ME!
      */
@@ -1211,7 +1221,7 @@ public class FileIO {
             if (imageFile != null) {
                 boolean isGESigna4X = imageFile.isGESigna4X();
 
-                
+
                 if (isGESigna4X) {
                     return FileBase.GE_SIGNA4X;
                 }
@@ -1231,15 +1241,16 @@ public class FileIO {
         }
 
     }
-    
-    
+
+
     /**
      * DOCUMENT ME!
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
-     * @return  <code>FileBase.sig</code> if the file is a GE MR Signa 5.x file, and <code>FileBase.UNDEFINED</code> otherwise
+     * @return  <code>FileBase.sig</code> if the file is a GE MR Signa 5.x file, and <code>FileBase.UNDEFINED</code>
+     *          otherwise
      *
      * @throws  IOException  DOCUMENT ME!
      */
@@ -1251,7 +1262,7 @@ public class FileIO {
             if (imageFile != null) {
                 boolean isGESigna5X = imageFile.isGESigna5X();
 
-                
+
                 if (isGESigna5X) {
                     return FileBase.GE_GENESIS;
                 }
@@ -1271,14 +1282,15 @@ public class FileIO {
         }
 
     }
-    
+
     /**
      * DOCUMENT ME!
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
-     * @return  <code>FileBase.ima</code> if the file is a Siemens Magnetom Vision type, and <code>FileBase.UNDEFINED</code> otherwise
+     * @return  <code>FileBase.ima</code> if the file is a Siemens Magnetom Vision type, and <code>
+     *          FileBase.UNDEFINED</code> otherwise
      *
      * @throws  IOException  DOCUMENT ME!
      */
@@ -1290,7 +1302,7 @@ public class FileIO {
             if (imageFile != null) {
                 boolean isMagnetomVision = imageFile.isMagnetomVision();
 
-                
+
                 if (isMagnetomVision) {
                     return FileBase.MAGNETOM_VISION;
                 }
@@ -1310,7 +1322,7 @@ public class FileIO {
         }
 
     }
-    
+
     /**
      * DOCUMENT ME!
      *
@@ -1329,7 +1341,7 @@ public class FileIO {
             if (imageFile != null) {
                 boolean isMinc = imageFile.isMinc();
 
-                
+
                 if (isMinc) {
                     return FileBase.MINC;
                 }
@@ -1350,7 +1362,7 @@ public class FileIO {
 
     }
 
-    
+
     /**
      * Refers to whether or not the FileIO will send alerts to the user about progress or errors.
      *
@@ -1402,7 +1414,7 @@ public class FileIO {
         if (fileList.length == 0) {
             return null;
         }
-//System.err.println("quiet: " + quiet);
+        // System.err.println("quiet: " + quiet);
         /*System.out.println("selectedFileName = " + selectedFileName);
          * for (int m = 0; m < fileList.length; m++) { System.out.println("Filelist = " + m + "  " + fileList[m]);}*/
 
@@ -1508,8 +1520,8 @@ public class FileIO {
                 seriesNoRef = "";
             }
 
-            createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
-          
+            createProgressBar(null, trim(selectedFileName) + getSuffixFrom(selectedFileName), FILE_READ);
+
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -1552,7 +1564,8 @@ public class FileIO {
             int[] rint = new int[nListImages]; // sorted image instance values.
             float[] zOrients = new float[nListImages]; // image orientation values as read in.
             float[] instanceNums = new float[nListImages]; // image instance numbers as read in.
-            //progressBar.setTitle("Reading headers");
+
+            // progressBar.setTitle("Reading headers");
 
             for (i = 0, nImages = 0; i < nListImages; i++) {
                 FileInfoDicom fileInfoTemp;
@@ -1642,7 +1655,7 @@ public class FileIO {
                     }
 
                 } catch (IOException error) {
-                    
+
                     if (!quiet) {
                         MipavUtil.displayError("FileIO: " + error);
                         Preferences.debug("FileIO: " + error + "\n");
@@ -1950,7 +1963,8 @@ public class FileIO {
         extents[1] = myFileInfo.getExtents()[1];
 
         myFileInfo.setExtents(extents);
-        image = new ModelImage(((FileInfoDicom) myFileInfo).displayType, extents, studyIDMaster.trim() + "_" + seriesNoRef.trim());
+        image = new ModelImage(((FileInfoDicom) myFileInfo).displayType, extents,
+                               studyIDMaster.trim() + "_" + seriesNoRef.trim());
 
         if (((FileInfoDicom) (myFileInfo)).isMultiFrame() == true) {
             image.setFileInfo(myFileInfo, 0);
@@ -1968,8 +1982,8 @@ public class FileIO {
         boolean multiframe = ((FileInfoDicom) (myFileInfo)).isMultiFrame();
 
         // loop through files, place them in image array
-       // pInterface.setTitle(UI.getProgressBarPrefix() + "image " + fileList[0]);
-        //myFileInfo.finalize();
+        // pInterface.setTitle(UI.getProgressBarPrefix() + "image " + fileList[0]);
+        // myFileInfo.finalize();
         pBarVal = 0;
 
         for (i = 0; i < nImages; i++) {
@@ -1993,7 +2007,7 @@ public class FileIO {
             try {
 
                 if (i == (nImages - 1)) {
-                	progressBar.updateValue(100, false);
+                    progressBar.updateValue(100, false);
                 } else if (((float) i / (nImages - 1) * 100) > pBarVal) {
                     pBarVal += 10;
                     progressBar.updateValue(10 + Math.round((float) i / (nImages - 1) * 90), false);
@@ -2027,25 +2041,20 @@ public class FileIO {
                 origin[2] = ((FileInfoDicom) myFileInfo).zLocation;
 
 
-                //TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
+                // TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
                 // Finally convert the point to axial millimeter DICOM space.
-                //dicomMatrix.transform(coord, tCoord);
+                // dicomMatrix.transform(coord, tCoord);
 
                 for (int j = 0; j < 3; j++) {
 
-                    if (orient[j] == FileInfoBase.ORI_L2R_TYPE ||
-                        orient[j] == FileInfoBase.ORI_R2L_TYPE){
+                    if ((orient[j] == FileInfoBase.ORI_L2R_TYPE) || (orient[j] == FileInfoBase.ORI_R2L_TYPE)) {
                         newOriginPt[j] = origin[0];
 
-                    }
-                    else if (orient[j] == FileInfoBase.ORI_P2A_TYPE ||
-                            orient[j] == FileInfoBase.ORI_A2P_TYPE){
-                            newOriginPt[j] = origin[1];
+                    } else if ((orient[j] == FileInfoBase.ORI_P2A_TYPE) || (orient[j] == FileInfoBase.ORI_A2P_TYPE)) {
+                        newOriginPt[j] = origin[1];
 
-                    }
-                    else if (orient[j] == FileInfoBase.ORI_S2I_TYPE ||
-                            orient[j] == FileInfoBase.ORI_I2S_TYPE){
-                            newOriginPt[j] = origin[2];
+                    } else if ((orient[j] == FileInfoBase.ORI_S2I_TYPE) || (orient[j] == FileInfoBase.ORI_I2S_TYPE)) {
+                        newOriginPt[j] = origin[2];
 
                     }
                 }
@@ -2059,6 +2068,7 @@ public class FileIO {
                     image.importData(location * length, bufferShort, false);
                 }
             } catch (IOException error) {
+
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
                     Preferences.debug("FileIO: " + error + "\n");
@@ -2126,20 +2136,24 @@ public class FileIO {
             if ((((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050") != null) ||
                     (((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088") != null)) {
 
-                if ((String) ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
-                        .getValue(true) != null) {
+                if ((String)
+                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050")).getValue(true) !=
+                        null) {
                     sliceThickness = Float.parseFloat((String)
-                                                          ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0))
-                                                               .getTagsList().get("0018,0050")).getValue(true));
+                                                      ((FileDicomTag)
+                                                           ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
+                                                          .getValue(true));
                 }
 
                 // 0018,0088 = Spacing Between Slices
                 // 0018,0050 = Slice Thickness
-                if ((String) ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
-                        .getValue(true) != null) {
+                if ((String)
+                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088")).getValue(true) !=
+                        null) {
                     sliceSpacing = Float.parseFloat((String)
-                                                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0))
-                                                             .getTagsList().get("0018,0088")).getValue(true));
+                                                    ((FileDicomTag)
+                                                         ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
+                                                        .getValue(true));
                 }
 
                 // System.err.println("Slice Spacing: " + sliceSpacing);
@@ -2206,31 +2220,38 @@ public class FileIO {
             if ((((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041") != null) &&
                     (sliceThickness == -1)) {
 
-                if ((String) ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041"))
-                        .getValue(true) != null) {
+                if ((String)
+                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041")).getValue(true) !=
+                        null) {
 
                     sliceDifference = Float.parseFloat((String)
-                                                           ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(1))
-                                                                .getTagsList().get("0020,1041")).getValue(true)) -
+                                                       ((FileDicomTag)
+                                                            ((FileInfoDicom) image.getFileInfo(1)).getTagsList().get("0020,1041"))
+                                                           .getValue(true)) -
                                       Float.parseFloat((String)
-                                                           ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0))
-                                                                .getTagsList().get("0020,1041")).getValue(true));
+                                                       ((FileDicomTag)
+                                                            ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041"))
+                                                           .getValue(true));
 
-                    //System.err.println("Slice difference: " + sliceDifference);
+                    // System.err.println("Slice difference: " + sliceDifference);
 
                     if ((Math.abs(sliceDifference) < sliceThickness) && (Math.abs(sliceDifference) > 0.001)) {
                         ((FileInfoDicom) image.getFileInfo(0)).getResolutions()[2] = sliceDifference;
 
                         for (int m = 0; m < (nImages - 1); m++) {
-                            ((FileInfoDicom) image.getFileInfo(m)).getResolutions()[2] =
-                                Float.parseFloat((String)((FileDicomTag)((FileInfoDicom)image.getFileInfo(m + 1)).getTagsList().get("0020,1041"))
-                                                                                                                  .getValue(true)) -
+                            ((FileInfoDicom) image.getFileInfo(m)).getResolutions()[2] = Float.parseFloat((String)
+                                                                                                          ((FileDicomTag)
+                                                                                                               ((FileInfoDicom)
+                                                                                                                    image.getFileInfo(m +
+                                                                                                                                      1))
+                                                                                                                   .getTagsList().get("0020,1041"))
+                                                                                                              .getValue(true)) -
                                                                                          Float.parseFloat((String)
-                                                                                                              ((FileDicomTag)
-                                                                                                                   ((FileInfoDicom)
-                                                                                                                        image.getFileInfo(m))
-                                                                                                                       .getTagsList().get("0020,1041"))
-                                                                                                                  .getValue(true));
+                                                                                                          ((FileDicomTag)
+                                                                                                               ((FileInfoDicom)
+                                                                                                                    image.getFileInfo(m))
+                                                                                                                   .getTagsList().get("0020,1041"))
+                                                                                                              .getValue(true));
                         }
 
                         if (nImages > 2) {
@@ -2256,8 +2277,9 @@ public class FileIO {
         }
 
         if (progressBar != null) {
-        	progressBar.dispose();
+            progressBar.dispose();
         }
+
         imageFile = null;
         matrix = null;
 
@@ -2406,23 +2428,23 @@ public class FileIO {
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isDicom(fileName, fileDir);
                 }
-                
+
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isGESigna4X(fileName, fileDir);
                 }
-                
+
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isGESigna5X(fileName, fileDir);
                 }
-                
+
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isMagnetomVision(fileName, fileDir);
                 }
-                
+
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isMinc(fileName, fileDir);
                 }
-                
+
                 if (fileType == FileBase.UNDEFINED) { // if image type not defined by extension, popup
                     fileType = getFileType(); // dialog to get user to define image type
                 }
@@ -2530,8 +2552,8 @@ public class FileIO {
 
                 case FileBase.DICOM:
                     if (!multiFile) {
-                    	this.fileDir = fileDir;
-                    	image = readDicom(fileName, new String[]{fileName.trim()}, false);
+                        this.fileDir = fileDir;
+                        image = readDicom(fileName, new String[] { fileName.trim() }, false);
                     } else {
                         image = readDicom(fileName, getFileList(fileDir, fileName), true);
                     }
@@ -2619,9 +2641,11 @@ public class FileIO {
             }
 
             if (image != null) {
-            	if (progressBar != null) {
-            		progressBar.dispose();
-            	}
+
+                if (progressBar != null) {
+                    progressBar.dispose();
+                }
+
                 if ((image.getType() == ModelStorageBase.COMPLEX) || (image.getType() == ModelStorageBase.DCOMPLEX)) {
                     image.calcMinMaxMag(true);
                 } else {
@@ -2630,9 +2654,11 @@ public class FileIO {
                 }
             }
         } catch (Exception error) {
-        	if (progressBar != null) {
-        		progressBar.dispose();
-        	}
+
+            if (progressBar != null) {
+                progressBar.dispose();
+            }
+
             error.printStackTrace();
 
             if (!quiet) {
@@ -2717,7 +2743,7 @@ public class FileIO {
         }
 
         createProgressBar(null, "files", FILE_READ);
-       
+
         // allocate memory for the result ModelImage.
         int[] extents = { imageExtents[0], imageExtents[1], fileList.length / numChannels };
 
@@ -2771,7 +2797,7 @@ public class FileIO {
 
         modelImageResult.calcMinMax();
 
-        
+
         progressBar = null;
         resultImageBuffer = null;
         oneSliceBuffer = null;
@@ -2890,9 +2916,11 @@ public class FileIO {
 
             return null;
         } finally {
+
             if (progressBar != null) {
-            	progressBar.dispose();
+                progressBar.dispose();
             }
+
             modelImageTemp.disposeLocal();
             modelImageTemp = null;
             oneSliceBuffer = null;
@@ -2902,14 +2930,15 @@ public class FileIO {
     /**
      * Reads the XCEDE schema file.
      *
-     * @param  fileName   the file name of the XCEDE file.
-     * @param  directory  the directory of the XCEDE file.
+     * @param   fileName   the file name of the XCEDE file.
+     * @param   directory  the directory of the XCEDE file.
      *
-     * @return the root element of the XCEDE schema.
+     * @return  the root element of the XCEDE schema.
      */
-    public XCEDEElement readXCEDE(String fileName, String directory){
+    public XCEDEElement readXCEDE(String fileName, String directory) {
         FileXCEDEXML xcedeFile;
         xcedeFile = new FileXCEDEXML(UI, fileName, directory);
+
         return xcedeFile.parse();
     }
 
@@ -2972,7 +3001,7 @@ public class FileIO {
      * @param  pBar  ProgressBarInterface
      */
     public void setPBar(ProgressBarInterface pBar) {
-       // this.pInterface = pBar;
+        // this.pInterface = pBar;
     }
 
     /**
@@ -3071,119 +3100,125 @@ public class FileIO {
         }
 
         boolean success = false;
-        
+
         switch (fileType) {
 
             case FileBase.RAW:
-            	success = writeRaw(image, options);
+                success = writeRaw(image, options);
                 break;
 
             case FileBase.ANALYZE:
-            	success = writeAnalyze(image, options);
-            	if (success) {
-            		if (image.getFileInfo(0) instanceof FileInfoImageXML) {
-            			FileInfoAnalyze[] info = new FileInfoAnalyze[image.getFileInfo().length];
-            			
-            			for (int i = 0; i < info.length; i++) {
-            				info[i] = new FileInfoAnalyze(image.getFileInfo(0).getFileName(),
-            						image.getFileInfo(0).getFileDirectory(), FileBase.ANALYZE);
-            			}
-            			
-            			FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
-            			image.setFileInfo(info);
-            		}
-            	}
+                success = writeAnalyze(image, options);
+                if (success) {
+
+                    if (image.getFileInfo(0) instanceof FileInfoImageXML) {
+                        FileInfoAnalyze[] info = new FileInfoAnalyze[image.getFileInfo().length];
+
+                        for (int i = 0; i < info.length; i++) {
+                            info[i] = new FileInfoAnalyze(image.getFileInfo(0).getFileName(),
+                                                          image.getFileInfo(0).getFileDirectory(), FileBase.ANALYZE);
+                        }
+
+                        FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
+                        image.setFileInfo(info);
+                    }
+                }
+
                 break;
 
             case FileBase.NIFTI:
-            	success = writeNIFTI(image, options);
-            	if (success) {
-                if (image.getFileInfo(0) instanceof FileInfoImageXML) {
-                    FileInfoNIFTI[] info = new FileInfoNIFTI[image.getFileInfo().length];
+                success = writeNIFTI(image, options);
+                if (success) {
 
-                    for (int i = 0; i < info.length; i++) {
-                        info[i] = new FileInfoNIFTI(image.getFileInfo(0).getFileName(),
-                                                    image.getFileInfo(0).getFileDirectory(), FileBase.NIFTI);
+                    if (image.getFileInfo(0) instanceof FileInfoImageXML) {
+                        FileInfoNIFTI[] info = new FileInfoNIFTI[image.getFileInfo().length];
+
+                        for (int i = 0; i < info.length; i++) {
+                            info[i] = new FileInfoNIFTI(image.getFileInfo(0).getFileName(),
+                                                        image.getFileInfo(0).getFileDirectory(), FileBase.NIFTI);
+                        }
+
+                        FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
+                        image.setFileInfo(info);
                     }
-
-                    FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
-                    image.setFileInfo(info);
                 }
-            	}
+
                 break;
 
             case FileBase.SPM:
-            	success =  writeSPM(image, options);
-            	if (success) {
-                if (image.getFileInfo(0) instanceof FileInfoImageXML) {
-                    FileInfoSPM[] info = new FileInfoSPM[image.getFileInfo().length];
+                success = writeSPM(image, options);
+                if (success) {
 
-                    for (int i = 0; i < info.length; i++) {
-                        info[i] = new FileInfoSPM(image.getFileInfo(0).getFileName(),
-                                                  image.getFileInfo(0).getFileDirectory(), FileBase.SPM);
+                    if (image.getFileInfo(0) instanceof FileInfoImageXML) {
+                        FileInfoSPM[] info = new FileInfoSPM[image.getFileInfo().length];
+
+                        for (int i = 0; i < info.length; i++) {
+                            info[i] = new FileInfoSPM(image.getFileInfo(0).getFileName(),
+                                                      image.getFileInfo(0).getFileDirectory(), FileBase.SPM);
+                        }
+
+                        FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
+                        image.setFileInfo(info);
                     }
-
-                    FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
-                    image.setFileInfo(info);
                 }
-            	}
+
                 break;
 
             case FileBase.TIFF:
-            	success = writeTiff(image, options);
+                success = writeTiff(image, options);
                 break;
 
             case FileBase.MGH:
-            	success = writeMGH(image, options);
+                success = writeMGH(image, options);
                 break;
 
             case FileBase.DICOM:
-            	success = writeDicom(image, options);
+                success = writeDicom(image, options);
                 break;
 
             case FileBase.JIMI:
-            	success = writeJimi(image, options);
+                success = writeJimi(image, options);
                 break;
 
             case FileBase.MINC:
-            	success = writeMinc(image, options);
+                success = writeMinc(image, options);
                 break;
 
             case FileBase.INTERFILE:
-            	success = writeInterfile(image, options);
+                success = writeInterfile(image, options);
                 break;
 
             case FileBase.FITS:
-            	success = writeFits(image, options);
+                success = writeFits(image, options);
                 break;
 
             case FileBase.MRC:
-            	success = writeMRC(image, options);
+                success = writeMRC(image, options);
                 break;
 
             case FileBase.OSM:
-            	success = writeOSM(image, options);
+                success = writeOSM(image, options);
                 break;
 
 
             case FileBase.COR:
-            	success = writeCOR(image, options);
+                success = writeCOR(image, options);
                 break;
 
             case FileBase.AFNI:
-            	success = writeAfni(image, options);
+                success = writeAfni(image, options);
                 break;
 
             case FileBase.ICS:
-            	success = writeICS(image, options);
+                success = writeICS(image, options);
                 break;
 
             case FileBase.XML:
-            	success = writeXML(image, options);
+                success = writeXML(image, options);
                 break;
 
             case FileBase.AVI:
-            	success = writeAvi(image, options);
+                success = writeAvi(image, options);
                 break;
 
             default:
@@ -3195,24 +3230,29 @@ public class FileIO {
         }
 
         if (progressBar != null) {
-        	progressBar.dispose();
+            progressBar.dispose();
         }
-        
-        
+
+
         if (success) {
-        	if (options.isMultiFile()) {
-        		String fName = options.getFileName();
-        		String start = Integer.toString(options.getStartNumber());
-        		int numDig = options.getDigitNumber();
-        		for (int i = 1; i < numDig; i++) {
-        			start = "0" + start;
-        		}
-        		fName = fName.substring(0, fName.indexOf(".")) + start + fName.substring(fName.indexOf("."), fName.length());
-        		Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
-        	} else {
-        		Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
-        	}
-            //updates menubar for each image
+
+            if (options.isMultiFile()) {
+                String fName = options.getFileName();
+                String start = Integer.toString(options.getStartNumber());
+                int numDig = options.getDigitNumber();
+
+                for (int i = 1; i < numDig; i++) {
+                    start = "0" + start;
+                }
+
+                fName = fName.substring(0, fName.indexOf(".")) + start +
+                        fName.substring(fName.indexOf("."), fName.length());
+                Preferences.setLastImage(options.getFileDirectory() + fName, true, image.getNDims());
+            } else {
+                Preferences.setLastImage(options.getFileDirectory() + options.getFileName(), false, image.getNDims());
+            }
+
+            // updates menubar for each image
             Vector imageFrames = UI.getImageFrameVector();
 
             if (imageFrames.size() < 1) {
@@ -3222,6 +3262,7 @@ public class FileIO {
                 UI.buildMenu();
 
                 for (int i = 0; i < imageFrames.size(); i++) {
+
                     if (imageFrames.elementAt(i) instanceof ViewJFrameImage) {
                         ((ViewJFrameImage) (imageFrames.elementAt(i))).updateMenubar();
                     }
@@ -3229,13 +3270,16 @@ public class FileIO {
 
                 UI.getActiveImageFrame().setControls();
             }
-        	ScriptableActionInterface action;
-        	if (options.isSaveAs()) {
-        		action = new ActionSaveImageAs(image, options);
-        	} else {
-        		action = new ActionSaveImage(image, options);
-        	}
-        	ScriptRecorder.getReference().addLine(action);
+
+            ScriptableActionInterface action;
+
+            if (options.isSaveAs()) {
+                action = new ActionSaveImageAs(image, options);
+            } else {
+                action = new ActionSaveImage(image, options);
+            }
+
+            ScriptRecorder.getReference().addLine(action);
         }
     }
 
@@ -3521,26 +3565,7 @@ public class FileIO {
 
     }
 
-    /**
-     * Creates the progress bar and links (if not null) the progress bar to a FileBase for reading/writing
-     * if the progress bar should not be updated within the FileBase's readImage/writeImage,
-     * pass in null to the fBase and update within FileIO's read[ImageType] or write[ImageType] methods
-     * @param fBase the FileBase that will add the Progress Bar as a listener (for fireProgressStateChanged())
-     * @param fName the filename (will be displayed in the title and part of the message)
-     * @param message this message should FILE_READ, FILE_OPEN
-     */
-    private void createProgressBar(FileBase fBase, String fName, String message) {
-    	//System.err.println("title is: " + fName + ", message is: " + message);
-    	progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
-        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
-        //System.err.println("quiet: " + quiet + " pbar vis: " + progressBar.isVisible());
-        progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
-        if (fBase != null) {
-        	fBase.addProgressChangeListener(progressBar);
-        }	
-	}
 
-    
     /**
      * DOCUMENT ME!
      *
@@ -3679,6 +3704,29 @@ public class FileIO {
     }
 
     /**
+     * Creates the progress bar and links (if not null) the progress bar to a FileBase for reading/writing if the
+     * progress bar should not be updated within the FileBase's readImage/writeImage, pass in null to the fBase and
+     * update within FileIO's read[ImageType] or write[ImageType] methods.
+     *
+     * @param  fBase    the FileBase that will add the Progress Bar as a listener (for fireProgressStateChanged())
+     * @param  fName    the filename (will be displayed in the title and part of the message)
+     * @param  message  this message should FILE_READ, FILE_OPEN
+     */
+    private void createProgressBar(FileBase fBase, String fName, String message) {
+
+        // System.err.println("title is: " + fName + ", message is: " + message);
+        progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
+        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
+
+        // System.err.println("quiet: " + quiet + " pbar vis: " + progressBar.isVisible());
+        progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
+
+        if (fBase != null) {
+            fBase.addProgressChangeListener(progressBar);
+        }
+    }
+
+    /**
      * Reads an AFNI file by calling the read method of the file.
      *
      * @param   fileName  Name of the image file to read.
@@ -3808,7 +3856,7 @@ public class FileIO {
         ModelImage image = null;
         FileAnalyze imageFile;
         FileInfoBase fileInfo;
-        
+
         int length = 0;
         float[] buffer;
         String[] fileList;
@@ -3850,7 +3898,7 @@ public class FileIO {
         }
 
         createProgressBar(null, fileName, FILE_READ);
-        
+
         // if one of the images has the wrong extents, the following must be changed.
         // (ei., too many images!)
         // for simplicity of setup, read in the first file hdr
@@ -3904,7 +3952,8 @@ public class FileIO {
         for (i = 0; i < nImages; i++) {
 
             try {
-                //progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
                 imageFile = new FileAnalyze(fileList[i], fileDir);
 
@@ -3917,6 +3966,7 @@ public class FileIO {
                 fileInfo = ((FileAnalyze) imageFile).getFileInfo();
 
                 if (extents.length != fileInfo.getExtents().length) {
+
                     if (!quiet) {
                         MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
                     }
@@ -3928,6 +3978,7 @@ public class FileIO {
 
                         case 2:
                             if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1])) {
+
                                 if (!quiet) {
                                     MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
                                 }
@@ -3940,6 +3991,7 @@ public class FileIO {
                         case 3:
                             if ((extents[0] != fileInfo.getExtents()[0]) || (extents[1] != fileInfo.getExtents()[1]) ||
                                     (extents[2] != fileInfo.getExtents()[2])) {
+
                                 if (!quiet) {
                                     MipavUtil.displayError("Inconsistent image file found.  This File will be skipped.");
                                 }
@@ -3970,16 +4022,18 @@ public class FileIO {
 
                 fileInfo.setExtents(imgExtents); // set image extents to proper value!
                 fileInfo.setResolutions(imgResolutions);
+
                 if (nImages > 1) {
                     fileInfo.setMultiFile(true);
                 }
+
                 ((FileAnalyze) imageFile).readImage(buffer);
                 image.importData(imageCount * length, buffer, false);
                 image.setFileInfo(fileInfo, imageCount);
                 imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
 
             } catch (IOException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -3994,7 +4048,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
@@ -4010,7 +4064,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -4058,16 +4112,16 @@ public class FileIO {
                 return null;
             }
 
-            FileInfoBase [] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
-            
+            FileInfoBase[] fileInfoArrCopy = new FileInfoBase[imgExtents[imgExtents.length - 1]];
+
             for (i = 0; i < imgExtents[imgExtents.length - 1]; i++) { // copy all image info
                 fileInfoArr[i].setExtents(imgExtents); // update extents
                 fileInfoArrCopy[i] = fileInfoArr[i];
             }
+
             image.setFileInfo(fileInfoArrCopy);
         }
 
-        
 
         return image;
 
@@ -4093,8 +4147,8 @@ public class FileIO {
         try {
             imageFile = new FileAvi(UI, fileName, fileDir);
             imageFile.setReadQT(readQT);
-           // imageFile.setProgressBar(pInterface);
-            
+            // imageFile.setProgressBar(pInterface);
+
             createProgressBar(imageFile, fileName, FILE_READ);
             image = imageFile.readImage(one);
 
@@ -4382,7 +4436,7 @@ public class FileIO {
         String[] fileList = null;
         FileCOR imageFile = null;
         ModelImage image = null;
-        
+
         String origName = null;
         boolean tryAgain = false;
         int nImages;
@@ -4470,7 +4524,7 @@ public class FileIO {
 
             // Progress bar shows what % of images have been read.
             createProgressBar(null, fileName, FILE_READ);
-            
+
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -4492,7 +4546,7 @@ public class FileIO {
         try {
             imageFile = new FileCOR(UI, fileList[0], fileDir);
         } catch (IOException error) {
-            
+
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -4513,7 +4567,8 @@ public class FileIO {
         for (i = 0; i < nImages; i++) {
 
             try {
-                //progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
                 ((FileCOR) imageFile).setFileName(fileList[i]);
                 ((FileCOR) imageFile).readImage(length);
@@ -4525,7 +4580,7 @@ public class FileIO {
                     image.importData(i * length, ((FileCOR) imageFile).getImageBuffer(), false);
                 }
             } catch (IOException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -4540,7 +4595,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
@@ -4556,7 +4611,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
@@ -4574,7 +4629,6 @@ public class FileIO {
             }
         }
 
-        
 
         return image;
 
@@ -4688,240 +4742,6 @@ public class FileIO {
     }
 
     /**
-     * Reads in a GE Signa 4x type file.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  The image that was read in, or null if failure.
-     */
-    private ModelImage readGESigna4X(String fileName, String fileDir) {
-
-        ModelImage image = null;
-        FileGESigna4X imageFile;
-        FileInfoBase myFileInfo0 = null;
-        FileInfoBase myFileInfo;
-        String[] fileList;
-        float[] buffer;
-        int[] extents;
-        int length = 0;
-        int i;
-        int width, height;
-        int nImages;
-        int imageSize;
-        int[] orient = { 0, 0, 0 };
-        float slice0Pos = 0.0f;
-        float slice1Pos = 0.0f;
-
-        try {
-
-            fileList = getFileList(fileDir, fileName);
-            imageFile = new FileGESigna4X(fileName, fileDir);
-
-            imageFile.setFileName(fileList[0]);
-            imageSize = imageFile.readImageFileData();
-
-            if (imageSize == -1) {
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
-                }
-
-                return null;
-            }
-
-            if (imageSize == -2) {
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: Not a Signa 4X file.");
-                }
-
-                return null;
-            }
-
-            if (imageSize == 0) {
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: Image length.");
-                }
-
-                return null;
-            }
-                        
-            width = imageFile.getWidth();
-            height = imageFile.getHeight();
-            length = width * height;
-            buffer = new float[length];
-
-            if (fileList.length == 1) {
-                extents = new int[2];
-                extents[0] = width;
-                extents[1] = height;
-            } else {
-                extents = new int[3];
-                extents[0] = width;
-                extents[1] = height;
-                extents[2] = fileList.length;
-            }
-
-            image = new ModelImage(ModelImage.USHORT, extents, "GE", UI);
-        } catch (OutOfMemoryError error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            return null;
-        } catch (IOException error) {
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-           
-            return null;
-        }
-
-
-        nImages = fileList.length;
-
-        createProgressBar(null, fileName, FILE_READ);
-        
-        // loop through files, place them in image array
-        for (i = 0; i < nImages; i++) {
-
-            try {
-              //  progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
-                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
-
-                if (fileList[i] != null) {
-                    imageFile.setFileName(fileList[i]);
-                    imageFile.readImageFileData();
-                    imageFile.readImage(buffer);
-
-                    myFileInfo = imageFile.getFileInfo(); // Needed to set index
-                    if (i == 0) {
-                        myFileInfo0 = imageFile.getFileInfo();
-                        orient = myFileInfo.getAxisOrientation();
-
-                        switch (myFileInfo.getImageOrientation()) {
-
-                            case FileInfoBase.AXIAL:
-                                slice0Pos = imageFile.getImgTLHC_S();
-                                break;
-
-                            case FileInfoBase.CORONAL:
-                                slice0Pos = imageFile.getImgTLHC_A();
-                                break;
-
-                            case FileInfoBase.SAGITTAL:
-                                slice0Pos = imageFile.getImgTLHC_R();
-                                break;
-                        }
-                    } // if (i == 0)
-                    else if (i == 1) {
-                        orient = myFileInfo.getAxisOrientation();
-
-                        switch (myFileInfo.getImageOrientation()) {
-
-                            case FileInfoBase.AXIAL:
-                                slice1Pos = imageFile.getImgTLHC_S();
-                                if (slice1Pos > slice0Pos) {
-                                    orient[2] = FileInfoBase.ORI_I2S_TYPE;
-                                } else {
-                                    orient[2] = FileInfoBase.ORI_S2I_TYPE;
-                                }
-
-                                break;
-
-                            case FileInfoBase.CORONAL:
-                                slice1Pos = imageFile.getImgTLHC_A();
-                                if (slice1Pos > slice0Pos) {
-                                    orient[2] = FileInfoBase.ORI_P2A_TYPE;
-                                } else {
-                                    orient[2] = FileInfoBase.ORI_A2P_TYPE;
-                                }
-
-                                break;
-
-                            case FileInfoBase.SAGITTAL:
-                                slice1Pos = imageFile.getImgTLHC_R();
-                                if (slice1Pos > slice0Pos) {
-                                    orient[2] = FileInfoBase.ORI_L2R_TYPE;
-                                } else {
-                                    orient[2] = FileInfoBase.ORI_R2L_TYPE;
-                                }
-
-                                break;
-                        } // switch (myFileInfo.getImageOrientation())
-
-
-                        if (myFileInfo0 != null) {
-                            image.setFileInfo(myFileInfo0, 0);
-                            myFileInfo0.setAxisOrientation(orient);
-                        }
-                    } // else if (i == 1)
-
-                    if (i != 0) {
-                        myFileInfo.setAxisOrientation(orient);
-                    }
-
-                    myFileInfo.setExtents(extents);
-                    myFileInfo.setOrigin(((FileInfoGESigna4X) (myFileInfo)).getOriginAtSlice(imageFile.getImageNumber() -
-                                                                                             1));
-
-                    image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
-                    image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
-                } // if (fileList[i] != null)
-            } // try
-            catch (IOException error) {
-                
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: " + error);
-                }
-
-                if (image != null) {
-                    image.disposeLocal();
-                    image = null;
-                }
-
-                System.gc();
-
-                return null;
-            } catch (OutOfMemoryError error) {
-                
-
-                if (!quiet) {
-                    MipavUtil.displayError("FileIO: " + error);
-                }
-
-                if (image != null) {
-
-                    image.disposeLocal();
-                    image = null;
-                }
-
-                System.gc();
-
-                return null;
-            }
-        } // for (i = 0; i < nImages; i++)
-
-        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
-
-        
-
-        return image;
-    }
-
-    /**
      * Reads in a GE Genesis 5x type file.
      *
      * @param   fileName  Name of the image file to read.
@@ -4983,7 +4803,7 @@ public class FileIO {
             }
 
             createProgressBar(null, fileName, FILE_READ);
-            
+
             width = imageFile.getWidth();
             height = imageFile.getHeight();
             length = width * height;
@@ -5014,9 +4834,7 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
-            if (progressBar != null) {
-                
-            }
+            if (progressBar != null) { }
 
             return null;
         } catch (IOException error) {
@@ -5025,9 +4843,7 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
-            if (progressBar != null) {
-                
-            }
+            if (progressBar != null) { }
 
             return null;
         }
@@ -5125,7 +4941,7 @@ public class FileIO {
                 } // if (fileList[i] != null)
             } // try
             catch (IOException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -5140,7 +4956,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -5160,7 +4976,240 @@ public class FileIO {
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
-        
+
+        return image;
+    }
+
+    /**
+     * Reads in a GE Signa 4x type file.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     *
+     * @return  The image that was read in, or null if failure.
+     */
+    private ModelImage readGESigna4X(String fileName, String fileDir) {
+
+        ModelImage image = null;
+        FileGESigna4X imageFile;
+        FileInfoBase myFileInfo0 = null;
+        FileInfoBase myFileInfo;
+        String[] fileList;
+        float[] buffer;
+        int[] extents;
+        int length = 0;
+        int i;
+        int width, height;
+        int nImages;
+        int imageSize;
+        int[] orient = { 0, 0, 0 };
+        float slice0Pos = 0.0f;
+        float slice1Pos = 0.0f;
+
+        try {
+
+            fileList = getFileList(fileDir, fileName);
+            imageFile = new FileGESigna4X(fileName, fileDir);
+
+            imageFile.setFileName(fileList[0]);
+            imageSize = imageFile.readImageFileData();
+
+            if (imageSize == -1) {
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
+                }
+
+                return null;
+            }
+
+            if (imageSize == -2) {
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: Not a Signa 4X file.");
+                }
+
+                return null;
+            }
+
+            if (imageSize == 0) {
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: Image length.");
+                }
+
+                return null;
+            }
+
+            width = imageFile.getWidth();
+            height = imageFile.getHeight();
+            length = width * height;
+            buffer = new float[length];
+
+            if (fileList.length == 1) {
+                extents = new int[2];
+                extents[0] = width;
+                extents[1] = height;
+            } else {
+                extents = new int[3];
+                extents[0] = width;
+                extents[1] = height;
+                extents[2] = fileList.length;
+            }
+
+            image = new ModelImage(ModelImage.USHORT, extents, "GE", UI);
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        } catch (IOException error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        }
+
+        nImages = fileList.length;
+
+        createProgressBar(null, fileName, FILE_READ);
+
+        // loop through files, place them in image array
+        for (i = 0; i < nImages; i++) {
+
+            try {
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
+
+                if (fileList[i] != null) {
+                    imageFile.setFileName(fileList[i]);
+                    imageFile.readImageFileData();
+                    imageFile.readImage(buffer);
+
+                    myFileInfo = imageFile.getFileInfo(); // Needed to set index
+
+                    if (i == 0) {
+                        myFileInfo0 = imageFile.getFileInfo();
+                        orient = myFileInfo.getAxisOrientation();
+
+                        switch (myFileInfo.getImageOrientation()) {
+
+                            case FileInfoBase.AXIAL:
+                                slice0Pos = imageFile.getImgTLHC_S();
+                                break;
+
+                            case FileInfoBase.CORONAL:
+                                slice0Pos = imageFile.getImgTLHC_A();
+                                break;
+
+                            case FileInfoBase.SAGITTAL:
+                                slice0Pos = imageFile.getImgTLHC_R();
+                                break;
+                        }
+                    } // if (i == 0)
+                    else if (i == 1) {
+                        orient = myFileInfo.getAxisOrientation();
+
+                        switch (myFileInfo.getImageOrientation()) {
+
+                            case FileInfoBase.AXIAL:
+                                slice1Pos = imageFile.getImgTLHC_S();
+                                if (slice1Pos > slice0Pos) {
+                                    orient[2] = FileInfoBase.ORI_I2S_TYPE;
+                                } else {
+                                    orient[2] = FileInfoBase.ORI_S2I_TYPE;
+                                }
+
+                                break;
+
+                            case FileInfoBase.CORONAL:
+                                slice1Pos = imageFile.getImgTLHC_A();
+                                if (slice1Pos > slice0Pos) {
+                                    orient[2] = FileInfoBase.ORI_P2A_TYPE;
+                                } else {
+                                    orient[2] = FileInfoBase.ORI_A2P_TYPE;
+                                }
+
+                                break;
+
+                            case FileInfoBase.SAGITTAL:
+                                slice1Pos = imageFile.getImgTLHC_R();
+                                if (slice1Pos > slice0Pos) {
+                                    orient[2] = FileInfoBase.ORI_L2R_TYPE;
+                                } else {
+                                    orient[2] = FileInfoBase.ORI_R2L_TYPE;
+                                }
+
+                                break;
+                        } // switch (myFileInfo.getImageOrientation())
+
+
+                        if (myFileInfo0 != null) {
+                            image.setFileInfo(myFileInfo0, 0);
+                            myFileInfo0.setAxisOrientation(orient);
+                        }
+                    } // else if (i == 1)
+
+                    if (i != 0) {
+                        myFileInfo.setAxisOrientation(orient);
+                    }
+
+                    myFileInfo.setExtents(extents);
+                    myFileInfo.setOrigin(((FileInfoGESigna4X) (myFileInfo)).getOriginAtSlice(imageFile.getImageNumber() -
+                                                                                             1));
+
+                    image.setFileInfo(myFileInfo, imageFile.getImageNumber() - 1);
+                    image.importData((imageFile.getImageNumber() - 1) * length, buffer, false);
+                } // if (fileList[i] != null)
+            } // try
+            catch (IOException error) {
+
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                if (image != null) {
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            } catch (OutOfMemoryError error) {
+
+
+                if (!quiet) {
+                    MipavUtil.displayError("FileIO: " + error);
+                }
+
+                if (image != null) {
+
+                    image.disposeLocal();
+                    image = null;
+                }
+
+                System.gc();
+
+                return null;
+            }
+        } // for (i = 0; i < nImages; i++)
+
+        image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
+
 
         return image;
     }
@@ -5509,7 +5558,7 @@ public class FileIO {
         String[] fileList;
         FileLSM imageFile;
         ModelImage image = null;
-        
+
         int nImages;
         int secondAddress = 0;
         int singleDims;
@@ -5602,7 +5651,7 @@ public class FileIO {
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName(), UI);
 
             createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
-            
+
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -5624,7 +5673,7 @@ public class FileIO {
         try {
             imageFile = new FileLSM(UI, fileList[0], fileDir, secondAddress);
         } catch (IOException error) {
-            
+
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -5669,6 +5718,7 @@ public class FileIO {
                     if (nImages > 1) {
                         myFileInfo.setMultiFile(true);
                     }
+
                     image.setFileInfo(myFileInfo, i);
 
                     // float[] tmpBuffer = fileLSM.getImageBuffer();
@@ -5679,7 +5729,7 @@ public class FileIO {
                     }
 
                 } catch (IOException error) {
-                    
+
 
                     if (!quiet) {
                         MipavUtil.displayError("FileIO: " + error);
@@ -5694,7 +5744,7 @@ public class FileIO {
 
                     return null;
                 } catch (ArrayIndexOutOfBoundsException error) {
-                    
+
 
                     if (!quiet) {
                         MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
@@ -5710,7 +5760,7 @@ public class FileIO {
 
                     return null;
                 } catch (OutOfMemoryError error) {
-                    
+
 
                     if (!quiet) {
                         MipavUtil.displayError("Out of memory: " + error);
@@ -5752,9 +5802,11 @@ public class FileIO {
                     }
 
                     myFileInfo.setResolutions(resols);
+
                     if (nImages > 1) {
                         myFileInfo.setMultiFile(true);
                     }
+
                     for (j = 0; j < extents[2]; j++) {
                         image.setFileInfo(myFileInfo, (i * extents[2]) + j);
                         // float[] tmpBuffer = fileLSM.getImageBuffer();
@@ -5768,7 +5820,7 @@ public class FileIO {
                         }
                     } // for (j = 0; j < extents[2]; j++) {
                 } catch (IOException error) {
-                    
+
 
                     if (!quiet) {
                         MipavUtil.displayError("FileIO: " + error);
@@ -5783,7 +5835,7 @@ public class FileIO {
 
                     return null;
                 } catch (ArrayIndexOutOfBoundsException error) {
-                    
+
 
                     if (!quiet) {
                         MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
@@ -5799,7 +5851,7 @@ public class FileIO {
 
                     return null;
                 } catch (OutOfMemoryError error) {
-                    
+
 
                     if (!quiet) {
                         MipavUtil.displayError("Out of memory: " + error);
@@ -5861,7 +5913,6 @@ public class FileIO {
             }
         } // else for singleDims == 3
 
-        
 
         return image;
 
@@ -5883,7 +5934,7 @@ public class FileIO {
         ModelImage image = null;
         FileMagnetomVision imageFile;
         FileInfoBase myFileInfo;
-        
+
         String[] fileList;
         short[] buffer;
         int[] extents;
@@ -5903,9 +5954,9 @@ public class FileIO {
             imageFile = new FileMagnetomVision(fileName, fileDir);
 
             imageFile.setFileName(fileList[0]);
-            
+
             createProgressBar(null, fileName, FILE_READ);
-            
+
             myFileInfo = imageFile.readHeader();
             width = myFileInfo.getExtents()[0];
             height = myFileInfo.getExtents()[1];
@@ -5984,7 +6035,7 @@ public class FileIO {
 
             imageFile.close();
         } catch (IOException error) {
-            
+
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -5999,7 +6050,7 @@ public class FileIO {
 
             return null;
         } catch (OutOfMemoryError error) {
-            
+
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -6018,7 +6069,6 @@ public class FileIO {
 
         image.setImageName(imageFile.getFileInfo().getImageNameFromInfo());
 
-        
 
         return image;
     }
@@ -6167,6 +6217,63 @@ public class FileIO {
     }
 
     /**
+     * Reads a MGH file by calling the read method of the file. if so, calls that method instead.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
+     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
+     *                    from 3D dataset.
+     *
+     * @return  The image that was read in, or null if failure.
+     */
+    private ModelImage readMGH(String fileName, String fileDir, boolean one) {
+        ModelImage image = null;
+        boolean showProgressBar = (!quiet) ? true : false;
+        FileMGH imageFile;
+
+        if (!UI.isAppFrameVisible()) {
+            showProgressBar = false;
+        }
+
+        try {
+            imageFile = new FileMGH(UI, fileName, fileDir);
+            createProgressBar(imageFile, fileName, FILE_READ);
+            image = imageFile.readImage(one);
+        } catch (IOException error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        } catch (OutOfMemoryError error) {
+
+            if (image != null) {
+                image.disposeLocal();
+                image = null;
+            }
+
+            System.gc();
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return null;
+        }
+
+        return image;
+    }
+
+    /**
      * Reads an Micro Cat file by calling the read method of the file.
      *
      * @param   fileName  Name of the image file to read.
@@ -6284,6 +6391,7 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error + "\n", Preferences.DEBUG_FILEIO);
+
                 for (int i = 0; i < error.getStackTrace().length; i++) {
                     Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
                 }
@@ -6361,63 +6469,6 @@ public class FileIO {
     }
 
     /**
-     * Reads a MGH file by calling the read method of the file. if so, calls that method instead.
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     * @param   one       Indicates that only the named file should be read, as opposed to reading the matching files in
-     *                    the directory, as defined by the filetype. <code>true</code> if only want to read one image
-     *                    from 3D dataset.
-     *
-     * @return  The image that was read in, or null if failure.
-     */
-    private ModelImage readMGH(String fileName, String fileDir, boolean one) {
-        ModelImage image = null;
-        boolean showProgressBar = (!quiet) ? true : false;
-        FileMGH imageFile;
-
-        if (!UI.isAppFrameVisible()) {
-            showProgressBar = false;
-        }
-
-        try {
-            imageFile = new FileMGH(UI, fileName, fileDir);
-            createProgressBar(imageFile, fileName, FILE_READ);
-            image = imageFile.readImage(one);
-        } catch (IOException error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            return null;
-        } catch (OutOfMemoryError error) {
-
-            if (image != null) {
-                image.disposeLocal();
-                image = null;
-            }
-
-            System.gc();
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            return null;
-        }
-
-        return image;
-    }
-
-    /**
      * Reads a NIFTI file by calling the read method of the file. if so, calls that method instead.
      *
      * @param   fileName  Name of the image file to read.
@@ -6481,7 +6532,7 @@ public class FileIO {
         ModelImage image = null;
         FileNIFTI imageFile;
         FileInfoBase fileInfo;
-        
+
         int length = 0;
         float[] buffer;
         String[] fileList;
@@ -6520,8 +6571,9 @@ public class FileIO {
         if (nImages == 1) {
             return readNIFTI(fileName, fileDir, false);
         }
+
         createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
-        
+
         // System.out.println("nImage = " + i);
         // System.out.println(" filelist[0] = " + fileList[0]);
         // System.out.println(" filelist[1] = " + fileList[1]);
@@ -6647,6 +6699,7 @@ public class FileIO {
 
                 fileInfo.setExtents(imgExtents); // set image extents to proper value!
                 fileInfo.setResolutions(imgResolutions);
+
                 if (nImages > 1) {
                     fileInfo.setMultiFile(true);
                 }
@@ -6657,7 +6710,7 @@ public class FileIO {
                 imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
 
             } catch (IOException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -6672,7 +6725,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
@@ -6688,7 +6741,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -6745,7 +6798,6 @@ public class FileIO {
             }
         }
 
-        
 
         return image;
 
@@ -6809,31 +6861,31 @@ public class FileIO {
     }
 
     /**
-     * Reads in a single GE Signa 4x type file.
+     * Reads in a single GE Genesis type file.
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
      * @return  The image that was read in, or null if failure.
      */
-    private ModelImage readOneGESigna4X(String fileName, String fileDir) {
+    private ModelImage readOneGEGenesis5X(String fileName, String fileDir) {
         ModelImage image = null;
-        FileGESigna4X imageFile;
+        FileGESigna5X imageFile;
         FileInfoBase myFileInfo;
         float[] buffer;
         int[] extents;
         int width, height;
-        int imageSize;
+        int imageSize = 0;
 
         try {
-            imageFile = new FileGESigna4X(fileName, fileDir);
+            imageFile = new FileGESigna5X(fileName, fileDir);
             imageFile.setFileName(fileName);
             imageSize = imageFile.readImageFileData();
 
             if (imageSize == -1) {
 
                 if (!quiet) {
-                    MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
+                    MipavUtil.displayError("FileIO: Compression not supported for Signa 5X");
                 }
 
                 return null;
@@ -6842,7 +6894,7 @@ public class FileIO {
             if (imageSize == -2) {
 
                 if (!quiet) {
-                    MipavUtil.displayError("FileIO: Not a Signa 4X file.");
+                    MipavUtil.displayError("FileIO: Not a Signa 5X file.");
                 }
 
                 return null;
@@ -6899,31 +6951,31 @@ public class FileIO {
     }
 
     /**
-     * Reads in a single GE Genesis type file.
+     * Reads in a single GE Signa 4x type file.
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
      * @return  The image that was read in, or null if failure.
      */
-    private ModelImage readOneGEGenesis5X(String fileName, String fileDir) {
+    private ModelImage readOneGESigna4X(String fileName, String fileDir) {
         ModelImage image = null;
-        FileGESigna5X imageFile;
+        FileGESigna4X imageFile;
         FileInfoBase myFileInfo;
         float[] buffer;
         int[] extents;
         int width, height;
-        int imageSize = 0;
+        int imageSize;
 
         try {
-            imageFile = new FileGESigna5X(fileName, fileDir);
+            imageFile = new FileGESigna4X(fileName, fileDir);
             imageFile.setFileName(fileName);
             imageSize = imageFile.readImageFileData();
 
             if (imageSize == -1) {
 
                 if (!quiet) {
-                    MipavUtil.displayError("FileIO: Compression not supported for Signa 5X");
+                    MipavUtil.displayError("FileIO: Compression not supported for Signa 4X");
                 }
 
                 return null;
@@ -6932,7 +6984,7 @@ public class FileIO {
             if (imageSize == -2) {
 
                 if (!quiet) {
-                    MipavUtil.displayError("FileIO: Not a Signa 5X file.");
+                    MipavUtil.displayError("FileIO: Not a Signa 4X file.");
                 }
 
                 return null;
@@ -7195,7 +7247,7 @@ public class FileIO {
 
         try {
             imageFile = new FileRaw(fileName, fileDir, fileInfo, FileBase.READ);
-           
+
             imageFile.readImage(image, fileInfo.getOffset());
         } catch (IOException error) {
 
@@ -7247,7 +7299,7 @@ public class FileIO {
         FileInfoImageXML[] nFileInfos;
         String[] fileList;
         int i;
-        
+
         int nImages;
 
         if (fileInfo == null) {
@@ -7292,7 +7344,7 @@ public class FileIO {
         }
 
         createProgressBar(null, fileName, FILE_READ);
-        
+
         nFileInfos = new FileInfoImageXML[nImages];
 
         if (nImages > 1) {
@@ -7324,7 +7376,7 @@ public class FileIO {
             }
 
             buffer = null;
-            
+
             System.gc();
 
             if (!quiet) {
@@ -7361,7 +7413,7 @@ public class FileIO {
                 }
 
                 buffer = null;
-                
+
                 System.gc();
 
                 if (!quiet) {
@@ -7377,7 +7429,7 @@ public class FileIO {
                 }
 
                 buffer = null;
-                
+
                 System.gc();
 
                 if (!quiet) {
@@ -7388,7 +7440,6 @@ public class FileIO {
             }
         }
 
-        
 
         return image;
 
@@ -7570,7 +7621,7 @@ public class FileIO {
         String[] fileList;
         FileTiff imageFile;
         ModelImage image = null;
-        
+
         int nImages;
 
         try {
@@ -7598,7 +7649,7 @@ public class FileIO {
         myFileInfo = imageFile.getFileInfo();
 
         length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
-       
+
 
         try {
             resols = new float[5];
@@ -7619,8 +7670,8 @@ public class FileIO {
             myFileInfo.setResolutions(resols); // ??
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName(), UI);
 
-            createProgressBar(null, trim(fileName) + getSuffixFrom(fileName) , FILE_READ);
-          
+            createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
+
         } catch (OutOfMemoryError error) {
 
             if (image != null) {
@@ -7642,7 +7693,7 @@ public class FileIO {
         try {
             imageFile = new FileTiff(UI, fileList[0], fileDir);
         } catch (IOException error) {
-            
+
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
@@ -7671,9 +7722,11 @@ public class FileIO {
                 myFileInfo = ((FileTiff) imageFile).getFileInfo();
                 myFileInfo.setExtents(extents);
                 myFileInfo.setResolutions(resols);
+
                 if (nImages > 1) {
                     myFileInfo.setMultiFile(true);
                 }
+
                 image.setFileInfo(myFileInfo, i);
 
                 // float[] tmpBuffer = fileTIFF.getImageBuffer();
@@ -7683,7 +7736,7 @@ public class FileIO {
                     image.importData(i * length, ((FileTiff) imageFile).getImageBuffer(), false);
                 }
             } catch (IOException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -7698,7 +7751,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
@@ -7714,7 +7767,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
@@ -7732,7 +7785,6 @@ public class FileIO {
             }
         }
 
-        
 
         return image;
 
@@ -7806,14 +7858,15 @@ public class FileIO {
         ModelImage image = null;
         FileImageXML imageFile;
         // don't show splash screen:
-        
+
 
         try {
             imageFile = new FileImageXML(UI, fileName, fileDir);
-            
+
             if (!(fileName.equals("splash.xml") || (one == true))) {
-            	createProgressBar(imageFile, fileName, FILE_READ);
+                createProgressBar(imageFile, fileName, FILE_READ);
             }
+
             image = imageFile.readImage(one);
             LUT = imageFile.getModelLUT();
             modelRGB = imageFile.getModelRGB();
@@ -7863,7 +7916,7 @@ public class FileIO {
         ModelImage image = null;
         FileImageXML imageFile;
         FileInfoImageXML fileInfo;
-        
+
         int length = 0;
         float[] buffer;
         String[] fileList;
@@ -7904,7 +7957,7 @@ public class FileIO {
         }
 
         createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
-        
+
         // System.out.println(" filelist[1] = " + fileList[1]);
         // if one of the images has the wrong extents, the following must be changed.
         // (ei., too many images!)
@@ -7963,10 +8016,11 @@ public class FileIO {
         for (i = 0; i < nImages; i++) {
 
             try {
-                //progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
+
+                // progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
                 progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
                 imageFile.setFileName(fileList[i]);
-                //imageFile = new FileImageXML(UI, fileList[i], fileDir, false);
+                // imageFile = new FileImageXML(UI, fileList[i], fileDir, false);
 
                 TalairachTransformInfo talairach = new TalairachTransformInfo();
                 res = ((FileImageXML) imageFile).readHeader(fileList[i], fileDir, talairach);
@@ -8036,16 +8090,18 @@ public class FileIO {
 
                 fileInfo.setExtents(imgExtents); // set image extents to proper value!
                 fileInfo.setResolutions(imgResolutions);
+
                 if (nImages > 1) {
                     fileInfo.setMultiFile(true);
                 }
+
                 ((FileImageXML) imageFile).readImage(buffer);
                 image.importData(imageCount * length, buffer, false);
                 image.setFileInfo(fileInfo, imageCount);
                 imageCount++; // image was okay, so count it.(can't do it before b/c of offset)
 
             } catch (IOException error) {
-                
+
 
                 if (!quiet) {
                     Preferences.debug("Failed to read XML multifile. This error can be caused by attempting to read an XML file that is not actually a multi-file.\n",
@@ -8062,7 +8118,7 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\nnumber in the file " +
@@ -8078,7 +8134,7 @@ public class FileIO {
 
                 return null;
             } catch (OutOfMemoryError error) {
-                
+
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -8135,7 +8191,6 @@ public class FileIO {
             }
         }
 
-        
 
         return image;
 
@@ -8333,7 +8388,7 @@ public class FileIO {
 
         try { // Construct a new file object
             analyzeFile = new FileAnalyze(options.getFileName(), options.getFileDirectory());
-            createProgressBar(analyzeFile,options.getFileName(), FILE_WRITE);
+            createProgressBar(analyzeFile, options.getFileName(), FILE_WRITE);
             analyzeFile.writeImage(image, options);
         } catch (IOException error) {
 
@@ -8379,9 +8434,9 @@ public class FileIO {
             aviFile.setCompressionQuality(options.getMJPEGQuality());
 
             if (!aviFile.writeImage(image, options.getImageB(), options.getLUTa(), options.getLUTb(),
-                                        options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
-                                        options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
-                                        options.getPaintBitmap(), options.getAVICompression())) {
+                                    options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
+                                    options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
+                                    options.getPaintBitmap(), options.getAVICompression())) {
                 System.err.println("AVI write cancelled");
             }
 
@@ -8573,7 +8628,8 @@ public class FileIO {
         } else { // Non DICOM images
             myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileBase.DICOM);
 
-            JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo, options.isScript());
+            JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo,
+                                                           options.isScript());
 
             if (dialog.isCancelled()) {
                 return false;
@@ -8651,34 +8707,37 @@ public class FileIO {
             float xLoc = 0;
             float yLoc = 0;
             float zLoc = 0;
-            String [] origins;
+            String[] origins;
 
             FileDicomTag tag = myFileInfo.getTag("0020,1041");
 
             if (tag != null) {
                 obj = tag.getValue(false);
             }
+
             if (obj != null) {
-                slLoc = Float.valueOf((String)obj).floatValue();
+                slLoc = Float.valueOf((String) obj).floatValue();
             }
 
             float sliceResolution = myFileInfo.getResolutions()[2];
 
             if (image.getExtents().length > 2) { // This sets the fileinfo to the same for all slices !!
+
                 FileInfoBase[] fBase = new FileInfoBase[image.getExtents()[2]];
 
-                if ( myFileInfo.getTag("0020,0032") != null) {
+                if (myFileInfo.getTag("0020,0032") != null) {
                     tag = myFileInfo.getTag("0020,0032");
+
                     if (tag != null) {
                         obj = tag.getValue(false);
                     }
+
                     if (obj != null) {
-                        origins = ((String)(obj)).split("\\\\");
+                        origins = ((String) (obj)).split("\\\\");
                         xLoc = Float.valueOf(origins[0]).floatValue();
                         yLoc = Float.valueOf(origins[1]).floatValue();
                         zLoc = Float.valueOf(origins[2]).floatValue();
-                    }
-                    else {
+                    } else {
                         xLoc = 0;
                         yLoc = 0;
                         zLoc = 0;
@@ -8689,15 +8748,19 @@ public class FileIO {
                     zLocOrig = zLoc;
                 }
 
-                // see if the original dicom a minc was created from was part of a larger volume.  if so, preserve the instance number it had
+                // see if the original dicom a minc was created from was part of a larger volume.  if so, preserve the
+                // instance number it had
                 int baseInstanceNumber = -1;
+
                 if (image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
                     tag = myFileInfo.getTag("0020,0013");
+
                     if (tag != null) {
                         obj = tag.getValue(false);
                     }
+
                     if (obj != null) {
-                        baseInstanceNumber = Integer.parseInt(((String)obj).trim());
+                        baseInstanceNumber = Integer.parseInt(((String) obj).trim());
                         options.setRecalculateInstanceNumber(false);
                     }
                 }
@@ -8708,52 +8771,50 @@ public class FileIO {
                     fBase[k] = (FileInfoBase) myFileInfo.clone();
 
                     // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
-                    ((FileInfoDicom)(fBase[k])).setValue("0020,1041", Float.toString(slLoc), Float.toString(slLoc).length());
+                    ((FileInfoDicom) (fBase[k])).setValue("0020,1041", Float.toString(slLoc),
+                                                          Float.toString(slLoc).length());
                     slLoc += sliceResolution;
 
-                    String tmpStr = new String (Float.toString(xLoc) + "\\" +
-                            Float.toString(yLoc) + "\\" +
-                            Float.toString(zLoc) );
-                    ((FileInfoDicom)(fBase[k])).setValue("0020,0032", tmpStr, tmpStr.length());
+                    String tmpStr = new String(Float.toString(xLoc) + "\\" + Float.toString(yLoc) + "\\" +
+                                               Float.toString(zLoc));
+                    ((FileInfoDicom) (fBase[k])).setValue("0020,0032", tmpStr, tmpStr.length());
 
-                    if( image.getFileInfo()[0].getImageOrientation() == FileInfoBase.AXIAL ){
-                        if (zLocOrig <= 0 ){
+                    if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.AXIAL) {
+
+                        if (zLocOrig <= 0) {
                             zLoc += sliceResolution;
-                        }
-                        else {
+                        } else {
                             zLoc -= sliceResolution;
                         }
-                    }
-                    else if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.CORONAL){
-                        if (yLocOrig <= 0 ){
+                    } else if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.CORONAL) {
+
+                        if (yLocOrig <= 0) {
                             yLoc += sliceResolution;
-                        }
-                        else {
+                        } else {
                             yLoc -= sliceResolution;
                         }
-                    }
-                    else if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.SAGITTAL){
-                        if (xLocOrig <= 0 ){
+                    } else if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.SAGITTAL) {
+
+                        if (xLocOrig <= 0) {
                             xLoc += sliceResolution;
-                        }
-                        else {
+                        } else {
                             xLoc -= sliceResolution;
                         }
-                    }
-                    else {
-                        if (zLoc <= 0 ){
+                    } else {
+
+                        if (zLoc <= 0) {
                             zLoc += sliceResolution;
-                        }
-                        else {
+                        } else {
                             zLoc -= sliceResolution;
                         }
                     }
 
                     if (baseInstanceNumber != -1) {
                         String instanceStr = "" + (baseInstanceNumber + k);
-                        ((FileInfoDicom)(fBase[k])).setValue("0020,0013", instanceStr, instanceStr.length());
+                        ((FileInfoDicom) (fBase[k])).setValue("0020,0013", instanceStr, instanceStr.length());
                     }
                 }
+
                 image.setFileInfo(fBase);
             } else {
                 image.setFileInfo(myFileInfo, 0);
@@ -8762,8 +8823,8 @@ public class FileIO {
 
         imageSize = extents[0] * extents[1];
 
-        createProgressBar(null,options.getFileName(), FILE_WRITE);
-       
+        createProgressBar(null, options.getFileName(), FILE_WRITE);
+
         if (options.isSaveAs()) {
             index = options.getFileName().indexOf(".");
             prefix = options.getFileName().substring(0, index); // Used for setting file name
@@ -8817,7 +8878,7 @@ public class FileIO {
                 dicomFile.writeMultiFrameImage(image, options.getBeginSlice(), options.getEndSlice());
             }
 
-            
+
         } catch (IOException error) {
             image.setFileInfo(originalFileInfos);
 
@@ -8825,7 +8886,6 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
-            
 
             return false;
         } catch (OutOfMemoryError error) {
@@ -8835,46 +8895,11 @@ public class FileIO {
                 MipavUtil.displayError("FileIO: " + error);
             }
 
-            
 
             return false;
         }
 
         image.setFileInfo(originalFileInfos);
-
-        return true;
-    }
-
-    /**
-     * Writes a MGH or MGZ file to store the image.
-     *
-     * @param   image    The image to write.
-     * @param   options  The options to use to write the image.
-     *
-     * @return  Flag indicating that this was a successful write.
-     */
-    private boolean writeMGH(ModelImage image, FileWriteOptions options) {
-        FileMGH mghFile;
-
-        try { // Construct a new file object
-            mghFile = new FileMGH(UI, options.getFileName(), options.getFileDirectory());
-            createProgressBar(mghFile, options.getFileName(), FILE_WRITE);
-            mghFile.writeImage(image, options);
-        } catch (IOException error) {
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            return false;
-        } catch (OutOfMemoryError error) {
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-            }
-
-            return false;
-        }
 
         return true;
     }
@@ -9002,7 +9027,8 @@ public class FileIO {
 
         for (int i = beginSlice; i <= endSlice; i++) {
 
-            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().show(0,i,true);
+            ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().show(0, i, true);
+
             Image im = ((ViewJFrameImage) (image.getImageFrameVector().firstElement())).getComponentImage().getImage();
 
             if ((i < 9) && (endSlice != beginSlice)) {
@@ -9031,6 +9057,40 @@ public class FileIO {
     }
 
     /**
+     * Writes a MGH or MGZ file to store the image.
+     *
+     * @param   image    The image to write.
+     * @param   options  The options to use to write the image.
+     *
+     * @return  Flag indicating that this was a successful write.
+     */
+    private boolean writeMGH(ModelImage image, FileWriteOptions options) {
+        FileMGH mghFile;
+
+        try { // Construct a new file object
+            mghFile = new FileMGH(UI, options.getFileName(), options.getFileDirectory());
+            createProgressBar(mghFile, options.getFileName(), FILE_WRITE);
+            mghFile.writeImage(image, options);
+        } catch (IOException error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Writes a Minc file to store the image.
      *
      * @param   image    The image to write.
@@ -9044,6 +9104,7 @@ public class FileIO {
 
         if (image.getNDims() != 3) {
             MipavUtil.displayError("FileIO: MINC writer only writes 3D images.");
+
             return false;
         }
 
@@ -9075,6 +9136,7 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
                 Preferences.debug(error.getMessage() + "\n", Preferences.DEBUG_FILEIO);
+
                 for (int i = 0; i < error.getStackTrace().length; i++) {
                     Preferences.debug("\t" + error.getStackTrace()[i] + "\n", Preferences.DEBUG_FILEIO);
                 }
@@ -9278,6 +9340,7 @@ public class FileIO {
         try { // Construct a new file object
             imageFile = new FileTiff(UI, options.getFileName(), options.getFileDirectory());
             createProgressBar(imageFile, options.getFileName(), FILE_WRITE);
+
             if (LUT == null) {
                 extents = new int[2];
                 extents[0] = 4;
@@ -9319,6 +9382,7 @@ public class FileIO {
         try {
             xmlFile = new FileImageXML(UI, options.getFileName(), options.getFileDirectory());
             createProgressBar(xmlFile, options.getFileName(), FILE_WRITE);
+
             /**
              * Set the LUT (for grayscale) and ModelRGB (for color) doesn't matter if either is null
              */
