@@ -733,6 +733,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double BLT[];
         int blx;
         int bly;
+        int intMat[];
         
         pyr = buildSFpyr(fn, fnx, fny, nScales, nOrientations-1, 1.0, pind);
         if (error == 1) {
@@ -743,7 +744,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             return null;
         }
         pyrh = pyr;
-        bandNum = pind.size()/2;
+        bandNum = pind.size();
         for (nband = 1; nband <= bandNum-1; nband++) {
             fireProgressStateChanged((100 * nband)/ (bandNum-1));
             aux = pyrBand(pyr, pind, nband-1,nsx, nsy);
@@ -812,8 +813,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
             }
             pyrh.setElementAt(BLT, nband-1);
-            pind.setElementAt(Integer.valueOf(bly), 2*(nband-1));
-            pind.setElementAt(Integer.valueOf(blx), 2*(nband-1)+1);
+            intMat = new int[2];
+            intMat[0] = blx;
+            intMat[1] = bly;
+            pind.setElementAt(intMat, nband-1);
         } // for (nband = 1; nband <= bandNum-1; nband++)
         fh = reconSFpyr(pyrh, pind, null, null, 1.0);
         if (error == 1) {
@@ -875,13 +878,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         boolean haveZero;
         double hi0mask[][];
         double arr[];
-        Integer ix;
-        Integer iy;
         int x;
         int y;
         double imag[];
         int hix;
         int hiy;
+        int intMat[];
         
         if (levs == null) {
             allLevs = true;
@@ -931,8 +933,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
         } // else
          
-        dimX = ((Integer)pind.get(0)).intValue();
-        dimY = ((Integer)pind.get(1)).intValue();
+        intMat = (int[])pind.get(0);
+        dimX = intMat[0];
+        dimY = intMat[1];
         ctrX = (int)Math.ceil((dimX + 0.5)/2);
         ctrY = (int)Math.ceil((dimY + 0.5)/2);
         
@@ -977,7 +980,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             yircos[i] = Math.sqrt(Math.abs(1.0 - yrcos[i]*yrcos[i]));
         }
         
-        if (pind.size()/2 == 2) {
+        if (pind.size() == 2) {
             haveOne = false;
             for (i = 0; i < levs.length; i++) {
                 if (levs[i] == 1) {
@@ -999,23 +1002,22 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 center(resdftr, resdfti, rows[0], columns[0]);
             }
             else {
-                rows[0] = ((Integer)pind.get(2)).intValue();
-                columns[0] = ((Integer)pind.get(3)).intValue();
+                intMat = (int[])pind.get(1);
+                rows[0] = intMat[0];
+                columns[0] = intMat[1];
                 resdftr = new double[rows[0]*columns[0]];
                 resdfti = new double[rows[0]*columns[0]];
             }
-        } // if (pind.size()/2 == 2)
+        } // if (pind.size() == 2)
         else {
             arr = (double[])pyr.remove(0);
-            ix = (Integer)pind.remove(0);
-            iy = (Integer)pind.remove(0);
-            rows[0] = ((Integer)pind.get(0)).intValue();
-            columns[0] = ((Integer)pind.get(1)).intValue();
+            intMat = (int[])pind.remove(0);
+            rows[0] = intMat[0];
+            columns[0] = intMat[1];
             reconSFpyrLevs(pyr, pind, log_rad, xrcos, yrcos, angle, nbands, 
                            levs, bands, resdftr, resdfti);
             pyr.insertElementAt(arr, 0);
-            pind.insertElementAt(iy, 0);
-            pind.insertElementAt(ix, 0);
+            pind.insertElementAt(intMat, 0);
         } // else
         
         lo0mask = pointOp(log_rad, yircos, xrcos[0], (xrcos[1] - xrcos[0]), false);
@@ -1040,8 +1042,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (haveZero) {
             hi0mask = pointOp(log_rad, yrcos, xrcos[0], (xrcos[1] - xrcos[0]), false); 
             arr = (double [])pyr.get(0);
-            x = ((Integer)pind.get(0)).intValue();
-            y = ((Integer)pind.get(1)).intValue();
+            intMat = (int[])pind.get(0);
+            x = intMat[0];
+            y = intMat[1];
             imag = new double[x * y];
             // forward FFT
             fftUtil = new FFTUtility(arr, imag, y, x, 1, -1, FFTUtility.FFT);
@@ -1119,7 +1122,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double nlog_rad[][];
         double nangle[][];
         double arr[][];
-        Integer parr[];
         double nresdftr[] = null;
         double nresdfti[] = null;
         int levsm1[];
@@ -1145,10 +1147,13 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double anglemask[][];
         double bandr[];
         double bandi[];
+        int intMat[];
+        int parr[][];
         
         lo_ind = nbands + 1;
-        dimX = ((Integer)pind.get(0)).intValue();
-        dimY = ((Integer)pind.get(1)).intValue();
+        intMat = (int[])pind.get(0);
+        dimX = intMat[0];
+        dimY = intMat[1];
         ctrX = (int)Math.ceil((dimX + 0.5)/2);
         ctrY = (int)Math.ceil((dimY + 0.5)/2);
         
@@ -1184,14 +1189,14 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     nangle[i][j] = angle[i + lostartX - 1][j + lostartY - 1];
                 }
             }
-            if (pind.size()/2 > lo_ind) {
+            if (pind.size() > lo_ind) {
                 arr = new double[lo_ind-1][];
-                parr = new Integer[2*(lo_ind-1)];
+                parr = new int[(lo_ind-1)][2];
                 for (i = 0; i < lo_ind-1; i++) {
                     arr[i] = (double[])pyr.remove(0);
                 }
-                for (i = 0; i < 2*(lo_ind-1); i++) {
-                    parr[i] = (Integer)pind.remove(0);
+                for (i = 0; i < lo_ind-1; i++) {
+                    parr[i] = (int[])pind.remove(0);
                 }
                 levsm1 = new int[levs.length];
                 for (i = 0; i < levs.length; i++) {
@@ -1201,11 +1206,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                                levsm1, bands, nresdftr, nresdfti);
                 for (i = lo_ind-2; i >= 0; i--) {
                     pyr.insertElementAt(arr[i], 0);
-                }
-                for (i = 2*(lo_ind-1)-1; i >= 0; i--) {
                     pind.insertElementAt(parr[i], 0);
                 }
-            } // if (pind.size()/2 > lo_ind)
+            } // if (pind.size() > lo_ind)
             else {
                 rows = new int[1];
                 columns = new int[1];
@@ -1348,8 +1351,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         nbands = spyrNumBands(pind);
         
         // Don't count lowpass or highpass residual bands
-        if (pind.size()/2 > 2) {
-            ht = (pind.size()/2 - 2)/nbands;
+        if (pind.size() > 2) {
+            ht = (pind.size() - 2)/nbands;
         }
         else {
             ht = 0;
@@ -1370,17 +1373,19 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int b;
         int x;
         int y;
-        if (pind.size()/2 == 2) {
+        int intMat[];
+        if (pind.size() == 2) {
             nbands = 0;
         }
         else {
             // Count number of orientation bands
             b = 3;
-            x = ((Integer)pind.get(2)).intValue();
-            y = ((Integer)pind.get(3)).intValue();
-            while ((b <= pind.size()/2) && 
-                    (((Integer)pind.get(2*(b-1))).intValue() == x) &&
-                    (((Integer)pind.get(2*(b-1)+1)).intValue() == y)) {
+            intMat = (int[])pind.get(1);
+            x = intMat[0];
+            y = intMat[1];
+            while ((b <= pind.size()) && 
+                    ((intMat = (int[])pind.get(b-1)) != null) &&
+                    (intMat[0] == x) && (intMat[1] == y)) {
                      b = b+1;   
             }
             nbands = b - 2;
@@ -2286,10 +2291,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      */
     private double[] pyrBand(Vector pyr, Vector pind, int band, int rows[], int columns[]) {
         double arr[];
+        int intMat[];
         
         arr = (double[])pyr.get(band); 
-        rows[0] = ((Integer)pind.get(2*band)).intValue();
-        columns[0] = ((Integer)pind.get(2*band+1)).intValue();
+        intMat = (int[])pind.get(band);
+        rows[0] = intMat[0];
+        columns[0] = intMat[1];
         return arr;
     }
     
@@ -2338,7 +2345,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double consta;
         double ycosn[];
         double bands[][];
-        Integer bind[];
+        int bind[][];
         int b;
         double anglemask[][];
         double maskr[][];
@@ -2463,11 +2470,41 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         }
         
         bands = new double[imx*imy][nbands];
-        bind = new Integer[2*nbands];
+        bind = new int[nbands][2];
         
         for (b = 1; b <= nbands; b++) {
             anglemask = pointOp(angle, ycosn, (xcosn[0] + Math.PI*(b-1)/nbands),
-                                (xcosn[1] - xcosn[0]), true);    
+                                (xcosn[1] - xcosn[0]), true);  
+            maskr = new double[imx][imy];
+            maski = new double[imx][imy];
+            if (((nbands-1) % 4) == 0) {
+                for (j = 0; j < imy; j++) {
+                    for (i = 0; i < imx; i++) {
+                        maskr[i][j] = anglemask[i][j]*hi0mask[i][j];
+                    }
+                }
+            } // if (((nbands-1) % 4) == 0)
+            else if (((nbands-1) %4) == 1) {
+                for (j = 0; j < imy; j++) {
+                    for (i = 0; i < imx; i++) {
+                        maski[i][j] = -anglemask[i][j]*hi0mask[i][j];
+                    }
+                }    
+            } // else if (((nbands-1) %4) == 1)
+            else if (((nbands-1) %4) == 2) {
+                for (j = 0; j < imy; j++) {
+                    for (i = 0; i < imx; i++) {
+                        maskr[i][j] = -anglemask[i][j]*hi0mask[i][j];
+                    }
+                }    
+            } // else if (((nbands-1) %4) == 2)
+            else if (((nbands-1) %4) == 3) {
+                for (j = 0; j < imy; j++) {
+                    for (i = 0; i < imx; i++) {
+                        maski[i][j] = anglemask[i][j]*hi0mask[i][j];
+                    }
+                }    
+            } // else if (((nbands-1) %4) == 3)
         } // for (b = 1; b <= nbands; b++)
         return pyr;
     }
@@ -2522,6 +2559,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double hi0dftr[];
         double hi0dfti[];
         Vector pyr;
+        int intMat[];
         // log2(x) = loge(x)/loge(2)
         logC = 1.0/Math.log(2.0);
         max_ht = (int)Math.floor(logC*Math.log(Math.min(imx,imy)) + 2);
@@ -2643,8 +2681,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         fftUtil.finalize();
         
         pyr.insertElementAt(hi0dftr, 0);
-        pind.insertElementAt(new Integer(imy), 0);
-        pind.insertElementAt(new Integer(imx), 0);
+        intMat = new int[2];
+        intMat[0] = imx;
+        intMat[1] = imy;
+        pind.insertElementAt(intMat, 0);
         return pyr;
     }
     
@@ -2669,7 +2709,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                                   double angle[][], int ht, int nbands, Vector pind) {
         FFTUtility fftUtil;
         double bands[][];
-        Integer bind[][];
+        int bind[][];
         int logx;
         int logy;
         int i, j;
@@ -2705,6 +2745,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         logx = lograd.length;
         logy = lograd[0].length;
         long p, q;
+        int intMat[];
         if (ht <= 0) {
             center(lodftr,lodfti, lodx, lody);
             // Inverse FFT
@@ -2717,12 +2758,14 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             fftUtil.run();
             fftUtil.finalize();
             pyr.add(lodftr);
-            pind.add(new Integer(lodx));
-            pind.add(new Integer(lody));
+            intMat = new int[2];
+            intMat[0] = lodx;
+            intMat[1] = lody;
+            pind.add(intMat);
         } // if (ht <= 0)
         else {
             bands = new double[nbands][lodx*lody];
-            bind = new Integer[nbands][2]; 
+            bind = new int[nbands][2]; 
             
             for (j = 0; j < logy; j++) {
                 for (i = 0; i < logx; i++) {
@@ -2801,8 +2844,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 for (i = 0; i < banddftr.length; i++) {
                     bands[b-1][i] = banddftr[i];
                 }
-                bind[b-1][0] = new Integer(lodx);
-                bind[b-1][1] = new Integer(lody);
+                bind[b-1][0] = lodx;
+                bind[b-1][1] = lody;
             } // for (b = 1; b <= nbands; b++)
             
             ctrx = (int)Math.ceil((lodx + 0.5)/2.0);
@@ -2874,9 +2917,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             pyr.addAll(npyr);
             pind.removeAllElements();
             for (i = 0; i < nbands; i++) {
-                for (j = 0; j < 2; j++) {
-                    pind.add(bind[i][j]);
-                }
+                pind.add(bind[i]);
             }
             pind.addAll(nind);
         } // else
