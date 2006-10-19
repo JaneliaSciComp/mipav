@@ -57,13 +57,22 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private static final int QMF16 = 7;
     
     // Daubechies wavelet
-    private static final int DAUB1 = 8;
+    private static final int DAUB2 = 8;
     
-    private static final int DAUB2 = 9;
+    private static final int DAUB3 = 9;
     
-    private static final int DAUB3 = 10;
+    private static final int DAUB4 = 10;
     
-    private static final int DAUB4 = 11;
+    private static final int GAUSS3 = 11;
+    
+    private static final int GAUSS5 = 12;
+    
+    private static final int BINOMIAL = 13;
+    
+    // Types of edges
+    private static final int CIRCULAR = 1;
+    
+    private static final int REFLECT1 = 2;
     
     
     /**
@@ -119,12 +128,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     /**
      * repres1 = ORTHOGONAL_WAVELET
-     *           Here repres2 can be NONE, QMF5, QMF8, QMF9, QMF12, QMF13, QMF16, DAUB1, DAUB2, DAUB3, DAUB4
-     *           DAUB1 is default.
+     *           Here repres2 can be NONE, QMF5, QMF8, QMF9, QMF12, QMF13, QMF16, DAUB2, DAUB3, DAUB4
+     *           QMF9 is default.
      *           
      * repres1 = UNDECIMATED_ORTHOGONAL_WAVELET
-     *           Here repres2 can be NONE, DAUB1, DAUB2, DAUB3, DAUB4
-     *           DAUB1 is default.
+     *           Here repres2 can be NONE, DAUB2, DAUB3, DAUB4
      *           
      * repres1 = STEERABLE_PYRAMID
      *           Here repres2 = NONE
@@ -810,7 +818,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     }
     
     /**
-     * Port of decomp_reconst-W.m by JPM, Univ. de Granada, 3/03
+     * Port of decomp_reconst_W.m by JPM, Univ. de Granada, 3/03
      * Decompose image into subbands, denoise using BLS-GSM method, and recompose again.
      * Version using a critically sampled pyramid (orthogonal wavelet), as 
      * implemented in MatlabPyrTools (Eero)
@@ -826,10 +834,122 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private double[] decompReconstW(double im[], int imx, int imy, int filter, double noise[],
             int noisex, int noisey) {
             double fh[] = null;
+            Vector pind = null;
+            Vector pyr = null;
+            Vector pyrN = null;
+            Vector pyrh;
+            int bandNum;
+            int nband;
+            double aux[] = null;
+            double auxn[] = null;
+            int nsx[] = new int[1];
+            int nsy[] = new int[1];
+            int nsxn[] = new int[1];
+            int nsyn[] = new int[1];
+            boolean prnt;
+            double BL[][][];
+            double BLn[][][];
+            int i, j;
+            int index;
+            double imagArray[] = null;
+            double sy2;
+            double sn2;
+            double SNRin;
+            double BLT[];
+            int blx;
+            int bly;
+            int intMat[];
             
             // Number of orientations: vertical, horizontal, and mixed diagonals
             // (for compatibility)
             nOrientations = 3;
+            
+            pyr = buildWpyr(im, imx, imy, nScales, filter, CIRCULAR, pind);
+            if (error == 1) {
+                return null;
+            }
+            pyrN = buildWpyr(noise, noisex, noisey, nScales, filter, CIRCULAR, pind);
+            if (error == 1) {
+                return null;
+            }
+            pyrh = pyr;
+            bandNum = pind.size();
+            // Everything except the low pass residual
+            for (nband = 1; nband <= bandNum-1; nband++) {
+                fireProgressStateChanged((100 * nband)/ (bandNum-1));
+                aux = pyrBand(pyr, pind, nband-1,nsx, nsy);
+                auxn = pyrBand(pyrN, pind, nband-1, nsxn, nsyn);
+                // Has the subband a parent?
+                prnt = useParent && (nband < bandNum - nOrientations);
+                if (prnt) {
+                    BL = new double[nsx[0]][nsy[0]][2];
+                    BLn = new double[nsx[0]][nsy[0]][2];
+                } // if (prnt)
+                else {
+                    BL = new double[nsx[0]][nsy[0]][1];
+                    BLn = new double[nsx[0]][nsy[0]][1];
+                } // else 
+                for (j = 0; j < nsy[0]; j++) {
+                    for (i = 0; i < nsx[0]; i++) {
+                        index = i + j * nsx[0];
+                        BL[i][j][0] = aux[index];
+                        BLn[i][j][0] = auxn[index];
+                    }
+                }
+                if (prnt) {
+                    aux = pyrBand(pyr, pind, nband+nOrientations-1, nsxn, nsyn);
+                    expand(aux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
+                    auxn = pyrBand(pyrN, pind, nband+nOrientations-1, nsxn, nsyn);
+                    expand(auxn, 2.0, nsxn[0], nsyn[0], auxn, imagArray);
+                    for (j = 0; j < nsy[0]; j++) {
+                        for (i = 0; i < nsx[0]; i++) {
+                            index = i + j * nsx[0];
+                            BL[i][j][1] = aux[index];
+                            BLn[i][j][1] = auxn[index];
+                        }
+                    }
+                } // if (prnt)
+                
+                sy2 = 0.0;
+                sn2 = 0.0;
+                for (j = 0; j < nsy[0]; j++) {
+                    for (i = 0; i < nsx[0]; i++) {
+                        sy2 = sy2 + BL[i][j][0]*BL[i][j][0];
+                        sn2 = sn2 + BLn[i][j][0]*BLn[i][j][0];
+                    }
+                }
+                sy2 = sy2/(nsx[0]*nsy[0]);
+                sn2 = sn2/(nsx[0]*nsy[0]);
+                if (sy2 > sn2) {
+                    SNRin = 4.342944819*Math.log((sy2-sn2)/sn2);
+                }
+                else {
+                    Preferences.debug(
+                    "decompReconst: Signal is not detectable in noisy subband");
+                }
+                
+                // main
+                BL = denoi_BLS_GSM_band(BL, BLn, prnt);
+                blx = BL.length;
+                bly = BL[0].length;
+                // Create BL transpose
+                BLT = new double[bly * blx];
+                for (j = 0; j < bly; j++) {
+                    for (i = 0; i < blx; i++) {
+                        index = j + i*bly;
+                        BLT[index] = BL[i][j][0];
+                    }
+                }
+                pyrh.setElementAt(BLT, nband-1);
+                intMat = new int[2];
+                intMat[0] = blx;
+                intMat[1] = bly;
+                pind.setElementAt(intMat, nband-1);
+            } // for (nband = 1; nband <= bandNum-1; nband++)
+            fh = reconWpyr(pyrh, pind, filter, CIRCULAR, null, null);
+            if (error == 1) {
+                return null;
+            }
             return fh;
     }
     
@@ -1297,6 +1417,22 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         fftUtil.run();
         fftUtil.finalize();
         return resdftr;
+    }
+    
+    /**
+     * 
+     * @param pyr
+     * @param ind
+     * @param filt
+     * @param edges
+     * @param levs
+     * @param bands
+     * @return
+     */
+    private double[] reconWpyr(Vector pyr, Vector ind, int filt,
+                               int edges, int levs[], int bands[]) {
+        double res[] = null;
+        return res;
     }
     
     /**
@@ -3030,6 +3166,382 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         intMat = new int[2];
         // Dummy highpass [ [0 0]; pind]
         pind.insertElementAt(intMat, 0);
+        return pyr;
+    }
+    
+    /**
+     * Ported from named_filter.m by Eero Simoncelli, 6/96.
+     * Some standard 1D filter kernels.  These are scaled such that their 
+     * L2-norm is 1.0.
+     * binomN             - binomial coefficient filter of order N-1
+       haar:              - Haar wavelet.
+       qmf8, qmf12, qmf16 - Symmetric Quadrature Mirror Filters [Johnston80]
+       daub2,daub3,daub4  - Daubechies wavelet [Daubechies88].
+       qmf5, qmf9, qmf13: - Symmetric Quadrature Mirror Filters [Simoncelli88,Simoncelli90]
+
+     * References:
+     * [Johnston80] - J D Johnston, "A filter family designed for use in quadrature 
+       mirror filter banks", Proc. ICASSP, pp 291-294, 1980.
+      
+      [Daubechies88] - I Daubechies, "Orthonormal bases of compactly supported wavelets",
+      Commun. Pure Appl. Math, vol. 42, pp 909-996, 1988.
+     
+      [Simoncelli88] - E P Simoncelli,  "Orthogonal sub-band image transforms",
+      PhD Thesis, MIT Dept. of Elec. Eng. and Comp. Sci. May 1988.
+      Also available as: MIT Media Laboratory Vision and Modeling Technical 
+      Report #100. 
+      
+      [Simoncelli90] -  E P Simoncelli and E H Adelson, "Subband image coding",
+      Subband Transforms, chapter 4, ed. John W Woods, Kluwer Academic 
+      Publishers,  Norwell, MA, 1990, pp 143--192.
+     * @param name
+     * @return
+     */
+    private double[] namedFilter(int name, int binomialSize) {
+        double kernel[]= null;
+        double sq2 = Math.sqrt(2.0);
+        int i;
+        if (name == BINOMIAL) {
+            kernel = binomialFilter(binomialSize);
+            for (i = 0; i < kernel.length; i++) {
+                kernel[i] = sq2 * kernel[i];
+            }
+        }
+        else if (name == QMF5) {
+            kernel = new double[]{-0.076103, 0.3535534, 0.8593118,
+                                   0.3535534, -0.076103};
+        }
+        else if (name == QMF9) {
+            kernel = new double[]{0.02807382, -0.060944743, -0.073386624,
+                                  0.41472545, 0.7973934, 0.41472545,
+                                  -0.073386624, -0.060944743, 0.02807382};    
+        }
+        else if (name == QMF13) {
+            kernel = new double[]{-0.014556438, 0.021651438, 0.039045125,
+                                  -0.09800052, -0.057827797, 0.42995453,
+                                  0.7737113, 0.42995453, -0.057827797,
+                                  -0.09800052, 0.039045125, 0.021651438,
+                                  -0.014556438};
+        }
+        else if (name == QMF8) {
+            kernel = new double[]{0.00938715, -0.07065183, 0.06942827,
+                                  0.4899808, 0.4899808, 0.06942827,
+                                  -0.07065183, 0.00938715};
+            for (i = 0; i < kernel.length; i++) {
+                kernel[i] = sq2 * kernel[i];   
+            }
+        }
+        else if (name == QMF12) {
+            kernel = new double[]{-0.003809699, 0.01885659, -0.002710326,
+                                  -0.08469594, 0.08846992, 0.4843894,
+                                  0.4843894, 0.08846992, -0.08469594,
+                                  -0.002710326, 0.01885659, -0.003809699}; 
+            for (i = 0; i < kernel.length; i++) {
+                kernel[i] = sq2 * kernel[i];   
+            }
+        }
+        else if (name == QMF16) {
+            kernel = new double[]{0.001050167, -0.005054526, -0.002589756,
+                                  0.0276414, -0.009666376, -0.09039223,
+                                  0.09779817, 0.4810284, 0.4810284,
+                                  0.09779817, -0.09039223, -0.009666376,
+                                  0.0276414, -0.002589756, -0.005054526,
+                                  0.001050167};
+            for (i = 0; i < kernel.length; i++) {
+                kernel[i] = sq2 * kernel[i];   
+            }
+        }
+        else if (name == HAAR) {
+            kernel = new double[]{1.0/sq2, 1.0/sq2};
+        }
+        else if (name == DAUB2) {
+            kernel = new double[]{0.482962913145, 0.836516303738, 0.224143868042,
+                                  -0.129409522551};
+        }
+        else if (name == DAUB3) {
+            kernel = new double[]{0.332670552950, 0.806891509311, 0.459877502118,
+                                  -0.135011020010, -0.085441273882,  0.035226291882};
+
+        }
+        else if (name == DAUB4) {
+            kernel = new double[]{0.230377813309, 0.714846570553, 0.630880767930,
+                                  -0.027983769417, -0.187034811719, 0.030841381836,
+                                  0.032883011667, -0.010597401785};
+
+        }
+        else if (name == GAUSS3) {
+            // for backward compatibility
+            kernel = new double[]{0.25, 0.5, 0.25};
+            for (i = 0; i < kernel.length; i++) {
+                kernel[i] = sq2 * kernel[i];   
+            }
+        }
+        else if (name == GAUSS5) {
+            // for backward compatibility
+            kernel = new double[]{0.0625, 0.25, 0.375, 0.25, 0.0625};
+            for (i = 0; i < kernel.length; i++) {
+                kernel[i] = sq2 * kernel[i];   
+            }
+        }
+        else {
+            MipavUtil.displayError("Bad filter name = " + name);
+            error = 1;
+        }
+        return kernel;
+    }
+    
+    /**
+     * This is a port of binomialFilter.m by Eero Simoncelli, 2/97.
+     * returns a vector of binomial coefficients of order (binomialSize-1)
+     * @param binomialSize
+     * @return
+     */
+    private double[] binomialFilter(int binomialSize) {
+        double kernel[];
+        double baseK[];
+        int n;
+        
+        if (binomialSize < 2) {
+            MipavUtil.displayError("binomialSize must be larger than 1");
+            return null;
+        }
+        
+        kernel = new double[2];
+        kernel[0] = 0.5;
+        kernel[1] = 0.5;
+        
+        baseK = new double[2];
+        baseK[0] = 0.5;
+        baseK[1] = 0.5;
+        
+        for (n = 1; n <= binomialSize-2; n++) {
+            kernel = conv(baseK, kernel);
+        }
+        
+        return kernel;
+    }
+    
+    /**
+     * 1D convolution
+     * @param s1
+     * @param s2
+     * @return
+     */
+    private double[] conv(double s1[], double s2[]) {
+        int j;
+        int k;
+        double kernel[] = new double[s1.length + s2.length-1];
+        
+        for (k = 0; k < kernel.length; k++) {
+            for (j = Math.max(0,k+1-s2.length); j <= Math.min(k,s1.length-1); j++) {
+                kernel[k] += s1[j]*s2[k-j];
+            }
+        }
+        return kernel;
+    }
+    
+    /**
+     * This is a port of the file modulateFlip.m by Eero Simoncelli, 7/96.
+     * QMF/Wavelet highpass filter construction: modulate by (-1)^n,
+     * reverse order (and shift by one, which is handled by the convolution
+     * routines).  This is an extension of the original definition of QMF's
+     * (e.g., see Simoncelli90).
+     * @param lfilt
+     * @return
+     */
+    private double[] modulateFlip(double lfilt[]) {
+        double hfilt[] = null;
+        int sz;
+        int sz2;
+        int ind[];
+        int i;
+        
+        sz = lfilt.length;
+        sz2 = (int)Math.ceil(sz/2.0);
+        
+        ind = new int[sz];
+        for (i = 0; i < sz; i++) {
+            ind[i] = sz - i;
+        }
+        
+        hfilt = new double[sz];
+        for (i = 0; i < sz; i++) {
+            if (((ind[i] - sz2) % 2) == 0) {
+                hfilt[i] = lfilt[ind[i]];
+            }
+            else {
+                hfilt[i] = -lfilt[ind[i]];
+            }
+        }
+        return hfilt;
+        
+    }
+    
+    /**
+     * This is a port of corrDn.c by EPS, 7/96
+     * Compute correlation of matrices image with filt, followed by downsampling.
+     * These arguments should be 1D or 2D matrices, and image must be larger
+     * (in both dimensions) than filt.  The origin of filt is assumed to be
+     * floor(size(filt)/2) + 1
+     * @param image
+     * @param xdim first dimension of image
+     * @param ydim second dimension of image
+     * @param filt
+     * @param xfdim first dimension of filt
+     * @param yfdim second dimension of filt
+     * @param edges Determines boundary handling
+     *        CIRCULAR = Circular convolution
+     *        REFLECT1 = Reflect about the edge pixels
+     *        REFLECT2 = Reflect, doubling the edge pixels
+     *        REPEAT = Repeat the edge pixels
+     *        ZERO = Assume values of zero outside the image boundary
+     *        EXTEND = Reflect and invert
+     *        DONT_COMPUTE = Zero output when filter overhangs input boundaries
+     * Downsampling factors are determined by xstep and ystep
+     * @param xstep
+     * @param ystep
+     * start and stop detrmine the window overwhich convolution occurs
+     * @param xstart
+     * @param ystart
+     * Note: This operation corresponds to multiplication of a signal
+     * vector by a matrix whose rows contain copies of the filt shifted by
+     * multiples of step.  See upconv for the operation corresponding to
+     * the transpose of this matrix.
+     * @return
+     */
+    private double[] corrDn(double image[], int xdim, int ydim, double filt[], 
+                            int xfdim, int yfdim, int edges,
+                            int xstep, int ystep, int xstart, int ystart) {
+        double result[] = null;
+        int xstop;
+        int ystop;
+        int xrdim;
+        int yrdim;
+        double temp[];
+        
+        xstart--;
+        ystart--;
+        xstop = xdim;
+        ystop = ydim;
+        xrdim = (xstop-xstart+xstep-1)/xstep;
+        yrdim = (ystop-ystart+ystep-1)/ystep;
+        result = new double[xrdim * yrdim];
+        if (edges == CIRCULAR) {
+            internal_wrap_reduce(image, xdim, ydim, filt, xfdim, yfdim,
+                                 xstart, xstep, xstop, ystart, ystep, ystop,
+                                 result);        
+        }
+        else {
+            temp = new double[xfdim * yfdim];
+            internal_reduce(image, xdim, ydim, filt, temp, xfdim, yfdim,
+                            xstart, xstep, xstop, ystart, ystep, ystop,
+                            result, edges);
+        } // else
+        return result;
+    }
+    
+    /**
+     * This is ported from wrap.c by Eero Simoncelli, 2/97
+     * Performs correlation (i.e., convolution with filt(-x,-y) of filt
+     * with image followed by subsampling (a.k.a. reduce in Burt&Adelson81).
+     * The operations are combined to avoid unnecessary computation of the
+     * convolution samples that are to be discarded in the subsampling
+     * operation.  The convolution is done in 9 sections so that mod
+     * operations are not performed unnecessarily.  The subsampling lattice
+     * is specified by the start, step, and stop parameters.
+     * @param image
+     * @param xdim first dimension of image
+     * @param ydim second dimension of image
+     * @param filt
+     * @param xfdim first dimension of filt
+     * @param yfdim second dimension of filt
+     * @param xstart
+     * @param xstep
+     * @param xstop
+     * @param ystart
+     * @param ystep
+     * @param ystop
+     * @param result
+     */
+    private void internal_wrap_reduce(double image[], int xdim, int ydim, double filt[],
+                                      int xfdim, int yfdim, int xstart, int xstep, int xstop,
+                                      int ystart, int ystep, int ystop, double result[]) {
+           
+    }
+    
+    private void internal_reduce(double image[], int xdim, int ydim, double filt[], double temp[],
+                                 int xfdim, int yfdim, int xstart, int xstep, int xstop,
+                                 int ystart, int ystep, int ystop, double result[], int edges) {
+        
+    }
+    
+    /**
+     * This is a port of buildWpyr.m by Eero Sinoncelli, 6/96.
+     * Construct a separable orthonormal QMF/wavelet pyramid on matrix im.
+     * @param im
+     * @param imx
+     * @param imy
+     * @param ht  Specifies the number of pyramid levels to build.
+     *            default is maxPyrHt(im, filt).
+     * @param filt Filter can be of even or odd length, but should be symmetric
+     * @param edges Specifies edge-handling, and defaults to REFLECT1.
+     * @param pind N size 2 int[] arrays, containing the sizes of each subband.
+     * @return
+     */
+    private Vector buildWpyr(double[] im, int imx, int imy, int ht, int filt, int edges,
+            Vector pind) {
+        // pyr is a vector containing the N pyramid subbands, ordered from fine to coarse.
+        Vector pyr = null;
+        double kernel[];
+        double hkernel[];
+        int stag;
+        int max_ht;
+        int x;
+        int y;
+        int intMat[];
+        
+        kernel = namedFilter(filt, 0);
+        
+        hkernel = modulateFlip(kernel);
+        
+        // Stagger sampling if filter is odd-length:
+        if ((kernel.length % 2) == 0) {
+            stag = 2;
+        }
+        else {
+            stag = 1;
+        }
+        
+        // Compute maximum pyramid height for given image and filter size.
+        // Specifically: the number of corrDn operations that can be sequentially
+        // performed when subsampling by a factor of 2;
+        max_ht = 0;
+        x = imx;
+        y = imy;
+        while ((x >= kernel.length) && (y >= kernel.length)) {
+            max_ht++;
+            x = (int)Math.floor(x/2.0);
+            y = (int)Math.floor(y/2.0);
+        }
+        if (ht > max_ht) {
+            MipavUtil.displayError("Cannot build pyramid higher than " +
+                                   max_ht + " levels");
+            error = 1;
+            return null;
+        }
+        
+        if (ht <= 0) {
+            pyr.removeAllElements();
+            pyr.add(im);
+            intMat = new int[2];
+            intMat[0] = imx;
+            intMat[1] = imy;
+            pind.removeAllElements();
+            pind.add(intMat);
+        } // if (ht <= 0)
+        else {
+            
+        } // else
         return pyr;
     }
     
