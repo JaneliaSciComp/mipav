@@ -119,7 +119,8 @@ public class FileInfoMinc extends FileInfoBase {
         null, // frame of reference UID
         null, // synchronization frame of reference UID
         null, // image comments
-        // null,// request attributes sequence
+
+    // null,// request attributes sequence
         null, // UID
         null, // content sequence
         null, // storage media file-set UID
@@ -247,7 +248,7 @@ public class FileInfoMinc extends FileInfoBase {
                         // getDicomTag(FileInfoDicom.anonymizeTagIDs[i])); System.out.println("found " +
                         // getVarElem(varIndex).name);
                         if (getVarElem(varIndex).name.equals("dicom_0x" +
-                                                                 getTagGroup(FileInfoDicom.anonymizeTagIDs[i]))) {
+                                                             getTagGroup(FileInfoDicom.anonymizeTagIDs[i]))) {
 
                             for (int attIndex = 0; attIndex < getVarElem(varIndex).vattArray.length; attIndex++) {
 
@@ -255,7 +256,7 @@ public class FileInfoMinc extends FileInfoBase {
                                 // getDicomElem(FileInfoDicom.anonymizeTagIDs[i])); System.out.println("found " +
                                 // getVarElem(varIndex).getVattElem(attIndex).name);
                                 if (getVarElem(varIndex).getVattElem(attIndex).name.equals("el_0x" +
-                                                                                               getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
+                                                                                           getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
 
                                     // System.out.println("want to erase " + FileInfoDicom.anonymizeTagIDs[i] + " -- "
                                     // + getVarElem(varIndex).getVattElem(attIndex).toString());
@@ -299,7 +300,7 @@ public class FileInfoMinc extends FileInfoBase {
                             // getDicomElem(FileInfoDicom.anonymizeTagIDs[i])); System.out.println("found " +
                             // getVarElem(varIndex).getVattElem(attIndex).name);
                             if (getVarElem(varIndex).getVattElem(attIndex).name.equals("el_0x" +
-                                                                                           getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
+                                                                                       getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
 
                                 // System.out.println("want to erase " + FileInfoDicom.anonymizeTagIDs[i] + " -- " +
                                 // getVarElem(varIndex).getVattElem(attIndex).toString());
@@ -345,6 +346,18 @@ public class FileInfoMinc extends FileInfoBase {
         }
 
         // this fileInfo is now an expurgated/sanitised version
+    }
+
+    /**
+     * Calculates rescale intercept given a min and a slope value.
+     *
+     * @param   min    Min value.
+     * @param   slope  Slope value.
+     *
+     * @return  Rescale intercept.
+     */
+    public final double calculateIntercept(double min, double slope) {
+        return (min - (slope * vmin));
     }
 
 
@@ -395,24 +408,12 @@ public class FileInfoMinc extends FileInfoBase {
      * @return  Rescale slope
      */
     public final double calculateSlope(double max, double min) {
-        if ((vmax - vmin) != 0 ){
+
+        if ((vmax - vmin) != 0) {
             return (max - min) / (vmax - vmin);
-        }
-        else {
+        } else {
             return 1.0;
         }
-    }
-    
-    /**
-     * Calculates rescale intercept given a min and a slope value.
-     *
-     * @param   min    Min value.
-     * @param   slope  Slope value.
-     *
-     * @return  Rescale intercept.
-     */
-    public final double calculateIntercept(double min, double slope) {
-        return (min - (slope * vmin));
     }
 
     /**
@@ -521,6 +522,130 @@ public class FileInfoMinc extends FileInfoBase {
         for (int j = 0; j < varArray.length; j++) {
             dialog.append(varArray[j].toString());
         }
+    }
+
+    /**
+     * Accessor that gets the "start" variable values, adjusted so that [0] holds the image x axis value, [1] the image
+     * y axis value, and [2] the image z axis value. It's important that this is accessed AFTER setFlipInfo() and
+     * setImportantImageInfo(). Otherwise it won't return the proper values.
+     *
+     * <p>MINC positive axis is right to left positive axis is posterior to anterior postive axis is inferior to
+     * superior</p>
+     *
+     * <p>DICOM positive axis is left to right positive axis is anterior to posterior postive axis is inferior to
+     * superior</p>
+     *
+     * @param   slice  slice to begin the start variable on.
+     *
+     * @return  The "start" values for the image.
+     */
+    public final double[] getConvertStartLocationsToDICOM(int slice) {
+        double x = 0;
+        double y = 0;
+        double z = 0;
+        double xRes = 1;
+        double yRes = 1;
+        double zRes = 1;
+
+        String spacex, spacey, spacez;
+
+        spacex = getDimElem(2).name;
+        spacey = getDimElem(1).name;
+        spacez = getDimElem(0).name;
+
+        for (int i = 0; i < varArray.length; i++) {
+
+            if (varArray[i].name.equals(spacex)) {
+                x = varArray[i].start;
+                xRes = varArray[i].resolution;
+            }
+
+            if (varArray[i].name.equals(spacey)) {
+                y = varArray[i].start;
+                yRes = varArray[i].resolution;
+            }
+
+            if (varArray[i].name.equals(spacez)) {
+                z = varArray[i].start;
+                zRes = varArray[i].resolution;
+            }
+        }
+
+        double[] startLocs = new double[getExtents().length];
+
+        if (startLocs.length == 2) {
+            startLocs[0] = x;
+            startLocs[1] = y;
+        } else if (startLocs.length == 3) {
+
+            if (getImageOrientation() == FileInfoBase.SAGITTAL) {
+
+                if (getAxisOrientation(1) == FileInfoBase.ORI_S2I_TYPE) {
+                    startLocs[0] = -x;
+                    startLocs[1] = y;
+                    startLocs[2] = -(z + (zRes * slice));
+                } else {
+                    startLocs[0] = -x;
+                    startLocs[1] = y;
+                    startLocs[2] = -(z + (zRes * slice));
+                }
+            } else if (getImageOrientation() == FileInfoBase.AXIAL) {
+                startLocs[0] = -x;
+                startLocs[1] = -y;
+                startLocs[2] = (z + (zRes * slice));
+            } else if (getImageOrientation() == FileInfoBase.CORONAL) {
+                startLocs[0] = -x;
+                startLocs[1] = y;
+                startLocs[2] = -(z + (zRes * slice));
+            } else {
+                startLocs[0] = x;
+                startLocs[1] = y;
+                startLocs[2] = (z + (zRes * slice));
+            }
+        }
+
+        TransMatrix matrix = new TransMatrix(getExtents().length + 1);
+        matrix.identity();
+
+        for (int i = 0; i < varArray.length; i++) {
+
+            if (varArray[i].name.equals("xspace")) {
+
+                if (varArray[i].cosines != null) {
+
+                    for (int j = 0; j < varArray[i].cosines.length; j++) {
+                        matrix.set(0, j, varArray[i].cosines[j]);
+                    }
+                }
+            } else if (varArray[i].name.equals("yspace")) {
+
+                if (varArray[i].cosines != null) {
+
+                    for (int j = 0; j < varArray[i].cosines.length; j++) {
+                        matrix.set(1, j, varArray[i].cosines[j]);
+                    }
+                }
+            } else if (varArray[i].name.equals("zspace")) {
+
+                if (varArray[i].cosines != null) {
+
+                    for (int j = 0; j < varArray[i].cosines.length; j++) {
+                        matrix.set(2, j, varArray[i].cosines[j]);
+                    }
+                }
+            }
+        }
+
+        double[] transformedPt = new double[getExtents().length];
+
+        if (getExtents().length == 2) {
+            matrix.transform(startLocs[0] + (xRes / 2), startLocs[1] + (yRes / 2), transformedPt);
+        } else if (getExtents().length == 3) {
+            matrix.transform(startLocs[0] + (xRes / 2), startLocs[1] + (yRes / 2), startLocs[2] + (zRes / 2),
+                             transformedPt);
+        }
+
+        return transformedPt;
     }
 
     /**
@@ -648,95 +773,7 @@ public class FileInfoMinc extends FileInfoBase {
         return gattArray[index];
     }
 
-    /**
-     * Accessor that gets the "start" variable values, adjusted so that [0] holds the image x axis value, [1] the image
-     * y axis value, and [2] the image z axis value. It's important that this is accessed AFTER setFlipInfo() and
-     * setImportantImageInfo(). Otherwise it won't return the proper values.
-     *
-     *  MINC positive axis is right to left
-     *       positive axis is posterior to anterior
-     *       postive  axis is inferior to superior
-     *       
-     *  DICOM positive axis is left to right
-     *        positive axis is anterior to posterior
-     *        postive  axis is inferior to superior
-     *        
-     * @param   slice  slice to begin the start variable on.
-     *
-     * @return  The "start" values for the image.
-     */
-    public final float[] getConvertStartLocationsToDICOM(int slice) {
-        double x = 0;
-        double y = 0;
-        double z = 0;
-        double xRes = 1;
-        double yRes = 1;
-        double zRes = 1;
-        
-        String spacex, spacey, spacez;
-        
-        spacex = getDimElem(2).name;
-        spacey = getDimElem(1).name;
-        spacez = getDimElem(0).name;
 
-        for (int i = 0; i < varArray.length; i++) {
-
-            if (varArray[i].name.equals(spacex)) {
-                x = varArray[i].start;
-                xRes = varArray[i].resolution;
-            }
-
-            if (varArray[i].name.equals(spacey)) {
-                y = varArray[i].start;
-                yRes = varArray[i].resolution;
-            }
-
-            if (varArray[i].name.equals(spacez)) {
-                z = varArray[i].start;
-                zRes = varArray[i].resolution;
-            }
-        }
-  
-        float[] startLocs = new float[getExtents().length];
-
-        if (startLocs.length == 2) {
-            startLocs[0] = (float) x;
-            startLocs[1] = (float) y;
-        } else if (startLocs.length == 3) {
-
-            if (getImageOrientation() == FileInfoBase.SAGITTAL){  
-                if (getAxisOrientation(1) == FileInfoBase.ORI_S2I_TYPE) {
-                    startLocs[0] = (float) -x;
-                    startLocs[1] = (float) y;
-                    startLocs[2] = (float) -(z + (zRes * slice));
-                }
-                else {
-                    startLocs[0] = (float) -x;
-                    startLocs[1] = (float) y;
-                    startLocs[2] = (float) -(z + (zRes * slice));
-                }
-            }
-            else if (getImageOrientation() == FileInfoBase.AXIAL){               
-                startLocs[0] = (float) -x;
-                startLocs[1] = (float) -y;
-                startLocs[2] = (float) (z + (zRes * slice));               
-            }
-            else if (getImageOrientation() == FileInfoBase.CORONAL){               
-                startLocs[0] = (float) -x;
-                startLocs[1] = (float) y;
-                startLocs[2] = (float) -(z + (zRes * slice));               
-            }
-            else {               
-                startLocs[0] = (float) x;
-                startLocs[1] = (float) y;
-                startLocs[2] = (float) (z + (zRes * slice));               
-            }
-        }
-        
-        return startLocs;
-    }
-    
-    
     /**
      * Accessor that gets the "start" variable values, with the "xspace" in 0, "yspace" in 1, and "zspace" in 2. This
      * differs from the other methods because it doesn't place the values so that they correspond to image x, y, and z.
@@ -848,14 +885,14 @@ public class FileInfoMinc extends FileInfoBase {
 
         String secondDim = getDimElem(1).name;
         Preferences.debug("secondDim = " + secondDim + "\n");
-        
+
         String thirdDim = getDimElem(2).name;
         Preferences.debug("thirdDim = " + thirdDim + "\n");
 
         for (int i = 0; i < varArray.length; i++) {
 
             if (varArray[i].name.equals("image")) {
-                setOffset( varArray[i].begin );
+                setOffset(varArray[i].begin);
                 Preferences.debug("Image offset = " + getOffset() + "\n");
 
                 switch (varArray[i].nc_type) {
@@ -1037,42 +1074,43 @@ public class FileInfoMinc extends FileInfoBase {
             }
 
             if (varArray[iy].resolution < 0) {
-               axisOrientation[1] = oppositeOrient(axisOrientation[1]);
+                axisOrientation[1] = oppositeOrient(axisOrientation[1]);
             }
 
             if (varArray[iz].resolution < 0) {
-               axisOrientation[2] = oppositeOrient(axisOrientation[2]);
+                axisOrientation[2] = oppositeOrient(axisOrientation[2]);
             }
         }
-        
 
-        for(int i = 0; i < axisOrientation.length; i++){
+
+        for (int i = 0; i < axisOrientation.length; i++) {
+
             switch (axisOrientation[i]) {
-    
+
                 case ORI_UNKNOWN_TYPE:
                     Preferences.debug("axisOrientation[" + i + "] = ORI_UNKNOWN_TYPE\n");
                     break;
-    
+
                 case ORI_R2L_TYPE:
                     Preferences.debug("axisOrientation[" + i + "] = ORI_R2L_TYPE\n");
                     break;
-    
+
                 case ORI_L2R_TYPE:
                     Preferences.debug("axisOrientation[" + i + "] = ORI_L2R_TYPE\n");
                     break;
-    
+
                 case ORI_P2A_TYPE:
                     Preferences.debug("axisOrientation[" + i + "] = ORI_P2A_TYPE\n");
                     break;
-    
+
                 case ORI_A2P_TYPE:
                     Preferences.debug("axisOrientation[" + i + "] = ORI_A2P_TYPE\n");
                     break;
-    
+
                 case ORI_I2S_TYPE:
                     Preferences.debug("axisOrientation[" + i + "] = ORI_I2S_TYPE\n");
                     break;
-    
+
                 case ORI_S2I_TYPE:
                     Preferences.debug("axisOrientation[" + i + "] = ORI_S2I_TYPE\n");
                     break;
@@ -1141,53 +1179,26 @@ public class FileInfoMinc extends FileInfoBase {
     }
 
     /**
-     * Sets the start location of the specified axis.
-     *
-     * @param  originCoord  origin coord.
-     * @param  axis         Axis of orientation; x is 0, y is 1, z is 2.
-     */
-    private void setStartLocation(float originCoord, int axis) {
-
-        String space;
-        int index = 0;
-        
-        if ((axis < 0) || (axis > 2)) {
-            Preferences.debug("Error: Axis must be 0, 1, or 2.\n");
-            return;
-        }
-
-        // opposite axis: if axis is 2 we need to getDimElem(0). See previous examples
-        // of String spacez = getDimElem(0).name. Minc stores the x dimension in
-        // 2, the y dimension in 1, and the z dimension in 0.
-        space = getDimElem(Math.abs(axis - 2)).name;
-
-        for (int i = 0; i < varArray.length; i++) {
-
-            if (varArray[i].name.equals(space)) {
-                index = i;
-            }
-        }
-
-        varArray[index].start = originCoord;
-    }
-
-    /**
      * Sets start locations of each axis.
      *
      * @param  origin  the image origin
      */
-    public final void setStartLocations(float[] origin) {
+    public final void setStartLocations(double[] origin) {
 
         if (origin.length != 3) {
             Preferences.debug("Start locations array must be of length 3.\n");
+
             return;
         }
 
+        float[] fOrigin = new float[origin.length];
+
         for (int i = 0; i < origin.length; i++) {
             setStartLocation(origin[i], i);
+            fOrigin[i] = (float) origin[i];
         }
 
-        super.setOrigin(origin);
+        super.setOrigin(fOrigin);
     }
 
     /**
@@ -1237,7 +1248,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  the element id
      */
-    private final static String getTagElem(String fullTag) {
+    private static String getTagElem(String fullTag) {
         int index = fullTag.indexOf(",");
 
         if (index == -1) {
@@ -1254,7 +1265,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  the element group
      */
-    private final static String getTagGroup(String fullTag) {
+    private static String getTagGroup(String fullTag) {
         int index = fullTag.indexOf(",");
 
         if (index == -1) {
@@ -1787,7 +1798,7 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * @return  The proper axis orientation for that space.
      */
-    private final int setOrientType(String space, boolean positive) {
+    private int setOrientType(String space, boolean positive) {
 
         if (positive) {
 
@@ -1810,5 +1821,37 @@ public class FileInfoMinc extends FileInfoBase {
         }
 
         return ORI_UNKNOWN_TYPE;
+    }
+
+    /**
+     * Sets the start location of the specified axis.
+     *
+     * @param  originCoord  origin coord.
+     * @param  axis         Axis of orientation; x is 0, y is 1, z is 2.
+     */
+    private void setStartLocation(double originCoord, int axis) {
+
+        String space;
+        int index = 0;
+
+        if ((axis < 0) || (axis > 2)) {
+            Preferences.debug("Error: Axis must be 0, 1, or 2.\n");
+
+            return;
+        }
+
+        // opposite axis: if axis is 2 we need to getDimElem(0). See previous examples
+        // of String spacez = getDimElem(0).name. Minc stores the x dimension in
+        // 2, the y dimension in 1, and the z dimension in 0.
+        space = getDimElem(Math.abs(axis - 2)).name;
+
+        for (int i = 0; i < varArray.length; i++) {
+
+            if (varArray[i].name.equals(space)) {
+                index = i;
+            }
+        }
+
+        varArray[index].start = originCoord;
     }
 }

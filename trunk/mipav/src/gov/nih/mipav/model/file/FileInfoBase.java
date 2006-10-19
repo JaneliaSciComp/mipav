@@ -1125,7 +1125,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         }
 
         dialog.append("Modality:             " + modalityStr[modality] + "\n");
-        dialog.append("Image origin upper left corner of image - right hand rule\n");
+        dialog.append("Slice origin upper left corner of image - right hand rule\n");
 
         for (int i = 0; i < origin.length; i++) {
 
