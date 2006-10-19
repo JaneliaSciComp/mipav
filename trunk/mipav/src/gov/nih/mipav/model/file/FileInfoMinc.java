@@ -120,7 +120,7 @@ public class FileInfoMinc extends FileInfoBase {
         null, // synchronization frame of reference UID
         null, // image comments
 
-    // null,// request attributes sequence
+        // null,// request attributes sequence
         null, // UID
         null, // content sequence
         null, // storage media file-set UID
@@ -248,7 +248,7 @@ public class FileInfoMinc extends FileInfoBase {
                         // getDicomTag(FileInfoDicom.anonymizeTagIDs[i])); System.out.println("found " +
                         // getVarElem(varIndex).name);
                         if (getVarElem(varIndex).name.equals("dicom_0x" +
-                                                             getTagGroup(FileInfoDicom.anonymizeTagIDs[i]))) {
+                                                                 getTagGroup(FileInfoDicom.anonymizeTagIDs[i]))) {
 
                             for (int attIndex = 0; attIndex < getVarElem(varIndex).vattArray.length; attIndex++) {
 
@@ -256,7 +256,7 @@ public class FileInfoMinc extends FileInfoBase {
                                 // getDicomElem(FileInfoDicom.anonymizeTagIDs[i])); System.out.println("found " +
                                 // getVarElem(varIndex).getVattElem(attIndex).name);
                                 if (getVarElem(varIndex).getVattElem(attIndex).name.equals("el_0x" +
-                                                                                           getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
+                                                                                               getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
 
                                     // System.out.println("want to erase " + FileInfoDicom.anonymizeTagIDs[i] + " -- "
                                     // + getVarElem(varIndex).getVattElem(attIndex).toString());
@@ -300,7 +300,7 @@ public class FileInfoMinc extends FileInfoBase {
                             // getDicomElem(FileInfoDicom.anonymizeTagIDs[i])); System.out.println("found " +
                             // getVarElem(varIndex).getVattElem(attIndex).name);
                             if (getVarElem(varIndex).getVattElem(attIndex).name.equals("el_0x" +
-                                                                                       getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
+                                                                                           getTagElem(FileInfoDicom.anonymizeTagIDs[i]))) {
 
                                 // System.out.println("want to erase " + FileInfoDicom.anonymizeTagIDs[i] + " -- " +
                                 // getVarElem(varIndex).getVattElem(attIndex).toString());
@@ -526,13 +526,12 @@ public class FileInfoMinc extends FileInfoBase {
 
     /**
      * Accessor that gets the "start" variable values, adjusted so that [0] holds the image x axis value, [1] the image
-     * y axis value, and [2] the image z axis value. It's important that this is accessed AFTER setFlipInfo() and
-     * setImportantImageInfo(). Otherwise it won't return the proper values.
+     * y axis value, and [2] the image z axis value.
      *
-     * <p>MINC positive axis is right to left positive axis is posterior to anterior postive axis is inferior to
+     * <p>MINC positive axis is left to right; positive axis is posterior to anterior; postive axis is inferior to
      * superior</p>
      *
-     * <p>DICOM positive axis is left to right positive axis is anterior to posterior postive axis is inferior to
+     * <p>DICOM positive axis is right to left; positive axis is anterior to posterior; postive axis is inferior to
      * superior</p>
      *
      * @param   slice  slice to begin the start variable on.
