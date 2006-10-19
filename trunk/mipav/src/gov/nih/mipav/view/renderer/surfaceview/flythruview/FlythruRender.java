@@ -498,6 +498,7 @@ public class FlythruRender extends SurfaceRender
         kPoint.x = ((2.0f * (kPoint.x - afOrigins[0]) / aiDirections[0]) - ((xDim - 1) * afResolutions[0])) / maxBox;
         kPoint.y = ((2.0f * (kPoint.y - afOrigins[1]) / aiDirections[1]) - ((yDim - 1) * afResolutions[1])) / maxBox;
         kPoint.z = ((2.0f * (kPoint.z - afOrigins[2]) / aiDirections[2]) - ((zDim - 1) * afResolutions[2])) / maxBox;
+        kPoint.z *= -1;
 
         return kPoint;
     }
@@ -1698,6 +1699,7 @@ public class FlythruRender extends SurfaceRender
                            maxBox;
             kPoint.z = ((2.0f * (kPoint.z - afOrigins[2]) / aiDirections[2]) - ((zDim - 1) * afResolutions[2])) /
                            maxBox;
+            kPoint.z *= -1;
 
             kLineStripArray.setCoordinate(iPoint, kPoint);
             kLineStripArray.setColor(iPoint, m_kNormalColorPathVisited);
