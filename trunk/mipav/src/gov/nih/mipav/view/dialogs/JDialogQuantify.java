@@ -128,8 +128,14 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
         // ViewJFrameImage imageFrame = null;
 
+        if (maskImage != null) {
+            maskImage.disposeLocal();
+            maskImage = null;
+        }
+
         if (algorithm instanceof AlgorithmQuantify) {
             image.clearMask();
+
             if (algorithm.isCompleted()) {
                 insertScriptLine();
             }
@@ -139,25 +145,6 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
         algoQuantify.finalize();
         algoQuantify = null;
         dispose();
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeImage(maskImage, "mask_image");
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-
-        setMaskImage(scriptParameters.retrieveImage("mask_image"));
     }
 
     /**
@@ -185,7 +172,7 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
             algoQuantify.addListener(this);
 
             createProgressBar(image.getImageName(), algoQuantify);
-            
+
             // Hide dialog
             setVisible(false);
 
@@ -196,6 +183,7 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
+
                 if (!userInterface.isAppFrameVisible()) {
                     algoQuantify.setProgressBarVisible(false);
                 }
@@ -207,6 +195,25 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
 
             return;
         }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        setMaskImage(scriptParameters.retrieveImage("mask_image"));
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeImage(maskImage, "mask_image");
     }
 
     /**

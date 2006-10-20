@@ -1,7 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -46,8 +45,6 @@ public class AlgorithmQuantify extends AlgorithmBase {
      * Prepares this class for destruction.
      */
     public void finalize() {
-        maskImage.disposeLocal();
-        maskImage = null;
         super.finalize();
     }
 
@@ -104,7 +101,6 @@ public class AlgorithmQuantify extends AlgorithmBase {
 
         int mod = length / 25; // mod is 4 percent of length
 
-        
 
         objs = new MaskObject[(int) maskImage.getMax() + 1];
 
@@ -144,7 +140,6 @@ public class AlgorithmQuantify extends AlgorithmBase {
         }
         // output object data.
 
-        
         setCompleted(true);
     }
 
@@ -172,7 +167,6 @@ public class AlgorithmQuantify extends AlgorithmBase {
             return;
         }
 
-        
         objs = new MaskObject[(int) maskImage.getMax() + 1];
 
         for (i = 0; i < objs.length; i++) {
@@ -219,7 +213,6 @@ public class AlgorithmQuantify extends AlgorithmBase {
             objs[i].output(srcImage, i);
         }
 
-        
         setCompleted(true);
     }
 
@@ -251,12 +244,14 @@ public class AlgorithmQuantify extends AlgorithmBase {
 
             if (image.getNDims() == 2) {
                 area = (nVoxels * image.getFileInfo(0).getResolutions()[0] * image.getFileInfo(0).getResolutions()[1]);
-                ViewUserInterface.getReference().setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity + "\t\t" + +area + "\n");
+                ViewUserInterface.getReference().setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity +
+                                                             "\t\t" + +area + "\n");
             } else {
 
                 volume = (nVoxels * image.getFileInfo(0).getResolutions()[0] *
                               image.getFileInfo(0).getResolutions()[1] * image.getFileInfo(0).getResolutions()[2]);
-                ViewUserInterface.getReference().setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity + "\t\t" + +volume + "\n");
+                ViewUserInterface.getReference().setDataText("    " + objNo + "\t" + +nVoxels + "\t" + totalIntensity +
+                                                             "\t\t" + +volume + "\n");
             }
         }
     }
