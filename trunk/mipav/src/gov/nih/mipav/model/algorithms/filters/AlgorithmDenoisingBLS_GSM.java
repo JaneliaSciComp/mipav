@@ -74,6 +74,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     private static final int REFLECT1 = 2;
     
+    private static final int EXTEND = 3;
+    
+    private static final int REPEAT = 4;
+    
     
     /**
      * underlying wavelet filter For 4 coefficients the routine daub4 is considerably faster than pwt. DAUB4 implements
@@ -859,6 +863,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             int blx;
             int bly;
             int intMat[];
+            int fhx[] = null;
+            int fhy[] = null;
             
             // Number of orientations: vertical, horizontal, and mixed diagonals
             // (for compatibility)
@@ -946,7 +952,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 intMat[1] = bly;
                 pind.setElementAt(intMat, nband-1);
             } // for (nband = 1; nband <= bandNum-1; nband++)
-            fh = reconWpyr(pyrh, pind, filter, CIRCULAR, null, null);
+            fh = reconWpyr(pyrh, pind, filter, CIRCULAR, null, null, fhx, fhy);
             if (error == 1) {
                 return null;
             }
@@ -1420,18 +1426,336 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     }
     
     /**
-     * 
-     * @param pyr
-     * @param ind
+     * This is a port of wpyrHt.m  by Eero Simoncelli, 6/96.
+     * Compute height of separable QMF/wavelet pyramid with given index matrix
+     * @param pind
+     * @return
+     */
+    private int wpyrHt(Vector pind) {
+        int intMat[];
+        int nbands;
+        int ht;
+        
+        intMat = (int[])pind.get(0);
+        if ((intMat[0] == 1) || (intMat[1] == 1)) {
+            nbands = 1;
+        }
+        else {
+            nbands = 3;
+        }
+        ht = (pind.size()-1)/nbands;
+        return ht;
+    }
+    
+    /**
+     * This is ported from upConv.c by Eero Simoncelli, 7/96.
+     * Upsample matrix image, followed by convolution with matrix filt.  These
+     * arguments should be 1D or 2D matrices, and image must be larger (in
+     * both dimensions) than filt.  The origin of filt is assumed to be
+     * floor(size(filt)/2)+1.
+     * @param image
+     * @param xdim
+     * @param ydim
      * @param filt
-     * @param edges
-     * @param levs
-     * @param bands
+     * @param xfdim
+     * @param yfdim
+     * @param edges Determines boundary handling
+     *              CIRCULAR - Circular convolution
+     *              REFLECT1 - Reflect about the edge pixels
+     *              REFLECT2 - Reflect, doubling the edge pixels
+     *              REPEAT - Repeat the edge pixels
+     *              ZERO - Assume values of zero outside image boundary
+     *              EXTEND - Reflect and invert
+     *              DONT_COMPUTE - Zero output when filter overhangs output boundaries
+     * Upsampliing factors are determined by xstep and ystep
+     * @param xstep
+     * @param ystep
+     * The window over which the convolution occurs is specified by
+     * xstart, ystart, xstop, and ystop.
+     * @param xstart
+     * @param ystart
+     * @param xstop
+     * @param ystop
+     * This operation corresponds to multiplication of a signal vector by a 
+     * matrix whose columns contains copies of the time-reversed (or space-
+     * reversed) filt shifted by multiple copies of step.  See corrDn for
+     * the operation corresponding to the transpose of this matrix.
+     * @return
+     */
+    private double[] upConv(double image[], int xdim, int ydim, double filt[],
+                            int xfdim, int yfdim, int edges, int xstep, int ystep,
+                            int xstart, int ystart, int xstop, int ystop) {
+        double result[] = new double[xstop * ystop];
+        int xrdim = xstop;
+        int yrdim = ystop;
+        double origFilt[];
+        int origx;
+        int origy;
+        int x;
+        int y;
+        double temp[];
+        
+        xstart--;
+        ystart--;
+        
+        // upConv has a bug for even length kernels when using the REFLECT1,
+        // EXTEND, or REPEAT edge handlers
+        if (((edges == REFLECT1) || (edges == EXTEND) || (edges == REPEAT)) &&
+            ((xfdim%2 == 0) || (yfdim %2 == 0))) {
+            origFilt = filt;
+            origx = xfdim;
+            origy = yfdim;
+            xfdim = 2*(origx/2) + 1;
+            yfdim = 2*(origy/2) + 1;
+            filt = new double[xfdim * yfdim];
+            for (y = 0; y < origy; y++) {
+                for (x = 0; x < origx; x++) {
+                    filt[y*xfdim + x] = origFilt[y*origx + x];
+                }
+            }
+        }
+        
+        if (edges == CIRCULAR) {
+            internal_wrap_expand(image, filt, xfdim, yfdim,
+                    xstart, xstep, xstop, ystart, ystep, ystop,
+                    result, xrdim, yrdim);    
+        }
+        else {
+            temp = new double[xfdim * yfdim]; 
+            internal_expand(image, filt, temp, xfdim, yfdim,
+                            xstart, xstep, xstop, ystart, ystep, ystop,
+                            result, xrdim, yrdim, edges);
+        }
+        
+        return result;
+    }
+    
+    private void internal_wrap_expand(double image[], double filt[], int xfdim, int yfdim,
+                                      int xstart, int xstep, int xstop, int ystart, int ystep, int ystop,
+                                      double result[], int xdim, int ydim) {
+        int xCtrStop = xdim - xfdim + 1;
+        int yCtrStop = ydim - yfdim + 1;
+        int xCtrStart = 0;
+        int yCtrStart = 0;
+        int xfmid = xfdim/2;
+        int yfmid = yfdim/2;
+        double imval[][];
+        int xpos;
+        int ypos;
+        int impos;
+        double val;
+        
+        // shift start/stop coords to filter upper left hand corner
+        xstart -= xfmid;
+        ystart -= yfmid;
+        xstop -= xfmid;
+        ystop -= yfmid;
+        
+        if (xstop < xCtrStop) {
+            xCtrStop = xstop;
+        }
+        if (ystop < yCtrStop) {
+            yCtrStop = ystop;
+        }
+        
+        imval = new double[ydim][xdim];
+        
+        // Top rows
+        for (impos = 0, ypos = ystart; ypos < yCtrStart; ypos += ystep) {
+            for (xpos = xstart; xpos < xCtrStart; xpos += xstep, impos++) {
+                val = image[impos];   
+            } // for (xpos = xstart; xpos < xCtrStart; xpos += xstep, impos++)
+        } // for (impos = 0, ypos = ystart; ypos < yCtrStart; ypos += ystep)
+    }
+    
+    private void internal_expand(double image[], double filt[], double temp[], int xfdim, int yfdim,
+                                 int xstart, int xstep, int xstop, int ystart, int ystep, int ystop,
+                                 double result[], int xdim, int ydim, int edges) {
+        
+    }
+    
+    /**
+     * This is a port of reconWpyr.m by Eero Simoncelli, 6/96
+     * Reconstruct image from its separable orthonormal QMF/wavelet pyramid
+     * representation, as created by buildWpyr.
+     * @param pyr  A Vector containing the N pyramid subbands, ordered from fine
+     *             to coarse.
+     * @param ind A Vector with N 2 element int[] containing the sizes of each
+     *            subband
+     * @param filt A standard filter
+     * @param edges Specifies edge handling
+     * @param levs Levels to include or all for default.  1 corresponds to the
+     *             finest scale.  The lowpass band corresponds to wpyrHt(indices) + 1.
+     * @param bands Bands to include or all for default. 1 = horizontal, 
+     *              2 = vertical, 3 = diagonal.
+     * @param resX First dimension of res
+     * @param resY Second dimension of res
      * @return
      */
     private double[] reconWpyr(Vector pyr, Vector ind, int filt,
-                               int edges, int levs[], int bands[]) {
+                               int edges, int levs[], int bands[],
+                               int resX[], int resY[]) {
         double res[] = null;
+        boolean allLevs = false;
+        boolean allBands = false;
+        int maxLev;
+        int i;
+        double kernel[];
+        double hkernel[];
+        int stag;
+        int res_sz[];
+        int loind;
+        int intMat[];
+        int intMat2[];
+        int hres_sz[];
+        int lres_sz[];
+        boolean moreOne;
+        double nres[];
+        int nresx[] = new int[1];
+        int nresy[] = new int[1];
+        double arr[][];
+        int parr[][];
+        int levsm1[];
+        
+        if (resX == null) {
+            resX = new int[1];
+        }
+        
+        if (resY == null) {
+            resY = new int[1];
+        }
+        
+        if (levs == null) {
+            allLevs = true;
+        }
+        if (bands == null) {
+            allBands = true;
+        }
+        
+        maxLev = 1 + wpyrHt(ind);
+        if (allLevs) {
+            levs = new int[maxLev];
+            for (i = 0; i < maxLev; i++) {
+                levs[i] = i+1;
+            }
+        }
+        else {
+            for (i = 0; i < levs.length; i++) {
+                if (levs[i] > maxLev) {
+                    MipavUtil.displayError("Level numbers must be in the range 1 to "
+                                            + maxLev);
+                    error = 1;
+                    return null;
+                }
+            }
+        } // else
+        
+        if (allBands) {
+            bands = new int[3];
+            bands[0] = 1;
+            bands[1] = 2;
+            bands[2] = 3;
+        }
+        else {
+            for (i = 0; i < bands.length; i++) {
+                if ((bands[i] < 1) || (bands[i] > 3)) {
+                    MipavUtil.displayError("Band numbers must be in the range 1 to 3");
+                    error = 1;
+                    return null;
+                }
+            }
+        } // else
+        
+        kernel = namedFilter(filt, 0);
+        hkernel = modulateFlip(kernel);
+        
+        // For odd-length filters, stagger the sampling lattices:
+        if (((kernel.length) % 2) == 0) {
+            stag = 2;
+        }
+        else {
+            stag = 1;
+        }
+        
+        // Compute size of result image: assumes critical sampling (boundaries correct)
+        res_sz = (int[])ind.get(0);
+        if (res_sz[0] == 1) {
+            loind = 2;
+            res_sz[1] = 0;
+            for (i = 0; i < ind.size(); i++) {
+                intMat = (int[])ind.get(i);
+                res_sz[1] += intMat[1];
+            }
+        } // if (res_sz[0] == 1)
+        else if (res_sz[1] == 1) {
+            loind = 2;
+            res_sz[0] = 0;
+            for (i = 0; i < ind.size(); i++) {
+                intMat = (int[])ind.get(i);
+                res_sz[0] += intMat[0];
+            }
+        } // else if (res_sz[1] == 1)
+        else {
+            loind = 4;
+            // Horizontal + vertical bands
+            intMat = (int[])ind.get(0);
+            intMat2 = (int[])ind.get(1);
+            res_sz[0] = intMat[0] + intMat2[0];
+            res_sz[1] = intMat[1] + intMat2[1];
+            hres_sz = new int[2];
+            hres_sz[0] = intMat[0];
+            hres_sz[1] = res_sz[1];
+            lres_sz = new int[2];
+            lres_sz[0] = intMat2[0];
+            lres_sz[1] = res_sz[1];
+        } // else
+        
+        moreOne = false;
+        for (i = 0; i < levs.length; i++) {
+            if (levs[i] > 1) {
+                moreOne = true;
+            }
+        }
+        
+        // First, recursively collapse coarser scales:
+        if (moreOne) {
+            if (ind.size() > loind) {
+                arr = new double[loind-1][];
+                parr = new int[(loind-1)][2];
+                for (i = 0; i < loind-1; i++) {
+                    arr[i] = (double[])pyr.remove(0);
+                }
+                for (i = 0; i < loind-1; i++) {
+                    parr[i] = (int[])ind.remove(0);
+                }
+                levsm1 = new int[levs.length];
+                for (i = 0; i < levs.length; i++) {
+                    levsm1[i] = levs[i] - 1;
+                }
+                nres = reconWpyr(pyr, ind, filt, edges, levsm1, bands, nresx, nresy);
+                for (i = loind-2; i >= 0; i--) {
+                    pyr.insertElementAt(arr[i], 0);
+                    ind.insertElementAt(parr[i], 0);
+                }
+            } // if (ind.size() > loind)
+            else {
+                // lowpass subband
+                nres = pyrBand(pyr, ind, loind-1, nresx, nresy);
+            }
+            
+            if (res_sz[0] == 1) {
+                
+            }
+            else if (res_sz[1] == 1) {
+                
+            }
+            else {
+                
+            }
+        } // if (moreOne)
+        else {
+            
+        }
         return res;
     }
     
@@ -2904,6 +3228,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         arr = (double[])pyr.get(band); 
         intMat = (int[])pind.get(band);
+        if (rows == null) {
+            rows = new int[1];
+        }
+        if (columns == null) {
+            columns = new int[1];
+        }
         rows[0] = intMat[0];
         columns[0] = intMat[1];
         return arr;
@@ -3403,6 +3733,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * start and stop detrmine the window overwhich convolution occurs
      * @param xstart
      * @param ystart
+     * @param xrdim first dimension of result
+     * @param yrdim second dimension of result
      * Note: This operation corresponds to multiplication of a signal
      * vector by a matrix whose rows contain copies of the filt shifted by
      * multiples of step.  See upconv for the operation corresponding to
@@ -3411,21 +3743,26 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      */
     private double[] corrDn(double image[], int xdim, int ydim, double filt[], 
                             int xfdim, int yfdim, int edges,
-                            int xstep, int ystep, int xstart, int ystart) {
+                            int xstep, int ystep, int xstart, int ystart,
+                            int xrdim[], int yrdim[]) {
         double result[] = null;
         int xstop;
         int ystop;
-        int xrdim;
-        int yrdim;
         double temp[];
         
         xstart--;
         ystart--;
         xstop = xdim;
         ystop = ydim;
-        xrdim = (xstop-xstart+xstep-1)/xstep;
-        yrdim = (ystop-ystart+ystep-1)/ystep;
-        result = new double[xrdim * yrdim];
+        if (xrdim == null) {
+            xrdim = new int[1];
+        }
+        if (yrdim == null) {
+            yrdim = new int[1];
+        }
+        xrdim[0] = (xstop-xstart+xstep-1)/xstep;
+        yrdim[0] = (ystop-ystart+ystep-1)/ystep;
+        result = new double[xrdim[0] * yrdim[0]];
         if (edges == CIRCULAR) {
             internal_wrap_reduce(image, xdim, ydim, filt, xfdim, yfdim,
                                  xstart, xstep, xstop, ystart, ystep, ystop,
@@ -3466,13 +3803,162 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private void internal_wrap_reduce(double image[], int xdim, int ydim, double filt[],
                                       int xfdim, int yfdim, int xstart, int xstep, int xstop,
                                       int ystart, int ystep, int ystop, double result[]) {
+        int filtSize = xfdim * yfdim;
+        int xCtrStop = xdim - xfdim + 1;
+        int yCtrStop = ydim - yfdim + 1;
+        int xCtrStart = 0;
+        int yCtrStart = 0;
+        int xfmid = xfdim/2;
+        int yfmid = yfdim/2;
+        double imval[][];
+        int i;
+        int j;
+        int index;
+        int respos;
+        int ypos;
+        int xpos;
+        double sum;
+        int xim;
+        int yim;
+        int filtPos;
+        int xFiltStop;
+        
+        /* shift start/stop coords to filter upper left hand corner */
+        xstart -= xfmid;
+        ystart -= yfmid;
+        xstop -= xfmid;
+        ystop -= yfmid;
+        
+        if (xstop < xCtrStop) {
+            xCtrStop = xstop;
+        }
+        if (ystop < yCtrStop) {
+            yCtrStop = ystop;
+        }
+        
+        imval = new double[ydim][xdim];
+        for (j = 0; j < ydim; j++) {
+            for (i = 0; i < xdim; i++) {
+                index = i + j*xdim;
+                imval[j][i] = image[index];
+            }
+        }
+        
+        // top rows
+        for (respos = 0, ypos = ystart; ypos < yCtrStart; ypos += ystep) {
+           for (xpos = xstart; xpos < xCtrStart; xpos += xstep, respos++) {
+               sum = 0.0;
+               for (yim = ypos+ydim, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yim++, xFiltStop += xfdim) {
+                   for (xim = xpos+xdim; filtPos < xFiltStop; filtPos++, xim++) {
+                       sum += imval[yim % ydim][xim % xdim] * filt[filtPos];
+                   }
+               }
+               result[respos] = sum;
+           } // for (xpos = xstart; xpos < xCtrStart; xpos += xstep, respos++)
            
-    }
+           for (; xpos < xCtrStop; xpos += xstep, respos++) {
+               sum = 0.0;
+               for (yim = ypos+ydim, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yim++, xFiltStop += xfdim) {
+                   for (xim = xpos; filtPos < xFiltStop; filtPos++, xim++) {
+                       sum += imval[yim % ydim][xim] * filt[filtPos];
+                   }
+               }
+               result[respos] = sum;    
+           } // for (; xpos < xCtrStop; xpos += xstep, respos++)
+           
+           for (; xpos < xstop; xpos += xstep, respos++) {
+               sum = 0.0;
+               for (yim = ypos+ydim, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yim++, xFiltStop += xfdim) {
+                   for (xim = xpos; filtPos < xFiltStop; filtPos++, xim++) {
+                       sum += imval[yim % ydim][xim % xdim] * filt[filtPos];
+                   }
+               }
+               result[respos] = sum;    
+           } // for (; xpos < xstop; xpos += xstep, respos++)
+        } // for (respos = 0, ypos = ystart; ypos < yCtrStart; ypos += ystep)
+        
+        // mid rows
+        for (; ypos < yCtrStop; ypos += ystep) {
+            for (xpos = xstart; xpos < xCtrStart; xpos += xstep, respos++) {
+                sum = 0.0;
+                for (yim = ypos, filtPos = 0, xFiltStop = xfdim;
+                     xFiltStop <= filtSize; yim++, xFiltStop += xfdim) {
+                    for (xim = xpos+xdim; filtPos < xFiltStop; filtPos++, xim++) {
+                        sum += imval[yim][xim % xdim] * filt[filtPos];
+                    }
+                }
+                result[respos] = sum;    
+            } // for (xpos = xstart; xpos < xCtrStart; xpos += xstep, respos++)
+            
+            // Center section
+            for (; xpos < xCtrStop; xpos += xstep, respos++) {
+                sum = 0.0;
+                for (yim = ypos, filtPos = 0, xFiltStop = xfdim;
+                     xFiltStop <= filtSize; yim++, xFiltStop += xfdim) {
+                    for (xim = xpos; filtPos < xFiltStop; filtPos++, xim++) {
+                        sum += imval[yim][xim] * filt[filtPos];
+                    }
+                }
+                result[respos] = sum;    
+            } // for (; xpos < xCtrStop; xpos += xstep, respos++)
+            
+            for (; xpos < xstop; xpos += xstep, respos++) {
+                sum = 0.0;
+                for (yim = ypos, filtPos = 0, xFiltStop = xfdim;
+                     xFiltStop <= filtSize; yim++, xFiltStop += xfdim) {
+                    for (xim = xpos; filtPos < xFiltStop; filtPos++, xim++) {
+                        sum += imval[yim][xim % xdim] * filt[filtPos];
+                    }
+                }
+                result[respos] = sum;    
+            } // for (; xpos < xstop; xpos += xstep, respos++)
+        } // for (; ypos < yCtrStop; ypos += ystep)
+        
+        // Bottom rows
+        for (; ypos < ystop; ypos += ystep) {
+            for (xpos = xstart; xpos < xCtrStart; xpos += xstep, respos++) {
+                sum = 0.0;
+                for (yim = ypos, filtPos = 0, xFiltStop = xfdim;
+                     xFiltStop <= filtSize; yim++, xFiltStop += xfdim) {
+                    for (xim = xpos+xdim; filtPos < xFiltStop; filtPos++, xim++) {
+                        sum += imval[yim % ydim][xim % xdim] * filt[filtPos];
+                    }
+                }
+                result[respos] = sum;    
+            } // for (xpos = xstart; xpos < xCtrStart; xpos += xstep, respos++)
+            
+            for (; xpos < xCtrStop; xpos += xstep, respos++) {
+                sum = 0.0;
+                for (yim = ypos, filtPos = 0, xFiltStop = xfdim;
+                     xFiltStop <= filtSize; yim++, xFiltStop += xfdim) {
+                    for (xim = xpos; filtPos < xFiltStop; filtPos++, xim++) {
+                        sum += imval[yim % ydim][xim] * filt[filtPos];
+                    }
+                }    
+            } // for (; xpos < xCtrStop; xpos += xstep, respos++)
+            
+            for (; xpos < xstop; xpos += xstep, respos++) {
+                sum = 0.0;
+                for (yim = ypos, filtPos = 0, xFiltStop = xfdim;
+                     xFiltStop <= filtSize; yim++, xFiltStop += xfdim) {
+                    for (xim = xpos; filtPos < xFiltStop; filtPos++, xim++) {
+                        sum += imval[yim % ydim][xim % xdim] * filt[filtPos];
+                    }
+                }
+                result[respos] = sum;    
+            } // for (; xpos < xstop; xpos += xstep, respos++)
+        } // for (; ypos < ystop; ypos += ystep)
+        
+        return;
+    } // internal_wrap_reduce
     
     private void internal_reduce(double image[], int xdim, int ydim, double filt[], double temp[],
                                  int xfdim, int yfdim, int xstart, int xstep, int xstop,
                                  int ystart, int ystep, int ystop, double result[], int edges) {
-        
+        // Code not needed yet since decomReconstW only calls buildWpyr with CIRCULAR    
     }
     
     /**
@@ -3499,6 +3985,28 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int x;
         int y;
         int intMat[];
+        int intMat2[];
+        int intMat3[];
+        double lolo[] = null;
+        double hihi[];
+        double lo[];
+        double hi[];
+        double lohi[] = null;
+        double hilo[] = null;
+        int lox[] = null;
+        int loy[] = null;
+        int hix[] = null;
+        int hiy[] = null;
+        int lolox[] = null;
+        int loloy[] = null;
+        int hihix[] = null;
+        int hihiy[] = null;
+        int lohix[] = null;
+        int lohiy[] = null;
+        int hilox[] = null;
+        int hiloy[] = null;
+        Vector nind = null;
+        Vector npyr;
         
         kernel = namedFilter(filt, 0);
         
@@ -3540,8 +4048,63 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             pind.add(intMat);
         } // if (ht <= 0)
         else {
+            if (imy == 1) {
+              lolo = corrDn(im, imx, imy, kernel, kernel.length, 1, edges, 2, 1, stag, 1, lolox, loloy);
+              hihi = corrDn(im, imx, imy, hkernel, hkernel.length, 1, edges, 2, 1, 2, 1, hihix, hihiy);
+            }
+            else if (imx == 1) {
+                lolo = corrDn(im, imx, imy, kernel, 1, kernel.length, edges, 1, 2, 1, stag, lolox, loloy);
+                hihi = corrDn(im, imx, imy, hkernel, 1, hkernel.length, edges, 1, 2, 1, 2, hihix, hihiy);
+            }
+            else {
+                lo = corrDn(im, imx, imy, kernel, kernel.length, 1, edges, 2, 1, stag, 1, lox, loy);
+                hi = corrDn(im, imx, imy, hkernel, hkernel.length, 1, edges, 2, 1, 2, 1, hix, hiy);
+                lolo = corrDn(lo, lox[0], loy[0], kernel, 1, kernel.length, edges, 1, 2, 1, stag, lolox, loloy);
+                // horizontal
+                lohi = corrDn(hi, hix[0], hiy[0], kernel, 1, kernel.length, edges, 1, 2, 1, stag, lohix, lohiy); 
+                // vertical
+                hilo = corrDn(lo, lox[0], loy[0], hkernel, 1, hkernel.length, edges, 1, 2, 1, 2, hilox, hiloy);
+                // diagonal
+                hihi = corrDn(hi, hix[0], hiy[0], hkernel, 1, hkernel.length, edges, 1, 2, 1, 2, hihix, hihiy);
+            }
             
+            npyr = buildWpyr(lolo, lolox[0], loloy[0], ht-1, filt, edges, nind);
+            
+            if ((imx == 1) || (imy == 1)) {
+                pyr.removeAllElements();
+                pyr.add(hihi);
+                pyr.addAll(npyr);
+                pind.removeAllElements();
+                intMat = new int[2];
+                intMat[0] = hihix[0];
+                intMat[1] = hihiy[0];
+                pind.add(intMat);
+                pind.addAll(nind);
+            }
+            else {
+                pyr.removeAllElements();
+                pyr.add(lohi);
+                pyr.add(hilo);
+                pyr.add(hihi);
+                pyr.addAll(npyr);
+                pind.removeAllElements();
+                intMat = new int[2];
+                intMat[0] = lohix[0];
+                intMat[1] = lohiy[0];
+                pind.add(intMat);
+                intMat2 = new int[2];
+                intMat2[0] = hilox[0];
+                intMat2[1] = hiloy[0];
+                pind.add(intMat2);
+                intMat3 = new int[2];
+                intMat3[0] = hihix[0];
+                intMat3[1] = hihiy[0];
+                pind.add(intMat3);
+                pind.addAll(nind);
+            }
         } // else
+        
+        
         return pyr;
     }
     
