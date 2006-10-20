@@ -426,33 +426,50 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
                 int os = Preferences.getOS();
 
-                if (os != Preferences.OS_MAC) {
-                    int response = JOptionPane.showConfirmDialog(this,
-                                                                 "Restart " + progName.toUpperCase() +
-                                                                 " to apply memory changes?", "Restart needed",
-                                                                 JOptionPane.YES_NO_OPTION,
-                                                                 JOptionPane.INFORMATION_MESSAGE);
+                // TODO: trying out restarting mipav on macs. clean up the commented-out code later
+                /*if (os != Preferences.OS_MAC) {
+                 *  int response = JOptionPane.showConfirmDialog(this,
+                 * "Restart " + progName.toUpperCase() +                                              " to apply memory
+                 * changes?", "Restart needed",                                              JOptionPane.YES_NO_OPTION,
+                 *                                             JOptionPane.INFORMATION_MESSAGE);
+                 *
+                 * if (response == JOptionPane.YES_OPTION) {
+                 *
+                 *   try {         Runtime.getRuntime().exec("./" + progName);         System.exit(0);     } catch
+                 * (IOException ioe) {         MipavUtil.displayError("Error restarting the application (./" + progName
+                 * +                                ").  Please exit and start " + progName.toUpperCase() +
+                 *                   " again manually to apply the new settings.");         dispose();
+                 *
+                 *       return;     } } } else { JOptionPane.showMessageDialog(this,
+                 * "Settings are being changed.\n" +                               "The changes will take effect the
+                 * next time " +                               progName.toUpperCase() + " is run.", "Changing settings",
+                 *                               JOptionPane.INFORMATION_MESSAGE);}*/
 
-                    if (response == JOptionPane.YES_OPTION) {
+                int response = JOptionPane.showConfirmDialog(this,
+                                                             "Restart " + progName.toUpperCase() +
+                                                             " to apply memory changes?", "Restart needed",
+                                                             JOptionPane.YES_NO_OPTION,
+                                                             JOptionPane.INFORMATION_MESSAGE);
 
-                        try {
+                if (response == JOptionPane.YES_OPTION) {
+
+                    try {
+
+                        if (os != Preferences.OS_MAC) {
                             Runtime.getRuntime().exec("./" + progName);
-                            System.exit(0);
-                        } catch (IOException ioe) {
-                            MipavUtil.displayError("Error restarting the application (./" + progName +
-                                                   ").  Please exit and start " + progName.toUpperCase() +
-                                                   " again manually to apply the new settings.");
-                            dispose();
-
-                            return;
+                        } else {
+                            Runtime.getRuntime().exec(new String[] { "open", "progName" });
                         }
+
+                        System.exit(0);
+                    } catch (IOException ioe) {
+                        MipavUtil.displayError("Error restarting the application (./" + progName +
+                                               ").  Please exit and start " + progName.toUpperCase() +
+                                               " again manually to apply the new settings.");
+                        dispose();
+
+                        return;
                     }
-                } else {
-                    JOptionPane.showMessageDialog(this,
-                                                  "Settings are being changed.\n" +
-                                                  "The changes will take effect the next time " +
-                                                  progName.toUpperCase() + " is run.", "Changing settings",
-                                                  JOptionPane.INFORMATION_MESSAGE);
                 }
 
                 dispose();
@@ -485,8 +502,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
      * creates the buttons, USE PREFERENCES, OKAY, CANCEL, and HELP. Over-rides {@link JDialog#buildButtons()} if
      * includesPrefs is <tt>false</tt>, otherwise, it returns what JDialog#buildButtons() returns.
      *
-     * @param    includePrefs  If the preferences are available, the &quot;Use Preferences&quot; button is added to the
-     *                         panel when it is returned.
+     * @param   includePrefs  If the preferences are available, the &quot;Use Preferences&quot; button is added to the
+     *                        panel when it is returned.
      *
      * @return  A JPanel which holds the buttons for user input.
      */
@@ -861,7 +878,8 @@ public class JDialogMemoryAllocation extends JDialogBase {
             try {
                 maxPref = new JLabel("(" + Preferences.getProperty("MaximumHeapSize") + ")");
                 maxPref.setFont(serif12);
-                //                maxPref.setForeground(Color.DARK_GRAY);
+
+                // maxPref.setForeground(Color.DARK_GRAY);
                 maxPref.setRequestFocusEnabled(false);
                 gbl.setConstraints(maxPref, gbc);
                 mainPanel.add(maxPref);
