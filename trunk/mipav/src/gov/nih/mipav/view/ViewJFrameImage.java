@@ -324,7 +324,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogPowerPaint(this, getImageA());
         } else if (command.equals("AdvancedPaint")) {
             new JDialogMultiPaint(this, getImageA());
-        }else if (command.equals("ShowPaintBorder")) {
+        } else if (command.equals("ShowPaintBorder")) {
 
             // swap the border painting
             Preferences.setProperty("ShowPaintBorder",
@@ -1896,8 +1896,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogRemoveTSlices(this, getActiveImage());
         } else if (command.equals("Replace slice")) {
             new JDialogReplaceSlice(this, getActiveImage());
-        } else if (command.equals("Iterative blind deconvolution")) {
-            new JDialogIteratedBlindDeconvolution(this, getActiveImage());
         } else if (command.equals("Maximum Likelihood Iterative blind deconvolution")) {
             new JDialogMaximumLikelihoodIteratedBlindDeconvolution(this, getActiveImage());
         } else if (command.equals("Reslice - isotropic voxels")) {
@@ -2808,10 +2806,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return null;
         }
     }
-    
-    
-    
-    
+
 
     /**
      * Returns the reference to the component image.
