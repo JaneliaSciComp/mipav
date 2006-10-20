@@ -426,50 +426,33 @@ public class JDialogMemoryAllocation extends JDialogBase {
 
                 int os = Preferences.getOS();
 
-                // TODO: trying out restarting mipav on macs. clean up the commented-out code later
-                /*if (os != Preferences.OS_MAC) {
-                 *  int response = JOptionPane.showConfirmDialog(this, "Restart " + progName.toUpperCase() +
-                 *                                  " to apply memory changes?", "Restart needed",
-                 *                        JOptionPane.YES_NO_OPTION,
-                 * JOptionPane.INFORMATION_MESSAGE);
-                 *
-                 * if (response == JOptionPane.YES_OPTION) {
-                 *
-                 * try {         Runtime.getRuntime().exec("./" + progName);         System.exit(0);     } catch
-                 * (IOException ioe) {         MipavUtil.displayError("Error restarting the application (./" + progName
-                 * +                                ").  Please exit and start " + progName.toUpperCase() +
-                 *     " again manually to apply the new settings.");         dispose();
-                 *
-                 *    return;     } } } else { JOptionPane.showMessageDialog(this, "Settings are being changed.\n" +
-                 *                           "The changes will take effect the next time " +
-                 *   progName.toUpperCase() + " is run.", "Changing settings",
-                 *                               JOptionPane.INFORMATION_MESSAGE);}*/
+                if (os != Preferences.OS_MAC) {
+                    int response = JOptionPane.showConfirmDialog(this,
+                                                                 "Restart " + progName.toUpperCase() +
+                                                                 " to apply memory changes?", "Restart needed",
+                                                                 JOptionPane.YES_NO_OPTION,
+                                                                 JOptionPane.INFORMATION_MESSAGE);
 
-                int response = JOptionPane.showConfirmDialog(this,
-                                                             "Restart " + progName.toUpperCase() +
-                                                             " to apply memory changes?", "Restart needed",
-                                                             JOptionPane.YES_NO_OPTION,
-                                                             JOptionPane.INFORMATION_MESSAGE);
+                    if (response == JOptionPane.YES_OPTION) {
 
-                if (response == JOptionPane.YES_OPTION) {
-
-                    try {
-
-                        if (os != Preferences.OS_MAC) {
+                        try {
                             Runtime.getRuntime().exec("./" + progName);
-                        } else {
-                            Runtime.getRuntime().exec(new String[] { "open", progName + ".app" });
+                            System.exit(0);
+                        } catch (IOException ioe) {
+                            MipavUtil.displayError("Error restarting the application (./" + progName +
+                                                   ").  Please exit and start " + progName.toUpperCase() +
+                                                   " again manually to apply the new settings.");
+                            dispose();
+
+                            return;
                         }
-
-                        System.exit(0);
-                    } catch (IOException ioe) {
-                        MipavUtil.displayError("Error restarting the application (./" + progName +
-                                               ").  Please exit and start " + progName.toUpperCase() +
-                                               " again manually to apply the new settings.");
-                        dispose();
-
-                        return;
                     }
+                } else {
+                    JOptionPane.showMessageDialog(this,
+                                                  "Settings are being changed.\n" +
+                                                  "The changes will take effect the next time " +
+                                                  progName.toUpperCase() + " is run.", "Changing settings",
+                                                  JOptionPane.INFORMATION_MESSAGE);
                 }
 
                 dispose();
