@@ -311,12 +311,15 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         GyyzData = null;
         GyzzData = null;
         GzzzData = null;
-        destImage = null;
+
+        if (destImage != null) {
+            destImage.disposeLocal();
+            destImage = null;
+        }
+
         srcImage = null;
         kExtents = null;
         sigmas = null;
-        zXMask.disposeLocal();
-        zXMask = null;
         super.finalize();
     }
 
@@ -545,7 +548,8 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
                 destExtents[2] = srcImage.getExtents()[2]; // Z or T dim
             }
 
-            zXMask = new ModelImage(ModelImage.UBYTE, destExtents, " Edges", srcImage.getUserInterface());
+            zXMask = new ModelImage(ModelImage.UBYTE, destExtents, srcImage.getImageName() + "_edgeNM",
+                                    srcImage.getUserInterface());
         } catch (OutOfMemoryError e) {
             destImage = null;
             srcImage = null;
@@ -622,7 +626,6 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
 
         int mod = totalLength / 100; // mod is 1 percent of length
 
-        
 
         for (s = 0; (s < nImages) && !threadStopped; s++) {
             start = s * length;
@@ -635,7 +638,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
                 System.gc();
                 displayError("Algorithm EdgeNMSup: Image(s) locked");
                 setCompleted(false);
-                
+
 
                 return;
             }
@@ -713,7 +716,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
 
-        
+
         setCompleted(true);
     }
 
@@ -772,7 +775,6 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
             return;
         }
 
-        
 
         int mod = totalLength / 100; // mod is 1 percent of length
 
@@ -865,7 +867,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
 
-        
+
         setCompleted(true);
     }
 

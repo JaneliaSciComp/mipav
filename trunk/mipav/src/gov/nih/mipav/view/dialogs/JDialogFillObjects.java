@@ -64,9 +64,6 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
     /** use later. */
     private JRadioButton replaceImage;
 
-    /** result image, only use for image conversion. */
-    private ModelImage resultImage = null;
-
     /** DOCUMENT ME! */
     private String[] titles;
 
@@ -143,7 +140,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
             image.clearMask();
 
             if ((idObjectsAlgo2D.isCompleted() == true) && (ubyteImage != null)) {
-                updateFileInfo(image, resultImage);
+                updateFileInfo(image, ubyteImage);
                 ubyteImage.clearMask();
 
                 // The algorithm has completed and produced a new image to be displayed.
@@ -183,7 +180,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
             image.clearMask();
 
             if ((idObjectsAlgo3D.isCompleted() == true) && (ubyteImage != null)) {
-                updateFileInfo(image, resultImage);
+                updateFileInfo(image, ubyteImage);
                 ubyteImage.clearMask();
 
                 // The algorithm has completed and produced a new image to be displayed.
@@ -253,16 +250,9 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
             if (displayLoc == NEW) {
 
                 try {
+                    ubyteImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
 
-                    // convert image from binary type to unsigned type
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    ubyteImage = new ModelImage(ModelImage.UBYTE, resultImage.getExtents(), name,
-                                                resultImage.getUserInterface());
-
-                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, resultImage, 0, 1, 0, 1,
-                                                                                 false);
+                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, false);
 
                     changeTypeAlgo.run();
 
@@ -358,16 +348,9 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
             if (displayLoc == NEW) {
 
                 try {
+                    ubyteImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
 
-                    // convert image from binary to unsigned byte image
-                    resultImage = (ModelImage) image.clone();
-                    resultImage.setImageName(name);
-
-                    ubyteImage = new ModelImage(ModelImage.UBYTE, resultImage.getExtents(), name,
-                                                resultImage.getUserInterface());
-
-                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, resultImage, 0, 1, 0, 1,
-                                                                                 false);
+                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, false);
 
                     changeTypeAlgo.run();
 

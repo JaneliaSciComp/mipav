@@ -4,8 +4,6 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 
@@ -172,7 +170,6 @@ public class AlgorithmChangeType extends AlgorithmBase {
         imDiff = imMax - imMin;
         newDiff = endRange2 - stRange2;
 
-        
 
         int mod = length / 100;
 
@@ -225,7 +222,6 @@ public class AlgorithmChangeType extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
 
     }
@@ -268,7 +264,6 @@ public class AlgorithmChangeType extends AlgorithmBase {
             return;
         }
 
-        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -276,7 +271,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ( ((i % mod) == 0)) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
@@ -370,7 +365,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         }
 
         setCompleted(true);
-        
+
     }
 
     /**
@@ -409,7 +404,6 @@ public class AlgorithmChangeType extends AlgorithmBase {
             return;
         }
 
-        
 
         int mod = length / 100; // mod is 1 percent of length
 
@@ -444,7 +438,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         destImage.releaseLock();
 
         // destImage.notifyImageDisplayListeners(null, true);
-        
+
         setCompleted(true);
     }
 
@@ -487,7 +481,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         fireProgressStateChanged(srcImage.getImageName(), "Changing new type image");
 
         int mod = length * numSlices / 100;
-        
+
 
         for (i = 0; i < numSlices; i++) {
 
@@ -507,7 +501,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
                     if (((((i * length) + j) % mod) == 0) && isProgressBarVisible()) {
                         fireProgressStateChanged(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
-                                                               100));
+                                                                100));
                     }
 
                     if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
@@ -539,7 +533,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
                     if (((((i * length) + j) % mod) == 0) && isProgressBarVisible()) {
                         fireProgressStateChanged(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
-                                                               100));
+                                                                100));
                     }
 
                     if ((buffer[j] >= imMin) && (buffer[j] <= imMax)) {
@@ -565,7 +559,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
         destImage.releaseLock();
 
         // destImage.notifyImageDisplayListeners(null, true);
-        
+
         setCompleted(true);
     }
 

@@ -50,9 +50,6 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
     private JPanelAlgorithmOutputOptions outputPanel;
 
     /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
     private JPanelSigmas sigmaPanel;
 
     /** DOCUMENT ME! */
@@ -113,7 +110,9 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
         if (algorithm instanceof AlgorithmEdgeNMSuppression) {
             image.clearMask();
 
-            if ((nmSupAlgo.isCompleted() == true) && (resultImage != null)) {
+            edgeImage = nmSupAlgo.getZeroXMask();
+
+            if ((nmSupAlgo.isCompleted() == true) && (edgeImage != null)) {
 
                 // updateFileInfo(image, resultImage);
                 // resultImage.clearMask();
@@ -129,11 +128,11 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open new frame");
                 }
-            } else if (resultImage != null) {
+            } else if (edgeImage != null) {
 
                 // algorithm failed but result image still has garbage
-                resultImage.disposeLocal(); // clean up memory
-                resultImage = null;
+                edgeImage.disposeLocal(); // clean up memory
+                edgeImage = null;
             }
         }
 
@@ -144,15 +143,6 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
         nmSupAlgo.finalize();
         nmSupAlgo = null;
         dispose();
-    }
-
-    /**
-     * Accessor that returns the image.
-     *
-     * @return  The result image.
-     */
-    public ModelImage getResultImage() {
-        return resultImage;
     }
 
     // *******************************************************************
@@ -202,7 +192,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
             try {
 
                 // Make result image of float type
-                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, " EdgeNMSup", userInterface);
+                ModelImage resultImage = new ModelImage(ModelImage.FLOAT, destExtents, " EdgeNMSup", userInterface);
                 resultImage.setImageName(name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
@@ -234,9 +224,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog EdgeNMSup: unable to allocate enough memory");
 
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up memory of result image
-                    resultImage = null;
+                if (nmSupAlgo.getZeroXMask() != null) {
+                    nmSupAlgo.getZeroXMask().disposeLocal(); // Clean up memory of result image
                 }
 
                 return;
@@ -253,7 +242,7 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
             try {
 
                 // Make result image of float type
-                resultImage = new ModelImage(ModelImage.FLOAT, destExtents, "EdgeNMSup", userInterface);
+                ModelImage resultImage = new ModelImage(ModelImage.FLOAT, destExtents, "EdgeNMSup", userInterface);
                 resultImage.setImageName(name);
 
                 if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
@@ -294,9 +283,8 @@ public class JDialogEdgeNMSuppression extends JDialogScriptableBase implements A
             } catch (OutOfMemoryError x) {
                 MipavUtil.displayError("Dialog EdgeNMSup: unable to allocate enough memory");
 
-                if (resultImage != null) {
-                    resultImage.disposeLocal(); // Clean up image memory
-                    resultImage = null;
+                if (nmSupAlgo.getZeroXMask() != null) {
+                    nmSupAlgo.getZeroXMask().disposeLocal(); // Clean up image memory
                 }
 
                 return;
