@@ -3024,11 +3024,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         ViewJFrameBase vjfb = ((ViewJComponentEditImage) this).getFrame();
         ViewControlsImage vci = vjfb.getControls();
-
-        if ((rowCheckers < 1) || (columnCheckers < 1)) {
-            vci.setAlphaSliderEnabled(true);
-        } else {
-            vci.setAlphaSliderEnabled(false);
+        if ( vci != null )
+        {
+            if ((rowCheckers < 1) || (columnCheckers < 1)) {
+                vci.setAlphaSliderEnabled(true);
+            } else {
+                vci.setAlphaSliderEnabled(false);
+            }
         }
     }
 
@@ -3538,6 +3540,22 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /**
      * Shows the image and the VOI(s).
      *
+     * @param   tSlice     t (time) slice to show
+     * @param   zSlice     z slice to show
+     * @param   _LUTa      LUTa - to change to new LUT for imageA else null
+     * @param   _LUTb      LUTb - to change to new LUT for imageB else null
+     * @param   forceShow  forces this method to import image and recalculate java image
+     *
+     * @return  boolean to indicate if the show was successful
+     */
+    public boolean show(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow)
+    {
+        return show( tSlice, zSlice, _LUTa, _LUTb, forceShow, interpMode );
+    }
+
+    /**
+     * Shows the image and the VOI(s).
+     *
      * @param   tSlice      t (time) slice to show
      * @param   zSlice      z slice to show
      * @param   _LUTa       LUTa - to change to new LUT for imageA else null
@@ -3556,6 +3574,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         m_kPatientSlice.setLUTa( _LUTa );
         m_kPatientSlice.setLUTb( _LUTb );
         m_kPatientSlice.updateSlice( zSlice );
+        if ( cleanImageBufferB == null )
+        {
+            cleanImageBufferB = new int[imageExtents[0] * imageExtents[1]];
+        }
         if ( m_kPatientSlice.showUsingOrientation( tSlice, cleanImageBufferA, cleanImageBufferB, forceShow, false, 0, false ) )
         {
             cleanImageB = null;
@@ -4410,8 +4432,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         ViewJFrameBase vjfb = ((ViewJComponentEditImage) this).getFrame();
         ViewControlsImage vci = vjfb.getControls();
-        vci.setAlphaSliderEnabled(false);
-
+        if ( vci != null )
+        {
+            vci.setAlphaSliderEnabled(false);
+        }
         xDim = maxExtents[0];
         yDim = maxExtents[1];
 
@@ -4830,5 +4854,71 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             }
         }
     }
+
+    /**
+     * Deletes the selected contour of an VOI.
+     */
+    public void deleteSelectedContours( )
+    {
+        this.deleteSelectedContours( -1, false );
+    }
+
+    /**
+     * Deletes the selected contour of an VOI.
+     */
+    public void deleteSelectedContours( int centerPtLocation, boolean btest ) {
+        int i, s, nVOI;
+
+        ViewVOIVector VOIs = imageActive.getVOIs();
+
+        nVOI = VOIs.size();
+
+        if (nVOI == 0) {
+            return;
+        }
+
+        for (i = 0; i < nVOI; i++) {
+
+            if ((VOIs.VOIAt(i).isActive() == true) &&
+                (!btest || (i != centerPtLocation)) ) {
+
+                break;
+            } // Set i
+        }
+
+        if (i == nVOI) {
+            MipavUtil.displayError("VOI must be selected.");
+
+            return; // No VOI to delete
+        }
+
+        System.err.println("VOI is selectled, index: " + i);
+
+        if (imageActive.getNDims() == 2) {
+            getVOIHandler().deleteContour(VOIs.VOIAt(i), 0);
+        } else if (imageActive.getNDims() >= 3) {
+
+            for (s = 0; s < imageActive.getExtents()[2]; s++) {
+                getVOIHandler().deleteContour(VOIs.VOIAt(i), s);
+            }
+        }
+
+        // System.err.println("We are always going through this for deletion");
+
+        if (VOIs.VOIAt(i).isEmpty() == true) {
+            imageActive.unregisterVOI(VOIs.VOIAt(i));
+
+            int id = (getActiveImage().getVOIs().size() > 0)
+                     ? (((VOI) (getActiveImage().getVOIs().lastElement())).getID() + 1) : 0;
+            int lastUID = (getActiveImage().getVOIs().size() > 0)
+                          ? (((VOI) (getActiveImage().getVOIs().lastElement())).getUID() + 1) : -1;
+
+            getVOIHandler().updateVOIColor(id, lastUID);
+            voiHandler.setVOI_ID(-1);
+        }
+
+        imageActive.notifyImageDisplayListeners(null, true);
+    }
+
 
 }

@@ -73,61 +73,6 @@ public class ViewJComponentSingleRegistration extends ViewJComponentEditImage im
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-    /**
-     * Deletes the selected contour of an VOI.
-     */
-    public void deleteSelectedContours() {
-        int i, s, nVOI;
-
-        ViewVOIVector VOIs = imageActive.getVOIs();
-
-        nVOI = VOIs.size();
-
-        if (nVOI == 0) {
-            return;
-        }
-
-        for (i = 0; i < nVOI; i++) {
-
-            if ((VOIs.VOIAt(i).isActive() == true) && (i != centerPtLocation)) {
-
-                break;
-            } // Set i
-        }
-
-        if (i == nVOI) {
-            MipavUtil.displayError("VOI must be selected.");
-
-            return; // No VOI to delete
-        }
-
-        System.err.println("VOI is selectled, index: " + i);
-
-        if (imageActive.getNDims() == 2) {
-            getVOIHandler().deleteContour(VOIs.VOIAt(i), 0);
-        } else if (imageActive.getNDims() >= 3) {
-
-            for (s = 0; s < imageActive.getExtents()[2]; s++) {
-                getVOIHandler().deleteContour(VOIs.VOIAt(i), s);
-            }
-        }
-
-        // System.err.println("We are always going through this for deletion");
-
-        if (VOIs.VOIAt(i).isEmpty() == true) {
-            imageActive.unregisterVOI(VOIs.VOIAt(i));
-
-            int id = (getActiveImage().getVOIs().size() > 0)
-                     ? (((VOI) (getActiveImage().getVOIs().lastElement())).getID() + 1) : 0;
-            int lastUID = (getActiveImage().getVOIs().size() > 0)
-                          ? (((VOI) (getActiveImage().getVOIs().lastElement())).getUID() + 1) : -1;
-
-            getVOIHandler().updateVOIColor(id, lastUID);
-            voiHandler.setVOI_ID(-1);
-        }
-
-        imageActive.notifyImageDisplayListeners(null, true);
-    }
 
     /**
      * Deletes all VOIs.

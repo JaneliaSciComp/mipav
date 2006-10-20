@@ -33,8 +33,7 @@ public class AlgorithmDicomOrder extends AlgorithmBase {
         super(null, srcImg);
         this.orient = orient;
 
-        if ((orient[0] == FileInfoBase.ORI_R2L_TYPE) && (orient[1] == FileInfoBase.ORI_A2P_TYPE) &&
-                (orient[2] == FileInfoBase.ORI_I2S_TYPE)) {
+        if ( srcImage.getFileInfo(0).isDicomOrdered() ) {
             MipavUtil.displayWarning("Image is already dicom ordered");
 
             return;

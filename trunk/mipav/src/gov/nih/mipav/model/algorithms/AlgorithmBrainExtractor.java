@@ -33,32 +33,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** Axis orientation unknown. */
-    public static final int ORI_UNKNOWN_TYPE = 0;
-
-    /** Axis orientation Right to Left. */
-    public static final int ORI_R2L_TYPE = 1;
-
-    /** Axis orientation Left to Right. */
-    public static final int ORI_L2R_TYPE = 2;
-
-    /** Axis orientation Posterior to Anterior. */
-    public static final int ORI_P2A_TYPE = 3;
-
-    /** Axis orientation Anterior to Posterior. */
-    public static final int ORI_A2P_TYPE = 4;
-
-    /** Axis orientation Inferior to Superior. */
-    public static final int ORI_I2S_TYPE = 5;
-
-    /** Axis orientation Superior to Inferior. */
-    public static final int ORI_S2I_TYPE = 6;
-
     /** Indicates that the image is in Sagittal or Coronal orientation */
     public static final int SAT_COR = 0;
-
-    /** Indicates that the image is in Axial orientation */
-    public static final int AXIAL = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -97,7 +73,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
     /** Factored used to adjust image influence - this is a fixed value.  */
     private float m_fBrainSelection;
-    
+
     /** Controls how much the image influences the surface evolution. */
     protected float imageFactor = 0.08f;
 
@@ -132,7 +108,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     protected int m_iBrightThreshold;
 
     /** Dilation size used in generating boundary from the surface */
-    protected int m_iDMax; 
+    protected int m_iDMax;
 
     /** The length of the vector _normal_ to the surface to sample along. */
     protected int m_iMaxDepth = 7;
@@ -233,7 +209,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_kCenter.x = centerPoint.x;
         m_kCenter.y = centerPoint.y;
         m_kCenter.z = centerPoint.z;
-        
+
 
         /* The number of levels to subdivide the initial
          *   ellipsoid into a mesh that approximates the brain surface.  The  number of triangles in the mesh is
@@ -255,16 +231,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         box[0] = (m_iXBound - 1) * m_fXDelta;
         box[1] = (m_iYBound - 1) * m_fYDelta;
         box[2] = (m_iZBound - 1) * m_fZDelta;
-        axisOrientation = srcImg.getFileInfo()[0].getAxisOrientation();
-        direction = new int[] { 1, 1, 1 };
 
-        for (i = 0; i <= 2; i++) {
-
-            if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-                    (axisOrientation[i] == ORI_S2I_TYPE)) {
-                direction[i] = -1;
-            }
-        }
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        direction = MipavCoordinateSystems.getModelDirections( srcImage );
 
         startLocation = srcImg.getFileInfo()[0].getOrigin();
         image = srcImg;
@@ -367,7 +336,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_fStiffness = 0.2f;
 
         fireProgressStateChanged(image.getImageName(), "Extracting brain ...");
-        
+
 
         if (runOneIter == true) {
             iMaxUpdate = 1;
@@ -491,7 +460,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             System.out.println(" Problem saving mesh.");
         }
 
-        
+
         setCompleted(true);
     }
 
@@ -2004,7 +1973,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 chk = new boolean[m_iQuantity];
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: Out of memory error creating buffer and chk");
-                
+
                 setCompleted(false);
 
                 return;
@@ -2014,7 +1983,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 image.exportData(0, m_iQuantity, buffer);
             } catch (IOException er) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: IO error on image export data");
-                
+
                 setCompleted(false);
 
                 return;
@@ -2226,7 +2195,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             } catch (IOException er) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: IO error on image import data");
-                
+
                 setCompleted(false);
 
                 return;

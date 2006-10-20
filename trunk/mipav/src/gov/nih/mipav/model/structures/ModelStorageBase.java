@@ -866,130 +866,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   tSlice         indicates time slice of data to be exported
-     * @param   slice          indicates slice of data to be exported
-     * @param   values         array where data is to be deposited
-     * @param   logMagDisplay  if true display log10 of 1 + value
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportComplexSliceXZ(int tSlice, int slice, float[] values, boolean logMagDisplay)
-            throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-        double real, imaginary, mag;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 2;
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 2) + (slice * xDim * 2);
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + (xDim * 2)); k += 2) {
-                    real = data.getFloat(k);
-                    imaginary = data.getFloat(k + 1);
-
-                    if (logMagDisplay == true) {
-                        mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                        values[i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
-                    } else {
-                        values[i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                    }
-
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   tSlice         indicates time slice of data to be exported
-     * @param   slice          indicates slice of data to be exported
-     * @param   values         array where data is to be deposited
-     * @param   logMagDisplay  DOCUMENT ME!
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportComplexSliceZY(int tSlice, int slice, float[] values, boolean logMagDisplay)
-            throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-        double real, imaginary, mag;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 2;
-            start = tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 2;
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-            slice = slice * 2;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    real = data.getFloat(start + slice + (k * stride));
-                    imaginary = data.getFloat(start + slice + (k * stride) + 1);
-
-                    if (logMagDisplay == true) {
-                        mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                        values[i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
-                    } else {
-                        values[i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
-                    }
-
-                    i++;
-                }
-
-                slice += xDim * 2;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
     /**
      * export data into values array.
      *
@@ -1996,102 +1872,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export YZ slice into values array.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceYZ(int tSlice, int slice, float[] values) throws IOException {
-        int i;
-        int y, z;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + slice;
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (z = 0; z < zDim; z++) {
-
-                for (y = 0; y < yDim; y++, i++) {
-                    values[i] = data.getFloat(start + (y * xDim) + (z * stride));
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export ZX slice into values array.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    /*
-    public final synchronized void exportSliceZX(int tSlice, int slice, float[] values) throws IOException {
-        int i;
-        int x, z;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + (slice * xDim);
-
-            for (x = 0; x < xDim; x++) {
-
-                for (z = 0; z < zDim; z++, i++) {
-                    values[i] = data.getFloat(start + (z * stride) + x);
-                }
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-*/
     /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export ZY slice into values array.
@@ -7090,7 +6870,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
                                                    int tSlice, int slice,
                                                    int[] extents,
                                                    Point3Df[] verts,
-                                                   float[] values ) throws IOException
+                                                   float[] values,
+                                                   boolean bInterpolate ) throws IOException
     {
         try {
             setLock(W_LOCKED);
@@ -7099,6 +6880,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         int iBound = extents[ 0 ];
         int jBound = extents[ 1 ];
+        int kBound = extents[ 2 ];
 
         /* Get the loop multiplication factors for indexing into the 1D array
          * with 3 index variables: based on the coordinate-systems:
@@ -7107,6 +6889,14 @@ public class ModelStorageBase extends ModelSerialCloneable {
         int jFactor = dimExtents[ 0 ];
         int kFactor = dimExtents[ 0 ] * dimExtents[ 1 ];
         int tFactor = dimExtents[0] * dimExtents[1] * dimExtents[2];
+
+        int buffFactor = 1;
+        if ((bufferType == ARGB) ||
+            (bufferType == ARGB_USHORT) ||
+            (bufferType == ARGB_FLOAT))
+        {
+            buffFactor = 4;
+        }
 
         /* Calculate the slopes for traversing the data in x,y,z: */
         float xSlopeX = verts[1].x - verts[0].x;
@@ -7150,36 +6940,50 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     (kIndex * kFactor) +
                     (tSlice * tFactor);
 
-                /* if color: */
-                if ((bufferType == ARGB) ||
-                    (bufferType == ARGB_USHORT) ||
-                    (bufferType == ARGB_FLOAT))
+                /* Bounds checking, if out of bounds, set to zero: */
+                if (((x < 0) || (x >= dimExtents[0])) ||
+                    ((y < 0) || (y >= dimExtents[1])) ||
+                    ((z < 0) || (z >= dimExtents[2])) ||
+                    ((index < 0) || ((index * buffFactor) > dataSize) ) )
                 {
-                    if ( (index >= 0) && ((index * 4 + 3) < dataSize) )
-                    {
-                        values[(j * iBound + i) * 4 + 0] = getFloat(index * 4 + 0);
-                        values[(j * iBound + i) * 4 + 1] = getFloat(index * 4 + 1);
-                        values[(j * iBound + i) * 4 + 2] = getFloat(index * 4 + 2);
-                        values[(j * iBound + i) * 4 + 3] = getFloat(index * 4 + 3);
-                    }
-                    else
+                    if ((bufferType == ARGB) ||
+                        (bufferType == ARGB_USHORT) ||
+                        (bufferType == ARGB_FLOAT))
                     {
                         values[(j * iBound + i) * 4 + 0] = 0;
                         values[(j * iBound + i) * 4 + 1] = 0;
                         values[(j * iBound + i) * 4 + 2] = 0;
                         values[(j * iBound + i) * 4 + 3] = 0;
                     }
-                }
-                /* not color: */
-                else
-                {
-                    if ( (index >= 0) && (index < dataSize) )
-                    {
-                        values[j * iBound + i] = getFloat(index);
-                    }
+                    /* not color: */
                     else
                     {
-                        values[j * iBound + i] = 0;
+                        values[j * iBound + i] = (float)this.min;
+                    }
+                }
+                else
+                {
+                    /* if color: */
+                    if ((bufferType == ARGB) ||
+                        (bufferType == ARGB_USHORT) ||
+                        (bufferType == ARGB_FLOAT))
+                    {
+                        values[(j * iBound + i) * 4 + 0] = getFloat(index * 4 + 0);
+                        values[(j * iBound + i) * 4 + 1] = getFloat(index * 4 + 1);
+                        values[(j * iBound + i) * 4 + 2] = getFloat(index * 4 + 2);
+                        values[(j * iBound + i) * 4 + 3] = getFloat(index * 4 + 3);
+                    }
+                    /* not color: */
+                    else
+                    {
+                        if ( bInterpolate )
+                        {
+                            values[j * iBound + i] = getFloatTriLinearBounds( x, y, z );
+                        }
+                        else
+                        {
+                            values[j * iBound + i] = getFloat(index);
+                        }
                     }
                 }
                 /* Inner loop: Move to the next diagonal point along the
@@ -7362,214 +7166,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return new int[] { 1, dimExtents[0], dimExtents[0] * dimExtents[1] };
     }
 
-
-    /* MipavCoordinateSystems upgrade TODO: : */
-    /** Moved from ViewJFrameTriImage: */
-    /** Will be moved into the MipavCoordinateSystems class: */
-    /**
-     * Converts to DICOM positions. TODO: This method really should be relocated as it is essentially just a worker
-     * method. Shouldn't be in a GUI class Convert from input image oriented x,y,z to Dicom x,y,z (x axis = R->L, y axis
-     * = A->P, z axis = I->S) Image distances are oriented the same as DICOM, just in a permuted order.
-     *
-     * @param   in     the input reference point in the original image
-     * @param   image  the image from which to translate the point <code>in</code>
-     *
-     * @return  the point <code>in</code> converted into Dicom space
-     */
-    public Point3Df toDicom(Point3Df in ) {
-        int[] orient = MipavCoordinateSystems.getAxisOrientation( this );
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int zDim = dimExtents[2];
-
-        Point3Df out = new Point3Df(0.0f, 0.0f, 0.0f);
-
-        switch (orient[0]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.x = in.x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.x = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.y = in.x;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.y = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.z = in.x;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.z = xDim - 1 - in.x;
-                break;
-        }
-
-        switch (orient[1]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.x = in.y;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.x = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.y = in.y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.y = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.z = in.y;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.z = yDim - 1 - in.y;
-                break;
-        }
-
-        switch (orient[2]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.x = in.z;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.x = zDim - 1 - in.z;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.y = in.z;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.y = zDim - 1 - in.z;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.z = in.z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.z = zDim - 1 - in.z;
-                break;
-        }
-
-        return out;
-    }
-
-    /* MipavCoordinateSystems upgrade TODO: : */
-    /** Moved from ViewJFrameTriImage: */
-    /** Will be moved into the MipavCoordinateSystems class: */
-    /**
-     * Converts DICOM back to original. TODO: This method really should be relocated as it is essentially just a worker
-     * method. Shouldn't be in a GUI class
-     *
-     * @param   image   Image to convert.
-     * @param   in      Original point.
-     * @param   orient  The image orientation.
-     *
-     * @return  The point <code>in</code> converted from DICOM space into the space of the image
-     */
-    public Point3Df toOriginal(Point3Df in, int[] orient) {
-        int xDim = dimExtents[0];
-        int yDim = dimExtents[1];
-        int zDim = dimExtents[2];
-        Point3Df out = new Point3Df(0.0f, 0.0f, 0.0f);
-
-        switch (orient[0]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.x = in.x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.x = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.x = in.y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.x = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.x = in.z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.x = zDim - 1 - in.z;
-                break;
-        }
-
-        switch (orient[1]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.y = in.x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.y = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.y = in.y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.y = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.y = in.z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.y = zDim - 1 - in.z;
-                break;
-        }
-
-        switch (orient[2]) {
-
-            case FileInfoBase.ORI_R2L_TYPE:
-                out.z = in.x;
-                break;
-
-            case FileInfoBase.ORI_L2R_TYPE:
-                out.z = xDim - 1 - in.x;
-                break;
-
-            case FileInfoBase.ORI_A2P_TYPE:
-                out.z = in.y;
-                break;
-
-            case FileInfoBase.ORI_P2A_TYPE:
-                out.z = yDim - 1 - in.y;
-                break;
-
-            case FileInfoBase.ORI_I2S_TYPE:
-                out.z = in.z;
-                break;
-
-            case FileInfoBase.ORI_S2I_TYPE:
-                out.z = zDim - 1 - in.z;
-                break;
-        }
-
-        return out;
-    }
 
     /**
      * Adds a surface mask to this image.

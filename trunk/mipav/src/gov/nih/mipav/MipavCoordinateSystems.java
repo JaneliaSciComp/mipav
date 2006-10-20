@@ -362,8 +362,7 @@ public class MipavCoordinateSystems
         return aiAxisOrder;
     }
 
-//     public static final boolean[] getModelFlip(  ModelStorageBase kImage )
-    public static final int[] getModelFlip(  ModelStorageBase kImage )
+    public static final int[] getModelDirections(  ModelStorageBase kImage )
     {
         boolean[] axialFlip = getAxisFlip( kImage, FileInfoBase.AXIAL );
         boolean[] coronalFlip = getAxisFlip( kImage, FileInfoBase.CORONAL );
@@ -406,7 +405,7 @@ public class MipavCoordinateSystems
         MipavCoordinateSystems.FileToPatient( kInput, kSagittal, kImage, FileInfoBase.SAGITTAL );
         float[] afSagittalRes = kImage.getResolutions( 0, FileInfoBase.SAGITTAL );
         float[] afSagittalOrigin = kImage.getOrigin( 0, FileInfoBase.SAGITTAL );
-        
+
         kOutput.x = kCoronal.z * afCoronalRes[2] + afCoronalOrigin[2];
         kOutput.y = kSagittal.z * afSagittalRes[2] + afSagittalOrigin[2];
         kOutput.z = kAxial.z * afAxialRes[2] + afAxialOrigin[2];

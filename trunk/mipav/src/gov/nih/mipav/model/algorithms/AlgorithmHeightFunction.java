@@ -1,6 +1,7 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.ProgressChangeListener;
 
@@ -20,27 +21,6 @@ import gov.nih
 public class AlgorithmHeightFunction extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /** Axis orientation unknown. */
-    public static final int ORI_UNKNOWN_TYPE = 0;
-
-    /** Axis orientation Right to Left. */
-    public static final int ORI_R2L_TYPE = 1;
-
-    /** Axis orientation Left to Right. */
-    public static final int ORI_L2R_TYPE = 2;
-
-    /** Axis orientation Posterior to Anterior. */
-    public static final int ORI_P2A_TYPE = 3;
-
-    /** Axis orientation Anterior to Posterior. */
-    public static final int ORI_A2P_TYPE = 4;
-
-    /** Axis orientation Inferior to Superior. */
-    public static final int ORI_I2S_TYPE = 5;
-
-    /** Axis orientation Superior to Inferior. */
-    public static final int ORI_S2I_TYPE = 6;
 
     /** DOCUMENT ME! */
     private static final int QUAD = 0;
@@ -146,19 +126,19 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
+
 
         try {
             srcImage.exportSliceXY(slice, buffer);
         } catch (IOException error) {
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -227,26 +207,26 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             } else {
                 surfaceFileName = srcImage.getUserInterface().getDefaultDirectory() + surfaceFileName;
             }
-            
-                        
+
+
             qMesh.save(surfaceFileName, getProgressChangeListener(), 90, 10);
         } catch (IOException e) {
             System.gc();
             displayError("AlgorithmHeightFunction: " + e);
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
+
         setCompleted(true);
     }
 
@@ -282,19 +262,19 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
+
 
         try {
             srcImage.exportData(slice, length, buffer); // locks and releases lock
         } catch (IOException error) {
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -329,7 +309,7 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
@@ -355,17 +335,8 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
         box[1] = yBox;
         box[2] = zBox;
 
-        int[] axisOrientation = srcImage.getFileInfo(0).getAxisOrientation();
-        int[] direction = new int[] { 1, 1, 1 };
-
-        for (i = 0; i <= 2; i++) {
-
-            if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-                    (axisOrientation[i] == ORI_S2I_TYPE)) {
-                direction[i] = -1;
-            }
-        }
-
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        int[] direction = MipavCoordinateSystems.getModelDirections( srcImage );
         float[] startLocation = srcImage.getFileInfo(0).getOrigin();
 
         for (y = 0; (y < yDim) && !threadStopped; y = y + sampleSize) {
@@ -407,19 +378,19 @@ public class AlgorithmHeightFunction extends AlgorithmBase {
             System.gc();
             displayError("AlgorithmHeightFunction: " + e);
             setCompleted(false);
-            
+
 
             return;
         } catch (OutOfMemoryError e) {
             System.gc();
             displayError("AlgorithmHeightFunction: Out of memory");
             setCompleted(false);
-            
+
 
             return;
         }
 
-        
+
         setCompleted(true);
     }
 

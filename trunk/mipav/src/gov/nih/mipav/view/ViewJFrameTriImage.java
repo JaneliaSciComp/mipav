@@ -2051,10 +2051,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         inPoint.y = y;
         inPoint.z = z;
 
-        Point3Df outPoint = imageA.toDicom(inPoint);
-        setCenter((int) outPoint.x, (int) outPoint.y, (int) outPoint.z);
-
-        // x, y, z passed in from ViewJComponentEditImage.mouseReleased() are already in image volume space
+        // x, y, z passed in from ViewJComponentEditImage.mouseReleased() are
+        // already in image volume space
+        setCenter( x, y, z );
         setPositionLabels(x, y, z);
     }
 

@@ -2152,7 +2152,7 @@ public class SurfaceRender extends RenderViewBase {
     {
         model.x = Math.round(((screen.x + xBox) * ((float)xDim-1)) / (2.0f * xBox));
         model.y = Math.round(((screen.y - yBox) * ((float)yDim-1)) / (-2.0f * yBox));
-        model.z = Math.round(((screen.z + zBox) * ((float)zDim-1)) / (2.0f * zBox));
+        model.z = Math.round(((screen.z - zBox) * ((float)zDim-1)) / (-2.0f * zBox));
     }
 
     /** Translate from Model coordinates to normalized plane coordinates:
@@ -2163,7 +2163,7 @@ public class SurfaceRender extends RenderViewBase {
     {
         screen.x = (2.0f * xBox) * (model.x / ((float)xDim-1)) - xBox;
         screen.y = (-2.0f * yBox) * (model.y / ((float)yDim-1)) + yBox;
-        screen.z = (2.0f * zBox) * (model.z / ((float)zDim-1)) - zBox;
+        screen.z = (-2.0f * zBox) * (model.z / ((float)zDim-1)) + zBox;
     }
 
 
@@ -2714,7 +2714,7 @@ public class SurfaceRender extends RenderViewBase {
         String[][] aakAxisFiles = new String[3][2];
         for ( int i = 0; i < 3; i++ )
         {
-            akAxisLabels[i] = imageA.getFileInfo(0).getAxisOrientationStr( imageA.getFileInfo(0).getAxisOrientation(i) ).toLowerCase();
+            akAxisLabels[i] = FileInfoBase.getAxisOrientationStr( imageA.getFileInfo(0).getAxisOrientation(i) ).toLowerCase();
 
             /* The file name correspond to the axis strings, read the file
              * names from the axis strings: */
@@ -2937,10 +2937,10 @@ public class SurfaceRender extends RenderViewBase {
         float[] coordMapArray = new float[3];
         coordMapArray[0] = (maxBox/xBox) / 2.0f;
         coordMapArray[1] = -(maxBox/yBox) / 2.0f;
-        coordMapArray[2] = (maxBox/zBox) / 2.0f;
+        coordMapArray[2] = -(maxBox/zBox) / 2.0f;
         if ( axisOrder[ 2 ] == 0 )
         {
-            coordMapArray[2] = -(maxBox/zBox) / 2.0f;
+            coordMapArray[2] = (maxBox/zBox) / 2.0f;
         }
         for ( int i = 0; i < 3; i++ )
         {
