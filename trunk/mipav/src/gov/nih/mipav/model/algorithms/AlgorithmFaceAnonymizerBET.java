@@ -3,6 +3,7 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.*;
 
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -181,11 +182,11 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
             curPosition = Integer.MAX_VALUE;
             closestPosition = Integer.MAX_VALUE;
         } else if (faceOrientation == FACING_DOWN) {
-            betOrientation = AlgorithmBrainExtractor.AXIAL;
+            betOrientation = FileInfoBase.AXIAL;
             curPosition = Integer.MIN_VALUE;
             closestPosition = Integer.MIN_VALUE;
         } else if (faceOrientation == FACING_UP) {
-            betOrientation = AlgorithmBrainExtractor.AXIAL;
+            betOrientation = FileInfoBase.AXIAL;
             curPosition = Integer.MAX_VALUE;
             closestPosition = Integer.MAX_VALUE;
         } else if (faceOrientation == FACING_INTO_SCREEN) {

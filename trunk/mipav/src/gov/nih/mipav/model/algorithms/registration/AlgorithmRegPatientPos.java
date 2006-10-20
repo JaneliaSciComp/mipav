@@ -7,6 +7,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
+import gov.nih.mipav.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -646,8 +647,9 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
             Preferences.debug("Field of view in " + i + " direction is " + (float) fieldOfView[i] + ".\n");
         }
 
-        axisDirA = AlgorithmTransform.getImageOrient(imageA);
-        axisDirB = AlgorithmTransform.getImageOrient(imageB);
+        /* Read the direction vector from MipavCoordinateSystems class: */
+        axisDirA = MipavCoordinateSystems.getModelDirections( imageA );
+        axisDirB = MipavCoordinateSystems.getModelDirections( imageB );
 
         for (int i = 0; i < 3; i++) {
             switchOrig = axisDirB[index2ImgA[i]] * axisDirA[i];

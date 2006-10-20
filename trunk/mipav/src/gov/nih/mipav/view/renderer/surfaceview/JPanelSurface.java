@@ -757,17 +757,7 @@ public class JPanelSurface extends JPanelRendererBase
                 box[2] = extents[2] * resolution[2];
                 maxBox = Math.max(box[0], Math.max(box[1], box[2]));
 
-//                 int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
-                int[] direction = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
-//                 int[] direction = new int[] { 1, 1, 1 };
-
-//                 for (i = 0; i <= 2; i++) {
-
-//                     if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-//                             (axisOrientation[i] == ORI_S2I_TYPE)) {
-//                         direction[i] = -1;
-//                     }
-//                 }
+                int[] direction = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
 
                 kOut.print("#direction { ");
                 kOut.print(direction[0]);
@@ -1376,29 +1366,29 @@ public class JPanelSurface extends JPanelRendererBase
             SurfaceAttributes surface = new SurfaceAttributes( kBranch, "", "branch", new Color4f( 1, 0, 0, 1), 64, 100,
                                                                PolygonAttributes.POLYGON_FILL, numTriangles, volume, area,
                                                                true, 1, kMesh.center(), getSurfaceMask());
-            
+
             surfaceVector.add(surface);
             triangleText.setText(String.valueOf(numTriangles));
             volumeText.setText(String.valueOf(volume));
             areaText.setText(String.valueOf(area));
-            
+
             /* Add to the surfaceList: */
             int iNameIndex = 0;
             int iIndex = 0;
             Vector surfaceNames = new Vector();
-            
+
             for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
                 String kElementName = ((SurfaceAttributes) en.nextElement()).name;
-                
+
                 surfaceNames.addElement(kElementName);
-                
+
                 if (kElementName.equals("branch")) {
                     iNameIndex = iIndex;
                 }
-                
+
                 iIndex++;
             }
-            
+
             surfaceList.setListData(surfaceNames);
             surfaceList.setSelectedIndex(iNameIndex);
         }
@@ -2403,7 +2393,7 @@ public class JPanelSurface extends JPanelRendererBase
                 break;
             }
         }
-        
+
         ((SurfaceRender) renderBase).updateData();
     }
 
@@ -3395,7 +3385,7 @@ public class JPanelSurface extends JPanelRendererBase
           Point3f kV0 = new Point3f();
           Point3f kV1 = new Point3f();
           Point3f kV2 = new Point3f();
-          
+
           Color3f kC0, kC1, kC2;
 
           for (int iT = 0; iT < m_iTQuantity; iT++) {
@@ -3440,9 +3430,9 @@ public class JPanelSurface extends JPanelRendererBase
             kV2.y = ( (kV2.y - m_fY0) / (m_fY1 - m_fY0)) * (yDim - 1);
             kV2.z = ( (kV2.z - m_fZ0) / (m_fZ1 - m_fZ0)) * (zDim - 1);
 
-//             kV0.z = zDim - 1 - kV0.z;
-//             kV1.z = zDim - 1 - kV1.z;
-//             kV2.z = zDim - 1 - kV2.z;
+            kV0.z = zDim - 1 - kV0.z;
+            kV1.z = zDim - 1 - kV1.z;
+            kV2.z = zDim - 1 - kV2.z;
 
             kV0.y = yDim - 1 - kV0.y;
             kV1.y = yDim - 1 - kV1.y;
@@ -3961,7 +3951,7 @@ public class JPanelSurface extends JPanelRendererBase
 
                     direction = ModelTriangleMesh.getDirection();
 //                     System.err.println( "DIRECTION: " + direction[0] + " " + direction[1] + " " + direction[2] );
-//                     boolean[] aiFlip = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
+//                     boolean[] aiFlip = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
 //                     System.err.println( "MODEL FLIP: " + aiFlip[0] + " " + aiFlip[1] + " " + aiFlip[2] );
 
                     startLocation = ModelTriangleMesh.getStartLocation();
@@ -4034,8 +4024,6 @@ public class JPanelSurface extends JPanelRendererBase
                     area += akComponent[i].area();
                     akComponent[i].setVerticies(akVertex);
                     numTriangles += akComponent[i].getIndexCount();
-
-                    akComponent[i].invertMesh();
                 }
             } else {
 
@@ -4123,8 +4111,6 @@ public class JPanelSurface extends JPanelRendererBase
                     akComponent[i].setVerticies(akVertex);
                     kClod.setVerticies(akVertex);
                     numTriangles += akComponent[i].getIndexCount();
-
-                    akComponent[i].invertMesh();
                 }
             }
         } catch (IOException e) {
@@ -5020,8 +5006,6 @@ public class JPanelSurface extends JPanelRendererBase
 
             ModelTriangleMesh[] akComponent = new ModelTriangleMesh[1];
             akComponent[0] = new ModelTriangleMesh(vertex, triangle);
-            akComponent[0].invertMesh();
-
             volume = akComponent[0].volume();
             area = akComponent[0].area();
 
@@ -5584,26 +5568,14 @@ public class JPanelSurface extends JPanelRendererBase
             box[2] = extents[2] * resolution[2];
 
             float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-            int[] direction = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
-
-//             int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
-//             int[] direction = new int[] { 1, 1, 1 };
+            int[] direction = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
             int j;
-
-//             for (i = 0; i <= 2; i++) {
-
-//                 if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-//                         (axisOrientation[i] == ORI_S2I_TYPE)) {
-//                     direction[i] = -1;
-//                 }
-//             }
 
             Point3f[] akVertex;
 
             for (i = 0; i < meshes.length; i++) {
                 meshCopy = new ModelTriangleMesh(meshes[i].getVertexCopy(), meshes[i].getNormalCopy(),
                                                  meshes[i].getIndexCopy());
-                meshCopy.invertMesh();
                 akVertex = meshCopy.getVertexCopy();
 
                 // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
@@ -5687,26 +5659,13 @@ public class JPanelSurface extends JPanelRendererBase
                 box[2] = extents[2] * resolution[2];
 
                 float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-                int[] direction = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
-
-//                 int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
-//                 int[] direction = new int[] { 1, 1, 1 };
+                int[] direction = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
                 int j;
-
-//                 for (i = 0; i <= 2; i++) {
-
-//                     if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-//                             (axisOrientation[i] == ORI_S2I_TYPE)) {
-//                         direction[i] = -1;
-//                     }
-//                 }
-
                 Point3f[] akVertex;
 
                 for (i = 0; i < meshes.length; i++) {
                     meshCopy = new ModelTriangleMesh(meshes[i].getVertexCopy(), meshes[i].getNormalCopy(),
                                                      meshes[i].getIndexCopy());
-                    meshCopy.invertMesh();
                     akVertex = meshCopy.getVertexCopy();
 
                     // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
@@ -5823,27 +5782,14 @@ public class JPanelSurface extends JPanelRendererBase
                 box[2] = extents[2] * resolution[2];
 
                 float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-                int[] direction = MipavCoordinateSystems.getModelFlip( parentScene.getImageA() );
-
-//                 int[] axisOrientation = parentScene.getImageA().getFileInfo(0).getAxisOrientation();
-//                 int[] direction = new int[] { 1, 1, 1 };
+                int[] direction = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
                 int j;
-
-//                 for (i = 0; i <= 2; i++) {
-
-//                     if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-//                             (axisOrientation[i] == ORI_S2I_TYPE)) {
-//                         direction[i] = -1;
-//                     }
-//                 }
-
                 Point3f[] akVertex;
 
                 for (i = 0; i < meshes.length; i++) {
                     ModelTriangleMesh meshCopy;
                     meshCopy = new ModelTriangleMesh(meshes[i].getVertexCopy(), meshes[i].getNormalCopy(),
                                                      meshes[i].getIndexCopy());
-                    meshCopy.invertMesh();
                     akVertex = meshCopy.getVertexCopy();
 
                     // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox

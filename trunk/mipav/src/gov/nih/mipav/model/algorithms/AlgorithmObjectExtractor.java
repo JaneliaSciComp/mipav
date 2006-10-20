@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.*;
 import gov.nih.mipav.view.*;
 
 import java.awt.*;
@@ -32,27 +33,6 @@ import javax.vecmath.*;
 public class AlgorithmObjectExtractor extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /** Axis orientation unknown. */
-    public static final int ORI_UNKNOWN_TYPE = 0;
-
-    /** Axis orientation Right to Left. */
-    public static final int ORI_R2L_TYPE = 1;
-
-    /** Axis orientation Left to Right. */
-    public static final int ORI_L2R_TYPE = 2;
-
-    /** Axis orientation Posterior to Anterior. */
-    public static final int ORI_P2A_TYPE = 3;
-
-    /** Axis orientation Anterior to Posterior. */
-    public static final int ORI_A2P_TYPE = 4;
-
-    /** Axis orientation Inferior to Superior. */
-    public static final int ORI_I2S_TYPE = 5;
-
-    /** Axis orientation Superior to Inferior. */
-    public static final int ORI_S2I_TYPE = 6;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -239,17 +219,9 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         box[0] = (m_iXBound - 1) * m_fXDelta;
         box[1] = (m_iYBound - 1) * m_fYDelta;
         box[2] = (m_iZBound - 1) * m_fZDelta;
-        axisOrientation = srcImg.getFileInfo()[0].getAxisOrientation();
-        direction = new int[] { 1, 1, 1 };
 
-        for (i = 0; i <= 2; i++) {
-
-            if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-                    (axisOrientation[i] == ORI_S2I_TYPE)) {
-                direction[i] = -1;
-            }
-        }
-
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        direction = MipavCoordinateSystems.getModelDirections( srcImage );
         startLocation = srcImg.getFileInfo()[0].getOrigin();
         image = srcImg;
         this.voi = voi;
@@ -274,7 +246,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         c3Factor = 0.05f; // --> 0  more stiff  c3
 
         fireProgressStateChanged(image.getImageName(), "Extracting object ...");
-        
+
 
         if (onlyInit == true) {
             iMaxUpdate = 1;
@@ -292,7 +264,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         }
 
         if (threadStopped) {
-            
+
             setCompleted(false);
             finalize();
 
@@ -307,7 +279,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             System.out.println(" Problem saving mesh.");
         }
 
-        
+
         setCompleted(true);
     }
 
@@ -569,7 +541,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         m_aiMask = new byte[m_iQuantity];
 
         if (threadStopped) {
-            
+
             setCompleted(false);
             finalize();
 
@@ -1968,7 +1940,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             gvfBuffer = new float[xDim * yDim * zDim];
         } catch (OutOfMemoryError e) {
             finalize();
-            
+
             displayError("AlgorithmObjectExtractor: Out of memory");
             setCompleted(false);
 
@@ -1980,7 +1952,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         } catch (IOException error) {
             displayError("AlgorithmObjectExtractor: Source image is locked");
             finalize();
-            
+
             setCompleted(false);
 
             return;
@@ -2110,7 +2082,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
         if (threadStopped) {
             finalize();
-            
+
 
             return;
         }
@@ -2645,7 +2617,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
         } // for (iteration = 0; iteration < gvfIterations && (!threadStopped); iteration++)
 
         if (threadStopped) {
-            
+
             setCompleted(false);
             finalize();
 
@@ -2717,7 +2689,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.importData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -2734,7 +2706,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.saveImage");
-                
+
                 setCompleted(false);
 
                 return;
@@ -2750,7 +2722,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.importData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -2767,7 +2739,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.saveImage");
-                
+
                 setCompleted(false);
 
                 return;
@@ -2783,7 +2755,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.importData");
-                
+
                 setCompleted(false);
 
                 return;
@@ -2800,7 +2772,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
                 gvfImage = null;
                 MipavUtil.displayError("Error on gvfImage.saveImage");
-                
+
                 setCompleted(false);
 
                 return;
@@ -2810,7 +2782,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             gvfImage = null;
         } // if (saveGVF)
 
-        
+
 
         return;
     }

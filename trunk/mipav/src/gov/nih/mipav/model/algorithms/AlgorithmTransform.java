@@ -5,6 +5,7 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
+import gov.nih.mipav.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -147,9 +148,9 @@ public class AlgorithmTransform extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private TransMatrix transMatrix;
-    
+
     private boolean doCenter = false;
-    
+
     private Point3Df center = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -185,7 +186,8 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         int type = srcImage.getType();
 
-        direct = getImageOrient(srcImage);
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        direct = MipavCoordinateSystems.getModelDirections( srcImage );
         DIM = srcImage.getNDims();
 
         if (pad) {
@@ -340,8 +342,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         iYdim = srcImage.getExtents()[1];
         iZdim = srcImage.getExtents()[2];
 
-        direct = getImageOrient(srcImage);
-
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        direct = MipavCoordinateSystems.getModelDirections( srcImage );
         // System.out.println("Directions are " +direct[0] +", " +direct[1] +" and " +direct[2]);
         if (pad) {
 
@@ -435,24 +437,24 @@ public class AlgorithmTransform extends AlgorithmBase {
         destImage = new ModelImage(type, extents, name);
         updateFileInfo(srcImage, destImage, destResolutions);
     }
-    
+
     /**
-     * 
+     *
      * @param doCenter
      */
     public void setDoCenter(boolean doCenter) {
         this.doCenter = doCenter;
     }
-    
+
     /**
-     * 
+     *
      * @param center
      */
     public void setCenter(Point3Df center) {
         this.center = center;
     }
-    
-    
+
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -1131,54 +1133,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         margins[5] = back;
 
         return margins;
-    }
-
-    /**
-     * Get axes orientation. I not sure this is needed ???
-     *
-     * @param   image  Source image.
-     *
-     * @return  direct Directions in x,y,z.
-     */
-    public static int[] getImageOrient(ModelImage image) {
-        int[] axisOrient = new int[3];
-        int[] direct = new int[3];
-        int DIM = image.getNDims();
-
-        axisOrient = new int[3];
-        axisOrient = (int[]) image.getFileInfo(0).getAxisOrientation();
-
-        if ((axisOrient[0] == FileInfoBase.ORI_R2L_TYPE) || (axisOrient[0] == FileInfoBase.ORI_A2P_TYPE) ||
-                (axisOrient[0] == FileInfoBase.ORI_I2S_TYPE)) {
-            direct[0] = 1;
-        } else {
-            direct[0] = -1;
-        }
-        // System.out.println("axis 1 = " + axisOrient[0]);
-        // System.out.println("direct 1 = " + direct[0]);
-
-        if ((axisOrient[1] == FileInfoBase.ORI_R2L_TYPE) || (axisOrient[1] == FileInfoBase.ORI_A2P_TYPE) ||
-                (axisOrient[1] == FileInfoBase.ORI_I2S_TYPE)) {
-            direct[1] = 1;
-        } else {
-            direct[1] = -1;
-        }
-
-        // System.out.println("axis 2 = " + axisOrient[1]);
-        // System.out.println("direct 2 = " + direct[1]);
-        if (DIM >= 3) {
-
-            if ((axisOrient[2] == FileInfoBase.ORI_R2L_TYPE) || (axisOrient[2] == FileInfoBase.ORI_A2P_TYPE) ||
-                    (axisOrient[2] == FileInfoBase.ORI_I2S_TYPE)) {
-                direct[2] = 1;
-            } else {
-                direct[2] = -1;
-            }
-        }
-
-        // System.out.println("axis 3 = " + axisOrient[2]);
-        // System.out.println("direct 3 = " + direct[2]);
-        return direct;
     }
 
     /**
@@ -3748,7 +3702,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                         mat3D.set(3, 3, 1.0);
                         newMatrix.timesEquals(mat3D);
                     }
-                    
+
                     newTMatrix = new TransMatrix(4);
                 }
                 else { // srcImage.getNDims() == 2
@@ -3762,7 +3716,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                     newTMatrix = new TransMatrix(3);
                 }
 
-                    
+
                 newTMatrix.setMatrix(newMatrix.getArray());
 
                 destImage.setMatrix(newTMatrix);

@@ -472,48 +472,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     }
 
     /**
-     * Delete the selected contour of a VOI in the active image.
-     */
-    public void deleteSelectedContours() {
-        int i, s, nVOI;
-
-        ViewVOIVector VOIs = imageActive.getVOIs();
-
-        nVOI = VOIs.size();
-
-        if (nVOI == 0) {
-            return;
-        }
-
-        for (i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).isActive() == true) {
-                break;
-            } // Set i
-        }
-
-        if (i == nVOI) {
-            return; // No VOI to delete
-        }
-
-        if (imageActive.getNDims() == 2) {
-            getVOIHandler().deleteContour(VOIs.VOIAt(i), 0);
-        } else if (imageActive.getNDims() >= 3) {
-
-            for (s = 0; s < imageActive.getExtents()[2]; s++) {
-                getVOIHandler().deleteContour(VOIs.VOIAt(i), s);
-            }
-        }
-
-        if (VOIs.VOIAt(i).isEmpty() == true) {
-            imageActive.unregisterVOI(VOIs.VOIAt(i));
-            voiHandler.setVOI_ID(-1);
-        }
-
-        imageActive.notifyImageDisplayListeners(null, true);
-    }
-
-    /**
      * Sets whether axes (either anatomical or x,y,z if no orientation info) are shown or not in one of the corners of
      * the component.
      *

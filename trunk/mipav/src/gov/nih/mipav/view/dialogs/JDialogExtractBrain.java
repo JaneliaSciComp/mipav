@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
@@ -595,7 +596,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             int orient = AlgorithmBrainExtractor.SAT_COR;
 
             if (orientCheckbox.isSelected()) {
-                orient = AlgorithmBrainExtractor.AXIAL;
+                orient = FileInfoBase.AXIAL;
             } else {
                 orient = AlgorithmBrainExtractor.SAT_COR;
             }
@@ -621,7 +622,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             int orient = AlgorithmBrainExtractor.SAT_COR;
 
             if (orientCheckbox.isSelected()) {
-                orient = AlgorithmBrainExtractor.AXIAL;
+                orient = FileInfoBase.AXIAL;
             } else {
                 orient = AlgorithmBrainExtractor.SAT_COR;
             }
@@ -655,7 +656,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
 
-                orientCheckbox.setSelected(MipavUtil.getInt(st) == AlgorithmBrainExtractor.AXIAL);
+                orientCheckbox.setSelected(MipavUtil.getInt(st) == FileInfoBase.AXIAL);
                 justInitEllipsoidCheckbox.setSelected(MipavUtil.getBoolean(st));
                 nIterationsTF.setText("" + MipavUtil.getInt(st));
                 depthTF.setText("" + MipavUtil.getInt(st));
@@ -1116,7 +1117,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         String tmpStr;
 
         if (orientCheckbox.isSelected()) {
-            orientation = AlgorithmBrainExtractor.AXIAL;
+            orientation = FileInfoBase.AXIAL;
         } else {
             orientation = AlgorithmBrainExtractor.SAT_COR;
         }

@@ -627,11 +627,11 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
             if (tabbedPane.getSelectedIndex() == 0) {
 
-                if (componentImage.checkerRegDialog != null) {
+                if (componentImage.checkerDialog != null) {
                     return;
                 }
 
-                componentImage.checkerRegDialog = new JDialogCheckerBoard(this, componentImage);
+                componentImage.checkerDialog = new JDialogCheckerBoard(this, componentImage);
             } else {
 
                 if (componentImageA.checkerDialog != null) {
@@ -826,9 +826,9 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             componentImage.setCenter(false);
             componentImage.setMode(ViewJComponentRegistration.DEFAULT);
         } else if (command.equals("refMarkMinus")) {
-            componentImageA.deleteSelectedContours();
+            componentImageA.deleteSelectedContours( componentImageA.getCenterPtLocation(), true );
         } else if (command.equals("adjMarkMinus")) {
-            componentImageB.deleteSelectedContours();
+            componentImageB.deleteSelectedContours( componentImageB.getCenterPtLocation(), true );
         } else if (command.equals("defaultMode")) {
             adjMarkButton.setSelected(false);
             refMarkButton.setSelected(false);
@@ -2344,7 +2344,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 componentImage.setRGBTB(RGBb);
             }
 
-            componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB, paintBuffer);
+            componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
 
             componentImage.setUseDualVOIs(true);
 

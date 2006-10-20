@@ -164,14 +164,13 @@ public class ViewJComponentTriSliceImage {
 
 
     /**
-     * Sets the member variable m_bInterpolate. When set to true, the
-     * showDiagonal function does tri-linear interpolation of the ModelImage
-     * data:
+     * When set to true, the m_kPatientSlice.showDiagonal function does
+     * tri-linear interpolation of the ModelImage data:
      *
      * @param  bSample  when true interpolate the ModelImage data
      */
     public void Interpolate(boolean bSample) {
-        //m_bInterpolate = bSample;
+        m_kPatientSlice.setInterpolate( bSample );
     }
 
     /**

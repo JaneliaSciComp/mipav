@@ -117,7 +117,8 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
             }
 
             if (doReg) {
-                regImage.setRowColumnCheckers(rowNumber, columnNumber);
+                regImage.setCheckerboard(rowNumber, columnNumber);
+                regImage.repaint();
             } else {
                 compImage.setCheckerboard(rowNumber, columnNumber);
                 compImage.repaint();
@@ -126,7 +127,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
             if (command.equals("Close")) {
 
                 if (doReg) {
-                    regImage.checkerRegDialog = null;
+                    regImage.checkerDialog = null;
                 } else {
                     compImage.checkerDialog = null;
                 }
@@ -136,7 +137,7 @@ public class JDialogCheckerBoard extends JDialogBase implements ChangeListener {
         } else if (command.equals("Cancel")) {
 
             if (doReg == true) {
-                regImage.checkerRegDialog = null;
+                regImage.checkerDialog = null;
             } else {
                 compImage.checkerDialog = null;
             }

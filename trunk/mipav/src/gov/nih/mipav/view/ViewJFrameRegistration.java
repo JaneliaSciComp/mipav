@@ -594,11 +594,11 @@ public class ViewJFrameRegistration extends ViewJFrameBase
             }
         } else if (command.equals("CheckerBoard")) {
 
-            if (componentImage.checkerRegDialog != null) {
+            if (componentImage.checkerDialog != null) {
                 return;
             }
 
-            componentImage.checkerRegDialog = new JDialogCheckerBoard(this, componentImage);
+            componentImage.checkerDialog = new JDialogCheckerBoard(this, componentImage);
         } else if (command.equals("MagRegister")) {
             float zoom = 2.0f * componentImage.getZoomX();
             componentImage.setZoom(zoom, zoom);
@@ -2191,7 +2191,7 @@ public class ViewJFrameRegistration extends ViewJFrameBase
                                                             imageBufferB, pixBuffer, 1, newExtents, logMagDisplay,
                                                             FileInfoBase.UNKNOWN_ORIENT, newAlphaBlend);
 
-            componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB, paintBuffer);
+            componentImage.setBuffers(imageBufferA, imageBufferB, pixBuffer, pixBufferB);
             xRes = image.getResolutions(0)[0];
             yRes = image.getResolutions(0)[1];
 

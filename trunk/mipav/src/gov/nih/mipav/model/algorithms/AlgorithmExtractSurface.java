@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.*;
 import gov.nih.mipav.view.*;
 
 import java.io.*;
@@ -38,28 +39,6 @@ import javax.vecmath.*;
 public class AlgorithmExtractSurface extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-
-    /** Axis orientation unknown. */
-    public static final int ORI_UNKNOWN_TYPE = 0;
-
-    /** Axis orientation Right to Left. */
-    public static final int ORI_R2L_TYPE = 1;
-
-    /** Axis orientation Left to Right. */
-    public static final int ORI_L2R_TYPE = 2;
-
-    /** Axis orientation Posterior to Anterior. */
-    public static final int ORI_P2A_TYPE = 3;
-
-    /** Axis orientation Anterior to Posterior. */
-    public static final int ORI_A2P_TYPE = 4;
-
-    /** Axis orientation Inferior to Superior. */
-    public static final int ORI_I2S_TYPE = 5;
-
-    /** Axis orientation Superior to Inferior. */
-    public static final int ORI_S2I_TYPE = 6;
-
     /** Extract surface from VOI. */
     public static final int VOI_MODE = 0;
 
@@ -188,7 +167,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         // Therefore blur flat surface to produce a small intensity gradient and then extract
         // a surface.
         fireProgressStateChanged(srcImage.getImageName(), "Extracting surface ...");
-        
+
         fireProgressStateChanged(0);
 
         if (threadStopped) {
@@ -301,17 +280,8 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
         box[1] = (iYDim - 1) * fYRes;
         box[2] = (iZDim - 1) * fZRes;
 
-        int[] axisOrientation = srcImage.getFileInfo(0).getAxisOrientation();
-        int[] direction = new int[] { 1, 1, 1 };
-
-        for (i = 0; i <= 2; i++) {
-
-            if ((axisOrientation[i] == ORI_L2R_TYPE) || (axisOrientation[i] == ORI_P2A_TYPE) ||
-                    (axisOrientation[i] == ORI_S2I_TYPE)) {
-                direction[i] = -1;
-            }
-        }
-
+        /* Read the direction vector from the MipavCoordinateSystems class: */
+        int[] direction = MipavCoordinateSystems.getModelDirections( srcImage );
         float[] origin = srcImage.getFileInfo(0).getOrigin();
 
         int[] buffer = null;
@@ -456,7 +426,7 @@ public class AlgorithmExtractSurface extends AlgorithmBase {
 
         System.gc();
         setCompleted(true);
-        
+
 
         return;
     }

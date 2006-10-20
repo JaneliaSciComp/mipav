@@ -2379,5 +2379,20 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         return s;
     }
 
+    /**
+     * isDicomOrdered() returns true if the file is in dicom order, false otherwise
+     * @return true if the file is in dicom order, false otherwise
+     */
+    public boolean isDicomOrdered()
+    {
+        if ((axisOrientation[0] == FileInfoBase.ORI_R2L_TYPE) &&
+            (axisOrientation[1] == FileInfoBase.ORI_A2P_TYPE) &&
+            (axisOrientation[2] == FileInfoBase.ORI_I2S_TYPE))
+        {
+            return true;
+        }
+        return false;
+    }
+
 
 }
