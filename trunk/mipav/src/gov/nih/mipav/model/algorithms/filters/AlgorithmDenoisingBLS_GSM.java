@@ -32,7 +32,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     // Possible repres1 values
     private static final int ORTHOGONAL_WAVELET = 1;
     
-    private static final int UNDECIMATED_ORTHOGONAL_WAVELET = 2;
+    private static final int UNDECIMATED_DAUBECHIES_WAVELET = 2;
     
     private static final int STEERABLE_PYRAMID = 3;
     
@@ -77,6 +77,13 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private static final int EXTEND = 3;
     
     private static final int REPEAT = 4;
+    
+    // Phase solutions for Daubechies scaling and wavelet filters
+    private static final int MINIMUM_PHASE = 1;
+    
+    private static final int MID_PHASE = 2;
+    
+    private static final int MAXIMUM_PHASE = 3;
     
     
     /**
@@ -302,6 +309,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double mean;
         long time;
         int filter;
+        int daubOrder = 2;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -315,7 +323,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             return;
         }
         
-        if (((repres1 == ORTHOGONAL_WAVELET) || (repres1 == UNDECIMATED_ORTHOGONAL_WAVELET)) &&
+        if (((repres1 == ORTHOGONAL_WAVELET) || (repres1 == UNDECIMATED_DAUBECHIES_WAVELET)) &&
             (nOrientations != 3)) {
             MipavUtil.displayWarning("For X-Y separable orientations nOrientations must be 3");
             nOrientations = 3;
@@ -581,6 +589,21 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         else if (repres1 == ORTHOGONAL_WAVELET) {
             filter = repres2;
             imD = decompReconstW(im, imx, imy, filter, delta, deltax, deltay);
+        }
+        else if (repres1 == UNDECIMATED_DAUBECHIES_WAVELET) {
+            if (repres2 == HAAR) {
+                daubOrder = 2;
+            }
+            else if (repres2 == DAUB2) {
+                daubOrder = 4;
+            }
+            else if (repres2 == DAUB3) {
+                daubOrder = 6;
+            }
+            else if (repres2 == DAUB4) {
+                daubOrder = 8;
+            }
+            imD = decompReconstWU(im, imx, imy, daubOrder, delta, deltax, deltay);
         }
 
         // clamp to mins and maxs allowed by data type
@@ -959,6 +982,150 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             return fh;
     }
     
+    /** 
+     * This is a port of decomp_reconst_WU.m by Javier.Portilla, Univ. de Granada, 11/04
+     * Decompose image into subbands (undecimated wavelet), denoise again, and
+     * recompose again.
+     * @param im  image
+     * @param imx  First dimension of image
+     * @param imy  Second dimension of image
+     * @param daubOrder  Order of the daubechie function used (must be even)
+     * @param noise  image having the same autocorrelation as the noise
+     *               (e.g., a delta for white noise)
+     * @param noisex  First dimension of noise
+     * @param noisey  Second dimension of noise
+     * @return
+     */
+    private double[] decompReconstWU(double im[], int imx, int imy, int daubOrder,
+                                     double noise[], int noisex, int noisey) {
+        double fh[] = null;
+        Vector pind = null;
+        Vector pyr = null;
+        Vector pyrN = null;
+        Vector pyrh;
+        int bandNum;
+        int nband;
+        double aux[] = null;
+        double auxn[] = null;
+        int nsx[] = new int[1];
+        int nsy[] = new int[1];
+        int nsxn[] = new int[1];
+        int nsyn[] = new int[1];
+        int nsxnn[] = new int[1];
+        int nsynn[] = new int[1];
+        boolean prnt;
+        double BL[][][];
+        double BLn[][][];
+        double var;
+        int i, j;
+        int index;
+        double imagArray[] = null;
+        double sy2;
+        double sn2;
+        double SNRin;
+        double BLT[];
+        int blx;
+        int bly;
+        int intMat[];
+        
+        // Number of orientations: vertical, horizontal, and mixed diagonals
+        nOrientations = 3;
+        
+        pyr = buildWUpyr(im, imx, imy, nScales, daubOrder, pind);
+        if (error == 1) {
+            return null;
+        }
+        pyrN = buildWUpyr(noise, noisex, noisey, nScales, daubOrder, pind);
+        if (error == 1) {
+            return null;
+        }
+        pyrh = pyr;
+        bandNum = pind.size() - 1;
+        
+        // Everything except the lowpass residual
+        for (nband = 2; nband <= bandNum; nband++) {
+            fireProgressStateChanged((100 * (nband-1))/ (bandNum-1));
+            aux = pyrBand(pyr, pind, nband-1,nsx, nsy);
+            auxn = pyrBand(pyrN, pind, nband-1, nsxn, nsyn);
+            // Has the subband a parent?
+            prnt = useParent && (nband < bandNum - nOrientations);
+            if (prnt) {
+                BL = new double[nsx[0]][nsy[0]][2];
+                BLn = new double[nsx[0]][nsy[0]][2];
+            } // if (prnt)
+            else {
+                BL = new double[nsx[0]][nsy[0]][1];
+                BLn = new double[nsx[0]][nsy[0]][1];
+            } // else 
+            // Because we are discarding 2 coefficients on every dimension
+            var = Math.sqrt(((nsx[0]-2)*(nsy[0]-2))/(nsx[0]*nsy[0]));
+            for (j = 0; j < nsy[0]; j++) {
+                for (i = 0; i < nsx[0]; i++) {
+                    index = i + j * nsx[0];
+                    BL[i][j][0] = aux[index];
+                    BLn[i][j][0] = auxn[index]*var;
+                }
+            }
+            if (prnt) {
+                aux = pyrBand(pyr, pind, nband+nOrientations-1, nsxn, nsyn);
+                auxn = pyrBand(pyrN, pind, nband+nOrientations-1, nsxnn, nsynn);
+                // Resample 2x2 the parent if not in the high-pass oriented subbands
+                if (nband > nOrientations + 1) {
+                    expand(aux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
+                    expand(auxn, 2.0, nsxnn[0], nsynn[0], auxn, imagArray);    
+                }
+                for (j = 0; j < nsy[0]; j++) {
+                    for (i = 0; i < nsx[0]; i++) {
+                        index = i + j * nsx[0];
+                        BL[i][j][1] = aux[index];
+                        BLn[i][j][1] = auxn[index]*var;
+                    }
+                }
+            } // if (prnt)
+            
+            sy2 = 0.0;
+            sn2 = 0.0;
+            for (j = 0; j < nsy[0]; j++) {
+                for (i = 0; i < nsx[0]; i++) {
+                    sy2 = sy2 + BL[i][j][0]*BL[i][j][0];
+                    sn2 = sn2 + BLn[i][j][0]*BLn[i][j][0];
+                }
+            }
+            sy2 = sy2/(nsx[0]*nsy[0]);
+            sn2 = sn2/(nsx[0]*nsy[0]);
+            if (sy2 > sn2) {
+                SNRin = 4.342944819*Math.log((sy2-sn2)/sn2);
+            }
+            else {
+                Preferences.debug(
+                "decompReconst: Signal is not detectable in noisy subband");
+            }
+            
+            // main
+            BL = denoi_BLS_GSM_band(BL, BLn, prnt);
+            blx = BL.length;
+            bly = BL[0].length;
+            // Create BL transpose
+            BLT = new double[bly * blx];
+            for (j = 0; j < bly; j++) {
+                for (i = 0; i < blx; i++) {
+                    index = j + i*bly;
+                    BLT[index] = BL[i][j][0];
+                }
+            }
+            pyrh.setElementAt(BLT, nband-1);
+            intMat = new int[2];
+            intMat[0] = blx;
+            intMat[1] = bly;
+            pind.setElementAt(intMat, nband-1);
+        } // for (nband = 2; nband <= bandNum; nband++)
+        fh = reconWUpyr(pyrh, pind, daubOrder);
+        if (error == 1) {
+            return null;
+        }
+        return fh;
+    }
+    
     /**
      * Decompose image into subbands, denoise, and recompose again
      * Port of routine written by Javier Portilla
@@ -1128,8 +1295,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double yrcos[] = null;
         double yircos[];
         boolean haveOne;
-        int rows[] = new int[1];
-        int columns[] = new int[1];
         double resdftr[] = null;;
         double resdfti[] = null;
         FFTUtility fftUtil;
@@ -1150,6 +1315,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double bandi[];
         double maskr[][];
         double maski[][];
+        int x[] = null;
+        int y[] = null;
         
         if (levs == null) {
             allLevs = true;
@@ -1262,25 +1429,25 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
             }
             if (haveOne) {
-                resdftr = pyrBand(pyr, pind, 1, rows, columns);
-                resdfti = new double[rows[0]*columns[0]];
+                resdftr = pyrBand(pyr, pind, 1, x, y);
+                resdfti = new double[x[0]*y[0]];
                 // forward FFT
-                fftUtil = new FFTUtility(resdftr, resdfti, columns[0], rows[0], 1, -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(resdftr, resdfti, y[0], x[0], 1, -1, FFTUtility.FFT);
                 fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
-                fftUtil = new FFTUtility(resdftr, resdfti, 1, columns[0], rows[0], -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(resdftr, resdfti, 1, y[0], x[0], -1, FFTUtility.FFT);
                 fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
-                center(resdftr, resdfti, rows[0], columns[0]);
+                center(resdftr, resdfti, x[0], y[0]);
             }
             else {
                 intMat = (int[])pind.get(1);
-                rows[0] = intMat[0];
-                columns[0] = intMat[1];
-                resdftr = new double[rows[0]*columns[0]];
-                resdfti = new double[rows[0]*columns[0]];
+                x[0] = intMat[0];
+                y[0] = intMat[1];
+                resdftr = new double[x[0]*y[0]];
+                resdfti = new double[x[0]*y[0]];
             }
         } // if (pind.size() == 2)
         else {
@@ -1291,8 +1458,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 intArr[i] = (int[])pind.remove(0);
             }
             intMat = (int [])pind.get(0);
-            rows[0] = intMat[0];
-            columns[0] = intMat[1];
+            x[0] = intMat[0];
+            y[0] = intMat[1];
             reconSFpyrLevs(pyr, pind, log_rad, xrcos, yrcos, angle, nbands, 
                            levs, bands, resdftr, resdfti);
             for (i = nbands; i >= 0; i--) {
@@ -1412,13 +1579,13 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             } // for (b = 1; b <= nbands; b++)    
         } // if (haveZero)
         
-        center(resdftr, resdfti, rows[0], columns[0]);
+        center(resdftr, resdfti, x[0], y[0]);
         // Inverse FFT
-        fftUtil = new FFTUtility(resdftr, resdfti, columns[0], rows[0], 1, +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(resdftr, resdfti, y[0], x[0], 1, +1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
-        fftUtil = new FFTUtility(resdftr, resdfti, 1, columns[0], rows[0], +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(resdftr, resdfti, 1, y[0], x[0], +1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
@@ -1480,20 +1647,24 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * matrix whose columns contains copies of the time-reversed (or space-
      * reversed) filt shifted by multiple copies of step.  See corrDn for
      * the operation corresponding to the transpose of this matrix.
-     * @return
+     * @param result
+     * @param xrdim First dimension of result
+     * @param yrdim Second dimension of result
      */
-    private double[] upConv(double image[], int xdim, int ydim, double filt[],
+    private void upConv(double image[], int xdim, int ydim, double filt[],
                             int xfdim, int yfdim, int edges, int xstep, int ystep,
-                            int xstart, int ystart, int xstop, int ystop) {
-        double result[] = new double[xstop * ystop];
-        int xrdim = xstop;
-        int yrdim = ystop;
+                            int xstart, int ystart, int xstop, int ystop,
+                            double result[], int xrdim, int yrdim) {
         double origFilt[];
         int origx;
         int origy;
         int x;
         int y;
         double temp[];
+        
+        if (result == null) {
+            result = new double[xrdim * yrdim];
+        }
         
         xstart--;
         ystart--;
@@ -1527,12 +1698,33 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                             result, xrdim, yrdim, edges);
         }
         
-        return result;
+        return;
     }
     
+    /**
+     * Performs upsampling (padding with zeroes) followed by convolution of
+     * filt with image (a.k.a. expand in Burt&Adelson81).  The operations
+     * are combined to avoid unnecessary multiplication of the filter samples
+     * with zeros in the unsampled image.  The convolution is done in 9
+     * sections so that the mod operation is not performed unnecessarily.
+     * @param image
+     * @param filt
+     * @param xfdim
+     * @param yfdim
+     * @param xstart
+     * @param xstep
+     * @param xstop
+     * @param ystart
+     * @param ystep
+     * @param ystop
+     * @param result
+     * @param xdim
+     * @param ydim
+     */
     private void internal_wrap_expand(double image[], double filt[], int xfdim, int yfdim,
                                       int xstart, int xstep, int xstop, int ystart, int ystep, int ystop,
                                       double result[], int xdim, int ydim) {
+        int filtSize = xfdim * yfdim;
         int xCtrStop = xdim - xfdim + 1;
         int yCtrStop = ydim - yfdim + 1;
         int xCtrStart = 0;
@@ -1544,6 +1736,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int ypos;
         int impos;
         double val;
+        int xres;
+        int yres;
+        int filtPos;
+        int xFiltStop;
         
         // shift start/stop coords to filter upper left hand corner
         xstart -= xfmid;
@@ -1563,15 +1759,110 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         // Top rows
         for (impos = 0, ypos = ystart; ypos < yCtrStart; ypos += ystep) {
             for (xpos = xstart; xpos < xCtrStart; xpos += xstep, impos++) {
-                val = image[impos];   
+                val = image[impos]; 
+                for (yres = ypos + ydim, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
+                    for (xres = xpos + xdim; filtPos < xFiltStop; filtPos++, xres++) {
+                        imval[yres%ydim][xres%xdim] += val * filt[filtPos];
+                    }
+                }
             } // for (xpos = xstart; xpos < xCtrStart; xpos += xstep, impos++)
+            
+            for (; xpos < xCtrStop; xpos += xstep, impos++) {
+                val = image[impos]; 
+                for (yres = ypos + ydim, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
+                    for (xres = xpos; filtPos < xFiltStop; filtPos++, xres++) {
+                        imval[yres%ydim][xres] += val * filt[filtPos];
+                    }
+                }    
+            } // for (; xpos < xCtrStop; xpos += xstep, impos++)
+            
+            for (; xpos < xstop; xpos += xstep, impos++) {
+                val = image[impos]; 
+                for (yres = ypos + ydim, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
+                    for (xres = xpos; filtPos < xFiltStop; filtPos++, xres++) {
+                        imval[yres%ydim][xres%xdim] += val * filt[filtPos];
+                    }
+                }    
+            } // for (; xpos < xstop; xpos += xstep, impos++)
         } // for (impos = 0, ypos = ystart; ypos < yCtrStart; ypos += ystep)
+        
+        // Mid rows
+        for (; ypos < yCtrStop; ypos += ystep) {
+            for (xpos = xstart; xpos < xCtrStart; xpos += xstep, impos++) {
+                val = image[impos]; 
+                for (yres = ypos, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
+                    for (xres = xpos + xdim; filtPos < xFiltStop; filtPos++, xres++) {
+                        imval[yres][xres%xdim] += val * filt[filtPos];
+                    }
+                }        
+            } // for (xpos = xstart; xpos < xCtrStart; xpos += xstep, impos++)
+            
+            // Center section
+            for (; xpos < xCtrStop; xpos += xstep, impos++) {
+                val = image[impos]; 
+                for (yres = ypos, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
+                    for (xres = xpos; filtPos < xFiltStop; filtPos++, xres++) {
+                        imval[yres][xres] += val * filt[filtPos];
+                    }
+                }    
+            } // for (; xpos < xCtrStop; xpos += xstep, impos++)
+            
+            for (; xpos < xstop; xpos += xstep, impos++) {
+                val = image[impos]; 
+                for (yres = ypos, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
+                    for (xres = xpos; filtPos < xFiltStop; filtPos++, xres++) {
+                        imval[yres][xres%xdim] += val * filt[filtPos];
+                    }
+                }    
+            } // for (; xpos < xstop; xpos += xstep, impos++)
+        } // for (; ypos < yCtrStop; ypos += ystep)
+        
+        // Bottom rows
+        for (; ypos < ystop; ypos += ystep) {
+            for (xpos = xstart; xpos < xCtrStart; xpos += xstep, impos++) {
+                val = image[impos]; 
+                for (yres = ypos, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
+                    for (xres = xpos + xdim; filtPos < xFiltStop; filtPos++, xres++) {
+                        imval[yres%ydim][xres%xdim] += val * filt[filtPos];
+                    }
+                }    
+            } // for (xpos = xstart; xpos < xCtrStart; xpos += xstep, impos++)
+            
+            for (; xpos < xCtrStop; xpos += xstep, impos++) {
+                val = image[impos]; 
+                for (yres = ypos, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
+                    for (xres = xpos; filtPos < xFiltStop; filtPos++, xres++) {
+                        imval[yres%ydim][xres] += val * filt[filtPos];
+                    }
+                }    
+            } // for (; xpos < xCtrStop; xpos += xstep, impos++)
+            
+            for (; xpos < xstop; xpos += xstep, impos++) {
+                val = image[impos]; 
+                for (yres = ypos, filtPos = 0, xFiltStop = xfdim;
+                    xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
+                    for (xres = xpos; filtPos < xFiltStop; filtPos++, xres++) {
+                        imval[yres%ydim][xres%xdim] += val * filt[filtPos];
+                    }
+                }    
+            } // for (; xpos < xstop; xpos += xstep, impos++)
+        } // for (; ypos < ystop; ypos += ystep)
+        
+        return;
     }
     
     private void internal_expand(double image[], double filt[], double temp[], int xfdim, int yfdim,
                                  int xstart, int xstep, int xstop, int ystart, int ystep, int ystop,
                                  double result[], int xdim, int ydim, int edges) {
-        
+        // dcompReconstW calls recnWpyr with CIRCULAR so internal_expand is not called    
     }
     
     /**
@@ -1607,8 +1898,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int loind;
         int intMat[];
         int intMat2[];
-        int hres_sz[];
-        int lres_sz[];
+        int hres_sz[] = null;
+        int lres_sz[] = null;
         boolean moreOne;
         double nres[];
         int nresx[] = new int[1];
@@ -1616,6 +1907,13 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double arr[][];
         int parr[][];
         int levsm1[];
+        double ires[] = null;
+        boolean anyOne;
+        int x[] = null;
+        int y[] = null;
+        boolean anyB1;
+        boolean anyB2;
+        boolean anyB3;
         
         if (resX == null) {
             resX = new int[1];
@@ -1744,18 +2042,106 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             
             if (res_sz[0] == 1) {
-                
+                res = null;
+                upConv(nres, nresx[0], nresy[0], kernel, 1, kernel.length,
+                             edges, 1, 2, 1, stag, res_sz[0], res_sz[1],
+                             res, res_sz[0], res_sz[1]);    
             }
             else if (res_sz[1] == 1) {
-                
+                res = null;
+                upConv(nres, nresx[0], nresy[0], kernel, kernel.length, 1,
+                             edges, 2, 1, stag, 1, res_sz[0], res_sz[1],
+                             res, res_sz[0], res_sz[1]);    
             }
             else {
-                
+                ires = null;
+                upConv(nres, nresx[0], nresy[0], kernel, 1, kernel.length,
+                              edges, 1, 2, 1, stag, lres_sz[0], lres_sz[1],
+                              ires, lres_sz[0], lres_sz[1]); 
+                res = null;
+                upConv(ires, lres_sz[0], lres_sz[1], kernel, kernel.length, 1,
+                             edges, 2, 1, stag, 1, res_sz[0], res_sz[1],
+                             res, res_sz[0], res_sz[1]);
             }
         } // if (moreOne)
         else {
-            
+            res = new double[res_sz[0] * res_sz[1]];   
         }
+        
+        // Add in reconsructed bands from this level
+        anyOne = false;
+        for (i = 0; i < levs.length; i++) {
+            if (levs[i] == 1) {
+                anyOne = true;
+            }
+        }
+        if (anyOne) {
+            anyB1 = false;
+            anyB2 = false;
+            anyB3 = false;
+            for (i = 0; i < bands.length; i++) {
+                if (bands[i] == 1) {
+                    anyB1 = true;
+                }
+                else if (bands[i] == 2) {
+                    anyB2 = true;
+                }
+                else if (bands[i] == 3) {
+                    anyB3 = true;
+                }
+            }
+            if (res_sz[0] == 1) {
+                upConv(pyrBand(pyr, ind, 0, x, y), x[0], y[0], 
+                       hkernel, 1, hkernel.length, edges, 1, 2, 1, 2, 
+                       res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);
+            }
+            else if (res_sz[1] == 1) {
+                upConv(pyrBand(pyr, ind, 0, x, y), x[0], y[0],
+                       hkernel, hkernel.length, 1, edges, 2, 1, 2, 1,
+                       res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);    
+            }
+            else {
+                if (anyB1) { // horizontal
+                    ires = null;
+                    upConv(pyrBand(pyr, ind, 0, x, y), x[0], y[0],
+                           kernel, 1, kernel.length, edges, 1, 2, 1, stag,
+                           hres_sz[0], hres_sz[1], ires, hres_sz[0], hres_sz[1]);
+                    // Destructively modify res
+                    upConv(ires, hres_sz[0], hres_sz[1], hkernel, hkernel.length, 1,
+                           edges, 2, 1, 2, 1, res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);
+                } // 
+                if (anyB2) { // vertical
+                    ires = null;
+                    upConv(pyrBand(pyr, ind, 1, x, y), x[0], y[0],
+                           hkernel, 1, hkernel.length, edges, 1, 2, 1, 2,
+                           lres_sz[0], lres_sz[1], ires, lres_sz[0], lres_sz[1]);
+                    // Destructively modify res
+                    upConv(ires, lres_sz[0], lres_sz[1], kernel, kernel.length, 1,
+                           edges, 2, 1, stag, 1, res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);    
+                } // if (anyB2) 
+                if (anyB3) { // diagonal
+                    ires = null;
+                    upConv(pyrBand(pyr, ind, 2, x, y), x[0], y[0],
+                           hkernel, 1, hkernel.length, edges, 1, 2, 1, 2,
+                           hres_sz[0], hres_sz[1], ires, hres_sz[0], hres_sz[1]);
+                    // Destructively modify res
+                    upConv(ires, hres_sz[0], hres_sz[1], hkernel, hkernel.length, 1,
+                           edges, 2, 1, 2, 1, res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);    
+                } // if (anyB3) 
+            } // else
+        } // if (anyOne)
+        return res;
+    }
+    
+    /**
+     * 
+     * @param pyr
+     * @param pind
+     * @param daubOrder
+     * @return
+     */
+    private double[] reconWUpyr(Vector pyr, Vector pind, int daubOrder) {
+        double res[] = null;
         return res;
     }
     
@@ -1800,8 +2186,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double yrcos[] = null;
         double yircos[];
         boolean haveOne;
-        int rows[] = new int[1];
-        int columns[] = new int[1];
+        int px[] = new int[1];
+        int py[] = new int[1];
         double resdftr[] = null;;
         double resdfti[] = null;
         FFTUtility fftUtil;
@@ -1921,33 +2307,33 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
             }
             if (haveOne) {
-                resdftr = pyrBand(pyr, pind, 1, rows, columns);
-                resdfti = new double[rows[0]*columns[0]];
+                resdftr = pyrBand(pyr, pind, 1, px, py);
+                resdfti = new double[px[0]*py[0]];
                 // forward FFT
-                fftUtil = new FFTUtility(resdftr, resdfti, columns[0], rows[0], 1, -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(resdftr, resdfti, py[0], px[0], 1, -1, FFTUtility.FFT);
                 fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
-                fftUtil = new FFTUtility(resdftr, resdfti, 1, columns[0], rows[0], -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(resdftr, resdfti, 1, py[0], px[0], -1, FFTUtility.FFT);
                 fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
-                center(resdftr, resdfti, rows[0], columns[0]);
+                center(resdftr, resdfti, px[0], py[0]);
             }
             else {
                 intMat = (int[])pind.get(1);
-                rows[0] = intMat[0];
-                columns[0] = intMat[1];
-                resdftr = new double[rows[0]*columns[0]];
-                resdfti = new double[rows[0]*columns[0]];
+                px[0] = intMat[0];
+                py[0] = intMat[1];
+                resdftr = new double[px[0]*py[0]];
+                resdfti = new double[px[0]*py[0]];
             }
         } // if (pind.size() == 2)
         else {
             arr = (double[])pyr.remove(0);
             intMat = (int[])pind.remove(0);
             intMat2 = (int[])pind.get(0);
-            rows[0] = intMat2[0];
-            columns[0] = intMat2[1];
+            px[0] = intMat2[0];
+            py[0] = intMat2[1];
             reconSFpyrLevs(pyr, pind, log_rad, xrcos, yrcos, angle, nbands, 
                            levs, bands, resdftr, resdfti);
             pyr.insertElementAt(arr, 0);
@@ -2001,13 +2387,13 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
         } // if (haveZero)
         
-        center(resdftr, resdfti, rows[0], columns[0]);
+        center(resdftr, resdfti, px[0], py[0]);
         // Inverse FFT
-        fftUtil = new FFTUtility(resdftr, resdfti, columns[0], rows[0], 1, +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(resdftr, resdfti, py[0], px[0], 1, +1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
-        fftUtil = new FFTUtility(resdftr, resdfti, 1, columns[0], rows[0], +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(resdftr, resdfti, 1, py[0], px[0], +1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
@@ -2057,8 +2443,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double nresdftr[] = null;
         double nresdfti[] = null;
         int levsm1[];
-        int rows[];
-        int columns[];
+        int px[];
+        int py[];
         FFTUtility fftUtil;
         double yircos[];
         double lomask[][];
@@ -2142,20 +2528,20 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
             } // if (pind.size() > lo_ind)
             else {
-                rows = new int[1];
-                columns = new int[1];
-                nresdftr = pyrBand(pyr, pind, lo_ind-1, rows, columns);
-                nresdfti = new double[rows[0] * columns[0]];
+                px = new int[1];
+                py = new int[1];
+                nresdftr = pyrBand(pyr, pind, lo_ind-1, px, py);
+                nresdfti = new double[px[0] * py[0]];
                 // forward FFT
-                fftUtil = new FFTUtility(nresdftr, nresdfti, columns[0], rows[0], 1, -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(nresdftr, nresdfti, py[0], px[0], 1, -1, FFTUtility.FFT);
                 fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
-                fftUtil = new FFTUtility(nresdftr, nresdfti, 1, columns[0], rows[0], -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(nresdftr, nresdfti, 1, py[0], px[0], -1, FFTUtility.FFT);
                 fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
-                center(nresdftr, nresdfti, rows[0], columns[0]);
+                center(nresdftr, nresdfti, px[0], py[0]);
             } // else
             
             yircos = new double[yrcos.length];
@@ -3222,20 +3608,20 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * @columns
      * @return
      */
-    private double[] pyrBand(Vector pyr, Vector pind, int band, int rows[], int columns[]) {
+    private double[] pyrBand(Vector pyr, Vector pind, int band, int x[], int y[]) {
         double arr[];
         int intMat[];
         
         arr = (double[])pyr.get(band); 
         intMat = (int[])pind.get(band);
-        if (rows == null) {
-            rows = new int[1];
+        if (x == null) {
+            x = new int[1];
         }
-        if (columns == null) {
-            columns = new int[1];
+        if (y == null) {
+            y = new int[1];
         }
-        rows[0] = intMat[0];
-        columns[0] = intMat[1];
+        x[0] = intMat[0];
+        y[0] = intMat[1];
         return arr;
     }
     
@@ -4104,7 +4490,287 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
         } // else
         
+        return pyr;
+    }
+    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  buffer  float [] input buffer to be sorted Sort an array into ascending numerical order by Shell's method
+     *                 Reference: Numerical Recipes in C The Art of Scientific Computing Second Edition by William H.
+     *                 Press, Saul A. Teukolsky, William T. Vetterling, Brian P. Flannery, pp. 331- 332.
+     */
+    private void shellSort(double[] buffer) {
+        int i, j, inc;
+        double v;
+        inc = 1;
+
+        int end = buffer.length;
+
+        do {
+            inc *= 3;
+            inc++;
+        } while (inc <= end);
+
+        do {
+            inc /= 3;
+
+            for (i = inc + 1; i <= end; i++) {
+                v = buffer[i - 1];
+                j = i;
+
+                while (buffer[j - inc - 1] > v) {
+                    buffer[j - 1] = buffer[j - inc - 1];
+                    j -= inc;
+
+                    if (j <= inc) {
+                        break;
+                    }
+                }
+
+                buffer[j - 1] = v;
+            }
+        } while (inc > 1);
+
+    }
+    
+    /**
+     * This is a port of daubcqf.m by Ramesh Gopinath
+     * %    [h_0,h_1] = daubcqf(N,TYPE); 
+    %
+    %    Function computes the Daubechies' scaling and wavelet filters
+    %    (normalized to sqrt(2)).
+    %
+    %    Input: 
+    %       N    : Length of filter (must be even)
+    %       TYPE : Optional parameter that distinguishes the minimum phase,
+    %              maximum phase and mid-phase solutions ('min', 'max', or
+    %              'mid'). If no argument is specified, the minimum phase
+    %              solution is used.
+    %
+    %    Output: 
+    %       h_0 : Minimal phase Daubechies' scaling filter 
+    %       h_1 : Minimal phase Daubechies' wavelet filter 
+    %
+    %    Example:
+    %       N = 4;
+    %       TYPE = 'min';
+    %       [h_0,h_1] = daubcqf(N,TYPE)
+    %       h_0 = 0.4830 0.8365 0.2241 -0.1294
+    %       h_1 = 0.1294 0.2241 -0.8365 0.4830
+    %
+    %    Reference: "Orthonormal Bases of Compactly Supported Wavelets",
+    %                CPAM, Oct.89 
+    %
+    
+    %File Name: daubcqf.m
+    %Last Modification Date: 01/02/96   15:12:57
+    %Current Version: daubcqf.m 2.4
+    %File Creation Date: 10/10/88
+    %Author: Ramesh Gopinath  <ramesh@dsp.rice.edu>
+    %
+    %Copyright (c) 2000 RICE UNIVERSITY. All rights reserved.
+    %Created by Ramesh Gopinath, Department of ECE, Rice University. 
+    %
+    %This software is distributed and licensed to you on a non-exclusive 
+    %basis, free-of-charge. Redistribution and use in source and binary forms, 
+    %with or without modification, are permitted provided that the following 
+    %conditions are met:
+    %
+    %1. Redistribution of source code must retain the above copyright notice, 
+    %   this list of conditions and the following disclaimer.
+    %2. Redistribution in binary form must reproduce the above copyright notice, 
+    %   this list of conditions and the following disclaimer in the 
+    %   documentation and/or other materials provided with the distribution.
+    %3. All advertising materials mentioning features or use of this software 
+    %   must display the following acknowledgment: This product includes 
+    %   software developed by Rice University, Houston, Texas and its contributors.
+    %4. Neither the name of the University nor the names of its contributors 
+    %   may be used to endorse or promote products derived from this software 
+    %   without specific prior written permission.
+    %
+    %THIS SOFTWARE IS PROVIDED BY WILLIAM MARSH RICE UNIVERSITY, HOUSTON, TEXAS, 
+    %AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, 
+    %BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+    %FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL RICE UNIVERSITY 
+    %OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+    %EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+    %PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+    %OR BUSINESS INTERRUPTIONS) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+    %WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+    %OTHERWISE), PRODUCT LIABILITY, OR OTHERWISE ARISING IN ANY WAY OUT OF THE 
+    %USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+    %
+    %For information on commercial licenses, contact Rice University's Office of 
+    %Technology Transfer at techtran@rice.edu or (713) 348-6173
+
+     * @param N
+     * @param type
+     * @return
+     */
+    private double[] daubcqf(int N, int type) {
+        double h[] = null;
+        int k;
+        double a;
+        double p[];
+        double q[];
+        double h_0[];
+        double qt[];
+        double h_1[];
+        int j;
+        double temp[];
+        int i;
+        double A[][];
+        int n;
+        EigenvalueDecomposition eig;
+        double eigenvalue[];
+        int qtl;
+        int index;
         
+        if ((N % 2) == 1) {
+            MipavUtil.displayError("No Daubechies filter exists for odd length");
+            error = 1;
+            return null;
+        }
+        
+        k = N/2;
+        a = 1.0;
+        p = new double[1];
+        p[0] = 1.0;
+        q = new double[1];
+        q[0] = 1.0;
+        h_0 = new double[2];
+        h_0[0] = 1.0;
+        h_0[1] = 1.0;
+        for (j = 1; j <= k-1; j++) {
+            a = -a * 0.25 * (j + k - 1.0)/j;
+            temp = h_0;
+            h_0 = new double[temp.length+1];
+            h_0[0] = temp[0];
+            for (i = 1; i < h_0.length-1; i++) {
+                h_0[i] = temp[i-1] + temp[i];
+            }
+            h_0[h_0.length-1] = temp[h_0.length-2];
+            temp = p;
+            p = new double[temp.length+1];
+            p[0] = temp[0];
+            for (i = 1; i < p.length-1; i++) {
+                p[i] = temp[i] - temp[i-1];
+            }
+            p[p.length-1] = -temp[p.length-2];
+            temp = p;
+            p = new double[temp.length+1];
+            p[0] = temp[0];
+            for (i = 1; i < p.length-1; i++) {
+                p[i] = temp[i] - temp[i-1];
+            }
+            p[p.length-1] = -temp[p.length-2];
+            temp = q;
+            q = new double[temp.length+2];
+            q[0] = a*p[0];
+            for (i = 1; i < q.length-1; i++) {
+                q[i] = temp[i-1] + a*p[i];
+            }
+            q[q.length-1] = a*p[q.length-1];
+        } // for (j = 1; j <= k-1; j++)
+        // Obtain the roots of polynomial of q
+        n = q.length-1;
+        A = new double[n][n];
+        for (i = 0; i < n-1; i++) {
+            A[i+1][i] = 1.0;
+        }
+        for (j = 0; j < n; j++) {
+            A[0][j] = -q[j+1]/q[0];
+        }
+        eig = new EigenvalueDecomposition(new Matrix(A));
+        eigenvalue = eig.getRealEigenvalues();
+        shellSort(eigenvalue);
+        qt = new double[k-1];
+        for (i = 0; i < k-1; i++) {
+            qt[i] = q[i];   
+        }
+        if (type == MID_PHASE) {
+            if ((k %2) == 1) {
+               qtl = 0;
+               for (i = 0; i <= N-1; i+=4) {
+                   qtl++;
+               }
+               for (i = 1; i <= N-1; i+=4) {
+                   qtl++;
+               }
+               qt = new double[qtl];
+               for (i = 0, index = 0; i < N-1; i+=4) {
+                   qt[index++] = q[i];
+               }
+               for (i = 1; i <= N-1; i+=4) {
+                   qt[index++] = q[i];
+               }
+            }
+            else {
+                qtl = 1;
+                for (i = 3; i <= k-2; i+= 4) {
+                    qtl++;
+                }
+                for (i = 4; i <= k-2; i+= 4) {
+                    qtl++;
+                }
+                for (i = N-2; i >= k-1; i-= 4) {
+                    qtl++;
+                }
+                for (i = N-3; i >= k-1; i-= 4) {
+                    qtl++;
+                }
+                qt = new double[qtl];
+                index = 0;
+                qt[index++] = q[0];
+                for (i = 3; i <= k-2; i+= 4) {
+                    qt[index++] = q[i];
+                }
+                for (i = 4; i <= k-2; i+= 4) {
+                    qt[index++] = q[i];
+                }
+                for (i = N-2; i >= k-1; i-= 4) {
+                    qt[index++] = q[i];
+                }
+                for (i = N-3; i >= k-1; i-= 4) {
+                    qt[index++] = q[i];
+                }
+            }
+        } // if (type == MID_PHASE)
+        return h;
+        
+    }
+    
+    /**
+     * This is a port of buildWUpyr.m by JPM, Univ. de Granada
+     * Construct a separable undecimated orthonormal QMF/wavelet pyramid
+     * on matrix (or vector) im
+     * @param im
+     * @param imx First dimension of im
+     * @param imy Second dimension of im
+     * @param nScales  The number of pyramid levels to build
+     * @param daubOrder  The order of the daubechies wavelet filter used
+     * @param pind  N 2-element int[] containing the sizes of each subband
+     * @return  A vector containing the N pyramid subbands, ordered from
+     *          fine to coarse.
+     */
+    private Vector buildWUpyr(double im[], int imx, int imy, int nScales,
+                              int daubOrder, Vector pind) {
+        Vector pyr = null;
+        double h[];
+        
+        if (nScales < 1) {
+            MipavUtil.displayError("Number of scales must be >= 1");
+            error = 1;
+            return null;
+        }
+        
+        // Fixed number of orientations
+        nOrientations = 3;
+        h = daubcqf(daubOrder, MINIMUM_PHASE);
+        if (error == 1) {
+            return null;
+        }
         return pyr;
     }
     
