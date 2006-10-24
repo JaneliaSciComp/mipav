@@ -709,137 +709,138 @@ public class PatientSlice
                 }
             }
         }
-        if ( LUTa == null )
-        {
-            try { 
-                LUTa = ViewJFrameImage.initLUT( imageA );
-            } catch ( OutOfMemoryError e ) {
-                return false;
-            }
-        }
-        float[][] RGB_LUTa = null;
-        float[][] RGB_LUTb = null;
-        int[] lutBufferRemapped = null;;
-        
-        TransferFunction tf_imgA = LUTa.getTransferFunction();
-        TransferFunction tf_imgB = null;
-        
-        if (imageB != null)
-        {
-            RGB_LUTa = LUTa.exportRGB_LUT(true);
-            if ( LUTb == null )
+        else {
+            if ( LUTa == null )
             {
                 try { 
-                    LUTb = ViewJFrameImage.initLUT( imageB );
+                    LUTa = ViewJFrameImage.initLUT( imageA );
                 } catch ( OutOfMemoryError e ) {
                     return false;
                 }
             }
-
-            RGB_LUTb = LUTb.exportRGB_LUT(true);
-            tf_imgB = LUTb.getTransferFunction();
-        }
-        else
-        {
-            int lutHeightA = LUTa.getExtents()[1];
-            lutBufferRemapped = new int[lutHeightA];
-            LUTa.exportIndexedLUT(lutBufferRemapped);
-        }
-        
-        fillImageBuffer(slice);
-        
-        float imageMinA = (float)Math.min( 0, imageA.getMin() );
-        
-        for ( int j = 0; j < localImageExtents[1]; j++ )
-        {
-            for ( int i = 0; i < localImageExtents[0]; i++ )
+            float[][] RGB_LUTa = null;
+            float[][] RGB_LUTb = null;
+            int[] lutBufferRemapped = null;;
+            
+            TransferFunction tf_imgA = LUTa.getTransferFunction();
+            TransferFunction tf_imgB = null;
+            
+            if (imageB != null)
             {
-                int ind4 = (j * localImageExtents[0]) + i;
-                int index = 4 * ind4;
+                RGB_LUTa = LUTa.exportRGB_LUT(true);
+                if ( LUTb == null )
+                {
+                    try { 
+                        LUTb = ViewJFrameImage.initLUT( imageB );
+                    } catch ( OutOfMemoryError e ) {
+                        return false;
+                    }
+                }
                 
-                if ( hasThreshold1 )
+                RGB_LUTb = LUTb.exportRGB_LUT(true);
+                tf_imgB = LUTb.getTransferFunction();
+            }
+            else
+            {
+                int lutHeightA = LUTa.getExtents()[1];
+                lutBufferRemapped = new int[lutHeightA];
+                LUTa.exportIndexedLUT(lutBufferRemapped);
+            }
+            
+            fillImageBuffer(slice);
+            
+            float imageMinA = (float)Math.min( 0, imageA.getMin() );
+            
+            for ( int j = 0; j < localImageExtents[1]; j++ )
+            {
+                for ( int i = 0; i < localImageExtents[0]; i++ )
                 {
-                    if ((imageBufferA[i] < threshold1) ||
-                        (imageBufferColocalize[i] < threshold2))
-                    {
-                        imageBufferA[i] = imageMinA;
-                    }
-                }
-                else if (hasThreshold2)
-                {
-                    if ((imageBufferColocalize[i] < threshold1) ||
-                        (imageBufferA[i] < threshold2)) {
-                        imageBufferA[i] = imageMinA;
-                    }
-                }
-
-                if (imageB == null) {
-                    int pixValueA =
-                        (int)(tf_imgA.getRemappedValue(imageBufferA[ind4], 256) +
-                              0.5f);
-                    bufferA[ind4] = lutBufferRemapped[pixValueA];
-                }
-                else
-                {
-                    int indexA =
-                        (int)(tf_imgA.getRemappedValue(imageBufferA[ind4], 256) +
-                              0.5f);
-                    int indexB =
-                        (int)(tf_imgB.getRemappedValue(imageBufferB[ind4], 256) +
-                              0.5f);
+                    int ind4 = (j * localImageExtents[0]) + i;
+                    int index = 4 * ind4;
                     
-                    float Ra = RGB_LUTa[0][indexA];
-                    float Ga = RGB_LUTa[1][indexA];
-                    float Ba = RGB_LUTa[2][indexA];
-                    float Rb = RGB_LUTb[0][indexB];
-                    float Gb = RGB_LUTb[1][indexB];
-                    float Bb = RGB_LUTb[2][indexB];
-
-                    if ( bBlend )
+                    if ( hasThreshold1 )
                     {
-                        Ra = fAlpha * Ra + (1.0f - fAlpha) * Rb;
-                        Ga = fAlpha * Ga + (1.0f - fAlpha) * Gb;
-                        Ba = fAlpha * Ba + (1.0f - fAlpha) * Bb;
+                        if ((imageBufferA[i] < threshold1) ||
+                            (imageBufferColocalize[i] < threshold2))
+                        {
+                            imageBufferA[i] = imageMinA;
+                        }
+                    }
+                    else if (hasThreshold2)
+                    {
+                        if ((imageBufferColocalize[i] < threshold1) ||
+                            (imageBufferA[i] < threshold2)) {
+                            imageBufferA[i] = imageMinA;
+                        }
+                    }
+                    
+                    if (imageB == null) {
+                        int pixValueA =
+                            (int)(tf_imgA.getRemappedValue(imageBufferA[ind4], 256) +
+                                  0.5f);
+                        bufferA[ind4] = lutBufferRemapped[pixValueA];
                     }
                     else
                     {
-                        int pixValueB = 0xff000000 | (((int)Rb) << 16) |
-                            (((int)Gb) << 8) | ((int)Bb);
-                        bufferB[ind4] = pixValueB;
-                    }
-                    int pixValueA = 0xff000000 | (((int)Ra) << 16) |
-                        (((int)Ga) << 8) | ((int)Ba);
-                    bufferA[ind4] = pixValueA;
-                }
+                        int indexA =
+                            (int)(tf_imgA.getRemappedValue(imageBufferA[ind4], 256) +
+                                  0.5f);
+                        int indexB =
+                            (int)(tf_imgB.getRemappedValue(imageBufferB[ind4], 256) +
+                                  0.5f);
+                    
+                        float Ra = RGB_LUTa[0][indexA];
+                        float Ga = RGB_LUTa[1][indexA];
+                        float Ba = RGB_LUTa[2][indexA];
+                        float Rb = RGB_LUTb[0][indexB];
+                        float Gb = RGB_LUTb[1][indexB];
+                        float Bb = RGB_LUTb[2][indexB];
 
-                /* Blend in mask: */
-                if ( bShowMask && (m_afMask != null) )
-                {
-                    if ( (m_afMask[index] != 0) &&
-                         ((m_afMask[index + 1] != 0) ||
-                          (m_afMask[index + 2] != 0) ||
-                          (m_afMask[index + 3] != 0)) )
+                        if ( bBlend )
+                        {
+                            Ra = fAlpha * Ra + (1.0f - fAlpha) * Rb;
+                            Ga = fAlpha * Ga + (1.0f - fAlpha) * Gb;
+                            Ba = fAlpha * Ba + (1.0f - fAlpha) * Bb;
+                        }
+                        else
+                        {
+                            int pixValueB = 0xff000000 | (((int)Rb) << 16) |
+                                (((int)Gb) << 8) | ((int)Bb);
+                            bufferB[ind4] = pixValueB;
+                        }
+                        int pixValueA = 0xff000000 | (((int)Ra) << 16) |
+                            (((int)Ga) << 8) | ((int)Ba);
+                        bufferA[ind4] = pixValueA;
+                    }
+
+                    /* Blend in mask: */
+                    if ( bShowMask && (m_afMask != null) )
                     {
-                        float alpha = m_afMask[index];
-                        int iMaskRa = (int)(alpha * m_afMask[index + 1]);
-                        int iMaskGa = (int)(alpha * m_afMask[index + 2]);
-                        int iMaskBa = (int)(alpha * m_afMask[index + 3]);
+                        if ( (m_afMask[index] != 0) &&
+                             ((m_afMask[index + 1] != 0) ||
+                              (m_afMask[index + 2] != 0) ||
+                              (m_afMask[index + 3] != 0)) )
+                        {
+                            float alpha = m_afMask[index];
+                            int iMaskRa = (int)(alpha * m_afMask[index + 1]);
+                            int iMaskGa = (int)(alpha * m_afMask[index + 2]);
+                            int iMaskBa = (int)(alpha * m_afMask[index + 3]);
                         
-                        int iRa =
-                            (int)((1 - alpha)*((bufferA[ind4] & 0x00ff0000) >> 16));
-                        int iGa =
-                            (int)((1 - alpha)*((bufferA[ind4] & 0x0000ff00) >>  8));
-                        int iBa =
-                            (int)((1 - alpha)*((bufferA[ind4] & 0x000000ff)));
+                            int iRa =
+                                (int)((1 - alpha)*((bufferA[ind4] & 0x00ff0000) >> 16));
+                            int iGa =
+                                (int)((1 - alpha)*((bufferA[ind4] & 0x0000ff00) >>  8));
+                            int iBa =
+                                (int)((1 - alpha)*((bufferA[ind4] & 0x000000ff)));
                         
-                        int pixValue = 0xff000000 | ((iMaskRa + iRa) << 16) |
-                            ((iMaskGa + iGa) << 8) | (iMaskBa + iBa);
-                        bufferA[ind4] = pixValue;
+                            int pixValue = 0xff000000 | ((iMaskRa + iRa) << 16) |
+                                ((iMaskGa + iGa) << 8) | (iMaskBa + iBa);
+                            bufferA[ind4] = pixValue;
+                        }
                     }
                 }
             }
         }
-
         m_bUpdateImage = false;
         return true;
     }

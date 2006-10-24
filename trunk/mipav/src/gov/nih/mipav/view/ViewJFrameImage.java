@@ -287,6 +287,53 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     /**
+     * Creates and initializes the ModelRGB for an image.
+     *
+     * @param   img  the image to create a ModelRGB for
+     *
+     * @return  a ModelRGB for the image <code>img</code> (null if NOT a color image)
+     *
+     * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
+     */
+    public static ModelRGB initRGB( ModelImage img ) throws OutOfMemoryError
+    {
+        ModelRGB newRGB = null;
+        
+        if ( img.isColorImage() )
+        {
+            float[] x = new float[4];
+            float[] y = new float[4];
+            float[] z = new float[4];
+            Dimension dim = new Dimension(256, 256);
+            
+            // Set ModelRGB min max values;
+            x[0] = 0;
+            y[0] = dim.height - 1;
+            
+            x[1] = 255 * 0.333f;
+            y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
+            
+            x[2] = 255 * 0.667f;
+            y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
+            
+            x[3] = 255;
+            y[3] = 0;
+            
+            int[] RGBExtents = new int[2];
+            RGBExtents[0] = 4;
+            RGBExtents[1] = 256;
+            newRGB = new ModelRGB(RGBExtents);
+            newRGB.getRedFunction().importArrays(x, y, 4);
+            newRGB.getGreenFunction().importArrays(x, y, 4);
+            newRGB.getBlueFunction().importArrays(x, y, 4);
+            newRGB.makeRGB(-1);
+        }
+        return newRGB;
+    }
+
+
+
+    /**
      * Makes an aboutDialog box and displays information of the image plane presently being displayed.
      */
     public void about() {
@@ -4507,7 +4554,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
      */
     protected void initLUT() throws OutOfMemoryError {
-
         if (LUTa == null) {
             LUTa = initLUT(imageA);
         }
@@ -4940,16 +4986,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // if this is a color image, then update the RGB info in the component
         if (imageA.isColorImage()) {
-
             if (getRGBTA() == null) {
-                int[] RGBExtents = new int[2];
-
-                RGBExtents[0] = 4;
-                RGBExtents[1] = 256;
-
-                ModelRGB rgb = new ModelRGB(RGBExtents);
-
-                setRGBTA(rgb);
+                setRGBTA( initRGB( imageA ) );
             }
         } // end if image is an RGB type
 
