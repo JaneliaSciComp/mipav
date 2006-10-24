@@ -55,8 +55,8 @@ Binary mask ('voiMask') created from input muscle bundle VOI. Contours of 'voiMa
 - N3'd thigh and voiMask sent to Hard Fuzzy Segmentation
         - N3'd thigh segmented into 3 classes (fat, muscle, background)
                - Used to isolate bone and bone marrow
-        - N3'd thigh segmented inside muscle bundle into 4 classes(using voiMask)
-                       – 2 types of fat, muscle, background. This is to reveal more hidden fat.
+        - N3'd thigh segmented inside muscle bundle into 4 classes(using voiMask) - 2 types of fat, muscle, background.
+                   This is to reveal more hidden fat.
                - Used to see inside the muscle bundle in as great detail as possible.
 
 - ObMask, voiMask, and 4-class Fuzzy segmented muscle bundle image sent to Subcutaneous Fat Cleanup/Relabeling.
