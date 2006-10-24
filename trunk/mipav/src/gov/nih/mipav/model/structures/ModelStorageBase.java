@@ -7090,14 +7090,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         float[] originReturn = new float[3];
         int[] aiAxisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
-        boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( this, orientation );
         for ( int i = 0; i < 3; i++ )
         {
             originReturn[i] = originTemp[ aiAxisOrder[i] ];
-            if ( axisFlip[i] )
-            {
-                originReturn[i] *= -1;
-            }
         }
         return originReturn;
     }

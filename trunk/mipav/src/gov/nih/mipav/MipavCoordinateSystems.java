@@ -105,6 +105,51 @@ public class MipavCoordinateSystems
         pOut.z = Math.round( patientPoint[2] );
     }
 
+    /** Model to Patient transform. Transforms points that are in model space
+     * into patient space, based on the desired orientation -- either AXIAL,
+     * SAGITTAL, or CORONAL: */
+    public static final int FileToSlice( Point3Df pIn, ModelStorageBase image,
+                                         int orientation, boolean bFlip )
+    {
+        /* axisOrder represents the mapping of model space volume axes to patient space axes: */
+        int[] axisOrder = MipavCoordinateSystems.getAxisOrder( image, orientation );
+
+        /* axisFlip represents whether to invert the axes after they are reordered: */
+        boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( image, orientation );
+
+        /* extents gets the image extents re-mapped to patient coordinates */
+        int[] extents = image.getExtents( orientation );
+
+        /* The modelPoint: */
+        float[] modelPoint = new float[3];
+        modelPoint[0] = pIn.x;
+        modelPoint[1] = pIn.y;
+        modelPoint[2] = pIn.z;
+
+        /* transformed patientPoint: */
+        float[] patientPoint = new float[3];
+
+        /* First reorder the point indices based on the axisOrder re-mapping
+         * from Model to Patient space: */
+        for ( int i = 0; i < 3; i++ )
+        {
+            patientPoint[i] = modelPoint[ axisOrder[i] ];
+        }
+
+        /* Then invert the point, using the appropriate extents: */
+        for ( int i = 0; i < 3; i++ )
+        {
+            if ( axisFlip[ i] && bFlip )
+            {
+                patientPoint[i] = extents[ i ] - patientPoint[ i ] - 1;
+            }
+        }
+        /* return the z-value of the transformed point: */
+        return Math.round( patientPoint[2] );
+    }
+
+
+
     /** Patient to Model transform. Transforms points that are in patient space
      * (either AXIAL, SAGITTAL, or CORONAL) into Model space: */
     public static final void PatientToFile(Point3Df pIn, Point3Df pOut,
@@ -391,24 +436,41 @@ public class MipavCoordinateSystems
      */
     public static final void getScannerCoordinates( Point3Df kInput, Point3Df kOutput, ModelStorageBase kImage )
     {
-        Point3Df kAxial = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( kInput, kAxial, kImage, FileInfoBase.AXIAL );
-        float[] afAxialRes = kImage.getResolutions( 0, FileInfoBase.AXIAL );
         float[] afAxialOrigin = kImage.getOrigin( 0, FileInfoBase.AXIAL );
-
-        Point3Df kCoronal = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( kInput, kCoronal, kImage, FileInfoBase.CORONAL );
-        float[] afCoronalRes = kImage.getResolutions( 0, FileInfoBase.CORONAL );
         float[] afCoronalOrigin = kImage.getOrigin( 0, FileInfoBase.CORONAL );
-
-        Point3Df kSagittal = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( kInput, kSagittal, kImage, FileInfoBase.SAGITTAL );
-        float[] afSagittalRes = kImage.getResolutions( 0, FileInfoBase.SAGITTAL );
         float[] afSagittalOrigin = kImage.getOrigin( 0, FileInfoBase.SAGITTAL );
 
-        kOutput.x = kCoronal.z * afCoronalRes[2] + afCoronalOrigin[2];
-        kOutput.y = kSagittal.z * afSagittalRes[2] + afSagittalOrigin[2];
-        kOutput.z = kAxial.z * afAxialRes[2] + afAxialOrigin[2];
+        if (( kImage.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
+            (kImage.getFileInfo()[0].getFileFormat() == FileBase.DICOM))
+        {
+            float[] afResolutions = kImage.getResolutions( 0 );
+
+            TransMatrix dicomMatrix = (TransMatrix) (((ModelImage)kImage).getMatrix().clone());
+            // Finally convert the point to axial millimeter DICOM space.
+            dicomMatrix.transform( new Point3Df( kInput.x * afResolutions[0],
+                                                 kInput.y * afResolutions[1],
+                                                 kInput.z * afResolutions[2] ), kOutput);
+            /* After transform kOutput is in sagittal, coronal, axial slice
+             * order, swap sagittal and coronal:*/
+            float tmp = kOutput.x;
+            kOutput.x = kOutput.y;
+            kOutput.y = tmp;
+        }
+        else
+        {
+            float[] afAxialRes = kImage.getResolutions( 0, FileInfoBase.AXIAL );
+            float[] afCoronalRes = kImage.getResolutions( 0, FileInfoBase.CORONAL );
+            float[] afSagittalRes = kImage.getResolutions( 0, FileInfoBase.SAGITTAL );
+
+            kOutput.x = afCoronalRes[2] * MipavCoordinateSystems.FileToSlice( kInput, kImage, FileInfoBase.CORONAL, false );
+            kOutput.y = afSagittalRes[2] * MipavCoordinateSystems.FileToSlice( kInput, kImage, FileInfoBase.SAGITTAL, false );
+            kOutput.z = afAxialRes[2] * MipavCoordinateSystems.FileToSlice( kInput, kImage, FileInfoBase.AXIAL, false );
+        }
+        /* Returned point represents the current position in coronal,
+         * sagittal, axial order (A/P, L/R, I/S axis space): */
+        kOutput.x += afCoronalOrigin[2];
+        kOutput.y += afSagittalOrigin[2];
+        kOutput.z += afAxialOrigin[2];
     }
 
 }
