@@ -194,6 +194,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
         int secondImage = 0; // 0 if not present
 
+        //lets set the user defined file filters
+        ViewImageFileFilter.setUserDefinedExtensions();
+
         // address of TIFF header of second image in file if present
         // for LSM510 image files
 
@@ -448,6 +451,8 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         // address of TIFF header of second image in file if present
         // for LSM510 image files
 
+        
+        
         // separate fileName and directory
         index = fileName.lastIndexOf(File.separatorChar);
 
