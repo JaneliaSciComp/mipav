@@ -3418,7 +3418,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (tCoord[i] < 0)
             {
                 strs[i] = new String( labels[i].charAt(0) + ": " +
-                                      String.valueOf(nf.format(-tCoord[i])));
+                                      String.valueOf(nf.format(tCoord[i])));
             }
             else
             {
