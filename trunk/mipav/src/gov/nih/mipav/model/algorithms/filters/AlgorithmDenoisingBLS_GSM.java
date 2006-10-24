@@ -768,20 +768,20 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             auxn = pyrBand(pyrN, pind, nband-1, nsxn, nsyn);
             prnt = useParent && (nband < bandNum - nOrientations);
             if (prnt) {
-                BL = new double[nsx[0]][nsy[0]][2];
-                BLn = new double[nsx[0]][nsy[0]][2];
+                BL = new double[nsy[0]][nsx[0]][2];
+                BLn = new double[nsy[0]][nsx[0]][2];
             } // if (prnt)
             else {
-                BL = new double[nsx[0]][nsy[0]][1];
-                BLn = new double[nsx[0]][nsy[0]][1];
+                BL = new double[nsy[0]][nsx[0]][1];
+                BLn = new double[nsy[0]][nsx[0]][1];
             } // else 
             // Because we are discarding 2 coefficients on every dimension
             var = Math.sqrt(((nsx[0]-2)*(nsy[0]-2))/(nsx[0]*nsy[0]));
             for (j = 0; j < nsy[0]; j++) {
                 for (i = 0; i < nsx[0]; i++) {
                     index = i + j * nsx[0];
-                    BL[i][j][0] = aux[index];
-                    BLn[i][j][0] = auxn[index]*var;
+                    BL[j][i][0] = aux[index];
+                    BLn[j][i][0] = auxn[index]*var;
                 }
             }
             if (prnt) {
@@ -795,8 +795,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 for (j = 0; j < nsy[0]; j++) {
                     for (i = 0; i < nsx[0]; i++) {
                         index = i + j * nsx[0];
-                        BL[i][j][1] = aux[index];
-                        BLn[i][j][1] = auxn[index]*var;
+                        BL[j][i][1] = aux[index];
+                        BLn[j][i][1] = auxn[index]*var;
                     }
                 }
             } // if (prnt)
@@ -805,8 +805,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             sn2 = 0.0;
             for (j = 0; j < nsy[0]; j++) {
                 for (i = 0; i < nsx[0]; i++) {
-                    sy2 = sy2 + BL[i][j][0]*BL[i][j][0];
-                    sn2 = sn2 + BLn[i][j][0]*BLn[i][j][0];
+                    sy2 = sy2 + BL[j][i][0]*BL[j][i][0];
+                    sn2 = sn2 + BLn[j][i][0]*BLn[j][i][0];
                 }
             }
             sy2 = sy2/(nsx[0]*nsy[0]);
@@ -821,14 +821,14 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             
             // main
             BL = denoi_BLS_GSM_band(BL, BLn, prnt);
-            blx = BL.length;
-            bly = BL[0].length;
+            bly = BL.length;
+            blx = BL[0].length;
             // Create BL transpose
             BLT = new double[bly * blx];
             for (j = 0; j < bly; j++) {
                 for (i = 0; i < blx; i++) {
                     index = j + i*bly;
-                    BLT[index] = BL[i][j][0];
+                    BLT[index] = BL[j][i][0];
                 }
             }
             pyrh.setElementAt(BLT, nband-1);
@@ -911,18 +911,18 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 // Has the subband a parent?
                 prnt = useParent && (nband < bandNum - nOrientations);
                 if (prnt) {
-                    BL = new double[nsx[0]][nsy[0]][2];
-                    BLn = new double[nsx[0]][nsy[0]][2];
+                    BL = new double[nsy[0]][nsx[0]][2];
+                    BLn = new double[nsy[0]][nsx[0]][2];
                 } // if (prnt)
                 else {
-                    BL = new double[nsx[0]][nsy[0]][1];
-                    BLn = new double[nsx[0]][nsy[0]][1];
+                    BL = new double[nsy[0]][nsx[0]][1];
+                    BLn = new double[nsy[0]][nsx[0]][1];
                 } // else 
                 for (j = 0; j < nsy[0]; j++) {
                     for (i = 0; i < nsx[0]; i++) {
                         index = i + j * nsx[0];
-                        BL[i][j][0] = aux[index];
-                        BLn[i][j][0] = auxn[index];
+                        BL[j][i][0] = aux[index];
+                        BLn[j][i][0] = auxn[index];
                     }
                 }
                 if (prnt) {
@@ -933,8 +933,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     for (j = 0; j < nsy[0]; j++) {
                         for (i = 0; i < nsx[0]; i++) {
                             index = i + j * nsx[0];
-                            BL[i][j][1] = aux[index];
-                            BLn[i][j][1] = auxn[index];
+                            BL[j][i][1] = aux[index];
+                            BLn[j][i][1] = auxn[index];
                         }
                     }
                 } // if (prnt)
@@ -943,8 +943,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 sn2 = 0.0;
                 for (j = 0; j < nsy[0]; j++) {
                     for (i = 0; i < nsx[0]; i++) {
-                        sy2 = sy2 + BL[i][j][0]*BL[i][j][0];
-                        sn2 = sn2 + BLn[i][j][0]*BLn[i][j][0];
+                        sy2 = sy2 + BL[j][i][0]*BL[j][i][0];
+                        sn2 = sn2 + BLn[j][i][0]*BLn[j][i][0];
                     }
                 }
                 sy2 = sy2/(nsx[0]*nsy[0]);
@@ -959,14 +959,14 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 
                 // main
                 BL = denoi_BLS_GSM_band(BL, BLn, prnt);
-                blx = BL.length;
-                bly = BL[0].length;
+                bly = BL.length;
+                blx = BL[0].length;
                 // Create BL transpose
                 BLT = new double[bly * blx];
                 for (j = 0; j < bly; j++) {
                     for (i = 0; i < blx; i++) {
                         index = j + i*bly;
-                        BLT[index] = BL[i][j][0];
+                        BLT[index] = BL[j][i][0];
                     }
                 }
                 pyrh.setElementAt(BLT, nband-1);
@@ -1050,20 +1050,20 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             // Has the subband a parent?
             prnt = useParent && (nband < bandNum - nOrientations);
             if (prnt) {
-                BL = new double[nsx[0]][nsy[0]][2];
-                BLn = new double[nsx[0]][nsy[0]][2];
+                BL = new double[nsy[0]][nsx[0]][2];
+                BLn = new double[nsy[0]][nsx[0]][2];
             } // if (prnt)
             else {
-                BL = new double[nsx[0]][nsy[0]][1];
-                BLn = new double[nsx[0]][nsy[0]][1];
+                BL = new double[nsy[0]][nsx[0]][1];
+                BLn = new double[nsy[0]][nsx[0]][1];
             } // else 
             // Because we are discarding 2 coefficients on every dimension
             var = Math.sqrt(((nsx[0]-2)*(nsy[0]-2))/(nsx[0]*nsy[0]));
             for (j = 0; j < nsy[0]; j++) {
                 for (i = 0; i < nsx[0]; i++) {
                     index = i + j * nsx[0];
-                    BL[i][j][0] = aux[index];
-                    BLn[i][j][0] = auxn[index]*var;
+                    BL[j][i][0] = aux[index];
+                    BLn[j][i][0] = auxn[index]*var;
                 }
             }
             if (prnt) {
@@ -1077,8 +1077,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 for (j = 0; j < nsy[0]; j++) {
                     for (i = 0; i < nsx[0]; i++) {
                         index = i + j * nsx[0];
-                        BL[i][j][1] = aux[index];
-                        BLn[i][j][1] = auxn[index]*var;
+                        BL[j][i][1] = aux[index];
+                        BLn[j][i][1] = auxn[index]*var;
                     }
                 }
             } // if (prnt)
@@ -1087,8 +1087,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             sn2 = 0.0;
             for (j = 0; j < nsy[0]; j++) {
                 for (i = 0; i < nsx[0]; i++) {
-                    sy2 = sy2 + BL[i][j][0]*BL[i][j][0];
-                    sn2 = sn2 + BLn[i][j][0]*BLn[i][j][0];
+                    sy2 = sy2 + BL[j][i][0]*BL[j][i][0];
+                    sn2 = sn2 + BLn[j][i][0]*BLn[j][i][0];
                 }
             }
             sy2 = sy2/(nsx[0]*nsy[0]);
@@ -1103,14 +1103,14 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             
             // main
             BL = denoi_BLS_GSM_band(BL, BLn, prnt);
-            blx = BL.length;
-            bly = BL[0].length;
+            bly = BL.length;
+            blx = BL[0].length;
             // Create BL transpose
             BLT = new double[bly * blx];
             for (j = 0; j < bly; j++) {
                 for (i = 0; i < blx; i++) {
                     index = j + i*bly;
-                    BLT[index] = BL[i][j][0];
+                    BLT[index] = BL[j][i][0];
                 }
             }
             pyrh.setElementAt(BLT, nband-1);
@@ -1185,20 +1185,20 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             prnt = useParent && (nband < bandNum - 1 - nOrientations) &&
                    (nband > 1);
             if (prnt) {
-                BL = new double[nsx[0]][nsy[0]][2];
-                BLn = new double[nsx[0]][nsy[0]][2];
+                BL = new double[nsy[0]][nsx[0]][2];
+                BLn = new double[nsy[0]][nsx[0]][2];
             } // if (prnt)
             else {
-                BL = new double[nsx[0]][nsy[0]][1];
-                BLn = new double[nsx[0]][nsy[0]][1];
+                BL = new double[nsy[0]][nsx[0]][1];
+                BLn = new double[nsy[0]][nsx[0]][1];
             } // else 
             // Because we are discarding 2 coefficients on every dimension
             var = Math.sqrt(((nsx[0]-2)*(nsy[0]-2))/(nsx[0]*nsy[0]));
             for (j = 0; j < nsy[0]; j++) {
                 for (i = 0; i < nsx[0]; i++) {
                     index = i + j * nsx[0];
-                    BL[i][j][0] = aux[index];
-                    BLn[i][j][0] = auxn[index]*var;
+                    BL[j][i][0] = aux[index];
+                    BLn[j][i][0] = auxn[index]*var;
                 }
             }
             if (prnt) {
@@ -1209,8 +1209,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 for (j = 0; j < nsy[0]; j++) {
                     for (i = 0; i < nsx[0]; i++) {
                         index = i + j * nsx[0];
-                        BL[i][j][1] = aux[index];
-                        BLn[i][j][1] = auxn[index]*var;
+                        BL[j][i][1] = aux[index];
+                        BLn[j][i][1] = auxn[index]*var;
                     }
                 }
             } // if (prnt)
@@ -1219,8 +1219,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             sn2 = 0.0;
             for (j = 0; j < nsy[0]; j++) {
                 for (i = 0; i < nsx[0]; i++) {
-                    sy2 = sy2 + BL[i][j][0]*BL[i][j][0];
-                    sn2 = sn2 + BLn[i][j][0]*BLn[i][j][0];
+                    sy2 = sy2 + BL[j][i][0]*BL[j][i][0];
+                    sn2 = sn2 + BLn[j][i][0]*BLn[j][i][0];
                 }
             }
             sy2 = sy2/(nsx[0]*nsy[0]);
@@ -1235,14 +1235,14 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             
             // main
             BL = denoi_BLS_GSM_band(BL, BLn, prnt);
-            blx = BL.length;
-            bly = BL[0].length;
+            bly = BL.length;
+            blx = BL[0].length;
             // Create BL transpose
             BLT = new double[bly * blx];
             for (j = 0; j < bly; j++) {
                 for (i = 0; i < blx; i++) {
                     index = j + i*bly;
-                    BLT[index] = BL[i][j][0];
+                    BLT[index] = BL[j][i][0];
                 }
             }
             pyrh.setElementAt(BLT, nband-1);
@@ -1380,34 +1380,34 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         ctrX = (int)Math.ceil((dimX + 0.5)/2);
         ctrY = (int)Math.ceil((dimY + 0.5)/2);
         
-        xramp = new double[dimX][dimY];
-        yramp = new double[dimX][dimY];
-        for (j = 0; j < dimY; j++) {
-            var = ((j+1.0)-ctrY)/(dimY/2.0);
-            for (i = 0; i < dimX; i++) {
-                xramp[i][j] = var;
-            }
-        }
+        xramp = new double[dimY][dimX];
+        yramp = new double[dimY][dimX];
         for (i = 0; i < dimX; i++) {
             var = ((i+1.0)-ctrX)/(dimX/2.0);
             for (j = 0; j < dimY; j++) {
-                yramp[i][j]= var;
+                xramp[j][i] = var;
             }
         }
-        angle = new double[dimX][dimY];
-        log_rad = new double[dimX][dimY];
+        for (j = 0; j < dimY; j++) {
+            var = ((j+1.0)-ctrY)/(dimY/2.0);
+            for (i = 0; i < dimX; i++) {
+                yramp[j][i]= var;
+            }
+        }
+        angle = new double[dimY][dimX];
+        log_rad = new double[dimY][dimX];
         for (j = 0; j < dimY; j++) {
             for (i = 0; i < dimX; i++) {
-                angle[i][j] = Math.atan2(yramp[i][j],xramp[i][j]);
-                log_rad[i][j] = Math.sqrt(xramp[i][j]*xramp[i][j] + yramp[i][j]*yramp[i][j]);
+                angle[j][i] = Math.atan2(yramp[j][i],xramp[j][i]);
+                log_rad[j][i] = Math.sqrt(xramp[j][i]*xramp[j][i] + yramp[j][i]*yramp[j][i]);
             }
         }
-        log_rad[ctrX-1][ctrY-1] = log_rad[ctrX-1][ctrY-2];
+        log_rad[ctrY-1][ctrX-1] = log_rad[ctrY-1][ctrX-2];
         // log2(x) = loge(x)/loge(2)
         var = 1.0/Math.log(2.0);
         for (j = 0; j < dimY; j++) {
             for (i = 0; i < dimX; i++) {
-                log_rad[i][j] = var * Math.log(log_rad[i][j]);
+                log_rad[j][i] = var * Math.log(log_rad[j][i]);
             }
         }
         
@@ -1472,8 +1472,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         for (j = 0; j < dimY; j++) {
             for (i = 0; i < dimX; i++) {
                 index = i + j*dimX;
-                resdftr[index] = resdftr[index] * lo0mask[i][j];
-                resdfti[index] = resdfti[index] * lo0mask[i][j];
+                resdftr[index] = resdftr[index] * lo0mask[j][i];
+                resdfti[index] = resdfti[index] * lo0mask[j][i];
             }
         }
         
@@ -1528,50 +1528,50 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     center(bandr, bandi, dimX, dimY);
                     // Make real the contents in the HF cross (to avoid information loss in these freqs.)
                     // It distributes evenly these contents among the nbands orientations
-                    maskr = new double[dimX][dimY];
-                    maski = new double[dimX][dimY];
+                    maskr = new double[dimY][dimX];
+                    maski = new double[dimY][dimX];
                     if (((nbands-1) % 4) == 0) {
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
-                                maskr[i][j] = anglemask[i][j]*hi0mask[i][j];
+                                maskr[j][i] = anglemask[j][i]*hi0mask[j][i];
                             }
                         }
                     } // if (((nbands-1) % 4) == 0)
                     else if (((nbands-1) %4) == 1) {
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
-                                maski[i][j] = anglemask[i][j]*hi0mask[i][j];
+                                maski[j][i] = anglemask[j][i]*hi0mask[j][i];
                             }
                         }    
                     } // else if (((nbands-1) %4) == 1)
                     else if (((nbands-1) %4) == 2) {
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
-                                maskr[i][j] = -anglemask[i][j]*hi0mask[i][j];
+                                maskr[j][i] = -anglemask[j][i]*hi0mask[j][i];
                             }
                         }    
                     } // else if (((nbands-1) %4) == 2)
                     else if (((nbands-1) %4) == 3) {
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
-                                maski[i][j] = -anglemask[i][j]*hi0mask[i][j];
+                                maski[j][i] = -anglemask[j][i]*hi0mask[j][i];
                             }
                         }    
                     } // else if (((nbands-1) %4) == 3)
                     
                     var = 1.0/Math.sqrt(nbands);
                     for (j = 0; j < dimY; j++) {
-                        maskr[0][j] = var;
+                        maskr[j][0] = var;
                     }
                     for (i = 1; i < dimX; i++) {
-                        maskr[i][0] = var;
+                        maskr[0][i] = var;
                     }
                     
                     for (j = 0; j < dimY; j++) {
                         for (i = 0; i < dimX; i++) {
                             index = i + j * dimX;
-                            resdftr[index] = resdftr[index] + bandr[index] * maskr[i][j] - bandi[index] * maski[i][j];
-                            resdfti[index] = resdfti[index] + bandr[index] * maski[i][j] + bandi[index] * maskr[i][j];
+                            resdftr[index] = resdftr[index] + bandr[index] * maskr[j][i] - bandi[index] * maski[j][i];
+                            resdfti[index] = resdfti[index] + bandr[index] * maski[j][i] + bandi[index] * maskr[j][i];
                         }
                     }
                 } // if (haveB)
@@ -2258,34 +2258,34 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         ctrX = (int)Math.ceil((dimX + 0.5)/2);
         ctrY = (int)Math.ceil((dimY + 0.5)/2);
         
-        xramp = new double[dimX][dimY];
-        yramp = new double[dimX][dimY];
-        for (j = 0; j < dimY; j++) {
-            var = ((j+1.0)-ctrY)/(dimY/2.0);
-            for (i = 0; i < dimX; i++) {
-                xramp[i][j] = var;
-            }
-        }
+        xramp = new double[dimY][dimX];
+        yramp = new double[dimY][dimX];
         for (i = 0; i < dimX; i++) {
             var = ((i+1.0)-ctrX)/(dimX/2.0);
             for (j = 0; j < dimY; j++) {
-                yramp[i][j]= var;
+                xramp[j][i] = var;
             }
         }
-        angle = new double[dimX][dimY];
-        log_rad = new double[dimX][dimY];
+        for (j = 0; j < dimY; j++) {
+            var = ((j+1.0)-ctrY)/(dimY/2.0);
+            for (i = 0; i < dimX; i++) {
+                yramp[j][i]= var;
+            }
+        }
+        angle = new double[dimY][dimX];
+        log_rad = new double[dimY][dimX];
         for (j = 0; j < dimY; j++) {
             for (i = 0; i < dimX; i++) {
-                angle[i][j] = Math.atan2(yramp[i][j],xramp[i][j]);
-                log_rad[i][j] = Math.sqrt(xramp[i][j]*xramp[i][j] + yramp[i][j]*yramp[i][j]);
+                angle[j][i] = Math.atan2(yramp[j][i],xramp[j][i]);
+                log_rad[j][i] = Math.sqrt(xramp[j][i]*xramp[j][i] + yramp[j][i]*yramp[j][i]);
             }
         }
-        log_rad[ctrX-1][ctrY-1] = log_rad[ctrX-1][ctrY-2];
+        log_rad[ctrY-1][ctrX-1] = log_rad[ctrY-1][ctrX-2];
         // log2(x) = loge(x)/loge(2)
         var = 1.0/Math.log(2.0);
         for (j = 0; j < dimY; j++) {
             for (i = 0; i < dimX; i++) {
-                log_rad[i][j] = var * Math.log(log_rad[i][j]);
+                log_rad[j][i] = var * Math.log(log_rad[j][i]);
             }
         }
         
@@ -2344,8 +2344,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         for (j = 0; j < dimY; j++) {
             for (i = 0; i < dimX; i++) {
                 index = i + j*dimX;
-                resdftr[index] = resdftr[index] * lo0mask[i][j];
-                resdfti[index] = resdfti[index] * lo0mask[i][j];
+                resdftr[index] = resdftr[index] * lo0mask[j][i];
+                resdfti[index] = resdfti[index] * lo0mask[j][i];
             }
         }
         
@@ -2374,13 +2374,13 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             fftUtil.run();
             fftUtil.finalize();
             center(arr, imag, x, y);
-            hix = hi0mask.length;
-            hiy = hi0mask[0].length;
+            hiy = hi0mask.length;
+            hix = hi0mask[0].length;
             for (j = 0; j < hiy; j++) {
                 for (i = 0; i < hix; i++) {
                     index = i + j * hix;
-                    arr[index] = arr[index] * hi0mask[i][j];
-                    imag[index] = imag[index] * hi0mask[i][j];
+                    arr[index] = arr[index] * hi0mask[j][i];
+                    imag[index] = imag[index] * hi0mask[j][i];
                     resdftr[index] = resdftr[index] + arr[index];
                     resdfti[index] = resdfti[index] + imag[index];
                 }
@@ -2475,11 +2475,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         ctrX = (int)Math.ceil((dimX + 0.5)/2);
         ctrY = (int)Math.ceil((dimY + 0.5)/2);
         
-        logx = log_rad.length;
-        logy = log_rad[0].length;
+        logy = log_rad.length;
+        logx = log_rad[0].length;
         for (j = 0; j < logy; j++) {
             for (i = 0; i < logx; i++) {
-                log_rad[i][j] = log_rad[i][j] + 1.0;
+                log_rad[j][i] = log_rad[j][i] + 1.0;
             }
         }
         
@@ -2499,12 +2499,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             lostartY = ctrY - loctrY + 1;
             loendX = lostartX + lodimX - 1;
             loendY = lostartY + lodimY - 1;
-            nlog_rad = new double[loendX-lostartX][loendY-lostartY];
-            nangle = new double[loendX-lostartX][loendY-lostartY];
+            nlog_rad = new double[loendY-lostartY][loendX-lostartX];
+            nangle = new double[loendY-lostartY][loendX-lostartX];
             for (j = 0; j < loendY-lostartY; j++) {
                 for (i = 0; i < loendX-lostartX; i++) {
-                    nlog_rad[i][j] = log_rad[i + lostartX - 1][j + lostartY - 1];
-                    nangle[i][j] = angle[i + lostartX - 1][j + lostartY - 1];
+                    nlog_rad[j][i] = log_rad[j + lostartY - 1][i + lostartX - 1];
+                    nangle[j][i] = angle[j + lostartY - 1][i + lostartX - 1];
                 }
             }
             if (pind.size() > lo_ind) {
@@ -2556,8 +2556,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 for (i = lostartX-1, i2 = 0; i < loendX; i++, i2++) {
                     index = i + j * dimX;
                     index2 = i2 + j2 * (loendX-lostartX);
-                    resdftr[index] = nresdftr[index2] * lomask[i2][j2];
-                    resdfti[index] = nresdfti[index2] * lomask[i2][j2];
+                    resdftr[index] = nresdftr[index2] * lomask[j2][i2];
+                    resdfti[index] = nresdfti[index2] * lomask[j2][i2];
                 }
             }
         } // if (moreOne)
@@ -2619,8 +2619,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
                                 index = i + j * dimX;
-                                resdftr[index] = resdftr[index] + bandr[index]*anglemask[i][j]*himask[i][j];
-                                resdfti[index] = resdfti[index] + bandi[index]*anglemask[i][j]*himask[i][j];
+                                resdftr[index] = resdftr[index] + bandr[index]*anglemask[j][i]*himask[j][i];
+                                resdfti[index] = resdfti[index] + bandi[index]*anglemask[j][i]*himask[j][i];
                             }
                         }
                     } // if (((nbands -1) % 4) == 0)
@@ -2628,8 +2628,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
                                 index = i + j * dimX;
-                                resdftr[index] = resdftr[index] - bandi[index]*anglemask[i][j]*himask[i][j];
-                                resdfti[index] = resdfti[index] + bandr[index]*anglemask[i][j]*himask[i][j];
+                                resdftr[index] = resdftr[index] - bandi[index]*anglemask[j][i]*himask[j][i];
+                                resdfti[index] = resdfti[index] + bandr[index]*anglemask[j][i]*himask[j][i];
                             }
                         }    
                     } // else if (((nbands-1) % 4) == 1)
@@ -2637,8 +2637,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
                                 index = i + j * dimX;
-                                resdftr[index] = resdftr[index] - bandr[index]*anglemask[i][j]*himask[i][j];
-                                resdfti[index] = resdfti[index] - bandi[index]*anglemask[i][j]*himask[i][j];
+                                resdftr[index] = resdftr[index] - bandr[index]*anglemask[j][i]*himask[j][i];
+                                resdfti[index] = resdfti[index] - bandi[index]*anglemask[j][i]*himask[j][i];
                             }
                         }    
                     } // else if (((nbands-1) % 4) == 2)
@@ -2646,8 +2646,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
                                 index = i + j * dimX;
-                                resdftr[index] = resdftr[index] + bandi[index]*anglemask[i][j]*himask[i][j];
-                                resdfti[index] = resdfti[index] - bandr[index]*anglemask[i][j]*himask[i][j];
+                                resdftr[index] = resdftr[index] + bandi[index]*anglemask[j][i]*himask[j][i];
+                                resdfti[index] = resdfti[index] - bandr[index]*anglemask[j][i]*himask[j][i];
                             }
                         }    
                     } // else if (((nbands-1) % 4) == 3)
@@ -2726,8 +2726,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private double[][][] denoi_BLS_GSM_band(double y[][][], double noise[][][],
             boolean prnt) {
         double x_hat[][][] = null;
-        int nx, ny;
-        int nblx, nbly;
+        int nv, nh;
+        int nblv, nblh;
         int nexp;
         double zM[][] = null;
         int N;
@@ -2794,17 +2794,18 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double rmat3[][];
         double rmat4[][];
         int i2, j2;
+        int nx, ny;
         
-        nx = y.length;
-        ny = y[0].length;
+        nv = y.length;
+        nh = y[0].length;
         
         // Discard the outer coefficients for the reference (central) coefficients
         // to avoid boundary effects
-        nblx = nx - blockSizeX + 1;
-        nbly = ny - blockSizeY + 1;
-        nexp = nblx * nbly; // number of coefficients considered
-        zM = new double[nx][ny]; // hidden variable z
-        x_hat = new double[nx][ny][1]; // coefficient estimation
+        nblv = nv - blockSizeY + 1;
+        nblh = nh - blockSizeX + 1;
+        nexp = nblv * nblh; // number of coefficients considered
+        zM = new double[nv][nh]; // hidden variable z
+        x_hat = new double[nv][nh][1]; // coefficient estimation
         N = blockSizeX * blockSizeY; // size of the neighborhood
         if (prnt) {
             N = N + 1; 
@@ -2825,26 +2826,26 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         // Compute covariance of noise from 'noise'
         n = 0;
-        for (i = -Lx; i <= Lx; i++) {
-            for (j = -Ly; j <= Ly; j++) {
+        for (ny = -Ly; ny <= Ly; ny++) {
+            for (nx = -Lx; nx <= Lx; nx++) {
                 n = n + 1;
-                mtxr = new double[nx*ny];
-                mtxi = new double[nx*ny];
-                for (ky = 0; ky < ny; ky++) {
-                    for (kx = 0; kx < nx; kx++) {
-                        index = kx + ky * nx;
-                        mtxr[index] = noise[kx][ky][0];
+                mtxr = new double[nv*nh];
+                mtxi = new double[nv*nh];
+                for (ky = 0; ky < nv; ky++) {
+                    for (kx = 0; kx < nh; kx++) {
+                        index = kx + ky * nh;
+                        mtxr[index] = noise[ky][kx][0];
                     }
                 }
-                offset[0] = i;
-                offset[1] = j;
-                shift(mtxr, mtxi, nx, ny, offset, resr, resi);
-                foo = new double[nblx][nbly];
-                for (ky = 0, indexW = 0; ky < nbly; ky++) {
-                    for (kx = 0; kx < nblx; kx++) {
-                        index = (kx + Lx)+ (ky + Ly) * nblx;
-                        foo[kx][ky] = resr[index];
-                        W[indexW++][n-1] = foo[kx][ky];
+                offset[0] = nx;
+                offset[1] = ny;
+                shift(mtxr, mtxi, nh, nv, offset, resr, resi);
+                foo = new double[nblv][nblh];
+                for (ky = 0, indexW = 0; ky < nblv; ky++) {
+                    for (kx = 0; kx < nblh; kx++) {
+                        index = (kx + Lx)+ (ky + Ly) * nblh;
+                        foo[ky][kx] = resr[index];
+                        W[indexW++][n-1] = foo[ky][kx];
                     }
                 }
             } // for (j = -Ly; j <= Ly; j++)
@@ -2852,11 +2853,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         if (prnt) { // parent
             n = n +1;
-            foo = new double[nblx][nbly];
-            for (ky = 0, indexW = 0; ky < nbly; ky++) {
-                for (kx = 0; kx < nblx; kx++) {
-                    foo[kx][ky] = noise[kx+Lx][ky+Ly][1];
-                    W[indexW++][n-1] = foo[kx][ky];
+            foo = new double[nblv][nblh];
+            for (ky = 0, indexW = 0; ky < nblv; ky++) {
+                for (kx = 0; kx < nblh; kx++) {
+                    foo[ky][kx] = noise[ky+Ly][kx+Lx][1];
+                    W[indexW++][n-1] = foo[ky][kx];
                 }
             }
         } // if (prnt)
@@ -2864,7 +2865,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         C_w = innerProd(W);
         for (j = 0; j < N; j++) {
             for (i = 0; i < N; i++) {
-                C_w[i][j] = C_w[i][j]/nexp;
+                C_w[j][i] = C_w[j][i]/nexp;
             }
         }
         
@@ -2899,38 +2900,38 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         // Rearrange observed samples in 'nexp' neighborhoods
         n = 0;
-        for (i = -Lx; i <= Lx; i++) {
-            for (j = -Ly; j <= Ly; j++) {
+        for (ny = -Ly; ny <= Ly; ny++) {
+            for (nx = -Lx; nx <= Lx; nx++) {
                 n = n + 1;
-                mtxr = new double[nx*ny];
-                mtxi = new double[nx*ny];
-                for (ky = 0; ky < ny; ky++) {
-                    for (kx = 0; kx < nx; kx++) {
-                        index = kx + ky * nx;
-                        mtxr[index] = y[kx][ky][0];
+                mtxr = new double[nv*nh];
+                mtxi = new double[nv*nh];
+                for (ky = 0; ky < nv; ky++) {
+                    for (kx = 0; kx < nh; kx++) {
+                        index = kx + ky * nh;
+                        mtxr[index] = y[ky][kx][0];
                     }
                 }
-                offset[0] = i;
-                offset[1] = j;
-                shift(mtxr, mtxi, nx, ny, offset, resr, resi);
-                foo = new double[nblx][nbly];
-                for (ky = 0, indexW = 0; ky < nbly; ky++) {
-                    for (kx = 0; kx < nblx; kx++) {
-                        index = (kx + Lx)+ (ky + Ly) * nblx;
-                        foo[kx][ky] = resr[index];
-                        Y[indexW++][n-1] = foo[kx][ky];
+                offset[0] = nx;
+                offset[1] = ny;
+                shift(mtxr, mtxi, nh, nv, offset, resr, resi);
+                foo = new double[nblv][nblh];
+                for (ky = 0, indexW = 0; ky < nblv; ky++) {
+                    for (kx = 0; kx < nblh; kx++) {
+                        index = (kx + Lx)+ (ky + Ly) * nblh;
+                        foo[ky][kx] = resr[index];
+                        Y[indexW++][n-1] = foo[ky][kx];
                     }
                 }
-            } // for (j = -Ly; j <= Ly; j++)
-        } // for (i = -Lx; i <= Lx; i++)
+            } // for (nx = -Lx; nx <= Lx; nx++)
+        } // for (ny = -Ly; ny <= Ly; ny++)
         
         if (prnt) { // parent
             n = n +1;
-            foo = new double[nblx][nbly];
-            for (ky = 0, indexW = 0; ky < nbly; ky++) {
-                for (kx = 0; kx < nblx; kx++) {
-                    foo[kx][ky] = y[kx+Lx][ky+Ly][1];
-                    Y[indexW++][n-1] = foo[kx][ky];
+            foo = new double[nblv][nblh];
+            for (ky = 0, indexW = 0; ky < nblv; ky++) {
+                for (kx = 0; kx < nblh; kx++) {
+                    foo[ky][kx] = y[ky+Ly][kx+Lx][1];
+                    Y[indexW++][n-1] = foo[ky][kx];
                 }
             }
         } // if (prnt)
@@ -2962,7 +2963,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         C_y = innerProd(Y);
         for (j = 0; j < N; j++) {
             for (i = 0; i < N; i++) {
-                C_y[i][j] = C_y[i][j]/nexp;
+                C_y[j][i] = C_y[j][i]/nexp;
             }
         }
         // sy2 = observed (signal + noise) variance in the subband
@@ -2981,7 +2982,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         // C_x = C_y - C_w as signal and noise are assumed to be independent
         for (j = 0; j < N; j++) {
             for (i = 0; i < N; i++) {
-                C_x[i][j] = C_y[i][j] - C_w[i][j];
+                C_x[j][i] = C_y[j][i] - C_w[j][i];
             }
         }
         eig = new EigenvalueDecomposition(new Matrix(C_x));
@@ -3149,59 +3150,59 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         aux = null;
         
         // For boundary handling
-        uv = 1 + Lx;
-        lh = 1 + Ly;
-        dv = nblx + Lx;
-        rh = nbly + Ly;
+        uv = 1 + Ly;
+        lh = 1 + Lx;
+        dv = nblv + Ly;
+        rh = nblh + Lx;
         
-        for (j = lh-1, index = 0; j < rh; j++) {
-            for (i = uv-1; i < dv; i++) {
-                zM[i][j] = z[index++];
+        for (j = uv-1, index = 0; j < dv; j++) {
+            for (i = lh-1; i < rh; i++) {
+                zM[j][i] = z[index++];
             }
         }
         
         // Propagation of the ML-estimated z to the boundaries
         
         // a) Corners
-        for (j = 0; j < lh; j++) {
-            for (i = 0; i < uv; i++) {
-                zM[i][j] = zM[uv-1][lh-1];
+        for (j = 0; j < uv; j++) {
+            for (i = 0; i < lh; i++) {
+                zM[j][i] = zM[uv-1][lh-1];
             }
         }
-        for (j = rh-1; j < ny; j++) {
-            for (i = 0; i < uv; i++) {
-                zM[i][j] = zM[uv-1][rh-1];
+        for (j = 0; j < uv-1; j++) {
+            for (i = rh-1; i < nh; i++) {
+                zM[j][i] = zM[uv-1][rh-1];
             }
         }
-        for (j = 0; j < lh; j++) {
-            for (i = dv-1; i < nx; i++) {
-                zM[i][j] = zM[dv-1][lh-1];
+        for (j = dv-1; j < nv; j++) {
+            for (i = 0; i < lh; i++) {
+                zM[j][i] = zM[dv-1][lh-1];
             }
         }
-        for (j = rh-1; j < ny; j++) {
-            for (i = dv-1; i < nx; i++) {
-                zM[i][j] = zM[dv-1][rh-1];
+        for (j = dv-1; j < nv; j++) {
+            for (i = rh-1; i < nh; i++) {
+                zM[j][i] = zM[dv-1][rh-1];
             }
         }
         // b) Bands
-        for (j = lh; j < rh-1; j++) {
-            for (i = 0; i < uv-1; i++) {
-                zM[i][j] = zM[uv-1][j];
+        for (j = 0; j < uv-1; j++) {
+            for (i = lh; i < rh-1; i++) {
+                zM[j][i] = zM[uv-1][i];
             }
         }
-        for (j = lh; j < rh-1; j++) {
-            for (i = dv; i < nx; i++) {
-                zM[i][j] = zM[dv-1][j];
+        for (j = dv; j < nv; j++) {
+            for (i = lh; i < rh-1; i++) {
+                zM[j][i] = zM[dv-1][i];
             }
         }
-        for (j = 0; j < lh-1; j++) {
-            for (i = uv; i < dv-1; i++) {
-                zM[i][j] = zM[i][lh-1];
+        for (j = uv; j < dv-1; j++) {
+            for (i = 0; i < lh-1; i++) {
+                zM[j][i] = zM[j][lh-1];
             }
         }
-        for (j = rh; j < ny; j++) {
-            for (i = uv; i < dv-1; i++) {
-                zM[i][j] = zM[i][rh-1];
+        for (j = uv; j < dv-1; j++) {
+            for (i = rh; i < nh; i++) {
+                zM[j][i] = zM[j][rh-1];
             }
         }
         
@@ -3211,9 +3212,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         }
         else {
             // Spatially invariant noise
-            for (j = 0; j < ny; j++) {
-                for(i = 0; i < nx; i++) {
-                    x_hat[i][j][0] = y[i][j][0]*sx2*zM[i][j]/(sx2*zM[i][j] + sig2);  
+            for (j = 0; j < nv; j++) {
+                for(i = 0; i < nh; i++) {
+                    x_hat[j][i][0] = y[j][i][0]*sx2*zM[j][i]/(sx2*zM[j][i] + sig2);  
                 }
             }
         } // else
@@ -3354,9 +3355,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
         }
         
-        for (j = Ly, j2 = 0; j < nbly + Ly; j++, j2++) {
-           for (i = Lx, i2 = 0; i < nblx + Lx; i++, i2++) {
-               x_hat[i][j][0] = aux[i2][j2];
+        for (j = Ly, j2 = 0; j < nblv + Ly; j++, j2++) {
+           for (i = Lx, i2 = 0; i < nblh + Lx; i++, i2++) {
+               x_hat[j][i][0] = aux[j2][i2];
            }
         }
         return x_hat;
@@ -3368,17 +3369,17 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * @return
      */
     private double[][] innerProd(double mat[][]) {
-        int xdim = mat.length;
-        int ydim = mat[0].length;
-        double res[][] = new double[ydim][ydim];
+        int ydim = mat.length;
+        int xdim = mat[0].length;
+        double res[][] = new double[xdim][xdim];
         int i,j;
         double tmp;
         int k;
         
-        for (i = 0; i < ydim; i++) {
-            for (j = i; j < ydim; j++) {
+        for (i = 0; i < xdim; i++) {
+            for (j = i; j < xdim; j++) {
                 tmp = 0.0;
-                for (k = 0; k < xdim; k++) {
+                for (k = 0; k < ydim; k++) {
                     tmp += mat[i][k] * mat[k][j];
                 }
                 res[i][j] = tmp;
@@ -3707,33 +3708,33 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         }
         ctrx = (int)Math.ceil((imx + 0.5)/2);
         ctry = (int)Math.ceil((imy + 0.5)/2);
-        xramp = new double[imx][imy];
-        yramp = new double[imx][imy];
-        for (j = 0; j < imy; j++) {
-            value = 2.0*((j+1) - ctry)/imy;
-            for (i = 0; i < imx; i++) {
-                xramp[i][j] = value;
-            }
-        }
+        xramp = new double[imy][imx];
+        yramp = new double[imy][imx];
         for (i = 0; i < imx; i++) {
-            value = 2.0*((i + 1) - ctrx)/imx;
+            value = 2.0*((i+1) - ctrx)/imx;
             for (j = 0; j < imy; j++) {
-                yramp[i][j] = value;
+                xramp[j][i] = value;
             }
         }
-        angle = new double[imx][imy];
-        log_rad = new double[imx][imy];
+        for (j = 0; j < imy; j++) {
+            value = 2.0*((j + 1) - ctry)/imy;
+            for (i = 0; i < imx; i++) {
+                yramp[j][i] = value;
+            }
+        }
+        angle = new double[imy][imx];
+        log_rad = new double[imy][imx];
         for (j = 0; j < imy; j++) {
             for (i = 0; i < imx; i++) {
-                angle[i][j] = Math.atan2(yramp[i][j], xramp[i][j]);
-                log_rad[i][j] = Math.sqrt(xramp[i][j]*xramp[i][j] + yramp[i][j]*yramp[i][j]);
+                angle[j][i] = Math.atan2(yramp[j][i], xramp[j][i]);
+                log_rad[j][i] = Math.sqrt(xramp[j][i]*xramp[j][i] + yramp[j][i]*yramp[j][i]);
             }
         }
-        log_rad[ctrx-1][ctry-1] = log_rad[ctrx-1][ctry-2];
+        log_rad[ctry-1][ctrx-1] = log_rad[ctry-1][ctrx-2];
         // log2(log_rad) = loge(rad)/loge(2)
         for (j = 0; j < imy; j++) {
             for (i = 0; i < imx; i++) {
-                log_rad[i][j] = logC*Math.log(log_rad[i][j]);
+                log_rad[j][i] = logC*Math.log(log_rad[j][i]);
             }
         }
         
@@ -3770,8 +3771,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         for (j = 0; j < imy; j++) {
             for (i = 0; i < imx; i++) {
                 index = i + j*imx;
-                lo0dftr[index] = imdftr[index] * lo0mask[imx][imy];
-                lo0dfti[index] = imdfti[index] * lo0mask[imx][imy];
+                lo0dftr[index] = imdftr[index] * lo0mask[j][i];
+                lo0dfti[index] = imdfti[index] * lo0mask[j][i];
             }
         }
         
@@ -3803,33 +3804,33 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         for (b = 1; b <= nbands; b++) {
             anglemask = pointOp(angle, ycosn, (xcosn[0] + Math.PI*(b-1)/nbands),
                                 (xcosn[1] - xcosn[0]), true);  
-            maskr = new double[imx][imy];
-            maski = new double[imx][imy];
+            maskr = new double[imy][imx];
+            maski = new double[imy][imx];
             if (((nbands-1) % 4) == 0) {
                 for (j = 0; j < imy; j++) {
                     for (i = 0; i < imx; i++) {
-                        maskr[i][j] = anglemask[i][j]*hi0mask[i][j];
+                        maskr[j][i] = anglemask[j][i]*hi0mask[j][i];
                     }
                 }
             } // if (((nbands-1) % 4) == 0)
             else if (((nbands-1) %4) == 1) {
                 for (j = 0; j < imy; j++) {
                     for (i = 0; i < imx; i++) {
-                        maski[i][j] = -anglemask[i][j]*hi0mask[i][j];
+                        maski[j][i] = -anglemask[j][i]*hi0mask[j][i];
                     }
                 }    
             } // else if (((nbands-1) %4) == 1)
             else if (((nbands-1) %4) == 2) {
                 for (j = 0; j < imy; j++) {
                     for (i = 0; i < imx; i++) {
-                        maskr[i][j] = -anglemask[i][j]*hi0mask[i][j];
+                        maskr[j][i] = -anglemask[j][i]*hi0mask[j][i];
                     }
                 }    
             } // else if (((nbands-1) %4) == 2)
             else if (((nbands-1) %4) == 3) {
                 for (j = 0; j < imy; j++) {
                     for (i = 0; i < imx; i++) {
-                        maski[i][j] = anglemask[i][j]*hi0mask[i][j];
+                        maski[j][i] = anglemask[j][i]*hi0mask[j][i];
                     }
                 }    
             } // else if (((nbands-1) %4) == 3)
@@ -3838,10 +3839,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             // It distributes evenly these contents among the nbands orientations
             var = 1.0/Math.sqrt(nbands);
             for (j = 0; j < imy; j++) {
-                maskr[0][j] = var;
+                maskr[j][0] = var;
             }
             for (i = 1; i < imx; i++) {
-                maskr[i][0] = var;
+                maskr[0][i] = var;
             }
             
             if (bandfftr == null) {
@@ -3853,8 +3854,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             for (j = 0; j < imy; j++) {
                 for (i = 0; i < imx; i++) {
                     index = i + j * imx;
-                    bandfftr[index] = imdftr[index] * maskr[i][j] - imdfti[index] * maski[i][j];
-                    bandffti[index] = imdftr[index] * maski[i][j] + imdfti[index] * maskr[i][j];
+                    bandfftr[index] = imdftr[index] * maskr[j][i] - imdfti[index] * maski[j][i];
+                    bandffti[index] = imdftr[index] * maski[j][i] + imdfti[index] * maskr[j][i];
                 }
             }
             center(bandfftr, bandffti, imx, imy);
@@ -4626,6 +4627,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double eigenvalue[];
         int qtl;
         int index;
+        double c[];
+        double sum;
+        double var;
         
         if ((N % 2) == 1) {
             MipavUtil.displayError("No Daubechies filter exists for odd length");
@@ -4737,8 +4741,354 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
             }
         } // if (type == MID_PHASE)
+        // Form a polynomial from the roots in qt
+        // The poynomial coefficients are ordered in descending powers
+        // The first coefficient for the highest power is 1.
+        c = new double[qt.length+1];
+        c[0] = 1.0;
+        for (j = 0; j <= qt.length-1; j++) {
+            for (i = 0; i <= j; i++) {
+                c[i+1] = c[i+1] - qt[j]*c[i];
+            }
+        }
+        h_0 = conv(h_0, c);
+        // Normalize to sqrt(2)
+        sum = 0.0;
+        for (i = 0; i < h_0.length; i++) {
+            sum += h_0[i];
+        }
+        var = Math.sqrt(2.0)/sum;
+        for (i = 0; i < h_0.length; i++) {
+            h_0[i] *= var;
+        }
+        if (type == MAXIMUM_PHASE) {
+            temp = new double[h_0.length];
+            for (i = 0; i < h_0.length; i++) {
+                temp[i] = h_0[h_0.length-1-i];
+            }
+            for (i = 0; i < h_0.length; i++) {
+                h_0[i] = temp[i];
+            }
+        } // if (type == MAXIMUM_PHASE)
+        sum = 0.0;
+        for (i = 0; i < h_0.length; i++) {
+            sum += h_0[i]*h_0[i];
+        }
+        if ((sum - 1.0) > 1.0e-4) {
+            MipavUtil.displayError("Daubcqf numerically unstable for this value of N");
+            error = 1;
+            return null;
+        }
+        h_1 = new double[h_0.length];
+        for (i = 0; i < h_0.length; i++) {
+            h_1[i] = h_0[h_0.length-1-i];
+        }
+        for (i = 0; i <= N-1; i++) {
+            h_1[i] = -h_1[i];
+        }
+        h = new double[h_0.length + h_1.length];
+        for (i = 0,index = 0; i < h_0.length; i++) {
+            h[index++] = h_0[i];
+        }
+        for (i = 0; i < h_1.length; i++) {
+            h[index++] = h_1[i];
+        }
         return h;
         
+    }
+    
+    /**
+     * This is a port of mrdwt.c
+     * File Name: mrdwt.c
+        Last Modification Date: %G% %U%
+        Current Version: %M%    %I%
+        File Creation Date: Wed Oct 12 08:44:43 1994
+        Author: Markus Lang  <lang@jazz.rice.edu>
+        
+        Copyright: All software, documentation, and related files in this distribution
+                   are Copyright (c) 1994  Rice University
+        
+        Permission is granted for use and non-profit distribution providing that this
+        notice be clearly maintained. The right to distribute any portion for profit
+        or as part of any commercial product is specifically reserved for the author.
+        
+        Change History: Fixed code such that the result has the same dimension as the 
+                        input for 1D problems. Also, added some standard error checking.
+                Jan Erik Odegard <odegard@ece.rice.edu> Wed Jun 14 1995
+
+     * @param im
+     * @param n  columns of im, the x dimension of im
+     * @param m  rows of im, the y dimension of im
+     * @param h
+     * @param hcol
+     * @param hrow
+     * @param L
+     * @param yl
+     * @param yh
+     */
+    private void mrdwt(double im[], int n, int m, double h[], int hcol, int hrow,
+                       int L, double yl[][], double yh[][]) {
+        int lh;
+        int denom;
+        int i;
+        if (hcol > hrow) {
+            lh = hcol;
+        }
+        else {
+            lh= hrow;
+        }
+        if (L < 0) {
+            MipavUtil.displayError("The number of levels, L, must be a nonnegative integer");
+            error = 1;
+            return;
+        }
+        /* Check the row dimension of the input */
+        if (m > 1) {
+            denom = 1;
+            for (i = 0; i < L; i++) {
+                denom *= 2;
+            }
+            if ((m % denom) != 0) {
+                MipavUtil.displayError("mrdwt must have m a multiple of 2^L");
+                error = 1;
+                return;
+            }
+        } // if (m > 1)
+        /* Check the column dimension of the input */
+        if (n > 1) {
+            denom = 1;
+            for (i = 0; i < L; i++) {
+                denom *= 2;
+            }
+            if ((n % denom) != 0) {
+                MipavUtil.displayError("mrdwt must have n a multiple of 2^L");
+                error = 1;
+                return;
+            }
+        } // if (n > 1)
+        yl = new double[m][n];
+        if (Math. min(m,n) == 1) {
+            yh = new double[m][L*n];
+        }
+        else {
+            yh = new double[m][3*L*n];
+        }
+        MRDWT(im, m, n, h, lh, L, yl, yh);
+    }
+    
+    /**
+     * This is a port of MRDWT.c
+     * File Name: MRDWT.c
+Last Modification Date: 09/21/95    15:42:59
+Current Version: MRDWT.c    2.4
+File Creation Date: Wed Oct 12 08:44:43 1994
+Author: Markus Lang  <lang@jazz.rice.edu>
+
+Copyright (c) 2000 RICE UNIVERSITY. All rights reserved.
+Created by Markus Lang, Department of ECE, Rice University. 
+
+This software is distributed and licensed to you on a non-exclusive 
+basis, free-of-charge. Redistribution and use in source and binary forms, 
+with or without modification, are permitted provided that the following 
+conditions are met:
+
+1. Redistribution of source code must retain the above copyright notice, 
+   this list of conditions and the following disclaimer.
+2. Redistribution in binary form must reproduce the above copyright notice, 
+   this list of conditions and the following disclaimer in the 
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software 
+   must display the following acknowledgment: This product includes 
+   software developed by Rice University, Houston, Texas and its contributors.
+4. Neither the name of the University nor the names of its contributors 
+   may be used to endorse or promote products derived from this software 
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY WILLIAM MARSH RICE UNIVERSITY, HOUSTON, TEXAS, 
+AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, 
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL RICE UNIVERSITY 
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+OR BUSINESS INTERRUPTIONS) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+OTHERWISE), PRODUCT LIABILITY, OR OTHERWISE ARISING IN ANY WAY OUT OF THE 
+USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+For information on commercial licenses, contact Rice University's Office of 
+Technology Transfer at techtran@rice.edu or (713) 348-6173
+
+Change History: Fixed the code such that 1D vectors passed to it can be in
+                either passed as a row or column vector. Also took care of 
+        the code such that it will compile with both under standard
+        C compilers as well as for ANSI C compilers
+        Jan Erik Odegard <odegard@ece.rice.edu> Wed Jun 14 1995
+
+MATLAB description:
+%[yl,yh] = mrdwt(im,h,L);
+% 
+% function computes the redundant discrete wavelet transform y for a 1D or
+% 2D input signal . redundant means here that the subsampling after each
+% stage is omitted. yl contains the lowpass and yl the highpass
+% components. In case of a 2D signal the ordering in yh is [lh hl hh lh hl
+% ... ] (first letter refers to row, second to column filtering). 
+%
+%    Input:
+%   im    : finite length 1D or 2D signal (implicitely periodized)
+%       h    : scaling filter
+%       L    : number of levels. in case of a 1D signal length(im) must be
+%              divisible by 2^L; in case of a 2D signal the row and the
+%              column dimension must be divisible by 2^L.
+%   
+%    Output:
+%       yl   : lowpass component
+%       yh   : highpass components
+%
+% see also: mdwt, midwt, mirdwt
+
+     * @param im
+     * @param m
+     * @param n
+     * @param h
+     * @param lh
+     * @param L
+     * @param yl
+     * @param yh
+     */
+    private void MRDWT(double im[], int m, int n, double h[], int lh,
+                       int L, double yl[][], double yh[][]) {
+        int i;
+        int j;
+        double h0[] = new double[lh];
+        double h1[] = new double[lh];
+        double xdummyl[] = new double[Math.max(m,n)+lh-1];
+        double xdummyh[] = new double[Math.max(m,n)+lh-1];
+        double ydummyll[] = new double[Math.max(m,n)];
+        double ydummylh[] = new double[Math.max(m,n)];
+        double ydummyhl[] = new double[Math.max(m,n)];
+        double ydummyhh[] = new double[Math.max(m,n)];
+        int actual_m;
+        int actual_n;
+        int index;
+        int sample_f;
+        int actual_L;
+        int c_o_a;
+        int c_o_a_p2n;
+        int n_cb;
+        int ir;
+        int n_c;
+        int ic;
+        int n_rb;
+        int n_r;
+        
+        if (n == 1) {
+            n = m;
+            m = 1;
+        }
+        // Analysis lowpass and highpass
+        for (i = 0; i < lh; i++) {
+            h0[i] = h[lh-i-1];
+            h1[i] = h[i];
+        }
+        for (i = 0; i < lh; i += 2) {
+            h1[i] = -h1[i];
+        }
+        
+        actual_m = 2*m;
+        actual_n = 2*n;
+        for (j = 0, index = 0; j < m; j++) {
+            for (i = 0; i < n; i++) {
+                yl[j][i] = im[index++];
+            }
+        }
+        
+        // main loop
+        sample_f = 1;
+        for (actual_L = 1; actual_L <= L; actual_L++) {
+            actual_m = actual_m/2;
+            actual_n = actual_n/2;
+            /* actual (level dependent) column offset */
+            if (m == 1) {
+                c_o_a = n*(actual_L-1);
+            }
+            else {
+                c_o_a = 3*n*(actual_L-1);
+            }
+            c_o_a_p2n = c_o_a + 2*n;
+            
+            /* Go by rows */
+            n_cb = n/actual_n;  /* # of column blocks per row */
+            for (ir = 0; ir < m; ir++) { /* Loop over rows */
+                for (n_c = 0; n_c < n_cb; n_c++) {  /* Loop within one row */
+                    /* Store in dummy variable */
+                    ic = -sample_f + n_c;
+                    for (i = 0; i < actual_n; i++) {
+                        ic = ic + sample_f;
+                        xdummyl[i] = yl[ir][ic];
+                    }
+                    /* Perform filtering lowpass/highpass */
+                    fpconv(xdummyl, actual_n, h0, h1, lh, ydummyll, ydummyhh);
+                    /* Restore dummy variables in matrices */
+                    ic = -sample_f + n_c;
+                    for (i = 0; i < actual_n; i++) {
+                        ic = ic + sample_f;
+                        yl[ir][ic] = ydummyll[i];
+                        yh[ir][c_o_a+ic] = ydummyhh[i];
+                    } // for (i = 0; i < actual_n; i++)
+                } // for (n_c = 0; n_c < n_cb; n_c++)
+            } // for (ir = 0; ir < m; ir++)
+            
+            /* Go by columns in case of a 2D signal */
+            if (m > 1) {
+                n_rb = m/actual_m;  /* # of row blocks per column */
+                for (ic = 0; ic < n; ic++) {  /* Loop over column */
+                    for (n_r = 0; n_r < n_rb; n_r++) {  /* Loop within one column */
+                        /* Store in dummy variables */
+                        ir = -sample_f + n_r;
+                        for (i = 0; i < actual_m; i++) {
+                            ir = ir + sample_f;
+                            xdummyl[i] = yl[ir][ic];
+                            xdummyh[i] = yh[ir][c_o_a+ic];
+                        } // for (i = 0; i < actual_m; i++)
+                        /* Perform filtering, first LL/LH, then HL/HH */
+                        fpconv(xdummyl, actual_m, h0, h1, lh, ydummyll, ydummylh);
+                        fpconv(xdummyh, actual_m, h0, h1, lh, ydummyhl, ydummyhh);
+                        /* Restore dummy variables in matrices */
+                        ir = -sample_f + n_r;
+                        for (i = 0; i < actual_m; i++) {
+                            ir = ir + sample_f;
+                            yl[ir][ic] = ydummyll[i];
+                            yh[ir][c_o_a+ic] = ydummylh[i];
+                            yh[ir][c_o_a+n+ic] = ydummyhl[i];
+                            yh[ir][c_o_a_p2n+ic] = ydummyhh[i];
+                        } // for (i = 0; i < actual_m; i++)
+                    } // for (n_r = 0; n_r < n_rb; n_r++)
+                } // for (ic = 0; ic < n; ic++)
+            } // if (m > 1)
+            sample_f = sample_f *2;
+        } // for (actual_L = 1; actual_L <= L; actual_L++)
+        return;
+    }
+    
+    private void fpconv(double xin[], int lx, double h0[], double h1[],
+                        int lh, double xoutl[], double xouth[]) {
+        int i, j;
+        double x0, x1;
+        
+        for (i = lx; i < lx+lh-1; i++) {
+            xin[i] = xin[i-lx];
+        }
+        for (i = 0; i < lx; i++) {
+            x0 = 0;
+            x1 = 0;
+            for (j = 0; j < lh; j++) {
+                x0 = x0 + xin[j+i]*h0[lh-1-j];
+                x1 = x1 + xin[j+i]*h1[lh-1-j];
+            }
+            xoutl[i] = x0;
+            xouth[i] = x1;
+        } // for (i = 0; i < lx; i++)
     }
     
     /**
@@ -4771,6 +5121,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (error == 1) {
             return null;
         }
+        // Performs the decomposition
         return pyr;
     }
     
@@ -4853,33 +5204,33 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         }
         ctrx = (int)Math.ceil((imx + 0.5)/2);
         ctry = (int)Math.ceil((imy + 0.5)/2);
-        xramp = new double[imx][imy];
-        yramp = new double[imx][imy];
-        for (j = 0; j < imy; j++) {
-            value = 2.0*((j+1) - ctry)/imy;
-            for (i = 0; i < imx; i++) {
-                xramp[i][j] = value;
-            }
-        }
+        xramp = new double[imy][imx];
+        yramp = new double[imy][imx];
         for (i = 0; i < imx; i++) {
-            value = 2.0*((i + 1) - ctrx)/imx;
+            value = 2.0*((i+1) - ctrx)/imx;
             for (j = 0; j < imy; j++) {
-                yramp[i][j] = value;
+                xramp[j][i] = value;
             }
         }
-        angle = new double[imx][imy];
-        log_rad = new double[imx][imy];
+        for (j = 0; j < imy; j++) {
+            value = 2.0*((j + 1) - ctry)/imy;
+            for (i = 0; i < imx; i++) {
+                yramp[j][i] = value;
+            }
+        }
+        angle = new double[imy][imx];
+        log_rad = new double[imy][imx];
         for (j = 0; j < imy; j++) {
             for (i = 0; i < imx; i++) {
-                angle[i][j] = Math.atan2(yramp[i][j], xramp[i][j]);
-                log_rad[i][j] = Math.sqrt(xramp[i][j]*xramp[i][j] + yramp[i][j]*yramp[i][j]);
+                angle[j][i] = Math.atan2(yramp[j][i], xramp[j][i]);
+                log_rad[j][i] = Math.sqrt(xramp[j][i]*xramp[j][i] + yramp[j][i]*yramp[j][i]);
             }
         }
-        log_rad[ctrx-1][ctry-1] = log_rad[ctrx-1][ctry-2];
+        log_rad[ctry-1][ctrx-1] = log_rad[ctry-1][ctrx-2];
         // log2(log_rad) = loge(rad)/loge(2)
         for (j = 0; j < imy; j++) {
             for (i = 0; i < imx; i++) {
-                log_rad[i][j] = logC*Math.log(log_rad[i][j]);
+                log_rad[j][i] = logC*Math.log(log_rad[j][i]);
             }
         }
         
@@ -4916,8 +5267,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         for (j = 0; j < imy; j++) {
             for (i = 0; i < imx; i++) {
                 index = i + j*imx;
-                lo0dftr[index] = imdftr[index] * lo0mask[imx][imy];
-                lo0dfti[index] = imdfti[index] * lo0mask[imx][imy];
+                lo0dftr[index] = imdftr[index] * lo0mask[j][i];
+                lo0dfti[index] = imdfti[index] * lo0mask[j][i];
             }
         }
         
@@ -4930,8 +5281,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         for (j = 0; j < imy; j++) {
             for (i = 0; i < imx; i++) {
                 index = i + j*imx;
-                hi0dftr[index] = imdftr[index] * hi0mask[i][j];
-                hi0dfti[index] = imdfti[index] * hi0mask[i][j];
+                hi0dftr[index] = imdftr[index] * hi0mask[j][i];
+                hi0dfti[index] = imdfti[index] * hi0mask[j][i];
             }
         }
         center(hi0dftr, hi0dfti, imx, imy);
@@ -5007,8 +5358,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         Vector npyr;
         Vector nind = null;
         pind = new Vector();
-        logx = lograd.length;
-        logy = lograd[0].length;
+        logy = lograd.length;
+        logx = lograd[0].length;
         long p, q;
         int intMat[];
         if (ht <= 0) {
@@ -5034,7 +5385,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             
             for (j = 0; j < logy; j++) {
                 for (i = 0; i < logx; i++) {
-                    lograd[i][j] = lograd[i][j] + 1;
+                    lograd[j][i] = lograd[j][i] + 1;
                 }
             } // for (j = 0; j < logy; j++)
             
@@ -5063,8 +5414,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     for (j = 0; j < lody; j++) {
                         for (i = 0; i < lodx; i++) {
                             index = i + j*lodx;
-                            banddftr[index] = lodftr[index] * anglemask[i][j] * himask[i][j];
-                            banddfti[index] = lodfti[index] * anglemask[i][j] * himask[i][j];
+                            banddftr[index] = lodftr[index] * anglemask[j][i] * himask[j][i];
+                            banddfti[index] = lodfti[index] * anglemask[j][i] * himask[j][i];
                         }
                     }
                 } // if (((nbands-1) % 4) == 0)
@@ -5072,8 +5423,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     for (j = 0; j < lody; j++) {
                         for (i = 0; i < lodx; i++) {
                             index = i + j*lodx;
-                            banddfti[index] = -lodftr[index] * anglemask[i][j] * himask[i][j];
-                            banddftr[index] = lodfti[index] * anglemask[i][j] * himask[i][j];
+                            banddfti[index] = -lodftr[index] * anglemask[j][i] * himask[j][i];
+                            banddftr[index] = lodfti[index] * anglemask[j][i] * himask[j][i];
                         }
                     }    
                 } // else if (((nbands-1) % 4) == 1)
@@ -5081,8 +5432,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     for (j = 0; j < lody; j++) {
                         for (i = 0; i < lodx; i++) {
                             index = i + j*lodx;
-                            banddftr[index] = -lodftr[index] * anglemask[i][j] * himask[i][j];
-                            banddfti[index] = -lodfti[index] * anglemask[i][j] * himask[i][j];
+                            banddftr[index] = -lodftr[index] * anglemask[j][i] * himask[j][i];
+                            banddfti[index] = -lodfti[index] * anglemask[j][i] * himask[j][i];
                         }
                     }    
                 } // else if (((nbands-1) % 4) == 2)
@@ -5090,8 +5441,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     for (j = 0; j < lody; j++) {
                         for (i = 0; i < lodx; i++) {
                             index = i + j*lodx;
-                            banddfti[index] = lodftr[index] * anglemask[i][j] * himask[i][j];
-                            banddftr[index] = -lodfti[index] * anglemask[i][j] * himask[i][j];
+                            banddfti[index] = lodftr[index] * anglemask[j][i] * himask[j][i];
+                            banddftr[index] = -lodfti[index] * anglemask[j][i] * himask[j][i];
                         }
                     }    
                 } // else if (((nbands-1) % 4) == 3)
@@ -5124,18 +5475,18 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             loendx = lostartx + lodimsx - 1;
             loendy = lostarty + lodimsy - 1;
             
-            temp = new double[loendx - lostartx][loendy - lostarty];
+            temp = new double[loendy - lostarty][loendx - lostartx];
             for (j = 0; j < loendy - lostarty; j++) {
                 for (i = 0; i < loendx - lostartx; i++) {
-                    temp[i][j] = lograd[lostartx - 1 + i][lostarty - 1 + j];
+                    temp[j][i] = lograd[lostarty - 1 + j][lostartx - 1 + i];
                 }
             }
             lograd = null;
             lograd = temp;
-            temp = new double[loendx - lostartx][loendy - lostarty];
+            temp = new double[loendy - lostarty][loendx - lostartx];
             for (j = 0; j < loendy - lostarty; j++) {
                 for (i = 0; i < loendx - lostartx; i++) {
-                    temp[i][j] = angle[lostartx - 1 + i][lostarty - 1 + j];
+                    temp[j][i] = angle[lostarty - 1 + j][lostartx - 1 + i];
                 }
             }
             angle = null;
@@ -5167,8 +5518,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             for (j = 0; j < loendy - lostarty; j++) {
                 for (i = 0; i < loendx - lostartx; i++) {
                     index = i + j*(loendx-lostartx);
-                    lodftr[index] = lomask[i][j] * lodftr[index];
-                    lodfti[index] = lomask[i][j] * lodfti[index];
+                    lodftr[index] = lomask[j][i] * lodftr[index];
+                    lodfti[index] = lomask[j][i] * lodfti[index];
                 }
             }
             
@@ -5236,9 +5587,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      */
     private double[][] pointOp(double im[][], double lut[],
                                double origin, double increment, boolean warnings) {
-        int imx = im.length;
-        int imy = im[0].length;
-        double res[][] = new double[imx][imy];
+        int imy = im.length;
+        int imx = im[0].length;
+        double res[][] = new double[imy][imx];
         int lutsize = lut.length;
         int i, j;
         double pos;
@@ -5249,7 +5600,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (increment > 0) {
             for (j = 0; j < imy; j++) {
                 for (i = 0; i < imx; i++) {
-                    pos = (im[i][j] - origin) / increment;
+                    pos = (im[j][i] - origin) / increment;
                     index = (int)pos; // Floor
                     if (index < 0) {
                         index = 0;
@@ -5265,14 +5616,14 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                             r_unwarned = false;
                         }
                     } // else if (index > lutsize)
-                    res[i][j] = lut[index] + (lut[index+1] - lut[index]) * (pos - index);
+                    res[j][i] = lut[index] + (lut[index+1] - lut[index]) * (pos - index);
                 } // for (i = 0; i < imx; i++)
             } // for (j = 0; j < imy; j++)
         } // if (increment > 0)
         else {
             for (j = 0; j < imy; j++) {
                 for (i = 0; i < imx; i++) {
-                    res[i][j] = lut[0];
+                    res[j][i] = lut[0];
                 }
             }
         }
