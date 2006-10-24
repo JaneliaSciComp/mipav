@@ -96,6 +96,9 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
 
     /** DOCUMENT ME! */
     private JButton filterButton;
+    
+    /** Button to lasunch the Edit User Defined File Types Dialog */
+    private JButton editUserDefButton;
 
     /** DOCUMENT ME! */
     private JComboBox fontChooser;
@@ -344,6 +347,12 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             if (filterString != null) {
                 fileFilter = ViewImageFileFilter.getFilterIndex(filterString);
                 filterButton.setText(ViewImageFileFilter.getShortDescription(fileFilter));
+                if (filterString.startsWith("User Defined")) {
+                	editUserDefButton.setEnabled(true);
+                }
+                else {
+                	editUserDefButton.setEnabled(false);
+                }
             }
         } else if (command.equalsIgnoreCase("close")) { // close box
             dispose();
@@ -633,7 +642,10 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
                 File file = chooser.getSelectedFile();
                 srbBaseTempDirField.setText(file.getAbsolutePath());
             }
-        } else {
+        } else if (command.equals("editUserDef")) {
+        	JDialogEditUserDefinedFileTypes editUserDefDialog = new JDialogEditUserDefinedFileTypes();
+        	MipavUtil.centerInComponent(this,editUserDefDialog);
+        }else {
             // any other button on the dialog: allow user to select "apply"
             // OKButton.setEnabled(true);  // doesn't act correctly when open and then new image frame is added.
         }
@@ -967,13 +979,14 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         filterButton.addActionListener(this);
         filterButton.setActionCommand("chooseFilter");
         filterButton.setFont(MipavUtil.font12);
-
         gbc.insets = new Insets(0, 0, 0, 0);
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        //gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.gridwidth = 1;
         gbc.anchor = GridBagConstraints.WEST;
-
         gbl.setConstraints(filterButton, gbc);
         fileMiscPanel.add(filterButton);
+        
+        
 
         // preset the choices:
         try {
@@ -990,6 +1003,23 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         // fileFilterComboBox.setSelectedIndex(filter);
 
         filterButton.setText(ViewImageFileFilter.getShortDescription(fileFilter));
+        
+        
+        editUserDefButton = new JButton("Edit User Defined");
+        editUserDefButton.addActionListener(this);
+        editUserDefButton.setActionCommand("editUserDef");
+        editUserDefButton.setFont(MipavUtil.font12);
+        if (filterButton.getText().equals("User Defined")) {
+        	editUserDefButton.setEnabled(true);
+        }
+        else {
+        	editUserDefButton.setEnabled(false);
+        }
+        gbc.insets = new Insets(0, 25, 0, 0);
+        //gbc.gridwidth = GridBagConstraints.REMAINDER;
+        //gbc.anchor = GridBagConstraints.LAST_LINE_END;
+        gbl.setConstraints(editUserDefButton, gbc);
+        fileMiscPanel.add(editUserDefButton);
 
     } // end makeFileFilterOptions
 

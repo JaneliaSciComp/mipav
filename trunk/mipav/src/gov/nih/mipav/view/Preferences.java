@@ -1403,6 +1403,9 @@ public class Preferences {
 
         return mipavProps.getProperty(key);
     }
+    
+    
+   
 
     /**
      * Returns the default script directory. if null, returns the user's current working directory + "scripts"

@@ -2,6 +2,7 @@ package gov.nih.mipav.view;
 
 
 import java.io.*;
+import java.util.ArrayList;
 
 
 /**
@@ -77,6 +78,9 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** XCEDE schema file. */
     public static final int XCEDE = 20;
     
+    /** User defined */
+    public static final int UDEF = 21;
+    
     /** description strings for each filterType. */
     // note that the order must match the order of filterType definitions above!!
     private static String[] descriptions = {
@@ -97,8 +101,11 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Surface Files (*.sur; *.wrl; *.xml)", // SURFACE
         "Transfer Function Files (*.fun)", // FUNCT
         "VOI Files (*.voi)", // VOI
-        "Nonlinear Transformation Files (*.nlt)", "Dynamic", "Plugin Files",
-        "XML-based Clinical and Experimental Data Exchange Schema(*.bxh)" // XCEDE schema
+        "Nonlinear Transformation Files (*.nlt)", 
+        "Dynamic", 
+        "Plugin Files",
+        "XML-based Clinical and Experimental Data Exchange Schema(*.bxh)", // XCEDE schema
+        "User Defined"
     }; // NLT
 
     /** short description strings for each filterType. */
@@ -122,8 +129,20 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         "Transfer Function Files", // FUNCT
         "VOI Files", // VOI
         "Nonlinear Transformation Files", // NLT
-        "Dynamic", "Plugin", "XCEDE Schema"
+        "Dynamic", 
+        "Plugin", 
+        "XCEDE Schema",
+        "User Defined"
     };
+    
+    
+    /** array of user defined extensions */
+    private static String[] userDefinedExtensions;
+    
+    /** This is the user defined file extensions String*/
+    private static String udefExtsString;
+    
+    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -135,6 +154,12 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
 
     /** Filter type of this filter. */
     private int filterType;
+    
+
+    
+    
+   
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -167,6 +192,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
             }
         }
     }
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -364,6 +390,15 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         } else if (filterType == XCEDE && extension.equalsIgnoreCase("bxh")){
             return true;
         }
+        else if(filterType == UDEF) {
+        	if (userDefinedExtensions != null) {
+	        	for (int i = 0; i < userDefinedExtensions.length; i++) {
+	                if (extension.equals(userDefinedExtensions[i].split("\\.")[1])) {
+	                    return true;
+	                }
+	            }
+        	}
+        }
 
         
         return false;
@@ -461,6 +496,37 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         }
 
         return " ";
+    }
+    
+    
+    
+    
+    /** This sets the udef description becasue as the user edits the file extensions, the description changes 
+     * 
+     * @param desc Description String
+     * */
+    public static void setUdefDescription(String desc) {
+    	descriptions[21]=desc;
+    }
+    
+    
+    
+    
+    /**This sets the user defined Exts String as well as the Arraay of exts from the Preferences */
+    public static void setUserDefinedExtensions() {
+    	udefExtsString =Preferences.getProperty("userDefinedFileTypes");
+    	if (udefExtsString != null && (!(udefExtsString.trim().equals("")))) {
+    		String desc = "User Defined (" + udefExtsString + ")";
+    		setUdefDescription(desc);
+    		userDefinedExtensions = udefExtsString.split(";");
+    	}
+    	else {
+    		String desc = "User Defined";
+    		setUdefDescription(desc);
+    		userDefinedExtensions = null;
+    	}
+    	
+    	
     }
 
 }
