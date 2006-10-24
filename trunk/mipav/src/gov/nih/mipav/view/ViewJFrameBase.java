@@ -98,8 +98,8 @@ public abstract class ViewJFrameBase extends JFrame
 
     /** Red channel value of the paint color. */
     private int red;
-    
-    
+
+
     private String voiSavedFileName = null;
 
     /** The main tabbed pane in the volume view frame. */
@@ -345,7 +345,7 @@ public abstract class ViewJFrameBase extends JFrame
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.ANALYZE) && (displayMode == IMAGE_B)) {
                     analyze = true;
                 }
-                
+
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.MGH) && (displayMode == IMAGE_B)) {
                     mgh = true;
                 }
@@ -353,7 +353,7 @@ public abstract class ViewJFrameBase extends JFrame
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.NIFTI) && (displayMode == IMAGE_B)) {
                     nifti = true;
                 }
-                
+
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.NRRD) && (displayMode == IMAGE_B)) {
                     nrrd = true;
                 }
@@ -365,7 +365,7 @@ public abstract class ViewJFrameBase extends JFrame
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.GE_GENESIS) && (displayMode == IMAGE_B)) {
                     geSigna = true;
                 }
-                
+
                 if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.GE_SIGNA4X) && (displayMode == IMAGE_B)) {
                     geSigna4x = true;
                 }
@@ -2934,7 +2934,7 @@ public abstract class ViewJFrameBase extends JFrame
       saveVOIAs(true);
       return this.voiSavedFileName;
   }
-    
+
     /**
      * This method allows the user to choose how to save the VOI.
      *
@@ -2991,10 +2991,10 @@ public abstract class ViewJFrameBase extends JFrame
                 fileName = chooser.getSelectedFile().getName();
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
                 userInterface.setDefaultDirectory(directory);
-                
+
                 this.voiSavedFileName = directory + fileName;
-                
-                
+
+
             } else {
                 return;
             }
@@ -3072,8 +3072,8 @@ public abstract class ViewJFrameBase extends JFrame
                 }
 
                 FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
-                
-                
+
+
 
                 if (!doPoint) {
 
@@ -3089,7 +3089,7 @@ public abstract class ViewJFrameBase extends JFrame
             }
         } else {
             MipavUtil.displayError(" Cannot save images when viewing both images.");
-        }        
+        }
     }
 
     /**
@@ -6258,7 +6258,7 @@ public abstract class ViewJFrameBase extends JFrame
             {
                 scannerLabelVals[i].setText( labels[i] +
                                              labels[i].charAt(0) + ": " +
-                                             String.valueOf(nf.format(-tCoord[i])));
+                                             String.valueOf(nf.format(tCoord[i])));
             }
             else
             {
