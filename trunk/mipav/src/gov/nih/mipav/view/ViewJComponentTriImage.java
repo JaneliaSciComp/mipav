@@ -544,6 +544,28 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
     }
 
     /**
+     * Translate a point on the x-y tri-image component into image volume
+     * space. Assumes input parameters have zoom and voxel resolution already
+     * factored out.
+     *
+     * @param   x  x value of the point within the component
+     * @param   y  y value of the point within the component
+     * @param   z  the z coordinate ( usually == slice ) (the out-of-component dimension)
+     *
+     * @return  the point translated into the image volume
+     */
+    public final Point3D getVolumePosition(int x, int y, int z) {
+        Point3Df volumePt = new Point3Df();
+        MipavCoordinateSystems.PatientToFile( new Point3Df( x, y, z ),
+                                              volumePt, imageActive, orientation );
+        Point3D returnPt = new Point3D( (int)volumePt.x,
+                                        (int)volumePt.y,
+                                        (int)volumePt.z );
+        return returnPt;
+    }
+
+
+    /**
      * Sets the crop volume.
      * @param lower the lower corner of the crop volume in File Coordinates
      * @param upper the upper corner of the crop volume in File Coordinates
@@ -897,7 +919,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 triImageFrame.setCenter( (int)volumeMousePoint.x, (int)volumeMousePoint.y, (int)volumeMousePoint.z);
 
                 frame.updateImages();
-
                 return;
             }
         }

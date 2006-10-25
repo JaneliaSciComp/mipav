@@ -1712,36 +1712,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
      *
      * @throws  IOException  DOCUMENT ME!
      */
-    public final void exportSliceXY(int slice, Number[] values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
-
-        exportData(slice * length, length, values);
-    }
-
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export XY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final void exportSliceXY(int slice, BitSet values) throws IOException {
-        int length = dimExtents[0] * dimExtents[1];
-
-        exportData(slice * length, length, values);
-    }
-
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export XY slice into values array.
-     *
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
     public final void exportSliceXY(int slice, byte[] values) throws IOException {
         int length = dimExtents[0] * dimExtents[1];
 
@@ -6701,7 +6671,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     /**
      * Exports data based on the mapping from ModelImage space to Patient
-     * space. 
+     * space.
      * @param orientation -- the Patient Orientation of the slice to export
      * @param tSlice -- for 4D volumes
      * @param slice -- the constant slice
@@ -6803,7 +6773,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                                 fReturn = new float[ jBound * iBound * 4];
                             }
                             kMaskColor = ((Color4f) m_kColorVector.elementAt(iMask));
-                            
+
                             Color4f[] kMaskColors = (Color4f[]) m_kMaskColorVector.elementAt(iMask);
                             if ( kMaskColors[index] != null )
                             {
@@ -6993,7 +6963,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 y = y + ySlopeX;
                 z = z + zSlopeX;
             }
-            
+
             /* Outer loop: Move to the next diagonal point along the
              * y-direction of the plane, using the xSlopeY, ySlopeY and
              * zSlopeY values: */

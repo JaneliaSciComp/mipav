@@ -902,7 +902,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         dataViewGroup.add( radiologicalView );
         dataViewGroup.add( neurologicalView );
 
-   
+
         JPanel viewPanel = new JPanel(new GridBagLayout());
         gbc2 = new GridBagConstraints();
         gbc2.anchor = GridBagConstraints.CENTER;
@@ -1171,7 +1171,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 }
 
                 m_akPlaneRender = new PlaneRender[3];
-                /* MipavCoordinateSystems upgrade: TODO: refactor AXIAL, SAGITTAL, CORONAL defs. */
                 m_akPlaneRender[0] = new PlaneRender(this,
                                                      imageA, LUTa,
                                                      imageB, LUTb,
@@ -2386,8 +2385,8 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  kScaledPosition  Ruida please add comment
      */
     public void setPathPosition(Point3f kPosition, Point3f kScaledPosition) {
-        Point3Df kCenter = new Point3Df( kPosition.x * imageA.getExtents()[0], 
-                                         kPosition.y * imageA.getExtents()[1], 
+        Point3Df kCenter = new Point3Df( kPosition.x * imageA.getExtents()[0],
+                                         kPosition.y * imageA.getExtents()[1],
                                          kPosition.z * imageA.getExtents()[2] );
         for (int iPlane = 0; iPlane < 3; iPlane++) {
             m_akPlaneRender[iPlane].setCenter( kCenter );
@@ -2554,12 +2553,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         }
     }
 
-    /* MipavCoordinateSystems upgrade: TODO: */
     /**
      * Sets the color for the PlaneRender iView (AXIAL, SAGITTAL, CORONAL) slice.
      *
      * @param iView (AXIAL, SAGITTAL, CORONAL)
-     * @param  color  the z axis color attribute.
+     * @param  color  the new axis color attribute.
      */
     public void setSliceHairColor( int iView, Color color ) {
         for (int iPlane = 0; iPlane < 3; iPlane++) {
