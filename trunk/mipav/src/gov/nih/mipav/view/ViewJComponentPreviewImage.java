@@ -31,17 +31,8 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
                             // scaled red, green, and blue
 
     /** DOCUMENT ME! */
-    private int bufferSize;
-
-    /** DOCUMENT ME! */
     private float contrast; // scale factor ranging from 0.1 to 10.0
                             // by which to multiply each red, green, and blue
-
-    /** DOCUMENT ME! */
-    private ModelImage image;
-
-    /** DOCUMENT ME! */
-    private float[] imageBuffer;
 
     /** DOCUMENT ME! */
     private int imageSize;
@@ -67,6 +58,11 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     /** DOCUMENT ME! */
     private PreviewImageContainer parent;
 
+    /** PatientSlice contains all the Patient Coordinate system view-specific
+     * data for rendering this component: */
+    private PatientSlice m_kPatientSlice;
+
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -79,109 +75,35 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
      */
     public ViewJComponentPreviewImage(ModelImage _image, int[] extents, PreviewImageContainer _parent) {
         super( extents[0], extents[1], _image);
-        image = _image;
         imageSize = extents[0] * extents[1];
 
-        if (image.isColorImage()) {
-            bufferSize = imageSize * 4;
-        } else {
-            bufferSize = imageSize;
-        }
-
-        imageBuffer = new float[bufferSize];
         paintBuffer = new int[imageSize];
         parent = _parent;
+
+        /* create the slice renderer for this orientation: */
+        m_kPatientSlice = new PatientSlice( _image, null, null, null,
+                                            FileInfoBase.UNKNOWN_ORIENT );
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Creates the Java image to be displayed from the model image. Makes it from the appropriate slice.
+     * Creates the Java image to be displayed from the model image. Makes it
+     * from the appropriate slice.
      *
      * @param   slice  Slice of image to create java image from.
      *
      * @return  Flag indicating success or failure.
      */
     public boolean createImg(int slice) {
-        float redMapped, greenMapped, blueMapped;
-
-        if (image.isColorImage()) {
-
-            try {
-                image.exportData(slice * bufferSize, bufferSize, imageBuffer);
-            } catch (IOException error) {
-                MipavUtil.displayError("" + error);
-
-                return false;
-            }
-
-            for (int index = 0, j = 0; j < imageSize; index += 4, j++) {
-                redMapped = imageBuffer[index + 1];
-                greenMapped = imageBuffer[index + 2];
-                blueMapped = imageBuffer[index + 3];
-                paintBuffer[j] = 0xff000000 |
-                                     (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
-            }
-
-        } else {
-            int[] extentsLUT = new int[] { 4, 256 };
-            ModelLUT LUT = new ModelLUT(ModelLUT.GRAY, 256, extentsLUT);
-            int[] lutBuffer = new int[256];
-
-            float min, max;
-
-            if (image.getType() == ModelStorageBase.UBYTE) {
-                min = 0;
-                max = 255;
-            } else if (image.getType() == ModelStorageBase.BYTE) {
-                min = -128;
-                max = 127;
-            } else {
-                min = (float) image.getMin();
-                max = (float) image.getMax();
-            }
-
-            float imgMin = (float) image.getMin();
-            float imgMax = (float) image.getMax();
-            LUT.resetTransferLine(min, imgMin, max, imgMax);
-
-            LUT.exportIndexedLUT(lutBuffer);
-
-            float remapConst = 255f / (max - min);
-
-            try {
-
-                if (image.getType() == ModelStorageBase.COMPLEX) {
-                    image.exportComplexSliceXY(slice, imageBuffer, image.getLogMagDisplay());
-                } else {
-                    image.exportSliceXY(slice, imageBuffer);
-                }
-            } catch (IOException error) {
-                MipavUtil.displayError("" + error); // Need to fix this
-
-                return false;
-            }
-
-            int pix = 0;
-            TransferFunction tf_img = LUT.getTransferFunction();
-
-            for (int index = 0; index < bufferSize; index++) {
-                pix = (int) (tf_img.getRemappedValue(imageBuffer[index], 256) + 0.5f);
-
-                try {
-                    paintBuffer[index] = lutBuffer[pix];
-                } catch (ArrayIndexOutOfBoundsException e) {
-
-                    Preferences.debug("error = " + e + "\n");
-                    Preferences.debug("index = " + index + " pix = " + pix + "\n");
-                }
-            }
+        m_kPatientSlice.updateSlice( slice );
+        if ( m_kPatientSlice.showUsingOrientation( 0, paintBuffer,
+                                                   null, true,
+                                                   false, 0, false ) )
+        {
+            importImage(paintBuffer);
         }
-
-        importImage(paintBuffer);
-
         return true;
-
     }
 
 
@@ -193,12 +115,6 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     public void dispose(boolean gc) {
         this.disposeLocal();
 
-        if (image != null) {
-            image.disposeLocal();
-            image = null;
-        }
-
-        imageBuffer = null;
         paintBuffer = null;
         memImage = null;
 
@@ -237,16 +153,19 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     }
 
     /**
-     * Creates a Image object form an array of ints that have been formatted (packed) properly (i.e. aRGB)
+     * Creates a Image object form an array of ints that have been formatted
+     * (packed) properly (i.e. aRGB)
      *
-     * @param  data        Data (image) to be displayed that has been formatted (packed) properly (i.e. aRGB)
+     * @param data Data (image) to be displayed that has been formatted
+     * (packed) properly (i.e. aRGB)
      * @param  haveFilter  DOCUMENT ME!
      */
 
     public void importImage(int[] data, boolean haveFilter) {
 
-        // If the MemoryImageSource and createImage steps are separated, then animate displays only
-        // the last image.  createImage must be executed right after MemoryImageSource
+        // If the MemoryImageSource and createImage steps are separated, then
+        // animate displays only the last image.  createImage must be executed
+        // right after MemoryImageSource
         if (data != null) {
             memImage = null;
 
