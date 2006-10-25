@@ -2134,15 +2134,380 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     }
     
     /**
-     * 
-     * @param pyr
-     * @param pind
-     * @param daubOrder
+     * This is a port of reconWpyr.m by JPM, Univ. de Granada, 3/2003
+     * Reconstruct image from its separable undecimated orthonormal QMF/wavelet
+     * pyramid representation, as created by buildWUpyr
+     * @param pyr A vector cotaining the N pyramid subbands, ordered from fine
+     *            to coarse.
+     * @param pind  Contains the N 2 element int[] arrays with the sizes
+     *              of each subband
+     * @param daubOrder Specifies the order of the daubechies wavelet filter used
      * @return
      */
     private double[] reconWUpyr(Vector pyr, Vector pind, int daubOrder) {
         double res[] = null;
+        double h[];
+        double yh[] = null;
+        int nband;
+        int last;
+        int nsc;
+        int nor;
+        int first;
+        double band[];
+        int sh;
+        double lpr[] = null;
+        int intMat[];
+        int bandx[] = null;
+        int bandy[] = null;
+        int i, j;
+        int twoPow;
+        double bandi[] = null;
+        int offset[] = new int[1];
+        double temp[];
+        int yhx = 0;
+        int yhy = 0;
+        int lprx;
+        int lpry;
+        
+        nOrientations = 2;
+        nScales = (pind.size() - 2)/nOrientations - 1;
+        h = daubcqf(daubOrder,0);
+        
+        nband = 1;
+        // Empty "high pass residual band" for compatibility with full steerpyr 2
+        intMat = (int[])pind.get(0);
+        last = intMat[0]*intMat[1];
+        // The number of scales corresponds to the number of pyramid levels
+        // (also for compatibility)
+        for (nsc = 1; nsc <= nScales+1; nsc++) {
+            for (nor = 1; nor <= nOrientations; nor++) {
+                nband = nband + 1;
+                first = last + 1;
+                intMat = (int[])pind.get(nband-1);
+                last = first + intMat[0]*intMat[1] - 1;
+                band = pyrBand(pyr, pind, nband-1, bandx, bandy);
+                // Approximate phase compensation
+                twoPow = 1;
+                for (i = 0; i < nsc; i++) {
+                    twoPow *= 2;
+                }
+                sh = (daubOrder/2 - 1)*twoPow;
+                if (nsc > 2) {
+                    twoPow = 1;
+                    for (i = 0; i < nsc-2; i++) {
+                        twoPow *= 2;
+                    }
+                    expand(band, twoPow, bandx[0], bandy[0], band, bandi);
+                    bandx[0] = (int)Math.round(twoPow*bandx[0]);
+                    bandy[0] = (int)Math.round(twoPow*bandy[0]);
+                } // if (nsc > 2)
+                if (nor == 1) { // horizontal
+                    twoPow = 1;
+                    for (i = 0; i < nsc-1; i++) {
+                        twoPow *= -2;
+                    }
+                    offset[0] = twoPow;
+                    offset[1] = -sh;
+                    shiftReal(band, bandx[0], bandy[0], offset, band);
+                } // if (nor = 1)
+                else if (nor == 2) { // vertical
+                    twoPow = 1;
+                    for (i = 0; i < nsc-1; i++) {
+                        twoPow *= -2;
+                    }
+                    offset[0] = -sh;
+                    offset[1] = twoPow;
+                    shiftReal(band, bandx[0], bandy[0], offset, band);    
+                } // else if (nor == 2)
+                else { // diagonal
+                    offset[0] = -sh;
+                    offset[1] = -sh;
+                    shiftReal(band, bandx[0], bandy[0], offset, band);
+                } // else 
+                if (yh == null) {
+                    yh = band;
+                    yhy = bandy[0];
+                    yhx = bandx[0];
+                }
+                else {
+                    // Problem with code.  For horizontal concatenation the number of rows
+                    // of yh and band is required to be the same.  But this need not be
+                    // the same here
+                    temp = new double[bandy[0]*(yhx + bandx[0])];
+                    for (j = 0; j < yhy; j++) {
+                        for (i = 0; i < yhx; i++) {
+                            temp[i + j*(yhx + bandx[0])] = yh[i + j*yhx];
+                        }
+                    }
+                    for (j = 0; j < bandy[0]; j++) {
+                        for (i = 0; i < bandx[0]; i++) {
+                            temp[i + yhx + j*(yhx + bandx[0])] = band[i + j*bandx[0]];
+                        }
+                    }
+                    yhy = bandy[0];
+                    yhx = yhx + bandx[0];
+                }
+            } // for (nor = 1; nor <= nOrientations; nor++)
+        } // for (nsc = 1; nsc <= nScales+1; nsc++)
+        
+        nband = nband + 1;
+        band = pyrBand(pyr, pind, nband-1, bandx, bandy);
+        twoPow = 1;
+        for (i = 0; i < nScales; i++) {
+            twoPow *= 2;
+        }
+        expand(band, twoPow, bandx[0], bandy[0], lpr, bandi);
+        lprx = (int)Math.round(twoPow*bandx[0]);
+        lpry = (int)Math.round(twoPow*bandy[0]);
+        res = mirdwt(lpr, lprx, lpry, yh, yhx, yhy, h,
+                     h.length, 1, nScales+1);
         return res;
+    }
+    
+    /**
+     * This is a port of mirdwt.c
+     * File Name: mirdwt.c
+    Last Modification Date: %G% %U%
+    Current Version: %M%    %I%
+    File Creation Date: Wed Oct 12 08:44:43 1994
+    Author: Markus Lang  <lang@jazz.rice.edu>
+    
+    Copyright: All software, documentation, and related files in this distribution
+               are Copyright (c) 1994  Rice University
+    
+    Permission is granted for use and non-profit distribution providing that this
+    notice be clearly maintained. The right to distribute any portion for profit
+    or as part of any commercial product is specifically reserved for the author.
+    
+    Change History: Fixed code such that the result has the same dimension as the 
+                    input for 1D problems. Also, added some standard error checking.
+            Jan Erik Odegard <odegard@ece.rice.edu> Wed Jun 14 1995
+
+     * @param yl
+     * @param n  First dimension of yl; number of columns of yl
+     * @param m  Second dimension of yl; number of rows of yl
+     * @param yh
+     * @param nh First dimension of yh; number of columns of yh
+     * @param mh Second dimension of yh; number of columns of yh
+     * @param h
+     * @param hcol
+     * @param hrow
+     * @param L
+     * @return
+     */
+    private double[] mirdwt(double yl[], int n, int m, double yh[],
+                            int nh, int mh, double h[], int hcol,
+                            int hrow, int L) {
+        double res[] = new double[n * m];
+        int lh;
+        int twoPow;
+        int i;
+        
+        if (hcol > hrow) {
+            lh = hcol;
+        }
+        else {
+            lh = hrow;
+        }
+        
+        if (L < 0) {
+            MipavUtil.displayError("The number of levels, L, must be a non-negative integer");
+            error = 1;
+            return null;
+        }
+        
+        /* Check for consistency of rows and columns of yl, yh */
+        if (Math.min(m,n) > 1) {
+            if ((m != mh) || (3*n*L != nh)) {
+                MipavUtil.displayError("Dimensions of first two input matrices not consistent");
+                error = 1;
+                return null;
+            }
+        }
+        else {
+            if ((m != mh) || (n*L != nh)) {
+                MipavUtil.displayError("Dimensions fo first two input vectors not consistent");
+                error = 1;
+                return null;
+            }
+        }
+        
+        /* Check the row dimension of input */
+        if (m > 1) {
+            twoPow = 1;
+            for (i = 0; i < L; i++) {
+                twoPow *= 2;
+            }
+            if ((m % twoPow) != 0) {
+                MipavUtil.displayError("The matrix row dimension must be a multiple of 2^L");
+                error = 1;
+                return null;
+            }
+        } // if (m > 1)
+        
+        /* Check the column dimension of input */
+        if (n > 1) {
+            twoPow = 1;
+            for (i = 0; i < L; i++) {
+                twoPow *= 2;
+            }
+            if ((n % twoPow) != 0) {
+                MipavUtil.displayError("The matrix column dimension must be a multiple of 2^L");
+                error = 1;
+                return null;
+            }    
+        } // if (n > 1)
+        MIRDWT(res, m, n, h, lh, L, yl, yh);
+        return res;
+    }
+    
+    /**
+     * This is a port of file mirdwt_r.c
+     * File Name: MIRDWT.c
+Last Modification Date: 06/14/95    16:22:45
+Current Version: MIRDWT.c   2.4
+File Creation Date: Wed Oct 12 08:44:43 1994
+Author: Markus Lang  <lang@jazz.rice.edu>
+
+Copyright (c) 2000 RICE UNIVERSITY. All rights reserved.
+Created by Markus Lang, Department of ECE, Rice University. 
+
+This software is distributed and licensed to you on a non-exclusive 
+basis, free-of-charge. Redistribution and use in source and binary forms, 
+with or without modification, are permitted provided that the following 
+conditions are met:
+
+1. Redistribution of source code must retain the above copyright notice, 
+   this list of conditions and the following disclaimer.
+2. Redistribution in binary form must reproduce the above copyright notice, 
+   this list of conditions and the following disclaimer in the 
+   documentation and/or other materials provided with the distribution.
+3. All advertising materials mentioning features or use of this software 
+   must display the following acknowledgment: This product includes 
+   software developed by Rice University, Houston, Texas and its contributors.
+4. Neither the name of the University nor the names of its contributors 
+   may be used to endorse or promote products derived from this software 
+   without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY WILLIAM MARSH RICE UNIVERSITY, HOUSTON, TEXAS, 
+AND CONTRIBUTORS AS IS AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, 
+BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
+FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL RICE UNIVERSITY 
+OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, 
+PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; 
+OR BUSINESS INTERRUPTIONS) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, 
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR 
+OTHERWISE), PRODUCT LIABILITY, OR OTHERWISE ARISING IN ANY WAY OUT OF THE 
+USE OF THIS SOFTWARE,  EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+For information on commercial licenses, contact Rice University's Office of 
+Technology Transfer at techtran@rice.edu or (713) 348-6173
+
+Change History: Fixed the code such that 1D vectors passed to it can be in
+                either passed as a row or column vector. Also took care of 
+        the code such that it will compile with both under standard
+        C compilers as well as for ANSI C compilers
+        Jan Erik Odegard <odegard@ece.rice.edu> Wed Jun 14 1995
+
+                Fix minor bug to allow maximum number of levels
+
+MATLAB description:
+%function res = mirdwt(yl,yh,h,L);
+% 
+% function computes the inverse redundant discrete wavelet transform y for a
+% 1D or  2D input signal. redundant means here that the subsampling after
+% each stage of the forward transform has been omitted. yl contains the
+% lowpass and yl the highpass components as computed, e.g., by mrdwt. In
+% case of a 2D signal the ordering in yh is [lh hl hh lh hl ... ] (first
+% letter refers to row, second to column filtering).  
+%
+%    Input:
+%       yl   : lowpass component
+%       yh   : highpass components
+%       h    : scaling filter
+%       L    : number of levels. in case of a 1D signal length(yl) must be
+%              divisible by 2^L; in case of a 2D signal the row and the
+%              column dimension must be divisible by 2^L.
+%   
+%    Output:
+%   res    : finite length 1D or 2D signal
+
+     * @param res
+     * @param m
+     * @param n
+     * @param h
+     * @param lh
+     * @param L
+     * @param yl
+     * @param yh
+     */
+    private void MIRDWT(double res[], int m, int n, double h[], int lh,
+                        int L, double yl[], double yh[]) {
+        double xh[] = new double[Math.max(m, n)];
+        double xdummyl[] = new double[Math.max(m, n)];
+        double xdummyh[] = new double[Math.max(m, n)];
+        double ydummyll[] = new double[Math.max(m, n) + lh - 1];
+        double ydummylh[] = new double[Math.max(m, n) + lh - 1];
+        double ydummyhl[] = new double[Math.max(m, n) + lh - 1];
+        double ydummyhh[] = new double[Math.max(m, n) + lh - 1];
+        double g0[] = new double[lh];
+        double g1[] = new double[lh];
+        int i, j;
+        int actual_L, actual_m, actual_n, c_o_a, ir, n_c, n_cb, n_c_o, lhm1;
+        int ic, n_r, n_rb, n_r_o, c_o_a_p2n, sample_f;
+        
+        if (n == 1) {
+            n = m;
+            m = 1;
+        } // if (n == 1)
+        /* Analysis lowpass and highpass */
+        for (i = 0; i < lh; i++) {
+            g0[i] = h[i]/2;
+            g1[i] = h[lh-i-1]/2;
+        }
+        for (i = 1; i <= lh; i+= 2) {
+            g1[i] = -g1[i];
+        }
+        
+        lhm1 = lh - 1;
+        /* 2^L */
+        sample_f = 1;
+        for (i = 1; i < L; i++) {
+            sample_f = sample_f * 2;
+        }
+        actual_m = m/sample_f;
+        actual_n = n/sample_f;
+        /* Restore yl in res */
+        for (i = 0; i < m*n; i++) {
+            res[i] = yl[i];
+        }
+        
+        /* Main loop */
+        for (actual_L = L; actual_L >= 1; actual_L--) {
+            /* Actual (level dependent) column offset */
+            if (m == 1) {
+                c_o_a = n*(actual_L-1);
+            }
+            else {
+                c_o_a = 3*n*(actual_L-1);
+            }
+            c_o_a_p2n = c_o_a + 2*n;
+            
+            /* Go by columns in case of a 2D signal */
+            if (m > 1) {
+                n_rb = m/actual_m;  /* # of row blocks per column */
+                for (ic = 0; ic < n; ic++) { /* Loop over column */
+                    for (n_r = 0; n_r < n_rb; n_r++) { /* Loop within one column */
+                        /* Store in dummy variables */
+                        ir = -sample_f + n_r;
+                        for (i = 0; i < actual_m; i++) {
+                            ir = ir + sample_f;
+                        } // for (i = 0; i < actual_m; i++)
+                    } // for (n_r = 0; n_r < n_rb; n_r++)
+                } // for (ic = 0; ic < n; ic++)
+            } // if (m > 1)
+        } // for (actual_L = L; actual_L >= 1; actual_L--)
     }
     
     /**
@@ -3419,17 +3784,14 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double esqr;
         double esqi;
         int offset[] = new int[2];
-        
-        mx = (int)Math.round(f*mx);
-        my = (int)Math.round(f*my);
+        int fmx, fmy;
         
         tr = new double[mx*my];
         ti = new double[mx*my];
         for (i = 0; i < tr.length; i++) {
             tr[i] = t[i];
         }
-        ter = new double[mx*my];
-        tei = new double[mx*my];
+        
         // forward FFT
         fftUtil = new FFTUtility(tr, ti, my, mx, 1, -1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
@@ -3446,78 +3808,84 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             ti[i] = f2 * ti[i];
         }
         
-        cx = (int)Math.ceil(mx/2.0);
-        evenmx = (mx == ((mx/2)*2));
-        cy = (int)Math.ceil(my/2.0);
-        evenmy = (my == ((my/2)*2));
+        fmx = (int)Math.round(f*mx);
+        fmy = (int)Math.round(f*my);
         
-        x1 = cx - (int)Math.floor(mx/(2.0*f)) - 1;
+        ter = new double[fmx*fmy];
+        tei = new double[fmx*fmy];
+        
+        cx = (int)Math.ceil(fmx/2.0);
+        evenmx = (fmx == ((fmx/2)*2));
+        cy = (int)Math.ceil(fmy/2.0);
+        evenmy = (fmy == ((fmy/2)*2));
+        
+        x1 = cx - (int)Math.floor(fmx/(2.0*f)) - 1;
         if (evenmx) {
             x1 = x1 + 2;
         }
-        x2 = cx + (int)Math.floor(mx/(2.0*f)) - 1;
-        y1 = cy - (int)Math.floor(my/(2.0*f)) - 1;
+        x2 = cx + (int)Math.floor(fmx/(2.0*f)) - 1;
+        y1 = cy - (int)Math.floor(fmy/(2.0*f)) - 1;
         if (evenmy) {
             y1 = y1 + 2;
         }
-        y2 = cy + (int)Math.floor(my/(2.0*f)) - 1;
+        y2 = cy + (int)Math.floor(fmy/(2.0*f)) - 1;
         
         xs = 0;
         if (evenmx) {
             xs = 1;
         }
-        xf = (int)Math.round(mx/f) - 1;
+        xf = (int)Math.round(fmx/f) - 1;
         ys = 0;
         if (evenmy) {
             ys = 1;
         }
-        yf = (int)Math.round(my/f) - 1;
+        yf = (int)Math.round(fmy/f) - 1;
         
         for (j = y1, j2 = ys; j <= y2; j++, j2++) {
             for (i = x1, i2 = xs; i <= x2; i++, i2++) {
-                ter[i + mx*j] = tr[i2 + mx*j2];
-                tei[i + mx*j] = ti[i2 + mx*j2];
+                ter[i + fmx*j] = tr[i2 + mx*j2];
+                tei[i + fmx*j] = ti[i2 + mx*j2];
             }
         }
         
         if (evenmx) {
             for (j = y1, j2 = 1; j <= y2; j++, j2++) {
-                ter[x1-1 + mx*j] = tr[mx*j2]/2.0;
-                tei[x1-1 + mx*j] = ti[mx*j2]/2.0;
+                ter[x1-1 + fmx*j] = tr[mx*j2]/2.0;
+                tei[x1-1 + fmx*j] = ti[mx*j2]/2.0;
             }
             
-            for (j = y1, j2 = (int)Math.round(my/f)-1; j <= y2; j++, j2--) {
-                ter[x2+1 + mx*j] = tr[mx*j2]/2.0;
-                tei[x2+1 + mx*j] = -ti[mx*j2]/2.0;
+            for (j = y1, j2 = (int)Math.round(fmy/f)-1; j <= y2; j++, j2--) {
+                ter[x2+1 + fmx*j] = tr[mx*j2]/2.0;
+                tei[x2+1 + fmx*j] = -ti[mx*j2]/2.0;
             }
         } // if (evenmx)
         
         if (evenmy) {
             for (i = x1, i2 = 1; i <= x2; i++, i2++) {
-                ter[i + mx*(y1-1)] = tr[i2]/2.0;
-                tei[i + mx*(y1-1)] = ti[i2]/2.0;
+                ter[i + fmx*(y1-1)] = tr[i2]/2.0;
+                tei[i + fmx*(y1-1)] = ti[i2]/2.0;
             }
             
-            for (i = x1, i2 = (int)Math.round(mx/f)-1; i <= x2; i++, i2--) {
-                ter[i + mx*(y2+1)] = tr[i2]/2.0;
-                tei[i + mx*(y2+1)] = -ti[i2]/2.0f;
+            for (i = x1, i2 = (int)Math.round(fmx/f)-1; i <= x2; i++, i2--) {
+                ter[i + fmx*(y2+1)] = tr[i2]/2.0;
+                tei[i + fmx*(y2+1)] = -ti[i2]/2.0f;
             }
         } // if (evenmy)
         
         if (evenmx && evenmy) {
             esqr = tr[0]/4.0;
             esqi = ti[0]/4.0;
-            ter[x1-1 + mx*(y1-1)] = esqr;
-            tei[x1-1 + mx*(y1-1)] = esqi;
-            ter[x2+1 + mx*(y1-1)] = esqr;
-            tei[x2+1 + mx*(y1-1)] = esqi;
-            ter[x1-1 + mx*(y2+1)] = esqr;
-            tei[x1-1 + mx*(y2+1)] = esqi;
-            ter[x2+1 + mx*(y2+1)] = esqr;
-            tei[x2+1 + mx*(y2+1)] = esqi;
+            ter[x1-1 + fmx*(y1-1)] = esqr;
+            tei[x1-1 + fmx*(y1-1)] = esqi;
+            ter[x2+1 + fmx*(y1-1)] = esqr;
+            tei[x2+1 + fmx*(y1-1)] = esqi;
+            ter[x1-1 + fmx*(y2+1)] = esqr;
+            tei[x1-1 + fmx*(y2+1)] = esqi;
+            ter[x2+1 + fmx*(y2+1)] = esqr;
+            tei[x2+1 + fmx*(y2+1)] = esqi;
         } // if (evenmx && evenmy)
         
-        center(ter, tei, mx, my);
+        center(ter, tei, fmx, fmy);
         offset[0] = 1;
         if (evenmx) {
             offset[0] = 0;
@@ -3526,23 +3894,75 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (evenmy) {
             offset[1] = 0;
         }
-        shift(ter, tei, mx, my, offset, ter, tei);
+        shift(ter, tei, fmx, fmy, offset, ter, tei);
         // Inverse FFT
-        fftUtil = new FFTUtility(ter, tei, my, mx, 1, +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(ter, tei, fmy, fmx, 1, +1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
-        fftUtil = new FFTUtility(ter, tei, 1, my, mx, +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(ter, tei, 1, fmy, fmx, +1, FFTUtility.FFT);
         fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         return;
     }
     
+    /**
+     * Circular shift 2D matrix samples by offset (a [X, Y] 2 vector),
+     * such that res(pos) = mtx(pos-offset)
+     * @param mtxr
+     * @param dimx
+     * @param dimy
+     * @param offset
+     * @param resr
+     */
+    private void shiftReal(double mtxr[], int dimx, int dimy, int offset[],
+                       double resr[]) {
+        resr = new double[mtxr.length];
+        int n;
+        int offsetx;
+        int offsety;
+        int i, j, i2, j2;
+        
+        n = (int)Math.floor(-offset[0]/(double)dimx);
+        offsetx = -offset[0] - n*dimx;
+        if (offsetx < 0) {
+            offsetx = offsetx + dimx;
+        }
+        
+        n = (int)Math.floor(-offset[1]/(double)dimy);
+        offsety = -offset[1] - n*dimy;
+        if (offsety < 0) {
+            offsety = offsety + dimy;
+        }
+        
+        for (j = 0, j2 = offsety; j2 <= dimy-1; j++, j2++) {
+            for (i = 0, i2 = offsetx; i2 <= dimx - 1; i++, i2++) {
+                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+            }
+            
+            for (i = dimx - offsetx, i2 = 0; i2 <= offsetx-1; i++, i2++) {
+                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+            }
+        }
+        
+        for (j = dimy - offsety, j2 = 0; j2 <= offsety - 1; j++, j2++) {
+            for (i = 0, i2 = offsetx; i2 <= dimx - 1; i++, i2++) {
+                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+            }
+            
+            for (i = dimx - offsetx, i2 = 0; i2 <= offsetx-1; i++, i2++) {
+                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+            }
+        }
+        
+        return;
+    }
+    
     
     /**
      * Port of shift.m
-     * Circular shift 2D matrix samples by offset (a [X, Y} 2 vector),
+     * Circular shift 2D matrix samples by offset (a [X, Y] 2 vector),
      * such that res(pos) = mtx(pos-offset)
      * @param mtxr
      * @param mtxi
@@ -5092,6 +5512,124 @@ MATLAB description:
     }
     
     /**
+     * This is a port of shrink.m by JPM, 5/1/95.
+     * It shrinks (spatially) an image by a factor f in each dimension.
+     * It does it by cropping the Fourier transform of the image.
+     * @param t
+     * @param tx First dimension of t
+     * @param ty Second dimension of t
+     * @param f Shrink by this factor in each dimension
+     * @param tsr Real part of shrunk result
+     * @param tsi Imaginary part of shrunk result
+     * @param tsx First dimension of shrunk result
+     * @param tsy Second dimension of shrunk result
+     */
+    private void shrink(double t[], int tx, int ty, int f,
+                        double tsr[], double tsi[], int tsx[], int tsy[]) {
+        FFTUtility fftUtil;
+        int i, j, i2, j2;
+        int cx;
+        int cy;
+        boolean evenmx;
+        boolean evenmy;
+        int evenx;
+        int eveny;
+        int y1, y2, x1, x2;
+        int intArr[] = new int[2];
+        double ti[] = new double[t.length];
+        if (tsx == null) {
+            tsx = new int[1];
+        }
+        if (tsy == null) {
+            tsy = new int[1];
+        }
+        // forward FFT
+        fftUtil = new FFTUtility(t, ti, ty, tx, 1, -1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        fftUtil = new FFTUtility(t, ti, 1, ty, tx, -1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        center(t, ti, tx, ty); 
+        for (i = 0; i < t.length; i++) {
+            t[i] = t[i]/(f*f);
+            ti[i] = ti[i]/(f*f);
+        }
+        tsx[0] = tx/f;
+        tsy[0] = ty/f;
+        
+        tsr = new double[tsx[0]*tsy[0]];
+        tsi = new double[tsx[0]*tsy[0]];
+        
+        cx = (int)Math.ceil(tx/2.0);
+        cy = (int)Math.ceil(ty/2.0);
+        evenmx = ((2 * (tx/2)) == tx);
+        if (evenmx) {
+            evenx = 1;
+        }
+        else {
+            evenx = 0;
+        }
+        evenmy = ((2 * (ty/2)) == ty);
+        if (evenmy) {
+            eveny = 1;
+        }
+        else {
+            eveny = 0;
+        }
+        
+        y1 = cy + 2*eveny - (int)Math.floor(ty/(2.0*f));
+        y2 = cy + (int)Math.floor(ty/(2.0*f));
+        x1 = cx + 2*evenx - (int)Math.floor(tx/(2.0*f));
+        x2 = cx + (int)Math.floor(tx/(2.0*f));
+        
+        for (j = eveny, j2 = y1-1; j < tsy[0]; j++, j2++) {
+            for (i = evenx, i2 = x1-1; i < tsx[0]; i++, i2++) {
+                tsr[i + tsx[0]*j] = t[i2 + tx*j2];
+                tsi[i + tsx[0]*j] = ti[i2 + tx*j2];
+            }
+        } // for (j = eveny, j2 = y1-1; j < tsy[0]; j++, j2++)
+        
+        if (evenmy) {
+            for (j = eveny, j2 = y1-1; j < tsy[0]; j++, j2++) {
+                tsr[tsx[0]*j] = (t[x1-2 + tx*j2] + t[x2 + tx*j2])/2.0;
+                tsi[tsx[0]*j] = (ti[x1-2 + tx*j2] + ti[x2 + tx*j2])/2.0;
+            }
+        } // if (evenmy)
+        
+        if (evenmx) {
+            for (i = evenx, i2 = x1-1; i < tsx[0]; i++, i2++) {
+                tsr[i] = (t[i2 + tx*(y1-2)] + t[i2 + tx*y2])/2.0;
+                tsi[i] = (ti[i2 + tx*(y1-2)] + ti[i2 + tx*y2])/2.0;
+            }
+        } // if (evenmx)
+        
+        if (evenmx && evenmy) {
+            tsr[0] = (t[x1-2 + tx*(y1-2)] + t[x2 + tx*(y1-2)] +
+                      t[x1-2 + tx*y2] + t[x2 + tx*y2])/4.0;
+            tsi[0] = (ti[x1-2 + tx*(y1-2)] + ti[x2 + tx*(y1-2)] +
+                    ti[x1-2 + tx*y2] + ti[x2 + tx*y2])/4.0;
+        } // if (evenmx && evenmy)
+        
+        center(tsr, tsi, tsx[0], tsy[0]);
+        intArr[0] = 1 - evenx;
+        intArr[1] = 1 - eveny;
+        shift(tsr, tsi, tsx[0], tsy[0], intArr, tsr, tsi);
+        // Inverse FFT
+        fftUtil = new FFTUtility(tsr, tsi, tsy[0], tsx[0], 1, +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        fftUtil = new FFTUtility(tsr, tsi, 1, tsy[0], tsx[0], +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        return;
+    }
+    
+    /**
      * This is a port of buildWUpyr.m by JPM, Univ. de Granada
      * Construct a separable undecimated orthonormal QMF/wavelet pyramid
      * on matrix (or vector) im
@@ -5108,6 +5646,25 @@ MATLAB description:
                               int daubOrder, Vector pind) {
         Vector pyr = null;
         double h[];
+        double lpr[][] = null;
+        double yh[][] = null;
+        int pArr[][] = null;
+        int i;
+        int nband;
+        int nsc;
+        int nor;
+        double band[];
+        int bandx;
+        int bandy;
+        int j;
+        int index;
+        int sh;
+        int twoPow;
+        int intArr[] = new int[2];
+        double bandi[] = null;
+        int sx[] = new int[1];
+        int sy[] = new int[1];
+        int intMat[];
         
         if (nScales < 1) {
             MipavUtil.displayError("Number of scales must be >= 1");
@@ -5122,6 +5679,103 @@ MATLAB description:
             return null;
         }
         // Performs the decomposition
+        mrdwt(im, imx, imy, h, h.length, 1, nScales+1, lpr, yh);
+        if (error == 1) {
+            return null;
+        }
+        
+        // Reorganize the output, forcing the same format as with buildFullSFpyr2
+        if (pind != null) {
+            pind.removeAllElements();
+        }
+        // Room for a "virtual" high pass residual, for compatibility
+        pArr = new int[(nScales+1)*nOrientations+2][2];
+        for (i = 0; i < pArr.length; i++) {
+            pind.add(pArr[i]);
+        }
+        nband = 1;
+        for (nsc = 1; nsc <= nScales+1; nsc++) {
+            for (nor = 1; nor <= nOrientations; nor++) {
+                nband = nband+1;
+                bandx = imx;
+                bandy = yh.length;
+                band = new double[yh.length*imx];
+                for (j = 0, index = 0; j < yh.length; j++) {
+                    for (i = (nband-2)*imx; i < (nband-1)*imx; i++) {
+                      band[index++] = yh[j][i];    
+                    }
+                }
+                twoPow = 1;
+                for (i = 0; i < nsc; i++) {
+                    twoPow *= 2;
+                }
+                // Approximate phase compensation
+                sh = (daubOrder/2 - 1)*twoPow;
+                if (nor == 1) { // horizontal
+                    twoPow = 1;
+                    for (i = 0; i < nsc-1; i++) {
+                        twoPow *= 2;
+                    }
+                    // Use x y order rather than original code y x order
+                    intArr[0] = twoPow;
+                    intArr[1] = sh;
+                    shiftReal(band, imx, yh.length, intArr, band);
+                } // if (nor == 1)
+                else if (nor == 2) { // vertical
+                    twoPow = 1;
+                    for (i = 0; i < nsc-1; i++) {
+                        twoPow *= 2;
+                    }
+                    intArr[0] = sh;
+                    intArr[1] = twoPow;
+                    shiftReal(band, imx, yh.length, intArr, band);
+                } // else if (nor == 2)
+                else { // diagonal
+                    intArr[0] = sh;
+                    intArr[1] = sh;
+                    shiftReal(band, imx, yh.length, intArr, band);
+                } // else
+                if (nsc > 2) {
+                    // The low frequency bands are shrunk in the frequency domain
+                    twoPow = 1;
+                    for (i = 0; i < nsc-2; i++) {
+                        twoPow *= 2;
+                    }
+                    shrink(band, bandx, bandy, twoPow, band, bandi, sx, sy);
+                    bandx = sx[0];
+                    bandy = sy[0];
+                } // if (nsc > 2)
+                pyr.add(band);
+                pind.removeElementAt(nband-1);
+                intMat = new int[2];
+                intMat[0] = bandx;
+                intMat[1] = bandy;
+                pind.insertElementAt(intMat, nband-1);
+            } // for (nor = 1; nor <= nOrientations; nor++)
+        } // for (nsc = 1; nsc <= nScales+1; nsc++)
+        
+        bandy = lpr.length;
+        bandx = lpr[0].length;
+        band = new double[bandy * bandx];
+        for (j = 0, index = 0; j < bandy; j++) {
+            for (i = 0; i < bandx; i++) {
+                band[index++] = lpr[j][i];    
+            }
+        }
+        twoPow = 1;
+        for (i = 0; i < nsc; i++) {
+            twoPow *= 2;
+        }
+        shrink(band, bandx, bandy, twoPow, band, bandi, sx, sy);
+        bandx = sx[0];
+        bandy = sy[0];
+        pyr.add(band);
+        pind.removeElementAt(nband);
+        intMat = new int[2];
+        intMat[0] = bandx;
+        intMat[1] = bandy;
+        pind.insertElementAt(intMat, nband);
+        
         return pyr;
     }
     
