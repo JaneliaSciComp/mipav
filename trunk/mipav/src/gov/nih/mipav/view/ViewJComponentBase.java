@@ -3,6 +3,7 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.*;
 import gov.nih.mipav.model.structures.*;
 
+import java.util.*;
 import java.awt.*;
 import java.awt.image.*;
 import javax.swing.*;
@@ -772,4 +773,206 @@ public abstract class ViewJComponentBase extends JComponent {
         disposeLocal();
         super.finalize();
     }
+
+
+    /**
+     * This method creates a buffer that will be used to make an image of the
+     * painted area on-screen.
+     *
+     * @param paintImageBuffer int[] the buffer to fill that will make the
+     * paint image
+     * @param paintBitmap, the bit map representing the painted pixels
+     * @param slice, the current slice to paint if this is a 3D image
+     * @param frame, the ViewJFrameBase containing the painted component.
+     * @param b2D, when true this is a 2D image component, when false it is
+     * greater than 2D
+     */
+    protected void makePaintImage(int[] paintImageBuffer, BitSet paintBitmap,
+                                  int slice, ViewJFrameBase frame,
+                                  boolean b2D )
+    {
+        // get the color of the paint the user has selected
+        int color = getSelectedPaintColor( frame );
+        float opacity = 0.3f;
+
+        try {
+            opacity = frame.getControls().getTools().getOpacity();
+        } catch (Exception e) {
+            /* do nothing, opactiy defaults to 0.3f */
+        } // should be changed later to a more elegant solution, since this always fails when 'frame' is a
+          // ViewJFrameLightBox
+
+        int opacityInt = (int) (opacity * 255);
+        opacityInt = opacityInt << 24;
+
+        // this loop converts the paint mask from a BitSet into an image
+        // buffer that will be drawn on-screen
+        if ( b2D )
+        {
+            // for 2D images
+            for (int j = 0; j < paintBitmap.length(); j++) {
+
+                if (paintBitmap.get(j) == true) {
+                    color = color & 0x00ffffff;
+                    paintImageBuffer[j] = color | opacityInt;
+                }
+            }
+        } else if (slice >= 0) {
+
+            // for 3D images
+            int j = slice * imageDim.width * imageDim.height;
+            int numPixelsInOneSlice = imageDim.width * imageDim.height;
+            int offset = numPixelsInOneSlice * slice;
+            int numIterations = numPixelsInOneSlice + offset;
+
+            for (; j < numIterations; j++) {
+
+                if (paintBitmap.get(j) == true) {
+                    color = color & 0x00ffffff;
+                    paintImageBuffer[j - offset] = color | opacityInt;
+                }
+            }
+        }
+    }
+
+    /**
+     * This method adds an opaque border to the painted area on-screen.
+     *
+     * @param paintImageBuffer int[] the buffer the paint image will be
+     * created from
+     * @param paintBitmap, the bit map representing the painted pixels
+     * @param slice, the current slice to paint if this is a 3D image
+     * @param frame, the ViewJFrameBase containing the painted component.
+     */
+    protected void makePaintBitmapBorder(int[] paintImageBuffer, BitSet paintBitmap,
+                                         int slice, ViewJFrameBase frame )
+    {
+        int i, j;
+        int idx;
+        int xDim = imageDim.width;
+        int yDim = imageDim.height;
+
+        // Top row of image
+        for (i = 0; i < (xDim - 1); i++) {
+
+            if (paintImageBuffer[i] != 0) {
+                paintImageBuffer[i] = paintImageBuffer[i] | 0xff000000;
+            }
+        }
+
+        // Bottom row of image
+        for (i = (yDim - 1) * xDim; i < (xDim * yDim); i++) {
+
+            if (paintImageBuffer[i] != 0) {
+                paintImageBuffer[i] = paintImageBuffer[i] | 0xff000000;
+            }
+        }
+
+        // Left column of image
+        for (i = 0; i < (xDim * yDim); i += xDim) {
+
+            if (paintImageBuffer[i] != 0) {
+                paintImageBuffer[i] = paintImageBuffer[i] | 0xff000000;
+            }
+        }
+
+        // Right column of image
+        for (i = (xDim - 1); i < (xDim * yDim); i += xDim) {
+
+            if (paintImageBuffer[i] != 0) {
+                paintImageBuffer[i] = paintImageBuffer[i] | 0xff000000;
+            }
+        }
+
+        for (j = 1; j < (imageDim.height - 1); j++) {
+
+            for (i = 1; i < (imageDim.width - 1); i++) {
+
+                idx = (j * imageDim.width) + i;
+
+                int left = idx - 1;
+                int right = idx + 1;
+                int above = idx - imageDim.width;
+                int below = idx + imageDim.width;
+                int northwest = above - 1;
+                int northeast = above + 1;
+                int southeast = below + 1;
+                int southwest = below - 1;
+
+                if (paintImageBuffer[idx] != 0) {
+
+                    if (paintImageBuffer[above] == 0) {
+                        paintImageBuffer[idx] = paintImageBuffer[idx] | 0xff000000;
+
+                        continue;
+                    }
+
+                    if (paintImageBuffer[below] == 0) {
+                        paintImageBuffer[idx] = paintImageBuffer[idx] | 0xff000000;
+
+                        continue;
+                    }
+
+                    if (paintImageBuffer[left] == 0) {
+                        paintImageBuffer[idx] = paintImageBuffer[idx] | 0xff000000;
+
+                        continue;
+                    }
+
+                    if (paintImageBuffer[right] == 0) {
+                        paintImageBuffer[idx] = paintImageBuffer[idx] | 0xff000000;
+
+                        continue;
+                    }
+
+                    if (paintImageBuffer[northwest] == 0) {
+                        paintImageBuffer[idx] = paintImageBuffer[idx] | 0xff000000;
+
+                        continue;
+                    }
+
+                    if (paintImageBuffer[northeast] == 0) {
+                        paintImageBuffer[idx] = paintImageBuffer[idx] | 0xff000000;
+
+                        continue;
+                    }
+
+                    if (paintImageBuffer[southeast] == 0) {
+                        paintImageBuffer[idx] = paintImageBuffer[idx] | 0xff000000;
+
+                        continue;
+                    }
+
+                    if (paintImageBuffer[southwest] == 0) {
+                        paintImageBuffer[idx] = paintImageBuffer[idx] | 0xff000000;
+
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Gets the color of the paint the user has selected from the paint
+     * toolbar.
+     *
+     * @param vjfb, the ViewJFrameBase object that contains the paint toolbar.
+     * @return int the color of the paint selected by the user, represented as
+     * a packed integer
+     */
+    public int getSelectedPaintColor( ViewJFrameBase vjfb )
+    {
+        try {
+            ViewControlsImage vci = vjfb.getControls();
+            ViewToolBarBuilder vtbb = vci.getTools();
+            Color rgbColorObj = vtbb.getPaintColor();
+
+            return rgbColorObj.getRGB();
+        } catch (Throwable t) {
+            return 0xffff0000; // default to red if exception is thrown
+        }
+    }
+
+    
 }
