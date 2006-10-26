@@ -32,7 +32,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     // Possible repres1 values
     private static final int ORTHOGONAL_WAVELET = 1;
     
-    private static final int UNDECIMATED_DAUBECHIES_WAVELET = 2;
+    private static final int UNDECIMATED_ORTHOGONAL_WAVELET = 2;
     
     private static final int STEERABLE_PYRAMID = 3;
     
@@ -57,17 +57,19 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private static final int QMF16 = 7;
     
     // Daubechies wavelet
-    private static final int DAUB2 = 8;
+    private static final int DAUB1 = 8;
     
-    private static final int DAUB3 = 9;
+    private static final int DAUB2 = 9;
     
-    private static final int DAUB4 = 10;
+    private static final int DAUB3 = 10;
     
-    private static final int GAUSS3 = 11;
+    private static final int DAUB4 = 11;
     
-    private static final int GAUSS5 = 12;
+    private static final int GAUSS3 = 12;
     
-    private static final int BINOMIAL = 13;
+    private static final int GAUSS5 = 13;
+    
+    private static final int BINOMIAL = 14;
     
     // Types of edges
     private static final int CIRCULAR = 1;
@@ -84,37 +86,17 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private static final int MID_PHASE = 2;
     
     private static final int MAXIMUM_PHASE = 3;
-    
-    
-    /**
-     * underlying wavelet filter For 4 coefficients the routine daub4 is considerably faster than pwt. DAUB4 implements
-     * a Daubechies 4-coefficient wavelet filter. PWT implements Daubechies filters with 4, 12, and 20 coefficients.
-     * DAUB4 and PWT use different default centerings. In spite of the faster speed of DAUB4, the dialog is designed
-     * only to call PWT so that the user only sees changes due to the number of coefficients and is not confused by
-     * changes in centering.
-     * Reference on NONNEGATIVE_GARROTE and SCAD thresholding:
-     * "Wavelet Estimators in Nonparametric Regression: A Comparative Simulation Study" by Anestis Antoniadis,
-     * Jeremie Bigot, and Theofanis Sapatinas, Journal of Statistical Software, Vol. 6, Issue 6, pp. 1-83, 2001.
-     */
-
-    
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private float[] aArray;
-
-    
+    private double[] aArray;
 
     /** DOCUMENT ME! */
     private int arrayLength;
-
-    
+   
     /** DOCUMENT ME! */
     private int dataType;
-
-    /** DOCUMENT ME! */
-    private ModelImage waveletImage = null;
     
     private float sig;  // noise standard deviation
     
@@ -124,6 +106,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     private boolean usePSD = true; // If true, use power spectral density = fft(autocorrelation)
                                    // If false, use white noise
+                                   // Default is use white noise
     
     private boolean useParent = true;
     
@@ -139,23 +122,22 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     /**
      * repres1 = ORTHOGONAL_WAVELET
-     *           Here repres2 can be NONE, QMF5, QMF8, QMF9, QMF12, QMF13, QMF16, DAUB2, DAUB3, DAUB4
+     *           Here repres2 can be QMF5, QMF8, QMF9, QMF12, QMF13, QMF16, DAUB2, DAUB3, DAUB4
      *           QMF9 is default.
      *           
      * repres1 = UNDECIMATED_ORTHOGONAL_WAVELET
-     *           Here repres2 can be NONE, DAUB2, DAUB3, DAUB4
+     *           Here repres2 can be HAAR, DAUB1, DAUB2, DAUB3, DAUB4
+     *           DAUB1 is the default.
      *           
      * repres1 = STEERABLE_PYRAMID
      *           Here repres2 = NONE
      *           
-     * repres1 = FULLY_STEERABLE_PYRAMID
+     * repres1 = FULL_STEERABLE_PYRAMID
      *           Here repres2 = NONE
      */
     private int repres1 = FULL_STEERABLE_PYRAMID;
     
     private int repres2 = NONE;
-    
-    private float seed = 0.0f; // Seed used for generating the Gaussian noise
     
     private int nx;
     
@@ -185,12 +167,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * @param  optimize        BLS / MAP-Wiener (2-step)
      * @param  repres1         
      * @param  repres2
-     * @param  seed            Seed used for generating the Gaussian noise
      */
     public AlgorithmDenoisingBLS_GSM(ModelImage srcImg, float sig, boolean usePSD, 
                                      int blockSizeX, int blockSizeY, boolean useParent, boolean useBoundary,
                                      int nScales, int nOrientations, boolean includeCovar,
-                                     boolean optimize, int repres1, int repres2, float seed) {
+                                     boolean optimize, int repres1, int repres2) {
         super(null, srcImg);
 
         
@@ -206,7 +187,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         this.optimize = optimize;
         this.repres1 = repres1;
         this.repres2 = repres2;
-        this.seed = seed;
     }
 
     /**
@@ -226,12 +206,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * @param  optimize        BLS / MAP-Wiener (2-step)
      * @param  repres1
      * @param  repres2
-     * @param  seed            Seed used for generating the Gaussian noise
      */
     public AlgorithmDenoisingBLS_GSM(ModelImage destImg, ModelImage srcImg, float sig, boolean usePSD,
                                      int blockSizeX, int blockSizeY, boolean useParent, boolean useBoundary,
                                      int nScales, int nOrientations, boolean includeCovar,
-                                     boolean optimize, int repres1, int repres2, float seed) {
+                                     boolean optimize, int repres1, int repres2) {
         super(destImg, srcImg);
 
         this.sig = sig;
@@ -246,7 +225,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         this.optimize = optimize;
         this.repres1 = repres1;
         this.repres2 = repres2;
-        this.seed = seed;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -257,18 +235,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     public void finalize() {
         destImage = null;
         srcImage = null;
-        waveletImage = null;
         aArray = null;
         super.finalize();
-    }
-
-    /**
-     * Accessor that returns the image.
-     *
-     * @return  the wavelet image
-     */
-    public ModelImage getWaveletImage() {
-        return waveletImage;
     }
 
     /**
@@ -277,20 +245,15 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * Javier Portilla, Univ. de Granada, 11/15/2004
      */
     public void runAlgorithm() {
-        int k;
-        int x, y, z;
+        int x, y;
         int xs;
         int ys;
         int twoPow;
         int i;
-        int bpx;
-        int bpy;
         double corArray[];
         double padArray[];
         int bx;
         int by;
-        int extents[] = new int[2];
-        ModelImage padImage;
         ModelImage corImage;
         AlgorithmAutoCorrelation algoAutoCorrelation;
         double imagArray[];
@@ -303,13 +266,23 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double ranArray[];
         double im[];
         int imx; // x dimension of im
-        int imy; // y dimesnion of im
-        double imD[];
+        int imy; // y dimension of im
+        double imD[] = null;
         double aux[];
         double mean;
         long time;
-        int filter;
+        long time2;
+        long elapsedTime;
         int daubOrder = 2;
+        int j;
+        int index;
+        boolean isOddPSx;
+        int ndx;
+        boolean isOddPSy;
+        int ndy;
+        double corArray2[];
+        double imagArray2[];
+        int i2, j2;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -323,7 +296,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             return;
         }
         
-        if (((repres1 == ORTHOGONAL_WAVELET) || (repres1 == UNDECIMATED_DAUBECHIES_WAVELET)) &&
+        if (((repres1 == ORTHOGONAL_WAVELET) || (repres1 == UNDECIMATED_ORTHOGONAL_WAVELET)) &&
             (nOrientations != 3)) {
             MipavUtil.displayWarning("For X-Y separable orientations nOrientations must be 3");
             nOrientations = 3;
@@ -341,22 +314,21 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         // Ensure that the processed image has dimensions that are integer multiples of 2**(nScales+1),
         // so it will not crash when applying the pyramidal representation.  The idea is padding with 
-        // mirror reflected pixels.  Note that an integer multiple of 2**(nScales+1) is not the same
-        // as pure power of 2 as required in the fft.
+        // mirror reflected pixels.
         twoPow = 2;
         // twoPow = 2**(nScales+1)
         for (i = 0; i < nScales; i++) {
             twoPow = 2 * twoPow;
         }
-        npx = (int)(Math.ceil(nx/twoPow)*twoPow);
-        npy = (int)(Math.ceil(ny/twoPow)*twoPow);
+        npx = (int)(Math.ceil((double)nx/twoPow)*twoPow);
+        npy = (int)(Math.ceil((double)ny/twoPow)*twoPow);
         
         try {
             im = new double[arrayLength];
         } catch (OutOfMemoryError e) {
             im = null;
             System.gc();
-            displayError("AlgorithmDenoisingBLS_GSM: Out of memory creating a");
+            displayError("AlgorithmDenoisingBLS_GSM: Out of memory creating im");
             setCompleted(false);
 
             return;
@@ -425,6 +397,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                                          srcImage.getUserInterface());
             algoAutoCorrelation = new AlgorithmAutoCorrelation(corImage, srcImage);
             algoAutoCorrelation.run();
+            algoAutoCorrelation.finalize();
             corArray = new double[arrayLength];
             try {
                 corImage.exportData(0, arrayLength, corArray);
@@ -434,55 +407,119 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 return;
             }
             
-            delta = new double[npx*npy];
-            for (y = 0; y < ny; y++) {
-                for (x = 0; x < nx; x++) {
-                    delta[x + npx*y] = corArray[x + nx*y];
-                }
-            } // for (y = 0; y < ny; y++)
-            
-            imagArray = new double[npx*npy];
+            imagArray = new double[nx*ny];
             // The fft of the autocorrelation gives the power spectral density
             // NOTE: Scale factors do not matter here.
             // forward FFT
-            fftUtil = new FFTUtility(delta, imagArray, npy, npx, 1, -1, FFTUtility.FFT);
+            fftUtil = new FFTUtility(corArray, imagArray, ny, nx, 1, -1, FFTUtility.FFT);
             fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
-            fftUtil = new FFTUtility(delta, imagArray, 1, npy, npx, -1, FFTUtility.FFT);
+            fftUtil = new FFTUtility(corArray, imagArray, 1, ny, nx, -1, FFTUtility.FFT);
             fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
+            center(corArray, imagArray, nx, ny);
+            // Ensure even dimensions
+            if ((nx %2) == 1) {
+                isOddPSx = true;
+                ndx = nx -1;
+            }
+            else {
+                isOddPSx = false;
+                ndx = nx;
+            }
+            
+            if ((ny %2) == 1) {
+                isOddPSy = true;
+                ndy = ny -1;
+            }
+            else {
+                isOddPSy = false;
+                ndy = ny;
+            }
+            
+            if (isOddPSx || isOddPSy) {
+                corArray2 = new double[ndx*ndy];
+                imagArray2 = new double[ndx*ndy];
+                for (j = 0; j < ndy; j++) {
+                    for (i = 0; i < ndx; i++) {
+                        corArray2[i + j*ndx] = corArray[i + j*nx];
+                        imagArray2[i + j*ndx] = imagArray[i + j*nx];
+                    }
+                }
+            }
+            else {
+                corArray2 = corArray;
+                imagArray2 = imagArray;
+            }
+            center(corArray2, imagArray2, ndx, ndy);
+            
             // A power spectrum is always real and nonnegative
-            for (i = 0; i < delta.length; i++) {
-                if (delta[i] < 0.0) {
-                    delta[i] = 0.0f;
+            for (i = 0; i < corArray2.length; i++) {
+                if (corArray2[i] < 0.0) {
+                    corArray2[i] = 0.0;
                 }
                 else {
-                    delta[i] = Math.sqrt(delta[i]);
+                    corArray2[i] = Math.sqrt(corArray2[i]);
                 }
+                imagArray2[i] = 0.0;
             }
         } // if (usePSD)
         else { // white noise
-            delta = new double[npx*npy];
-            for (i = 0; i < delta.length; i++) {
-                delta[i] = 1.0;
+            ndx = npx;
+            ndy = npy;
+            corArray2 = new double[npx*npy];
+            imagArray2 = new double[npx * npy];
+            for (i = 0; i < corArray2.length; i++) {
+                corArray2[i] = 1.0;
             }
         } // else white noise
+        
+        // Inverse FFT
+        fftUtil = new FFTUtility(corArray2, imagArray2, ndy, ndx, 1, +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        fftUtil = new FFTUtility(corArray2, imagArray2, 1, ndy, ndx, +1, FFTUtility.FFT);
+        fftUtil.setProgressBarVisible(false);
+        fftUtil.run();
+        fftUtil.finalize();
+        center(corArray2, imagArray2, ndx, ndy);
+        
+        // Make the dimensions of the power spectral density support the same as those
+        // of the padded image
         deltax = npx;
         deltay = npy;
-        
-        imagArray = new double[npx*npy];
-        // Inverse FFT
-        fftUtil = new FFTUtility(delta, imagArray, npy, npx, 1, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
-        fftUtil.run();
-        fftUtil.finalize();
-        fftUtil = new FFTUtility(delta, imagArray, 1, npy, npx, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
-        fftUtil.run();
-        fftUtil.finalize();
-        center(delta, imagArray, npx, npy);
+        delta = new double[npx * npy];
+        if ((ndy <= npy) && (ndx <= npx)) {
+            for (j = npy/2 - ndy/2, j2 = 0; j < npy/2 + ndy/2; j++, j2++) {
+              for (i = npx/2 - ndx/2, i2 = 0; i < npx/2 + ndx/2; i++, i2++) {
+                  delta[i + npx*j] = corArray2[i2 + ndx*j2];
+              }
+            }
+        } // if ((ndy <= npy) && (ndx <= npx))
+        else if ((ndy > npy) && (ndx > npx)) {
+            for (j = 0, j2 = ndy/2 - npy/2; j2 < ndy/2 + npy/2; j++, j2++) {
+                for (i = 0, i2 = ndx/2 - npx/2; i2 < ndx/2 + npx/2; i++, i2++) {
+                    delta[i + npx*j] = corArray2[i2 + ndx*j2];
+                }
+            }
+        } // else if ((ndy > npy) && (ndx > npx))
+        else if ((ndy <= npy) && (ndx > npx)) {
+            for (j = npy/2 - ndy/2, j2 = 0; j < npy/2 + ndy/2; j++, j2++) {
+                for (i = 0, i2 = ndx/2 - npx/2; i2 < ndx/2 + npx/2; i++, i2++) {
+                    delta[i + npx*j] = corArray2[i2 + ndx*j2];
+                }    
+            }
+        } // else if ((ndy <= npy) && (ndx > npx))
+        else if ((ndy > npy) && (ndx <= npx)) {
+            for (j = 0, j2 = ndy/2 - npy/2; j2 < ndy/2 + npy/2; j++, j2++) {
+                for (i = npx/2 - ndx/2, i2 = 0; i < npx/2 + ndx/2; i++, i2++) {
+                    delta[i + npx*j] = corArray2[i2 + ndx*j2];
+                }    
+            }
+        } // else if ((ndy > npy) && (ndx <= npx))
         
         if (repres1 == ORTHOGONAL_WAVELET) {
             imagArray = new double[npx*npy];
@@ -500,7 +537,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 psArray[i] = delta[i]*delta[i] + imagArray[i]*imagArray[i];
             }
             imagArray = new double[npx*npy];
-            center(delta, imagArray, npx, npy);
+            center(psArray, imagArray, npx, npy);
             // Noise, to be used only with translation variant transforms (such as
             // orthogonal wavelet)
             ranArray = new double[npx*npy];
@@ -519,7 +556,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             fftUtil.finalize();
             for (i = 0; i < ranArray.length; i++) {
                 ranArray[i] = Math.atan2(imagArray[i], ranArray[i]);
-                delta[i] = Math.sqrt(delta[i]);
+                delta[i] = Math.sqrt(psArray[i]);
                 imagArray[i] = delta[i] * Math.sin(ranArray[i]);
                 delta[i] = delta[i] * Math.cos(ranArray[i]);
             }
@@ -534,6 +571,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             fftUtil.finalize();
         } // if (repres1 == ORTHOGONAL_WAVELET)
         
+        // Boundary handling: it extends im and delta
         if (useBoundary) {
             im = mirrorExtension(im, npx, npy, bx, by);
             imx = npx + 2*bx;
@@ -578,20 +616,18 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         // Standard steerable pyramid
         if (repres1 == STEERABLE_PYRAMID) {
             imD = decompReconst(im, imx, imy, delta, deltax, deltay);  
-            if (error == 1) {
-                setCompleted(false);
-                return;   
-            }
         }
         else if (repres1 == FULL_STEERABLE_PYRAMID) {
             imD = decompReconstFull(im, imx, imy, delta, deltax, deltay);
         }
         else if (repres1 == ORTHOGONAL_WAVELET) {
-            filter = repres2;
-            imD = decompReconstW(im, imx, imy, filter, delta, deltax, deltay);
+            imD = decompReconstW(im, imx, imy, repres2, delta, deltax, deltay);
         }
-        else if (repres1 == UNDECIMATED_DAUBECHIES_WAVELET) {
+        else if (repres1 == UNDECIMATED_ORTHOGONAL_WAVELET) {
             if (repres2 == HAAR) {
+                daubOrder = 2;
+            }
+            else if (repres2 == DAUB1) {
                 daubOrder = 2;
             }
             else if (repres2 == DAUB2) {
@@ -605,6 +641,20 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             imD = decompReconstWU(im, imx, imy, daubOrder, delta, deltax, deltay);
         }
+        if (error == 1) {
+            setCompleted(false);
+            return;   
+        }
+        time2 = System.currentTimeMillis();
+        elapsedTime = time2 - time;
+        Preferences.debug("Elapsed time in seconds = " + Math.round(elapsedTime/1000.0));
+        
+        aArray = new double[nx * ny];
+        for (j = by, index = 0; j < by + ny; j++) {
+            for (i = bx; i < bx + nx; i++) {
+                aArray[index++] = imD[i + imx*j];
+            }
+        }
 
         // clamp to mins and maxs allowed by data type
         if (destImage != null) {
@@ -617,9 +667,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
             for (i = 0; i < aArray.length; i++) {
 
-                if (aArray[i] > 255.0f) {
-                    aArray[i] = 255.0f;
-                } else if (aArray[i] < 0.0f) {
+                if (aArray[i] > 255.0) {
+                    aArray[i] = 255.0;
+                } else if (aArray[i] < 0.0) {
                     aArray[i] = 0.0f;
                 }
             }
@@ -628,10 +678,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
             for (i = 0; i < aArray.length; i++) {
 
-                if (aArray[i] > 127.0f) {
-                    aArray[i] = 127.0f;
-                } else if (aArray[i] < -128.0f) {
-                    aArray[i] = -128.0f;
+                if (aArray[i] > 127.0) {
+                    aArray[i] = 127.0;
+                } else if (aArray[i] < -128.0) {
+                    aArray[i] = -128.0;
                 }
             }
         } // else if (dataType == ModelImage.BYTE)
@@ -639,10 +689,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
             for (i = 0; i < aArray.length; i++) {
 
-                if (aArray[i] > 65535.0f) {
-                    aArray[i] = 65535.0f;
+                if (aArray[i] > 65535.0) {
+                    aArray[i] = 65535.0;
                 } else if (aArray[i] < 0.0f) {
-                    aArray[i] = 0.0f;
+                    aArray[i] = 0.0;
                 }
             }
         } // else if (dataType == ModelImage.USHORT)
@@ -650,10 +700,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
             for (i = 0; i < aArray.length; i++) {
 
-                if (aArray[i] > 32767.0f) {
-                    aArray[i] = 32767.0f;
-                } else if (aArray[i] < -32768.0f) {
-                    aArray[i] = -32768.0f;
+                if (aArray[i] > 32767.0) {
+                    aArray[i] = 32767.0;
+                } else if (aArray[i] < -32768.0) {
+                    aArray[i] = -32768.0;
                 }
             }
         } // else if (dataType == ModelImage.SHORT)
@@ -703,6 +753,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
 
         }
+        
+        fireProgressStateChanged(100, null, null);
 
         setCompleted(true);
 
@@ -711,6 +763,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     /**
      * This is a port of decomp_reconst_full.m, JPM, Univ. de Granada, 11/04
      * Decompose image into subbands, denoise, and recompose again
+     * Version using the full steerable pyramid (High pass residual
+     * splitted into orientations)
      * @param im
      * @param imx
      * @param imy
@@ -766,6 +820,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             fireProgressStateChanged((100 * (nband-1))/ (bandNum-1));
             aux = pyrBand(pyr, pind, nband-1,nsx, nsy);
             auxn = pyrBand(pyrN, pind, nband-1, nsxn, nsyn);
+            // Has the subband a parent?
             prnt = useParent && (nband < bandNum - nOrientations);
             if (prnt) {
                 BL = new double[nsy[0]][nsx[0]][2];
@@ -2444,7 +2499,7 @@ MATLAB description:
      */
     private void MIRDWT(double res[], int m, int n, double h[], int lh,
                         int L, double yl[], double yh[]) {
-        double xh[] = new double[Math.max(m, n)];
+        double xh[] = new double[m * n];
         double xdummyl[] = new double[Math.max(m, n)];
         double xdummyh[] = new double[Math.max(m, n)];
         double ydummyll[] = new double[Math.max(m, n) + lh - 1];
@@ -2453,9 +2508,9 @@ MATLAB description:
         double ydummyhh[] = new double[Math.max(m, n) + lh - 1];
         double g0[] = new double[lh];
         double g1[] = new double[lh];
-        int i, j;
-        int actual_L, actual_m, actual_n, c_o_a, ir, n_c, n_cb, n_c_o, lhm1;
-        int ic, n_r, n_rb, n_r_o, c_o_a_p2n, sample_f;
+        int i;
+        int actual_L, actual_m, actual_n, c_o_a, ir, n_c, n_cb, lhm1;
+        int ic, n_r, n_rb, c_o_a_p2n, sample_f;
         
         if (n == 1) {
             n = m;
@@ -2503,11 +2558,75 @@ MATLAB description:
                         ir = -sample_f + n_r;
                         for (i = 0; i < actual_m; i++) {
                             ir = ir + sample_f;
+                            ydummyll[i+lhm1] = res[ic + n*ir];
+                            ydummylh[i+lhm1] = yh[c_o_a + ic + n*ir];
+                            ydummyhl[i+lhm1] = yh[c_o_a+n+ic + n*ir];
+                            ydummyhh[i+lhm1] = yh[c_o_a_p2n+ic + n*ir];
+                        } // for (i = 0; i < actual_m; i++)
+                        /* Perform filtering and adding: first LL/LH, then HL/HH */
+                        bpconv(xdummyl, actual_m, g0, g1, lh, ydummyll, ydummylh);
+                        bpconv(xdummyh, actual_m, g0, g1, lh, ydummyhl, ydummyhh);
+                        /* Store dummy variables in matrices */
+                        ir = -sample_f + n_r;
+                        for (i = 0; i < actual_m; i++) {
+                            ir = ir + sample_f;
+                            res[ic + n*ir] = xdummyl[i];
+                            xh[ic + n*ir] = xdummyh[i];
                         } // for (i = 0; i < actual_m; i++)
                     } // for (n_r = 0; n_r < n_rb; n_r++)
                 } // for (ic = 0; ic < n; ic++)
             } // if (m > 1)
+            
+            /* Go by rows */
+            n_cb = n/actual_n;  /* # of column blocks per row */
+            for (ir = 0; ir < m; ir++) { /* Loop over rows */
+                for (n_c = 0; n_c < n_cb; n_c++) { /* Loop within one row */
+                    /* Store in dummy variable */
+                    ic = -sample_f + n_c;
+                    for (i = 0; i < actual_n; i++) {
+                        ic = ic + sample_f;
+                        ydummyll[i+lhm1] = res[ic + n*ir];
+                        if (m > 1) {
+                            ydummyhh[i+lhm1] = xh[ic + n*ir];
+                        }
+                        else {
+                            ydummyhh[i+lhm1] = yh[c_o_a+ic + n*ir];
+                        }
+                    } // for (i = 0; i < actual_n; i++)
+                    /* Perform filtering lowpass/highpass */
+                    bpconv(xdummyl, actual_n, g0, g1, lh, ydummyll, ydummyhh);
+                    /* Restore dummy variables in matrices */
+                    ic = -sample_f + n_c;
+                    for (i = 0; i < actual_n; i++) {
+                        ic = ic + sample_f;
+                        res[ic + n*ir] = xdummyl[i];
+                    } // for (i = 0; i < actual_n; i++)
+                } // for (n_c = 0; n_c < n_cb; n_c++)
+            } // for (ir = 0; ir < m; ir++)
+            sample_f = sample_f/2;
+            actual_m = actual_m*2;
+            actual_n = actual_n*2;
         } // for (actual_L = L; actual_L >= 1; actual_L--)
+        return;
+    }
+    
+    private void bpconv(double xout[], int lx, double g0[], double g1[], int lh,
+                        double xinl[], double xinh[]) {
+        int i,j;
+        double x0;
+        
+        for (i = lh-2; i > -1; i--) {
+            xinl[i] = xinl[lx+i];
+            xinh[i] = xinh[lx+i];
+        }
+        for (i = 0; i < lx; i++) {
+            x0 = 0;
+            for (j = 0; j < lh; j++) {
+                x0 = x0 + xinl[j+i]*g0[lh-1-j] +
+                          xinh[j+i]*g1[lh-1-j];
+                xout[i] = x0;
+            }
+        }
     }
     
     /**
