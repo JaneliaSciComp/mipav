@@ -411,9 +411,9 @@ public class FileInfoMinc extends FileInfoBase {
 
         if ((vmax - vmin) != 0) {
             return (max - min) / (vmax - vmin);
-        } else {
-            return 1.0;
         }
+        
+        return 1.0;
     }
 
     /**
@@ -533,18 +533,27 @@ public class FileInfoMinc extends FileInfoBase {
      *
      * <p>DICOM positive axis is right to left; positive axis is anterior to posterior; postive axis is inferior to
      * superior</p>
+     * 
+     * <p>If the space's alignment attribute has the value 'centre', then subtract half the space's step value (doesn't 
+     * seem to apply to zspace for some reason..).  Then transform the point by the inverse of the direction_cosines
+     * matrix (extracted from the spaces).  The result then has some of the signs of its components flipped (which is
+     * determined by the image orientation) to get it from minc to dicom orientation.</p>
      *
      * @param   slice  slice to begin the start variable on.
      *
-     * @return  The "start" values for the image.
+     * @return  The slice position in dicom (and mipav) space.
      */
     public final double[] getConvertStartLocationsToDICOM(int slice) {
         double x = 0;
         double y = 0;
         double z = 0;
-        double xRes = 1;
-        double yRes = 1;
-        double zRes = 1;
+        double xStep = 1;
+        double yStep = 1;
+        double zStep = 1;
+        
+        boolean isXCentered = false;
+        boolean isYCentered = false;
+        boolean isZCentered = false;
 
         String spacex, spacey, spacez;
 
@@ -556,52 +565,52 @@ public class FileInfoMinc extends FileInfoBase {
 
             if (varArray[i].name.equals(spacex)) {
                 x = varArray[i].start;
-                xRes = varArray[i].resolution;
+                xStep = varArray[i].step;
+                
+                for (int j = 0; j < varArray[i].vattArray.length; j++) {
+                    if (varArray[i].vattArray[j].name.equals("alignment")) {
+                        isXCentered = varArray[i].vattArray[j].getValueString().equals("centre");
+                    }
+                }
             }
 
             if (varArray[i].name.equals(spacey)) {
                 y = varArray[i].start;
-                yRes = varArray[i].resolution;
+                yStep = varArray[i].step;
+                
+                for (int j = 0; j < varArray[i].vattArray.length; j++) {
+                    if (varArray[i].vattArray[j].name.equals("alignment")) {
+                        isYCentered = varArray[i].vattArray[j].getValueString().equals("centre");
+                    }
+                }
             }
 
             if (varArray[i].name.equals(spacez)) {
                 z = varArray[i].start;
-                zRes = varArray[i].resolution;
+                zStep = varArray[i].step;
+                
+                for (int j = 0; j < varArray[i].vattArray.length; j++) {
+                    if (varArray[i].vattArray[j].name.equals("alignment")) {
+                        isZCentered = varArray[i].vattArray[j].getValueString().equals("centre");
+                    }
+                }
             }
         }
+        
+        //System.out.println("convert: begin res:\t" + xRes + " " + yRes + " " + zRes);
 
         double[] startLocs = new double[getExtents().length];
 
         if (startLocs.length == 2) {
             startLocs[0] = x;
             startLocs[1] = y;
-        } else if (startLocs.length == 3) {
-
-            if (getImageOrientation() == FileInfoBase.SAGITTAL) {
-
-                if (getAxisOrientation(1) == FileInfoBase.ORI_S2I_TYPE) {
-                    startLocs[0] = -x;
-                    startLocs[1] = y;
-                    startLocs[2] = -(z + (zRes * slice));
-                } else {
-                    startLocs[0] = -x;
-                    startLocs[1] = y;
-                    startLocs[2] = -(z + (zRes * slice));
-                }
-            } else if (getImageOrientation() == FileInfoBase.AXIAL) {
-                startLocs[0] = -x;
-                startLocs[1] = -y;
-                startLocs[2] = (z + (zRes * slice));
-            } else if (getImageOrientation() == FileInfoBase.CORONAL) {
-                startLocs[0] = -x;
-                startLocs[1] = y;
-                startLocs[2] = -(z + (zRes * slice));
-            } else {
-                startLocs[0] = x;
-                startLocs[1] = y;
-                startLocs[2] = (z + (zRes * slice));
-            }
+        } else {
+            startLocs[0] = x;
+            startLocs[1] = y;
+            startLocs[2] = z + (zStep * slice);
         }
+        
+        //System.out.println("convert: locs:\t" + startLocs[0] + " " + startLocs[1] + " " + startLocs[2]);
 
         TransMatrix matrix = new TransMatrix(getExtents().length + 1);
         matrix.identity();
@@ -634,15 +643,50 @@ public class FileInfoMinc extends FileInfoBase {
                 }
             }
         }
+        
+        //System.out.println("convert: matrix:\t" + matrix.matrixToString(24, 16));
+        
+        matrix.invert();
+        
+        //System.out.println("convert: invmat:\t" + matrix.matrixToString(24, 16));
 
         double[] transformedPt = new double[getExtents().length];
 
-        if (getExtents().length == 2) {
-            matrix.transform(startLocs[0] + (xRes / 2), startLocs[1] + (yRes / 2), transformedPt);
-        } else if (getExtents().length == 3) {
-            matrix.transform(startLocs[0] + (xRes / 2), startLocs[1] + (yRes / 2), startLocs[2] + (zRes / 2),
-                             transformedPt);
+        if (isXCentered) {
+            startLocs[0] -= (xStep / 2);
         }
+        
+        if (isYCentered) {
+            startLocs[1] -= (yStep / 2);
+        }
+        
+        // TODO: mni seems not to adjust the zstart by the zstep even when xspace has the attrib alignment=centre
+        /*if (isZCentered) {
+            startLocs[2] -= (zStep / 2);
+        }*/
+        
+        if (getExtents().length == 2) {
+            matrix.transform(startLocs[0], startLocs[1], transformedPt);
+        } else if (getExtents().length == 3) {
+            matrix.transform(startLocs[0], startLocs[1], startLocs[2], transformedPt);
+        }
+        
+        //System.out.println("convert: trans:\t" + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2]);
+        
+        if (startLocs.length == 3) {
+            if (getImageOrientation() == FileInfoBase.SAGITTAL) {
+                transformedPt[0] = -transformedPt[0];
+                transformedPt[2] = -transformedPt[2];
+            } else if (getImageOrientation() == FileInfoBase.AXIAL) {
+                transformedPt[0] = -transformedPt[0];
+                transformedPt[1] = -transformedPt[1];
+            } else if (getImageOrientation() == FileInfoBase.CORONAL) {
+                transformedPt[0] = -transformedPt[0];
+                transformedPt[2] = -transformedPt[2];
+            }
+        }
+        
+        //System.out.println("convert: result:\t" + transformedPt[0] + " " + transformedPt[1] + " " + transformedPt[2]);
 
         return transformedPt;
     }
@@ -815,45 +859,6 @@ public class FileInfoMinc extends FileInfoBase {
     }
 
     /**
-     * Accessor that gets the "step" (voxel resolutions) variable values, as they are stored in the header file.
-     *
-     * @return  The "step" values for the image.
-     */
-    public final float[] getStepMinc() {
-        double xRes = 1;
-        double yRes = 1;
-        double zRes = 1;
-
-        for (int i = 0; i < varArray.length; i++) {
-
-            if (varArray[i].name.equals("xspace")) {
-                xRes = varArray[i].resolution;
-            }
-
-            if (varArray[i].name.equals("yspace")) {
-                yRes = varArray[i].resolution;
-            }
-
-            if (varArray[i].name.equals("zspace")) {
-                zRes = varArray[i].resolution;
-            }
-        }
-
-        float[] res = new float[getExtents().length];
-
-        if (res.length == 2) {
-            res[0] = (float) xRes;
-            res[1] = (float) yRes;
-        } else if (res.length == 3) {
-            res[0] = (float) xRes;
-            res[1] = (float) yRes;
-            res[2] = (float) zRes;
-        }
-
-        return res;
-    }
-
-    /**
      * Gets the array with the variable information.
      *
      * @return  the array
@@ -952,28 +957,28 @@ public class FileInfoMinc extends FileInfoBase {
                         switch (elem.nc_type) {
 
                             case NC_BYTE:
-                                vmin = (double) ((Byte) elem.values[0]).byteValue();
-                                vmax = (double) ((Byte) elem.values[1]).byteValue();
+                                vmin = ((Byte) elem.values[0]).byteValue();
+                                vmax = ((Byte) elem.values[1]).byteValue();
                                 break;
 
                             case NC_CHAR:
-                                vmin = (double) ((Character) elem.values[0]).charValue();
-                                vmax = (double) ((Character) elem.values[1]).charValue();
+                                vmin = ((Character) elem.values[0]).charValue();
+                                vmax = ((Character) elem.values[1]).charValue();
                                 break;
 
                             case NC_SHORT:
-                                vmin = (double) ((Short) elem.values[0]).shortValue();
-                                vmax = (double) ((Short) elem.values[1]).shortValue();
+                                vmin = ((Short) elem.values[0]).shortValue();
+                                vmax = ((Short) elem.values[1]).shortValue();
                                 break;
 
                             case NC_INT:
-                                vmin = (double) ((Integer) elem.values[0]).intValue();
-                                vmax = (double) ((Integer) elem.values[1]).intValue();
+                                vmin = ((Integer) elem.values[0]).intValue();
+                                vmax = ((Integer) elem.values[1]).intValue();
                                 break;
 
                             case NC_FLOAT:
-                                vmin = (double) ((Float) elem.values[0]).floatValue();
-                                vmax = (double) ((Float) elem.values[1]).floatValue();
+                                vmin = ((Float) elem.values[0]).floatValue();
+                                vmax = ((Float) elem.values[1]).floatValue();
                                 break;
 
                             case NC_DOUBLE:
@@ -988,23 +993,23 @@ public class FileInfoMinc extends FileInfoBase {
                         switch (elem.nc_type) {
 
                             case NC_BYTE:
-                                vmax = (double) ((Byte) elem.values[0]).byteValue();
+                                vmax = ((Byte) elem.values[0]).byteValue();
                                 break;
 
                             case NC_CHAR:
-                                vmax = (double) ((Character) elem.values[0]).charValue();
+                                vmax = ((Character) elem.values[0]).charValue();
                                 break;
 
                             case NC_SHORT:
-                                vmax = (double) ((Short) elem.values[0]).shortValue();
+                                vmax = ((Short) elem.values[0]).shortValue();
                                 break;
 
                             case NC_INT:
-                                vmax = (double) ((Integer) elem.values[0]).intValue();
+                                vmax = ((Integer) elem.values[0]).intValue();
                                 break;
 
                             case NC_FLOAT:
-                                vmax = (double) ((Float) elem.values[0]).floatValue();
+                                vmax = ((Float) elem.values[0]).floatValue();
                                 break;
 
                             case NC_DOUBLE:
@@ -1017,23 +1022,23 @@ public class FileInfoMinc extends FileInfoBase {
                         switch (elem.nc_type) {
 
                             case NC_BYTE:
-                                vmin = (double) ((Byte) elem.values[0]).byteValue();
+                                vmin = ((Byte) elem.values[0]).byteValue();
                                 break;
 
                             case NC_CHAR:
-                                vmin = (double) ((Character) elem.values[0]).charValue();
+                                vmin = ((Character) elem.values[0]).charValue();
                                 break;
 
                             case NC_SHORT:
-                                vmin = (double) ((Short) elem.values[0]).shortValue();
+                                vmin = ((Short) elem.values[0]).shortValue();
                                 break;
 
                             case NC_INT:
-                                vmin = (double) ((Integer) elem.values[0]).intValue();
+                                vmin = ((Integer) elem.values[0]).intValue();
                                 break;
 
                             case NC_FLOAT:
-                                vmin = (double) ((Float) elem.values[0]).floatValue();
+                                vmin = ((Float) elem.values[0]).floatValue();
                                 break;
 
                             case NC_DOUBLE:
@@ -1044,13 +1049,13 @@ public class FileInfoMinc extends FileInfoBase {
                     }
                 }
             } else if (varArray[i].name.equals(thirdDim)) {
-                axisOrientation[0] = setOrientType(thirdDim, (varArray[i].resolution > 0));
+                axisOrientation[0] = setOrientType(thirdDim, (varArray[i].step > 0));
                 ix = i;
             } else if (varArray[i].name.equals(secondDim)) {
-                axisOrientation[1] = setOrientType(secondDim, (varArray[i].resolution > 0));
+                axisOrientation[1] = setOrientType(secondDim, (varArray[i].step > 0));
                 iy = i;
             } else if (varArray[i].name.equals(firstDim)) {
-                axisOrientation[2] = setOrientType(firstDim, (varArray[i].resolution > 0));
+                axisOrientation[2] = setOrientType(firstDim, (varArray[i].step > 0));
                 iz = i;
             }
         }
@@ -1068,15 +1073,15 @@ public class FileInfoMinc extends FileInfoBase {
             mat.setMatrix(varArray[iz].cosines[2], 2, 2);
             axisOrientation = getAxisOrientation(mat);
 
-            if (varArray[ix].resolution < 0) {
+            if (varArray[ix].step < 0) {
                 axisOrientation[0] = oppositeOrient(axisOrientation[0]);
             }
 
-            if (varArray[iy].resolution < 0) {
+            if (varArray[iy].step < 0) {
                 axisOrientation[1] = oppositeOrient(axisOrientation[1]);
             }
 
-            if (varArray[iz].resolution < 0) {
+            if (varArray[iz].step < 0) {
                 axisOrientation[2] = oppositeOrient(axisOrientation[2]);
             }
         }
@@ -1125,51 +1130,67 @@ public class FileInfoMinc extends FileInfoBase {
      * @param  orientation  The orientation of the image (sagittal, coronal, or axial).
      */
     public void setResolutions(int orientation) {
-        double xRes = 1.0;
-        double yRes = 1.0;
-        double zRes = 1.0;
+        double xStep = 1.0;
+        double yStep = 1.0;
+        double zStep = 1.0;
+        double thickness = getSliceThickness();
 
         for (int i = 0; i < varArray.length; i++) {
 
             if (varArray[i].name.equals("xspace")) {
-                xRes = varArray[i].resolution;
+                xStep = varArray[i].step;
             }
 
             if (varArray[i].name.equals("yspace")) {
-                yRes = varArray[i].resolution;
+                yStep = varArray[i].step;
             }
 
             if (varArray[i].name.equals("zspace")) {
-                zRes = varArray[i].resolution;
+                zStep = varArray[i].step;
             }
         }
 
         float[] res = new float[getExtents().length];
 
         if (res.length == 2) {
-            res[0] = Math.abs((float) xRes);
-            res[1] = Math.abs((float) yRes);
+            res[0] = Math.abs((float) xStep);
+            res[1] = Math.abs((float) yStep);
         } else if (res.length == 3) {
 
             switch (orientation) {
 
                 case SAGITTAL:
-                    res[2] = Math.abs((float) xRes);
-                    res[0] = Math.abs((float) yRes);
-                    res[1] = Math.abs((float) zRes);
+                    if (thickness == 0) {
+                        res[2] = Math.abs((float) xStep);
+                    } else {
+                        res[2] = Math.abs((float) thickness);
+                        setSliceSpacing((float) xStep);
+                    }
+                    res[0] = Math.abs((float) yStep);
+                    res[1] = Math.abs((float) zStep);
                     break;
 
                 case CORONAL:
-                    res[0] = Math.abs((float) xRes);
-                    res[2] = Math.abs((float) yRes);
-                    res[1] = Math.abs((float) zRes);
+                    res[0] = Math.abs((float) xStep);
+                    if (thickness == 0) {
+                        res[2] = Math.abs((float) yStep);
+                    } else {
+                        res[2] = Math.abs((float) thickness);
+                        setSliceSpacing((float) yStep);
+                    }
+                    res[1] = Math.abs((float) zStep);
                     break;
 
                 case AXIAL:
                 default:
-                    res[0] = Math.abs((float) xRes);
-                    res[1] = Math.abs((float) yRes);
-                    res[2] = Math.abs((float) zRes);
+                    res[0] = Math.abs((float) xStep);
+                    res[1] = Math.abs((float) yStep);
+                    if (thickness == 0) {
+                        res[2] = Math.abs((float) zStep);
+                    } else {
+                        res[2] = Math.abs((float) thickness);
+                        setSliceSpacing((float) zStep);
+                    }
                     break;
             }
         }
@@ -1252,9 +1273,9 @@ public class FileInfoMinc extends FileInfoBase {
 
         if (index == -1) {
             return null;
-        } else {
-            return fullTag.substring(index + 1);
         }
+        
+        return fullTag.substring(index + 1);
     }
 
     /**
@@ -1269,9 +1290,9 @@ public class FileInfoMinc extends FileInfoBase {
 
         if (index == -1) {
             return null;
-        } else {
-            return fullTag.substring(0, index);
         }
+        
+        return fullTag.substring(0, index);
     }
 
     /**
@@ -1852,5 +1873,24 @@ public class FileInfoMinc extends FileInfoBase {
         }
 
         varArray[index].start = originCoord;
+    }
+    
+    /**
+     * Return the slice thickness value stored in the minc header (var = 'acquisition', attrib = 'slice_thickness').
+     * 
+     * @return  The slice thickness, if it is stored in the minc header (0 otherwise).
+     */
+    private double getSliceThickness() {
+        for (int i = 0; i < varArray.length; i++) {
+            if (varArray[i].name.equals("acquisition")) {
+                for (int j = 0; j < varArray[i].vattArray.length; j++) {
+                    if (varArray[i].vattArray[j].name.equals("slice_thickness")) {
+                        return ((Double) varArray[i].vattArray[j].values[0]).doubleValue();
+                    }
+                }
+            }
+        }
+        
+        return 0;
     }
 }

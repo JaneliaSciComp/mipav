@@ -116,8 +116,17 @@ public class FileMincAttElem extends ModelSerialCloneable {
      * @return  The string representation of this attribute.
      */
     public String toString() {
-        String s;
-        s = "Name: " + name + " Value: ";
+        return "Name: " + name + " Value: " + getValueString();
+    }
+    
+    /**
+     * Returns the value stored in this minc attribute as a String.
+     * 
+     * @return  The values in the attribute, nc_char values are joined together, all other types are separated by
+     *          spaces.
+     */
+    public String getValueString() {
+        String s = new String();
 
         if (nc_type == FileInfoMinc.NC_CHAR) {
 
