@@ -6889,6 +6889,8 @@ public class ModelStorageBase extends ModelSerialCloneable {
         ySlopeY /= (float) (jBound - 1);
         zSlopeY /= (float) (jBound - 1);
 
+        double real, imaginary, mag;
+
         /* loop over the 2D image (values) we're writing into */
         float x, y, z;
         for (int j = 0; j < jBound; j++)
@@ -6942,6 +6944,19 @@ public class ModelStorageBase extends ModelSerialCloneable {
                         values[(j * iBound + i) * 4 + 1] = getFloat(index * 4 + 1);
                         values[(j * iBound + i) * 4 + 2] = getFloat(index * 4 + 2);
                         values[(j * iBound + i) * 4 + 3] = getFloat(index * 4 + 3);
+                    }
+                    /* if complex: */
+                    else if ( bufferType == COMPLEX )
+                    {
+                        real = getFloat(index * 2);
+                        imaginary = getFloat(index * 2 + 1);
+
+                        if (logMagDisp == true) {
+                            mag = Math.sqrt((real * real) + (imaginary * imaginary));
+                            values[j * iBound + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
+                        } else {
+                            values[j * iBound + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                        }
                     }
                     /* not color: */
                     else

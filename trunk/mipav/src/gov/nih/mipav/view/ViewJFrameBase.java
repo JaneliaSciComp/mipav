@@ -217,6 +217,15 @@ public abstract class ViewJFrameBase extends JFrame
     public abstract void setAlphaBlend(int value);
 
     /**
+     * Returns a default alphaBlend value for blending of two images.
+     * @return a default alphaBlend value
+     */
+    public float getAlphaBlend()
+    {
+        return 0.5f;
+    }
+
+    /**
      * Sets the menu and controls (i.e. toolbars) of the main frame! This puts only the menus and controls needed to
      * controls the operations of this frame. Different image frames have different menu and controls.
      */

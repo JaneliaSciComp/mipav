@@ -30,9 +30,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     /** alphaBlending values for compositing two images. */
     protected float alphaBlend = 0.5f;
 
-    /** DOCUMENT ME! */
-    protected float alphaPrime = 0.5f;
-
     /** frame - frame where the component image is displayed. */
     protected ViewJFrameBase frame;
 
@@ -48,24 +45,10 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     /** DOCUMENT ME! */
     protected int interpMode = SMOOTH;
 
-    /** LUTa - lookup table for image A. */
-    protected ModelLUT LUTa;
-
-    /** LUTb - lookup table for image B. */
-    protected ModelLUT LUTb;
-
-
-    /** DOCUMENT ME! */
-    protected int[] lutBufferRemapped = null;
+    private int[] paintImageBuffer = null;
 
     /** mode - used to describe the cursor mode. */
     protected int mode;
-
-    /** true if selected red, green, blue components present in RGB image. */
-    protected ModelRGB RGBTA;
-
-    /** DOCUMENT ME! */
-    protected ModelRGB RGBTB;
 
     /** DOCUMENT ME! */
     protected int slice = -99;
@@ -74,24 +57,12 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     protected String string;
 
     /** DOCUMENT ME! */
-    protected long time;
-
-    /** DOCUMENT ME! */
-    protected int timeSlice = 0;
-
-    /** DOCUMENT ME! */
-    private Color borderCol; // for 4D color of border around each z slice
-
-    /** DOCUMENT ME! */
     private int brightness; // offset ranging from -255 to 255 add to each
                             // scaled red, green, and blue
 
     /** DOCUMENT ME! */
     private float contrast; // scale factor ranging from 0.1 to 10.0
                             // by which to multiply each red, green, and blue
-
-    /** DOCUMENT ME! */
-    private int curSlice; // z slice given by the z slice slider
 
     /** DOCUMENT ME! */
     private boolean disposeImage; // whether or not to dispose of imageA and imageB
@@ -107,18 +78,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
 
     /** DOCUMENT ME! */
     private ModelImage imageActive = null;
-
-    /** DOCUMENT ME! */
-    private float[] imageBufferA = null;
-
-    /** DOCUMENT ME! */
-    private float[] imageBufferActive = null;
-
-    /** DOCUMENT ME! */
-    private float[] imageBufferB = null;
-
-    /** DOCUMENT ME! */
-    private boolean logMagDisplay = false;
 
     /** DOCUMENT ME! */
     private MemoryImageSource memImage;
@@ -178,6 +137,10 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
 
     /** DOCUMENT ME! */
     private String[] zString; // string for displaying slice number
+
+    /** PatientSlice contains all the Patient Coordinate system view-specific
+     * data for rendering this component: */
+    private PatientSlice m_kPatientSlice;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -249,261 +212,22 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
 
         setSize(Math.round(imageDim.width * resX), Math.round(imageDim.height * resY));
 
-
-        LUTa = _LUTa;
-        LUTb = _LUTb;
-        lutBufferRemapped = new int[1];
         alphaBlend = alphaBl;
-        alphaPrime = 1 - alphaBlend;
-
-        imageBufferA = imgBufferA;
-        imageBufferB = imgBufferB;
+        alphaBlend = frame.getAlphaBlend();
+        System.err.println( alphaBlend );
+        
         pixBuffer = pixelBuffer;
         paintBitmap = imageA.getMask();
-        imageBufferActive = imageBufferA;
-        this.logMagDisplay = logMagDisplay;
 
+        /* create the slice renderer for this orientation: */
+        m_kPatientSlice = new PatientSlice( imageA, _LUTa,
+                                            imageB, _LUTb,
+                                            FileInfoBase.UNKNOWN_ORIENT );
         setZoom(zoom, zoom);
         setVisible(true);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
-    /**
-     * For generating the display of 1 or 2 RGB images.
-     *
-     * @param   tSlice     t (time) slice to show
-     * @param   zSlice     z slice to show
-     * @param   forceShow  forces this method to import image and recalculate java image
-     *
-     * @return  boolean to indicate if the show was successful
-     */
-    public boolean buildImageObject(int tSlice, int zSlice, boolean forceShow) {
-        // Note that alphaBlending is applied with 1 component taken as zero if both components are not present -for
-        // example, if either imageA or imageB but not both has red, then the red component is alphaBlended with zero.
-
-        int j;
-        int bufferSize;
-        int offset;
-        int index;
-        int Ra, Ga, Ba, Rb, Gb, Bb;
-        int imageSize;
-        int pixValue;
-        float opacityPrime;
-        float redMapped, greenMapped, blueMapped;
-        int[] RGBIndexBufferA = new int[256];
-        int[] RGBIndexBufferB = new int[256];
-        float maxColorA = 255;
-        float maxColorB = 255;
-        float normColorB = 1;
-        float normColorA = 1;
-        int timeSliceA, timeSliceB;
-
-        bufferSize = imageA.getSliceSize() * 4;
-        imageSize = imageA.getSliceSize();
-
-        if (imageA.getType() != ModelStorageBase.ARGB) {
-            maxColorA = (float) imageA.getMaxR();
-            maxColorA = Math.max((float) imageA.getMaxG(), maxColorA);
-            maxColorA = Math.max((float) imageA.getMaxB(), maxColorA);
-        }
-
-        normColorA = 255 / maxColorA;
-
-        if ((imageB != null) && (imageB.getType() != ModelStorageBase.ARGB)) {
-            maxColorB = (float) imageB.getMaxR();
-            maxColorB = Math.max((float) imageB.getMaxG(), maxColorB);
-            maxColorB = Math.max((float) imageB.getMaxB(), maxColorB);
-        }
-
-        normColorB = 255 / maxColorB;
-
-        if (frame.getControls() != null) {
-            OPACITY = frame.getControls().getTools().getOpacity();
-        }
-
-        opacityPrime = 1 - OPACITY;
-        red = borderCol.getRed();
-        green = borderCol.getGreen();
-        blue = borderCol.getBlue();
-
-        // System.out.println(" RGBTA = " + RGBTA);
-        if (RGBTA != null) {
-            RGBIndexBufferA = RGBTA.exportIndexedRGB();
-        }
-
-        if ((imageB != null) && (RGBTB != null)) {
-            RGBIndexBufferB = RGBTB.exportIndexedRGB();
-        }
-
-        if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-            slice = zSlice;
-            timeSlice = tSlice;
-
-            if (imageA.getNDims() < 4) {
-                timeSliceA = 0;
-            } else {
-                timeSliceA = timeSlice;
-            }
-
-            if ((imageB != null) && (imageB.getNDims() < 4)) {
-                timeSliceB = 0;
-            } else {
-                timeSliceB = timeSlice;
-            }
-
-            int zDimSlices = 0;
-
-            if (imageA.getNDims() >= 3) {
-                zDimSlices = imageA.getExtents()[2];
-            }
-
-            try {
-                imageA.exportData(((timeSliceA * zDimSlices * bufferSize) + (zSlice * bufferSize)), bufferSize,
-                                  imageBufferA);
-
-                if (imageB != null) {
-                    imageB.exportData(((timeSliceB * zDimSlices * bufferSize) + (zSlice * bufferSize)), bufferSize,
-                                      imageBufferB);
-                }
-            } catch (IOException error) {
-                MipavUtil.displayError("" + error);
-
-                return false;
-            }
-        }
-
-        if (imageB == null) {
-            offset = zSlice * imageSize;
-
-            for (index = 0, j = 0; j < imageSize; index += 4, j++) {
-
-                if (RGBTA != null) {
-
-                    if (RGBTA.getROn()) {
-                        redMapped = (RGBIndexBufferA[(int) (imageBufferA[index + 1] * normColorA)] & 0x00ff0000) >> 16;
-                    } else {
-                        redMapped = 0;
-                    }
-
-                    if (RGBTA.getGOn()) {
-                        greenMapped = (RGBIndexBufferA[(int) (imageBufferA[index + 2] * normColorA)] & 0x0000ff00) >> 8;
-                    } else {
-                        greenMapped = 0;
-                    }
-
-                    if (RGBTA.getBOn()) {
-                        blueMapped = (RGBIndexBufferA[(int) (imageBufferA[index + 3] * normColorA)] & 0x000000ff);
-                    } else {
-                        blueMapped = 0;
-                    }
-                } // end of if (RGBTA != null)
-                else {
-                    redMapped = imageBufferA[index + 1] * normColorA;
-                    greenMapped = imageBufferA[index + 2] * normColorA;
-                    blueMapped = imageBufferA[index + 3] * normColorA;
-                }
-
-                if (paintBitmap.get(offset + j) == true) {
-                    pixValue = 0xff000000 |
-                                   (((int) ((redMapped * opacityPrime) + red) << 16) |
-                                        (((int) ((greenMapped * opacityPrime) + green) << 8) |
-                                             ((int) ((blueMapped * opacityPrime) + blue))));
-                    paintBuffer[j] = pixValue;
-                    pixBuffer[j] = 0xff000000 | ((int) redMapped << 16) | ((int) greenMapped << 8) | (int) blueMapped;
-                } // end of if (paintBitmap.get(offset+j) == true)
-                else {
-                    pixValue = 0xff000000 |
-                                   (((int) (redMapped) << 16) | (((int) (greenMapped) << 8) | ((int) (blueMapped))));
-                    paintBuffer[j] = pixBuffer[j] = pixValue;
-                }
-            }
-        } else {
-            offset = zSlice * imageSize;
-
-            for (index = 0, j = 0; j < imageSize; index += 4, j++) {
-
-                if ((RGBTA != null) && (RGBTB != null)) {
-
-                    if (RGBTA.getROn()) {
-                        Ra = (RGBIndexBufferA[(int) (imageBufferA[index + 1] * normColorA)] & 0x00ff0000) >> 16;
-                    } else {
-                        Ra = 0;
-                    }
-
-                    if (RGBTA.getGOn()) {
-                        Ga = (RGBIndexBufferA[(int) (imageBufferA[index + 2] * normColorA)] & 0x0000ff00) >> 8;
-                    } else {
-                        Ga = 0;
-                    }
-
-                    if (RGBTA.getBOn()) {
-                        Ba = (RGBIndexBufferA[(int) (imageBufferA[index + 3] * normColorA)] & 0x000000ff);
-                    } else {
-                        Ba = 0;
-                    }
-
-
-                    if (RGBTB.getROn()) {
-                        Rb = (RGBIndexBufferB[(int) (imageBufferB[index + 1] * normColorB)] & 0x00ff0000) >> 16;
-                    } else {
-                        Rb = 0;
-                    }
-
-                    if (RGBTB.getGOn()) {
-                        Gb = (RGBIndexBufferB[(int) (imageBufferB[index + 2] * normColorB)] & 0x0000ff00) >> 8;
-                    } else {
-                        Gb = 0;
-                    }
-
-                    if (RGBTB.getBOn()) {
-                        Bb = (RGBIndexBufferB[(int) (imageBufferB[index + 3] * normColorB)] & 0x000000ff);
-                    } else {
-                        Bb = 0;
-                    }
-                } else {
-                    Ra = (int) (imageBufferA[index + 1] * normColorA);
-                    Ga = (int) (imageBufferA[index + 2] * normColorA);
-                    Ba = (int) (imageBufferA[index + 3] * normColorA);
-
-                    Rb = (int) (imageBufferB[index + 1] * normColorB);
-                    Gb = (int) (imageBufferB[index + 2] * normColorB);
-                    Bb = (int) (imageBufferB[index + 3] * normColorB);
-                }
-
-                if ((Rb == 0) && (Gb == 0) && (Bb == 0)) {
-                    Ra = (int) (Ra);
-                    Ga = (int) (Ga);
-                    Ba = (int) (Ba);
-                } else if ((Ra == 0) && (Ga == 0) && (Ba == 0)) {
-                    Ra = (int) (Rb);
-                    Ga = (int) (Gb);
-                    Ba = (int) (Bb);
-                } else {
-                    Ra = (int) ((Ra * alphaBlend) + (Rb * alphaPrime));
-                    Ga = (int) ((Ga * alphaBlend) + (Gb * alphaPrime));
-                    Ba = (int) ((Ba * alphaBlend) + (Bb * alphaPrime));
-                }
-
-                if (paintBitmap.get(offset + j) == true) {
-                    pixValue = 0xff000000 |
-                                   (((int) ((Ra * opacityPrime) + red) << 16) |
-                                        (((int) ((Ga * opacityPrime) + green) << 8) |
-                                             ((int) ((Ba * opacityPrime) + blue))));
-                    paintBuffer[j] = pixValue;
-                    pixBuffer[j] = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                } // end of if (paintBitmap.get(offset+j) == true)
-                else {
-                    pixValue = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                    paintBuffer[j] = pixBuffer[j] = pixValue;
-                }
-            }
-        }
-
-        importImage(paintBuffer);
-
-        return true;
-    }
 
     /**
      * Shows the image.
@@ -518,203 +242,21 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      */
     public boolean buildImageObject(int tSlice, int zSlice, ModelLUT _LUTa, ModelLUT _LUTb, boolean forceShow) {
 
-        float imageMinB = 0, imageMaxB = 0;
-        int xDim, yDim;
-        int bufferSize;
-        int lutHeightA = 0;
-        int index;
-        int indexA, indexB;
-        float[][] RGB_LUTa = null, RGB_LUTb = null;
-        int[][] iRGB_LUTa = null, iRGB_LUTb = null;
-        int Ra, Ga, Ba, Rb, Gb, Bb;
-        int pix;
-        float opacityPrime;
-        int j;
-
-        int timeSliceA, timeSliceB;
-
-        if (imageA.isColorImage()) {
-
-            // call the show method for displaying RGB images
-            return (buildImageObject(tSlice, zSlice, forceShow));
+        if (interpMode > -1) {
+            setInterpolationMode(interpMode);
         }
 
-        if (imageA == null) {
-            return false;
-        }
-
-        if ((LUTa == null) && (_LUTb == null)) {
-            return false;
-        }
-
-        if (_LUTa != null) {
-            LUTa = _LUTa;
-        }
-
-        if ((imageB != null) && (_LUTb != null)) {
-            LUTb = _LUTb;
-        }
-
-        lutHeightA = LUTa.getExtents()[1];
-
-        xDim = imageA.getExtents()[0];
-        yDim = imageA.getExtents()[1];
-        zDim = imageA.getExtents()[2];
-
-        if (lutHeightA != lutBufferRemapped.length) {
-
-            try {
-                lutBufferRemapped = new int[lutHeightA];
-            } catch (OutOfMemoryError error) {
-                System.gc();
-                MipavUtil.displayError("Out of memory: ViewJComponentEditAnimate.buildImageObject");
-
-                return false;
+        m_kPatientSlice.setLUTa( _LUTa );
+        m_kPatientSlice.setLUTb( _LUTb );
+        m_kPatientSlice.updateSlice( zSlice );
+        slice = zSlice;
+        if ( !ignoreSlice[slice] )
+        {
+            if ( m_kPatientSlice.showUsingOrientation( tSlice, paintBuffer, null, forceShow, true, alphaBlend, false ) )
+            {
+                importImage(paintBuffer);
             }
         }
-
-        if (imageB == null) {
-            LUTa.exportIndexedLUT(lutBufferRemapped);
-        }
-
-        bufferSize = xDim * yDim;
-
-        if (imageB != null) {
-            RGB_LUTa = LUTa.exportRGB_LUT(true);
-            RGB_LUTb = LUTb.exportRGB_LUT(true);
-            iRGB_LUTa = new int[3][RGB_LUTa[0].length];
-            iRGB_LUTb = new int[3][RGB_LUTb[0].length];
-
-            for (int c = 0; c < RGB_LUTa[0].length; c++) {
-                iRGB_LUTa[0][c] = (int) ((RGB_LUTa[0][c] * alphaBlend) + 0.5f);
-                iRGB_LUTb[0][c] = (int) ((RGB_LUTb[0][c] * alphaPrime) + 0.5f);
-                iRGB_LUTa[1][c] = (int) ((RGB_LUTa[1][c] * alphaBlend) + 0.5f);
-                iRGB_LUTb[1][c] = (int) ((RGB_LUTb[1][c] * alphaPrime) + 0.5f);
-                iRGB_LUTa[2][c] = (int) ((RGB_LUTa[2][c] * alphaBlend) + 0.5f);
-                iRGB_LUTb[2][c] = (int) ((RGB_LUTb[2][c] * alphaPrime) + 0.5f);
-            }
-        } // if (imageB != null)
-
-        if (frame.getControls() != null) {
-            OPACITY = frame.getControls().getTools().getOpacity();
-        }
-
-        opacityPrime = 1 - OPACITY;
-        red = borderCol.getRed();
-        green = borderCol.getGreen();
-        blue = borderCol.getBlue();
-
-        if ((slice != zSlice) || (timeSlice != tSlice) || (forceShow == true)) {
-            slice = zSlice;
-            timeSlice = tSlice;
-
-            if (imageA.getNDims() < 4) {
-                timeSliceA = 0;
-            } else {
-                timeSliceA = timeSlice;
-            }
-
-            if ((imageB != null) && (imageB.getNDims() < 4)) {
-                timeSliceB = 0;
-            } else {
-                timeSliceB = timeSlice;
-            }
-
-            int zDimSlices = 0;
-
-            if (imageA.getNDims() >= 3) {
-                zDimSlices = imageA.getExtents()[2];
-            }
-
-            try {
-
-                // if (imageA.getType() == ModelStorageBase.DCOMPLEX)
-                // imageA.ExportDComplexSliceXY(timeSliceA*zDimSlices + slice,imageBufferA, logMagDisplay);
-                if (imageA.getType() == ModelStorageBase.COMPLEX) {
-                    imageA.exportComplexSliceXY((timeSliceA * zDimSlices) + slice, imageBufferA, logMagDisplay);
-                } else {
-                    imageA.exportSliceXY((timeSliceA * zDimSlices) + slice, imageBufferA);
-                }
-
-                if (imageB != null) {
-
-                    // if (imageB.getType() == ModelStorageBase.DCOMPLEX)
-                    // imageB.exportDComplexSliceXY(timeSliceB*zDimSlices + slice,imageBufferB, logMagDisplay);
-                    if (imageB.getType() == ModelStorageBase.COMPLEX) {
-                        imageB.exportComplexSliceXY((timeSliceB * zDimSlices) + slice, imageBufferB, logMagDisplay);
-                    } else {
-                        imageB.exportSliceXY((timeSliceB * zDimSlices) + slice, imageBufferB);
-                    }
-                }
-            } catch (IOException error) {
-                MipavUtil.displayError("" + error); // Need to fix this
-
-                return false;
-            }
-        }
-
-        if (imageB == null) {
-            int offset = zSlice * bufferSize;
-            int value;
-            pix = 0;
-
-            TransferFunction tf_imgA = LUTa.getTransferFunction();
-
-            for (index = 0; index < bufferSize; index++) {
-                pix = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-
-                if (paintBitmap.get(offset + index) == true) {
-                    value = lutBufferRemapped[pix];
-                    Ra = (value & 0x00ff0000) >> 16;
-                    Ga = (value & 0x0000ff00) >> 8;
-                    Ba = (value & 0x000000ff);
-                    value = 0xff000000 |
-                                (((int) ((Ra * opacityPrime) + red) << 16) |
-                                     (((int) ((Ga * opacityPrime) + green) << 8) |
-                                          ((int) ((Ba * opacityPrime) + blue))));
-                    paintBuffer[index] = value;
-                    pixBuffer[index] = lutBufferRemapped[pix];
-                } else {
-                    paintBuffer[index] = pixBuffer[index] = lutBufferRemapped[pix];
-                }
-            }
-        } else {
-            int offset = zSlice * bufferSize;
-            indexA = indexB = 0;
-
-            TransferFunction tf_imgA = LUTa.getTransferFunction();
-            TransferFunction tf_imgB = LUTb.getTransferFunction();
-
-            for (index = 0; index < bufferSize; index++) {
-                indexA = (int) (tf_imgA.getRemappedValue(imageBufferA[index], 256) + 0.5f);
-                indexB = (int) (tf_imgB.getRemappedValue(imageBufferB[index], 256) + 0.5f);
-
-                Ra = iRGB_LUTa[0][indexA];
-                Rb = iRGB_LUTb[0][indexB];
-                Ga = iRGB_LUTa[1][indexA];
-                Gb = iRGB_LUTb[1][indexB];
-                Ba = iRGB_LUTa[2][indexA];
-                Bb = iRGB_LUTb[2][indexB];
-
-                Ra = (Ra + Rb);
-                Ga = (Ga + Gb);
-                Ba = (Ba + Bb);
-
-                if (paintBitmap.get(offset + index) == true) {
-                    pix = 0xff000000 |
-                              (((int) ((Ra * opacityPrime) + red) << 16) |
-                                   (((int) ((Ga * opacityPrime) + green) << 8) | ((int) ((Ba * opacityPrime) + blue))));
-                    paintBuffer[index] = pix;
-                    pixBuffer[index] = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                } else {
-                    pix = 0xff000000 | (Ra << 16) | (Ga << 8) | Ba;
-                    paintBuffer[index] = pixBuffer[index] = pix;
-                }
-            }
-        }
-
-        importImage(paintBuffer);
-
         return true;
     }
 
@@ -735,14 +277,10 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      */
     public void dispose(boolean gcFlag) {
 
-        lutBufferRemapped = null;
-        imageBufferA = null;
-        imageBufferB = null;
         pixBuffer = null;
         paintBuffer = null;
         paintBitmap = null;
         imageActive = null;
-        imageBufferActive = null;
         frame = null;
 
         if (disposeImage) {
@@ -770,9 +308,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
 
             img = null;
         }
-
-        LUTa = null;
-        LUTb = null;
 
         if (gcFlag == true) {
             System.gc();
@@ -1024,15 +559,40 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
             }
 
             if (img != null) {
+                if ((paintImageBuffer == null) || (paintImageBuffer.length != (imageDim.width * imageDim.height))) {
+                    paintImageBuffer = new int[imageDim.width * imageDim.height]; // make the buffer that will hold the
+                    // paint
+                } else {
+                    Arrays.fill(paintImageBuffer, 0); // ensure erasure of old image, otherwise ghosting occurs
+                }
+                // build the paint image that will be blended on-screen
+                makePaintImage(paintImageBuffer, paintBitmap, slice, frame, (imageA.getNDims() < 3));
+                if (Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)) {
+                    makePaintBitmapBorder(paintImageBuffer, paintBitmap, slice, frame);
+                }
+
+                int zoomedWidth = Math.round(zoomX * img[slice].getWidth(this) * resX);
+                int zoomedHeight = Math.round(zoomY * img[slice].getHeight(this) * resY);
+
                 g.setClip(getVisibleRect());
 
                 if (((zoomX * resX) != 1.0f) || ((zoomY * resY) != 1.0f)) {
-                    g.drawImage(img[slice], 0, 0, (int) ((zoomX * imageDim.width * resX) + 0.5),
-                                (int) ((zoomY * imageDim.height * resY) + 0.5), 0, 0, imageDim.width, imageDim.height,
-                                this);
+                    g.drawImage(img[slice], 0, 0, (int) (zoomedWidth + 0.5), (int) (zoomedHeight + 0.5),
+                                0, 0, imageDim.width, imageDim.height, this);
                 } else {
                     g.drawImage(img[slice], 0, 0, this);
                 }
+                
+                memImage = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
+                Image paintImage = createImage(memImage); // the image representing the paint mask
+                // change rendering hint back from BILINEAR to nearest neighbor so that
+                // all other painting will not be in interpolated mode
+//                 g.setRenderingHints(new RenderingHints(RenderingHints.KEY_INTERPOLATION,
+//                                                        RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR));
+//                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
+                g.drawImage(paintImage, 0, 0, zoomedWidth, zoomedHeight, 0, 0, img[slice].getWidth(this),
+                            img[slice].getHeight(this), null);
+
 
                 if (showNumbers) {
                     g.setFont(MipavUtil.font12);
@@ -1082,7 +642,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      */
     public void setAlphaBlend(int value) {
         alphaBlend = value / 100.0f;
-        alphaPrime = 1 - alphaBlend;
     }
 
     /**
@@ -1091,7 +650,9 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      * @param  borderCol  border color surounding each z slice
      */
     public void setBorderCol(Color borderCol) {
-        this.borderCol = borderCol;
+        red = borderCol.getRed();
+        green = borderCol.getGreen();
+        blue = borderCol.getBlue();
     }
 
     /**
@@ -1105,7 +666,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
         this.brightness = brightness;
         this.contrast = contrast;
         haveFiltered = true;
-        curSlice = slice;
+        int curSlice = slice;
 
         for (i = 0; ((i < zDim) && (!ignoreSlice[i])); i++) {
             buildImageObject(0, i, null, null, true);
@@ -1127,11 +688,9 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      */
     public void setBuffers(float[] imgBufferA, float[] imgBufferB, int[] pixBuff, int[] paintBuff) {
 
-        imageBufferA = imgBufferA;
-        imageBufferB = imgBufferB;
         pixBuffer = pixBuff;
         paintBuffer = paintBuff;
-        imageBufferActive = imageBufferA;
+        m_kPatientSlice.setBuffers( imgBufferA, imgBufferB );
     }
 
 
@@ -1241,7 +800,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      * @param  RGBT  RGB table
      */
     public void setRGBTA(ModelRGB RGBT) {
-        RGBTA = RGBT;
+        m_kPatientSlice.setRGBTA(RGBT);
     }
 
     /**
@@ -1250,7 +809,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      * @param  RGBT  RGB table
      */
     public void setRGBTB(ModelRGB RGBT) {
-        RGBTB = RGBT;
+        m_kPatientSlice.setRGBTB(RGBT);
     }
 
     /**
@@ -1269,6 +828,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      */
     public void setSlice(int _slice) {
         slice = _slice;
+        m_kPatientSlice.updateSlice(slice);
     }
 
     /**

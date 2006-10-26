@@ -3497,6 +3497,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     }
 
     /**
+     * Returns the alphaBlend value for blending between imageA and imageB
+     * @return the alphaBlend value for blending between imageA and imageB
+     */
+    public float getAlphaBlend()
+    {
+        if (componentImage != null) {
+            return componentImage.getAlphaBlend();
+        }
+        return 0.5f;
+    }
+
+
+    /**
      * DOCUMENT ME!
      *
      * @param   image2load  DOCUMENT ME!
