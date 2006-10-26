@@ -467,7 +467,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** DICOM images have a rescale slope value that we have also kept in the base. */
     private double rescaleSlope = 1.0;
 
-    /** The spacing between slices. Only appears in DICOM (TAG = 0018, 0088) and MIPAV (XML) file formats. */
+    /** The spacing between slices. Only appears in DICOM (TAG = 0018, 0088), GESigma4X, Minc and MIPAV (XML) file formats. */
     private float sliceSpacing = 0;
 
     /** Transform ID associated with the matrix. */

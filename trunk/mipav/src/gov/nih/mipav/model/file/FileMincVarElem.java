@@ -45,8 +45,8 @@ public class FileMincVarElem extends ModelSerialCloneable {
     /** DOCUMENT ME! */
     public int nelems;
 
-    /** DOCUMENT ME! */
-    public double resolution;
+    /** in zspace, step == slice gap, not necessarily slice thickness */
+    public double step;
 
     /** DOCUMENT ME! */
     public String signtype;
@@ -129,7 +129,7 @@ public class FileMincVarElem extends ModelSerialCloneable {
 
                 units = s.trim();
             } else if (elem.name.equals("step")) {
-                resolution = ((Double) value).doubleValue();
+                step = ((Double) value).doubleValue();
             } else if (elem.name.equals("start")) {
                 start = ((Double) value).doubleValue();
                 trueStart = start;
@@ -198,7 +198,7 @@ public class FileMincVarElem extends ModelSerialCloneable {
         elem.vsize = this.vsize;
         elem.begin = this.begin;
         elem.values = (Vector) this.values.clone();
-        elem.resolution = this.resolution;
+        elem.step = this.step;
         elem.start = this.start;
         elem.trueStart = this.trueStart;
         elem.signtype = this.signtype;
