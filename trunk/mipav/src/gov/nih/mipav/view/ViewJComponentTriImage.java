@@ -555,13 +555,30 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
      * @return  the point translated into the image volume
      */
     public final Point3D getVolumePosition(int x, int y, int z) {
-        Point3Df volumePt = new Point3Df();
-        MipavCoordinateSystems.PatientToFile( new Point3Df( x, y, z ),
-                                              volumePt, imageActive, orientation );
+        Point3Df volumePt = getVolumePosition( (float)x, (float)y, (float)z );
         Point3D returnPt = new Point3D( (int)volumePt.x,
                                         (int)volumePt.y,
                                         (int)volumePt.z );
         return returnPt;
+    }
+
+
+    /**
+     * Translate a point on the x-y tri-image component into image volume
+     * space. Assumes input parameters have zoom and voxel resolution already
+     * factored out.
+     *
+     * @param   x  x value of the point within the component
+     * @param   y  y value of the point within the component
+     * @param   z  the z coordinate ( usually == slice ) (the out-of-component dimension)
+     *
+     * @return  the point translated into the image volume
+     */
+    public final Point3Df getVolumePosition(float x, float y, float z) {
+        Point3Df volumePt = new Point3Df();
+        MipavCoordinateSystems.PatientToFile( new Point3Df( x, y, z ),
+                                              volumePt, imageActive, orientation );
+        return volumePt;
     }
 
 
@@ -940,7 +957,6 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             MipavCoordinateSystems.PatientToFile( patientMousePoint, m_kVolumePoint,
                                                   imageActive, orientation );
             triImageFrame.setCenter( (int)m_kVolumePoint.x, (int)m_kVolumePoint.y, (int)m_kVolumePoint.z );
-
             if (mode == DEFAULT)
             {
                 return;
