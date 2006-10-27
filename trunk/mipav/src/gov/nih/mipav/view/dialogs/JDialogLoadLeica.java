@@ -22,9 +22,6 @@ import javax.swing.*;
  * remove or to cancel. Allows 3D or 4D images; 2D images would not make sense with this operation.**(as of 25 Oct, does
  * not yet rename removed slice image when saving)**(as of 1 November, does not yet process the more complicated DICOM
  * images completely.
- *
- * @author   David Parsons (parsonsd@cbel.cit.nih.gov) (with vast help from M.McAuliffe)
- * @version  v0.12 1 Nov 1999 (processes most images)
  */
 public class JDialogLoadLeica extends JDialogBase {
 
@@ -47,10 +44,18 @@ public class JDialogLoadLeica extends JDialogBase {
     /** DOCUMENT ME! */
     private boolean successful = false; // indicates status of algorithm
 
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Creates a new JDialogLoadLeica object.
+     *
+     * @param  headerFile  DOCUMENT ME!
+     */
+    public JDialogLoadLeica(File headerFile) {
+        super(false);
+        this.headerFile = headerFile;
+        init();
+    }
 
     /**
      * Creates a new JDialogLoadLeica object.
@@ -60,20 +65,6 @@ public class JDialogLoadLeica extends JDialogBase {
      */
     public JDialogLoadLeica(Frame theParentFrame, File headerFile) {
         super(theParentFrame, false);
-        userInterface = ViewUserInterface.getReference();
-        this.headerFile = headerFile;
-        init();
-    }
-
-    /**
-     * Creates a new JDialogLoadLeica object.
-     *
-     * @param  UI          DOCUMENT ME!
-     * @param  headerFile  DOCUMENT ME!
-     */
-    public JDialogLoadLeica(ViewUserInterface UI, File headerFile) {
-        super(false);
-        userInterface = UI;
         this.headerFile = headerFile;
         init();
     }
@@ -411,7 +402,7 @@ public class JDialogLoadLeica extends JDialogBase {
                 tempPath = (String) series.getFileNames().elementAt(0);
                 tempDir = tempPath.substring(0, tempPath.lastIndexOf(File.separator) + 1);
                 tempName = tempPath.substring(tempPath.lastIndexOf(File.separator) + 1, tempPath.length());
-                tempTiff = new FileTiff(userInterface, tempName, tempDir);
+                tempTiff = new FileTiff(tempName, tempDir);
 
                 image = tempTiff.readImage(false, false);
                 lut = tempTiff.getModelLUT();
@@ -421,7 +412,7 @@ public class JDialogLoadLeica extends JDialogBase {
                 image.getFileInfo()[0].setUnitsOfMeasure(FileInfoBase.MICROMETERS, 0);
                 image.setImageName(series.getName());
             } else {
-                tempTiff = new FileTiff(userInterface, "", "");
+                tempTiff = new FileTiff("", "");
                 image = tempTiff.readLeicaSeries(series);
             }
 
