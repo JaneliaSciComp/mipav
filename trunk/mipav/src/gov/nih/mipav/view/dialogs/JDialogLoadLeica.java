@@ -199,7 +199,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
                     String unitsStr = currentLine.substring(currentLine.indexOf("[") + 1, currentLine.indexOf("]"));
 
-                    if (unitsStr.equalsIgnoreCase("µm")) {
+                    //if (unitsStr.equalsIgnoreCase("µm")) {
+                    if (unitsStr.equalsIgnoreCase("\u00B5" + "m")) {
                         units[0] = FileInfoBase.MICROMETERS;
                     }
 
@@ -210,7 +211,8 @@ public class JDialogLoadLeica extends JDialogBase {
 
                     String unitsStr = currentLine.substring(currentLine.indexOf("[") + 1, currentLine.indexOf("]"));
 
-                    if (unitsStr.equalsIgnoreCase("µm")) {
+                    //if (unitsStr.equalsIgnoreCase("µm")) {
+                    if (unitsStr.equalsIgnoreCase("\u00B5" + "m")) {
                         units[1] = FileInfoBase.MICROMETERS;
                     }
 
@@ -229,7 +231,8 @@ public class JDialogLoadLeica extends JDialogBase {
                         String unitsStr = currentLine.substring(currentLine.indexOf("[") + 1, currentLine.indexOf("]"));
                         currentLine = currentLine.substring(currentLine.indexOf("]") + 1, currentLine.length()).trim();
 
-                        if (unitsStr.equalsIgnoreCase("µm")) {
+                        //if (unitsStr.equalsIgnoreCase("µm")) {
+                        if (unitsStr.equalsIgnoreCase("\u00B5" + "m")) {
                             units[2] = FileInfoBase.MICROMETERS;
                         }
 
