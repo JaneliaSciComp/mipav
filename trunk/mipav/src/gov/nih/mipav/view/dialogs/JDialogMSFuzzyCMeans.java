@@ -634,19 +634,8 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
                 for (i = 0; i < nClasses; i++) {
                     String name = makeImageName(srcImage[0].getImageName(), "_class" + (i + 1));
 
-                    if (srcImage[0].getType() == ModelStorageBase.ARGB) {
-                        resultImage[presentNumber++] = new ModelImage(ModelStorageBase.UBYTE, destExtents, name,
-                                                                      userInterface);
-                    } else if (srcImage[0].getType() == ModelStorageBase.ARGB_USHORT) {
-                        resultImage[presentNumber++] = new ModelImage(ModelStorageBase.USHORT, destExtents, name,
-                                                                      userInterface);
-                    } else if (srcImage[0].getType() == ModelStorageBase.ARGB_FLOAT) {
-                        resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents, name,
-                                                                      userInterface);
-                    } else {
-                        resultImage[presentNumber++] = new ModelImage(srcImage[0].getType(), destExtents, name,
-                                                                      userInterface);
-                    }
+                    resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents, name,
+                                                                  userInterface);
                 }
                 /* if (outputGainField) {
                  *  resultImage[presentNumber++] = new ModelImage(ModelStorageBase.FLOAT, destExtents,
