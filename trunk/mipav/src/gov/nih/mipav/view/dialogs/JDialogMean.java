@@ -494,10 +494,6 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            meanAlgo.setProgressBarVisible(false);
-                        }
-
                         meanAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -552,10 +548,6 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            meanAlgo.setProgressBarVisible(false);
-                        }
-
                         meanAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -615,10 +607,6 @@ public class JDialogMean extends JDialogScriptableBase implements AlgorithmInter
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            meanAlgo.setProgressBarVisible(false);
-                        }
-
                         meanAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

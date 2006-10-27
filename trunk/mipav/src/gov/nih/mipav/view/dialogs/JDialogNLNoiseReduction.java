@@ -352,11 +352,6 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            nlnrAlgo.setProgressBarVisible(false);
-                        }
-
                         nlnrAlgo.run();
                     }
 
@@ -409,11 +404,6 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            nlnrAlgo.setProgressBarVisible(false);
-                        }
-
                         nlnrAlgo.run();
                     }
 
@@ -467,11 +457,6 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            nlnrAlgo.setProgressBarVisible(false);
-                        }
-
                         nlnrAlgo.run();
                     }
 
@@ -523,11 +508,6 @@ public class JDialogNLNoiseReduction extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            nlnrAlgo.setProgressBarVisible(false);
-                        }
-
                         nlnrAlgo.run();
                     }
 

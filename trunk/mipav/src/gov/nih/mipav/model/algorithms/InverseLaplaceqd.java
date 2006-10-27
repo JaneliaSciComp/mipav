@@ -183,7 +183,6 @@ public abstract class InverseLaplaceqd {
         }
 
         fft = new FFTUtility(fftR, fftI, 1, N, 1, -1, FFTUtility.FFT);
-        fft.setProgressBarVisible(false);
         fft.run();
         fft.finalize();
         fft = null;

@@ -451,8 +451,6 @@ public class FileIO {
         AlgorithmSubsample algorithmSubsample = new AlgorithmSubsample(modelImage, modelImageResult, subsampledExtents,
                                                                        new float[] { 1.0f, 1.0f, 1.0f }, false, false,
                                                                        null);
-
-        algorithmSubsample.setProgressBarVisible(false);
         algorithmSubsample.run();
 
         modelImage.disposeLocal(false);
@@ -8643,7 +8641,6 @@ public class FileIO {
                 AlgorithmChangeType convertType = new AlgorithmChangeType(newImage, ModelImage.SHORT, newImage.getMin(),
                                                                           newImage.getMax(), newImage.getMin(),
                                                                           newImage.getMax(), false);
-                convertType.setProgressBarVisible(false);
                 convertType.run();
 
                 image = newImage;

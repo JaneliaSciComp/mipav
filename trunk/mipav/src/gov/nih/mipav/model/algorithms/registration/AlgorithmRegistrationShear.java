@@ -532,7 +532,6 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                 return;
             }
 
-            algoTrans.setProgressBarVisible(false);
             fireProgressStateChanged("Resampling imageB to match imageA dims and resolutions");
             algoTrans.run();
             resampledImageB = algoTrans.getTransformedImage();
@@ -593,7 +592,6 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
             // Make algorithm
             gaussianBlurAlgo = new AlgorithmGaussianBlur(blurredImageA, imageA, sigmas, true, false);
-            gaussianBlurAlgo.setProgressBarVisible(false);
             gaussianBlurAlgo.run();
         } catch (OutOfMemoryError x) {
             cleanup();
@@ -703,7 +701,6 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                 gaussianBlurAlgo = new AlgorithmGaussianBlur(blurredImageB, imageB, sigmas, true, false);
             }
 
-            gaussianBlurAlgo.setProgressBarVisible(false);
             gaussianBlurAlgo.run();
         } catch (OutOfMemoryError x) {
             cleanup();
@@ -855,7 +852,6 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
         blurredA = null;
 
         gaussianBlurAlgo = new AlgorithmGaussianBlur(null, blurredImageW, sigmas, true, false);
-        gaussianBlurAlgo.setProgressBarVisible(false);
         gaussianBlurAlgo.run();
 
         // Now blurredImageW = blur(blur(imageA) + shift(blur(imageB)))
@@ -894,7 +890,6 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                 gaussianBlurAlgo = new AlgorithmGaussianBlur(blurredImageB, imageB, sigmas, true, false);
             }
 
-            gaussianBlurAlgo.setProgressBarVisible(false);
             gaussianBlurAlgo.run();
         } catch (OutOfMemoryError x) {
             cleanup();
@@ -1038,19 +1033,16 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                 case 1:
 
                     AlgorithmInverseOrder inverseOrderAlgo = new AlgorithmInverseOrder(vol);
-                    inverseOrderAlgo.setProgressBarVisible(false);
                     inverseOrderAlgo.run();
                     break;
 
                 case 2:
                     flipAlgo = new AlgorithmFlip(vol, AlgorithmFlip.Y_AXIS);
-                    flipAlgo.setProgressBarVisible(false);
                     flipAlgo.run();
                     break;
 
                 case 3:
                     flipAlgo = new AlgorithmFlip(vol, AlgorithmFlip.X_AXIS);
-                    flipAlgo.setProgressBarVisible(false);
                     flipAlgo.run();
                     break;
 
@@ -3489,7 +3481,6 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
             // Make algorithm
             gaussianBlurAlgo = new AlgorithmGaussianBlur(null, imageW, sigmas, true, false);
-            gaussianBlurAlgo.setProgressBarVisible(false);
             gaussianBlurAlgo.run();
             // #endif
 
@@ -4351,7 +4342,6 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
 
                     AlgorithmAddMargins imageMarginsAlgo = new AlgorithmAddMargins(vol, vvv, 0.0, rotpx, rotpy, rotpz,
                                                                                    rotpz);
-                    imageMarginsAlgo.setProgressBarVisible(false);
 
                     // when using the local-buffer method of the algorithm,  false is default
                     // imageMarginsAlgo.performCopiesWithBuffers(usingBuffer.isSelected());
@@ -4398,7 +4388,6 @@ public class AlgorithmRegistrationShear extends AlgorithmBase {
                     zBounds[1] = nz + rotpz - 1;
 
                     AlgorithmCrop cropAlgo = new AlgorithmCrop(vol, vvv, 0, xBounds, yBounds, zBounds);
-                    cropAlgo.setProgressBarVisible(false);
                     cropAlgo.run();
                 } catch (OutOfMemoryError x) {
                     cleanup();

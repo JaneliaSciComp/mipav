@@ -305,7 +305,6 @@ public class AlgorithmNonparametricSegmentation extends AlgorithmBase {
             smoothSigmas[0] = 0.6f;
             smoothSigmas[1] = 0.6f;
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, true, false);
-            gaussAlgo.setProgressBarVisible(false);
             gaussAlgo.run();
             gaussAlgo.finalize();
             gaussAlgo = null;
@@ -771,7 +770,6 @@ loop1:
             smoothSigmas[1] = 0.6f;
             smoothSigmas[2] = 0.6f;
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, true, false);
-            gaussAlgo.setProgressBarVisible(false);
             gaussAlgo.run();
             gaussAlgo.finalize();
             gaussAlgo = null;
@@ -1224,7 +1222,6 @@ loop1:
             image2.importData(0, buffer, true);
 
             lapAlgo = new AlgorithmLaplacian(image2, lapSigmas, wholeImage, image25D, ampFactor);
-            lapAlgo.setProgressBarVisible(false);
             lapAlgo.run();
             lapAlgo.finalize();
             lapAlgo = null;
@@ -1270,7 +1267,6 @@ loop1:
             smoothSigmas[0] = 0.6f;
             smoothSigmas[1] = 0.6f;
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, true, false);
-            gaussAlgo.setProgressBarVisible(false);
             gaussAlgo.run();
             gaussAlgo.finalize();
             gaussAlgo = null;

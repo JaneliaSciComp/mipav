@@ -332,9 +332,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             gBuffer[i] = 1 / (1 + pBuffer[i]);
         }
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(2);
-        }
+        fireProgressStateChanged(2);
 
         // Adjust beta after the first trial run thru.
         beta = 1.0f;
@@ -351,9 +349,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         pBuffer = null;
         System.gc();
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(4);
-        }
+        fireProgressStateChanged(4);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
             yPos = i / xDim;
@@ -395,9 +391,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             }
         }
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(6);
-        }
+        fireProgressStateChanged(6);
 
         c13max = -Double.MAX_VALUE;
         c2max = -Double.MAX_VALUE;
@@ -471,10 +465,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         long startTime = System.currentTimeMillis();
 
         for (n = 0; (n < iterations) && !threadStopped && haveChanged; n++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(10 + Math.round((float) n / (iterations - 1) * 90));
-            }
+            fireProgressStateChanged(10 + Math.round((float) n / (iterations - 1) * 90));
 
             c13max = -Double.MAX_VALUE;
             c2max = -Double.MAX_VALUE;
@@ -745,7 +736,6 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage, mask, xDim, yDim, zDim,
                                                                                      voiID);
 
-        algoPaintToVOI.setProgressBarVisible(false);
         algoPaintToVOI.run();
         algoPaintToVOI = null;
 
@@ -882,10 +872,8 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         for (i = 0; i < length; i++) {
             gBuffer[i] = 1 / (1 + pBuffer[i]);
         }
-
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(2);
-        }
+        
+        fireProgressStateChanged(2);
 
         // Adjust beta after the first trial run thru.
         beta = 1.0f;
@@ -904,9 +892,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         pBuffer = null;
         System.gc();
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(4);
-        }
+        fireProgressStateChanged(4);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
             zPos = i / sliceSize;
@@ -948,10 +934,8 @@ public class AlgorithmLevelSet extends AlgorithmBase {
                 }
             }
         }
-
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(6);
-        }
+        
+        fireProgressStateChanged(6);
 
         c13max = -Double.MAX_VALUE;
         c2max = -Double.MAX_VALUE;
@@ -1035,10 +1019,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         beta = (float) (edgeAttract * c13max / c2max);
 
         for (n = 0; (n < iterations) && !threadStopped && haveChanged; n++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(10 + Math.round((float) n / (iterations - 1) * 90));
-            }
+            fireProgressStateChanged(10 + Math.round((float) n / (iterations - 1) * 90));
 
             c13max = -Double.MAX_VALUE;
             c2max = -Double.MAX_VALUE;
@@ -1330,7 +1311,6 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage, mask, xDim, yDim, zDim,
                                                                                      voiID);
 
-        algoPaintToVOI.setProgressBarVisible(false);
         algoPaintToVOI.run();
         algoPaintToVOI = null;
 

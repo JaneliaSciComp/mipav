@@ -345,14 +345,10 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         }
 
         for (int iStep = 1; (iStep <= iMaxStep) && !threadStopped; iStep++) {
-
-            if (isProgressBarVisible()) {
-
-                if (secondStageErosion) {
-                    fireProgressStateChanged(Math.round((iStep * 100.0f) / 800 * 25));
-                } else {
-                    fireProgressStateChanged(Math.round((iStep * 100.0f) / 800 * 50));
-                }
+            if (secondStageErosion) {
+                fireProgressStateChanged(Math.round((iStep * 100.0f) / 800 * 25));
+            } else {
+                fireProgressStateChanged(Math.round((iStep * 100.0f) / 800 * 50));
             }
 
             for (i = 1; i <= iMaxUpdate; i++) {
@@ -372,7 +368,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
-            if (((i % 100) == 0) && isProgressBarVisible()) {
+            if (((i % 100) == 0)) {
 
                 if (secondStageErosion) {
                     fireProgressStateChanged(Math.round((25 + (((float) (i)) / iMaxUpdate * 25))));
@@ -409,10 +405,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
 
             for (int iStep = 1; (iStep <= iMaxStep) && !threadStopped; iStep++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round(50 + ((iStep * 100.0f) / 800 * 25)));
-                }
+                fireProgressStateChanged(Math.round(50 + ((iStep * 100.0f) / 800 * 25)));
 
                 for (i = 1; i <= iMaxUpdate; i++) {
                     updateMesh();
@@ -435,7 +428,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
-                if (((i % 100) == 0) && isProgressBarVisible()) {
+                if (((i % 100) == 0)) {
                     fireProgressStateChanged(Math.round((75 + (((float) (i)) / iMaxUpdate * 25))));
                 }
 

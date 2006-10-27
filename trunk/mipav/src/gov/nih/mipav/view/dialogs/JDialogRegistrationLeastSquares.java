@@ -231,8 +231,6 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                     MipavUtil.displayError("Result Image is null");
                 }
 
-                closingLog();
-
                 insertScriptLine();
             }
         }
@@ -454,31 +452,10 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-
-            if (!userInterface.isAppFrameVisible()) {
-                LSMatch.setProgressBarVisible(false);
-            }
-
             LSMatch.run();
         }
 
 
-    }
-
-    /**
-     * Constructs a string indicating if the algorithm completed sucessfully.
-     */
-    protected void closingLog() {
-        String logString;
-
-        if (LSMatch.isCompleted() == true) {
-            logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
-                                   " Completed successfully!" + "\n");
-        } else {
-            logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
-                                   " Algorithm failed!" + "\n");
-        }
-        // Preferences.log(matchImage.getUserInterface(), logString);
     }
 
     /**

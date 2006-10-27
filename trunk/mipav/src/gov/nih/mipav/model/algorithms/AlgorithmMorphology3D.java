@@ -303,10 +303,7 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                 }
 
                 try {
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged(Math.round(((float) s) / ((float) (imgSize - 1)) * 100));
-                    }
+                    fireProgressStateChanged(Math.round(((float) s) / ((float) (imgSize - 1)) * 100));
                 } catch (NullPointerException npe) {
 
                     if (threadStopped) {
@@ -1905,7 +1902,7 @@ kernelLoop:
                 /*
                  *              try {
                  *
-                 *               if ((((tmpSize + pix) % mod) == 0) && isProgressBarVisible()) {
+                 *               if ((((tmpSize + pix) % mod) == 0)) {
                  *              }             } catch (NullPointerException npe) {
                  *
                  *               if (threadStopped) {                     Preferences.debug("somehow you managed to

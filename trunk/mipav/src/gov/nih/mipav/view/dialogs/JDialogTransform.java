@@ -1158,11 +1158,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-
-            if (!userInterface.isAppFrameVisible()) {
-                algoTrans.setProgressBarVisible(false);
-            }
-
             algoTrans.run();
         }
     }
@@ -2421,11 +2416,6 @@ public class JDialogTransform extends JDialogScriptableBase implements Algorithm
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    algoTal.setProgressBarVisible(false);
-                }
-
                 algoTal.run();
             }
         } // try

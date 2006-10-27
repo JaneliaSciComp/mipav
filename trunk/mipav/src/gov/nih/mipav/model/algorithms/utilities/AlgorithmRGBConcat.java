@@ -232,7 +232,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
                 for (i = 0, id = 0; (i < length) && !threadStopped; i += 4, id++) {
 
-                    if (((i % mod) == 0) && isProgressBarVisible()) {
+                    if (((i % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100));
                     }
 
@@ -257,7 +257,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
                 for (i = 0, id = 0; (i < length) && !threadStopped; i += 4, id++) {
 
-                    if (((i % mod) == 0) && isProgressBarVisible()) {
+                    if (((i % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) (i + (j * length)) / ((nImages * length) - 1) * 100));
                     }
 
@@ -495,7 +495,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
             for (i = 0, id = 0; (i < totLength) && !threadStopped; i += 4, id++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) (i) / (totLength - 1) * 100));
                 }
 
@@ -520,7 +520,7 @@ public class AlgorithmRGBConcat extends AlgorithmBase {
 
             for (i = 0, id = 0; (i < totLength) && !threadStopped; i += 4, id++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) (i) / (totLength - 1) * 100));
                 }
 

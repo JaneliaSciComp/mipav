@@ -209,11 +209,6 @@ public class JDialogRegularizedIsotropicDiffusion extends JDialogScriptableBase 
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    regIsoDiffusionAlgo.setProgressBarVisible(false);
-                }
-
                 regIsoDiffusionAlgo.run();
             } // end if (isRunInSeparateThread())
         } catch (OutOfMemoryError x) {

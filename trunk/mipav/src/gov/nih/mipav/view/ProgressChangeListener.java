@@ -9,7 +9,7 @@ import java.util.EventListener;
  * @version 1.0
  * @created 30-Jun-2006 9:27:52 AM
  */
-public interface ProgressChangeListener extends EventListener{
+public interface ProgressChangeListener extends EventListener {
 
 	/**
 	 * Invoked when the target of the listener has changed its state

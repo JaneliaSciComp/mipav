@@ -333,11 +333,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            unsharpMaskAlgo.setProgressBarVisible(false);
-                        }
-
                         unsharpMaskAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -390,11 +385,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            unsharpMaskAlgo.setProgressBarVisible(false);
-                        }
-
                         unsharpMaskAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -452,11 +442,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            unsharpMaskAlgo.setProgressBarVisible(false);
-                        }
-
                         unsharpMaskAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -506,11 +491,6 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            unsharpMaskAlgo.setProgressBarVisible(false);
-                        }
-
                         unsharpMaskAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -523,7 +503,7 @@ public class JDialogUnsharpMask extends JDialogScriptableBase implements Algorit
     }
 
     /**
-     * DOCUMENT ME!
+     * Register the result image in the script runner.
      */
     protected void doPostAlgorithmActions() {
 

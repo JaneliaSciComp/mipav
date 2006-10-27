@@ -568,10 +568,6 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            particleAlgo2D.setProgressBarVisible(false);
-                        }
-
                         particleAlgo2D.run();
 
                     }
@@ -633,10 +629,6 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            particleAlgo2D.setProgressBarVisible(false);
-                        }
-
                         particleAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -684,10 +676,6 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            particleAlgo3D.setProgressBarVisible(false);
-                        }
-
                         particleAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -745,10 +733,6 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            particleAlgo3D.setProgressBarVisible(false);
-                        }
-
                         particleAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -807,10 +791,6 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            particleAlgo25D.setProgressBarVisible(false);
-                        }
-
                         particleAlgo25D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -869,10 +849,6 @@ public class JDialogParticleAnalysisNew extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            particleAlgo25D.setProgressBarVisible(false);
-                        }
-
                         particleAlgo25D.run();
                     }
                 } catch (OutOfMemoryError x) {

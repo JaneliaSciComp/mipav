@@ -60,7 +60,7 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     protected ModelImage srcImage;
 
     /** Flag indicating whether or not the thread is stopped. */
-    protected boolean threadStopped = false;
+    protected volatile boolean threadStopped = false;
 
     /** Elapsed time (in milliseconds) -- time it took for algorithm to run. */
     private double elapsedTime = 0;
@@ -80,13 +80,11 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     private int minProgressValue = 0;
     private int maxProgressValue = 100;
     
-    
     /**
      * A list of the ChangeListeners which are interested in the ChangeEvent. 
      */
     private EventListenerList listenerList = new EventListenerList();
 
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -119,19 +117,11 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
 
         threadStopped = false;
     }
-
-    public void setProgressBarVisible(boolean bar) {
-    	//nada..keep til remove
-    }
-
-    //kill this later too
-    public boolean isProgressBarVisible() { return true; }
     
     //~ Methods --------------------------------------------------------------------------------------------------------
 
-
     public void actionPerformed(ActionEvent e) {
-    	System.err.println("action performed!");
+    	//System.err.println("action performed!");
     	if (e.getActionCommand().equalsIgnoreCase("cancel")) {
     		setThreadStopped(true);
     	}
@@ -644,6 +634,14 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
             }
         }
     }
+    
+    /**
+     * Updates listeners of progress status.
+     * 
+     * @param fVal     the percent progress of the algorithm so far
+     * @param title    the title to send to the listeners
+     * @param message  the message to send to the listeners
+     */
     protected void fireProgressStateChanged(float fVal, String title, String message) {
     	fireProgressStateChanged(ViewJProgressBar.getProgressFromFloat(minProgressValue, maxProgressValue, fVal), title, message);
     }

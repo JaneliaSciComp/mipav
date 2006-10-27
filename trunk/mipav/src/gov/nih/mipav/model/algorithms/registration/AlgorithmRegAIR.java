@@ -1498,7 +1498,6 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
                 // Make algorithm
                 gaussianBlurAlgo = new AlgorithmGaussianBlur(sourceImage, sigmas, entireSource, inPlane);
-                gaussianBlurAlgo.setProgressBarVisible(false);
                 gaussianBlurAlgo.run();
             } catch (OutOfMemoryError x) {
                 finalize();
@@ -1540,7 +1539,6 @@ public class AlgorithmRegAIR extends AlgorithmBase {
 
                 // Make algorithm
                 gaussianBlurAlgo = new AlgorithmGaussianBlur(targetImage, sigmas, entireTarget, inPlane);
-                gaussianBlurAlgo.setProgressBarVisible(false);
                 gaussianBlurAlgo.run();
             } catch (OutOfMemoryError x) {
                 finalize();

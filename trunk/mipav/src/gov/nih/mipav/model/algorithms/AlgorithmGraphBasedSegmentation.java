@@ -487,7 +487,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                                          srcImage.getUserInterface());
             smoothImage.importData(0, c1Buffer, true);
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, wholeImage, image25D);
-            gaussAlgo.setProgressBarVisible(false);
             gaussAlgo.run();
             gaussAlgo.finalize();
             gaussAlgo = null;
@@ -495,7 +494,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
 
             smoothImage.importData(0, c2Buffer, true);
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, wholeImage, image25D);
-            gaussAlgo.setProgressBarVisible(false);
             gaussAlgo.run();
             gaussAlgo.finalize();
             gaussAlgo = null;
@@ -828,7 +826,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                                          srcImage.getUserInterface());
             smoothImage.importData(0, redBuffer, true);
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, wholeImage, image25D);
-            gaussAlgo.setProgressBarVisible(false);
             gaussAlgo.run();
             gaussAlgo.finalize();
             gaussAlgo = null;
@@ -836,7 +833,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
 
             smoothImage.importData(0, greenBuffer, true);
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, wholeImage, image25D);
-            gaussAlgo.setProgressBarVisible(false);
             gaussAlgo.run();
             gaussAlgo.finalize();
             gaussAlgo = null;
@@ -844,7 +840,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
 
             smoothImage.importData(0, blueBuffer, true);
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, wholeImage, image25D);
-            gaussAlgo.setProgressBarVisible(false);
             gaussAlgo.run();
             gaussAlgo.finalize();
             gaussAlgo = null;
@@ -1170,7 +1165,6 @@ public class AlgorithmGraphBasedSegmentation extends AlgorithmBase {
                                          srcImage.getUserInterface());
             smoothImage.importData(0, buffer, true);
             gaussAlgo = new AlgorithmGaussianBlurSep(smoothImage, smoothSigmas, wholeImage, image25D);
-            gaussAlgo.setProgressBarVisible(false);
             gaussAlgo.run();
             gaussAlgo.finalize();
             gaussAlgo = null;

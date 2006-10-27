@@ -8,8 +8,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -204,14 +202,12 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
             // Make algorithm
             changeTypeAlgo = new AlgorithmChangeType(leftBWImage, leftImage, leftImage.getMin(), leftImage.getMax(),
                                                      leftImage.getMin(), leftImage.getMax(), false);
-            changeTypeAlgo.setProgressBarVisible(false);
             changeTypeAlgo.run();
             updateFileInfo(leftImage, leftBWImage);
 
             // Make algorithm
             changeTypeAlgo = new AlgorithmChangeType(rightBWImage, rightImage, rightImage.getMin(), rightImage.getMax(),
                                                      rightImage.getMin(), rightImage.getMax(), false);
-            changeTypeAlgo.setProgressBarVisible(false);
             changeTypeAlgo.run();
             updateFileInfo(rightImage, rightBWImage);
 
@@ -742,7 +738,6 @@ public class AlgorithmStereoDepth extends AlgorithmBase {
             return;
         }
 
-        air.setProgressBarVisible(false);
         air.run();
 
         /* rigidReg = new AlgorithmRegOAR2D(leftBWImage, rightBWImage,leftRefImage, rightRefImage,

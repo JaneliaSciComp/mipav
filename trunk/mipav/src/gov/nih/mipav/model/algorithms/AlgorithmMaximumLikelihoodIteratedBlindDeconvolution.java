@@ -172,8 +172,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* Initialize progress bar: */
         m_kPBar = new ViewJProgressBar("Blind Deconvolution", "computing iterative blind deconvolution...", 0, 100,
                                        false, null, null);
-        MipavUtil.centerOnScreen(m_kPBar);
-        m_kPBar.setVisible(true);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -274,7 +272,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
         algImageCalc.setRunningInSeparateThread(false);
-        algImageCalc.setProgressBarVisible(false);
         algImageCalc.run();
         algImageCalc.finalize();
         algImageCalc = null;
@@ -464,7 +461,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
         kMathAlgo.setRunningInSeparateThread(false);
-        kMathAlgo.setProgressBarVisible(false);
         kMathAlgo.run();
         kMathAlgo.finalize();
         kMathAlgo = null;
@@ -512,7 +508,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
         kRGBAlgoMulti.setRunningInSeparateThread(false);
-        kRGBAlgoMulti.setProgressBarVisible(false);
         kRGBAlgoMulti.run();
         kRGBAlgoMulti.finalize();
         kRGBAlgoMulti = null;
@@ -543,7 +538,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
         kRGBAlgo.setRunningInSeparateThread(false);
-        kRGBAlgo.setProgressBarVisible(false);
         kRGBAlgo.run();
         kRGBAlgo.finalize();
         kRGBAlgo = null;
@@ -626,7 +620,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         /* Must not run in separate thread, since we need the results before
          * proceeding to the next step: */
         kFFT.setRunningInSeparateThread(false);
-        kFFT.setProgressBarVisible(false);
         kFFT.run();
         kFFT.finalize();
         kFFT = null;

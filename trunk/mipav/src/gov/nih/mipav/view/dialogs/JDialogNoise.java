@@ -305,11 +305,6 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            randomAlgo.setProgressBarVisible(false);
-                        }
-
                         randomAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -362,11 +357,6 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            randomAlgo.setProgressBarVisible(false);
-                        }
-
                         randomAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -424,11 +414,6 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            randomAlgo.setProgressBarVisible(false);
-                        }
-
                         randomAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -480,11 +465,6 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            randomAlgo.setProgressBarVisible(false);
-                        }
-
                         randomAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

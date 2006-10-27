@@ -606,7 +606,7 @@ public class AlgorithmGradientMagnitude extends AlgorithmBase {
 
                 for (i = 0; (i < length) && !threadStopped; i++) {
 
-                    if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
+                    if ((((start + i) % mod) == 0)) {
                         fireProgressStateChanged( ((float) (start + i) / (totalLength - 1)), null, null);
                       //  fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                     }

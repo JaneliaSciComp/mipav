@@ -460,13 +460,6 @@ public class FileMinc extends FileBase {
      */
     public ModelImage readImage(boolean one) throws IOException {
         FileInfoMinc fileInfo = null;
-        ViewJProgressBar progressBar = null;
-
-        progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                           ViewUserInterface.getReference().getProgressBarPrefix() + "image(s) ...", 0,
-                                           100, false, null, null);
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        
         
         fireProgressStateChanged(5);
 
@@ -761,12 +754,7 @@ public class FileMinc extends FileBase {
      * @see        FileInfoMinc
      * @see        FileMinc
      */
-    public void writeImage(ModelImage _image, FileWriteOptions options) throws IOException {
-        ViewJProgressBar progressBar = new ViewJProgressBar("Saving " + fileName, "Writing header", 0, 100, false, null,
-                                                            null);
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        
-        
+    public void writeImage(ModelImage _image, FileWriteOptions options) throws IOException {        
         fireProgressStateChanged(5);
         
         raFile.setLength(0);

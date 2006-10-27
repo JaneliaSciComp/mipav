@@ -2350,7 +2350,6 @@ public class SurfaceRender extends RenderViewBase {
                                                               xDim, yDim, zDim, false, false, false);
 
         algoTrans.setUpdateOriginFlag(false);
-        algoTrans.setProgressBarVisible(false);
         algoTrans.run();
 
         ModelImage resultImage1 = algoTrans.getTransformedImage();

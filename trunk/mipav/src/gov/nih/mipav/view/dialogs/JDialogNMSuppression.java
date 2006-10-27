@@ -316,11 +316,6 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            nmSuppressionAlgo.setProgressBarVisible(false);
-                        }
-
                         nmSuppressionAlgo.run();
                     }
 
@@ -374,11 +369,6 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            nmSuppressionAlgo.setProgressBarVisible(false);
-                        }
-
                         nmSuppressionAlgo.run();
                     }
 
@@ -441,11 +431,6 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            nmSuppressionAlgo.setProgressBarVisible(false);
-                        }
-
                         nmSuppressionAlgo.run();
                     }
 
@@ -498,11 +483,6 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            nmSuppressionAlgo.setProgressBarVisible(false);
-                        }
-
                         nmSuppressionAlgo.run();
                     }
 

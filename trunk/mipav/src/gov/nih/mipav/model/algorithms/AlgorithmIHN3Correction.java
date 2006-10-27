@@ -2010,10 +2010,7 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
 
         for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++) {
             fireProgressStateChanged("Starting iteration " + iters);
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) iters / (maxIters - 1) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) iters / (maxIters - 1) * 100));
 
             // Correct volume using field estimate
             for (i = 0; i < newSliceSize; i++) {
@@ -2727,10 +2724,8 @@ public class AlgorithmIHN3Correction extends AlgorithmBase {
         for (iters = 0; ((iters < maxIters) && (stddev >= endTol)) && !threadStopped; iters++) {
             Preferences.debug("Starting iteration " + iters + ": Tol = " + stddev + "\n", Preferences.DEBUG_ALGORITHM);
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged("Starting iteration " + iters + ": Tol = " + stddev);
-                fireProgressStateChanged(Math.round((float) iters / (maxIters - 1) * 100));
-            }
+            fireProgressStateChanged("Starting iteration " + iters + ": Tol = " + stddev);
+            fireProgressStateChanged(Math.round((float) iters / (maxIters - 1) * 100));
 
             // Correct volume using field estimate
             for (i = 0; i < newVolSize; i++) {

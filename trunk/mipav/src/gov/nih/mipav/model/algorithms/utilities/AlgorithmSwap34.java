@@ -155,7 +155,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
                 for (xy = 0; (xy < sliceSize) && !threadStopped; xy++) {
                     index = ((t * zDim * sliceSize) + (z * sliceSize) + xy);
 
-                    if (((index % mod) == 0) && isProgressBarVisible()) {
+                    if (((index % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) (index) / (length - 1) * 100));
                     }
 

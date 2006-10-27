@@ -129,10 +129,7 @@ public class AlgorithmRandSliceOrder extends AlgorithmBase {
         
 
         for (s = 0; (s < sliceNumber) && !threadStopped; s++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) (s) / (sliceNumber - 1) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) (s) / (sliceNumber - 1) * 100));
 
             try {
                 srcImage.exportData(s * length, length, sliceBuffer); // locks and releases lock

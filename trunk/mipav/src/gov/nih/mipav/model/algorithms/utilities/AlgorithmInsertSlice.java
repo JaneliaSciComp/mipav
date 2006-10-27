@@ -174,9 +174,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
             for (z = 0; (z < (oldZdim + 1)) && !threadStopped; z++) { // for all slices in the old image
 
                 // let user know something is happening by updating the progressbar
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100));
-                }
+                fireProgressStateChanged(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100));
 
                 if (z == insertSlice) {
 

@@ -410,10 +410,6 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        mathAlgo.setProgressBarVisible(false);
-                    }
-
                     mathAlgo.run();
                 }
 
@@ -468,10 +464,6 @@ public class JDialogRGBConcat extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        mathAlgo.setProgressBarVisible(false);
-                    }
-
                     mathAlgo.run();
                 }
 

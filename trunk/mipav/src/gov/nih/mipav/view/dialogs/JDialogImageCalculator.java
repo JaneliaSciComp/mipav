@@ -436,10 +436,6 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            mathAlgo.setProgressBarVisible(false);
-                        }
-
                         mathAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -493,10 +489,6 @@ public class JDialogImageCalculator extends JDialogScriptableBase implements Alg
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            mathAlgo.setProgressBarVisible(false);
-                        }
-
                         mathAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

@@ -392,7 +392,6 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                 transform = new AlgorithmTransform(imageInput, answer[i].matrix, interpolation, volumeResolutions[0],
                                                    volumeResolutions[1], volumeResolutions[2], volumeExtents[0],
                                                    volumeExtents[1], volumeExtents[2], false, true, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
 
                 if (transform.isCompleted() == false) {
@@ -1025,7 +1024,6 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                                                    volumeResolutionsIso[1], volumeResolutionsIso[2],
                                                    volumeExtentsIso[0], volumeExtentsIso[1], volumeExtentsIso[2], false,
                                                    true, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
 
                 if (transform.isCompleted() == false) {
@@ -1122,7 +1120,6 @@ public class AlgorithmRegTSOAR extends AlgorithmBase {
                                                    volumeResolutionsIso[1], volumeResolutionsIso[2],
                                                    volumeExtentsIso[0], volumeExtentsIso[1], volumeExtentsIso[2], false,
                                                    true, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
 
                 if (transform.isCompleted() == false) {

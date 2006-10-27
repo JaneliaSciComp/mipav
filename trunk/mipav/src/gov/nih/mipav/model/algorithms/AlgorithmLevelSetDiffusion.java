@@ -242,10 +242,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         int zDim = 1;
 
         for (n = 0; (n < iterations) && !threadStopped; n++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) n / (iterations - 1) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) n / (iterations - 1) * 100));
 
             for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
                 resultBuffer[i] = 0;
@@ -328,7 +325,6 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage, mask, xDim, yDim, zDim,
                                                                                      voiID);
 
-        algoPaintToVOI.setProgressBarVisible(false);
         algoPaintToVOI.run();
 
         
@@ -440,10 +436,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         int zDim = srcImage.getExtents()[2];
 
         for (n = 0; (n < iterations) && !threadStopped; n++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) n / (iterations - 1) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) n / (iterations - 1) * 100));
 
             for (i = imageSliceSize + xDim + 1; (i < (length - imageSliceSize - xDim - 1)) && !threadStopped; i++) {
                 resultBuffer[i] = 0;
@@ -529,7 +522,6 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage, mask, xDim, yDim, zDim,
                                                                                      voiID);
 
-        algoPaintToVOI.setProgressBarVisible(false);
         algoPaintToVOI.run();
 
         

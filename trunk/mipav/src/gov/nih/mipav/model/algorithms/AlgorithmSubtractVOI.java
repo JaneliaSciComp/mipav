@@ -313,7 +313,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                         try {
 
-                            if (((i % mod) == 0) && isProgressBarVisible()) {
+                            if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round(50 +
                                                                    ((float) (i + offset) / (totalLength - 1) * 50)));
                             }
@@ -513,7 +513,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                         try {
 
-                            if (((i % mod) == 0) && isProgressBarVisible()) {
+                            if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round(50 +
                                                                    ((float) (i + offset) / (totalLength - 1) * 50)));
                             }
@@ -662,7 +662,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                         try {
 
-                            if (((i % mod) == 0) && isProgressBarVisible()) {
+                            if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round(50 +
                                                                    ((float) (i + offset) / (totalLength - 1) * 50)));
                             }
@@ -822,7 +822,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                         try {
 
-                            if (((i % mod) == 0) && isProgressBarVisible()) {
+                            if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round(50 +
                                                                    ((float) (i + offset) / (totalLength - 1) * 50)));
                             }
@@ -1119,7 +1119,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                             try {
 
-                                if (((i % mod) == 0) && isProgressBarVisible()) {
+                                if (((i % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 50));
                                 }
                             } catch (NullPointerException npe) {
@@ -1250,7 +1250,7 @@ public class AlgorithmSubtractVOI extends AlgorithmBase {
 
                             try {
 
-                                if (((i % mod) == 0) && isProgressBarVisible()) {
+                                if (((i % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 50));
                                 }
                             } catch (NullPointerException npe) {

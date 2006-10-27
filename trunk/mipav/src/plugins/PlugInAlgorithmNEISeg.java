@@ -208,7 +208,7 @@ public class PlugInAlgorithmNEISeg extends AlgorithmBase {
 
         for (i = 0, id = 0; i < lengthIn; i += 4, id += 4) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) (i) / (lengthIn) * 40) + 70);
             }
 

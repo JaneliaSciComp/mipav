@@ -183,11 +183,6 @@ public class JDialogQuantify extends JDialogScriptableBase implements AlgorithmI
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    algoQuantify.setProgressBarVisible(false);
-                }
-
                 algoQuantify.run();
             }
         } catch (OutOfMemoryError x) {

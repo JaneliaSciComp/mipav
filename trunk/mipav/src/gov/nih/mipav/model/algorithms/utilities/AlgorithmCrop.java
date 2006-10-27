@@ -222,7 +222,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
@@ -241,7 +241,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
@@ -359,7 +359,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                    if (((i % mod) == 0) && isProgressBarVisible()) {
+                    if (((i % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                     }
 
@@ -377,7 +377,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                    if (((i % mod) == 0) && isProgressBarVisible()) {
+                    if (((i % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                     }
 
@@ -505,7 +505,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                        if (((i % mod) == 0) && isProgressBarVisible()) {
+                        if (((i % mod) == 0)) {
                             fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                         }
 
@@ -523,7 +523,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                        if (((i % mod) == 0) && isProgressBarVisible()) {
+                        if (((i % mod) == 0)) {
                             fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                         }
 
@@ -675,7 +675,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
@@ -694,7 +694,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             for (i = 0, k = 0; (i < length) && !threadStopped; i++, k++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
                 }
 
@@ -927,7 +927,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                    if (((i % mod) == 0) && isProgressBarVisible()) {
+                    if (((i % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                     }
 
@@ -945,7 +945,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                 for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                    if (((i % mod) == 0) && isProgressBarVisible()) {
+                    if (((i % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) i / (croppedVolume - 1) * 100));
                     }
 
@@ -1243,7 +1243,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                        if (((i % mod) == 0) && isProgressBarVisible()) {
+                        if (((i % mod) == 0)) {
                             fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                         }
 
@@ -1261,7 +1261,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
                     for (count = 0; (count < croppedLength) && !threadStopped; i++, k++, count++) {
 
-                        if (((i % mod) == 0) && isProgressBarVisible()) {
+                        if (((i % mod) == 0)) {
                             fireProgressStateChanged(Math.round((float) i / (croppedSeries - 1) * 100));
                         }
 

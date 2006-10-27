@@ -2092,10 +2092,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         for (i = 0; i < objects.size(); i++) {
 
             try {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round(33 + ((i + 1) / ((float) objects.size()) * 33)));
-                }
+                fireProgressStateChanged(Math.round(33 + ((i + 1) / ((float) objects.size()) * 33)));
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {
@@ -2147,10 +2144,7 @@ public class AlgorithmMorphology2D extends AlgorithmBase {
         for (i = 0; (i < objects.size()) && !threadStopped; i++) {
 
             try {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round(66 + ((i + 1) / ((float) objects.size()) * 34)));
-                }
+                fireProgressStateChanged(Math.round(66 + ((i + 1) / ((float) objects.size()) * 34)));
             } catch (NullPointerException npe) {
 
                 if (threadStopped) {

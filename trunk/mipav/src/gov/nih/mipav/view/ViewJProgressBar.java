@@ -75,7 +75,7 @@ public class ViewJProgressBar extends JFrame
     public ViewJProgressBar(String _title, String msg, int min, int max, boolean cancelFlag) {
         this(_title, msg, min, max, cancelFlag, null, null);
     }
-
+    
     /**
      * Creates a new progress bar with the given title, message, and min and max. The percentage is initially set to
      * "0%". The <code>cancelFlag</code> indicates if there should be a cancel button - usually this is used for
@@ -92,6 +92,27 @@ public class ViewJProgressBar extends JFrame
      */
     public ViewJProgressBar(String _title, String msg, int min, int max, boolean cancelFlag,
                             ActionListener actionListener, WindowListener windowListener) {
+        this(_title, msg, min, max, cancelFlag, actionListener, windowListener, true);
+    }
+
+    /**
+     * Creates a new progress bar with the given title, message, and min and max. The percentage is initially set to
+     * "0%". The <code>cancelFlag</code> indicates if there should be a cancel button - usually this is used for
+     * algorithms, which can be stopped, but not loading images.
+     *
+     * @param  _title          Title for the frame of the progress bar.
+     * @param  msg             Message directly above the actual progress bar.
+     * @param  min             Minimum value progress bar takes.
+     * @param  max             Maximum value progress bar takes.
+     * @param  cancelFlag      <code>true</code> indicates that the user can stop the process by clicking on the cancel
+     *                         button, and so the button should be added to the frame.
+     * @param  actionListener  Listener to tie to cancel button.
+     * @param  windowListener  Listener to tie to this frame.
+     * @param  isVisible       Whether to display the progress bar after it is first constructed.  Note that the 
+     *                         progress bar is never displayed if the -hide option was chosen by the user.
+     */
+    public ViewJProgressBar(String _title, String msg, int min, int max, boolean cancelFlag,
+                            ActionListener actionListener, WindowListener windowListener, boolean isVisible) {
         super(_title);
 
         title = _title;
@@ -173,6 +194,7 @@ public class ViewJProgressBar extends JFrame
         MipavUtil.centerOnScreen(this);
         percentage.setText("0%");
 
+        setVisible(isVisible && ViewUserInterface.getReference().isAppFrameVisible());
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

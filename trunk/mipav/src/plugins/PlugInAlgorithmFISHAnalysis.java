@@ -1,5 +1,4 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -14,7 +13,6 @@ import java.io.*;
  * This shows how to extend the AlgorithmBase class.
  *
  * @version  March 29, 2004
- * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
  *           <p>$Logfile: /mipav/src/plugins/PlugInAlgorithmFISHAnalysis.java $ $Revision: 3 $ $Date: 11/18/05 1:12p $
@@ -315,7 +313,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         centroids[0] = min + ((max - min) / 3.0f);
         centroids[1] = min + (2.0f * (max - min) / 3.0f);
         fcmAlgo.setCentroids(centroids);
-        fcmAlgo.setProgressBarVisible(false);
         fcmAlgo.run();
         fcmAlgo.finalize();
         fcmAlgo = null;
@@ -357,7 +354,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         centroids[0] = min + ((max - min) / 3.0f);
         centroids[1] = min + (2.0f * (max - min) / 3.0f);
         fcmAlgo.setCentroids(centroids);
-        fcmAlgo.setProgressBarVisible(false);
         fcmAlgo.run();
         fcmAlgo.finalize();
         fcmAlgo = null;
@@ -398,7 +394,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         centroids[0] = min + ((max - min) / 3.0f);
         centroids[1] = min + (2.0f * (max - min) / 3.0f);
         fcmAlgo.setCentroids(centroids);
-        fcmAlgo.setProgressBarVisible(false);
         fcmAlgo.run();
         fcmAlgo.finalize();
         fcmAlgo = null;
@@ -420,7 +415,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         fireProgressStateChanged("Extracting green-labelled FISH signals");
         fireProgressStateChanged(30);
         algoVOIExtraction = new AlgorithmVOIExtraction(greenSegImage[0]);
-        algoVOIExtraction.setProgressBarVisible(false);
         algoVOIExtraction.run();
         algoVOIExtraction.finalize();
         algoVOIExtraction = null;
@@ -430,7 +424,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         fireProgressStateChanged(35);
 
         algoVOIExtraction = new AlgorithmVOIExtraction(redSegImage[0]);
-        algoVOIExtraction.setProgressBarVisible(false);
         algoVOIExtraction.run();
         algoVOIExtraction.finalize();
         algoVOIExtraction = null;
@@ -550,7 +543,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         binaryFlag = true;
         thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue, binaryFlag, wholeImage,
                                                    true);
-        thresholdAlgo.setProgressBarVisible(false);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -567,7 +559,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         edgingType = 0;
         openAlgo = new AlgorithmMorphology2D(blueSegImage[0], kernel, circleDiameter, method, itersDilation,
                                              itersErosion, numPruningPixels, edgingType, wholeImage);
-        openAlgo.setProgressBarVisible(false);
         openAlgo.run();
         openAlgo.finalize();
         openAlgo = null;
@@ -577,7 +568,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         method = AlgorithmMorphology2D.CLOSE;
         closeAlgo = new AlgorithmMorphology2D(blueSegImage[0], kernel, circleDiameter, method, itersDilation,
                                               itersErosion, numPruningPixels, edgingType, wholeImage);
-        closeAlgo.setProgressBarVisible(false);
         closeAlgo.run();
         closeAlgo.finalize();
         closeAlgo = null;
@@ -672,7 +662,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         idObjectsAlgo2D = new AlgorithmMorphology2D(blueSegImage[0], kernel, circleDiameter, method, itersDilation,
                                                     itersErosion, numPruningPixels, edgingType, wholeImage);
         idObjectsAlgo2D.setMinMax(10, 200000);
-        idObjectsAlgo2D.setProgressBarVisible(false);
         idObjectsAlgo2D.run();
         idObjectsAlgo2D.finalize();
         idObjectsAlgo2D = null;
@@ -746,7 +735,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
             dilateAlgo = new AlgorithmMorphology2D(blueSegImage[0], kernel, circleDiameter, method, itersDilation,
                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
-            dilateAlgo.setProgressBarVisible(false);
             dilateAlgo.run();
             dilateAlgo.finalize();
             dilateAlgo = null;
@@ -984,7 +972,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
         // extract the VOI from the segmented blue image
         algoVOIExtraction = new AlgorithmVOIExtraction(blueSegImage[0]);
-        algoVOIExtraction.setProgressBarVisible(false);
         algoVOIExtraction.run();
         algoVOIExtraction.finalize();
         algoVOIExtraction = null;
@@ -1005,7 +992,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
         // find the properties of the segmented VOI
         algoVOIProps = new AlgorithmVOIProps(blueSegImage[0], AlgorithmVOIProps.PROCESS_PER_VOI, 0);
-        algoVOIProps.setProgressBarVisible(false);
         algoVOIProps.run();
         UI.setDataText("\n--------------------------------------------------------");
         UI.setDataText("\n Image: " + blueSegImage[0].getImageFileName());
@@ -1278,7 +1264,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         centroids[0] = min + ((max - min) / 3.0f);
         centroids[1] = min + (2.0f * (max - min) / 3.0f);
         fcmAlgo.setCentroids(centroids);
-        fcmAlgo.setProgressBarVisible(false);
         fcmAlgo.run();
         fcmAlgo.finalize();
         fcmAlgo = null;
@@ -1301,7 +1286,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
         thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue, binaryFlag, wholeImage,
                                                    true);
-        thresholdAlgo.setProgressBarVisible(false);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -1318,7 +1302,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         edgingType = 0;
         openAlgo = new AlgorithmMorphology3D(blueSegImage[0], kernel, sphereDiameter, method, itersDilation,
                                              itersErosion, numPruningPixels, edgingType, wholeImage);
-        openAlgo.setProgressBarVisible(false);
         openAlgo.run();
         openAlgo.finalize();
         openAlgo = null;
@@ -1332,7 +1315,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         method = AlgorithmMorphology3D.CLOSE;
         closeAlgo = new AlgorithmMorphology3D(blueSegImage[0], kernel, sphereDiameter, method, itersDilation,
                                               itersErosion, numPruningPixels, edgingType, wholeImage);
-        closeAlgo.setProgressBarVisible(false);
         closeAlgo.run();
         closeAlgo.finalize();
         closeAlgo = null;
@@ -1445,7 +1427,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         idObjectsAlgo3D = new AlgorithmMorphology3D(blueSegImage[0], kernel, sphereDiameter, method, itersDilation,
                                                     itersErosion, numPruningPixels, edgingType, wholeImage);
         idObjectsAlgo3D.setMinMax(10, 2000000);
-        idObjectsAlgo3D.setProgressBarVisible(false);
         idObjectsAlgo3D.run();
         idObjectsAlgo3D.finalize();
         idObjectsAlgo3D = null;
@@ -1533,7 +1514,6 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
 
             dilateAlgo = new AlgorithmMorphology3D(blueSegImage[0], kernel, sphereDiameter, method, itersDilation,
                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
-            dilateAlgo.setProgressBarVisible(false);
             dilateAlgo.run();
             dilateAlgo.finalize();
             dilateAlgo = null;

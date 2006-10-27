@@ -415,7 +415,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
 
             AlgorithmHistogram histoAlgoA = new AlgorithmHistogram(histogramA, imageA, true);
             histoAlgoA.setRunningInSeparateThread(isActiveImage);
-            histoAlgoA.setProgressBarVisible(false);
             histoAlgoA.run();
 
             if (histoAlgoA.isCompleted()) {
@@ -430,7 +429,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
 
             AlgorithmHistogram histoAlgoB = new AlgorithmHistogram(histogramB, imageB, true);
             histoAlgoB.setRunningInSeparateThread(isActiveImage);
-            histoAlgoB.setProgressBarVisible(false);
             histoAlgoB.run();
 
             if (histoAlgoB.isCompleted()) {
@@ -470,7 +468,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                                                                                           true, false);
 
                 gradMagAlgo_A.setRunningInSeparateThread(isActiveImage); // progress bar junk.
-                gradMagAlgo_A.setProgressBarVisible(false);
                 gradMagAlgo_A.run();
 
                 if (gradMagAlgo_A.isCompleted()) {
@@ -487,7 +484,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                                                                                0, 1023, false);
 
                 changeTypeAlgo_A.setRunningInSeparateThread(isActiveImage);
-                changeTypeAlgo_A.setProgressBarVisible(false);
                 changeTypeAlgo_A.run();
                 gradMagRescale_A.calcMinMax();
                 rendererProgressBar.setValue(30);
@@ -506,7 +502,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                         AlgorithmHistogram histoAlgoGM_A = new AlgorithmHistogram(histogramGM_A, gradMagRescale_A,
                                                                                   true);
                         histoAlgoGM_A.setRunningInSeparateThread(isActiveImage);
-                        histoAlgoGM_A.setProgressBarVisible(false);
                         histoAlgoGM_A.run();
 
                         if (histoAlgoGM_A.isCompleted()) {
@@ -528,7 +523,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
 
                 AlgorithmHistogram histoAlgoGM_A = new AlgorithmHistogram(histogramGM_A, gradMagRescale_A, true);
                 histoAlgoGM_A.setRunningInSeparateThread(isActiveImage);
-                histoAlgoGM_A.setProgressBarVisible(false);
                 histoAlgoGM_A.run();
 
                 if (histoAlgoGM_A.isCompleted()) {
@@ -561,7 +555,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                                                                                                 sigma, true, false);
 
                 gradMagAlgo_B.setRunningInSeparateThread(isActiveImage); // progress bar junk.
-                gradMagAlgo_B.setProgressBarVisible(false);
                 gradMagAlgo_B.run();
 
                 if (gradMagAlgo_B.isCompleted()) {
@@ -578,7 +571,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                                                                                0, 1023, false);
 
                 changeTypeAlgo_B.setRunningInSeparateThread(isActiveImage);
-                changeTypeAlgo_B.setProgressBarVisible(false);
                 changeTypeAlgo_B.run();
 
                 if (changeTypeAlgo_B.isCompleted()) {
@@ -593,7 +585,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                         AlgorithmHistogram histoAlgoGM_B = new AlgorithmHistogram(histogramGM_B, gradMagRescale_B,
                                                                                   true);
                         histoAlgoGM_B.setRunningInSeparateThread(isActiveImage);
-                        histoAlgoGM_B.setProgressBarVisible(false);
                         histoAlgoGM_B.run();
 
                         if (histoAlgoGM_B.isCompleted()) {
@@ -616,7 +607,6 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
 
                 AlgorithmHistogram histoAlgoGM_B = new AlgorithmHistogram(histogramGM_B, gradMagRescale_B, true);
                 histoAlgoGM_B.setRunningInSeparateThread(isActiveImage);
-                histoAlgoGM_B.setProgressBarVisible(false);
                 histoAlgoGM_B.run();
 
                 if (histoAlgoGM_B.isCompleted()) {

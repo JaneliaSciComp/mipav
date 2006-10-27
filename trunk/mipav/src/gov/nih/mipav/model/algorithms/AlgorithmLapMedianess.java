@@ -309,9 +309,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             sigs[1] = s;
             makeKernels2D(sigs);
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) (s) / 8 * 100));
-            }
+            fireProgressStateChanged(Math.round((float) (s) / 8 * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -365,7 +363,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
@@ -465,9 +463,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             sigs[2] = s;
             makeKernels3D(sigs);
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) (s) / 8 * 100));
-            }
+            fireProgressStateChanged(Math.round((float) (s) / 8 * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -539,9 +535,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
             sigs[1] = s;
             makeKernels2D(sigs);
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) (s) / 8 * 100));
-            }
+            fireProgressStateChanged(Math.round((float) (s) / 8 * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
                 lap = AlgorithmConvolver.convolve2DPtMed(i, srcImage.getExtents(), buffer, kExtents, GxxData);
@@ -638,7 +632,7 @@ public class AlgorithmLapMedianess extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 

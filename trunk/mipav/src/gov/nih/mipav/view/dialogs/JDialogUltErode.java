@@ -292,11 +292,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo2D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo2D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -358,11 +353,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo2D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo2D.run();
                     }
 
@@ -408,11 +398,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo3D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -471,11 +456,6 @@ public class JDialogUltErode extends JDialogScriptableBase implements AlgorithmI
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            erodeAlgo3D.setProgressBarVisible(false);
-                        }
-
                         erodeAlgo3D.run();
                     }
 

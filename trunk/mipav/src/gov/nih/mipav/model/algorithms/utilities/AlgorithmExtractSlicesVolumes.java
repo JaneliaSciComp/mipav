@@ -251,10 +251,8 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
                 if (extract[zSrc]) {
                     progress++;
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged((int) ((progress / numToExtract) * 100));
-                    }
+                    
+                    fireProgressStateChanged((int) ((progress / numToExtract) * 100));
 
                     try {
 
@@ -294,10 +292,8 @@ public class AlgorithmExtractSlicesVolumes extends AlgorithmBase {
 
                 if (extract[zSrc]) {
                     progress++;
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged((int) ((progress / numToExtract) * 100));
-                    }
+                    
+                    fireProgressStateChanged((int) ((progress / numToExtract) * 100));
 
                     resultImage = new ModelImage(srcImage.getType(), newExtents,
                                                  srcImage.getImageName() + "_slice" + (zSrc + 1),

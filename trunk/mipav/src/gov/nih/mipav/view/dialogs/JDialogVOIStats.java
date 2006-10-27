@@ -864,11 +864,6 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             // the thing held BY the image.
             algoVOI = new AlgorithmVOIProps(image);
             algoVOI.setRunningInSeparateThread(false);
-
-            if (!((ViewJFrameImage) (parentFrame)).getUserInterface().
-                isAppFrameVisible()) {
-                algoVOI.setProgressBarVisible(false);
-            }
             algoVOI.run();
             if (!algoVOI.isCompleted()) {
                 MipavUtil.displayError("Please make sure VOI is selected.");

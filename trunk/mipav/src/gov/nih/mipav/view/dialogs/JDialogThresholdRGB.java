@@ -550,11 +550,6 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        thresholdAlgoRGB.setProgressBarVisible(false);
-                    }
-
                     thresholdAlgoRGB.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -607,11 +602,6 @@ public class JDialogThresholdRGB extends JDialogScriptableBase implements Algori
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        thresholdAlgoRGB.setProgressBarVisible(false);
-                    }
-
                     thresholdAlgoRGB.run();
                 }
             } catch (OutOfMemoryError x) {

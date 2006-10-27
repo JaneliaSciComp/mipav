@@ -118,11 +118,7 @@ public class AlgorithmInverseOrder extends AlgorithmBase {
         for (t = 0; (t < tDim) && !threadStopped; t++) {
 
             for (s = 0; (s < sliceNumber) && !threadStopped; s++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) ((t * sliceNumber) + s) / ((tDim * sliceNumber) - 1) *
-                                                           100));
-                }
+                fireProgressStateChanged(Math.round((float) ((t * sliceNumber) + s) / ((tDim * sliceNumber) - 1) * 100));
 
                 start = s * length;
 

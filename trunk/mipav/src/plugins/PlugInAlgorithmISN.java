@@ -261,13 +261,11 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
 
                         // histogram matching here
                         histoMatchAlgo = new AlgorithmHistogramMatch(sliceImage2D, prevSliceImage2D);
-                        histoMatchAlgo.setProgressBarVisible(false);
                         histoMatchAlgo.run();
 
                         // intensity remapping
                         changeTypeAlgo = new AlgorithmChangeType(sliceImage2D, sliceImage2D.getType(), sliceMin[i],
                                                                  sliceMax[i], startRange, endRange, processIndep);
-                        changeTypeAlgo.setProgressBarVisible(false);
                         changeTypeAlgo.run();
 
                         sliceImage2D.exportData(0, imgBuffer.length, imgBuffer);
@@ -292,7 +290,6 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
                         // intensity remapping
                         changeTypeAlgo = new AlgorithmChangeType(sliceImage3D, sliceImage3D.getType(), sliceMin[i],
                                                                  sliceMax[i], startRange, endRange, processIndep);
-                        changeTypeAlgo.setProgressBarVisible(false);
                         changeTypeAlgo.run();
 
                         sliceImage3D.exportData(0, imgBuffer.length, imgBuffer);
@@ -464,13 +461,11 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
                         // intensity remapping
                         changeTypeAlgo = new AlgorithmChangeType(sliceImage2D, sliceImage2D.getType(), sliceMin[i],
                                                                  sliceMax[i], startRange, endRange, processIndep);
-                        changeTypeAlgo.setProgressBarVisible(false);
                         changeTypeAlgo.run();
 
 
                         // histogram matching here
                         histoMatchAlgo = new AlgorithmHistogramMatch(sliceImage2D, prevSliceImage2D);
-                        histoMatchAlgo.setProgressBarVisible(false);
                         histoMatchAlgo.run();
 
                         sliceImage2D.exportData(0, imgBuffer.length, imgBuffer);
@@ -493,12 +488,10 @@ public class PlugInAlgorithmISN extends AlgorithmBase {
                         // intensity remapping
                         changeTypeAlgo = new AlgorithmChangeType(sliceImage3D, sliceImage3D.getType(), sliceMin[i],
                                                                  sliceMax[i], startRange, endRange, processIndep);
-                        changeTypeAlgo.setProgressBarVisible(false);
                         changeTypeAlgo.run();
 
                         // histogram matching
                         histoMatchAlgo = new AlgorithmHistogramMatch(sliceImage3D, prevSliceImage3D);
-                        histoMatchAlgo.setProgressBarVisible(false);
                         histoMatchAlgo.run();
 
                         sliceImage3D.exportData(0, imgBuffer.length, imgBuffer);

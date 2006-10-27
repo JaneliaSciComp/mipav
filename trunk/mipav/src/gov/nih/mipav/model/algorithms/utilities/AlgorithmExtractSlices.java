@@ -216,10 +216,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                 for (zSrc = 0; (zSrc < oldZdim) && !threadStopped; zSrc++) { // for all slices in the src image
 
                     // let user know something is happening by updating the progressbar
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDimSrc * oldZdim) - 1) *
-                                                               100));
-                    }
+                    fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDimSrc * oldZdim) - 1) * 100));
 
                     // if the slice has been marked for extraction, copy it all over.
                     if (extractList.contains(Integer.toString(zSrc))) {
@@ -345,9 +342,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
                                 destOffset += sliceArea;
                             }
 
-                            if (isProgressBarVisible()) {
-                                fireProgressStateChanged(Math.round((float) (zDest + 1) / (numElements) * 100));
-                            }
+                            fireProgressStateChanged(Math.round((float) (zDest + 1) / (numElements) * 100));
 
                         } catch (IOException error) {
                             displayError("Algorithm ExtractSlices reports: " + error.getMessage());

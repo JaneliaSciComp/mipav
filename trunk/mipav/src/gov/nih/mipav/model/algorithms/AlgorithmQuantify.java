@@ -112,7 +112,7 @@ public class AlgorithmQuantify extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 

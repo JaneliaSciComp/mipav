@@ -17,7 +17,6 @@ import java.awt.image.*;
 import java.io.*;
 
 import javax.media.j3d.*;
-import javax.media.j3d.*;
 
 import javax.swing.*;
 
@@ -366,11 +365,9 @@ public class JFrameRegistrationMosaic extends JFrame
         if (iReferenceBuffFactor > iTileBuffFactor) {
             iMosaicBuffFactor = iReferenceBuffFactor;
             kMosaic = new ModelImage(m_akImages[m_iReference].getType(), aiExtents, "Mosaic");
-            ;
         } else {
             iMosaicBuffFactor = iTileBuffFactor;
             kMosaic = new ModelImage(m_akImages[m_iTile].getType(), aiExtents, "Mosaic");
-            ;
         }
 
         if (kAlgorithm instanceof AlgorithmRegOAR2D) {
@@ -386,7 +383,6 @@ public class JFrameRegistrationMosaic extends JFrame
 
                 kAlgorithmTransform.setRunningInSeparateThread(true);
                 kAlgorithmTransform.setUpdateOriginFlag(true);
-                kAlgorithmTransform.setProgressBarVisible(false);
                 kAlgorithmTransform.run();
                 kTransformedTile = kAlgorithmTransform.getTransformedImage();
                 kAlgorithmTransform.finalize();
@@ -401,7 +397,6 @@ public class JFrameRegistrationMosaic extends JFrame
 
                 kAlgorithmTransform.setRunningInSeparateThread(true);
                 kAlgorithmTransform.setUpdateOriginFlag(true);
-                kAlgorithmTransform.setProgressBarVisible(false);
                 kAlgorithmTransform.run();
                 kTransformedTileAlpha = kAlgorithmTransform.getTransformedImage();
                 kAlgorithmTransform.finalize();
@@ -1595,7 +1590,6 @@ public class JFrameRegistrationMosaic extends JFrame
                                                                 m_iNumMinima);
         kAlgorithmReg.addListener(this);
         kAlgorithmReg.setRunningInSeparateThread(false);
-        kAlgorithmReg.setProgressBarVisible(true);
 
         if (m_bBruteForce == true) {
 

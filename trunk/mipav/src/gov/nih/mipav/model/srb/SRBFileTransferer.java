@@ -548,7 +548,7 @@ public class SRBFileTransferer implements FileTransferable, Runnable, ActionList
         
         boolean ret = true;
         for(int i = 0; i < sourceFiles.length; i++){
-            if ((((i) % mod) == 0) && isProgressBarVisible()) {
+            if ((((i) % mod) == 0)) {
                 progressBar.setTitle("Transfering " + sourceFiles[i].getName());
                 progressBar.updateValue(Math.round(((float) i / sourceFiles.length) * 100), isThreadSeperated());
             }

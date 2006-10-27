@@ -172,10 +172,6 @@ public class JDialogRGBtoHSB extends JDialogScriptableBase implements AlgorithmI
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    HSBAlgo.setProgressBarVisible(false);
-                }
-
                 HSBAlgo.run();
             }
         } catch (OutOfMemoryError x) {

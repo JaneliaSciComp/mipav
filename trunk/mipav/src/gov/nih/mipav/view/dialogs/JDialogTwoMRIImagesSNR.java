@@ -355,11 +355,6 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!UI.isAppFrameVisible()) {
-                    snrAlgo.setProgressBarVisible(false);
-                }
-
                 snrAlgo.run();
             }
         } catch (OutOfMemoryError x) {

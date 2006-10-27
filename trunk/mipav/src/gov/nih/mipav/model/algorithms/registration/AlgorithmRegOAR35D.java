@@ -949,7 +949,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             fireProgressStateChanged("Interpolating input image to obtain equal x, y, and z resolutions");
             transform = new AlgorithmTransform(inputImage, new TransMatrix(4), interp, resIso[0], resIso[1], resIso[2],
                                                extentsIso[0], extentsIso[1], extentsIso[2], false, true, false);
-            transform.setProgressBarVisible(false);
             transform.run();
 
             if (transform.isCompleted() == false) {
@@ -988,7 +987,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             transform = new AlgorithmTransform(outsidePreReferenceVolume, new TransMatrix(4), interp, resIso[0],
                                                resIso[1], resIso[2], extentsIso[0], extentsIso[1], extentsIso[2], false,
                                                true, false);
-            transform.setProgressBarVisible(false);
             transform.run();
 
             if (transform.isCompleted() == false) {
@@ -1112,7 +1110,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 transform = new AlgorithmTransform(inputWeight, new TransMatrix(4), interp, resIso[0], resIso[1],
                                                    resIso[2], extentsIso[0], extentsIso[1], extentsIso[2], false, true,
                                                    false);
-                transform.setProgressBarVisible(false);
                 transform.run();
 
                 if (transform.isCompleted() == false) {
@@ -1812,7 +1809,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
             answer.matrix.invert();
             transform = new AlgorithmTransform(input1, answer.matrix, interp2, iResols[0], iResols[1], iResols[2],
                                                iExtents[0], iExtents[1], iExtents[2], false, true, false);
-            transform.setProgressBarVisible(false);
             transform.run();
 
             if (output_1 != null) {
@@ -1956,7 +1952,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                 transform = new AlgorithmTransform(input1, answer.matrix, interp2, resIso[0], resIso[1], resIso[2],
                                                    extentsIso[0], extentsIso[1], extentsIso[2], false, true, false);
 
-                transform.setProgressBarVisible(false);
                 transform.run();
 
                 if (output_1 != null) {
@@ -2052,7 +2047,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                     transform = new AlgorithmTransform(inputw_1, answer.matrix, interp2, resIso[0], resIso[1],
                                                        resIso[2], extentsIso[0], extentsIso[1], extentsIso[2], false,
                                                        true, false);
-                    transform.setProgressBarVisible(false);
                     transform.run();
 
                     if (output_1 != null) {
@@ -2184,7 +2178,6 @@ public class AlgorithmRegOAR35D extends AlgorithmBase {
                         transform = new AlgorithmTransform(inputw_1, answer.matrix, interp2, resIso[0], resIso[1],
                                                            resIso[2], extentsIso[0], extentsIso[1], extentsIso[2],
                                                            false, true, false);
-                        transform.setProgressBarVisible(false);
                         transform.run();
 
                         if (output_1 != null) {

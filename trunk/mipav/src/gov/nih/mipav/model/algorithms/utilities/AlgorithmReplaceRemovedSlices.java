@@ -627,9 +627,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
 
             numSlices = destExtents[2];
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged("Importing Image Data...");
-            }
+            fireProgressStateChanged("Importing Image Data...");
 
             try {
 

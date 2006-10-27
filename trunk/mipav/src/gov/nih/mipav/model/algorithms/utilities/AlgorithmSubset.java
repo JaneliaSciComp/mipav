@@ -245,10 +245,7 @@ public class AlgorithmSubset extends AlgorithmBase {
             
 
             for (t = 0; (t < tDim) && !threadStopped; t++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
 
                 try {
 
@@ -326,10 +323,7 @@ public class AlgorithmSubset extends AlgorithmBase {
             
 
             for (t = 0; (t < tDim) && !threadStopped; t++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
 
                 try {
 
@@ -407,10 +401,7 @@ public class AlgorithmSubset extends AlgorithmBase {
             
 
             for (t = 0; (t < tDim) && !threadStopped; t++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
 
                 try {
 

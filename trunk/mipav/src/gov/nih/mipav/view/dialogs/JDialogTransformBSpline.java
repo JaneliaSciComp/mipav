@@ -247,10 +247,6 @@ public class JDialogTransformBSpline extends JDialogBase implements AlgorithmInt
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    algoTrans.setProgressBarVisible(false);
-                }
-
                 algoTrans.run();
             }
         } catch (OutOfMemoryError x) {

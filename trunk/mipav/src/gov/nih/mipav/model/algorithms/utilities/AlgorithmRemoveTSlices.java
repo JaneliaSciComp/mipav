@@ -106,9 +106,7 @@ public class AlgorithmRemoveTSlices extends AlgorithmBase {
         for (t = 0; (t < oldTdim) && !threadStopped; t++) { // for all slices in the old image
 
             // let user know something is happening by updating the progressbar
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) (t) / (oldTdim - 1) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) (t) / (oldTdim - 1) * 100));
 
             // so long as the slice has not been marked for removal, copy it all over.
             if (!remove[t]) {

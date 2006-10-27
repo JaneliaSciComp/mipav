@@ -447,7 +447,6 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
                 fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage2D, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0,
                                                             0, 0, wholeImage);
-                fillHolesAlgo2D.setProgressBarVisible(false);
                 fillHolesAlgo2D.run();
                 fillHolesAlgo2D.finalize();
                 fillHolesAlgo2D = null;
@@ -497,7 +496,6 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         edgingType = 0;
         idObjectsAlgo3D = new AlgorithmMorphology3D(idImage, kernel, sphereDiameter, method, itersDilation,
                                                     itersErosion, numPruningPixels, edgingType, wholeImage);
-        idObjectsAlgo3D.setProgressBarVisible(false);
         idObjectsAlgo3D.run();
         idObjectsAlgo3D.finalize();
         idObjectsAlgo3D = null;

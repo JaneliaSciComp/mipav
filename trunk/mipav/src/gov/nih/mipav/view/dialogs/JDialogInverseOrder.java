@@ -181,10 +181,6 @@ public class JDialogInverseOrder extends JDialogScriptableBase implements Algori
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    orderAlgo.setProgressBarVisible(false);
-                }
-
                 orderAlgo.run();
             }
         } catch (OutOfMemoryError x) {

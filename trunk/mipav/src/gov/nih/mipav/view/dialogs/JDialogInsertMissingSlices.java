@@ -263,11 +263,6 @@ public class JDialogInsertMissingSlices extends JDialogScriptableBase implements
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    rSliceAlgo.setProgressBarVisible(false);
-                }
-
                 rSliceAlgo.run();
             }
         } catch (OutOfMemoryError x) {

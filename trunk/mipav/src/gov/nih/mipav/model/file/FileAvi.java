@@ -325,7 +325,6 @@ public class FileAvi extends FileBase {
                 AlgorithmTranscode at = new AlgorithmTranscode(new File(fileDir + fileName).toURI().toURL(),
                                                                fileDir + newFileName, AlgorithmTranscode.TRANSCODE_RGB);
 
-                at.setProgressBarVisible(false);
                 at.setQuality(compressionQuality);
                 at.run();
 
@@ -2523,7 +2522,6 @@ public class FileAvi extends FileBase {
         long endPos;
         long saveidx1Length;
         int xMod;
-        ViewJProgressBar progressBar;
         int bufferFactor;
 
         imageA = _imageA;
@@ -2758,7 +2756,6 @@ public class FileAvi extends FileBase {
                     }
 
                     algoMarg.performCopiesWithBuffers(false);
-                    algoMarg.setProgressBarVisible(true);
                     algoMarg.setRunningInSeparateThread(false);
                     algoMarg.run();
                     algoMarg.finalize();
@@ -2775,20 +2772,6 @@ public class FileAvi extends FileBase {
                 }
             }
         }
-
-        String progressString = null;
-
-        if (useNewCompression) {
-            progressString = "Writing temporary RGB uncompressed AVI file...";
-        } else {
-            progressString = "Writing AVI file...";
-        }
-
-        progressBar = new ViewJProgressBar(imageA.getImageName(), progressString, 0, 100, false, null, null);
-
-        progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-        
-        
 
         lutBufferRemapped = new int[1];
 
@@ -3483,7 +3466,6 @@ public class FileAvi extends FileBase {
                                                            newCompressionType);
 
             at.setRunningInSeparateThread(false);
-            at.setProgressBarVisible(isProgressBarVisible());
             at.setQuality(compressionQuality);
             at.run();
             at.finalize();

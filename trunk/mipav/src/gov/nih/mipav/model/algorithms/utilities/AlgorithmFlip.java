@@ -167,7 +167,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                         for (x = 0; (x < xDim) && !threadStopped; x++) {
                             index = ((y * xDim) + x);
 
-                            if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
+                            if ((((start + index) % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) * 100));
                             }
 
@@ -181,7 +181,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                         for (x = 0; (x < xDim) && !threadStopped; x++) {
                             index = ((y * xDim) + x);
 
-                            if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
+                            if ((((start + index) % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) * 100));
                             }
 
@@ -209,7 +209,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                             for (j = 0; (j < cf) && !threadStopped; j++) {
                                 index = ((cf * y * xDim) + (cf * x) + j);
 
-                                if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
+                                if ((((start + index) % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) *
                                                                            100));
                                 }
@@ -227,7 +227,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                             for (j = 0; (j < cf) && !threadStopped; j++) {
                                 index = ((cf * y * xDim) + (cf * x) + j);
 
-                                if ((((start + index) % mod) == 0) && isProgressBarVisible()) {
+                                if ((((start + index) % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) *
                                                                            100));
                                 }

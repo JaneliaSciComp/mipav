@@ -345,7 +345,6 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
                                                    AlgorithmMorphology3D.CLOSE, 1, 1, 0, 0, true);
         }
 
-        MorphClose.setProgressBarVisible(false);
         MorphClose.run();
     }
 
@@ -362,7 +361,6 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
     public void crop(ModelImage destImage, ModelImage srcImage, int[] xbound, int[] ybound, int[] zbound) {
 
         AlgorithmCrop algorithmVOICrop1 = new AlgorithmCrop(destImage, srcImage, 0, xbound, ybound, zbound);
-        algorithmVOICrop1.setProgressBarVisible(false);
         algorithmVOICrop1.run();
         algorithmVOICrop1.finalize();
         algorithmVOICrop1 = null;
@@ -477,7 +475,6 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
                                              AlgorithmFuzzyCMeans.HARD_ONLY, false, 0.0f, 200, 0.01f, true);
 
         firstFuzz.setCentroids(centroid_array);
-        firstFuzz.setProgressBarVisible(false);
         firstFuzz.run();
         firstFuzz.finalize();
         firstFuzz = null;
@@ -497,7 +494,6 @@ public class PlugInAlgorithmOAICropImage extends AlgorithmBase {
         AlgorithmMorphology3D MorphIDObj = null;
         MorphIDObj = new AlgorithmMorphology3D(srcImage, 4, 1, AlgorithmMorphology3D.ID_OBJECTS, 0, 0, 0, 0, true);
         MorphIDObj.setMinMax(min, max);
-        MorphIDObj.setProgressBarVisible(false);
         MorphIDObj.run();
     }
 

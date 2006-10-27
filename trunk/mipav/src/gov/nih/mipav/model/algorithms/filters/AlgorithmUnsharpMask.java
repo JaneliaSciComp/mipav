@@ -196,7 +196,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
-                if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
+                if ((((start + i) % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                 }
 
@@ -274,7 +274,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
@@ -368,7 +368,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
 
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
-                if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
+                if ((((start + i) % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                 }
 
@@ -437,7 +437,7 @@ public class AlgorithmUnsharpMask extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 

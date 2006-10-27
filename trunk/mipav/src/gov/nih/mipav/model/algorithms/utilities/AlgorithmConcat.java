@@ -251,10 +251,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 nImages = srcImage1.getExtents()[2];
 
                 for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
-                    }
+                    fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
 
                     srcImage1.exportData(i * buffer.length, length, buffer);
                     destImage.importData(i * buffer.length, buffer, false);
@@ -275,10 +272,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 nImages = srcImage2.getExtents()[2];
 
                 for (i = 0; (i < srcImage2.getExtents()[2]) && !threadStopped; i++) {
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
-                    }
+                    fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
 
                     srcImage2.exportData(i * buffer.length, length, buffer);
                     destImage.importData((i + 1) * buffer.length, buffer, false);
@@ -445,10 +439,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             nImages = srcImage1.getExtents()[2] + srcImage2.getExtents()[2];
 
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
 
                 srcImage1.exportData(i * buffer.length, length, buffer);
                 destImage.importData(i * buffer.length, buffer, false);
@@ -464,10 +455,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             int offset = i * buffer.length;
 
             for (j = 0; (j < srcImage2.getExtents()[2]) && !threadStopped; j++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
 
                 srcImage2.exportData(j * buffer.length, length, buffer);
                 destImage.importData(offset + (j * buffer.length), buffer, false);
@@ -605,10 +593,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             nImages = srcImage1.getExtents()[2] + srcImage2.getExtents()[2];
 
             for (i = 0; (i < srcImage1.getExtents()[2]) && !threadStopped; i++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
 
                 srcImage1.exportData(i * buffer.length, length, buffer);
                 destImage.importData(i * buffer.length, buffer, false);
@@ -624,10 +609,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             int offset = i * buffer.length;
 
             for (j = 0; (j < srcImage2.getExtents()[2]) && !threadStopped; j++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
 
                 srcImage2.exportData(j * buffer.length, length, buffer);
                 destImage.importData(offset + (j * buffer.length), buffer, false);
@@ -779,10 +761,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 nImages = (srcImage1.getExtents()[2] * srcImage1.getExtents()[3]) + srcImage2.getExtents()[2];
 
                 for (i = 0; (i < (srcImage1.getExtents()[2] * srcImage1.getExtents()[3])) && !threadStopped; i++) {
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
-                    }
+                    fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
 
                     srcImage1.exportData(i * length, length, buffer);
                     destImage.importData(i * length, buffer, false);
@@ -796,10 +775,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 }
 
                 for (j = 0; (j < srcImage2.getExtents()[2]) && !threadStopped; j++) {
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
-                    }
+                    fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
 
                     srcImage2.exportData(j * length, length, buffer);
                     destImage.importData((i + j) * length, buffer, false);
@@ -817,10 +793,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 nImages = (srcImage2.getExtents()[2] * srcImage2.getExtents()[3]) + srcImage1.getExtents()[2];
 
                 for (j = 0; (j < srcImage1.getExtents()[2]) && !threadStopped; j++) {
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged(Math.round((float) (j) / (nImages - 1) * 100));
-                    }
+                    fireProgressStateChanged(Math.round((float) (j) / (nImages - 1) * 100));
 
                     srcImage1.exportData(j * length, length, buffer);
                     destImage.importData(j * length, buffer, false);
@@ -834,10 +807,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                 }
 
                 for (i = 0; (i < (srcImage2.getExtents()[2] * srcImage2.getExtents()[3])) && !threadStopped; i++) {
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
-                    }
+                    fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
 
                     srcImage2.exportData(i * buffer.length, length, buffer);
                     destImage.importData((i + j) * buffer.length, buffer, false);
@@ -1035,10 +1005,7 @@ public class AlgorithmConcat extends AlgorithmBase {
                       (srcImage2.getExtents()[2] * srcImage2.getExtents()[3]);
 
             for (i = 0; (i < (srcImage1.getExtents()[2] * srcImage1.getExtents()[3])) && !threadStopped; i++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) (i) / (nImages - 1) * 100));
 
                 srcImage1.exportData(i * length, length, buffer);
                 destImage.importData(i * length, buffer, false);
@@ -1052,10 +1019,7 @@ public class AlgorithmConcat extends AlgorithmBase {
             }
 
             for (j = 0; (j < (srcImage2.getExtents()[2] * srcImage2.getExtents()[3])) && !threadStopped; j++) {
-
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) (i + j) / (nImages - 1) * 100));
 
                 srcImage2.exportData(j * length, length, buffer);
                 destImage.importData((i + j) * length, buffer, false);

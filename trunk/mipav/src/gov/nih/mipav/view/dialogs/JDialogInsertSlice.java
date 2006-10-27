@@ -366,11 +366,6 @@ public class JDialogInsertSlice extends JDialogScriptableBase implements Algorit
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    insertSliceAlgo.setProgressBarVisible(false);
-                }
-
                 insertSliceAlgo.run();
             }
         } catch (OutOfMemoryError x) {

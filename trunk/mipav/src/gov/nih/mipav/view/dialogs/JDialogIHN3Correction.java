@@ -425,11 +425,6 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    N3Algo.setProgressBarVisible(false);
-                }
-
                 N3Algo.run();
             }
         } catch (OutOfMemoryError x) {

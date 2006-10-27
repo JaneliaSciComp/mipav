@@ -473,10 +473,6 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        mAlgo.setProgressBarVisible(false);
-                    }
-
                     mAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -529,10 +525,6 @@ public class JDialogMRIShadingCorrection extends JDialogScriptableBase implement
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        mAlgo.setProgressBarVisible(false);
-                    }
-
                     mAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

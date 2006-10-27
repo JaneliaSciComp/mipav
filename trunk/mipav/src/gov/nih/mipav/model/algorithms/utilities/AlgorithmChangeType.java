@@ -176,7 +176,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
@@ -414,7 +414,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
-            if (((i % mod) == 0) && isProgressBarVisible()) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) i / (length - 1) * 100));
             }
 
@@ -499,7 +499,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
                 for (j = 0; (j < length) && !threadStopped; j++) {
 
-                    if (((((i * length) + j) % mod) == 0) && isProgressBarVisible()) {
+                    if (((((i * length) + j) % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
                                                                 100));
                     }
@@ -531,7 +531,7 @@ public class AlgorithmChangeType extends AlgorithmBase {
 
                 for (j = 0; j < length; j++) {
 
-                    if (((((i * length) + j) % mod) == 0) && isProgressBarVisible()) {
+                    if (((((i * length) + j) % mod) == 0)) {
                         fireProgressStateChanged(Math.round((float) ((i * length) + j) / ((numSlices * length) - 1) *
                                                                 100));
                     }

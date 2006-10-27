@@ -408,9 +408,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
                 }
             }
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
-            }
+            fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
         }
 
         image.releaseLock();
@@ -601,10 +599,8 @@ public class AlgorithmHistogram extends AlgorithmBase {
                     } // else
                 }
             }
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
-            }
+            
+            fireProgressStateChanged(Math.round((float) (z + 1) / zStop * 100));
         }
 
         image.releaseLock();
