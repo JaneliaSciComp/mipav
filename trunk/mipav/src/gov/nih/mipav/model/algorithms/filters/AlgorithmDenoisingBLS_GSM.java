@@ -861,7 +861,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             else {
                 Preferences.debug(
-                "decompReconst: Signal is not detectable in noisy subband");
+                "decompReconstFull: Signal is not detectable in noisy subband");
             }
             
             // main
@@ -878,8 +878,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             pyrh.setElementAt(BLT, nband-1);
             intMat = new int[2];
-            intMat[0] = blx;
-            intMat[1] = bly;
+            intMat[0] = bly;
+            intMat[1] = blx;
             pind.setElementAt(intMat, nband-1);
         } // for (nband = 2; nband <= bandNum; nband++)
         fh = reconFullSFpyr2(pyrh, pind, null, null, 1.0);
@@ -1016,8 +1016,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
                 pyrh.setElementAt(BLT, nband-1);
                 intMat = new int[2];
-                intMat[0] = blx;
-                intMat[1] = bly;
+                intMat[0] = bly;
+                intMat[1] = blx;
                 pind.setElementAt(intMat, nband-1);
             } // for (nband = 1; nband <= bandNum-1; nband++)
             fh = reconWpyr(pyrh, pind, filter, CIRCULAR, null, null, fhx, fhy);
@@ -1143,7 +1143,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             else {
                 Preferences.debug(
-                "decompReconst: Signal is not detectable in noisy subband");
+                "decompReconstWU: Signal is not detectable in noisy subband");
             }
             
             // main
@@ -1160,8 +1160,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             pyrh.setElementAt(BLT, nband-1);
             intMat = new int[2];
-            intMat[0] = blx;
-            intMat[1] = bly;
+            intMat[0] = bly;
+            intMat[1] = blx;
             pind.setElementAt(intMat, nband-1);
         } // for (nband = 2; nband <= bandNum; nband++)
         fh = reconWUpyr(pyrh, pind, daubOrder);
@@ -1173,7 +1173,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     /**
      * Decompose image into subbands, denoise, and recompose again
-     * Port of routine written by Javier Portilla
+     * Port of routine written by Javier Portilla, Univ. de Granada, 11/04
      *
      * @param fn
      * @param fnx x dimension of fn
@@ -1292,8 +1292,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             pyrh.setElementAt(BLT, nband-1);
             intMat = new int[2];
-            intMat[0] = blx;
-            intMat[1] = bly;
+            intMat[0] = bly;
+            intMat[1] = blx;
             pind.setElementAt(intMat, nband-1);
         } // for (nband = 1; nband <= bandNum-1; nband++)
         fh = reconSFpyr(pyrh, pind, null, null, 1.0);
@@ -1318,7 +1318,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      */
     private double[] reconFullSFpyr2(Vector pyr, Vector pind, int levs[],
             int bands[], double twidth) {
-        double res[] = null;
         boolean allLevs = false;
         boolean allBands = false;
         int nbands;
@@ -1362,6 +1361,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double maski[][];
         int x[] = null;
         int y[] = null;
+        int ind;
         
         if (levs == null) {
             allLevs = true;
@@ -1380,7 +1380,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         for (i = 0; i < nbands; i++) {
             intArr[i] = (int[])pind.remove(0);
         }
-        maxLev = 1 + spyrHt(pind);
+        maxLev = 2 + spyrHt(pind);
         for (i = nbands-1; i >= 0; i--) {
             pind.insertElementAt(intArr[i], 0);
         }
@@ -1410,7 +1410,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         } // if (allBands)
         else {
             for (i = 0; i < bands.length; i++) {
-                if ((levs[i] < 1) || (levs[i] > nbands)) {
+                if ((bands[i] < 1) || (bands[i] > nbands)) {
                     MipavUtil.displayError(
                     "Band numbers must be in the range 1 to " + nbands);
                     error = 1;
@@ -1422,8 +1422,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         intMat = (int[])pind.get(1);
         dimX = intMat[0];
         dimY = intMat[1];
-        ctrX = (int)Math.ceil((dimX + 0.5)/2);
-        ctrY = (int)Math.ceil((dimY + 0.5)/2);
+        ctrX = (int)Math.ceil((dimX + 0.5)/2.0);
+        ctrY = (int)Math.ceil((dimY + 0.5)/2.0);
         
         xramp = new double[dimY][dimX];
         yramp = new double[dimY][dimX];
@@ -1542,11 +1542,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             consta = Math.sqrt(consta);
             ycosn = new double[xcosn.length];
             for (i = 0; i < xcosn.length; i++) {
-                ycosn[i] = consta * Math.pow(xcosn[i], order);
+                ycosn[i] = consta * Math.pow(Math.cos(xcosn[i]), order);
             }
             hi0mask = pointOp(log_rad, yrcos, xrcos[0], (xrcos[1]-xrcos[0]), false);
             
-            index = 0;
+            ind = 0;
             for (b = 1; b <= nbands; b++) {
                 haveB = false;
                 for (i = 0; i < bands.length; b++) {
@@ -1557,7 +1557,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 if (haveB) {
                     anglemask = pointOp(angle, ycosn, (xcosn[0] + Math.PI*(b-1)/nbands),
                                         (xcosn[1] - xcosn[0]), true);
-                    bandr = (double[])pyr.get(index);
+                    bandr = (double[])pyr.get(ind);
                     bandi = new double[dimX * dimY];
                     // forward FFT
                     fftUtil = new FFTUtility(bandr, bandi, dimY, dimX, 1, -1, FFTUtility.FFT);
@@ -1601,11 +1601,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     } // else if (((nbands-1) %4) == 3)
                     
                     var = 1.0/Math.sqrt(nbands);
-                    for (j = 0; j < dimY; j++) {
-                        maskr[j][0] = var;
-                    }
-                    for (i = 1; i < dimX; i++) {
+                    for (i = 0; i < dimX; i++) {
                         maskr[0][i] = var;
+                    }
+                    for (j = 1; j < dimY; j++) {
+                        maskr[j][0] = var;
                     }
                     
                     for (j = 0; j < dimY; j++) {
@@ -1616,7 +1616,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                         }
                     }
                 } // if (haveB)
-                index++;
+                ind++;
             } // for (b = 1; b <= nbands; b++)    
         } // if (haveZero)
         
@@ -1673,7 +1673,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      *              ZERO - Assume values of zero outside image boundary
      *              EXTEND - Reflect and invert
      *              DONT_COMPUTE - Zero output when filter overhangs output boundaries
-     * Upsampliing factors are determined by xstep and ystep
+     * Upsampling factors are determined by xstep and ystep
      * @param xstep
      * @param ystep
      * The window over which the convolution occurs is specified by
@@ -2269,21 +2269,21 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     yhx = bandx[0];
                 }
                 else {
-                    // Problem with code.  For horizontal concatenation the number of rows
-                    // of yh and band is required to be the same.  But this need not be
-                    // the same here
-                    temp = new double[bandy[0]*(yhx + bandx[0])];
+                    // For horizontal concatenation the number of rows of yh and band is required to be
+                    // the same.  Since band is always expanded up to the same image size, this is
+                    // not a problem.
+                    temp = new double[yhy*(yhx + bandx[0])];
                     for (j = 0; j < yhy; j++) {
                         for (i = 0; i < yhx; i++) {
                             temp[i + j*(yhx + bandx[0])] = yh[i + j*yhx];
                         }
                     }
-                    for (j = 0; j < bandy[0]; j++) {
+                    for (j = 0; j < yhy; j++) {
                         for (i = 0; i < bandx[0]; i++) {
                             temp[i + yhx + j*(yhx + bandx[0])] = band[i + j*bandx[0]];
                         }
                     }
-                    yhy = bandy[0];
+                    yh = temp;
                     yhx = yhx + bandx[0];
                 }
             } // for (nor = 1; nor <= nOrientations; nor++)
@@ -3225,7 +3225,6 @@ MATLAB description:
         double M[][];
         double m[];
         double lzmin;
-        double lzmax;
         double step;
         int nsamp_z;
         double lzi[];
@@ -3524,7 +3523,7 @@ MATLAB description:
         // Compute p(Y|log(z))
         // Non-informative prior
         lzmin = -20.5;
-        lzmax = 3.5;
+        //lzmax = 3.5;
         step = 2;
         nsamp_z = 13;
         
@@ -3872,8 +3871,6 @@ MATLAB description:
         int x1, x2, y1, y2;
         int xs;
         int ys;
-        int xf;
-        int yf;
         double esqr;
         double esqi;
         int offset[] = new int[2];
@@ -3925,12 +3922,10 @@ MATLAB description:
         if (evenmx) {
             xs = 1;
         }
-        xf = (int)Math.round(fmx/f) - 1;
         ys = 0;
         if (evenmy) {
             ys = 1;
         }
-        yf = (int)Math.round(fmy/f) - 1;
         
         for (j = y1, j2 = ys; j <= y2; j++, j2++) {
             for (i = x1, i2 = xs; i <= x2; i++, i2++) {
