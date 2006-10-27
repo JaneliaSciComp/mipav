@@ -72,9 +72,8 @@ import java.util.*;
  * the smallest bounding box outside of which all image pixel values are below the image threshold. Values inside the
  * bounding box are copied to a smaller array to save space and calculations are performed with this reduced array.
  * However, these pixels outside the box are restored for the production of the hard and fuzzy segmented images. In the
- * hard segmentation case values outside the box all have a value of 0. In the fuzzy segmentation case values outside
- * the box all have a value equal to the image minimum. If the cropping checkbox is selected, the user is constrained to
- * select whole image rather than VOI region(s).</p>
+ * hard and fuzzy segmentation cases values outside the box all have a value of 0. If the cropping checkbox is selected,
+ * the user is constrained to select whole image rather than VOI region(s).</p>
  *
  * <p>There are 3 choices for produced output images:<br>
  * 1.) HARD ONLY<br>
@@ -86,10 +85,9 @@ import java.util.*;
  * requirements values of 0. The first class is assigned a value of 1, the second class is assigned a pixel
  * value of 2, and so on. The last class has a value of nClass.</p>
  *
- * <p>Fuzzy segmentation produces 1 image of the same type as the source image for every segmentation class. The
- * membership function is scaled so that the minimum membership value scales to the source image minimum value and the
- * maximum membership value scales to the source image maximum value. If boundary cropping is used, pixels outside the
- * bounding box are all assigned the source image minimum value.</p>
+ * <p>Fuzzy segmentation produces 1 image of floating point type for every segmentation class. The
+ * membership function ranges from 0.0 to 1.0. If boundary cropping is used, pixels outside the
+ * bounding box are all assigned the value 0.0.</p>
  *
  * <p>The signal threshold value is entered on the initial dialog and the image centroids are entered on a later dialog.
  * </p>
@@ -179,9 +177,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int memSize;
-
-    /** DOCUMENT ME! */
-    private float minimum, maximum;
 
     /** DOCUMENT ME! */
     private int nClass = 3;
@@ -282,8 +277,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
      *                           bounding box are copied to a smaller array to save space and calculations are
      *                           performed with this reduced array.  However, these pixels outside the box are
      *                           restored for the production of the hard and fuzzy segmented images. In the hard
-     *                           segmentation case values outside the box all have a value of 0. In the fuzzy
-     *                           segmentation case values outside the box all have a value equal to the image minimum.
+     *                           and fuzzy segmentation cases values outside the box all have a value of 0.
      * @param  _threshold        The default value is the image minimum value. In the centroid calculation
      *                           only those pixels whose values equal or exceed threshold are used in the centroid
      *                           calculaton. In the hard segmentation pixels whose values are less than threshold
@@ -352,8 +346,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
      *                           bounding box are copied to a smaller array to save space and calculations are
      *                           performed with this reduced array.  However, these pixels outside the box are
      *                           restored for the production of the hard and fuzzy segmented images. In the hard
-     *                           segmentation case values outside the box all have a value of 0. In the fuzzy
-     *                           segmentation case values outside the box all have a value equal to the image minimum.
+     *                           and fuzzy segmentation cases values outside the box all have a value of 0.
      * @param  _threshold        The default value is the image minimum value. In the centroid calculation
      *                           only those pixels whose values equal or exceed threshold are used in the centroid
      *                           calculaton. In the hard segmentation pixels whose values are less than threshold
@@ -510,21 +503,15 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         int yHigh;
         int c;
         int x, y;
-        int i, j;
+        int i;
         float dTemp;
         int indexM;
         int index;
-        float minClass, maxClass;
-        float offset;
-        float scaleFactor;
         int yStepIn, yStepOut;
 
         float[] buffer;
         int classType;
 
-        srcImage.calcMinMax();
-        minimum = (float) srcImage.getMin();
-        maximum = (float) srcImage.getMax();
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         orgXDim = xDim;
@@ -541,25 +528,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
             if ((destImage == null) && (srcImage.getType() != ModelStorageBase.UBYTE)) {
                 srcImage.reallocate(ModelStorageBase.UBYTE);
             }
-
-            if (!wholeImage) {
-                maximum = -Float.MAX_VALUE;
-                minimum = Float.MAX_VALUE;
-
-                for (i = 0; i < sliceSize; i++) {
-
-                    if (mask.get(i)) {
-
-                        if (buffer[i] > maximum) {
-                            maximum = buffer[i];
-                        }
-
-                        if (buffer[i] < minimum) {
-                            minimum = buffer[i];
-                        }
-                    }
-                }
-            } // if (!wholeImage)
 
             xLow = 0;
             yLow = 0;
@@ -633,16 +601,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                     }
 
                     buffer2 = null;
-
-                    // Find the new minimum
-                    minimum = maximum;
-
-                    for (i = 0; i < sliceSize; i++) {
-
-                        if (buffer[i] < minimum) {
-                            minimum = buffer[i];
-                        } // if (buffer[i] < minimum)
-                    } // for (i = 0; i < sliceSize; i++)
                 } // if ((xLow > 0) || (xHigh < (xDim-1)) || (yLow > 0) || (yHigh < (yDim - 1)))
             } // if (cropBackground)
 
@@ -746,39 +704,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
             for (i = 0; (i < nClass) && !threadStopped; i++) {
 
-                for (j = 0; j < orgSlice; j++) {
-                    memsBuffer[j] = minimum;
-                } // for (j = 0; j < orgSlice; j++)
-                // Find the maximum value in the class
-
-                maxClass = -Float.MAX_VALUE;
-                minClass = Float.MAX_VALUE;
-
-                for (j = 0; j < sliceSize; j++) {
-
-                    if ((wholeImage) || (mask.get(j))) {
-                        indexM = (i * sliceSize) + j;
-
-                        if (mems[indexM] > maxClass) {
-                            maxClass = mems[indexM];
-                        }
-
-                        if (mems[indexM] < minClass) {
-                            minClass = mems[indexM];
-                        }
-                    } // if ((wholeImage) || (mask.get(j)))
-                } // for (j = 0; j < sliceSize; j++)
-
-                // Scale the data so that the scaled data has the same original minimum
-                // and the same original maximum as the source image
-                if (maxClass != minClass) {
-                    scaleFactor = (maximum - minimum) / (maxClass - minClass);
-                    offset = ((maxClass * minimum) - (maximum * minClass)) / (maxClass - minClass);
-                } else {
-                    scaleFactor = 1;
-                    offset = 0;
-                }
-
                 // System.out.println("old y = " + oldY);
                 // restore the image to the original dimensions
                 indexM = i * sliceSize;
@@ -793,7 +718,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                             index = oldX + yStepIn;
 
                             if ((wholeImage) || (mask.get(index))) {
-                                memsBuffer[index] = (mems[x + yStepOut] * scaleFactor) + offset;
+                                memsBuffer[index] = mems[x + yStepOut];
                             }
                         } // for (oldX = xLow, x = 0; oldX <= xHigh;oldX++,x++)
                     } // for (oldY = yLow, y = 0; oldY <= yHigh;oldY++,y++)
@@ -961,16 +886,10 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         float dTemp;
         int indexM;
         int index;
-        float minClass, maxClass;
-        float offset;
-        float scaleFactor;
         int yStepIn, yStepOut, zStepIn, zStepOut;
 
         float[] buffer;
 
-        srcImage.calcMinMax();
-        minimum = (float) srcImage.getMin();
-        maximum = (float) srcImage.getMax();
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         zDim = srcImage.getExtents()[2];
@@ -1012,25 +931,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
         }
 
         try {
-
-            if (!wholeImage) {
-                maximum = -Float.MAX_VALUE;
-                minimum = Float.MAX_VALUE;
-
-                for (i = 0; i < volSize; i++) {
-
-                    if (mask.get(i)) {
-
-                        if (buffer[i] > maximum) {
-                            maximum = buffer[i];
-                        }
-
-                        if (buffer[i] < minimum) {
-                            minimum = buffer[i];
-                        }
-                    }
-                }
-            } // if (!wholeImage)
 
             xLow = 0;
             yLow = 0;
@@ -1130,16 +1030,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                     }
 
                     buffer2 = null;
-
-                    // Find the new minimum
-                    minimum = maximum;
-
-                    for (i = 0; i < volSize; i++) {
-
-                        if (buffer[i] < minimum) {
-                            minimum = buffer[i];
-                        } // if (buffer[i] < minimum)
-                    } // for (i = 0; i < volSize; i++)
                 } // if ((xLow > 0) || (xHigh < (xDim - 1)) || (yLow > 0) || (yHigh < (yDim - 1)) ||
                 // (zLow > 0) || (zHigh < (zDim - 1)))
             } // if (cropBackground)
@@ -1225,39 +1115,6 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
 
                 for (i = 0; i < nClass; i++) {
 
-                    for (j = 0; j < orgVol; j++) {
-                        memsBuffer[j] = minimum;
-                    } // for (j = 0; j < orgVol; j++)
-
-                    // Find the maximum value in the class
-                    maxClass = -Float.MAX_VALUE;
-                    minClass = Float.MAX_VALUE;
-
-                    for (j = 0; j < volSize; j++) {
-
-                        if ((wholeImage) || (mask.get(j))) {
-                            indexM = (i * volSize) + j;
-
-                            if (mems[indexM] > maxClass) {
-                                maxClass = mems[indexM];
-                            }
-
-                            if (mems[indexM] < minClass) {
-                                minClass = mems[indexM];
-                            }
-                        } // if ((wholeImage) || (mask.get(j)))
-                    } // for (j = 0; j < volSize; j++)
-
-                    // Scale the data so that the scaled data has the same original minimum
-                    // and the same original maximum as the source image
-                    if (maxClass != minClass) {
-                        scaleFactor = (maximum - minimum) / (maxClass - minClass);
-                        offset = ((maxClass * minimum) - (maximum * minClass)) / (maxClass - minClass);
-                    } else {
-                        scaleFactor = 1;
-                        offset = 0;
-                    }
-
                     // restore the image to the original dimensions
                     indexM = i * volSize;
 
@@ -1273,7 +1130,7 @@ public class AlgorithmFuzzyCMeans extends AlgorithmBase {
                                 index = oldX + yStepIn;
 
                                 if ((wholeImage) || (mask.get(index))) {
-                                    memsBuffer[index] = (mems[x + yStepOut] * scaleFactor) + offset;
+                                    memsBuffer[index] = mems[x + yStepOut];
                                 } // if ((wholeImage) || (mask.get(index)))
                             } // for (oldX = xLow, x = 0; oldX <= xHigh;oldX++,x++)
                         } // for (oldY = yLow, y = 0; oldY <= yHigh;oldY++,y++)
