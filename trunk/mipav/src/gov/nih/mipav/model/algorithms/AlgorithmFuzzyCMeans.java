@@ -86,7 +86,7 @@ import java.util.*;
  * value of 2, and so on. The last class has a value of nClass.</p>
  *
  * <p>Fuzzy segmentation produces 1 image of floating point type for every segmentation class. The
- * membership function ranges from 0.0 to 1.0. If boundary cropping is used, pixels outside the
+ * values ranges from 0.0 to 1.0. If boundary cropping is used, pixels outside the
  * bounding box are all assigned the value 0.0.</p>
  *
  * <p>The signal threshold value is entered on the initial dialog and the image centroids are entered on a later dialog.
