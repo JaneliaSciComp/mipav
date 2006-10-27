@@ -63,7 +63,7 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
 	public JDialogEditUserDefinedFileTypes() {
 		
 		setTitle("Edit User Defined Filter");
-		System.out.println(Preferences.getPreferencesDir());
+
 		//get the user defined file types preferences
 		if (Preferences.getProperty("userDefinedFileTypes") != null) {
 			if (!Preferences.getProperty("userDefinedFileTypes").trim().equals("")) {
