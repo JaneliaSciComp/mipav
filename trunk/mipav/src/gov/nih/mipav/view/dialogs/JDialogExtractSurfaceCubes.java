@@ -484,11 +484,11 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         intensityTF.setEnabled(false);
         intensityTF.setFont(serif12);
 
+       
         blurCheck = new JCheckBox("Blur by (Std. Dev)", false);
         blurCheck.setForeground(Color.black);
         blurCheck.setFont(serif12);
         blurCheck.addItemListener(this);
-        blurCheck.setEnabled(false);
 
         blurTF = new JTextField();
         blurTF.setText("0.5");
