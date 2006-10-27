@@ -7567,7 +7567,7 @@ public class FileIO {
         FileTiff imageFile;
 
         try {
-            imageFile = new FileTiff(UI, fileName, fileDir);
+            imageFile = new FileTiff(fileName, fileDir);
             image = imageFile.readImage(false, one);
             LUT = imageFile.getModelLUT();
 
@@ -7627,7 +7627,7 @@ public class FileIO {
         try {
             fileList = getFileList(fileDir, fileName); // get series of files in the chosen dir
             nImages = fileList.length;
-            imageFile = new FileTiff(UI, fileName, fileDir); // read in files
+            imageFile = new FileTiff(fileName, fileDir); // read in files
             imageFile.setFileName(fileList[0]);
             imageFile.readImage(true, false);
         } catch (IOException error) {
@@ -7691,7 +7691,7 @@ public class FileIO {
         image.setFileInfo(myFileInfo, 0);
 
         try {
-            imageFile = new FileTiff(UI, fileList[0], fileDir);
+            imageFile = new FileTiff(fileList[0], fileDir);
         } catch (IOException error) {
 
 
@@ -9338,7 +9338,7 @@ public class FileIO {
         int[] extents;
 
         try { // Construct a new file object
-            imageFile = new FileTiff(UI, options.getFileName(), options.getFileDirectory());
+            imageFile = new FileTiff(options.getFileName(), options.getFileDirectory());
             createProgressBar(imageFile, options.getFileName(), FILE_WRITE);
 
             if (LUT == null) {

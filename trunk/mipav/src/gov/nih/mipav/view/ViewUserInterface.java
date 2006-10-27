@@ -625,7 +625,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             int returnVal = chooser.showDialog(this.getMainFrame(), "Open");
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                new JDialogLoadLeica(this, chooser.getSelectedFile());
+                new JDialogLoadLeica(chooser.getSelectedFile());
             } else {
                 return;
             }
@@ -1565,54 +1565,58 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         openFile.setFilterType(filter);
 
         // Matt through in a _false_ to get it to compile - 12/31/2002
-        //Vector openImageNames = openFile.open(stackFlag, false);
+        // Vector openImageNames = openFile.open(stackFlag, false);
         ArrayList openImagesArrayList = openFile.open(stackFlag, false);
-        if(openImagesArrayList != null) {
-	        for(int i=0;i<openImagesArrayList.size();i++) {
-	        	
-	        	Vector openImageNames = (Vector)openImagesArrayList.get(i);
-		        // if open failed, then imageNames will be null
-		        if (openImageNames == null) {
-		            return;
-		        }
-		
-		        boolean sizeChanged = false;
-		
-		        // if the SaveAllOnSave preference flag is set, then
-		        // load all the files associated with this image (VOIs, LUTs, etc.)
-		        if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
-		            Enumeration e = openImageNames.elements();
-		
-		            while (e.hasMoreElements()) {
-		
-		                try {
-		                    String name = (String) e.nextElement();
-		                    ModelImage img = this.getRegisteredImageByName(name);
-		
-		                    // get frame for image
-		                    ViewJFrameImage imgFrame = img.getParentFrame();
-		
-		                    // if the image size was changed to FLOAT, then don't
-		                    // load any luts (chances are they won't work)
-		                    if (!sizeChanged) {
-		
-		                        // load any luts
-		                        imgFrame.loadLUT(true, true);
-		                    }
-		
-		                    // load any vois
-		                    imgFrame.loadAllVOIs(true);
-		                } catch (IllegalArgumentException iae) {
-		
-		                    // MipavUtil.displayError("There was a problem with the supplied name.\n" );
-		                    Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). " +
-		                                      "Somehow the Image list sent an incorrect name to " +
-		                                      "the image image hashtable. " + "\n", 1);
-		                    Preferences.debug("Bad argument.");
-		                }
-		            }
-		        }
-	        }
+
+        if (openImagesArrayList != null) {
+
+            for (int i = 0; i < openImagesArrayList.size(); i++) {
+
+                Vector openImageNames = (Vector) openImagesArrayList.get(i);
+
+                // if open failed, then imageNames will be null
+                if (openImageNames == null) {
+                    return;
+                }
+
+                boolean sizeChanged = false;
+
+                // if the SaveAllOnSave preference flag is set, then
+                // load all the files associated with this image (VOIs, LUTs, etc.)
+                if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
+                    Enumeration e = openImageNames.elements();
+
+                    while (e.hasMoreElements()) {
+
+                        try {
+                            String name = (String) e.nextElement();
+                            ModelImage img = this.getRegisteredImageByName(name);
+
+                            // get frame for image
+                            ViewJFrameImage imgFrame = img.getParentFrame();
+
+                            // if the image size was changed to FLOAT, then don't
+                            // load any luts (chances are they won't work)
+                            if (!sizeChanged) {
+
+                                // load any luts
+                                imgFrame.loadLUT(true, true);
+                            }
+
+                            // load any vois
+                            imgFrame.loadAllVOIs(true);
+                        } catch (IllegalArgumentException iae) {
+
+                            // MipavUtil.displayError("There was a problem with the supplied name.\n" );
+                            Preferences.debug("Illegal Argument Exception in " +
+                                              "ViewUserInterface.openImageFrame(). " +
+                                              "Somehow the Image list sent an incorrect name to " +
+                                              "the image image hashtable. " + "\n", 1);
+                            Preferences.debug("Bad argument.");
+                        }
+                    }
+                }
+            }
         }
     }
 
