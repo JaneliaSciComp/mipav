@@ -203,7 +203,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                                                    AlgorithmMorphology3D.CLOSE, iters, iters, 0, 0, true);
         }
 
-        MorphClose.setProgressBarVisible(false);
         MorphClose.run();
     }
 
@@ -265,7 +264,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                                                     AlgorithmMorphology3D.DILATE, 1, 0, 0, 0, true);
         }
 
-        MorphDilate.setProgressBarVisible(false);
         MorphDilate.run();
     }
 
@@ -307,7 +305,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                                                    AlgorithmMorphology3D.ERODE, 0, 1, 0, 0, true);
         }
 
-        MorphErode.setProgressBarVisible(false);
         MorphErode.run();
     }
 
@@ -457,7 +454,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
     public void FillHole(ModelImage srcImage) {
         AlgorithmMorphology3D MorphFILL = null;
         MorphFILL = new AlgorithmMorphology3D(srcImage, 4, 2, AlgorithmMorphology3D.FILL_HOLES, 0, 0, 0, 1, true);
-        MorphFILL.setProgressBarVisible(false);
         MorphFILL.run();
     }
 
@@ -568,7 +564,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
          * _tolerance, boolean _wholeImage)  ---wholeImage =true, means whole image*/
 
         firstFuzz.setCentroids(centroid_array);
-        firstFuzz.setProgressBarVisible(false);
         firstFuzz.run();
         firstFuzz.finalize();
         firstFuzz = null;
@@ -587,7 +582,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         AlgorithmMorphology3D MorphIDObj = null;
         MorphIDObj = new AlgorithmMorphology3D(srcImage, 4, 1, AlgorithmMorphology3D.ID_OBJECTS, 0, 0, 0, 0, true);
         MorphIDObj.setMinMax(min, max);
-        MorphIDObj.setProgressBarVisible(false);
         MorphIDObj.run();
     }
 
@@ -605,7 +599,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         //      AlgorithmImageCalculator(ModelImage destImg, ModelImage srcImgA, ModelImage srcImgB, int type, int _clipMode,
         //      boolean maskFlag, String adOpString)
         MorphSubtract = new AlgorithmImageCalculator(destImage, srcImageA, srcImageB, 4, 0, true, "SUBTRACT");
-        MorphSubtract.setProgressBarVisible(false);
         MorphSubtract.run();
     }
 
@@ -619,7 +612,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
         PlugInAlgorithmISN isnAlgo = null;
         isnAlgo = new PlugInAlgorithmISN(srcImage, srcImage);
-        isnAlgo.setProgressBarVisible(false);
         isnAlgo.run();
 
         isnAlgo.finalize();
@@ -776,7 +768,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         AlgorithmIHN3Correction ihn3Algo1 = null;
         ihn3Algo1 = new AlgorithmIHN3Correction(n3ProcessedImage, fieldImage, srcImage1, 100f, 150, 0.0001f, 33.3f, 4f,
                                                 0.2f, 0.01f, true, false, false);
-        ihn3Algo1.setProgressBarVisible(false);
         ihn3Algo1.run();
 
         ihn3Algo1.finalize();
@@ -808,7 +799,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                                                   AlgorithmMorphology3D.OPEN, 1, 1, 0, 0, true);
         }
 
-        MorphOpen.setProgressBarVisible(false);
         MorphOpen.run();
     }
 
@@ -1227,7 +1217,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
         firstFuzz = new AlgorithmFuzzyCMeans(FuzzySeg, srcImage, nClasses, 4, 1, 2, 2.0f, 20000, 200000, false,
                                              AlgorithmFuzzyCMeans.FUZZY_ONLY, false, 0.0f, 200, 0.01f, true);
         firstFuzz.setCentroids(centroid_array);
-        firstFuzz.setProgressBarVisible(false);
         firstFuzz.run();
         firstFuzz.finalize();
         firstFuzz = null;
@@ -1250,7 +1239,6 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
 
         AlgorithmThresholdDual threshAlgo = null;
         threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, 1, true, true, true);
-        threshAlgo.setProgressBarVisible(false);
         threshAlgo.run();
 
         return resultImage;

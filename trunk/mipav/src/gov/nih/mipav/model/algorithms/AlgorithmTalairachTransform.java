@@ -286,11 +286,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
             transformTalairachVolume(buffer, result);
         }
         
-        if (!threadStopped) {
-            closingLog();
-        }
-
-        
+        constructLog();
 
         if (!threadStopped) {
             setCompleted(true);
@@ -298,22 +294,13 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
             setCompleted(false);
         }
     }
-
-    /**
-     * Constructs a string indicating if the algorithm completed sucessfully.
-     */
-    private void closingLog() {
-
-        if (isCompleted()) {
+    
+    private void constructLog() {
+        if (isCompleted() && !threadStopped) {
             historyString = new String("# Talairach Transform (Completed successfully!)\n");
         } else {
             historyString = new String("# Talairach Transform (Algorithm failed!)\n");
         }
-
-        writeLog();
-
-        // log the elapsed time
-        logElapsedTime();
     }
 
     /**
@@ -609,9 +596,7 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
         // record time
         long start_time = System.currentTimeMillis();
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged("process volume (" + transformTypeName + ")");
-        }
+        fireProgressStateChanged("process volume (" + transformTypeName + ")");
 
         // debug: UI.setGlobalDataText("\n-- "+transformType+" --\n");
 
@@ -747,11 +732,8 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                 obj = voi.VOIAt(i);
 
                 if ((obj.getCurveType() == VOI.CONTOUR) || (obj.getCurveType() == VOI.POLYLINE)) {
-
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged("process VOI (" + obj.getName() + ")");
-                        fireProgressStateChanged(0);
-                    }
+                    fireProgressStateChanged("process VOI (" + obj.getName() + ")");
+                    fireProgressStateChanged(0);
 
                     // create an image with voi tags
                     imgMask.clear();
@@ -788,9 +770,9 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
                                     tInfo.origToTlrc(x, y, z, pt);
                                 }
 
-                                xi = (int) Math.round(pt.x);
-                                yi = (int) Math.round(pt.y);
-                                zi = (int) Math.round(pt.z);
+                                xi = Math.round(pt.x);
+                                yi = Math.round(pt.y);
+                                zi = Math.round(pt.z);
 
                                 if ((xi > 0) && (xi < (nix - 1)) && (yi > 0) && (yi < (niy - 1)) && (zi > 0) &&
                                         (zi < (niz - 1))) {
@@ -821,10 +803,8 @@ public class AlgorithmTalairachTransform extends AlgorithmBase {
         // debug
 
         System.out.print("total time: (milliseconds): " + (System.currentTimeMillis() - start_time));
-
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged("creating result image...");
-        }
+        
+        fireProgressStateChanged("creating result image...");
 
         try {
             destImage.importData(0, result, true);

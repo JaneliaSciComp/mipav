@@ -964,12 +964,8 @@ public class AlgorithmFFT extends AlgorithmBase {
             if (image25D) {
                 realSubsetData = new float[newSliceSize];
                 imagSubsetData = new float[newSliceSize];
-
-                if (transformDir == FORWARD) {
-                    fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
-                } else if (isProgressBarVisible()) {
-                    fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
-                }
+                
+                fireProgressStateChanged(0, srcImage.getImageName(), "Running forward FFTs ...");
 
                 for (z = 0; z < newDimLengths[2]; z++) {
 

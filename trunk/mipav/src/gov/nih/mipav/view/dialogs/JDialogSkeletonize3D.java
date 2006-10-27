@@ -374,10 +374,6 @@ public class JDialogSkeletonize3D extends JDialogBase implements AlgorithmInterf
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    skeletonize3DAlgo.setProgressBarVisible(false);
-                }
-
                 skeletonize3DAlgo.run();
             }
         } catch (OutOfMemoryError x) {

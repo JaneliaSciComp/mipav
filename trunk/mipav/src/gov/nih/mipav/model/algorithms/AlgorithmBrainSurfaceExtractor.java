@@ -1003,7 +1003,6 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
 
         AlgorithmRemoveSlices sliceAlgo = new AlgorithmRemoveSlices(paddedImg, img, slices);
         sliceAlgo.setRunningInSeparateThread(false);
-        sliceAlgo.setProgressBarVisible(false);
         sliceAlgo.run();
         sliceAlgo.finalize();
 

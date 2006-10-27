@@ -146,7 +146,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
 
         for (int i = 0; (i < length) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && (((i) % mod) == 0)) {
+            if ((((i) % mod) == 0)) {
                 fireProgressStateChanged(Math.round((float) (i) / (length - 1) * 100));
             }
 
@@ -237,9 +237,7 @@ public class PlugInAlgorithmCT_MD extends AlgorithmBase {
             int ldMuscle = 0;
             int hdMuscle = 0;
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) (i) / (srcImage.getExtents()[2] - 1) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) (i) / (srcImage.getExtents()[2] - 1) * 100));
 
             for (int j = 0; (j < imgLength) && !threadStopped; j++) {
 

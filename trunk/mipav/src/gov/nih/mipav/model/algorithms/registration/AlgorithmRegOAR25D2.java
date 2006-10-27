@@ -964,7 +964,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             fireProgressStateChanged("Interpolating input image to obtain equal x and y resolutions");
             transform = new AlgorithmTransform(inputImage, new TransMatrix(3), interp, resIso[0], resIso[1],
                                                extentsIso[0], extentsIso[1], false, true, false);
-            transform.setProgressBarVisible(false);
             transform.run();
 
             if (transform.isCompleted() == false) {
@@ -1000,7 +999,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
         if (useOutsideReferenceSlice && resample) {
             transform = new AlgorithmTransform(outsidePreReferenceSlice, new TransMatrix(3), interp, resIso[0],
                                                resIso[1], extentsIso[0], extentsIso[1], false, true, false);
-            transform.setProgressBarVisible(false);
             transform.run();
 
             if (transform.isCompleted() == false) {
@@ -1087,7 +1085,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 fireProgressStateChanged("Performing interpolation on input weight image");
                 transform = new AlgorithmTransform(inputWeight, new TransMatrix(3), interp, resIso[0], resIso[1],
                                                    extentsIso[0], extentsIso[1], false, true, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
 
                 if (transform.isCompleted() == false) {
@@ -1646,7 +1643,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             answer.matrix.invert();
             transform = new AlgorithmTransform(input1, answer.matrix, interp2, iResols[0], iResols[1], iExtents[0],
                                                iExtents[1], transformVOIs, true, false);
-            transform.setProgressBarVisible(false);
             transform.run();
 
             if (output_1 != null) {
@@ -1662,7 +1658,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             if (inputImage2 != null) {
                 transform = new AlgorithmTransform(input2, answer.matrix, interp2, iResols[0], iResols[1], iExtents[0],
                                                    iExtents[1], false, true, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
 
                 if (output_2 != null) {
@@ -1679,7 +1674,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
             if (inputImage3 != null) {
                 transform = new AlgorithmTransform(input3, answer.matrix, interp2, iResols[0], iResols[1], iExtents[0],
                                                    iExtents[1], false, true, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
 
                 if (output_3 != null) {
@@ -1874,7 +1868,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
                 transform = new AlgorithmTransform(input1, answer.matrix, interp2, resIso[0], resIso[1], extentsIso[0],
                                                    extentsIso[1], false, true, false);
 
-                transform.setProgressBarVisible(false);
                 transform.run();
 
                 if (output_1 != null) {
@@ -1964,7 +1957,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
                     transform = new AlgorithmTransform(inputw_1, answer.matrix, interp2, resIso[0], resIso[1],
                                                        extentsIso[0], extentsIso[1], false, true, false);
-                    transform.setProgressBarVisible(false);
                     transform.run();
 
                     if (output_1 != null) {
@@ -2082,7 +2074,6 @@ public class AlgorithmRegOAR25D2 extends AlgorithmBase {
 
                         transform = new AlgorithmTransform(inputw_1, answer.matrix, interp2, resIso[0], resIso[1],
                                                            extentsIso[0], extentsIso[1], false, true, false);
-                        transform.setProgressBarVisible(false);
                         transform.run();
 
                         if (output_1 != null) {

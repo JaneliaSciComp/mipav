@@ -370,7 +370,6 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
                         lapAlgo = new AlgorithmLaplacian(image2, lapSigmas, wholeImage, image25D, ampFactor);
                     }
 
-                    lapAlgo.setProgressBarVisible(false);
                     lapAlgo.run();
                     lapAlgo.finalize();
                     lapAlgo = null;
@@ -549,7 +548,6 @@ public class AlgorithmMRIShadingCorrection extends AlgorithmBase {
                         gaussAlgo = new AlgorithmGaussianBlurSep(image2, sigmas, true, false);
                     }
 
-                    gaussAlgo.setProgressBarVisible(false);
                     gaussAlgo.run();
                     gaussAlgo.finalize();
                     gaussAlgo = null;

@@ -155,7 +155,7 @@ public class FileTransferSRB extends Thread implements ActionListener, WindowLis
 
         for (int i = 0; i < sourceFileList.size(); i++) {
 
-            if ((((i) % mod) == 0) && isProgressBarVisible()) {
+            if ((((i) % mod) == 0)) {
                 progressBar.setTitle("Transfering " + ((GeneralFile) sourceFileList.get(i)).getName());
 
                 if (sourceFileList.size() > 100) {

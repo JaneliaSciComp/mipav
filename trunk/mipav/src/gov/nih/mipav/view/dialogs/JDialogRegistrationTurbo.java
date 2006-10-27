@@ -510,10 +510,6 @@ public class JDialogRegistrationTurbo extends JDialogBase implements AlgorithmIn
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!UI.isAppFrameVisible()) {
-                turbo.setProgressBarVisible(false);
-            }
-
             turbo.run();
         }
     }

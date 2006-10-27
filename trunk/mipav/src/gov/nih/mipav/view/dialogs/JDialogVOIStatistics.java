@@ -360,11 +360,6 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
 
 
         calculator.setRunningInSeparateThread(false);
-
-        if (!userInterface.isAppFrameVisible()) {
-            calculator.setProgressBarVisible(false);
-        }
-
         calculator.run();
     }
 

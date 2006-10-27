@@ -364,10 +364,6 @@ public class JDialogPointArea extends JDialogScriptableBase implements Algorithm
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!userInterface.isAppFrameVisible()) {
-                pointAlgo.setProgressBarVisible(false);
-            }
-
             pointAlgo.run();
         }
     }

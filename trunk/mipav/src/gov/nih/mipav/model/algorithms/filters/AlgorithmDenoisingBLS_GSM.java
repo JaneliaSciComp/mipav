@@ -412,11 +412,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             // NOTE: Scale factors do not matter here.
             // forward FFT
             fftUtil = new FFTUtility(corArray, imagArray, ny, nx, 1, -1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             fftUtil = new FFTUtility(corArray, imagArray, 1, ny, nx, -1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             center(corArray, imagArray, nx, ny);
@@ -478,11 +476,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         // Inverse FFT
         fftUtil = new FFTUtility(corArray2, imagArray2, ndy, ndx, 1, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(corArray2, imagArray2, 1, ndy, ndx, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         center(corArray2, imagArray2, ndx, ndy);
@@ -525,11 +521,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             imagArray = new double[npx*npy];
             // forward FFT
             fftUtil = new FFTUtility(delta, imagArray, npy, npx, 1, -1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             fftUtil = new FFTUtility(delta, imagArray, 1, npy, npx, -1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             psArray = new double[npx*npy];
@@ -547,11 +541,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             // forward FFT
             fftUtil = new FFTUtility(ranArray, imagArray, npy, npx, 1, -1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             fftUtil = new FFTUtility(ranArray, imagArray, 1, npy, npx, -1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             for (i = 0; i < ranArray.length; i++) {
@@ -562,11 +554,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             // Inverse FFT
             fftUtil = new FFTUtility(delta, imagArray, npy, npx, 1, +1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             fftUtil = new FFTUtility(delta, imagArray, 1, npy, npx, +1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
         } // if (repres1 == ORTHOGONAL_WAVELET)
@@ -1488,11 +1478,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 resdfti = new double[x[0]*y[0]];
                 // forward FFT
                 fftUtil = new FFTUtility(resdftr, resdfti, y[0], x[0], 1, -1, FFTUtility.FFT);
-                fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
                 fftUtil = new FFTUtility(resdftr, resdfti, 1, y[0], x[0], -1, FFTUtility.FFT);
-                fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
                 center(resdftr, resdfti, x[0], y[0]);
@@ -1573,11 +1561,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     bandi = new double[dimX * dimY];
                     // forward FFT
                     fftUtil = new FFTUtility(bandr, bandi, dimY, dimX, 1, -1, FFTUtility.FFT);
-                    fftUtil.setProgressBarVisible(false);
                     fftUtil.run();
                     fftUtil.finalize();
                     fftUtil = new FFTUtility(bandr, bandi, 1, dimY, dimX, -1, FFTUtility.FFT);
-                    fftUtil.setProgressBarVisible(false);
                     fftUtil.run();
                     fftUtil.finalize();
                     center(bandr, bandi, dimX, dimY);
@@ -1637,11 +1623,9 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         center(resdftr, resdfti, x[0], y[0]);
         // Inverse FFT
         fftUtil = new FFTUtility(resdftr, resdfti, y[0], x[0], 1, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(resdftr, resdfti, 1, y[0], x[0], +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         return resdftr;
@@ -2666,13 +2650,13 @@ MATLAB description:
         double var;
         double angle[][];
         double log_rad[][];
-        double xrcos[] = null;;
+        double xrcos[] = null;
         double yrcos[] = null;
         double yircos[];
         boolean haveOne;
         int px[] = new int[1];
         int py[] = new int[1];
-        double resdftr[] = null;;
+        double resdftr[] = null;
         double resdfti[] = null;
         FFTUtility fftUtil;
         double lo0mask[][];
@@ -2795,11 +2779,9 @@ MATLAB description:
                 resdfti = new double[px[0]*py[0]];
                 // forward FFT
                 fftUtil = new FFTUtility(resdftr, resdfti, py[0], px[0], 1, -1, FFTUtility.FFT);
-                fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
                 fftUtil = new FFTUtility(resdftr, resdfti, 1, py[0], px[0], -1, FFTUtility.FFT);
-                fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
                 center(resdftr, resdfti, px[0], py[0]);
@@ -2850,11 +2832,9 @@ MATLAB description:
             imag = new double[x * y];
             // forward FFT
             fftUtil = new FFTUtility(arr, imag, y, x, 1, -1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             fftUtil = new FFTUtility(arr, imag, 1, y, x, -1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             center(arr, imag, x, y);
@@ -2874,11 +2854,9 @@ MATLAB description:
         center(resdftr, resdfti, px[0], py[0]);
         // Inverse FFT
         fftUtil = new FFTUtility(resdftr, resdfti, py[0], px[0], 1, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(resdftr, resdfti, 1, py[0], px[0], +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         return resdftr;
@@ -3018,11 +2996,9 @@ MATLAB description:
                 nresdfti = new double[px[0] * py[0]];
                 // forward FFT
                 fftUtil = new FFTUtility(nresdftr, nresdfti, py[0], px[0], 1, -1, FFTUtility.FFT);
-                fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
                 fftUtil = new FFTUtility(nresdftr, nresdfti, 1, py[0], px[0], -1, FFTUtility.FFT);
-                fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
                 center(nresdftr, nresdfti, px[0], py[0]);
@@ -3090,11 +3066,9 @@ MATLAB description:
                     bandi = new double[dimX * dimY];
                     // forward FFT
                     fftUtil = new FFTUtility(bandr, bandi, dimY, dimX, 1, -1, FFTUtility.FFT);
-                    fftUtil.setProgressBarVisible(false);
                     fftUtil.run();
                     fftUtil.finalize();
                     fftUtil = new FFTUtility(bandr, bandi, 1, dimY, dimX, -1, FFTUtility.FFT);
-                    fftUtil.setProgressBarVisible(false);
                     fftUtil.run();
                     fftUtil.finalize();
                     center(bandr, bandi, dimX, dimY);
@@ -3913,11 +3887,9 @@ MATLAB description:
         
         // forward FFT
         fftUtil = new FFTUtility(tr, ti, my, mx, 1, -1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(tr, ti, 1, my, mx, -1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         center(tr, ti, mx, my);
@@ -4016,11 +3988,9 @@ MATLAB description:
         shift(ter, tei, fmx, fmy, offset, ter, tei);
         // Inverse FFT
         fftUtil = new FFTUtility(ter, tei, fmy, fmx, 1, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(ter, tei, 1, fmy, fmx, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         return;
@@ -4297,11 +4267,9 @@ MATLAB description:
         }
         imdfti = new double[imx*imy];
         fftUtil = new FFTUtility(imdftr, imdfti, imy, imx, 1, -1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(imdftr, imdfti, 1, imy, imx, -1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         center(imdftr, imdfti, imx, imy);
@@ -4400,11 +4368,9 @@ MATLAB description:
             center(bandfftr, bandffti, imx, imy);
             // Inverse FFT
             fftUtil = new FFTUtility(bandfftr, bandffti, imy, imx, 1, +1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             fftUtil = new FFTUtility(bandfftr, bandffti, 1, imy, imx, +1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             for (i = 0; i < bandfftr.length; i++) {
@@ -5664,11 +5630,9 @@ MATLAB description:
         }
         // forward FFT
         fftUtil = new FFTUtility(t, ti, ty, tx, 1, -1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(t, ti, 1, ty, tx, -1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         center(t, ti, tx, ty); 
@@ -5738,11 +5702,9 @@ MATLAB description:
         shift(tsr, tsi, tsx[0], tsy[0], intArr, tsr, tsi);
         // Inverse FFT
         fftUtil = new FFTUtility(tsr, tsi, tsy[0], tsx[0], 1, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(tsr, tsi, 1, tsy[0], tsx[0], +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         return;
@@ -6027,11 +5989,9 @@ MATLAB description:
         }
         imdfti = new double[imx*imy];
         fftUtil = new FFTUtility(imdftr, imdfti, imy, imx, 1, -1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(imdftr, imdfti, 1, imy, imx, -1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         center(imdftr, imdfti, imx, imy);
@@ -6061,11 +6021,9 @@ MATLAB description:
         center(hi0dftr, hi0dfti, imx, imy);
         // Inverse FFT
         fftUtil = new FFTUtility(hi0dftr, hi0dfti, imy, imx, 1, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         fftUtil = new FFTUtility(hi0dftr, hi0dfti, 1, imy, imx, +1, FFTUtility.FFT);
-        fftUtil.setProgressBarVisible(false);
         fftUtil.run();
         fftUtil.finalize();
         
@@ -6139,11 +6097,9 @@ MATLAB description:
             center(lodftr,lodfti, lodx, lody);
             // Inverse FFT
             fftUtil = new FFTUtility(lodftr, lodfti, lody, lodx, 1, +1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             fftUtil = new FFTUtility(lodftr, lodfti, 1, lody, lodx, +1, FFTUtility.FFT);
-            fftUtil.setProgressBarVisible(false);
             fftUtil.run();
             fftUtil.finalize();
             pyr.add(lodftr);
@@ -6222,11 +6178,9 @@ MATLAB description:
                 center(banddftr, banddfti, lodx, lody);
                 // Inverse FFT
                 fftUtil = new FFTUtility(banddftr, banddfti, lody, lodx, 1, +1, FFTUtility.FFT);
-                fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
                 fftUtil = new FFTUtility(banddftr, banddfti, 1, lody, lodx, +1, FFTUtility.FFT);
-                fftUtil.setProgressBarVisible(false);
                 fftUtil.run();
                 fftUtil.finalize();
                 

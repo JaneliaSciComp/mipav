@@ -299,10 +299,6 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        subVOIAlgo.setProgressBarVisible(false);
-                    }
-
                     subVOIAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -354,10 +350,6 @@ public class JDialogSubtractVOI extends JDialogScriptableBase implements Algorit
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        subVOIAlgo.setProgressBarVisible(false);
-                    }
-
                     subVOIAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

@@ -1834,7 +1834,6 @@ public class FileNIFTI extends FileBase {
                     // Don't do scaling in changeTypeAlgo because scl_slope could be negative
                     changeTypeAlgo = new AlgorithmChangeType(image, newType, imageMin, imageMax, imageMin, imageMax,
                                                              false);
-                    changeTypeAlgo.setProgressBarVisible(false);
                     changeTypeAlgo.run();
                     changeTypeAlgo.finalize();
                     changeTypeAlgo = null;

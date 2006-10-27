@@ -447,11 +447,6 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-
-            if (!m_kUI.isAppFrameVisible()) {
-                m_kAlgorithmReg.setProgressBarVisible(false);
-            }
-
             m_kAlgorithmReg.run();
         }
     }

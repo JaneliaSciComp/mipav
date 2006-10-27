@@ -908,7 +908,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
                         try {
 
-                            if (((i % mod) == 0) && isProgressBarVisible()) {
+                            if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                             }
                         } catch (NullPointerException npe) {
@@ -1519,7 +1519,7 @@ public class AlgorithmImageCalculator extends AlgorithmBase implements ActionLis
 
                         try {
 
-                            if (((i % mod) == 0) && isProgressBarVisible()) {
+                            if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                             }
                         } catch (NullPointerException npe) {

@@ -832,7 +832,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 /*
                     try {
 
-                        if (((((c * offsetZ) + pix) % mod) == 0) && isProgressBarVisible()) {
+                        if (((((c * offsetZ) + pix) % mod) == 0)) {
                             fireProgressStateChanged(Math.round((pix + 1 + (c * offsetZ)) /
                                                                    (iters * (float) sliceLength * zDim) * 100),
                                                     runningInSeparateThread);

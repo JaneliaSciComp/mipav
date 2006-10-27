@@ -339,7 +339,6 @@ public class VolumeTexture {
                                                   volExtents[1], volExtents[2], false, true, false);
 
             transformImg.setRunningInSeparateThread(false);
-            transformImg.setProgressBarVisible(false);
             transformImg.run();
 
             if (transformImg.isCompleted() == false) { }

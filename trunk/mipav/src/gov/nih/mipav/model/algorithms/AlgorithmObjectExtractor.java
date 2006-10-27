@@ -256,7 +256,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
 
         for (i = 1; (i <= iMaxUpdate) && !threadStopped; i++) {
 
-            if (((i % 100) == 0) && isProgressBarVisible()) {
+            if (((i % 100) == 0)) {
                 fireProgressStateChanged(Math.round((float) (i) / (iMaxUpdate) * 100));
             }
 

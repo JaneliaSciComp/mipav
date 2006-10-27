@@ -231,11 +231,6 @@ public class JDialogSubsample extends JDialogScriptableBase implements Algorithm
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-
-            if (!userInterface.isAppFrameVisible()) {
-                algoSub.setProgressBarVisible(false);
-            }
-
             algoSub.run();
         }
     }

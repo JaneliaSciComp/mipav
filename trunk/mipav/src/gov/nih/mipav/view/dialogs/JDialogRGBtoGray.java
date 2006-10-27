@@ -389,11 +389,6 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        RGBAlgo.setProgressBarVisible(false);
-                    }
-
                     RGBAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -445,11 +440,6 @@ public class JDialogRGBtoGray extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        RGBAlgo.setProgressBarVisible(false);
-                    }
-
                     RGBAlgo.run();
                 }
 

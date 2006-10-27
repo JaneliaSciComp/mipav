@@ -202,9 +202,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
             for (z = 0; (z < (oldZdim + 1)) && !threadStopped; z++) { // for all slices in the old image
 
                 // let user know something is happening by updating the progressbar
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100));
-                }
+                fireProgressStateChanged(Math.round(((float) ((t * oldZdim) + z)) / (oldZdim * tDim) * 100));
 
                 if (((z == 0) && (frontSlices > 0)) || ((z == oldZdim) && (backSlices > 0))) {
 
@@ -540,10 +538,8 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
             if (srcImage.getNDims() > 3) {
                 numTimes = srcImage.getExtents()[3];
             }
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged("Importing Image Data...");
-            }
+            
+            fireProgressStateChanged("Importing Image Data...");
 
             try {
 

@@ -724,11 +724,6 @@ public class JDialogRegistrationOAR35D extends JDialogScriptableBase implements 
         setVisible(false);
 
         if (isScript) {
-
-            if (!UI.isAppFrameVisible()) {
-                reg35.setProgressBarVisible(false);
-            }
-
             reg35.run();
         } else {
 

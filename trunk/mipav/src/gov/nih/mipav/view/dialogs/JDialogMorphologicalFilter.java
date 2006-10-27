@@ -408,10 +408,6 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            mfAlgo.setProgressBarVisible(false);
-                        }
-
                         mfAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -464,10 +460,6 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            mfAlgo.setProgressBarVisible(false);
-                        }
-
                         mfAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -522,10 +514,6 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            mfAlgo.setProgressBarVisible(false);
-                        }
-
                         mfAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -577,10 +565,6 @@ public class JDialogMorphologicalFilter extends JDialogScriptableBase implements
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            mfAlgo.setProgressBarVisible(false);
-                        }
-
                         mfAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

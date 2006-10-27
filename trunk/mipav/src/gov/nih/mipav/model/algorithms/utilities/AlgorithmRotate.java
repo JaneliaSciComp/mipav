@@ -217,7 +217,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                     for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
                         for (j = 0; (j < oldDimExtents[0]) && !threadStopped; j++) {
 
-                            if (((count % mod) == 0) && isProgressBarVisible()) {
+                            if (((count % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (count) / (length - 1) * 100));
                             }
 
@@ -245,7 +245,7 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                         for (k = oldDimExtents[1] - 1; (k >= 0) && !threadStopped; k--) {
 
-                            if (((i % mod) == 0) && isProgressBarVisible()) {
+                            if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (i) / (length - 1) * 100));
                             }
 
@@ -263,7 +263,7 @@ public class AlgorithmRotate extends AlgorithmBase {
 
                         for (k = 0; (k < oldDimExtents[1]) && !threadStopped; k++) {
 
-                            if (((i % mod) == 0) && isProgressBarVisible()) {
+                            if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) (i) / (length - 1) * 100));
                             }
 
@@ -306,7 +306,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                             // must repeat cf times for each pixel in order to get ARGB or complex data
                             for (w = cf-1; (w >= 0) && !threadStopped; w--) {
 
-                                if (((count % mod) == 0) && isProgressBarVisible()) {
+                                if (((count % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (count) / (length - 1) * 100));
                                 }
 
@@ -336,7 +336,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                             // must repeat cf times for each pixel in order to get ARGB or complex data
                             for (w = 0; (w < cf) && !threadStopped; w++) {
 
-                                if (((i % mod) == 0) && isProgressBarVisible()) {
+                                if (((i % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (i) / (length - 1) * 100));
                                 }
 
@@ -358,7 +358,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                             // must repeat cf times for each pixel in order to get ARGB or complex data
                             for (w = 0; (w < cf) && !threadStopped; w++) {
 
-                                if (((i % mod) == 0) && isProgressBarVisible()) {
+                                if (((i % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (i) / (length - 1) * 100));
                                 }
 
@@ -1029,7 +1029,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                     // for the whole image
                     for (index = 0; (index < length) && !threadStopped; index++) {
 
-                        if ((((start + index + tOffset) % mod) == 0) && isProgressBarVisible()) {
+                        if ((((start + index + tOffset) % mod) == 0)) {
                             fireProgressStateChanged(Math.round((float) (start + index + tOffset) / (totalLength - 1) *
                                                                    100));
                         }
@@ -1400,7 +1400,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                     // which has the pixel data for the whole image
                     for (index = 0; (index < length) && !threadStopped; index++) {
 
-                        if ((((start + index + tOffset) % mod) == 0) && isProgressBarVisible()) {
+                        if ((((start + index + tOffset) % mod) == 0)) {
                             fireProgressStateChanged(Math.round((float) (start + index + tOffset) / (totalLength - 1) *
                                                                    100));
                         }

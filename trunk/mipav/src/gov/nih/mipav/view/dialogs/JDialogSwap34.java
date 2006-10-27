@@ -165,11 +165,6 @@ public class JDialogSwap34 extends JDialogScriptableBase implements AlgorithmInt
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    swap34Algo.setProgressBarVisible(false);
-                }
-
                 swap34Algo.run();
             }
         } catch (OutOfMemoryError x) {

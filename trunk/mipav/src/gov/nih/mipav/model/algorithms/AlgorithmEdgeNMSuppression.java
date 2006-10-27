@@ -645,7 +645,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
 
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
-                if ((((start + i) % mod) == 0) && isProgressBarVisible()) {
+                if ((((start + i) % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                 }
 
@@ -783,7 +783,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
 
             for (i = start; (i < (start + length)) && !threadStopped; i++) {
 
-                if (((i % mod) == 0) && isProgressBarVisible()) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (totalLength - 1) * 100));
                 }
 

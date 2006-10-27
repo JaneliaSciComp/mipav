@@ -163,10 +163,6 @@ public class JDialogReplaceBlankSlicesWithAverages extends JDialogScriptableBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                //if (!userInterface.isAppFrameVisible()) {
-                    rAlgo.setProgressBarVisible(false);
-                //}
-
                 rAlgo.run();
             }
         } catch (OutOfMemoryError x) {

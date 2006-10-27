@@ -1494,7 +1494,6 @@ public class JPanelHistoRGB
 
             AlgorithmHistogram histoAlgoARed = new AlgorithmHistogram(histogramARed, offset, imageA, entireFlag);
 
-            histoAlgoARed.setProgressBarVisible(progressFlag);
             histoAlgoARed.run();
 
             if (imageA.getType() != ModelStorageBase.ARGB_USHORT) {
@@ -1508,7 +1507,6 @@ public class JPanelHistoRGB
 
             AlgorithmHistogram histoAlgoAGreen = new AlgorithmHistogram(histogramAGreen, offset, imageA, entireFlag);
 
-            histoAlgoAGreen.setProgressBarVisible(progressFlag);
             histoAlgoAGreen.run();
 
             if (imageA.getType() != ModelStorageBase.ARGB_USHORT) {
@@ -1522,7 +1520,6 @@ public class JPanelHistoRGB
 
             AlgorithmHistogram histoAlgoABlue = new AlgorithmHistogram(histogramABlue, offset, imageA, entireFlag);
 
-            histoAlgoABlue.setProgressBarVisible(progressFlag);
             histoAlgoABlue.run();
         }
 
@@ -1539,7 +1536,6 @@ public class JPanelHistoRGB
 
             AlgorithmHistogram histoAlgoBRed = new AlgorithmHistogram(histogramBRed, offset, imageB, entireFlag);
 
-            histoAlgoBRed.setProgressBarVisible(progressFlag);
             histoAlgoBRed.run();
 
             if (imageB.getType() != ModelStorageBase.ARGB_USHORT) {
@@ -1553,7 +1549,6 @@ public class JPanelHistoRGB
 
             AlgorithmHistogram histoAlgoBGreen = new AlgorithmHistogram(histogramBGreen, offset, imageB, entireFlag);
 
-            histoAlgoBGreen.setProgressBarVisible(progressFlag);
             histoAlgoBGreen.run();
 
             if (imageB.getType() != ModelStorageBase.ARGB_USHORT) {
@@ -1567,7 +1562,6 @@ public class JPanelHistoRGB
 
             AlgorithmHistogram histoAlgoBBlue = new AlgorithmHistogram(histogramBBlue, offset, imageB, entireFlag);
 
-            histoAlgoBBlue.setProgressBarVisible(progressFlag);
             histoAlgoBBlue.run();
         }
     }

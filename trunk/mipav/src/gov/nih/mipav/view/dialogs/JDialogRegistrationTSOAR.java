@@ -476,17 +476,11 @@ public class JDialogRegistrationTSOAR extends JDialogScriptableBase implements A
             if (algoReg.startMethod(Thread.MIN_PRIORITY) == false) {
                 MipavUtil.displayError("A thread is already running on this object");
             }
-
-            dispose();
         } else {
-            dispose();
-
-            if (!UI.isAppFrameVisible()) {
-                algoReg.setProgressBarVisible(false);
-            }
-
             algoReg.run();
         }
+        
+        dispose();
     }
 
     /**

@@ -924,7 +924,6 @@ public abstract class JDialogBase extends JDialog
     protected void createProgressBar(String title, String msg, AlgorithmBase pListener) {
     	progressBar = new ViewJProgressBar(title, msg, 0, 100, true);
         progressBar.setSeparateThread(runInSeparateThread);
-        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible());
         pListener.addProgressChangeListener(progressBar);
         pListener.setProgressValues(0, 100);
     }

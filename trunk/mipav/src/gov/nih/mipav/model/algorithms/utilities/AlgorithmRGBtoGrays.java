@@ -165,7 +165,7 @@ public class AlgorithmRGBtoGrays extends AlgorithmBase {
 
                     for (i = 0, id = 0; (i < length) && !threadStopped; i += 4, id++) {
 
-                        if (((i % mod) == 0) && isProgressBarVisible()) {
+                        if (((i % mod) == 0)) {
                             fireProgressStateChanged(Math.round((float) (i + offset) / (totalLength - 1) * 100));
                         }
 

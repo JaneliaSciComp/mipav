@@ -209,9 +209,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
 
             average = (float) (total / count);
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) s / nImages * 100));
-            }
+            fireProgressStateChanged(Math.round((float) s / nImages * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -220,9 +218,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
                 }
             } // for ( i = 0; i < length && !threadStopped; i++)
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -231,9 +227,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
                 }
             } // for ( i = 0; i < length && !threadStopped; i++)
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -242,10 +236,8 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
                 }
             } // for ( i = 0; i < length && !threadStopped; i++)
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100));
-            }
-
+            fireProgressStateChanged(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100));
+            
             for (i = 0; (i < length) && !threadStopped; i++) {
 
                 if (entireImage || mask.get(i)) {
@@ -419,9 +411,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
 
         average = (float) (total / count);
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(20);
-        }
+        fireProgressStateChanged(20);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -430,9 +420,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             }
         } // for ( i = 0; i < length && !threadStopped; i++)
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(40);
-        }
+        fireProgressStateChanged(40);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -441,9 +429,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             }
         } // for ( i = 0; i < length && !threadStopped; i++)
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(60);
-        }
+        fireProgressStateChanged(60);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -452,9 +438,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             }
         } // for ( i = 0; i < length && !threadStopped; i++)
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(80);
-        }
+        fireProgressStateChanged(80);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -625,9 +609,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
 
             average = (float) (total / count);
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) s / nImages * 100));
-            }
+            fireProgressStateChanged(Math.round((float) s / nImages * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -636,9 +618,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
                 }
             } // for ( i = 0; i < length && !threadStopped; i++)
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) ((4 * s) + 1) / (4 * nImages) * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -647,9 +627,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
                 }
             } // for ( i = 0; i < length && !threadStopped; i++)
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) ((4 * s) + 2) / (4 * nImages) * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -658,9 +636,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
                 }
             } // for ( i = 0; i < length && !threadStopped; i++)
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) ((4 * s) + 3) / (4 * nImages) * 100));
 
             for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -848,9 +824,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
 
         average = (float) (total / count);
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(20);
-        }
+        fireProgressStateChanged(20);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -859,9 +833,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             }
         } // for ( i = 0; i < length && !threadStopped; i++)
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(40);
-        }
+        fireProgressStateChanged(40);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -870,9 +842,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             }
         } // for ( i = 0; i < length && !threadStopped; i++)
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(60);
-        }
+        fireProgressStateChanged(60);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 
@@ -881,9 +851,7 @@ public class AlgorithmMorphologicalFilter extends AlgorithmBase {
             }
         } // for ( i = 0; i < length && !threadStopped; i++)
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(80);
-        }
+        fireProgressStateChanged(80);
 
         for (i = 0; (i < length) && !threadStopped; i++) {
 

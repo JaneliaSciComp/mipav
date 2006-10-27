@@ -185,11 +185,6 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    resliceAlgo.setProgressBarVisible(false);
-                }
-
                 resliceAlgo.run();
             }
         } catch (OutOfMemoryError x) {

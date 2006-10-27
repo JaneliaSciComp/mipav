@@ -1389,7 +1389,6 @@ public class FileImageXML extends FileXML {
 
             algoTrans = new AlgorithmTransform(tempImage, transMat, AlgorithmTransform.BSPLINE3, res[0], res[1], xDim,
                                                yDim, false, false, false);
-            algoTrans.setProgressBarVisible(false);
             algoTrans.run();
 
             ModelImage thumbnailImage = algoTrans.getTransformedImage();
@@ -1404,7 +1403,6 @@ public class FileImageXML extends FileXML {
                 AlgorithmRGBConcat algoRGB = new AlgorithmRGBConcat(thumbnailImage, thumbnailImage, thumbnailImage,
                                                                     tempConcat, true);
 
-                algoRGB.setProgressBarVisible(false);
                 algoRGB.run();
                 thumbnailImage.disposeLocal();
                 thumbnailImage = tempConcat;

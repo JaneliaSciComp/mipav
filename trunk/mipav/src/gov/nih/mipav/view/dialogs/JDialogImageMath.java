@@ -514,11 +514,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            mathAlgo.setProgressBarVisible(false);
-                        }
-
                         mathAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -573,11 +568,6 @@ public class JDialogImageMath extends JDialogScriptableBase implements Algorithm
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            mathAlgo.setProgressBarVisible(false);
-                        }
-
                         mathAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

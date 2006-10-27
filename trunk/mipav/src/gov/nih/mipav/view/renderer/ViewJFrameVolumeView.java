@@ -1068,7 +1068,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             AlgorithmReslice resliceAlgo = new AlgorithmReslice(_imageA, AlgorithmReslice.LINEAR);
 
             resliceAlgo.setRunningInSeparateThread(false);
-            resliceAlgo.setProgressBarVisible(false);
             resliceAlgo.run();
             isoImageA = resliceAlgo.getResultImage();
 
@@ -1085,7 +1084,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             if (_imageB != null) {
                 resliceAlgo = new AlgorithmReslice(_imageB, AlgorithmReslice.LINEAR);
                 resliceAlgo.setRunningInSeparateThread(false);
-                resliceAlgo.setProgressBarVisible(false);
                 resliceAlgo.run();
                 isoImageB = resliceAlgo.getResultImage();
 
@@ -1167,7 +1165,7 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
                 surRender.setVolView(true);
 
                 if (surRender != null) {
-                    ((SurfaceRender) surRender).configureVolumeFrame();
+                    surRender.configureVolumeFrame();
                 }
 
                 m_akPlaneRender = new PlaneRender[3];
@@ -1433,7 +1431,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
         try {
             mathAlgo = new AlgorithmConcat(imageA, blankImage, paddingImageA);
-            mathAlgo.setProgressBarVisible(false);
             setVisible(false);
             mathAlgo.run();
 
@@ -1461,7 +1458,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
             try {
                 mathAlgo = new AlgorithmConcat(imageB, blankImage, paddingImageB);
-                mathAlgo.setProgressBarVisible(false);
                 setVisible(false);
                 mathAlgo.run();
 
@@ -1514,7 +1510,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             }
 
             transformFunct.setRunningInSeparateThread(false);
-            transformFunct.setProgressBarVisible(true);
             transformFunct.run();
 
             if (transformFunct.isCompleted() == false) {
@@ -1551,7 +1546,6 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             } else { }
 
             transformFunct.setRunningInSeparateThread(false);
-            transformFunct.setProgressBarVisible(true);
             transformFunct.run();
 
             if (transformFunct.isCompleted() == false) {

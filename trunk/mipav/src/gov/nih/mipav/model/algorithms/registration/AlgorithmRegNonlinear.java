@@ -1698,7 +1698,6 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                     // Make algorithm
                     gaussianBlurAlgo = new AlgorithmGaussianBlur(sImage, sigmas, true, inPlane);
-                    gaussianBlurAlgo.setProgressBarVisible(false);
                     gaussianBlurAlgo.run();
                 } catch (OutOfMemoryError x) {
                     finalize();
@@ -1744,7 +1743,6 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
 
                     // Make algorithm
                     gaussianBlurAlgo = new AlgorithmGaussianBlur(targetImage, sigmas, entireTarget, inPlane);
-                    gaussianBlurAlgo.setProgressBarVisible(false);
                     gaussianBlurAlgo.run();
                 } catch (OutOfMemoryError x) {
                     finalize();
@@ -2417,7 +2415,6 @@ public class AlgorithmRegNonlinear extends AlgorithmBase {
                 }
 
                 AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(maskImage);
-                VOIExtAlgo.setProgressBarVisible(false);
                 VOIExtAlgo.run();
 
                 if (series2D) {

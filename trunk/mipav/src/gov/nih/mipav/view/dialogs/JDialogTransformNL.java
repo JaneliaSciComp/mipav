@@ -531,11 +531,6 @@ public class JDialogTransformNL extends JDialogScriptableBase implements Algorit
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-
-            if (!userInterface.isAppFrameVisible()) {
-                algoTrans.setProgressBarVisible(false);
-            }
-
             algoTrans.run();
         }
     }

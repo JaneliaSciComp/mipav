@@ -453,11 +453,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                                                        ydimA, zdimA, false, false, false);
 
                     transform.setUpdateOriginFlag(true);
-
-                    if (!UI.isAppFrameVisible()) {
-                        transform.setProgressBarVisible(false);
-                    }
-
                     transform.run();
                     resultImage = transform.getTransformedImage();
                     transform.finalize();
@@ -1099,11 +1094,6 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-
-            if (!UI.isAppFrameVisible()) {
-                reg3.setProgressBarVisible(false);
-            }
-
             reg3.run();
         }
 

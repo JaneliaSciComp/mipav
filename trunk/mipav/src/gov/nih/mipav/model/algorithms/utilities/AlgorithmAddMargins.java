@@ -702,7 +702,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
             for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
-                if (isProgressBarVisible() && ((i % mod) == 0)) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (destSliceArea) * 100));
                 }
 
@@ -766,7 +766,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                         for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
-                            if (isProgressBarVisible() && ((i % mod) == 0)) {
+                            if (((i % mod) == 0)) {
                                 fireProgressStateChanged(Math.round((float) ((z * destSliceArea) + i) / (imageLength) *
                                                                        100));
                             }
@@ -963,7 +963,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
             for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
-                if (isProgressBarVisible() && ((i % mod) == 0)) {
+                if (((i % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) i / (destSliceArea) * 100));
                 }
 
@@ -1073,7 +1073,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                             for (i = 0; (i < destSliceArea) && !threadStopped; i++) {
 
-                                if (isProgressBarVisible() && ((i % mod) == 0)) {
+                                if (((i % mod) == 0)) {
                                     fireProgressStateChanged(Math.round((float) (tNewOffset + (z * destSliceArea) + i) /
                                                                            (imageLength) * 100));
                                 }
@@ -1169,7 +1169,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     System.out.println("Start location is " + startLoc + ".\n");
 
                     // FILE INFO: add the file info for 3D images
-                    if ((tDim == 1) && isProgressBarVisible()) {
+                    if ((tDim == 1)) {
                         fireProgressStateChanged("Updating File Info...");
                         // int fillLength = Math.round((float)z/destDepth); int piece = (1 - fillLength);
                     }
@@ -1178,7 +1178,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                     for (Z = 0; (Z < destDepth) && !threadStopped; Z++) {
 
-                        if ((isProgressBarVisible()) && (tDim == 1)) {
+                        if ((tDim == 1)) {
                             fireProgressStateChanged(Math.round((float) (Z) / destDepth * 100));
                         }
 
@@ -1448,21 +1448,15 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                     // TOP MARGIN LATITUDES: over the top margin, copy in the default values
                     for (i = 0; (i < topMargin) && !threadStopped; i++) {
-
-                        if (isProgressBarVisible()) {
-                            fireProgressStateChanged(Math.round((float) i / destHeight * 100));
-                        }
-
+                        fireProgressStateChanged(Math.round((float) i / destHeight * 100));
+                            
                         destImage.importData(i * destWidth * colorFactor, headerFooterMargins, false);
                     }
 
                     // IMAGE LATITUDES: skip through the added 'top' margin, then copy the source image into offset
                     // place
                     for (i = 0; (i < srcHeight) && !threadStopped; i++) {
-
-                        if (isProgressBarVisible()) {
-                            fireProgressStateChanged(Math.round((float) (i + topMargin) / destHeight * 100));
-                        }
+                        fireProgressStateChanged(Math.round((float) (i + topMargin) / destHeight * 100));
 
                         destImage.importData(colorFactor * (topRows + (destWidth * i)), leftMargins, false); // left margin
 
@@ -1476,11 +1470,8 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                     // BOTTOM MARGIN LATITUDES: over the bottom margin, copy in the default values
                     for (i = topMargin + srcHeight; (i < destHeight) && !threadStopped; i++) {
-
-                        if (isProgressBarVisible()) {
-                            fireProgressStateChanged(Math.round((float) i / destHeight * 100));
-                        }
-
+                        fireProgressStateChanged(Math.round((float) i / destHeight * 100));
+                        
                         destImage.importData(colorFactor * i * destWidth, headerFooterMargins, false);
                     }
 
@@ -1548,12 +1539,10 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                         for (z = 0; (z < frontMargin) && !threadStopped; z++) {
                             destPlate = z * destSliceArea;
-
-                            if (isProgressBarVisible()) {
-                                fireProgressStateChanged(Math.round(((float) ((t * destDepth) + z)) /
-                                                                       (tDim * destDepth) * 100));
-                            }
-
+                            
+                            fireProgressStateChanged(Math.round(((float) ((t * destDepth) + z)) /
+                                                                   (tDim * destDepth) * 100));
+                            
                             for (i = 0; (i < destHeight) && !threadStopped; i++) {
                                 destImage.importData(colorFactor * (tNewOffset + destPlate + (i * destWidth)),
                                                      headerFooterMargins, false);
@@ -1565,7 +1554,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             destPlate = (z * destSliceArea) + (frontMargin * destSliceArea);
 
                             // let user know something is happening by updating the progressbar
-                            if ((isProgressBarVisible()) && (tDim == 1)) {
+                            if ((tDim == 1)) {
                                 fireProgressStateChanged(Math.round((float) (z + frontMargin) / destDepth * 100));
                             }
 
@@ -1602,7 +1591,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         for (z = frontMargin + srcDepth; (z < destDepth) && !threadStopped; z++) {
                             destPlate = z * destSliceArea;
 
-                            if ((isProgressBarVisible()) && (tDim == 1)) {
+                            if ((tDim == 1)) {
                                 fireProgressStateChanged(Math.round((float) z / (destDepth) * 100));
                             }
 
@@ -1643,7 +1632,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         System.out.println("Start location is " + startLoc + ".\n");
 
                         // FILE INFO: add the file info for 3D images
-                        if ((tDim == 1) && isProgressBarVisible()) {
+                        if ((tDim == 1)) {
                             fireProgressStateChanged("Updating File Info...");
                             // int fillLength = Math.round((float)z/destDepth); int piece = (1 - fillLength);
                         }
@@ -1652,7 +1641,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
 
                         for (Z = 0; (Z < destDepth) && !threadStopped; Z++) {
 
-                            if ((isProgressBarVisible()) && (tDim == 1)) {
+                            if ((tDim == 1)) {
                                 fireProgressStateChanged(Math.round((float) (Z) / destDepth * 100));
                             }
 

@@ -259,7 +259,6 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtents);
 
         AlgorithmHistogram histoAlgoA = new AlgorithmHistogram(histogram, image, true);
-        histoAlgoA.setProgressBarVisible(false);
         histoAlgoA.setRunningInSeparateThread(false);
         histoAlgoA.run();
     }
@@ -550,11 +549,6 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        thresholdAlgo.setProgressBarVisible(false);
-                    }
-
                     thresholdAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -607,11 +601,6 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        thresholdAlgo.setProgressBarVisible(false);
-                    }
-
                     thresholdAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

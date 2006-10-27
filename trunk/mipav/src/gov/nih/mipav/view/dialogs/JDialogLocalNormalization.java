@@ -750,10 +750,6 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        algoLocal.setProgressBarVisible(false);
-                    }
-
                     algoLocal.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -834,10 +830,6 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        algoLocal.setProgressBarVisible(false);
-                    }
-
                     algoLocal.run();
                 }
             } catch (OutOfMemoryError x) {

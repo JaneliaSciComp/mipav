@@ -307,11 +307,6 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        padSlicesAlgo.setProgressBarVisible(false);
-                    }
-
                     padSlicesAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -365,11 +360,6 @@ public class JDialogPadImages extends JDialogScriptableBase implements Algorithm
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        padSlicesAlgo.setProgressBarVisible(false);
-                    }
-
                     padSlicesAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

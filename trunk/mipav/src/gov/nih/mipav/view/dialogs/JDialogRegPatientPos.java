@@ -197,11 +197,6 @@ public class JDialogRegPatientPos extends JDialogScriptableBase implements Algor
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-
-            if (!UI.isAppFrameVisible()) {
-                RegPatPos.setProgressBarVisible(false);
-            }
-
             RegPatPos.run();
         }
 

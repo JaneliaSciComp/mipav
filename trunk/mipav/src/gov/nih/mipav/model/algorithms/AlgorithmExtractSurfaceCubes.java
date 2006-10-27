@@ -223,7 +223,6 @@ public class AlgorithmExtractSurfaceCubes extends AlgorithmBase {
                 fireProgressStateChanged("Blurring images");
 
                 // fireProgressStateChanged(15, separateThread);
-                blurAlgo.setProgressBarVisible(false);
                 blurAlgo.run();
                 fireProgressStateChanged(15);
 

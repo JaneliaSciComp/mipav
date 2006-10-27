@@ -190,8 +190,6 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
                     MipavUtil.displayError("result Image is null");
                 }
 
-                closingLog();
-
                 Preferences.debug("Done.");
                 insertScriptLine();
             }
@@ -453,31 +451,9 @@ public class JDialogRegistrationTPSpline extends JDialogScriptableBase implement
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-
-            if (!UI.isAppFrameVisible()) {
-                spline.setProgressBarVisible(false);
-            }
-
             spline.run();
         }
 
-    }
-
-    /**
-     * closingLog - constructs a string indicating if the whether or not the algorithm completed sucessfully. overrides
-     * AlgorithmBase's nonfunctional closingLog function
-     */
-    protected void closingLog() {
-        String logString;
-
-        if (spline.isCompleted() == true) {
-            logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
-                                   " Completed successfully!" + "\n");
-        } else {
-            logString = new String("Register " + matchImage.getImageName() + " to " + baseImage.getImageName() +
-                                   " Algorithm failed!" + "\n");
-        }
-        // Preferences.log(matchImage.getUserInterface(), logString);
     }
 
     /**

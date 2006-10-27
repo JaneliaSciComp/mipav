@@ -366,11 +366,6 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            waveletAlgo.setProgressBarVisible(false);
-                        }
-
                         waveletAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -423,11 +418,6 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            waveletAlgo.setProgressBarVisible(false);
-                        }
-
                         waveletAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -481,11 +471,6 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            waveletAlgo.setProgressBarVisible(false);
-                        }
-
                         waveletAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -537,11 +522,6 @@ public class JDialogWaveletThreshold extends JDialogScriptableBase implements Al
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-
-                        if (!userInterface.isAppFrameVisible()) {
-                            waveletAlgo.setProgressBarVisible(false);
-                        }
-
                         waveletAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

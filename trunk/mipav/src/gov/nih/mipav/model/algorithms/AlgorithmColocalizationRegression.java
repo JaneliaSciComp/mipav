@@ -3980,7 +3980,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 reg2 = new AlgorithmRegOAR2D(srcImage, baseImage, cost, DOF, interp, coarseBegin, coarseEnd, coarseRate,
                                              fineRate, doSubsample);
-                reg2.setProgressBarVisible(false);
                 reg2.run();
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
@@ -3998,7 +3997,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 fireProgressStateChanged(10);
                 transform = new AlgorithmTransform(baseImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA, xDim,
                                                    yDim, false, clip, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
                 registeredBaseImage = transform.getTransformedImage();
                 updateFileInfo(baseImage, registeredBaseImage);
@@ -4012,7 +4010,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 reg2 = new AlgorithmRegOAR2D(baseImage, srcImage, cost, DOF, interp, coarseBegin, coarseEnd, coarseRate,
                                              fineRate, doSubsample);
-                reg2.setProgressBarVisible(false);
                 reg2.run();
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
@@ -4029,7 +4026,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 transform = new AlgorithmTransform(srcImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA, xDim,
                                                    yDim, transformVOI, clip, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
                 registeredSrcImage = transform.getTransformedImage();
                 updateFileInfo(srcImage, registeredSrcImage);
@@ -4327,7 +4323,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name);
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImage, subtractedSrcImage);
-                algoAutoCovariance.setProgressBarVisible(false);
                 algoAutoCovariance.run();
 
                 fwhmS = algoAutoCovariance.getFWHM();
@@ -4349,7 +4344,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 algoAutoCovariance = null;
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImage, subtractedBaseImage);
-                algoAutoCovariance.setProgressBarVisible(false);
                 algoAutoCovariance.run();
 
                 fwhmB = algoAutoCovariance.getFWHM();
@@ -6258,7 +6252,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     reg2 = new AlgorithmRegOAR2D(refImage, inputImage, cost, DOF, interp, coarseBegin, coarseEnd,
                                                  coarseRate, fineRate, doSubsample);
-                    reg2.setProgressBarVisible(false);
                     reg2.run();
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
@@ -6271,7 +6264,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     xfrm.setMatrix(mat);
                     transform = new AlgorithmTransform(inputImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA,
                                                        xDim, yDim, transformVOI, clip, false);
-                    transform.setProgressBarVisible(false);
                     transform.run();
                     registeredImage = transform.getTransformedImage();
 
@@ -6289,7 +6281,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     reg2 = new AlgorithmRegOAR2D(inputImage, refImage, cost, DOF, interp, coarseBegin, coarseEnd,
                                                  coarseRate, fineRate, doSubsample);
-                    reg2.setProgressBarVisible(false);
                     reg2.run();
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
@@ -6303,7 +6294,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     transform = new AlgorithmTransform(refImage, xfrm, AlgorithmTransform.BILINEAR, xresB, yresB, xDim,
                                                        yDim, transformVOI, clip, false);
 
-                    transform.setProgressBarVisible(false);
                     transform.run();
                     registeredImage = transform.getTransformedImage();
 
@@ -6629,7 +6619,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 resultImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), name);
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImage, subtractedSrcImage);
-                algoAutoCovariance.setProgressBarVisible(false);
                 algoAutoCovariance.run();
 
                 fwhmS = algoAutoCovariance.getFWHM();
@@ -6651,7 +6640,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                 algoAutoCovariance = null;
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImage, subtractedBaseImage);
-                algoAutoCovariance.setProgressBarVisible(false);
                 algoAutoCovariance.run();
 
                 fwhmB = algoAutoCovariance.getFWHM();
@@ -8657,7 +8645,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 reg2 = new AlgorithmRegOAR2D(refImage, inputImage, cost, DOF, interp, coarseBegin, coarseEnd,
                                              coarseRate, fineRate, doSubsample);
-                reg2.setProgressBarVisible(false);
                 reg2.run();
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
@@ -8674,7 +8661,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 transform = new AlgorithmTransform(inputImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA, xDim,
                                                    yDim, transformVOI, clip, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
                 registeredImageY = transform.getTransformedImage();
                 transform.disposeLocal();
@@ -8685,7 +8671,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 reg2 = new AlgorithmRegOAR2D(inputImage, refImage, cost, DOF, interp, coarseBegin, coarseEnd,
                                              coarseRate, fineRate, doSubsample);
-                reg2.setProgressBarVisible(false);
                 reg2.run();
                 xfrm = reg2.getTransform();
                 reg2.disposeLocal();
@@ -8699,7 +8684,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 transform = new AlgorithmTransform(refImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA, xDim,
                                                    yDim, transformVOI, clip, false);
-                transform.setProgressBarVisible(false);
                 transform.run();
                 registeredImageX = transform.getTransformedImage();
                 transform.disposeLocal();
@@ -9052,7 +9036,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImageR, resultImageG, resultImageB,
                                                                  subtractedSrcImage);
-                algoAutoCovariance.setProgressBarVisible(false);
                 algoAutoCovariance.run();
 
                 if (useRed) {
@@ -11178,7 +11161,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     reg2 = new AlgorithmRegOAR2D(refImage, inputImage, cost, DOF, interp, coarseBegin, coarseEnd,
                                                  coarseRate, fineRate, doSubsample);
-                    reg2.setProgressBarVisible(false);
                     reg2.run();
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
@@ -11191,7 +11173,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     xfrm.setMatrix(mat);
                     transform = new AlgorithmTransform(inputImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA,
                                                        xDim, yDim, transformVOI, clip, false);
-                    transform.setProgressBarVisible(false);
                     transform.run();
                     registeredImageY = transform.getTransformedImage();
                     transform.disposeLocal();
@@ -11199,7 +11180,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                     reg2 = new AlgorithmRegOAR2D(inputImage, refImage, cost, DOF, interp, coarseBegin, coarseEnd,
                                                  coarseRate, fineRate, doSubsample);
-                    reg2.setProgressBarVisible(false);
                     reg2.run();
                     xfrm = reg2.getTransform();
                     reg2.disposeLocal();
@@ -11212,7 +11192,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
                     xfrm.setMatrix(mat);
                     transform = new AlgorithmTransform(refImage, xfrm, AlgorithmTransform.BILINEAR, xresA, yresA, xDim,
                                                        yDim, transformVOI, clip, false);
-                    transform.setProgressBarVisible(false);
                     transform.run();
                     registeredImageX = transform.getTransformedImage();
                     transform.disposeLocal();
@@ -11588,7 +11567,6 @@ public class AlgorithmColocalizationRegression extends AlgorithmBase implements 
 
                 algoAutoCovariance = new AlgorithmAutoCovariance(resultImageR, resultImageG, resultImageB,
                                                                  subtractedSrcImage);
-                algoAutoCovariance.setProgressBarVisible(false);
                 algoAutoCovariance.run();
 
                 if (useRed) {

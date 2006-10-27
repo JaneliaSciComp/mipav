@@ -132,9 +132,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         try {
             resultImage.importData(0, temp.data, true);
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(100);
-            }
+            fireProgressStateChanged(100);
         } catch (IOException ioe) {
             MipavUtil.displayError("Error caught trying to import subsample result image.");
             setCompleted(false);
@@ -654,9 +652,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
         int yOffset;
         int zOffset;
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(percent);
-        }
+        fireProgressStateChanged(percent);
 
         for (int s = 0; s < nImages; s++) {
             zOffset = s * sliceSize;
@@ -800,9 +796,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
         percent += (int) inc;
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(percent);
-        }
+        fireProgressStateChanged(percent);
 
         remainder += inc - (int) inc;
 
@@ -810,9 +804,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
             percent += (int) remainder;
             remainder = remainder - (int) remainder;
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(percent);
-            }
+            fireProgressStateChanged(percent);
         }
 
         return result;
@@ -870,15 +862,11 @@ public class AlgorithmSubsample extends AlgorithmBase {
         float remainder = 0;
         float inc = (90.0f / result.zDim);
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(percent);
-        }
+        fireProgressStateChanged(percent);
 
         for (int z = 0; z < result.zDim; z++) {
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged("Subsampling slice " + (z + 1) + "..");
-            }
+            fireProgressStateChanged("Subsampling slice " + (z + 1) + "..");
 
             for (int y = 0; y < result.yDim; y++) {
 
@@ -1188,9 +1176,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
             percent += (int) inc;
 
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(percent);
-            }
+            fireProgressStateChanged(percent);
 
             remainder += inc - (int) inc;
 
@@ -1198,9 +1184,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 percent += (int) remainder;
                 remainder = remainder - (int) remainder;
 
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(percent);
-                }
+                fireProgressStateChanged(percent);
             }
 
         }
@@ -1262,15 +1246,10 @@ public class AlgorithmSubsample extends AlgorithmBase {
         float remainder = 0;
         float inc = (90.0f / (result.tDim * result.zDim));
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged(percent);
-        }
+        fireProgressStateChanged(percent);
 
         for (int t = 0; t < result.tDim; t++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged("Subsampling time " + (t + 1) + "..");
-            }
+            fireProgressStateChanged("Subsampling time " + (t + 1) + "..");
 
             for (int z = 0; z < result.zDim; z++) {
 
@@ -1584,9 +1563,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
 
                 percent += (int) inc;
 
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(percent);
-                }
+                fireProgressStateChanged(percent);
 
                 remainder += inc - (int) inc;
 
@@ -1594,9 +1571,7 @@ public class AlgorithmSubsample extends AlgorithmBase {
                     percent += (int) remainder;
                     remainder = remainder - (int) remainder;
 
-                    if (isProgressBarVisible()) {
-                        fireProgressStateChanged(percent);
-                    }
+                    fireProgressStateChanged(percent);
                 } // if (remainder >= 1)
 
             } // for (int z = 0; z < result.zDim; z++)
@@ -1693,8 +1668,6 @@ public class AlgorithmSubsample extends AlgorithmBase {
         tmpMask.calcMinMax();
 
         AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-        VOIExtAlgo.setProgressBarVisible(false);
-
         VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
         VOIExtAlgo.run();
         resultImage.setVOIs(tmpMask.getVOIs());
@@ -1818,8 +1791,6 @@ public class AlgorithmSubsample extends AlgorithmBase {
         tmpMask.calcMinMax();
 
         AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-        VOIExtAlgo.setProgressBarVisible(false);
-
         VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
         VOIExtAlgo.run();
 

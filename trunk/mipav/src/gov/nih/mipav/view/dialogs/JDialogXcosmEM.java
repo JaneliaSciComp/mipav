@@ -232,11 +232,6 @@ public class JDialogXcosmEM extends JDialogScriptableBase implements AlgorithmIn
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    xcosmEMAlgo.setProgressBarVisible(false);
-                }
-
                 xcosmEMAlgo.run();
             } // end if (isRunInSeparateThread())
 

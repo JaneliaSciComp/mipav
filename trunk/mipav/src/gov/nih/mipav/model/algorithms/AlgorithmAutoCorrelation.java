@@ -197,7 +197,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         for (deltaY = 0; deltaY < yDim; deltaY++) {
             newValue = deltaY * 100 / yDim;
 
-            if (isProgressBarVisible() && (newValue > oldValue)) {
+            if ((newValue > oldValue)) {
                 fireProgressStateChanged(newValue);
             }
 
@@ -392,7 +392,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             for (deltaY = 0; deltaY < yDim; deltaY++) {
                 newValue = deltaY * 100 / (yDim * colorsPresent);
 
-                if (isProgressBarVisible() && (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -462,7 +462,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             for (deltaY = 0; deltaY < yDim; deltaY++) {
                 newValue = lastValue + (deltaY * 100 / (yDim * colorsPresent));
 
-                if (isProgressBarVisible() && (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -532,7 +532,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             for (deltaY = 0; deltaY < yDim; deltaY++) {
                 newValue = lastValue + (deltaY * 100 / (yDim * colorsPresent));
 
-                if (isProgressBarVisible() && (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -650,7 +650,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
             newValue = deltaZ * 100 / zDim;
 
-            if (isProgressBarVisible() && (newValue > oldValue)) {
+            if ((newValue > oldValue)) {
                 fireProgressStateChanged(newValue);
             }
 
@@ -885,7 +885,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
                 newValue = deltaZ * 100 / (zDim * colorsPresent);
 
-                if (isProgressBarVisible() && (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -978,7 +978,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
                 newValue = lastValue + (deltaZ * 100 / (zDim * colorsPresent));
 
-                if (isProgressBarVisible() && (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -1071,7 +1071,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             for (deltaZ = 0; deltaZ < zDim; deltaZ++) {
                 newValue = lastValue + (deltaZ * 100 / (zDim * colorsPresent));
 
-                if (isProgressBarVisible() && (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -1204,7 +1204,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
         for (deltaT = 0; deltaT < tDim; deltaT++) {
             newValue = deltaT * 100 / tDim;
 
-            if (isProgressBarVisible() && (newValue > oldValue)) {
+            if ((newValue > oldValue)) {
                 fireProgressStateChanged(newValue);
             }
 
@@ -1363,7 +1363,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             for (deltaT = 0; deltaT < tDim; deltaT++) {
                 newValue = deltaT * 100 / (tDim * colorsPresent);
 
-                if (isProgressBarVisible() && (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -1470,7 +1470,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             for (deltaT = 0; deltaT < tDim; deltaT++) {
                 newValue = lastValue + (deltaT * 100 / (tDim * colorsPresent));
 
-                if (isProgressBarVisible() && (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 
@@ -1577,7 +1577,7 @@ public class AlgorithmAutoCorrelation extends AlgorithmBase {
             for (deltaT = 0; deltaT < tDim; deltaT++) {
                 newValue = lastValue + (deltaT * 100 / (tDim * colorsPresent));
 
-                if (isProgressBarVisible() && (newValue > oldValue)) {
+                if ((newValue > oldValue)) {
                     fireProgressStateChanged(newValue);
                 }
 

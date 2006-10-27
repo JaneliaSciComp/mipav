@@ -7,8 +7,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.Toolkit;
-
 import java.io.*;
 
 import java.util.Vector;
@@ -302,7 +300,6 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                         algoMarg = new AlgorithmAddMargins(dicomImage, paddedImage, leftPadding, 0, topPadding, 0, 0);
                     }
 
-                    algoMarg.setProgressBarVisible(false);
                     algoMarg.run();
                     algoMarg.finalize();
                     algoMarg = null;

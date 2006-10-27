@@ -794,10 +794,6 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            removeSlicesAlgo.setProgressBarVisible(false);
-                        }
-
                         removeSlicesAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -851,10 +847,6 @@ public class JDialogRemoveSlices extends JDialogScriptableBase implements Algori
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            removeSlicesAlgo.setProgressBarVisible(false);
-                        }
-
                         removeSlicesAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

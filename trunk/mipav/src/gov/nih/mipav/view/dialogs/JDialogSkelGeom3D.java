@@ -200,10 +200,6 @@ public class JDialogSkelGeom3D extends JDialogBase implements AlgorithmInterface
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    skelGeom3DAlgo.setProgressBarVisible(false);
-                }
-
                 skelGeom3DAlgo.run();
             }
         } catch (OutOfMemoryError x) {

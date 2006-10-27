@@ -679,8 +679,6 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
             histogram = new ModelHistogram(ModelStorageBase.INTEGER, dimExtentsA);
 
             AlgorithmHistogram histoAlgo = new AlgorithmHistogram(histogram, channel, image, true);
-
-            histoAlgo.setProgressBarVisible(false);
             histoAlgo.run();
 
             if (histoAlgo.isCompleted()) {
@@ -722,7 +720,6 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 gradMagAlgo_A.setBlue(true);
                 gradMagAlgo_A.setGreen(true);
                 gradMagAlgo_A.setRunningInSeparateThread(isActiveImage); // progress bar junk.
-                gradMagAlgo_A.setProgressBarVisible(true);
                 gradMagAlgo_A.run();
 
                 if (gradMagAlgo_A.isCompleted()) {
@@ -738,7 +735,6 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                                                                                0, 255, false);
 
                 changeTypeAlgo_A.setRunningInSeparateThread(isActiveImage);
-                changeTypeAlgo_A.setProgressBarVisible(false);
                 changeTypeAlgo_A.run();
                 gradMagRescale_A.calcMinMax();
 
@@ -796,7 +792,6 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                 gradMagAlgo_B.setBlue(true);
                 gradMagAlgo_B.setGreen(true);
                 gradMagAlgo_B.setRunningInSeparateThread(isActiveImage); // progress bar junk.
-                gradMagAlgo_B.setProgressBarVisible(true);
                 gradMagAlgo_B.run();
 
                 if (gradMagAlgo_B.isCompleted()) {
@@ -812,7 +807,6 @@ public class JPanelVolOpacityRGB extends JPanelVolOpacityBase {
                                                                                0, 255, false);
 
                 changeTypeAlgo_B.setRunningInSeparateThread(isActiveImage);
-                changeTypeAlgo_B.setProgressBarVisible(false);
                 changeTypeAlgo_B.run();
                 gradMagRescale_B.calcMinMax();
 

@@ -562,7 +562,6 @@ public abstract class InverseLaplaceWeeks {
         }
 
         fft = new FFTUtility(fftR, fftI, 1, M, 1, -1, FFTUtility.FFT);
-        fft.setProgressBarVisible(false);
         fft.run();
         fft.finalize();
         fft = null;

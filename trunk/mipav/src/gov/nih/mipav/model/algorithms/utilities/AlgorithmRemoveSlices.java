@@ -212,9 +212,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                 plate = zSrc * sliceArea;
 
                 // let user know something is happening by updating the progressbar
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100));
 
                 // so long as the slice has not been marked for removal, copy it all over.
                 if (!remove[zSrc]) {
@@ -289,9 +287,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
             numTimes = newExtents[3];
         }
 
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged("Importing Image Data...");
-        }
+        fireProgressStateChanged("Importing Image Data...");
 
         try {
 
@@ -339,9 +335,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         }
 
         // update the fileInfo in the srcImage
-        if (isProgressBarVisible()) {
-            fireProgressStateChanged("Updating Image Headers...");
-        }
+        fireProgressStateChanged("Updating Image Headers...");
 
         updateFileInfo(resultImage, srcImage);
 
@@ -422,9 +416,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
                 plate = zSrc * sliceArea;
 
                 // let user know something is happening by updating the progressbar
-                if (isProgressBarVisible()) {
-                    fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100));
-                }
+                fireProgressStateChanged(Math.round((float) ((t * oldZdim) + zSrc) / ((tDim * oldZdim) - 1) * 100));
 
                 // so long as the slice has not been marked for removal, copy it all over.
                 if (!remove[zSrc]) {

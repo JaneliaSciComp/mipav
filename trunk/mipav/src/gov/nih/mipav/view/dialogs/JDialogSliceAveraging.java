@@ -327,10 +327,6 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        sAverAlgo.setProgressBarVisible(false);
-                    }
-
                     sAverAlgo.run();
                 }
 
@@ -384,10 +380,6 @@ public class JDialogSliceAveraging extends JDialogScriptableBase implements Algo
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-                    if (!userInterface.isAppFrameVisible()) {
-                        sAverAlgo.setProgressBarVisible(false);
-                    }
-
                     sAverAlgo.run();
                 }
 

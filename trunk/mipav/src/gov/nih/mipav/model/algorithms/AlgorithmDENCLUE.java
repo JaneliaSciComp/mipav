@@ -274,7 +274,6 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         colorTable = new Color[1];
         colorTable[0] = Color.RED;
         algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-        algoVOIExtraction.setProgressBarVisible(false);
         algoVOIExtraction.setColorTable(colorTable);
         algoVOIExtraction.run();
         algoVOIExtraction.finalize();
@@ -458,7 +457,6 @@ public class AlgorithmDENCLUE extends AlgorithmBase {
         colorTable = new Color[1];
         colorTable[0] = Color.RED;
         algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-        algoVOIExtraction.setProgressBarVisible(false);
         algoVOIExtraction.setColorTable(colorTable);
         algoVOIExtraction.run();
         algoVOIExtraction.finalize();

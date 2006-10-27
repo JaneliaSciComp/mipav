@@ -238,10 +238,6 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
                 MipavUtil.displayError("A thread is already running on this object");
             }
         } else {
-            if (!userInterface.isAppFrameVisible()) {
-                algoReplace.setProgressBarVisible(false);
-            }
-
             algoReplace.run();
         }
     }

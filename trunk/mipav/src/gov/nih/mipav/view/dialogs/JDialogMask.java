@@ -330,11 +330,6 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        maskAlgo.setProgressBarVisible(false);
-                    }
-
                     maskAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
@@ -390,11 +385,6 @@ public class JDialogMask extends JDialogScriptableBase implements AlgorithmInter
                         MipavUtil.displayError("A thread is already running on this object");
                     }
                 } else {
-
-                    if (!userInterface.isAppFrameVisible()) {
-                        maskAlgo.setProgressBarVisible(false);
-                    }
-
                     maskAlgo.run();
                 }
             } catch (OutOfMemoryError x) {

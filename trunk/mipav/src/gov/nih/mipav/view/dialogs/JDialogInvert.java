@@ -361,10 +361,6 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
-
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -416,10 +412,6 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
-
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -480,10 +472,6 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
-
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -535,10 +523,6 @@ public class JDialogInvert extends JDialogScriptableBase implements AlgorithmInt
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            changeTypeAlgo.setProgressBarVisible(false);
-                        }
-
                         changeTypeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

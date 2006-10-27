@@ -488,7 +488,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         centroids[0] = min + ((max - min) / 3.0f);
         centroids[1] = min + (2.0f * (max - min) / 3.0f);
         fcmAlgo.setCentroids(centroids);
-        fcmAlgo.setProgressBarVisible(false);
         fcmAlgo.run();
         fcmAlgo.finalize();
         fcmAlgo = null;
@@ -510,7 +509,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         fillValue = 0.0f;
         binaryFlag = true;
         thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage, true);
-        thresholdAlgo.setProgressBarVisible(false);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -526,7 +524,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
         fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
                                                     wholeImage);
-        fillHolesAlgo2D.setProgressBarVisible(false);
         fillHolesAlgo2D.run();
         fillHolesAlgo2D.finalize();
         fillHolesAlgo2D = null;
@@ -549,7 +546,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         edgingType = 0;
         openAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
                                              numPruningPixels, edgingType, wholeImage);
-        openAlgo.setProgressBarVisible(false);
         openAlgo.run();
         openAlgo.finalize();
         openAlgo = null;
@@ -565,7 +561,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         method = AlgorithmMorphology2D.CLOSE;
         closeAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
                                               numPruningPixels, edgingType, wholeImage);
-        closeAlgo.setProgressBarVisible(false);
         closeAlgo.run();
         closeAlgo.finalize();
         closeAlgo = null;
@@ -595,7 +590,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         itersErosion = iters;
         erosionAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
                                                 numPruningPixels, edgingType, wholeImage);
-        erosionAlgo.setProgressBarVisible(false);
         erosionAlgo.run();
         erosionAlgo.finalize();
         erosionAlgo = null;
@@ -618,7 +612,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         idObjectsAlgo2D = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                     itersErosion, numPruningPixels, edgingType, wholeImage);
         idObjectsAlgo2D.setMinMax(blueMin, 200000);
-        idObjectsAlgo2D.setProgressBarVisible(false);
         idObjectsAlgo2D.run();
         idObjectsAlgo2D.finalize();
         idObjectsAlgo2D = null;
@@ -640,7 +633,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         itersErosion = 0;
         dilationAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation, itersErosion,
                                                  numPruningPixels, edgingType, wholeImage);
-        dilationAlgo.setProgressBarVisible(false);
         dilationAlgo.run();
         dilationAlgo.finalize();
         dilationAlgo = null;
@@ -771,7 +763,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 stdDev = 0.0f;
                 wholeImage = true;
                 algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, wholeImage);
-                algoMedian.setProgressBarVisible(false);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -780,7 +771,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged(32);
                 bins = 256;
                 algoHist = new AlgorithmHistogram(grayImage, bins);
-                algoHist.setProgressBarVisible(false);
                 algoHist.run();
                 histoBuffer = algoHist.getHistoBuffer();
                 lowValue = algoHist.getLowValue();
@@ -846,7 +836,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 centroids[1] = min + (2.0f * (max - min) / 4.0f);
                 centroids[2] = min + (3.0f * (max - min) / 4.0f);
                 fcmAlgo.setCentroids(centroids);
-                fcmAlgo.setProgressBarVisible(false);
                 fcmAlgo.run();
                 fcmAlgo.finalize();
                 fcmAlgo = null;
@@ -865,7 +854,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage,
                                                            true);
-                thresholdAlgo.setProgressBarVisible(false);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -875,7 +863,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged(37);
                 fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0,
                                                             0, wholeImage);
-                fillHolesAlgo2D.setProgressBarVisible(false);
                 fillHolesAlgo2D.run();
                 fillHolesAlgo2D.finalize();
                 fillHolesAlgo2D = null;
@@ -892,7 +879,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 edgingType = 0;
                 openAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                      itersErosion, numPruningPixels, edgingType, wholeImage);
-                openAlgo.setProgressBarVisible(false);
                 openAlgo.run();
                 openAlgo.finalize();
                 openAlgo = null;
@@ -902,7 +888,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 method = AlgorithmMorphology2D.CLOSE;
                 closeAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                       itersErosion, numPruningPixels, edgingType, wholeImage);
-                closeAlgo.setProgressBarVisible(false);
                 closeAlgo.run();
                 closeAlgo.finalize();
                 closeAlgo = null;
@@ -918,7 +903,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 idObjectsAlgo2D = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                             itersErosion, numPruningPixels, edgingType, wholeImage);
                 idObjectsAlgo2D.setMinMax(redMin, 200000);
-                idObjectsAlgo2D.setProgressBarVisible(false);
                 idObjectsAlgo2D.run();
                 idObjectsAlgo2D.finalize();
                 idObjectsAlgo2D = null;
@@ -1069,7 +1053,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 stdDev = 0.0f;
                 wholeImage = true;
                 algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, wholeImage);
-                algoMedian.setProgressBarVisible(false);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -1078,7 +1061,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged(48);
                 bins = 256;
                 algoHist = new AlgorithmHistogram(grayImage, bins);
-                algoHist.setProgressBarVisible(false);
                 algoHist.run();
                 histoBuffer = algoHist.getHistoBuffer();
                 lowValue = algoHist.getLowValue();
@@ -1145,7 +1127,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 centroids[1] = min + (2.0f * (max - min) / 4.0f);
                 centroids[2] = min + (3.0f * (max - min) / 4.0f);
                 fcmAlgo.setCentroids(centroids);
-                fcmAlgo.setProgressBarVisible(false);
                 fcmAlgo.run();
                 fcmAlgo.finalize();
                 fcmAlgo = null;
@@ -1161,7 +1142,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage,
                                                            true);
-                thresholdAlgo.setProgressBarVisible(false);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -1171,7 +1151,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged(52);
                 fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0,
                                                             0, wholeImage);
-                fillHolesAlgo2D.setProgressBarVisible(false);
                 fillHolesAlgo2D.run();
                 fillHolesAlgo2D.finalize();
                 fillHolesAlgo2D = null;
@@ -1188,7 +1167,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 edgingType = 0;
                 openAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                      itersErosion, numPruningPixels, edgingType, wholeImage);
-                openAlgo.setProgressBarVisible(false);
                 openAlgo.run();
                 openAlgo.finalize();
                 openAlgo = null;
@@ -1198,7 +1176,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 method = AlgorithmMorphology2D.CLOSE;
                 closeAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                       itersErosion, numPruningPixels, edgingType, wholeImage);
-                closeAlgo.setProgressBarVisible(false);
                 closeAlgo.run();
                 closeAlgo.finalize();
                 closeAlgo = null;
@@ -1214,7 +1191,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 idObjectsAlgo2D = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                             itersErosion, numPruningPixels, edgingType, wholeImage);
                 idObjectsAlgo2D.setMinMax(greenMin, 200000);
-                idObjectsAlgo2D.setProgressBarVisible(false);
                 idObjectsAlgo2D.run();
                 idObjectsAlgo2D.finalize();
                 idObjectsAlgo2D = null;
@@ -1534,7 +1510,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged("Extracting VOIs from red image");
                 fireProgressStateChanged(73);
                 algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-                algoVOIExtraction.setProgressBarVisible(false);
                 algoVOIExtraction.setColorTable(colorTable);
                 algoVOIExtraction.setNameTable(nameTable);
                 algoVOIExtraction.run();
@@ -1587,7 +1562,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged("Extracting VOIs from green image");
                 fireProgressStateChanged(74);
                 algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-                algoVOIExtraction.setProgressBarVisible(false);
                 algoVOIExtraction.setColorTable(colorTable);
                 algoVOIExtraction.setNameTable(nameTable);
                 algoVOIExtraction.run();
@@ -1786,7 +1760,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
             dilateAlgo = new AlgorithmMorphology2D(grayImage, kernel, circleDiameter, method, itersDilation,
                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
-            dilateAlgo.setProgressBarVisible(false);
             dilateAlgo.run();
             dilateAlgo.finalize();
             dilateAlgo = null;
@@ -2439,7 +2412,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         centroids[0] = min + ((max - min) / 3.0f);
         centroids[1] = min + (2.0f * (max - min) / 3.0f);
         fcmAlgo.setCentroids(centroids);
-        fcmAlgo.setProgressBarVisible(false);
         fcmAlgo.run();
         fcmAlgo.finalize();
         fcmAlgo = null;
@@ -2466,7 +2438,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         // new Dimension(600, 300), srcImage.getUserInterface());
 
         thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage, true);
-        thresholdAlgo.setProgressBarVisible(false);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -2515,7 +2486,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
             fillHolesAlgo2D = new AlgorithmMorphology2D(grayImage2D, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
                                                         wholeImage);
-            fillHolesAlgo2D.setProgressBarVisible(false);
             fillHolesAlgo2D.run();
             fillHolesAlgo2D.finalize();
             fillHolesAlgo2D = null;
@@ -2567,7 +2537,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         edgingType = 0;
         openAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
                                              numPruningPixels, edgingType, wholeImage);
-        openAlgo.setProgressBarVisible(false);
         openAlgo.run();
         openAlgo.finalize();
         openAlgo = null;
@@ -2586,7 +2555,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         method = AlgorithmMorphology3D.CLOSE;
         closeAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
                                               numPruningPixels, edgingType, wholeImage);
-        closeAlgo.setProgressBarVisible(false);
         closeAlgo.run();
         closeAlgo.finalize();
         closeAlgo = null;
@@ -2617,7 +2585,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         itersErosion = iters;
         erosionAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
                                                 numPruningPixels, edgingType, wholeImage);
-        erosionAlgo.setProgressBarVisible(false);
         erosionAlgo.run();
         erosionAlgo.finalize();
         erosionAlgo = null;
@@ -2641,7 +2608,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         idObjectsAlgo3D = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                     itersErosion, numPruningPixels, edgingType, wholeImage);
         idObjectsAlgo3D.setMinMax(blueMin, 2000000);
-        idObjectsAlgo3D.setProgressBarVisible(false);
         idObjectsAlgo3D.run();
         idObjectsAlgo3D.finalize();
         idObjectsAlgo3D = null;
@@ -2667,7 +2633,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         itersErosion = 0;
         dilationAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation, itersErosion,
                                                  numPruningPixels, edgingType, wholeImage);
-        dilationAlgo.setProgressBarVisible(false);
         dilationAlgo.run();
         dilationAlgo.finalize();
         dilationAlgo = null;
@@ -2814,7 +2779,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 wholeImage = true;
                 algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, sliceBySlice,
                                                  wholeImage);
-                algoMedian.setProgressBarVisible(false);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -2826,7 +2790,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged(32);
                 bins = 256;
                 algoHist = new AlgorithmHistogram(grayImage, bins);
-                algoHist.setProgressBarVisible(false);
                 algoHist.run();
                 histoBuffer = algoHist.getHistoBuffer();
                 lowValue = algoHist.getLowValue();
@@ -2892,7 +2855,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 centroids[1] = min + (2.0f * (max - min) / 4.0f);
                 centroids[2] = min + (3.0f * (max - min) / 4.0f);
                 fcmAlgo.setCentroids(centroids);
-                fcmAlgo.setProgressBarVisible(false);
                 fcmAlgo.run();
                 fcmAlgo.finalize();
                 fcmAlgo = null;
@@ -2912,7 +2874,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage,
                                                            true);
-                thresholdAlgo.setProgressBarVisible(false);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -2922,7 +2883,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged(37);
                 fillHolesAlgo3D = new AlgorithmMorphology3D(grayImage, 0, 0, AlgorithmMorphology3D.FILL_HOLES, 0, 0, 0,
                                                             0, wholeImage);
-                fillHolesAlgo3D.setProgressBarVisible(false);
                 fillHolesAlgo3D.run();
                 fillHolesAlgo3D.finalize();
                 fillHolesAlgo3D = null;
@@ -2939,7 +2899,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 edgingType = 0;
                 openAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                      itersErosion, numPruningPixels, edgingType, wholeImage);
-                openAlgo.setProgressBarVisible(false);
                 openAlgo.run();
                 openAlgo.finalize();
                 openAlgo = null;
@@ -2949,7 +2908,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 method = AlgorithmMorphology3D.CLOSE;
                 closeAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                       itersErosion, numPruningPixels, edgingType, wholeImage);
-                closeAlgo.setProgressBarVisible(false);
                 closeAlgo.run();
                 closeAlgo.finalize();
                 closeAlgo = null;
@@ -2965,7 +2923,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 idObjectsAlgo3D = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                             itersErosion, numPruningPixels, edgingType, wholeImage);
                 idObjectsAlgo3D.setMinMax(redMin, 2000000);
-                idObjectsAlgo3D.setProgressBarVisible(false);
                 idObjectsAlgo3D.run();
                 idObjectsAlgo3D.finalize();
                 idObjectsAlgo3D = null;
@@ -3120,7 +3077,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 wholeImage = true;
                 algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, sliceBySlice,
                                                  wholeImage);
-                algoMedian.setProgressBarVisible(false);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -3130,7 +3086,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged(48);
                 bins = 256;
                 algoHist = new AlgorithmHistogram(grayImage, bins);
-                algoHist.setProgressBarVisible(false);
                 algoHist.run();
                 histoBuffer = algoHist.getHistoBuffer();
                 lowValue = algoHist.getLowValue();
@@ -3196,7 +3151,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 centroids[1] = min + (2.0f * (max - min) / 4.0f);
                 centroids[2] = min + (3.0f * (max - min) / 4.0f);
                 fcmAlgo.setCentroids(centroids);
-                fcmAlgo.setProgressBarVisible(false);
                 fcmAlgo.run();
                 fcmAlgo.finalize();
                 fcmAlgo = null;
@@ -3216,7 +3170,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 binaryFlag = true;
                 thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage,
                                                            true);
-                thresholdAlgo.setProgressBarVisible(false);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -3227,7 +3180,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged(52);
                 fillHolesAlgo3D = new AlgorithmMorphology3D(grayImage, 0, 0, AlgorithmMorphology3D.FILL_HOLES, 0, 0, 0,
                                                             0, wholeImage);
-                fillHolesAlgo3D.setProgressBarVisible(false);
                 fillHolesAlgo3D.run();
                 fillHolesAlgo3D.finalize();
                 fillHolesAlgo3D = null;
@@ -3245,7 +3197,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 edgingType = 0;
                 openAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                      itersErosion, numPruningPixels, edgingType, wholeImage);
-                openAlgo.setProgressBarVisible(false);
                 openAlgo.run();
                 openAlgo.finalize();
                 openAlgo = null;
@@ -3255,7 +3206,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 method = AlgorithmMorphology3D.CLOSE;
                 closeAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                       itersErosion, numPruningPixels, edgingType, wholeImage);
-                closeAlgo.setProgressBarVisible(false);
                 closeAlgo.run();
                 closeAlgo.finalize();
                 closeAlgo = null;
@@ -3272,7 +3222,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 idObjectsAlgo3D = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                             itersErosion, numPruningPixels, edgingType, wholeImage);
                 idObjectsAlgo3D.setMinMax(greenMin, 2000000);
-                idObjectsAlgo3D.setProgressBarVisible(false);
                 idObjectsAlgo3D.run();
                 idObjectsAlgo3D.finalize();
                 idObjectsAlgo3D = null;
@@ -3659,7 +3608,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged("Extracting VOIs from red image");
                 fireProgressStateChanged(73);
                 algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-                algoVOIExtraction.setProgressBarVisible(false);
                 algoVOIExtraction.setColorTable(colorTable);
                 algoVOIExtraction.setNameTable(nameTable);
                 algoVOIExtraction.run();
@@ -3720,7 +3668,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 fireProgressStateChanged("Extracting VOIs from green image");
                 fireProgressStateChanged(74);
                 algoVOIExtraction = new AlgorithmVOIExtraction(grayImage);
-                algoVOIExtraction.setProgressBarVisible(false);
                 algoVOIExtraction.setColorTable(colorTable);
                 algoVOIExtraction.setNameTable(nameTable);
                 algoVOIExtraction.run();
@@ -4082,7 +4029,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
             dilateAlgo = new AlgorithmMorphology3D(grayImage, kernel, sphereDiameter, method, itersDilation,
                                                    itersErosion, numPruningPixels, edgingType, wholeImage);
-            dilateAlgo.setProgressBarVisible(false);
             dilateAlgo.run();
             dilateAlgo.finalize();
             dilateAlgo = null;

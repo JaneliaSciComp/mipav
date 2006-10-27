@@ -324,11 +324,6 @@ public class JDialogSubset extends JDialogScriptableBase implements AlgorithmInt
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-
-                if (!userInterface.isAppFrameVisible()) {
-                    subsetAlgo.setProgressBarVisible(false);
-                }
-
                 subsetAlgo.run();
             }
 

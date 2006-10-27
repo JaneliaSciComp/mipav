@@ -391,10 +391,6 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            modeAlgo.setProgressBarVisible(false);
-                        }
-
                         modeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -446,10 +442,6 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            modeAlgo.setProgressBarVisible(false);
-                        }
-
                         modeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -503,10 +495,6 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            modeAlgo.setProgressBarVisible(false);
-                        }
-
                         modeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {
@@ -557,10 +545,6 @@ public class JDialogMode extends JDialogScriptableBase implements AlgorithmInter
                             MipavUtil.displayError("A thread is already running on this object");
                         }
                     } else {
-                        if (!userInterface.isAppFrameVisible()) {
-                            modeAlgo.setProgressBarVisible(false);
-                        }
-
                         modeAlgo.run();
                     }
                 } catch (OutOfMemoryError x) {

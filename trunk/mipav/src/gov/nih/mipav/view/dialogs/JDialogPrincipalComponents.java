@@ -306,10 +306,6 @@ public class JDialogPrincipalComponents extends JDialogScriptableBase implements
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                if (!userInterface.isAppFrameVisible()) {
-                    pComponentAlgo.setProgressBarVisible(false);
-                }
-
                 pComponentAlgo.run();
             }
 

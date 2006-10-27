@@ -4260,7 +4260,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + .5));
             }
 
@@ -4311,14 +4311,12 @@ public class AlgorithmTransform extends AlgorithmBase {
         tmpMask.calcMinMax();
 
         AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-        VOIExtAlgo.setProgressBarVisible(false);
 
         VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
         VOIExtAlgo.run();
         destImage.setVOIs(tmpMask.getVOIs());
         tmpMask.disposeLocal();
         maskImage.disposeLocal();
-
     }
 
     /**
@@ -4383,7 +4381,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
@@ -4452,7 +4450,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         tmpMask.calcMinMax();
 
         AlgorithmVOIExtraction VOIExtAlgo = new AlgorithmVOIExtraction(tmpMask);
-        VOIExtAlgo.setProgressBarVisible(false);
 
         VOIExtAlgo.setRunningInSeparateThread(runningInSeparateThread);
         VOIExtAlgo.run();
@@ -4513,7 +4510,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
-            if (isProgressBarVisible() && ((j % mod) == 0)) {
+            if (((j % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) j / oYdim * 100) + 0.5f));
             }
 
@@ -4616,10 +4613,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) k / oZdim * 100));
-            }
+            fireProgressStateChanged(Math.round((float) k / oZdim * 100));
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
                 imm = (float) i * oXres;
@@ -4721,7 +4715,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
@@ -4843,10 +4837,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -4944,10 +4935,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -5087,7 +5075,7 @@ public class AlgorithmTransform extends AlgorithmBase {
             temp1 = (imm * T00) + T02;
             temp2 = (imm * T10) + T12;
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -5260,7 +5248,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
-                if (isProgressBarVisible() && ((j % mod) == 0)) {
+                if (((j % mod) == 0)) {
                     fireProgressStateChanged((int) ((((float) z / nz * 100) + ((float) j / (oYdim * nz) * 100)) +
                                                     0.5f));
                 }
@@ -5388,7 +5376,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
                 for (j = 0; (j < oYdim) && !threadStopped; j++) {
 
-                    if (isProgressBarVisible() && ((j % mod) == 0)) {
+                    if (((j % mod) == 0)) {
                         fireProgressStateChanged((int) ((((float) z / nz * 100) + ((float) c / (3 * nz) * 100) +
                                                          ((float) j / (3 * oYdim * nz) * 100)) + 0.5f));
                     }
@@ -5492,7 +5480,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
@@ -5617,7 +5605,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-                if (isProgressBarVisible() && ((k % mod) == 0)) {
+                if (((k % mod) == 0)) {
                     fireProgressStateChanged((int) (((float) k / (3 * oZdim) * 100) + ((float) c / 3 * 100) + 0.5f));
                 }
 
@@ -5716,10 +5704,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index = 0;
 
         for (t = 0; t < iTdim; t++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) t / iTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) t / iTdim * 100) + 0.5));
 
             if ((t >= 1)) {
 
@@ -5831,7 +5816,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (j = 0; (j < oYdim) && !threadStopped; j++) {
      *
-     *   if (isProgressBarVisible() && ((j % mod) == 0)) {         fireProgressStateChanged((int) (((float) j / oYdim *
+     *   if (((j % mod) == 0)) {         fireProgressStateChanged((int) (((float) j / oYdim *
      * 100) + 0.5f));     }
      *
      *   jmm = j * oYres;     j1 = (jmm * T01) + T02;     j2 = (jmm * T11) + T12;
@@ -5871,7 +5856,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (i = 0; (i < oXdim) && !threadStopped; i++) {
      *
-     *   if (isProgressBarVisible() && ((i % mod) == 0)) {         fireProgressStateChanged((int) (((float) i / oXdim *
+     *   if (((i % mod) == 0)) {         fireProgressStateChanged((int) (((float) i / oXdim *
      * 100) + 0.5));     }
      *
      *   imm = (float) i * oXres;     temp1 = (imm * T00) + T02;     temp2 = (imm * T10) + T12;
@@ -5931,7 +5916,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (k = 0; (k < oZdim) && !threadStopped; k++) {
      *
-     *   if (isProgressBarVisible() && ((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim *
+     *   if (((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim *
      * 100) + 0.5f));     }
      *
      *   kmm = k * oZres;     k1 = (kmm * T02) + T03;     k2 = (kmm * T12) + T13;     k3 = (kmm * T22) + T23;
@@ -5980,7 +5965,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (i = 0; (i < oXdim) && !threadStopped; i++) {
      *
-     *   if (isProgressBarVisible() && ((i % mod) == 0)) {         fireProgressStateChanged((int) (((float) i / oXdim *
+     *   if (((i % mod) == 0)) {         fireProgressStateChanged((int) (((float) i / oXdim *
      * 100) + 0.5));     }
      *
      *   imm = (float) i * oXres;     i1 = (imm * T00) + T03;     i2 = (imm * T10) + T13;     i3 = (imm * T20) + T23;
@@ -6038,7 +6023,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * // System.out.println("oZdim = "); for (k = 0; (k < oZdim) && !threadStopped; k++) {
      *
-     *   if (isProgressBarVisible() && ((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim *
+     *   if (((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim *
      * 100) + 0.5));     }
      *
      *   Bspline.setup2DBSpline(imgBuf, inVolExtents, degree);
@@ -6092,7 +6077,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (k = 0; (k < oZdim) && !threadStopped; k++) {
      *
-     *   if (isProgressBarVisible() && ((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim *
+     *   if (((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim *
      * 100) + 0.5));     }
      *
      *   Bspline.setup2DBSplineC(imgBuf, inVolExtents, degree);
@@ -6152,7 +6137,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (l = 0; (l < oTdim) && !threadStopped; l++) {
      *
-     *   if (isProgressBarVisible() && ((l % mod) == 0)) {         fireProgressStateChanged((int) (((float) l / oTdim *
+     *   if (((l % mod) == 0)) {         fireProgressStateChanged((int) (((float) l / oTdim *
      * 100) + .5));     }
      *
      *   Bspline.setup3DBSpline(imgBuf, inVolExtents, degree);
@@ -6340,7 +6325,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -6415,7 +6400,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -6513,7 +6498,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
@@ -6608,7 +6593,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -6710,7 +6695,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
@@ -6799,7 +6784,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
@@ -6908,7 +6893,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
-            if (isProgressBarVisible() && ((l % mod) == 0)) {
+            if (((l % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
             }
 
@@ -7008,10 +6993,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
                 CLag.setup2DCubicLagrangian(imgBuf, inVolExtents, clip);
@@ -7094,10 +7076,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -7200,7 +7179,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -7275,7 +7254,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -7369,7 +7348,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -7467,7 +7446,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -7569,7 +7548,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
@@ -7657,7 +7636,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
@@ -7765,7 +7744,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
-            if (isProgressBarVisible() && ((l % mod) == 0)) {
+            if (((l % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
             }
 
@@ -7864,10 +7843,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
                 HLag.setup2DHepticLagrangian(imgBuf, inVolExtents, clip);
@@ -7950,10 +7926,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -8051,7 +8024,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -8111,7 +8084,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -8197,7 +8170,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -8278,7 +8251,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -8367,10 +8340,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) k / oZdim * 100));
-            }
+            fireProgressStateChanged(Math.round((float) k / oZdim * 100));
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -8444,10 +8414,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -8543,10 +8510,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T23 = (float) xfrm[2][3];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
@@ -8628,10 +8592,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -8705,10 +8666,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -8799,7 +8757,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -8874,7 +8832,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -8968,7 +8926,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -9066,7 +9024,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -9168,7 +9126,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
@@ -9256,7 +9214,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
@@ -9368,7 +9326,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
-            if (isProgressBarVisible() && ((l % mod) == 0)) {
+            if (((l % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
             }
 
@@ -9468,10 +9426,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
                 QLag.setup2DQuinticLagrangian(imgBuf, inVolExtents, clip);
@@ -9555,10 +9510,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
@@ -9684,7 +9636,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));
             }
 
@@ -9859,10 +9811,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         int index = 0;
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) l / oTdim * 100));
-            }
+            fireProgressStateChanged(Math.round((float) l / oTdim * 100));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
                 kmm = k * oZres;
@@ -10016,10 +9965,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T23 = (float) xfrm[2][3];
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged(Math.round((float) i / (oXdim) * 100));
-            }
+            fireProgressStateChanged(Math.round((float) i / (oXdim) * 100));
 
             if (pad) {
                 iAdj = i - margins[0];
@@ -10199,7 +10145,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -10274,7 +10220,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -10367,7 +10313,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -10465,7 +10411,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (i = 0; (i < oXdim) && !threadStopped; i++) {
 
-            if (isProgressBarVisible() && ((i % mod) == 0)) {
+            if (((i % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));
             }
 
@@ -10566,7 +10512,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
@@ -10654,7 +10600,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (k = 0; (k < oZdim) && !threadStopped; k++) {
 
-            if (isProgressBarVisible() && ((k % mod) == 0)) {
+            if (((k % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));
             }
 
@@ -10762,7 +10708,7 @@ public class AlgorithmTransform extends AlgorithmBase {
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
 
-            if (isProgressBarVisible() && ((l % mod) == 0)) {
+            if (((l % mod) == 0)) {
                 fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));
             }
 
@@ -10861,10 +10807,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
                 WSinc.setup2DWSinc(imgBuf, inVolExtents, clip);
@@ -10947,10 +10890,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         T12 = (float) xfrm[1][2];
 
         for (l = 0; (l < oTdim) && !threadStopped; l++) {
-
-            if (isProgressBarVisible()) {
-                fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
-            }
+            fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));
 
             for (k = 0; (k < oZdim) && !threadStopped; k++) {
 

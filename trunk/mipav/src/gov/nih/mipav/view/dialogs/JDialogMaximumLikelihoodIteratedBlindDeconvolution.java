@@ -223,7 +223,6 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                ibdAlgor.setProgressBarVisible(false);
                 ibdAlgor.run();
             } // end if (runInSeperateThread) {} else {}
 
