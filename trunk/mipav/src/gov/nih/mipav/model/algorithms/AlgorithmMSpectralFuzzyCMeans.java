@@ -121,9 +121,8 @@ import java.util.*;
  * the smallest bounding box outside of which all first image pixel values are below the first image threshold. Values
  * inside the bounding box are copied to a smaller array to save space and calculations are performed with this reduced
  * array. However, these pixels outside the box are restored for the production of the hard and fuzzy segmented images.
- * In the hard segmentation case values outisde the box all have a value of 0. In the fuzzy segmentation case values
- * outside the box all have a value equal to the first image minimum. If the cropping checkbox is selected, the user is
- * constrained to select the whole image rather than VOI regions.</p>
+ * In the hard and fuzzy segmentation cases values outisde the box all have a value of 0. If the cropping checkbox is selected,
+ * the user is constrained to select the whole image rather than VOI regions.</p>
  *
  * <p>There are 3 choices for produced output images:<br>
  * 1.) HARD ONLY<br>
@@ -135,10 +134,9 @@ import java.util.*;
  * requirements values of 0. The first class is assigned a value of 1, the second class is assigned a pixel
  * value of 2, and so on. The last class has a value of nClass.</p>
  *
- * <p>Fuzzy segmentation produces 1 image of the same type as the source image for every segmentation class. The
- * membership function is scaled so that the minimum membership value scales to the source image minimum value and the
- * maximum membership value scales to the source image maximum value. If boundary cropping is used, pixels outside the
- * bounding box are all assigned the source image minimum value.</p>
+ * <p>Fuzzy segmentation produces 1 image of floating point type for every segmentation class. The
+ * values range from 0.0 to 1.0. If boundary cropping is used, pixels outside the
+ * bounding box are all assigned the value 0.0.</p>
  *
  * <p>The first dialog provides buttons for loading and removing images. The multispectral dialog has a list of loaded
  * images. The button labeled Load another image causes an Open File dialog to appear. An opened file will only cause an
@@ -249,9 +247,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
     private int memSize;
 
     /** DOCUMENT ME! */
-    private float[] minimum, maximum;
-
-    /** DOCUMENT ME! */
     private int nClass = 3;
 
     /** DOCUMENT ME! */
@@ -351,8 +346,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
      *                           bounding box are copied to a smaller array to save space and calculations are
      *                           performed with this reduced array.  However, these pixels outside the box are
      *                           restored for the production of the hard and fuzzy segmented images. In the hard
-     *                           segmentation case values outside the box all have a value of 0. In the fuzzy
-     *                           segmentation case values outside the box all have a value equal to the image minimum.
+     *                           and fuzzy segmentation cases values outside the box all have a value of 0.
      * @param  _max_iter         Maximum allowed iterations of main program loop
      * @param  _tolerance        The iteration continues until either the user specified maximum number of
      *                           iterations has occcured or until convergence has been detected. Convergence occurs
@@ -540,10 +534,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         int yStepIn, yStepOut, mStepIn, mStepOut;
         float dtemp;
         int indexM;
-        float offset;
-        int kSlice, mSlice;
-        float minClass, maxClass;
-        float scaleFactor;
+        int kSlice;
         int totalSize;
 
         xDim = srcImage[0].getExtents()[0];
@@ -553,40 +544,8 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         orgSlice = sliceSize;
 
         try {
-            minimum = new float[spectraNumber];
-            maximum = new float[spectraNumber];
             tBuffer = new float[sliceSize];
             buffer = new float[spectraNumber * sliceSize];
-
-            for (i = 0, j = 0; i < imageNumber; i++) {
-                srcImage[i].calcMinMax();
-
-                if (srcImage[i].isColorImage()) {
-
-                    if (doRed) {
-                        minimum[j] = (float) srcImage[i].getMinR();
-                        maximum[j] = (float) srcImage[i].getMaxR();
-                        j++;
-                    }
-
-                    if (doGreen) {
-                        minimum[j] = (float) srcImage[i].getMinG();
-                        maximum[j] = (float) srcImage[i].getMaxG();
-                        j++;
-                    }
-
-                    if (doBlue) {
-                        minimum[j] = (float) srcImage[i].getMinB();
-                        maximum[j] = (float) srcImage[i].getMaxB();
-                        j++;
-                    }
-                } else {
-                    minimum[j] = (float) srcImage[i].getMin();
-                    maximum[j] = (float) srcImage[i].getMax();
-                    j++;
-                }
-            } // for (i = 0,j = 0; i < imageNumber;i++)
-
         } catch (OutOfMemoryError error) {
             cleanUp();
             System.gc();
@@ -664,29 +623,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                 return;
             }
         } // for (i = 0, k = 0; i < imageNumber; i++)
-
-        if (!wholeImage) {
-
-            for (k = 0; k < spectraNumber; k++) {
-                maximum[k] = -Float.MAX_VALUE;
-                minimum[k] = Float.MAX_VALUE;
-                kSlice = k * sliceSize;
-
-                for (i = 0; i < sliceSize; i++) {
-
-                    if (mask.get(i)) {
-
-                        if (buffer[i + kSlice] > maximum[k]) {
-                            maximum[k] = buffer[i + kSlice];
-                        }
-
-                        if (buffer[i + kSlice] < minimum[k]) {
-                            minimum[k] = buffer[i + kSlice];
-                        }
-                    }
-                }
-            } // for (k = 0; k < spectraNumber; k++)
-        } // if (!wholeImage)
 
         tBuffer = null;
         System.gc();
@@ -768,19 +704,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     }
 
                     buffer2 = null;
-
-                    // Find the new minimum
-                    for (m = 0; m < spectraNumber; m++) {
-                        minimum[m] = Float.MAX_VALUE;
-                        mSlice = m * sliceSize;
-
-                        for (i = 0; i < sliceSize; i++) {
-
-                            if (buffer[mSlice + i] < minimum[m]) {
-                                minimum[m] = buffer[mSlice + i];
-                            } // if (buffer[mSlice + i] < minimum[m])
-                        } // for (i = 0; i < sliceSize; i++)
-                    } // for (m = 0; m < spectralNumber; m++) {
                 } // if ((xLow > 0) || (xHigh < (xDim-1)) || (yLow > 0) || (yHigh < (yDim - 1)))
             } // if (cropBackground)
 
@@ -877,39 +800,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
             for (i = 0; i < nClass; i++) {
 
-                for (j = 0; j < orgSlice; j++) {
-                    memsBuffer[j] = minimum[0];
-                } // for (j = 0; j < orgSlice; j++)
-
-                // Find the maximum value in the class
-                maxClass = -Float.MAX_VALUE;
-                minClass = Float.MAX_VALUE;
-
-                for (j = 0; j < sliceSize; j++) {
-
-                    if ((wholeImage) || (mask.get(j))) {
-                        indexM = (i * sliceSize) + j;
-
-                        if (mems[indexM] > maxClass) {
-                            maxClass = mems[indexM];
-                        }
-
-                        if (mems[indexM] < minClass) {
-                            minClass = mems[indexM];
-                        }
-                    } // if ((wholeImage) || (mask.get(j)))
-                } // for (j = 0; j < sliceSize; j++)
-
-                // Scale the data so that the scaled data has the same original minimum
-                // and the same original maximum as the first source image
-                if (maxClass != minClass) {
-                    scaleFactor = (maximum[0] - minimum[0]) / (maxClass - minClass);
-                    offset = ((maxClass * minimum[0]) - (maximum[0] * minClass)) / (maxClass - minClass);
-                } else {
-                    scaleFactor = 1;
-                    offset = 0;
-                }
-
                 // restore the image to the original dimensions
                 indexM = i * sliceSize;
 
@@ -921,7 +811,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                         index = oldX + yStepIn;
 
                         if ((wholeImage) || (mask.get(index))) {
-                            memsBuffer[index] = (mems[x + yStepOut] * scaleFactor) + offset;
+                            memsBuffer[index] = mems[x + yStepOut];
                         } // if ((wholeImage) || (mask.get(index)))
                     } // for (oldX = xLow, x = 0; oldX <= xHigh;oldX++,x++)
                 } // for (oldY = yLow, y = 0; oldY <= yHigh;oldY++,y++)
@@ -1034,10 +924,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         int yStepIn, yStepOut, zStepIn, zStepOut, mStepIn, mStepOut;
         float dtemp;
         int indexM;
-        float offset;
-        int kVol, mVol;
-        float minClass, maxClass;
-        float scaleFactor;
+        int kVol;
         int totalSize;
 
         xDim = srcImage[0].getExtents()[0];
@@ -1050,39 +937,8 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         orgVol = volSize;
 
         try {
-            minimum = new float[spectraNumber];
-            maximum = new float[spectraNumber];
             tBuffer = new float[volSize];
             buffer = new float[spectraNumber * volSize];
-
-            for (i = 0, j = 0; i < imageNumber; i++) {
-                srcImage[i].calcMinMax();
-
-                if (srcImage[i].isColorImage()) {
-
-                    if (doRed) {
-                        minimum[j] = (float) srcImage[i].getMinR();
-                        maximum[j] = (float) srcImage[i].getMaxR();
-                        j++;
-                    }
-
-                    if (doGreen) {
-                        minimum[j] = (float) srcImage[i].getMinG();
-                        maximum[j] = (float) srcImage[i].getMaxG();
-                        j++;
-                    }
-
-                    if (doBlue) {
-                        minimum[j] = (float) srcImage[i].getMinB();
-                        maximum[j] = (float) srcImage[i].getMaxB();
-                        j++;
-                    }
-                } else {
-                    minimum[j] = (float) srcImage[i].getMin();
-                    maximum[j] = (float) srcImage[i].getMax();
-                    j++;
-                }
-            } // for (i = 0,j = 0; i < imageNumber;i++)
         } catch (OutOfMemoryError error) {
             cleanUp();
             System.gc();
@@ -1160,29 +1016,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                 return;
             }
         } // for (i = 0, k = 0; i < imageNumber; i++)
-
-        if (!wholeImage) {
-
-            for (k = 0; k < spectraNumber; k++) {
-                maximum[k] = -Float.MAX_VALUE;
-                minimum[k] = Float.MAX_VALUE;
-                kVol = k * volSize;
-
-                for (i = 0; i < volSize; i++) {
-
-                    if (mask.get(i)) {
-
-                        if (buffer[i + kVol] > maximum[k]) {
-                            maximum[k] = buffer[i + kVol];
-                        }
-
-                        if (buffer[i + kVol] < minimum[k]) {
-                            minimum[k] = buffer[i + kVol];
-                        }
-                    }
-                }
-            } // for (k = 0; k < spectraNumber; k++)
-        } // if (!wholeImage)
 
         tBuffer = null;
         System.gc();
@@ -1290,19 +1123,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     }
 
                     buffer2 = null;
-
-                    // Find the new minimum
-                    for (m = 0; m < spectraNumber; m++) {
-                        minimum[m] = Float.MAX_VALUE;
-                        mVol = m * volSize;
-
-                        for (i = 0; i < volSize; i++) {
-
-                            if (buffer[mVol + i] < minimum[m]) {
-                                minimum[m] = buffer[mVol + i];
-                            } // if (buffer[mVol + i] < minimum[m])
-                        } // for (i = 0; i < volSize; i++)
-                    } // for (m = 0; m < spectraNumber; m++)
                 } // if ((xLow > 0) || (xHigh < (xDim - 1)) || (yLow > 0) || (yHigh < (yDim - 1)) ||
                 // (zLow > 0) || (zHigh < (zDim - 1)))
             } // if (cropBackground)
@@ -1390,39 +1210,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
 
                 for (i = 0; i < nClass; i++) {
 
-                    for (j = 0; j < orgVol; j++) {
-                        memsBuffer[j] = minimum[0];
-                    } // for (j = 0; j < orgVol; j++)
-
-                    // Find the maximum value in the class
-                    maxClass = -Float.MAX_VALUE;
-                    minClass = Float.MAX_VALUE;
-
-                    for (j = 0; j < volSize; j++) {
-
-                        if ((wholeImage) || (mask.get(j))) {
-                            indexM = (i * volSize) + j;
-
-                            if (mems[indexM] > maxClass) {
-                                maxClass = mems[indexM];
-                            }
-
-                            if (mems[indexM] < minClass) {
-                                minClass = mems[indexM];
-                            }
-                        } // if ((wholeImage) || (mask.get(j)))
-                    } // for (j = 0; j < volSize; j++)
-
-                    // Scale the data so that the scaled data has the same original minimum
-                    // and the same original maximum as the first source image
-                    if (maxClass != minClass) {
-                        scaleFactor = (maximum[0] - minimum[0]) / (maxClass - minClass);
-                        offset = ((maxClass * minimum[0]) - (maximum[0] * minClass)) / (maxClass - minClass);
-                    } else {
-                        scaleFactor = 1;
-                        offset = 0;
-                    }
-
                     // restore the image to the original dimensions
                     indexM = i * volSize;
 
@@ -1438,7 +1225,7 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                                 index = oldX + yStepIn;
 
                                 if ((wholeImage) || (mask.get(index))) {
-                                    memsBuffer[index] = (mems[x + yStepOut] * scaleFactor) + offset;
+                                    memsBuffer[index] = mems[x + yStepOut];
                                 } // if ((wholeImage) || (mask.get(index)))
                             } // for (oldX = xLow, x = 0; oldX <= xHigh;oldX++,x++)
                         } // for (oldY = yLow, y = 0; oldY <= yHigh;oldY++,y++)
@@ -1550,7 +1337,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         int m;
         float minC;
         int indexM;
-        int indexB;
         float tempFloat = 0;
         int index = 0;
         int yStepOut;
@@ -1568,7 +1354,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                     for (x = 0; (x < xDim) && !threadStopped; x++) {
                         index = x + yStepOut;
                         indexM = (c * sliceSize) + index;
-                        indexB = (m * sliceSize) + index;
 
                         if (objMask.get(index)) {
 
@@ -1656,7 +1441,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
         int i, j;
         float minC;
         int indexM;
-        int indexB;
         int m;
         float tempFloat = 0;
         int index = 0;
@@ -1678,7 +1462,6 @@ public class AlgorithmMSpectralFuzzyCMeans extends AlgorithmBase {
                         for (x = 0; x < xDim; x++) {
                             index = x + yStepOut;
                             indexM = (c * volSize) + index;
-                            indexB = (m * volSize) + index;
 
                             if (objMask.get(index)) {
 
