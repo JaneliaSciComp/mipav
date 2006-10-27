@@ -372,8 +372,8 @@ public class ParameterTable {
 
                 try {
                     String overrideValue = varTable.interpolate(paramLabel);
-                    Preferences.debug("param table:\t Overriding parameter (" + param.convertToString() +
-                                      ") with value:\t" + overrideValue + "\n", Preferences.DEBUG_SCRIPTING);
+                    Preferences.debug("param table:\t Overriding parameter (" + paramLabel + ") with value:\t" +
+                                      overrideValue + "\n", Preferences.DEBUG_SCRIPTING);
                     param = ParameterFactory.newNonListParameter(paramLabel, paramType, overrideValue);
                 } catch (ParserException pe) {
                     throw new ParameterException(paramLabel,
