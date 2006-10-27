@@ -205,7 +205,6 @@ public class ScriptRunner {
      * @param  pe  The parser exception to handle.
      */
     protected void handleParserException(ParserException pe) {
-        MipavUtil.displayError("Error executing script:\n" + pe);
         Preferences.debug("script runner:\tAborted script execution:\t" + pe.getParsedFileName() + "\n",
                           Preferences.DEBUG_SCRIPTING);
 
@@ -221,6 +220,8 @@ public class ScriptRunner {
 
             Preferences.debug(message, Preferences.DEBUG_SCRIPTING);
         }
+
+        MipavUtil.displayError("Error executing script:\n" + pe);
 
         setRunning(false);
     }
