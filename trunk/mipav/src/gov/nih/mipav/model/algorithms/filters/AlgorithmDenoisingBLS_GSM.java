@@ -1895,6 +1895,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             } // for (; xpos < xstop; xpos += xstep, impos++)
         } // for (; ypos < ystop; ypos += ystep)
         
+        for (ypos = 0; ypos < ydim; ypos++) {
+            for (xpos = 0; xpos < xdim; xpos++) {
+                result[xpos + ypos * xdim] = imval[ypos][xpos];
+            }
+        }
+        
         return;
     }
     
@@ -2107,7 +2113,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             res = new double[res_sz[0] * res_sz[1]];   
         }
         
-        // Add in reconsructed bands from this level
+        // Add in reconstructed bands from this level
         anyOne = false;
         for (i = 0; i < levs.length; i++) {
             if (levs[i] == 1) {
@@ -2208,7 +2214,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int lprx;
         int lpry;
         
-        nOrientations = 2;
+        nOrientations = 3;
         nScales = (pind.size() - 2)/nOrientations - 1;
         h = daubcqf(daubOrder,0);
         
@@ -2285,7 +2291,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     }
                     yh = temp;
                     yhx = yhx + bandx[0];
-                }
+                } // else
             } // for (nor = 1; nor <= nOrientations; nor++)
         } // for (nsc = 1; nsc <= nScales+1; nsc++)
         
@@ -2327,7 +2333,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * @param m  Second dimension of yl; number of rows of yl
      * @param yh
      * @param nh First dimension of yh; number of columns of yh
-     * @param mh Second dimension of yh; number of columns of yh
+     * @param mh Second dimension of yh; number of rows of yh
      * @param h
      * @param hcol
      * @param hrow
@@ -2365,7 +2371,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         }
         else {
             if ((m != mh) || (n*L != nh)) {
-                MipavUtil.displayError("Dimensions fo first two input vectors not consistent");
+                MipavUtil.displayError("Dimensions of first two input vectors not consistent");
                 error = 1;
                 return null;
             }
@@ -2619,12 +2625,12 @@ MATLAB description:
      * Fourier domain, as created by buildSFpyr.
      * @param pyr  A vector containing the N pyramid subbands, ordered from
      *             fine to coarse
-     * @param pind     A vector with a NX2 Integer set of the sizes of each
+     * @param pind     A vector with a N 2 element int[] set of the sizes of each
      *                 subband
      * @param levs   Optional.  A list of the levels to include or null
      *               for all levels.  0 corresponds to the residual highpass
      *               subband.  1 corresponds to the finest oriented scale.
-     *               The lowpass band corresponds to number spyrHt(indices+1)
+     *               The lowpass band corresponds to number spyrHt(indices)+1.
      * @param band  Optional.  Should be a list of the bands to include or
      *              null for all bands.  1 = vertical, rest proceeding anti-
      *              clockwise.
@@ -2711,7 +2717,7 @@ MATLAB description:
         } // if (allBands)
         else {
             for (i = 0; i < bands.length; i++) {
-                if ((levs[i] < 1) || (levs[i] > nbands)) {
+                if ((bands[i] < 1) || (bands[i] > nbands)) {
                     MipavUtil.displayError(
                     "Band numbers must be in the range 1 to " + nbands);
                     error = 1;
@@ -2723,8 +2729,8 @@ MATLAB description:
         intMat = (int[])pind.get(0);
         dimX = intMat[0];
         dimY = intMat[1];
-        ctrX = (int)Math.ceil((dimX + 0.5)/2);
-        ctrY = (int)Math.ceil((dimY + 0.5)/2);
+        ctrX = (int)Math.ceil((dimX + 0.5)/2.0);
+        ctrY = (int)Math.ceil((dimY + 0.5)/2.0);
         
         xramp = new double[dimY][dimX];
         yramp = new double[dimY][dimX];
@@ -2929,13 +2935,14 @@ MATLAB description:
         double bandi[];
         int intMat[];
         int parr[][];
+        int ind;
         
         lo_ind = nbands + 1;
         intMat = (int[])pind.get(0);
         dimX = intMat[0];
         dimY = intMat[1];
-        ctrX = (int)Math.ceil((dimX + 0.5)/2);
-        ctrY = (int)Math.ceil((dimY + 0.5)/2);
+        ctrX = (int)Math.ceil((dimX + 0.5)/2.0);
+        ctrY = (int)Math.ceil((dimY + 0.5)/2.0);
         
         logy = log_rad.length;
         logx = log_rad[0].length;
@@ -2953,10 +2960,10 @@ MATLAB description:
         }
         
         if (moreOne) {
-            lodimX = (int)Math.ceil((dimX - 0.5)/2);
-            lodimY = (int)Math.ceil((dimY - 0.5)/2);
-            loctrX = (int)Math.ceil((lodimX + 0.5)/2);
-            loctrY = (int)Math.ceil((lodimY + 0.5)/2);
+            lodimX = (int)Math.ceil((dimX - 0.5)/2.0);
+            lodimY = (int)Math.ceil((dimY - 0.5)/2.0);
+            loctrX = (int)Math.ceil((lodimX + 0.5)/2.0);
+            loctrY = (int)Math.ceil((lodimY + 0.5)/2.0);
             lostartX = ctrX - loctrX + 1;
             lostartY = ctrY - loctrY + 1;
             loendX = lostartX + lodimX - 1;
@@ -3047,11 +3054,11 @@ MATLAB description:
             consta = Math.sqrt(consta);
             ycosn = new double[xcosn.length];
             for (i = 0; i < xcosn.length; i++) {
-                ycosn[i] = consta * Math.pow(xcosn[i], order);
+                ycosn[i] = consta * Math.pow(Math.cos(xcosn[i]), order);
             }
             himask = pointOp(log_rad, yrcos, xrcos[0], (xrcos[1]-xrcos[0]), false);
             
-            index = 0;
+            ind = 0;
             for (b = 1; b <= nbands; b++) {
                 haveB = false;
                 for (i = 0; i < bands.length; b++) {
@@ -3062,7 +3069,7 @@ MATLAB description:
                 if (haveB) {
                     anglemask = pointOp(angle, ycosn, (xcosn[0] + Math.PI*(b-1)/nbands),
                                         (xcosn[1] - xcosn[0]), true);
-                    bandr = (double[])pyr.get(index);
+                    bandr = (double[])pyr.get(ind);
                     bandi = new double[dimX * dimY];
                     // forward FFT
                     fftUtil = new FFTUtility(bandr, bandi, dimY, dimX, 1, -1, FFTUtility.FFT);
@@ -3110,7 +3117,7 @@ MATLAB description:
                         }    
                     } // else if (((nbands-1) % 4) == 3)
                 } // if (haveB)
-                index++;
+                ind++;
             } // for (b = 1; b <= nbands; b++)
         } // if (haveOne)
     }
@@ -3252,6 +3259,7 @@ MATLAB description:
         double rmat4[][];
         int i2, j2;
         int nx, ny;
+        double max;
         
         nv = y.length;
         nh = y[0].length;
@@ -3268,6 +3276,7 @@ MATLAB description:
             N = N + 1; 
         }
         
+        // bolckSizeX and blockSizeY must be odd
         Lx = (blockSizeX - 1)/2;
         Ly = (blockSizeY - 1)/2;
         // reference coefficient in the neighborhood
@@ -3283,11 +3292,11 @@ MATLAB description:
         
         // Compute covariance of noise from 'noise'
         n = 0;
-        for (ny = -Ly; ny <= Ly; ny++) {
+        mtxr = new double[nv*nh];
+        mtxi = new double[nv*nh];
+        for (ny = -Ly; ny <= Ly; ny++) { // Spatial neighbors
             for (nx = -Lx; nx <= Lx; nx++) {
                 n = n + 1;
-                mtxr = new double[nv*nh];
-                mtxi = new double[nv*nh];
                 for (ky = 0; ky < nv; ky++) {
                     for (kx = 0; kx < nh; kx++) {
                         index = kx + ky * nh;
@@ -3300,7 +3309,7 @@ MATLAB description:
                 foo = new double[nblv][nblh];
                 for (ky = 0, indexW = 0; ky < nblv; ky++) {
                     for (kx = 0; kx < nblh; kx++) {
-                        index = (kx + Lx)+ (ky + Ly) * nblh;
+                        index = (kx + Lx)+ (ky + Ly) * nh;
                         foo[ky][kx] = resr[index];
                         W[indexW++][n-1] = foo[ky][kx];
                     }
@@ -3309,7 +3318,7 @@ MATLAB description:
         } // for (i = -Lx; i <= Lx; i++)
         
         if (prnt) { // parent
-            n = n +1;
+            n = n + 1;
             foo = new double[nblv][nblh];
             for (ky = 0, indexW = 0; ky < nblv; ky++) {
                 for (kx = 0; kx < nblh; kx++) {
@@ -3357,11 +3366,9 @@ MATLAB description:
         
         // Rearrange observed samples in 'nexp' neighborhoods
         n = 0;
-        for (ny = -Ly; ny <= Ly; ny++) {
+        for (ny = -Ly; ny <= Ly; ny++) { // Spatial neighbors
             for (nx = -Lx; nx <= Lx; nx++) {
                 n = n + 1;
-                mtxr = new double[nv*nh];
-                mtxi = new double[nv*nh];
                 for (ky = 0; ky < nv; ky++) {
                     for (kx = 0; kx < nh; kx++) {
                         index = kx + ky * nh;
@@ -3374,7 +3381,7 @@ MATLAB description:
                 foo = new double[nblv][nblh];
                 for (ky = 0, indexW = 0; ky < nblv; ky++) {
                     for (kx = 0; kx < nblh; kx++) {
-                        index = (kx + Lx)+ (ky + Ly) * nblh;
+                        index = (kx + Lx)+ (ky + Ly) * nh;
                         foo[ky][kx] = resr[index];
                         Y[indexW++][n-1] = foo[ky][kx];
                     }
@@ -3403,18 +3410,25 @@ MATLAB description:
         // In EigenvalueDecomposition the columns represent the
         // eigenvectors
         S = eig.getV().getArray();
+        // S * S' = C_w
         for (j = 0; j < N; j++) {
-            var = Math.sqrt(eigenvalue[j]);
-            for (i = 0; i < N; i++) {
-                if (eigenvalue[j] > 0) {
-                    S[i][j] = S[i][j] * var;
-                }
-                else {
-                    S[i][j] = 0;
-                }
+            if (eigenvalue[j] > 0) {
+                var = Math.sqrt(eigenvalue[j]);
+            }
+            else {
+                 var = 0.0;
+            }
+            for (i = 0; i < N; i++) {  
+                 S[i][j] = S[i][j] * var;
             }
         }
         iS = (new Matrix(S)).inverse().getArray();
+        for (i = 0; i < noise.length; i++) {
+            for (j = 0; j < noise[i].length; j++) {
+                noise[i][j] = null;;
+            }
+            noise[i] = null;
+        }
         noise = null;
         
         C_y = innerProd(Y);
@@ -3491,7 +3505,7 @@ MATLAB description:
             } // else
         } // if (!includeCovar)
         
-        // Double diagonalization of signal and noise eigenvlaues:
+        // Double diagonalization of signal and noise eigenvalues:
         // energy in the new representation
         eig = new EigenvalueDecomposition(((new Matrix(iS)).times(new Matrix(C_x))).times((new Matrix(iS)).transpose()));
         la = eig.getRealEigenvalues();
@@ -3507,6 +3521,9 @@ MATLAB description:
         // Linearly transform the observations, and keep the quadratic
         // values (we do not model phase).
         V = (((new Matrix(Q)).transpose()).times(new Matrix(iS))).times((new Matrix(Y)).transpose()).getArray();
+        for (i = 0; i < Y.length; i++) {
+            Y[i] = null;
+        }
         Y = null;
         V2 = new double[nexp][N];
         for (j = 0; j < nexp; j++) {
@@ -3548,7 +3565,7 @@ MATLAB description:
             pg1_lz = new double[nsamp_z];
             for (j = 0; j < nsamp_z; j++) {
                 pg1_lz[j] = laz[0][j] + 1.0;
-                for (i = 1; i < N; i++) {
+                for (i = 1; i < nexp; i++) {
                    pg1_lz[j] *= (laz[i][j] + 1.0); 
                 }
                 pg1_lz[j] = 1.0/Math.sqrt(pg1_lz[j]);
@@ -3560,7 +3577,6 @@ MATLAB description:
                 }
             }
             aux = (new Matrix(V2)).times(new Matrix(laz2)).getArray();
-            laz2 = null;
             for (j = 0; j < nsamp_z; j++) {
                 for (i = 0; i < nexp; i++) {
                     aux[i][j] = Math.exp(-0.5*aux[i][j]);
@@ -3577,9 +3593,13 @@ MATLAB description:
             aux = new double[N][nsamp_z];
             for (j = 0; j < nsamp_z; j++) {
                 for (i = 0; i < N; i++) {
-                    aux[i][j] = m[i]*laz[i][j]/(1.0 + laz[i][j]);
+                    aux[i][j] = m[i]*laz2[i][j];
                 }
             }
+            for (i = 0; i < laz2.length; i++) {
+                laz2[i] = null;
+            }
+            laz2 = null;
             // Wiener estimation, for each considered sample of z
             mu_x = ((new Matrix(V)).transpose()).times(new Matrix(aux)).getArray();
         } // if (z_w == null)
@@ -3593,15 +3613,20 @@ MATLAB description:
         ind = new int[nexp];
         for (i = 0; i < nexp; i++) {
             ind[i] = 0;
+            max = p_lz[i][0];
             for (j = 1; j < nsamp_z; j++) {
-                if (p_lz[i][j] > ind[i]) {
+                if (p_lz[i][j] > max) {
                     ind[i] = j;
+                    max = p_lz[i][j];
                 }
             }
         } // for (i = 0; i < nexp; i++)
         z = new double[nexp];
         for (i = 0; i < nexp; i++) {
             z[i] = zi[ind[i]];
+        }
+        for (i = 0; i < V2.length; i++) {
+            V2[i] = null;
         }
         V2 = null;
         aux = null;
@@ -3626,7 +3651,7 @@ MATLAB description:
                 zM[j][i] = zM[uv-1][lh-1];
             }
         }
-        for (j = 0; j < uv-1; j++) {
+        for (j = 0; j < uv; j++) {
             for (i = rh-1; i < nh; i++) {
                 zM[j][i] = zM[uv-1][rh-1];
             }
