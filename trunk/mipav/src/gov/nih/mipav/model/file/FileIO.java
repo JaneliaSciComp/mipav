@@ -8650,28 +8650,28 @@ public class FileIO {
             myFileInfo.setRescaleIntercept(0);
             myFileInfo.setRescaleSlope(1);
             myFileInfo.setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
-            myFileInfo.vr_type = myFileInfo.EXPLICIT;
+            myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
 
-            if ((image.getType() == image.SHORT) || (image.getType() == image.USHORT)) {
+            if ((image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT)) {
                 myFileInfo.setValue("0028,0100", new Short((short) 16), 2);
                 myFileInfo.setValue("0028,0101", new Short((short) 16), 2);
                 myFileInfo.setValue("0028,0102", new Short((short) 15), 2);
                 myFileInfo.setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 myFileInfo.setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
 
-                if (image.getType() == image.USHORT) {
+                if (image.getType() == ModelImage.USHORT) {
                     myFileInfo.setValue("0028,0103", new Short((short) 0), 2);
                 } else {
                     myFileInfo.setValue("0028,0103", new Short((short) 1), 2);
                 }
-            } else if ((image.getType() == image.BYTE) || (image.getType() == image.UBYTE)) {
+            } else if ((image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE)) {
                 myFileInfo.setValue("0028,0100", new Short((short) 8), 2);
                 myFileInfo.setValue("0028,0101", new Short((short) 8), 2);
                 myFileInfo.setValue("0028,0102", new Short((short) 7), 2);
                 myFileInfo.setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 myFileInfo.setValue("0028,0004", new String("MONOCHROME2")); // photometric
 
-                if (image.getType() == image.UBYTE) {
+                if (image.getType() == ModelImage.UBYTE) {
                     myFileInfo.setValue("0028,0103", new Short((short) 0), 2);
                 } else {
                     myFileInfo.setValue("0028,0103", new Short((short) 1), 2);
