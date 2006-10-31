@@ -750,7 +750,7 @@ public class FileIO {
         String suffix2;
         boolean okNumber;
         int nImages;
-
+        
         imageDir = new File(fileDir);
 
         // Read directory and find no. of images
@@ -814,7 +814,22 @@ public class FileIO {
                 } // if (!files[i].isDirectory())
             } // for (i = 0; i <fileListBuffer.length; i++)
         } // if (numberSuffix)
-        else { // numberSuffix == false. I.e. ".img".
+        else if (suffix.equals("")) {
+        	for (i = 0; i < fileListBuffer.length; i++) {
+        		if (!files[i].isDirectory()) {
+        			String fileSubName = trim(fileListBuffer[i].trim());
+        			String fileExtension = getSuffixFrom(fileListBuffer[i]);
+        			        			
+        			if (fileSubName.trim().equals(subName) && fileExtension.equals(suffix)) {
+        				fileList[j] = fileListBuffer[i];
+        				j++;
+        			}
+        			
+        		}
+        	}
+        		
+       }
+       else { // numberSuffix == false. I.e. ".img".
 
             // check to see that they end in suffix.  If so, store, count.
 
@@ -1192,7 +1207,7 @@ public class FileIO {
     }
 
     /**
-     * DOCUMENT ME!
+     * Tests if the unknown file is of type Dicom
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1234,7 +1249,7 @@ public class FileIO {
 
 
     /**
-     * DOCUMENT ME!
+     * Tests if the unknown file is of type GE Signa 4X type.
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1275,7 +1290,7 @@ public class FileIO {
 
 
     /**
-     * DOCUMENT ME!
+     * Tests if the unknown file is of type GE Signa 5X type
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1315,7 +1330,7 @@ public class FileIO {
     }
 
     /**
-     * DOCUMENT ME!
+     * Tests if the unknown file is of type Siemens Magnetom Vision
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1355,7 +1370,7 @@ public class FileIO {
     }
 
     /**
-     * DOCUMENT ME!
+     * Tests if the unknown file is of type Minc
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1392,7 +1407,119 @@ public class FileIO {
         }
 
     }
+    
+    /**
+     * Tests if the unknown file is of type Analyze
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     *
+     * @return  <code>FileBase.ANALYZE</code> if the file is a ANALYZE type, and <code>FileBase.UNDEFINED</code> otherwise
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public int isAnalyze(String fileName, String fileDir) throws IOException {
 
+
+        try {
+            
+            	boolean isAnalyze = FileAnalyze.isAnalyze(fileDir + fileName);
+
+                if (isAnalyze) {
+                    return FileBase.ANALYZE;
+                }
+           
+
+            return FileBase.UNDEFINED;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug("FileIO: " + error + "\n");
+            } else {
+                Preferences.debug("FileIO: " + error + "\n");
+            }
+
+            return FileBase.UNDEFINED;
+        }
+
+    }
+    
+    /**
+     * Tests if the unknown file is of type Nifti
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     *
+     * @return  <code>FileBase.NIFTI</code> if the file is a NIFTI type, and <code>FileBase.UNDEFINED</code> otherwise
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public int isNIFTI(String fileName, String fileDir) throws IOException {
+
+
+        try {
+                boolean isNIFTI = FileNIFTI.isNIFTI(fileName, fileDir);
+
+                
+                if (isNIFTI) {
+                    return FileBase.NIFTI;
+                }
+          
+
+            return FileBase.UNDEFINED;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug("FileIO: " + error + "\n");
+            } else {
+                Preferences.debug("FileIO: " + error + "\n");
+            }
+
+            return FileBase.UNDEFINED;
+        }
+
+    }
+    
+    /**
+     * Tests if the unknown file is of type SPM
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     *
+     * @return  <code>FileBase.NIFTI</code> if the file is a NIFTI type, and <code>FileBase.UNDEFINED</code> otherwise
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public int isSPM(String fileName, String fileDir) throws IOException {
+
+
+        try {
+                boolean isSPM = FileSPM.isSPM(fileDir + fileName);
+
+                
+                if (isSPM) {
+                    return FileBase.SPM;
+                }
+          
+            return FileBase.UNDEFINED;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug("FileIO: " + error + "\n");
+            } else {
+                Preferences.debug("FileIO: " + error + "\n");
+            }
+
+            return FileBase.UNDEFINED;
+        }
+
+    }
+
+
+ 
 
     /**
      * Refers to whether or not the FileIO will send alerts to the user about progress or errors.
@@ -2477,8 +2604,20 @@ public class FileIO {
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isMinc(fileName, fileDir);
                 }
+                
+                if (fileType == FileBase.UNDEFINED) {
+                    fileType = isSPM(fileName, fileDir);
+                }
 
+                if (fileType == FileBase.UNDEFINED) {
 
+                    fileType = isAnalyze(fileName, fileDir);
+                }
+                
+                if (fileType == FileBase.UNDEFINED) {
+                    fileType = isNIFTI(fileName, fileDir);
+                }
+                
                 if (fileType == FileBase.UNDEFINED) { // if image type not defined by extension, popup
                     fileType = getFileType(); // dialog to get user to define image type
                     userDefinedFileType = fileType;
