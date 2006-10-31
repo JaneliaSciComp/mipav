@@ -82,44 +82,50 @@ public class FileIO {
      * identify the image type so the correct reader can be used
      */
     private JDialogUnknownIO unknownIODialog;
-    
-    
-    /** Document Me */
+
+
+    /** Document Me. */
     private String[] userDefinedFileTypeAssociations = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates the FileIO and displays <q>Choose File Type</q> unknown file dialog. Constructs a new FileIO object, sets
-     * the user interface, and initializes the unknown file dialog.
-     * Also gets the userDefinedFileTypeAssociations preferences
+     * the user interface, and initializes the unknown file dialog. Also gets the userDefinedFileTypeAssociations
+     * preferences
      */
     public FileIO() {
         UI = ViewUserInterface.getReference();
+
         if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
-        	if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) { 
-        		userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
-        	}
-		}
+
+            if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) {
+                userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+            }
+        }
+
         unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
         UI.setLoad(false); // default to "opening "
     }
 
     /**
      * Creates the FileIO and displays <q>Choose File Type</q> unknown file dialog. Constructs a new FileIO object, sets
-     * the user interface, sets the LUT, and initializes the unknown file dialog.
-     * Also gets the userDefinedFileTypeAssociations preferences
+     * the user interface, sets the LUT, and initializes the unknown file dialog. Also gets the
+     * userDefinedFileTypeAssociations preferences
      *
      * @param  _LUT  Passes LUT into file IO object so that LUT can be store with image (i.e. TIFF).
      */
     public FileIO(ModelLUT _LUT) {
         UI = ViewUserInterface.getReference();
         LUT = _LUT;
+
         if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
-        	if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) { 
-        		userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
-        	}
-		}
+
+            if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) {
+                userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+            }
+        }
+
         unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
     }
 
@@ -1141,16 +1147,18 @@ public class FileIO {
         } else { // cannot automatically determine the filetype from the filename extension
             fileType = FileBase.UNDEFINED;
         }
-        
-        //check to see if there are any user defined associations
+
+        // check to see if there are any user defined associations
         if (userDefinedFileTypeAssociations != null) {
-        	for(int k=0;k<userDefinedFileTypeAssociations.length;k++) {
-        		if(suffix.equals(userDefinedFileTypeAssociations[k].split(":")[0])) {
-        			fileType = new Integer(userDefinedFileTypeAssociations[k].split(":")[1]).intValue();
-        		}
-        	}
+
+            for (int k = 0; k < userDefinedFileTypeAssociations.length; k++) {
+
+                if (suffix.equals(userDefinedFileTypeAssociations[k].split(":")[0])) {
+                    fileType = new Integer(userDefinedFileTypeAssociations[k].split(":")[1]).intValue();
+                }
+            }
         }
-        
+
         return fileType;
     }
 
@@ -2469,7 +2477,6 @@ public class FileIO {
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isMinc(fileName, fileDir);
                 }
-                
 
 
                 if (fileType == FileBase.UNDEFINED) { // if image type not defined by extension, popup
@@ -2479,7 +2486,7 @@ public class FileIO {
                 }
 
                 fileType = chkMultiFile(fileType, multiFile); // for multifile support...
-                
+
 
             }
         } catch (IOException ioe) {
@@ -2683,45 +2690,49 @@ public class FileIO {
                     image.calcMinMax();
                     // image.setImageDirectory(fileDir);
                 }
-                
-                
-                
-                //if file type was a new user defined file type, then we need to save its association
-                //to the preferences if its not already there.
-                //we also need to save this pref as part of both the userDefinedFileTypes and 
-                //the userDefinedFileTypes_textField
-                if(userDefinedSuffix != null) {
-                	String association = userDefinedSuffix + ":" + userDefinedFileType;
-                	boolean isPresent = false;
-	                if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
-	                	if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) { 
-	                		userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
-	                		for(int i=0;i<userDefinedFileTypeAssociations.length;i++) {
-	                			if(userDefinedSuffix.equals(userDefinedFileTypeAssociations[i].split(":")[0])) {
-	                    			isPresent = true;
-	                    		}
-	                		}
-	                		if(!isPresent) {
-	                			Preferences.setProperty("userDefinedFileTypeAssociations", Preferences.getProperty("userDefinedFileTypeAssociations") + ";" + association);
-	                			setUserDefinedFileTypesPref(userDefinedSuffix);
-	                			setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
-	                		}
-	                		
-	                	}
-	                	else {
-	                		Preferences.setProperty("userDefinedFileTypeAssociations", association);
-	                		setUserDefinedFileTypesPref(userDefinedSuffix);
-	                		setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
-	                	}
-	        		}
-	                else {
-	                	Preferences.setProperty("userDefinedFileTypeAssociations", association);
-	                	setUserDefinedFileTypesPref(userDefinedSuffix);
-	                	setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
-	                }
+
+
+                // if file type was a new user defined file type, then we need to save its association
+                // to the preferences if its not already there.
+                // we also need to save this pref as part of both the userDefinedFileTypes and
+                // the userDefinedFileTypes_textField
+                if (userDefinedSuffix != null) {
+                    String association = userDefinedSuffix + ":" + userDefinedFileType;
+                    boolean isPresent = false;
+
+                    if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
+
+                        if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) {
+                            userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+
+                            for (int i = 0; i < userDefinedFileTypeAssociations.length; i++) {
+
+                                if (userDefinedSuffix.equals(userDefinedFileTypeAssociations[i].split(":")[0])) {
+                                    isPresent = true;
+                                }
+                            }
+
+                            if (!isPresent) {
+                                Preferences.setProperty("userDefinedFileTypeAssociations",
+                                                        Preferences.getProperty("userDefinedFileTypeAssociations") +
+                                                        ";" + association);
+                                setUserDefinedFileTypesPref(userDefinedSuffix);
+                                setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
+                            }
+
+                        } else {
+                            Preferences.setProperty("userDefinedFileTypeAssociations", association);
+                            setUserDefinedFileTypesPref(userDefinedSuffix);
+                            setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
+                        }
+                    } else {
+                        Preferences.setProperty("userDefinedFileTypeAssociations", association);
+                        setUserDefinedFileTypesPref(userDefinedSuffix);
+                        setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
+                    }
                 }
-                
-                
+
+
             }
         } catch (Exception error) {
 
@@ -2742,80 +2753,7 @@ public class FileIO {
 
         return image;
     }
-    
-    
-    
-    /** This method sets the userDefinedFileTypes preference 
-     * 
-     * @param udefSuffix      the user defined suffix
-     * 
-     * 
-     * */
-    public void setUserDefinedFileTypesPref(String udefSuffix) {
-    	if (Preferences.getProperty("userDefinedFileTypes") != null) {
-			if (Preferences.getProperty("userDefinedFileTypes").trim().equals("")) {
-				Preferences.setProperty("userDefinedFileTypes", "*" + udefSuffix);
-			}
-			else {
-				//first check to see if its already not there
-				String[] prefTypes = Preferences.getProperty("userDefinedFileTypes").split(";");
-				boolean isPresent = false;
-				for(int i=0;i<prefTypes.length;i++) {
-					String suff = prefTypes[i].split("\\.")[1];
-					suff = "." + suff;
-					if(udefSuffix.equals(suff)) {
-						isPresent = true;
-					}
-				}
-				if (!isPresent) {
-					Preferences.setProperty("userDefinedFileTypes", Preferences.getProperty("userDefinedFileTypes") + "; *" + udefSuffix);
-				}
-			}
-		}
-		else {
-			Preferences.setProperty("userDefinedFileTypes", "*" + udefSuffix);
-		}
 
-    	
-    }
-    
-    
-    
-    /** This method sets the userDefinedFileTypes_textField preference
-     * 
-     * @param udefSuffix      the user defined suffix
-     * 
-     * 
-     * */
-    
-   public void setUserDefinedFileTypes_textFieldPref(String udefSuffix) {
-	   if (Preferences.getProperty("userDefinedFileTypes_textField") != null) {
-			if (Preferences.getProperty("userDefinedFileTypes_textField").trim().equals("")) {
-				Preferences.setProperty("userDefinedFileTypes_textField", "*" + udefSuffix);
-			}
-			else {
-				//first check to see if its already not there
-				String[] prefTypes = Preferences.getProperty("userDefinedFileTypes_textField").split(";");
-				boolean isPresent = false;
-				for(int i=0;i<prefTypes.length;i++) {
-					String suff = prefTypes[i].split("\\.")[1];
-					suff = "." + suff;
-					if(udefSuffix.equals(suff)) {
-						isPresent = true;
-					}
-				}
-				if(!isPresent) {
-					Preferences.setProperty("userDefinedFileTypes_textField", Preferences.getProperty("userDefinedFileTypes_textField") + ";*" + udefSuffix);
-				}
-			}
-		}
-		else {
-			Preferences.setProperty("userDefinedFileTypes_textField", "*" + udefSuffix);
-		}
-   }
-    
-    
-    
 
     /**
      * Reads file, determines file type, and calls a read function specific to the file. That read function returns an
@@ -3157,6 +3095,84 @@ public class FileIO {
      */
     public void setQuiet(boolean q) {
         quiet = q;
+    }
+
+
+    /**
+     * This method sets the userDefinedFileTypes_textField preference.
+     *
+     * @param  udefSuffix  the user defined suffix
+     */
+
+    public void setUserDefinedFileTypes_textFieldPref(String udefSuffix) {
+
+        if (Preferences.getProperty("userDefinedFileTypes_textField") != null) {
+
+            if (Preferences.getProperty("userDefinedFileTypes_textField").trim().equals("")) {
+                Preferences.setProperty("userDefinedFileTypes_textField", "*" + udefSuffix);
+            } else {
+
+                // first check to see if its already not there
+                String[] prefTypes = Preferences.getProperty("userDefinedFileTypes_textField").split(";");
+                boolean isPresent = false;
+
+                for (int i = 0; i < prefTypes.length; i++) {
+                    String suff = prefTypes[i].split("\\.")[1];
+                    suff = "." + suff;
+
+                    if (udefSuffix.equals(suff)) {
+                        isPresent = true;
+                    }
+                }
+
+                if (!isPresent) {
+                    Preferences.setProperty("userDefinedFileTypes_textField",
+                                            Preferences.getProperty("userDefinedFileTypes_textField") + ";*" +
+                                            udefSuffix);
+                }
+            }
+        } else {
+            Preferences.setProperty("userDefinedFileTypes_textField", "*" + udefSuffix);
+        }
+    }
+
+
+    /**
+     * This method sets the userDefinedFileTypes preference.
+     *
+     * @param  udefSuffix  the user defined suffix
+     */
+    public void setUserDefinedFileTypesPref(String udefSuffix) {
+
+        if (Preferences.getProperty("userDefinedFileTypes") != null) {
+
+            if (Preferences.getProperty("userDefinedFileTypes").trim().equals("")) {
+                Preferences.setProperty("userDefinedFileTypes", "*" + udefSuffix);
+            } else {
+
+                // first check to see if its already not there
+                String[] prefTypes = Preferences.getProperty("userDefinedFileTypes").split(";");
+                boolean isPresent = false;
+
+                for (int i = 0; i < prefTypes.length; i++) {
+                    String suff = prefTypes[i].split("\\.")[1];
+                    suff = "." + suff;
+
+                    if (udefSuffix.equals(suff)) {
+                        isPresent = true;
+                    }
+                }
+
+                if (!isPresent) {
+                    Preferences.setProperty("userDefinedFileTypes",
+                                            Preferences.getProperty("userDefinedFileTypes") + "; *" + udefSuffix);
+                }
+            }
+        } else {
+            Preferences.setProperty("userDefinedFileTypes", "*" + udefSuffix);
+        }
+
+
     }
 
     /**
@@ -8779,6 +8795,15 @@ public class FileIO {
                 return false;
             }
 
+            myFileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
+            myFileInfo.setRescaleIntercept(0);
+            myFileInfo.setRescaleSlope(1);
+            myFileInfo.setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+            myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
+
+            // TODO: remove the below conversion after getting the dicom short-to-float rescaling working for all float
+            // datasets
+
             // necessary to save floating point minc files to dicom
             if ((image.getFileInfo(0).getFileFormat() == FileBase.MINC) && (image.getType() == ModelImage.FLOAT)) {
                 ModelImage newImage = (ModelImage) image.clone();
@@ -8792,32 +8817,68 @@ public class FileIO {
                 image = newImage;
             }
 
-            myFileInfo.setEndianess(FileBase.LITTLE_ENDIAN);
-            myFileInfo.setRescaleIntercept(0);
-            myFileInfo.setRescaleSlope(1);
-            myFileInfo.setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
-            myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
+            // TODO: move this to when the minc file is read in
 
-            if ((image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT)) {
+            // set the dicom modality, if present in the original image's minc header
+            /*if (image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
+             *  FileMincVarElem[] varArray = ((FileInfoMinc) image.getFileInfo(0)).getVarArray();
+             *
+             * for (int j = 0; j < varArray.length; j++) {
+             *
+             * if (varArray[j].name.equals("study")) {
+             *
+             * for (int k = 0; k < varArray[j].vattArray.length; k++) {
+             *
+             *     if (varArray[j].vattArray[k].name.equals("modality")) {                 String modality =
+             * varArray[j].vattArray[k].getValueString();
+             *
+             *         if (modality.equals("PET__")) {
+             * myFileInfo.setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY); myFileInfo.setValue("0008,0060",
+             * "PT");                 } else if (modality.equals("MRI__")) {
+             * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE); myFileInfo.setValue("0008,0060", "MR");       }
+             * else if (modality.equals("SPECT")) {
+             * myFileInfo.setModality(FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY);
+             * myFileInfo.setValue("0008,0060", "ST");
+             *
+             *             //} else if (modality.equals("GAMMA")) {                     //
+             * myFileInfo.setModality(FileInfoBase.);   myFileInfo.setValue("0008,0060",                     // "");
+             *   } else if (modality.equals("MRS__")) {
+             * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY); myFileInfo.setValue("0008,0060",
+             * "MS");                 } else if (modality.equals("MRA__")) {
+             * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY); myFileInfo.setValue("0008,0060",
+             * "MA");                 } else if (modality.equals("CT___")) {
+             * myFileInfo.setModality(FileInfoBase.COMPUTED_TOMOGRAPHY); myFileInfo.setValue("0008,0060", "CT");
+             *
+             *             //} else if (modality.equals("DSA__")) {                     //
+             * myFileInfo.setModality(FileInfoBase.); myFileInfo.setValue("0008,0060", "");                 } else if
+             * (modality.equals("DR___")) { myFileInfo.setModality(FileInfoBase.DIGITAL_RADIOGRAPHY);
+             * myFileInfo.setValue("0008,0060", "DX");                 }             }         }     } }}*/
+
+            if ((image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT) ||
+                    (image.getFileInfo(0).getDataType() == ModelImage.SHORT) ||
+                    (image.getFileInfo(0).getDataType() == ModelImage.USHORT)) {
                 myFileInfo.setValue("0028,0100", new Short((short) 16), 2);
                 myFileInfo.setValue("0028,0101", new Short((short) 16), 2);
                 myFileInfo.setValue("0028,0102", new Short((short) 15), 2);
                 myFileInfo.setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 myFileInfo.setValue("0028,0004", new String("MONOCHROME2"), 11); // photometric
 
-                if (image.getType() == ModelImage.USHORT) {
+                if ((image.getType() == ModelImage.USHORT) ||
+                        (image.getFileInfo(0).getDataType() == ModelImage.USHORT)) {
                     myFileInfo.setValue("0028,0103", new Short((short) 0), 2);
                 } else {
                     myFileInfo.setValue("0028,0103", new Short((short) 1), 2);
                 }
-            } else if ((image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE)) {
+            } else if ((image.getType() == ModelImage.BYTE) || (image.getType() == ModelImage.UBYTE) ||
+                           (image.getFileInfo(0).getDataType() == ModelImage.BYTE) ||
+                           (image.getFileInfo(0).getDataType() == ModelImage.UBYTE)) {
                 myFileInfo.setValue("0028,0100", new Short((short) 8), 2);
                 myFileInfo.setValue("0028,0101", new Short((short) 8), 2);
                 myFileInfo.setValue("0028,0102", new Short((short) 7), 2);
                 myFileInfo.setValue("0028,0002", new Short((short) 1), 2); // samples per pixel
                 myFileInfo.setValue("0028,0004", new String("MONOCHROME2")); // photometric
 
-                if (image.getType() == ModelImage.UBYTE) {
+                if ((image.getType() == ModelImage.UBYTE) || (image.getFileInfo(0).getDataType() == ModelImage.UBYTE)) {
                     myFileInfo.setValue("0028,0103", new Short((short) 0), 2);
                 } else {
                     myFileInfo.setValue("0028,0103", new Short((short) 1), 2);
@@ -8832,7 +8893,12 @@ public class FileIO {
             } else {
 
                 if (!quiet) {
-                    MipavUtil.displayError("Saving the original image in DICOM format is not yet supported.");
+                    MipavUtil.displayError("Saving the original image type in DICOM format is not yet supported.");
+
+                    if (image.getType() != image.getFileInfo(0).getDataType()) {
+                        Preferences.debug("writeDicom:\tThe image file type in memory and the data type in the file info do not match.\n",
+                                          Preferences.DEBUG_FILEIO);
+                    }
                 }
 
                 System.gc();
@@ -8844,13 +8910,9 @@ public class FileIO {
 
             Object obj = null;
             float slLoc = 0;
-            float xLocOrig = 0;
-            float yLocOrig = 0;
-            float zLocOrig = 0;
             float xLoc = 0;
             float yLoc = 0;
             float zLoc = 0;
-            String[] origins;
 
             FileDicomTag tag = myFileInfo.getTag("0020,1041");
 
@@ -8876,7 +8938,7 @@ public class FileIO {
                     }
 
                     if (obj != null) {
-                        origins = ((String) (obj)).split("\\\\");
+                        String[] origins = ((String) (obj)).split("\\\\");
                         xLoc = Float.valueOf(origins[0]).floatValue();
                         yLoc = Float.valueOf(origins[1]).floatValue();
                         zLoc = Float.valueOf(origins[2]).floatValue();
@@ -8885,11 +8947,20 @@ public class FileIO {
                         yLoc = 0;
                         zLoc = 0;
                     }
-
-                    xLocOrig = xLoc;
-                    yLocOrig = yLoc;
-                    zLocOrig = zLoc;
                 }
+
+                float[] axialOrigin = new float[3];
+                float[] dicomOrigin = new float[3];
+                TransMatrix matrix = myFileInfo.getPatientOrientation();
+
+                if (matrix == null) {
+                    matrix = image.getMatrix();
+                }
+
+                TransMatrix invMatrix = (TransMatrix) matrix.clone();
+                invMatrix.invert();
+
+                matrix.transform(new float[] { xLoc, yLoc, zLoc }, axialOrigin);
 
                 // see if the original dicom a minc was created from was part of a larger volume.  if so, preserve the
                 // instance number it had
@@ -8918,44 +8989,64 @@ public class FileIO {
                                                           Float.toString(slLoc).length());
                     slLoc += sliceResolution;
 
-                    String tmpStr = new String(Float.toString(xLoc) + "\\" + Float.toString(yLoc) + "\\" +
-                                               Float.toString(zLoc));
+                    // transform the slice position back into dicom space and store it in the file info
+                    invMatrix.transform(axialOrigin, dicomOrigin);
+
+                    String tmpStr = new String(Float.toString(dicomOrigin[0]) + "\\" + Float.toString(dicomOrigin[1]) +
+                                               "\\" + Float.toString(dicomOrigin[2]));
                     ((FileInfoDicom) (fBase[k])).setValue("0020,0032", tmpStr, tmpStr.length());
 
-                    if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.AXIAL) {
-
-                        if (zLocOrig <= 0) {
-                            zLoc += sliceResolution;
-                        } else {
-                            zLoc -= sliceResolution;
-                        }
-                    } else if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.CORONAL) {
-
-                        if (yLocOrig <= 0) {
-                            yLoc += sliceResolution;
-                        } else {
-                            yLoc -= sliceResolution;
-                        }
-                    } else if (image.getFileInfo()[0].getImageOrientation() == FileInfoBase.SAGITTAL) {
-
-                        if (xLocOrig <= 0) {
-                            xLoc += sliceResolution;
-                        } else {
-                            xLoc -= sliceResolution;
-                        }
-                    } else {
-
-                        if (zLoc <= 0) {
-                            zLoc += sliceResolution;
-                        } else {
-                            zLoc -= sliceResolution;
-                        }
-                    }
+                    // move the slice position to the next slice in the image
+                    axialOrigin[2] += sliceResolution;
 
                     if (baseInstanceNumber != -1) {
                         String instanceStr = "" + (baseInstanceNumber + k);
                         ((FileInfoDicom) (fBase[k])).setValue("0020,0013", instanceStr, instanceStr.length());
                     }
+
+                    // TODO: if the image.getType() or image.getFileInfo(0).getDataType() are FLOAT, then calculate the
+                    // rescaling intercepts and slopes for each slice.  if the dicom modality tag (0008,0060) is not set
+                    // already, it should be defaulted to PET ("PT")
+                    /*if (((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))
+                     * &&     ((image.getFileInfo(0).getDataType() == ModelImage.SHORT) ||
+                     * (image.getFileInfo(0).getDataType() == ModelImage.USHORT))) { int sliceSize =
+                     * image.getSliceSize(); int nImages = image.getExtents()[2];
+                     *
+                     * double vmin; double vmax;
+                     *
+                     * if (image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
+                     *
+                     * // Valid_range see line  823 in FileInfoMinc!!!!!!!.     vmin = ((FileInfoMinc)
+                     * image.getFileInfo(0)).vmin;     vmax = ((FileInfoMinc) image.getFileInfo(0)).vmax; } else { vmin
+                     * = image.getMin();     vmax = image.getMax(); }
+                     *
+                     * double slopeDivisor = vmax - vmin;
+                     *
+                     * if (slopeDivisor == 0) {     slopeDivisor = 1; }
+                     *
+                     * float[] sliceData = new float[sliceSize]; double smin, smax; // slice min and max
+                     *
+                     * for (int curSlice = 0; curSlice <= nImages; curSlice++) {
+                     *
+                     * try {         image.exportData(curSlice * sliceSize, sliceSize, sliceData);     } catch
+                     * (IOException ioe) {         image.setFileInfo(originalFileInfos);
+                     *
+                     * ioe.printStackTrace();
+                     *
+                     * if (!quiet) {             MipavUtil.displayError("FileIO: " + ioe);         }
+                     *
+                     * return false;     }
+                     *
+                     * smin = Double.MAX_VALUE;     smax = -Double.MAX_VALUE;
+                     *
+                     * // calculate min max values per slice     for (int pixel = 0; pixel < sliceData.length; pixel++) {
+                     *
+                     * if (sliceData[pixel] < smin) {             smin = sliceData[pixel];         }
+                     *
+                     * if (sliceData[pixel] > smax) {             smax = sliceData[pixel];         }     }
+                     *
+                     * myFileInfo.setRescaleIntercept((smax - smin) / slopeDivisor);
+                     * myFileInfo.setRescaleSlope(smin - (myFileInfo.getRescaleSlope() * vmin)); }}*/
                 }
 
                 image.setFileInfo(fBase);
@@ -9025,6 +9116,8 @@ public class FileIO {
         } catch (IOException error) {
             image.setFileInfo(originalFileInfos);
 
+            error.printStackTrace();
+
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
@@ -9033,6 +9126,8 @@ public class FileIO {
             return false;
         } catch (OutOfMemoryError error) {
             image.setFileInfo(originalFileInfos);
+
+            error.printStackTrace();
 
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
