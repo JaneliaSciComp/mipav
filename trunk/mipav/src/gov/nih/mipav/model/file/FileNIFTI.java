@@ -603,26 +603,43 @@ public class FileNIFTI extends FileBase {
 
         // index         = fileName.toLowerCase().indexOf(".img");
         index = fileName.lastIndexOf(".");
-
-        if (fileName.substring(index + 1).equalsIgnoreCase("nii")) {
-            oneFileStorage = true;
-            fileHeaderName = fileName;
+        
+        if (index == -1) {
+        	oneFileStorage = false;
+        	fileHeaderName = fileName + ".hdr";
+        	fileHeader = new File(fileDir + fileHeaderName);
+        	
+        	if (fileHeader.exists()== false) {
+        		fileHeaderName = fileName + ".HDR";
+        		fileHeader = new File(fileDir + fileHeaderName);
+        	}
+        	
+        	if (fileHeader.exists() == false) {
+        		return false;
+        	}
+        	
         } else {
-            oneFileStorage = false;
-            fileHeaderName = fileName.substring(0, index) + ".hdr";
-        }
+        	if (fileName.substring(index + 1).equalsIgnoreCase("nii")) {
+                oneFileStorage = true;
+                fileHeaderName = fileName;
+            } else {
+                oneFileStorage = false;
+                fileHeaderName = fileName.substring(0, index) + ".hdr";
+            }
 
-        fileHeader = new File(fileDir + fileHeaderName);
-
-        if (fileHeader.exists() == false) {
-            fileHeaderName = fileName.substring(0, index) + ".HDR";
             fileHeader = new File(fileDir + fileHeaderName);
 
             if (fileHeader.exists() == false) {
-                return false;
-            }
-        }
+                fileHeaderName = fileName.substring(0, index) + ".HDR";
+                fileHeader = new File(fileDir + fileHeaderName);
 
+                if (fileHeader.exists() == false) {
+                    return false;
+                }
+            }
+        	
+        }
+           
         // Tagged for removal - Matt 4/17/2003
         // if (fileInfo == null) { // if the file info does not yet exist: make it
         // fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileBase.NIFTI);
