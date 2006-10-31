@@ -170,7 +170,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected static final int NUM_INVISIBLE_BUTTONS = 4;
 
     /** DOCUMENT ME! */
-    public static int zoomMode = ViewJComponentEditImage.EXPONENTIAL;
+    public static int zoomMode = ViewJComponentEditImage.LINEAR;
 
     /** Maximum number of tri-images! */
     public static final int MAX_TRI_IMAGES = 9;
@@ -1496,7 +1496,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  event  DOCUMENT ME!
      */
     public void mouseClicked(MouseEvent event) {
-
+    	
         if (event.getButton() == MouseEvent.BUTTON3) {
 
             if (event.getSource() instanceof AbstractButton) {
@@ -1504,6 +1504,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                 if (btnSource.getActionCommand().equals("MagImage") ||
                         btnSource.getActionCommand().equals("UnMagImage")) {
+                	
                     handleZoomPopupMenu(btnSource, event);
                 }
             }
@@ -2638,9 +2639,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(traverseButton);
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
-        imageToolBar.add(toolbarBuilder.buildButton("MagImage", "Magnify image 2.0x", "zoomin"));
-        imageToolBar.add(toolbarBuilder.buildButton("UnMagImage", "Magnify image 0.5x", "zoomout"));
-        imageToolBar.add(toolbarBuilder.buildButton("ZoomOne", "Magnify image 1.0x", "zoom1"));
+        ButtonGroup magGroup = new ButtonGroup();
+        imageToolBar.add(toolbarBuilder.buildToggleButton("MagImage", "Magnify image 2.0x", "zoomin", magGroup));
+        imageToolBar.add(toolbarBuilder.buildToggleButton("UnMagImage", "Magnify image 0.5x", "zoomout", magGroup));
+        imageToolBar.add(toolbarBuilder.buildToggleButton("ZoomOne", "Magnify image 1.0x", "zoom1", magGroup));
+        
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
@@ -3158,19 +3161,41 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             buildVolumePositionPanel();
         }
 
-        JPanel mainPanel = new JPanel(new GridLayout(2, 2, 8, 8));
 
-        mainPanel.add(scrollPane[axialIndex]);
-        mainPanel.add(scrollPane[sagittalIndex]);
-        mainPanel.add(scrollPane[coronalIndex]);
+        JPanel mainPanel = new JPanel(new GridLayout(1,1,8,8));
+        JPanel topPanel = new JPanel(new GridLayout(1, 1, 8, 8));
+        JPanel bottomPanel = new JPanel(new GridLayout(1, 1, 8, 8));
+        JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[axialIndex],
+        		scrollPane[sagittalIndex]);
+        splitPane1.setDividerLocation(0.5);
+        splitPane1.setResizeWeight(0.5);
+        splitPane1.setOneTouchExpandable(true);
+        topPanel.add(splitPane1);
+        JSplitPane splitPane2 = null;
+
 
         if (pluginPanel != null) {
-            mainPanel.add(pluginPanel);
+            //mainPanel.add(pluginPanel);
+        	splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[coronalIndex],
+        			pluginPanel);
         } else {
             if ( volumePositionPanel != null ) {
-                mainPanel.add(volumePositionPanel);
+            	splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[coronalIndex],
+            			volumePositionPanel);
             }
         }
+        splitPane2.setDividerLocation(0.5);
+        splitPane2.setResizeWeight(0.5);
+        splitPane2.setOneTouchExpandable(true);
+        bottomPanel.add(splitPane2);
+
+        JSplitPane splitPane3 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topPanel,
+        		bottomPanel);
+        splitPane3.setDividerLocation(0.5);
+        splitPane3.setResizeWeight(0.5);
+        splitPane3.setOneTouchExpandable(true);
+        
+        mainPanel.add(splitPane3);
 
         getContentPane().removeAll();
         getContentPane().add(panelToolbar, BorderLayout.NORTH);
@@ -3513,14 +3538,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected void handleZoomPopupMenu(Component component, MouseEvent event) {
         JPopupMenu popupMenu = new JPopupMenu();
 
-        JMenuItem menuItem = new JMenuItem("Use exponential zoom increment");
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("Zoom exponentially");
-        popupMenu.add(menuItem);
+        
 
-        menuItem = new JMenuItem("Use linear zoom increment");
+        JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
         menuItem.addActionListener(this);
         menuItem.setActionCommand("Zoom linearly");
+        popupMenu.add(menuItem);
+        
+        menuItem = new JMenuItem("Use exponential zoom increment");
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand("Zoom exponentially");
         popupMenu.add(menuItem);
 
         popupMenu.show(component, event.getX(), event.getY());
@@ -3921,10 +3948,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[AXIAL_A],
                                                    scrollPane[SAGITTAL_A]);
             splitPane1.setDividerLocation(0.5);
+            splitPane1.setResizeWeight(0.5);
             splitPane1.setOneTouchExpandable(true);
 
             JSplitPane splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, splitPane1, scrollPane[CORONAL_A]);
             splitPane2.setDividerLocation(0.67);
+            splitPane2.setResizeWeight(0.5);
             splitPane2.setOneTouchExpandable(true);
             panelA.add(splitPane2);
             getContentPane().add(panelA, BorderLayout.CENTER);
@@ -3945,14 +3974,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             JSplitPane splitPane1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, panelAB, panelA);
             JSplitPane splitPane2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane1, panelB);
-            getContentPane().add(splitPane2, BorderLayout.CENTER);
+            
 
-            setSize(getSize().width, defaultPreferredHeight);
-            pack();
+           
             splitPane1.setOneTouchExpandable(true);
             splitPane2.setOneTouchExpandable(true);
             splitPane1.setDividerLocation(0.5);
             splitPane2.setDividerLocation(0.67);
+            splitPane1.setResizeWeight(0.5);
+            splitPane2.setResizeWeight(0.5);
+            
+            getContentPane().add(splitPane2, BorderLayout.CENTER);
+            setSize(getSize().width, defaultPreferredHeight);
+            pack();
         }
     }
 
