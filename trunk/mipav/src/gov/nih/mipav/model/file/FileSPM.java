@@ -318,6 +318,85 @@ public class FileSPM extends FileBase {
      *
      * @see        FileInfoSPM
      */
+    
+    /**
+     * Determines whether this file is SPM file or not based on three fields of the header file: sizeof_hdr, extent
+     * and regular.
+     *
+     * @param   absolutePath  the file name.
+     *
+     * @return  true if the file is ANALYZE file.
+     *
+     * @throws  FileNotFoundException  thrown when the file can't be found.
+     * @throws  IOException            thrown when the I/O error happens.
+     */
+    public static boolean isSPM(String absolutePath) throws FileNotFoundException, IOException {
+        
+    	final int HEADER_SIZE = 348; 
+                
+        if ((absolutePath == null) || (absolutePath.length() == 0)) {
+            return false;
+        }
+
+        String[] completeFileNames = FileAnalyze.getCompleteFileNameList(absolutePath);
+
+        if ((completeFileNames == null) || (completeFileNames.length != 2)) {
+            return false;
+        }
+
+        for (int i = 0; i < completeFileNames.length; i++) {
+            File file = new File(completeFileNames[i]);
+
+            if (!file.exists()) {
+                throw new FileNotFoundException("The file can not be found: " + completeFileNames[i] + "!");
+            }
+        }
+
+        RandomAccessFile raFile = new RandomAccessFile(FileAnalyze.getHeaderFile(completeFileNames), "r");
+
+        /** Check whether the value of sizeof_hdr field equals to the 348 */
+        byte[] buffer = new byte[4];
+        raFile.readFully(buffer);
+
+        boolean bigEndian = true;
+        int sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
+
+        if (sizeOfHeader != HEADER_SIZE) {
+            bigEndian = false;
+            sizeOfHeader = FileBase.bytesToInt(bigEndian, 0, buffer);
+
+            if (sizeOfHeader != HEADER_SIZE) {
+                return false;
+            }
+        }
+
+        
+        /** Check whether the value of regular field equals to "r" */
+        raFile.seek(38);
+
+        byte regular = raFile.readByte();
+
+        if (regular != 'r') {
+            return false;
+        }
+        
+        raFile.seek(40);
+        int dims = raFile.readShort();
+        if (dims != 4) {
+        	return false;
+        	
+        } 
+        raFile.seek(112);
+        float scale = raFile.readFloat();
+        if (scale == 0.0) {
+        	return false;
+        }
+                
+        raFile.close();
+        return true;
+        
+    }
+    
     public boolean readHeader(String imageFileName, String fileDir) throws IOException {
         int i;
         int index;
@@ -667,6 +746,7 @@ public class FileSPM extends FileBase {
         return;
     }
 
+    
     /**
      * Takes the image and sets it to SPM defaults, using the specified info.
      *
@@ -904,7 +984,8 @@ public class FileSPM extends FileBase {
 
         // With extents from rawFile
     }
-
+    
+    
     /**
      * updates the units of Measure in the file info based on the voxUnits from an SPM Header. This version simply
      * updates a single FileInfo. It does not have an image to attach to.
