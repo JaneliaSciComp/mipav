@@ -10,6 +10,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+
 
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -563,7 +566,7 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
 				}
 			}
 			
-		
+
 			//set the udef description
 			if (checkedFileTypes.size() == 0 && userInputFileTypes == null) {
 				ViewImageFileFilter.setUdefDescription("User Defined");
@@ -574,7 +577,47 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
 			
 			//set the preferences
 			Preferences.setProperty("userDefinedFileTypes",sb.toString());
-			Preferences.setProperty("userDefinedFileTypes_textField",userInput.getText().trim());
+			StringBuffer inputStringSB = new StringBuffer();
+			if(userInputFileTypes != null) {
+				for(int i=0;i<userInputFileTypes.length;i++) {
+					inputStringSB.append(userInputFileTypes[i]);
+					if(i != userInputFileTypes.length -1) {
+						inputStringSB.append(";");
+					}
+				}
+			}
+			Preferences.setProperty("userDefinedFileTypes_textField",inputStringSB.toString());
+			
+			
+			
+			//need to disasscociate and reset userdefinedFileTypesAssociations if user
+			//has deleted a userDefined Extension that was part of that preferences
+			if (userInput.getText().trim().equals("")) {
+				Preferences.setProperty("userDefinedFileTypeAssociations","");
+			}
+			else {
+				if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
+	            	if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) { 
+	            		String[] associations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+	            		StringBuffer assocSB = new StringBuffer();
+	            		for(int i=0;i<associations.length;i++) {
+	            			for(int k=0;k<userInputFileTypes.length;k++) {
+	            				String uiFileType = userInputFileTypes[k].split("\\.")[1];
+	            				uiFileType = "." + uiFileType;
+	            				if(associations[i].split(":")[0].equals(uiFileType)) {
+	            					
+	            					if(sb.length() != 0) {
+	            						assocSB.append(";");
+	            					}
+	            					assocSB.append(associations[i]);
+	            					break;
+	            				}
+	            			}
+	            		}
+	            		Preferences.setProperty("userDefinedFileTypeAssociations", assocSB.toString());
+	            	}
+				}
+			}
 			
 			//set the cancel button text to 'close' since the changes were accepted
             cancelButton.setText("Close");
@@ -614,6 +657,10 @@ public class JDialogEditUserDefinedFileTypes extends JDialogBase {
 	 * */
 	public boolean validateUserInputString(String inputString) {
 		userInputFileTypes = inputString.split(";");
+		//take away duplicates in case user typed in duplicates
+		LinkedHashSet set = new LinkedHashSet(Arrays.asList(userInputFileTypes));
+		userInputFileTypes = (String[])set.toArray(new String[0]);
+		
 		for(int i=0;i<userInputFileTypes.length;i++) {
 			if (!(userInputFileTypes[i].trim().matches("\\*\\.\\w+?"))) {
 				userInputFileTypes = null;

@@ -54,6 +54,9 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
 
     /** DOCUMENT ME! */
     private boolean xmlLinked = false;
+    
+    /** Document Me */
+    private String[] userDefinedFileTypeAssociations = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -185,7 +188,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
      */
     public ArrayList open(boolean multiFile, boolean imageset) {
         ViewJFrameImage imageFrame;
-        FileIO fileIO = new FileIO();
+        FileIO fileIO;
         FileIO fileIO2 = null;
         Vector images = new Vector();
         ModelImage linkedImage = null;
@@ -292,6 +295,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
         for (int k = 0; k < openedFiles.length; k++) {
 
             try {
+            	fileIO = new FileIO();
                 fileName = openedFiles[k].getName();
                 image = fileIO.readImage(fileName, directory, multiFile, null);
 
@@ -301,6 +305,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                     return null;
                 }
 
+                
                 //imagesArrayList.add(image.getImageName());
 
                 LUT = fileIO.getModelLUT();

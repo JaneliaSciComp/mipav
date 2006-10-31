@@ -82,15 +82,25 @@ public class FileIO {
      * identify the image type so the correct reader can be used
      */
     private JDialogUnknownIO unknownIODialog;
+    
+    
+    /** Document Me */
+    private String[] userDefinedFileTypeAssociations = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates the FileIO and displays <q>Choose File Type</q> unknown file dialog. Constructs a new FileIO object, sets
      * the user interface, and initializes the unknown file dialog.
+     * Also gets the userDefinedFileTypeAssociations preferences
      */
     public FileIO() {
         UI = ViewUserInterface.getReference();
+        if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
+        	if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) { 
+        		userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+        	}
+		}
         unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
         UI.setLoad(false); // default to "opening "
     }
@@ -98,12 +108,18 @@ public class FileIO {
     /**
      * Creates the FileIO and displays <q>Choose File Type</q> unknown file dialog. Constructs a new FileIO object, sets
      * the user interface, sets the LUT, and initializes the unknown file dialog.
+     * Also gets the userDefinedFileTypeAssociations preferences
      *
      * @param  _LUT  Passes LUT into file IO object so that LUT can be store with image (i.e. TIFF).
      */
     public FileIO(ModelLUT _LUT) {
         UI = ViewUserInterface.getReference();
         LUT = _LUT;
+        if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
+        	if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) { 
+        		userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+        	}
+		}
         unknownIODialog = new JDialogUnknownIO(UI.getMainFrame(), "Choose File Type");
     }
 
@@ -1125,7 +1141,16 @@ public class FileIO {
         } else { // cannot automatically determine the filetype from the filename extension
             fileType = FileBase.UNDEFINED;
         }
-
+        
+        //check to see if there are any user defined associations
+        if (userDefinedFileTypeAssociations != null) {
+        	for(int k=0;k<userDefinedFileTypeAssociations.length;k++) {
+        		if(suffix.equals(userDefinedFileTypeAssociations[k].split(":")[0])) {
+        			fileType = new Integer(userDefinedFileTypeAssociations[k].split(":")[1]).intValue();
+        		}
+        	}
+        }
+        
         return fileType;
     }
 
@@ -2396,6 +2421,8 @@ public class FileIO {
                                 int secondAddress, boolean loadB, boolean one) {
         ModelImage image = null;
         int fileType = FileBase.UNDEFINED;
+        int userDefinedFileType = 0;
+        String userDefinedSuffix = null;
 
         if ((fileName == null) || (fileDir == null)) {
             return null;
@@ -2442,12 +2469,18 @@ public class FileIO {
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isMinc(fileName, fileDir);
                 }
+                
+
 
                 if (fileType == FileBase.UNDEFINED) { // if image type not defined by extension, popup
                     fileType = getFileType(); // dialog to get user to define image type
+                    userDefinedFileType = fileType;
+                    userDefinedSuffix = "." + fileName.split("\\.")[1];
                 }
 
                 fileType = chkMultiFile(fileType, multiFile); // for multifile support...
+                
+
             }
         } catch (IOException ioe) {
 
@@ -2650,6 +2683,45 @@ public class FileIO {
                     image.calcMinMax();
                     // image.setImageDirectory(fileDir);
                 }
+                
+                
+                
+                //if file type was a new user defined file type, then we need to save its association
+                //to the preferences if its not already there.
+                //we also need to save this pref as part of both the userDefinedFileTypes and 
+                //the userDefinedFileTypes_textField
+                if(userDefinedSuffix != null) {
+                	String association = userDefinedSuffix + ":" + userDefinedFileType;
+                	boolean isPresent = false;
+	                if (Preferences.getProperty("userDefinedFileTypeAssociations") != null) {
+	                	if (!Preferences.getProperty("userDefinedFileTypeAssociations").trim().equals("")) { 
+	                		userDefinedFileTypeAssociations = Preferences.getProperty("userDefinedFileTypeAssociations").split(";");
+	                		for(int i=0;i<userDefinedFileTypeAssociations.length;i++) {
+	                			if(userDefinedSuffix.equals(userDefinedFileTypeAssociations[i].split(":")[0])) {
+	                    			isPresent = true;
+	                    		}
+	                		}
+	                		if(!isPresent) {
+	                			Preferences.setProperty("userDefinedFileTypeAssociations", Preferences.getProperty("userDefinedFileTypeAssociations") + ";" + association);
+	                			setUserDefinedFileTypesPref(userDefinedSuffix);
+	                			setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
+	                		}
+	                		
+	                	}
+	                	else {
+	                		Preferences.setProperty("userDefinedFileTypeAssociations", association);
+	                		setUserDefinedFileTypesPref(userDefinedSuffix);
+	                		setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
+	                	}
+	        		}
+	                else {
+	                	Preferences.setProperty("userDefinedFileTypeAssociations", association);
+	                	setUserDefinedFileTypesPref(userDefinedSuffix);
+	                	setUserDefinedFileTypes_textFieldPref(userDefinedSuffix);
+	                }
+                }
+                
+                
             }
         } catch (Exception error) {
 
@@ -2670,6 +2742,80 @@ public class FileIO {
 
         return image;
     }
+    
+    
+    
+    /** This method sets the userDefinedFileTypes preference 
+     * 
+     * @param udefSuffix      the user defined suffix
+     * 
+     * 
+     * */
+    public void setUserDefinedFileTypesPref(String udefSuffix) {
+    	if (Preferences.getProperty("userDefinedFileTypes") != null) {
+			if (Preferences.getProperty("userDefinedFileTypes").trim().equals("")) {
+				Preferences.setProperty("userDefinedFileTypes", "*" + udefSuffix);
+			}
+			else {
+				//first check to see if its already not there
+				String[] prefTypes = Preferences.getProperty("userDefinedFileTypes").split(";");
+				boolean isPresent = false;
+				for(int i=0;i<prefTypes.length;i++) {
+					String suff = prefTypes[i].split("\\.")[1];
+					suff = "." + suff;
+					if(udefSuffix.equals(suff)) {
+						isPresent = true;
+					}
+				}
+				if (!isPresent) {
+					Preferences.setProperty("userDefinedFileTypes", Preferences.getProperty("userDefinedFileTypes") + "; *" + udefSuffix);
+				}
+			}
+		}
+		else {
+			Preferences.setProperty("userDefinedFileTypes", "*" + udefSuffix);
+		}
+
+    	
+    }
+    
+    
+    
+    /** This method sets the userDefinedFileTypes_textField preference
+     * 
+     * @param udefSuffix      the user defined suffix
+     * 
+     * 
+     * */
+    
+   public void setUserDefinedFileTypes_textFieldPref(String udefSuffix) {
+	   if (Preferences.getProperty("userDefinedFileTypes_textField") != null) {
+			if (Preferences.getProperty("userDefinedFileTypes_textField").trim().equals("")) {
+				Preferences.setProperty("userDefinedFileTypes_textField", "*" + udefSuffix);
+			}
+			else {
+				//first check to see if its already not there
+				String[] prefTypes = Preferences.getProperty("userDefinedFileTypes_textField").split(";");
+				boolean isPresent = false;
+				for(int i=0;i<prefTypes.length;i++) {
+					String suff = prefTypes[i].split("\\.")[1];
+					suff = "." + suff;
+					if(udefSuffix.equals(suff)) {
+						isPresent = true;
+					}
+				}
+				if(!isPresent) {
+					Preferences.setProperty("userDefinedFileTypes_textField", Preferences.getProperty("userDefinedFileTypes_textField") + ";*" + udefSuffix);
+				}
+			}
+		}
+		else {
+			Preferences.setProperty("userDefinedFileTypes_textField", "*" + udefSuffix);
+		}
+   }
+    
+    
+    
 
     /**
      * Reads file, determines file type, and calls a read function specific to the file. That read function returns an
