@@ -84,7 +84,7 @@ public class FileAnalyze extends FileBase {
     /**
      * Returns the complete list of file names according to given file name.
      *
-     * @param   absolutePath  one file name of ANLYZE.
+     * @param   absolutePath  one file name of ANALYZE.
      *
      * @return  the complete list of file names.
      */
@@ -93,10 +93,12 @@ public class FileAnalyze extends FileBase {
 
         if (isHeaderFile(absolutePath)) {
             completeFileNameList[0] = absolutePath;
-            completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[1];
+            // completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[1];
+            completeFileNameList[1] = absolutePath + EXTENSIONS[1];
         } else if (isImageFile(absolutePath)) {
             completeFileNameList[1] = absolutePath;
-            completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[0];
+            // completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[0];
+            completeFileNameList[0] = absolutePath + EXTENSIONS[0];
         } else {
             completeFileNameList = null;
         }
@@ -221,8 +223,9 @@ public class FileAnalyze extends FileBase {
         if (regular == 'r') {
             return true;
         }
-
+        raFile.close();
         return false;
+        
     }
 
     /**
@@ -238,7 +241,7 @@ public class FileAnalyze extends FileBase {
 
         if (extension.equalsIgnoreCase(EXTENSIONS[0])) {
             return true;
-        }
+        } 
 
         return false;
     }
@@ -256,6 +259,8 @@ public class FileAnalyze extends FileBase {
 
         if (extension.equalsIgnoreCase(EXTENSIONS[1])) {
             return true;
+        } else if(extension.length() == 0 ) { //Support for image file with no extension.
+        	return true;
         }
 
         return false;
@@ -1054,8 +1059,8 @@ public class FileAnalyze extends FileBase {
             }
 
             flipTopBottom(buffer, fileInfo);
-        } catch (IOException error) {
-            throw new IOException("FileAnalyze: " + error);
+        } catch (IOException error) { error.printStackTrace();
+            throw new IOException("FileAnalyz: " + error);
         } catch (OutOfMemoryError e) {
             throw (e);
         }
@@ -1186,6 +1191,7 @@ public class FileAnalyze extends FileBase {
 
     }
 
+    
     /**
      * Helper method to calculate the offset for getting only the middle analyze image slice from the 3D file.
      *
