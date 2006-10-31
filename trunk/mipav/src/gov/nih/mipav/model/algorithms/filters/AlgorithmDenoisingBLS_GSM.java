@@ -3820,7 +3820,9 @@ MATLAB description:
             }
             rmat1 = null;
         } // else
-        aux[0] = null;
+        for (i = 0; i < aux.length; i++) {
+            aux[i] =  null;
+        }
         aux = null;
         
         // Compute E{x|Y} = int_log(z){ E{x|log(z), Y} p(log(z)|Y) d(log(z)) }
@@ -3837,9 +3839,9 @@ MATLAB description:
             }
         }
         
-        for (j = Ly, j2 = 0; j < nblv + Ly; j++, j2++) {
-           for (i = Lx, i2 = 0; i < nblh + Lx; i++, i2++) {
-               x_hat[j][i][0] = aux[j2][i2];
+        for (j = Ly, j2 = 0; j < nblv + Ly; j++) {
+           for (i = Lx; i < nblh + Lx; i++) {
+               x_hat[j][i][0] = aux[j2++][0];
            }
         }
         return x_hat;
@@ -3872,7 +3874,7 @@ MATLAB description:
     }
     
     /**
-     * Port of expand.m, written by JPM, 5/1//95
+     * Port of expand.m, written by JPM, 5/2003
      * It expands (spatially) an image into a factor f in each dimension.
      * It does it filling in with zeros the expanded Fourier domain.
      * @param t
@@ -4130,7 +4132,7 @@ MATLAB description:
     }
     
     /**
-     * This duplicates the functionality of pyrBand.m
+     * This duplicates the functionality of pyrBand.m and pyrBandIndices.m
      * @param pyr
      * @param pind
      * @param band
@@ -4211,7 +4213,7 @@ MATLAB description:
         
         // log2(x) = loge(x)/loge(2)
         logC = 1.0/Math.log(2.0);
-        max_ht = (int)Math.floor(logC*Math.log(Math.min(imx,imy)) + 2);
+        max_ht = (int)Math.floor(logC*Math.log(Math.min(imx,imy)) + 1);
         
         if (ht > max_ht) {
             MipavUtil.displayError("Error! Cannot build pyramid higher than " + 
@@ -4223,10 +4225,12 @@ MATLAB description:
         if ((order > 15) || (order < 0)) {
             MipavUtil.displayWarning("Warning: ORDER must be an integer in the range 0 to 15");
             if (order < 0) {
+                MipavUtil.displayWarning("Setting order to 0");
                 order = 0;
             }
             else if (order > 15) {
                 order = 15;
+                MipavUtil.displayWarning("Setting order to 15");
             } 
         } // if ((order > 15) || (order < 0))
         nbands = order + 1;
@@ -4235,8 +4239,8 @@ MATLAB description:
             MipavUtil.displayWarning("Warning: TWIDTH must be positive.  Setting to 1");
             twidth = 1;
         }
-        ctrx = (int)Math.ceil((imx + 0.5)/2);
-        ctry = (int)Math.ceil((imy + 0.5)/2);
+        ctrx = (int)Math.ceil((imx + 0.5)/2.0);
+        ctry = (int)Math.ceil((imy + 0.5)/2.0);
         xramp = new double[imy][imx];
         yramp = new double[imy][imx];
         for (i = 0; i < imx; i++) {
@@ -4316,23 +4320,25 @@ MATLAB description:
             xcosn[i] = j * Math.PI/lutsize;
         }
         order = nbands-1;
-        // Divide by sqrt(sum_(n=0)^(N-1) cos(pi*n/N)^(2(N-1)) )
         var = factorial(order);
         consta = Math.pow(2.0,(2.0*order))*var*var/(nbands*factorial(2*order));
         consta = Math.sqrt(consta);
         ycosn = new double[xcosn.length];
         for (i = 0; i < xcosn.length; i++) {
-            ycosn[i] = consta * Math.pow(xcosn[i], order);
+            ycosn[i] = consta * Math.pow(Math.cos(xcosn[i]), order);
         }
         
         bands = new double[nbands][imx * imy];
         bind = new int[nbands][2];
         
+        maskr = new double[imy][imx];
+        maski = new double[imy][imx];
+        var = 1.0/Math.sqrt(nbands);
+        bandfftr = new double[imx * imy];    
+        bandffti = new double[imx * imy];
         for (b = 1; b <= nbands; b++) {
             anglemask = pointOp(angle, ycosn, (xcosn[0] + Math.PI*(b-1)/nbands),
                                 (xcosn[1] - xcosn[0]), true);  
-            maskr = new double[imy][imx];
-            maski = new double[imy][imx];
             if (((nbands-1) % 4) == 0) {
                 for (j = 0; j < imy; j++) {
                     for (i = 0; i < imx; i++) {
@@ -4364,20 +4370,14 @@ MATLAB description:
             // Make real the contents in the HF cross (to avoid
             // information loss in these frequencies.)
             // It distributes evenly these contents among the nbands orientations
-            var = 1.0/Math.sqrt(nbands);
-            for (j = 0; j < imy; j++) {
-                maskr[j][0] = var;
-            }
-            for (i = 1; i < imx; i++) {
+            
+            for (i = 0; i < imx; i++) {
                 maskr[0][i] = var;
             }
-            
-            if (bandfftr == null) {
-                bandfftr = new double[imx * imy];    
+            for (j = 1; j < imy; j++) {
+                maskr[j][0] = var;
             }
-            if (bandffti == null) {
-                bandffti = new double[imx * imy];
-            }
+             
             for (j = 0; j < imy; j++) {
                 for (i = 0; i < imx; i++) {
                     index = i + j * imx;
@@ -4642,7 +4642,7 @@ MATLAB description:
      * Downsampling factors are determined by xstep and ystep
      * @param xstep
      * @param ystep
-     * start and stop detrmine the window overwhich convolution occurs
+     * start and stop detrmine the window over which convolution occurs
      * @param xstart
      * @param ystart
      * @param xrdim first dimension of result
@@ -4874,7 +4874,7 @@ MATLAB description:
     }
     
     /**
-     * This is a port of buildWpyr.m by Eero Sinoncelli, 6/96.
+     * This is a port of buildWpyr.m by Eero Simoncelli, 6/96.
      * Construct a separable orthonormal QMF/wavelet pyramid on matrix im.
      * @param im
      * @param imx
@@ -4883,7 +4883,7 @@ MATLAB description:
      *            default is maxPyrHt(im, filt).
      * @param filt Filter can be of even or odd length, but should be symmetric
      * @param edges Specifies edge-handling, and defaults to REFLECT1.
-     * @param pind N size 2 int[] arrays, containing the sizes of each subband.
+     * @param pind N size 2 element int[] arrays, containing the sizes of each subband.
      * @return
      */
     private Vector buildWpyr(double[] im, int imx, int imy, int ht, int filt, int edges,
