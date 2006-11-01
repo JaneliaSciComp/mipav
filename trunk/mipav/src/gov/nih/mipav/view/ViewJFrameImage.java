@@ -371,6 +371,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogPowerPaint(this, getImageA());
         } else if (command.equals("AdvancedPaint")) {
             new JDialogMultiPaint(this, getImageA());
+            getControls().getTools().setPaintBrushButtonSelected();
+            componentImage.setMode(ViewJComponentEditImage.PAINT_VOI);
         } else if (command.equals("ShowPaintBorder")) {
 
             // swap the border painting
@@ -3026,11 +3028,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
 
             if (imageB != null) {
-                ViewJProgressBar progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100,
+            	ViewJProgressBar progressBar = null;
+            	if(showProgressBar) {
+            		progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100,
                                                                     true, this, this);
-                MipavUtil.centerOnScreen(progressBar);
-                progressBar.setVisible(showProgressBar);
-
+            		MipavUtil.centerOnScreen(progressBar);
+            		progressBar.setVisible(showProgressBar);
+            	}
                 try {
                     int numSlices = ((imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
 
@@ -3053,8 +3057,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         // put the modified slice back into image
                         imageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
-
-                        progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
+                        if(progressBar != null) {
+                        	progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
+                        }
                     }
 
                     updateImages(true);
@@ -3063,7 +3068,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     // do nothing. the error will be displayed when this if block exits
                     MipavUtil.displayError("Cannot complete the operation due to an internal error.");
                 } finally {
-                    progressBar.dispose();
+                	if(progressBar != null) {
+                		progressBar.dispose();
+                	}
                 }
             } else {
 

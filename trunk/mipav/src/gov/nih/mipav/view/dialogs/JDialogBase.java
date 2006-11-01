@@ -946,7 +946,7 @@ public abstract class JDialogBase extends JDialog
 
         return name;
     }
-
+    
     /**
      * Returns whether the current dialog is being run from within a script.
      *
@@ -1022,6 +1022,8 @@ public abstract class JDialogBase extends JDialog
             return false;
         }
     }
+    
+    
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
