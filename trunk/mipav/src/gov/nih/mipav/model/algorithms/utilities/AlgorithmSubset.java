@@ -179,15 +179,12 @@ public class AlgorithmSubset extends AlgorithmBase {
             }
 
             try {
-
-                // try copying the sliceNum slice out of srcImage, making it the entire destination
+                int buffFactor = 1;
                 if (srcImage.isColorImage()) {
-                    srcImage.exportData(sliceNum * 4 * volume, 4 * volume, imageBuffer);
-                    destImage.importData(0, imageBuffer, true);
-                } else {
-                    srcImage.exportData(sliceNum * volume, volume, imageBuffer);
-                    destImage.importData(0, imageBuffer, true);
+                    buffFactor = 4;
                 }
+                srcImage.exportData(sliceNum * buffFactor * volume, buffFactor * volume, imageBuffer);
+                destImage.importData(0, imageBuffer, true);
             } catch (IOException error) {
                 displayError("AlgorithmSubset reports: Destination image already locked.");
                 setCompleted(false);
@@ -248,15 +245,14 @@ public class AlgorithmSubset extends AlgorithmBase {
                 fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
 
                 try {
-
-                    // try copying the sliceNum slice out of srcImage, making it the entire destination
+                    int buffFactor = 1;
                     if (srcImage.isColorImage()) {
-                        srcImage.exportData((t * 4 * volume) + (sliceNum * 4 * slice), 4 * slice, imageBuffer);
-                        destImage.importData(t * 4 * slice, imageBuffer, false);
-                    } else {
-                        srcImage.exportData((t * volume) + (sliceNum * slice), slice, imageBuffer);
-                        destImage.importData(t * slice, imageBuffer, false);
+                        buffFactor = 4;
                     }
+                    int[] axisOrder = { 0, 1, 2 };
+                    boolean[] axisFlip = { false, false, false };
+                    srcImage.export( axisOrder, axisFlip, t, sliceNum, imageBuffer);
+                    destImage.importData(t * buffFactor * slice, imageBuffer, false);
                 } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
@@ -326,15 +322,14 @@ public class AlgorithmSubset extends AlgorithmBase {
                 fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
 
                 try {
-
-                    // try copying the sliceNum slice out of srcImage, making it the entire destination
+                    int buffFactor = 1;
                     if (srcImage.isColorImage()) {
-                        srcImage.exportRGBSliceXZ(t, sliceNum, imageBuffer);
-                        destImage.importData(t * 4 * slice, imageBuffer, false);
-                    } else {
-                        srcImage.exportSliceXZ(t, sliceNum, imageBuffer);
-                        destImage.importData(t * slice, imageBuffer, false);
+                        buffFactor = 4;
                     }
+                    int[] axisOrder = { 0, 2, 1 };
+                    boolean[] axisFlip = { false, false, false };
+                    srcImage.export( axisOrder, axisFlip, t, sliceNum, imageBuffer);
+                    destImage.importData(t * buffFactor * slice, imageBuffer, false);
                 } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
@@ -404,15 +399,14 @@ public class AlgorithmSubset extends AlgorithmBase {
                 fireProgressStateChanged(Math.round((float) (t) / (tDim - 1) * 100));
 
                 try {
-
-                    // try copying the sliceNum slice out of srcImage, making it the entire destination
+                    int buffFactor = 1;
                     if (srcImage.isColorImage()) {
-                        srcImage.exportRGBSliceZY(t, sliceNum, imageBuffer);
-                        destImage.importData(t * 4 * slice, imageBuffer, false);
-                    } else {
-                        srcImage.exportSliceZY(t, sliceNum, imageBuffer);
-                        destImage.importData(t * slice, imageBuffer, false);
+                        buffFactor = 4;
                     }
+                    int[] axisOrder = { 2, 1, 0 };
+                    boolean[] axisFlip = { false, false, false };
+                    srcImage.export( axisOrder, axisFlip, t, sliceNum, imageBuffer);
+                    destImage.importData(t * buffFactor * slice, imageBuffer, false);
                 } catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);

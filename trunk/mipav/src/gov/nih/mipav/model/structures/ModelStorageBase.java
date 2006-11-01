@@ -1597,111 +1597,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         throw new IOException("Export data error - bounds incorrect");
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceXZ(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
 
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4) + (slice * xDim * 4);
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + (xDim * 4)); k += 4) {
-                    values[i] = data.getFloat(k);
-                    values[i + 1] = data.getFloat(k + 1);
-                    values[i + 2] = data.getFloat(k + 2);
-                    values[i + 3] = data.getFloat(k + 3);
-                    i += 4;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportRGBSliceZY(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1] * 4;
-            start = tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2] * 4;
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-            slice = slice * 4;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getFloat(start + slice + (k * stride));
-                    values[i + 1] = data.getFloat(start + slice + (k * stride) + 1);
-                    values[i + 2] = data.getFloat(start + slice + (k * stride) + 2);
-                    values[i + 3] = data.getFloat(start + slice + (k * stride) + 3);
-                    i += 4;
-                }
-
-                slice += xDim * 4;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
 
     /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
@@ -1793,104 +1689,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export XZ slice into values array.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceXZ(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int start;
-        int xDim, zDim;
-        int stride;
-
-        if ((slice >= 0) && (slice < dimExtents[1])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-
-            xDim = dimExtents[0];
-            zDim = dimExtents[2];
-            i = 0;
-            start = (tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2]) + (slice * xDim);
-
-            for (j = 0; j < zDim; j++) {
-
-                for (k = start; k < (start + xDim); k++) {
-                    values[i] = data.getFloat(k);
-                    i++;
-                }
-
-                start += stride;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
-
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
-    /**
-     * export ZY slice into values array.
-     *
-     * @param   tSlice  indicates time slice of data to be exported
-     * @param   slice   indicates slice of data to be exported
-     * @param   values  array where data is to be deposited
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public final synchronized void exportSliceZY(int tSlice, int slice, float[] values) throws IOException {
-        int i, j, k;
-        int xDim, yDim, zDim;
-        int stride;
-        int start;
-
-        if ((slice >= 0) && (slice < dimExtents[0])) {
-
-            try {
-                setLock(W_LOCKED);
-            } catch (IOException error) {
-                throw error;
-            }
-
-            stride = dimExtents[0] * dimExtents[1];
-            start = tSlice * dimExtents[0] * dimExtents[1] * dimExtents[2];
-
-            xDim = dimExtents[0];
-            yDim = dimExtents[1];
-            zDim = dimExtents[2];
-            i = 0;
-
-            for (j = 0; j < yDim; j++) {
-
-                for (k = 0; k < zDim; k++) {
-                    values[i] = data.getFloat(start + slice + (k * stride));
-                    i++;
-                }
-
-                slice += xDim;
-            }
-
-            releaseLock();
-
-            return;
-        }
-
-        throw new IOException("Export data error - bounds incorrect");
-    }
 
     /**
      * function to get data where bounds checking is performed.
@@ -6683,7 +6481,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
     {
         int[] axisOrder = MipavCoordinateSystems.getAxisOrder( this, orientation );
         boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( this, orientation );
-        return export( orientation, axisOrder, axisFlip, tSlice, slice, values );
+        return export( axisOrder, axisFlip, tSlice, slice, values );
     }
 
     /* MipavCoordinateSystems upgrade TODO: : */
@@ -6691,15 +6489,17 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * Exports data based on the mapping from ModelImage space to Patient
      * space. The mapping parameters are passed in as the axisOrder and
      * axisFlip arrays.
-     * @param axisOrder -- the mapping of ModelImage space volume axes to Patient space axes
-     * @param axisFlip -- the mapping of ModelImage space volume axes to Patient space axes (invert flags)
+     * @param axisOrder -- the mapping of ModelImage space volume axes to
+     * Patient space axes
+     * @param axisFlip -- the mapping of ModelImage space volume axes to
+     * Patient space axes (invert flags)
      * @param tSlice -- for 4D volumes
      * @param slice -- the constant slice
      * @param values -- the array to write the data into
      */
-    private final synchronized float[] export( int orientation, int[] axisOrder, boolean[] axisFlip,
-                                               int tSlice, int slice,
-                                               float[] values ) throws IOException
+    public final synchronized float[] export( int[] axisOrder, boolean[] axisFlip,
+                                              int tSlice, int slice,
+                                              float[] values ) throws IOException
     {
         try {
             setLock(W_LOCKED);
@@ -6836,12 +6636,12 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * matter which type of plane this object represents (XY, XZ, or ZY).</p>
      *
      */
-    public final synchronized void exportDiagonal( int orientation,
-                                                   int tSlice, int slice,
+    public final synchronized void exportDiagonal( int tSlice, int slice,
                                                    int[] extents,
                                                    Point3Df[] verts,
                                                    float[] values,
-                                                   boolean bInterpolate ) throws IOException
+                                                   boolean bInterpolate )
+        throws IOException
     {
         try {
             setLock(W_LOCKED);

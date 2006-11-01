@@ -899,17 +899,17 @@ public class PatientSlice
 
             if ( m_bShowDiagonal )
             {
-                imageA.exportDiagonal( orientation, timeSliceA, slice,
+                imageA.exportDiagonal( timeSliceA, slice,
                                        localImageExtents, m_kFourCorners, imageBufferA, m_bInterpolate );
                 if (imageB != null)
                 {
-                    imageB.exportDiagonal( orientation, timeSliceB, slice,
+                    imageB.exportDiagonal( timeSliceB, slice,
                                            localImageExtents, m_kFourCorners,
                                            imageBufferB, m_bInterpolate );
                 }
                 if ( (imageColocalize != null) && (hasThreshold1 || hasThreshold2) )
                 {
-                    imageColocalize.exportDiagonal( orientation, timeSliceA, slice,
+                    imageColocalize.exportDiagonal( timeSliceA, slice,
                                                     localImageExtents, m_kFourCorners,
                                                     imageBufferColocalize, m_bInterpolate );
                 }
