@@ -750,7 +750,7 @@ public class FileIO {
         String suffix2;
         boolean okNumber;
         int nImages;
-        
+
         imageDir = new File(fileDir);
 
         // Read directory and find no. of images
@@ -815,21 +815,22 @@ public class FileIO {
             } // for (i = 0; i <fileListBuffer.length; i++)
         } // if (numberSuffix)
         else if (suffix.equals("")) {
-        	for (i = 0; i < fileListBuffer.length; i++) {
-        		if (!files[i].isDirectory()) {
-        			String fileSubName = trim(fileListBuffer[i].trim());
-        			String fileExtension = getSuffixFrom(fileListBuffer[i]);
-        			        			
-        			if (fileSubName.trim().equals(subName) && fileExtension.equals(suffix)) {
-        				fileList[j] = fileListBuffer[i];
-        				j++;
-        			}
-        			
-        		}
-        	}
-        		
-       }
-       else { // numberSuffix == false. I.e. ".img".
+
+            for (i = 0; i < fileListBuffer.length; i++) {
+
+                if (!files[i].isDirectory()) {
+                    String fileSubName = trim(fileListBuffer[i].trim());
+                    String fileExtension = getSuffixFrom(fileListBuffer[i]);
+
+                    if (fileSubName.trim().equals(subName) && fileExtension.equals(suffix)) {
+                        fileList[j] = fileListBuffer[i];
+                        j++;
+                    }
+
+                }
+            }
+
+        } else { // numberSuffix == false. I.e. ".img".
 
             // check to see that they end in suffix.  If so, store, count.
 
@@ -1207,7 +1208,45 @@ public class FileIO {
     }
 
     /**
-     * Tests if the unknown file is of type Dicom
+     * Tests if the unknown file is of type Analyze.
+     *
+     * @param   fileName  Name of the image file to read.
+     * @param   fileDir   Directory of the image file to read.
+     *
+     * @return  <code>FileBase.ANALYZE</code> if the file is a ANALYZE type, and <code>FileBase.UNDEFINED</code>
+     *          otherwise
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public int isAnalyze(String fileName, String fileDir) throws IOException {
+
+
+        try {
+
+            boolean isAnalyze = FileAnalyze.isAnalyze(fileDir + fileName);
+
+            if (isAnalyze) {
+                return FileBase.ANALYZE;
+            }
+
+
+            return FileBase.UNDEFINED;
+        } catch (OutOfMemoryError error) {
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + error);
+                Preferences.debug("FileIO: " + error + "\n");
+            } else {
+                Preferences.debug("FileIO: " + error + "\n");
+            }
+
+            return FileBase.UNDEFINED;
+        }
+
+    }
+
+    /**
+     * Tests if the unknown file is of type Dicom.
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1290,7 +1329,7 @@ public class FileIO {
 
 
     /**
-     * Tests if the unknown file is of type GE Signa 5X type
+     * Tests if the unknown file is of type GE Signa 5X type.
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1330,7 +1369,7 @@ public class FileIO {
     }
 
     /**
-     * Tests if the unknown file is of type Siemens Magnetom Vision
+     * Tests if the unknown file is of type Siemens Magnetom Vision.
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1370,7 +1409,7 @@ public class FileIO {
     }
 
     /**
-     * Tests if the unknown file is of type Minc
+     * Tests if the unknown file is of type Minc.
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1407,46 +1446,9 @@ public class FileIO {
         }
 
     }
-    
+
     /**
-     * Tests if the unknown file is of type Analyze
-     *
-     * @param   fileName  Name of the image file to read.
-     * @param   fileDir   Directory of the image file to read.
-     *
-     * @return  <code>FileBase.ANALYZE</code> if the file is a ANALYZE type, and <code>FileBase.UNDEFINED</code> otherwise
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public int isAnalyze(String fileName, String fileDir) throws IOException {
-
-
-        try {
-            
-            	boolean isAnalyze = FileAnalyze.isAnalyze(fileDir + fileName);
-
-                if (isAnalyze) {
-                    return FileBase.ANALYZE;
-                }
-           
-
-            return FileBase.UNDEFINED;
-        } catch (OutOfMemoryError error) {
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + error);
-                Preferences.debug("FileIO: " + error + "\n");
-            } else {
-                Preferences.debug("FileIO: " + error + "\n");
-            }
-
-            return FileBase.UNDEFINED;
-        }
-
-    }
-    
-    /**
-     * Tests if the unknown file is of type Nifti
+     * Tests if the unknown file is of type Nifti.
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1459,13 +1461,13 @@ public class FileIO {
 
 
         try {
-                boolean isNIFTI = FileNIFTI.isNIFTI(fileName, fileDir);
+            boolean isNIFTI = FileNIFTI.isNIFTI(fileName, fileDir);
 
-                
-                if (isNIFTI) {
-                    return FileBase.NIFTI;
-                }
-          
+
+            if (isNIFTI) {
+                return FileBase.NIFTI;
+            }
+
 
             return FileBase.UNDEFINED;
         } catch (OutOfMemoryError error) {
@@ -1481,9 +1483,19 @@ public class FileIO {
         }
 
     }
-    
+
+
     /**
-     * Tests if the unknown file is of type SPM
+     * Refers to whether or not the FileIO will send alerts to the user about progress or errors.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public boolean isQuiet() {
+        return quiet;
+    }
+
+    /**
+     * Tests if the unknown file is of type SPM.
      *
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
@@ -1496,13 +1508,13 @@ public class FileIO {
 
 
         try {
-                boolean isSPM = FileSPM.isSPM(fileDir + fileName);
+            boolean isSPM = FileSPM.isSPM(fileDir + fileName);
 
-                
-                if (isSPM) {
-                    return FileBase.SPM;
-                }
-          
+
+            if (isSPM) {
+                return FileBase.SPM;
+            }
+
             return FileBase.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
@@ -1516,18 +1528,6 @@ public class FileIO {
             return FileBase.UNDEFINED;
         }
 
-    }
-
-
- 
-
-    /**
-     * Refers to whether or not the FileIO will send alerts to the user about progress or errors.
-     *
-     * @return  DOCUMENT ME!
-     */
-    public boolean isQuiet() {
-        return quiet;
     }
 
     /**
@@ -2604,7 +2604,7 @@ public class FileIO {
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isMinc(fileName, fileDir);
                 }
-                
+
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isSPM(fileName, fileDir);
                 }
@@ -2613,11 +2613,11 @@ public class FileIO {
 
                     fileType = isAnalyze(fileName, fileDir);
                 }
-                
+
                 if (fileType == FileBase.UNDEFINED) {
                     fileType = isNIFTI(fileName, fileDir);
                 }
-                
+
                 if (fileType == FileBase.UNDEFINED) { // if image type not defined by extension, popup
                     fileType = getFileType(); // dialog to get user to define image type
                     userDefinedFileType = fileType;
@@ -8968,27 +8968,26 @@ public class FileIO {
              *
              * for (int k = 0; k < varArray[j].vattArray.length; k++) {
              *
-             *     if (varArray[j].vattArray[k].name.equals("modality")) {                 String modality =
+             * if (varArray[j].vattArray[k].name.equals("modality")) {                 String modality =
              * varArray[j].vattArray[k].getValueString();
              *
-             *         if (modality.equals("PET__")) {
-             * myFileInfo.setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY); myFileInfo.setValue("0008,0060",
-             * "PT");                 } else if (modality.equals("MRI__")) {
+             *   if (modality.equals("PET__")) { myFileInfo.setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY);
+             * myFileInfo.setValue("0008,0060", "PT");                 } else if (modality.equals("MRI__")) {
              * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE); myFileInfo.setValue("0008,0060", "MR");       }
              * else if (modality.equals("SPECT")) {
              * myFileInfo.setModality(FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY);
              * myFileInfo.setValue("0008,0060", "ST");
              *
-             *             //} else if (modality.equals("GAMMA")) {                     //
-             * myFileInfo.setModality(FileInfoBase.);   myFileInfo.setValue("0008,0060",                     // "");
-             *   } else if (modality.equals("MRS__")) {
+             *       //} else if (modality.equals("GAMMA")) {                     //
+             * myFileInfo.setModality(FileInfoBase.);   myFileInfo.setValue("0008,0060",                     // "");  }
+             * else if (modality.equals("MRS__")) {
              * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY); myFileInfo.setValue("0008,0060",
              * "MS");                 } else if (modality.equals("MRA__")) {
              * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY); myFileInfo.setValue("0008,0060",
              * "MA");                 } else if (modality.equals("CT___")) {
              * myFileInfo.setModality(FileInfoBase.COMPUTED_TOMOGRAPHY); myFileInfo.setValue("0008,0060", "CT");
              *
-             *             //} else if (modality.equals("DSA__")) {                     //
+             *       //} else if (modality.equals("DSA__")) {                     //
              * myFileInfo.setModality(FileInfoBase.); myFileInfo.setValue("0008,0060", "");                 } else if
              * (modality.equals("DR___")) { myFileInfo.setModality(FileInfoBase.DIGITAL_RADIOGRAPHY);
              * myFileInfo.setValue("0008,0060", "DX");                 }             }         }     } }}*/
@@ -9049,9 +9048,6 @@ public class FileIO {
 
             Object obj = null;
             float slLoc = 0;
-            float xLoc = 0;
-            float yLoc = 0;
-            float zLoc = 0;
 
             FileDicomTag tag = myFileInfo.getTag("0020,1041");
 
@@ -9069,25 +9065,6 @@ public class FileIO {
 
                 FileInfoBase[] fBase = new FileInfoBase[image.getExtents()[2]];
 
-                if (myFileInfo.getTag("0020,0032") != null) {
-                    tag = myFileInfo.getTag("0020,0032");
-
-                    if (tag != null) {
-                        obj = tag.getValue(false);
-                    }
-
-                    if (obj != null) {
-                        String[] origins = ((String) (obj)).split("\\\\");
-                        xLoc = Float.valueOf(origins[0]).floatValue();
-                        yLoc = Float.valueOf(origins[1]).floatValue();
-                        zLoc = Float.valueOf(origins[2]).floatValue();
-                    } else {
-                        xLoc = 0;
-                        yLoc = 0;
-                        zLoc = 0;
-                    }
-                }
-
                 float[] axialOrigin = new float[3];
                 float[] dicomOrigin = new float[3];
                 TransMatrix matrix = myFileInfo.getPatientOrientation();
@@ -9099,7 +9076,7 @@ public class FileIO {
                 TransMatrix invMatrix = (TransMatrix) matrix.clone();
                 invMatrix.invert();
 
-                matrix.transform(new float[] { xLoc, yLoc, zLoc }, axialOrigin);
+                matrix.transform(image.getFileInfo(0).getOrigin(), axialOrigin);
 
                 // see if the original dicom a minc was created from was part of a larger volume.  if so, preserve the
                 // instance number it had
