@@ -2213,10 +2213,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int yhy = 0;
         int lprx;
         int lpry;
+        double h_1[] = null;
         
         nOrientations = 3;
         nScales = (pind.size() - 2)/nOrientations - 1;
-        h = daubcqf(daubOrder,0);
+        h = daubcqf(daubOrder,MINIMUM_PHASE, h_1);
         
         nband = 1;
         // Empty "high pass residual band" for compatibility with full steerpyr 2
@@ -5061,6 +5062,55 @@ MATLAB description:
     }
     
     /**
+     * Complex numbers are sorted by absolute values and when absolute values are
+     * equal are further sorted by angle on the interval from -PI to PI.
+     * @param realBuffer
+     * @param imagBuffer
+     */
+    private void sort(double[] realBuffer, double imagBuffer[]) {
+        int i, j, inc;
+        double vr;
+        double vi;
+        inc = 1;
+        double sq;
+        double vsq;
+
+        int end = realBuffer.length;
+
+        do {
+            inc *= 3;
+            inc++;
+        } while (inc <= end);
+
+        do {
+            inc /= 3;
+
+            for (i = inc + 1; i <= end; i++) {
+                vr = realBuffer[i - 1];
+                vi = imagBuffer[i - 1];
+                j = i;
+
+                while (((sq = (realBuffer[j - inc - 1]*realBuffer[j - inc - 1] +
+                              imagBuffer[j - inc - 1]*imagBuffer[j - inc - 1])) > (vsq = vr*vr + vi*vi)) ||
+                       ((sq == vsq) && (Math.atan2(imagBuffer[j - inc - 1], realBuffer[j - inc - 1]) >
+                                        Math.atan2(vi,vr)))){
+                    realBuffer[j - 1] = realBuffer[j - inc - 1];
+                    imagBuffer[j - 1] = imagBuffer[j - inc - 1];
+                    j -= inc;
+
+                    if (j <= inc) {
+                        break;
+                    }
+                }
+
+                realBuffer[j - 1] = vr;
+                imagBuffer[j - 1] = vi;
+            }
+        } while (inc > 1);
+
+    }
+    
+    /**
      * This is a port of daubcqf.m by Ramesh Gopinath
      * %    [h_0,h_1] = daubcqf(N,TYPE); 
     %
@@ -5132,17 +5182,17 @@ MATLAB description:
 
      * @param N
      * @param type
+     * @param h_1
      * @return
      */
-    private double[] daubcqf(int N, int type) {
-        double h[] = null;
+    private double[] daubcqf(int N, int type, double h_1[]) {
         int k;
         double a;
         double p[];
         double q[];
         double h_0[];
-        double qt[];
-        double h_1[];
+        double qtr[];
+        double qti[];
         int j;
         double temp[];
         int i;
@@ -5150,11 +5200,14 @@ MATLAB description:
         int n;
         EigenvalueDecomposition eig;
         double eigenvalue[];
+        double imagvalue[];
         int qtl;
         int index;
-        double c[];
+        double cr[];
+        double ci[];
         double sum;
         double var;
+        boolean haveImag;
         
         if ((N % 2) == 1) {
             MipavUtil.displayError("No Daubechies filter exists for odd length");
@@ -5213,10 +5266,24 @@ MATLAB description:
         }
         eig = new EigenvalueDecomposition(new Matrix(A));
         eigenvalue = eig.getRealEigenvalues();
-        shellSort(eigenvalue);
-        qt = new double[k-1];
+        imagvalue = eig.getImagEigenvalues();
+        haveImag = false;
+        for (i = 0; i < imagvalue.length; i++) {
+            if (imagvalue[i] != 0.0) {
+                haveImag = true;
+            }
+        }
+        if (!haveImag) {
+            shellSort(eigenvalue);
+        }
+        else {
+            sort(eigenvalue, imagvalue);
+        }
+        qtr = new double[k-1];
+        qti = new double[k-1];
         for (i = 0; i < k-1; i++) {
-            qt[i] = q[i];   
+            qtr[i] = eigenvalue[i];
+            qti[i] = imagvalue[i];
         }
         if (type == MID_PHASE) {
             if ((k %2) == 1) {
@@ -5227,12 +5294,15 @@ MATLAB description:
                for (i = 1; i <= N-1; i+=4) {
                    qtl++;
                }
-               qt = new double[qtl];
-               for (i = 0, index = 0; i < N-1; i+=4) {
-                   qt[index++] = q[i];
+               qtr = new double[qtl];
+               qti = new double[qtl];
+               for (i = 0, index = 0; i <= N-1; i+=4) {
+                   qtr[index] = eigenvalue[i];
+                   qti[index++] = imagvalue[i];
                }
                for (i = 1; i <= N-1; i+=4) {
-                   qt[index++] = q[i];
+                   qtr[index] = eigenvalue[i];
+                   qti[index++] = imagvalue[i];
                }
             }
             else {
@@ -5243,40 +5313,49 @@ MATLAB description:
                 for (i = 4; i <= k-2; i+= 4) {
                     qtl++;
                 }
-                for (i = N-2; i >= k-1; i-= 4) {
+                for (i = N-4; i >= k-1; i-= 4) {
                     qtl++;
                 }
-                for (i = N-3; i >= k-1; i-= 4) {
+                for (i = N-5; i >= k-1; i-= 4) {
                     qtl++;
                 }
-                qt = new double[qtl];
+                qtr = new double[qtl];
+                qti = new double[qtl];
                 index = 0;
-                qt[index++] = q[0];
+                qtr[index] = eigenvalue[0];
+                qti[index++] = imagvalue[0];
                 for (i = 3; i <= k-2; i+= 4) {
-                    qt[index++] = q[i];
+                    qtr[index] = eigenvalue[i];
+                    qti[index++] = imagvalue[i];
                 }
                 for (i = 4; i <= k-2; i+= 4) {
-                    qt[index++] = q[i];
+                    qtr[index] = eigenvalue[i];
+                    qti[index++] = imagvalue[i];
                 }
-                for (i = N-2; i >= k-1; i-= 4) {
-                    qt[index++] = q[i];
+                for (i = N-4; i >= k-1; i-= 4) {
+                    qtr[index] = eigenvalue[i];
+                    qti[index++] = imagvalue[i];
                 }
-                for (i = N-3; i >= k-1; i-= 4) {
-                    qt[index++] = q[i];
+                for (i = N-5; i >= k-1; i-= 4) {
+                    qtr[index] = eigenvalue[i];
+                    qti[index++] = imagvalue[i];
                 }
             }
         } // if (type == MID_PHASE)
         // Form a polynomial from the roots in qt
         // The poynomial coefficients are ordered in descending powers
         // The first coefficient for the highest power is 1.
-        c = new double[qt.length+1];
-        c[0] = 1.0;
-        for (j = 0; j <= qt.length-1; j++) {
+        cr = new double[qtr.length+1];
+        ci = new double[qtr.length+1];
+        cr[0] = 1.0;
+        ci[0] = 0.0;
+        for (j = 0; j <= qtr.length-1; j++) {
             for (i = 0; i <= j; i++) {
-                c[i+1] = c[i+1] - qt[j]*c[i];
+                cr[i+1] = cr[i+1] - qtr[j]*cr[i] + qti[j]*ci[i];
+                ci[i+1] = ci[i+1] - qtr[j]*ci[i] - qti[j]*cr[i];
             }
         }
-        h_0 = conv(h_0, c);
+        h_0 = conv(h_0, cr);
         // Normalize to sqrt(2)
         sum = 0.0;
         for (i = 0; i < h_0.length; i++) {
@@ -5308,17 +5387,11 @@ MATLAB description:
         for (i = 0; i < h_0.length; i++) {
             h_1[i] = h_0[h_0.length-1-i];
         }
-        for (i = 0; i <= N-1; i++) {
+        for (i = 0; i <= N-1; i+=2) {
             h_1[i] = -h_1[i];
         }
-        h = new double[h_0.length + h_1.length];
-        for (i = 0,index = 0; i < h_0.length; i++) {
-            h[index++] = h_0[i];
-        }
-        for (i = 0; i < h_1.length; i++) {
-            h[index++] = h_1[i];
-        }
-        return h;
+        
+        return h_0;
         
     }
     
@@ -5360,7 +5433,7 @@ MATLAB description:
             lh = hcol;
         }
         else {
-            lh= hrow;
+            lh = hrow;
         }
         if (L < 0) {
             MipavUtil.displayError("The number of levels, L, must be a nonnegative integer");
@@ -5591,7 +5664,7 @@ MATLAB description:
                     } // for (n_r = 0; n_r < n_rb; n_r++)
                 } // for (ic = 0; ic < n; ic++)
             } // if (m > 1)
-            sample_f = sample_f *2;
+            sample_f = sample_f * 2;
         } // for (actual_L = 1; actual_L <= L; actual_L++)
         return;
     }
@@ -5641,7 +5714,12 @@ MATLAB description:
         int eveny;
         int y1, y2, x1, x2;
         int intArr[] = new int[2];
+        double tr[] = new double[t.length];
         double ti[] = new double[t.length];
+        
+        for (i = 0; i < t.length; i++) {
+            tr[i] = t[i];
+        }
         if (tsx == null) {
             tsx = new int[1];
         }
@@ -5649,15 +5727,15 @@ MATLAB description:
             tsy = new int[1];
         }
         // forward FFT
-        fftUtil = new FFTUtility(t, ti, ty, tx, 1, -1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(tr, ti, ty, tx, 1, -1, FFTUtility.FFT);
         fftUtil.run();
         fftUtil.finalize();
-        fftUtil = new FFTUtility(t, ti, 1, ty, tx, -1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(tr, ti, 1, ty, tx, -1, FFTUtility.FFT);
         fftUtil.run();
         fftUtil.finalize();
-        center(t, ti, tx, ty); 
-        for (i = 0; i < t.length; i++) {
-            t[i] = t[i]/(f*f);
+        center(tr, ti, tx, ty); 
+        for (i = 0; i < tr.length; i++) {
+            tr[i] = tr[i]/(f*f);
             ti[i] = ti[i]/(f*f);
         }
         tsx[0] = tx/f;
@@ -5690,28 +5768,28 @@ MATLAB description:
         
         for (j = eveny, j2 = y1-1; j < tsy[0]; j++, j2++) {
             for (i = evenx, i2 = x1-1; i < tsx[0]; i++, i2++) {
-                tsr[i + tsx[0]*j] = t[i2 + tx*j2];
+                tsr[i + tsx[0]*j] = tr[i2 + tx*j2];
                 tsi[i + tsx[0]*j] = ti[i2 + tx*j2];
             }
         } // for (j = eveny, j2 = y1-1; j < tsy[0]; j++, j2++)
         
         if (evenmy) {
             for (j = eveny, j2 = y1-1; j < tsy[0]; j++, j2++) {
-                tsr[tsx[0]*j] = (t[x1-2 + tx*j2] + t[x2 + tx*j2])/2.0;
+                tsr[tsx[0]*j] = (tr[x1-2 + tx*j2] + tr[x2 + tx*j2])/2.0;
                 tsi[tsx[0]*j] = (ti[x1-2 + tx*j2] + ti[x2 + tx*j2])/2.0;
             }
         } // if (evenmy)
         
         if (evenmx) {
             for (i = evenx, i2 = x1-1; i < tsx[0]; i++, i2++) {
-                tsr[i] = (t[i2 + tx*(y1-2)] + t[i2 + tx*y2])/2.0;
+                tsr[i] = (tr[i2 + tx*(y1-2)] + tr[i2 + tx*y2])/2.0;
                 tsi[i] = (ti[i2 + tx*(y1-2)] + ti[i2 + tx*y2])/2.0;
             }
         } // if (evenmx)
         
         if (evenmx && evenmy) {
-            tsr[0] = (t[x1-2 + tx*(y1-2)] + t[x2 + tx*(y1-2)] +
-                      t[x1-2 + tx*y2] + t[x2 + tx*y2])/4.0;
+            tsr[0] = (tr[x1-2 + tx*(y1-2)] + tr[x2 + tx*(y1-2)] +
+                      tr[x1-2 + tx*y2] + tr[x2 + tx*y2])/4.0;
             tsi[0] = (ti[x1-2 + tx*(y1-2)] + ti[x2 + tx*(y1-2)] +
                     ti[x1-2 + tx*y2] + ti[x2 + tx*y2])/4.0;
         } // if (evenmx && evenmy)
@@ -5731,7 +5809,7 @@ MATLAB description:
     }
     
     /**
-     * This is a port of buildWUpyr.m by JPM, Univ. de Granada
+     * This is a port of buildWUpyr.m by JPM, Univ. de Granada, 3/2003
      * Construct a separable undecimated orthonormal QMF/wavelet pyramid
      * on matrix (or vector) im
      * @param im
@@ -5739,7 +5817,7 @@ MATLAB description:
      * @param imy Second dimension of im
      * @param nScales  The number of pyramid levels to build
      * @param daubOrder  The order of the daubechies wavelet filter used
-     * @param pind  N 2-element int[] containing the sizes of each subband
+     * @param pind  N 2-element int[] array containing the sizes of each subband
      * @return  A vector containing the N pyramid subbands, ordered from
      *          fine to coarse.
      */
@@ -5766,6 +5844,7 @@ MATLAB description:
         int sx[] = new int[1];
         int sy[] = new int[1];
         int intMat[];
+        double h_1[] = null;
         
         if (nScales < 1) {
             MipavUtil.displayError("Number of scales must be >= 1");
@@ -5775,7 +5854,7 @@ MATLAB description:
         
         // Fixed number of orientations
         nOrientations = 3;
-        h = daubcqf(daubOrder, MINIMUM_PHASE);
+        h = daubcqf(daubOrder, MINIMUM_PHASE, h_1);
         if (error == 1) {
             return null;
         }
@@ -5881,7 +5960,7 @@ MATLAB description:
     }
     
     /**
-     * This is a port of a MATLAB routine by Eero Simoncelli.
+     * This is a port of MATLAB routine buildSFpyr.m by Eero Simoncelli, 5/97.
      * Construct a steerable pyramid on array im, in the Fourier domain.  This is 
      * similar to buildSpyr, except that:
      * + Reconstruction is exact (within floating point errors)
@@ -5945,9 +6024,11 @@ MATLAB description:
         if ((order > 15) || (order < 0)) {
             MipavUtil.displayWarning("Warning: ORDER must be an integer in the range 0 to 15");
             if (order < 0) {
+                MipavUtil.displayWarning("Setting order to 0");
                 order = 0;
             }
             else if (order > 15) {
+                MipavUtil.displayWarning("Setting order to 15");
                 order = 15;
             } 
         } // if ((order > 15) || (order < 0))
@@ -5957,8 +6038,8 @@ MATLAB description:
             MipavUtil.displayWarning("Warning: TWIDTH must be positive.  Setting to 1");
             twidth = 1;
         }
-        ctrx = (int)Math.ceil((imx + 0.5)/2);
-        ctry = (int)Math.ceil((imy + 0.5)/2);
+        ctrx = (int)Math.ceil((imx + 0.5)/2.0);
+        ctry = (int)Math.ceil((imy + 0.5)/2.0);
         xramp = new double[imy][imx];
         yramp = new double[imy][imx];
         for (i = 0; i < imx; i++) {
@@ -6056,7 +6137,7 @@ MATLAB description:
     }
     
     /**
-     * This is a port of a MATLAB function written by Eero Simoncelli, 5/97.
+     * This is a port of MATLAB function buildSFpyrLevs.m written by Eero Simoncelli, 5/97.
      * Recursive function for constructing levels of a steerable pyramid.
      * This is called by buildSFpyr, and is usually not called directly.
      * @param lodftr
@@ -6122,7 +6203,9 @@ MATLAB description:
             fftUtil = new FFTUtility(lodftr, lodfti, 1, lody, lodx, +1, FFTUtility.FFT);
             fftUtil.run();
             fftUtil.finalize();
+            pyr.removeAllElements();
             pyr.add(lodftr);
+            pind.removeAllElements();
             intMat = new int[2];
             intMat[0] = lodx;
             intMat[1] = lody;
@@ -6149,8 +6232,9 @@ MATLAB description:
             q = factorial(2*order);
             constant = Math.pow(2.0,(2.0*order)) * (p*p) / (nbands * q);
             ycosn = new double[3*lutsize + 3];
+            constant = Math.sqrt(constant);
             for (i = 0; i < ycosn.length; i++) {
-                ycosn[i] = Math.sqrt(constant) * Math.pow(Math.cos(xcosn[i]), order);
+                ycosn[i] = constant * Math.pow(Math.cos(xcosn[i]), order);
             }
             himask = pointOp(lograd, yrcos, xrcos[0], (xrcos[1]-xrcos[0]), false);
             
@@ -6158,7 +6242,7 @@ MATLAB description:
             banddfti = new double[lodx*lody];
             for (b = 1; b <= nbands; b++) {
                 anglemask = pointOp(angle, ycosn, xcosn[0] + Math.PI*(b-1)/nbands,
-                                    xcosn[1] - xcosn[0], true);
+                                    (xcosn[1] - xcosn[0]), true);
                 if (((nbands-1) % 4) == 0) {
                     for (j = 0; j < lody; j++) {
                         for (i = 0; i < lodx; i++) {
@@ -6378,7 +6462,7 @@ MATLAB description:
     }
     
     /**
-     * This is a port of a MATLAB function written by Eero Simoncelli, 7/96.
+     * This is a port of a MATLAB rcosFn.m written by Eero Simoncelli, 7/96.
      * Returns a lookup table containing a "raised cosine" soft threshold function:
      * Y = value1 + (value2 - value1) * cos^2(PI/2 * (X - position + width)/ width)
      * 
@@ -6419,28 +6503,29 @@ MATLAB description:
     private double[] mirrorExtension(double im[], int nx, int ny, int bx, int by) {
         int x, y, xs, ys;
         int npx = nx + 2*bx;
-        double pad[] = new double[(nx+2*bx)*(ny+2*by)];
+        int npy = ny + 2*by;
+        double pad[] = new double[npx*npy];
         for (y = 0; y < ny; y++) {
             for (x = 0; x < nx; x++) {
                 pad[x + bx + npx*(y+by)] = im[x + nx*y];
             }
         } // for (y = 0; y < ny; y++)
         for (y = 0, ys = 2*by - 1; y <= by - 1; y++, ys--) {
-            for (x = bx; x < nx + bx; x++) {
+            for (x = 0; x < npx; x++) {
                 pad[x + npx*y] = pad[x + npx*ys];
             }
         }
-        for (y = by; y < ny + by; y++) {
+        for (y = 0; y < npy; y++) {
             for (x = 0, xs = 2*bx - 1; x <= bx - 1; x++, xs--) {
                 pad[x + npx*y] = pad[xs + npx*y];
             }
         }
         for (y = ny + by, ys = ny + by - 1; y <= ny + 2*by - 1; y++, ys--) {
-            for (x = bx; x < nx + bx; x++) {
+            for (x = 0; x < npx; x++) {
                 pad[x + npx*y] = pad[x + npx*ys];
             }
         }
-        for (y = by; y < ny + by; y++) {
+        for (y = 0; y < npy; y++) {
             for (x = nx + bx, xs = nx + bx - 1; x <= nx + 2*bx - 1; x++, xs--) {
                 pad[x + npx*y] = pad[xs + npx*y];
             }
