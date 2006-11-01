@@ -64,6 +64,9 @@ public class ViewToolBarBuilder implements ItemListener {
      * voxel.
      */
     protected JToggleButton pointerVOIButton;
+    
+    
+    protected JToggleButton paintBrushButton;
 
     /** The button used to enable the showing of a small portion of image b near the mouse cursor. */
     protected JToggleButton regButton;
@@ -397,7 +400,8 @@ public class ViewToolBarBuilder implements ItemListener {
 
         paintToolBar.add(makeSeparator());
 
-        paintToolBar.add(buildToggleButton("PaintBrush", "Draw using a brush.", "brush", VOIGroup));
+        paintBrushButton = buildToggleButton("PaintBrush", "Draw using a brush.", "brush", VOIGroup);
+        paintToolBar.add(paintBrushButton);
         paintToolBar.add(buildButton("AdvancedPaint", "Load advanced paint tools", "advancedpaint"));
         paintToolBar.add(buildToggleButton("Dropper", "Picks up a color from the image.", "dropper", VOIGroup));
         paintToolBar.add(buildToggleButton("PaintCan", "Fills an area with desired color.", "paintcan", VOIGroup));
@@ -1075,6 +1079,16 @@ public class ViewToolBarBuilder implements ItemListener {
     public void setPointerSelected() {
         if (pointerVOIButton != null) {
             pointerVOIButton.setSelected(true);
+        }
+    }
+    
+    
+    /**
+     * Accessor that sets the paint brush button to selected.
+     */
+    public void setPaintBrushButtonSelected() {
+        if (paintBrushButton != null) {
+        	paintBrushButton.setSelected(true);
         }
     }
 
