@@ -2089,11 +2089,20 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
 
     /**
-     * This method creates a buffer that will be used to make an image of the painted area on-screen.
+     * This method creates a buffer that will be used to make an image of the
+     * painted area on-screen. 
      *
-     * @param  paintImageBuffer  int[] the buffer to fill that will eventually be used to create the paint image
+     * @param paintImageBuffer int[] the buffer to fill that will make the
+     * paint image
+     * @param paintBitmap, the bit map representing the painted pixels
+     * @param slice, the current slice to paint if this is a 3D image
+     * @param frame, the ViewJFrameBase containing the painted component.
+     * @param b2D, when true this is a 2D image component, when false it is
+     * greater than 2D
      */
-    protected void makePaintImage(int[] paintImageBuffer) {
+    protected void makePaintImage(int[] paintImageBuffer, BitSet paintBitmap,
+                                  int slice, ViewJFrameBase frame,
+                                  boolean b2D) {
         // get the color of the paint the user has selected
 
         int color = getSelectedPaintColor( frame );
