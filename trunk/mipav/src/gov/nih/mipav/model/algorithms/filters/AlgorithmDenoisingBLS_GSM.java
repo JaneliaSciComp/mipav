@@ -104,7 +104,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     private int blockSizeY = 3; // Local neighborhood y
     
-    private boolean usePSD = true; // If true, use power spectral density = fft(autocorrelation)
+    private boolean usePSD = false; // If true, use power spectral density = fft(autocorrelation)
                                    // If false, use white noise
                                    // Default is use white noise
     
@@ -122,11 +122,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     /**
      * repres1 = ORTHOGONAL_WAVELET
-     *           Here repres2 can be QMF5, QMF8, QMF9, QMF12, QMF13, QMF16, DAUB2, DAUB3, DAUB4
+     *           Here repres2 can be DAUB2, DAUB3, DAUB4, QMF5, QMF8, QMF9, QMF12, QMF13, QMF16
      *           QMF9 is default.
      *           
      * repres1 = UNDECIMATED_ORTHOGONAL_WAVELET
-     *           Here repres2 can be HAAR, DAUB1, DAUB2, DAUB3, DAUB4
+     *           Here repres2 can be DAUB1, DAUB2, DAUB3, DAUB4
      *           DAUB1 is the default.
      *           
      * repres1 = STEERABLE_PYRAMID
