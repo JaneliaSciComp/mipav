@@ -4604,7 +4604,7 @@ MATLAB description:
         
         ind = new int[sz];
         for (i = 0; i < sz; i++) {
-            ind[i] = sz - i;
+            ind[i] = sz - i - 1;
         }
         
         hfilt = new double[sz];
@@ -4667,12 +4667,6 @@ MATLAB description:
         ystart--;
         xstop = xdim;
         ystop = ydim;
-        if (xrdim == null) {
-            xrdim = new int[1];
-        }
-        if (yrdim == null) {
-            yrdim = new int[1];
-        }
         xrdim[0] = (xstop-xstart+xstep-1)/xstep;
         yrdim[0] = (ystop-ystart+ystep-1)/ystep;
         result = new double[xrdim[0] * yrdim[0]];
@@ -4906,18 +4900,18 @@ MATLAB description:
         double hi[];
         double lohi[] = null;
         double hilo[] = null;
-        int lox[] = null;
-        int loy[] = null;
-        int hix[] = null;
-        int hiy[] = null;
-        int lolox[] = null;
-        int loloy[] = null;
-        int hihix[] = null;
-        int hihiy[] = null;
-        int lohix[] = null;
-        int lohiy[] = null;
-        int hilox[] = null;
-        int hiloy[] = null;
+        int lox[] = new int[1];
+        int loy[] = new int[1];
+        int hix[] = new int[1];
+        int hiy[] = new int[1];
+        int lolox[] = new int[1];
+        int loloy[] = new int[1];
+        int hihix[] = new int[1];
+        int hihiy[] = new int[1];
+        int lohix[] = new int[1];
+        int lohiy[] = new int[1];
+        int hilox[] = new int[1];
+        int hiloy[] = new int[1];
         Vector nind = null;
         Vector npyr;
         
@@ -4952,12 +4946,22 @@ MATLAB description:
         }
         
         if (ht <= 0) {
-            pyr.removeAllElements();
+            if (pyr != null) {
+                pyr.removeAllElements();
+            }
+            if (pyr == null) {
+                pyr = new Vector();
+            }
             pyr.add(im);
             intMat = new int[2];
             intMat[0] = imx;
             intMat[1] = imy;
-            pind.removeAllElements();
+            if (pind != null) {
+                pind.removeAllElements();
+            }
+            if (pind == null) {
+                pind = new Vector();
+            }
             pind.add(intMat);
         } // if (ht <= 0)
         else {
@@ -4972,6 +4976,12 @@ MATLAB description:
             else {
                 lo = corrDn(im, imx, imy, kernel, kernel.length, 1, edges, 2, 1, stag, 1, lox, loy);
                 hi = corrDn(im, imx, imy, hkernel, hkernel.length, 1, edges, 2, 1, 2, 1, hix, hiy);
+                if (lox == null) {
+                    MipavUtil.displayError("lox is null");
+                }
+                if (loy == null) {
+                    MipavUtil.displayError("loy is null");
+                }
                 lolo = corrDn(lo, lox[0], loy[0], kernel, 1, kernel.length, edges, 1, 2, 1, stag, lolox, loloy);
                 // horizontal
                 lohi = corrDn(hi, hix[0], hiy[0], kernel, 1, kernel.length, edges, 1, 2, 1, stag, lohix, lohiy); 
@@ -4984,10 +4994,20 @@ MATLAB description:
             npyr = buildWpyr(lolo, lolox[0], loloy[0], ht-1, filt, edges, nind);
             
             if ((imx == 1) || (imy == 1)) {
-                pyr.removeAllElements();
+                if (pyr != null) {
+                    pyr.removeAllElements();
+                }
+                if (pyr == null) {
+                    pyr = new Vector();
+                }
                 pyr.add(hihi);
                 pyr.addAll(npyr);
-                pind.removeAllElements();
+                if (pind != null) {
+                    pind.removeAllElements();
+                }
+                if (pind == null) {
+                    pind = new Vector();
+                }
                 intMat = new int[2];
                 intMat[0] = hihix[0];
                 intMat[1] = hihiy[0];
@@ -4995,12 +5015,22 @@ MATLAB description:
                 pind.addAll(nind);
             }
             else {
-                pyr.removeAllElements();
+                if (pyr != null) {
+                   pyr.removeAllElements();
+                }
+                if (pyr == null) {
+                    pyr = new Vector();
+                }
                 pyr.add(lohi);
                 pyr.add(hilo);
                 pyr.add(hihi);
                 pyr.addAll(npyr);
-                pind.removeAllElements();
+                if (pind != null) {
+                    pind.removeAllElements();
+                }
+                if (pind == null) {
+                    pind = new Vector();
+                }
                 intMat = new int[2];
                 intMat[0] = lohix[0];
                 intMat[1] = lohiy[0];
@@ -5013,7 +5043,9 @@ MATLAB description:
                 intMat3[0] = hihix[0];
                 intMat3[1] = hihiy[0];
                 pind.add(intMat3);
-                pind.addAll(nind);
+                if (nind != null) {
+                    pind.addAll(nind);
+                }
             }
         } // else
         
