@@ -1528,6 +1528,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogSingleMRIImageSNR(this, getActiveImage());
         } else if (command.equals("DMRISNR")) {
             new JDialogTwoMRIImagesSNR(this, getActiveImage());
+        } else if (command.equals("blsGSM")) {
+            new JDialogDenoisingBLS_GSM(this, getActiveImage());
         } else if (command.equals("waveletThreshold")) {
             new JDialogWaveletThreshold(this, getActiveImage());
         } else if (command.equals("Calculator")) {
