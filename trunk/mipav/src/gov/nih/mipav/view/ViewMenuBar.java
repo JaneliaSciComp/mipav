@@ -861,6 +861,8 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Horizontal", "FlipY", 0,
                                                                                            "fliphoriz.gif", true),
                                                                  menuBuilder.buildMenuItem("Vertical", "FlipX", 0,
+                                                                                           "flipvert.gif", true),
+                                                                 menuBuilder.buildMenuItem("Depth", "FlipZ", 0,
                                                                                            "flipvert.gif", true)
                                                              }),
                                         menuBuilder.buildMenuItem("Image calculator", "Calculator", 0, null, false),

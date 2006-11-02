@@ -6533,6 +6533,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         int tFactor = (dimExtents.length > 2 ) ? dimExtents[0] * dimExtents[1] * dimExtents[2] :
             (dimExtents.length > 1 ) ? dimExtents[0] * dimExtents[1] : (dimExtents.length > 1 ) ? dimExtents[0] : 1;
 
+        boolean exportComplex = ( values.length == (2 * iBound * jBound) ) ? true : false;
         double real, imaginary, mag;
         float[] fReturn = null;
 
@@ -6600,14 +6601,23 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 /* if complex: */
                 else if ( bufferType == COMPLEX )
                 {
-                    real = getFloat(index * 2);
-                    imaginary = getFloat(index * 2 + 1);
 
-                    if (logMagDisp == true) {
-                        mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                        values[j * iBound + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
-                    } else {
-                        values[j * iBound + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                    if ( exportComplex )
+                    {
+                        values[(j * iBound + i) * 2 + 0] = getFloat(index * 2);
+                        values[(j * iBound + i) * 2 + 1] = getFloat(index * 2 + 1);
+                    }
+                    else
+                    {
+                        real = getFloat(index * 2);
+                        imaginary = getFloat(index * 2 + 1);
+
+                        if (logMagDisp == true) {
+                            mag = Math.sqrt((real * real) + (imaginary * imaginary));
+                            values[j * iBound + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
+                        } else {
+                            values[j * iBound + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                        }
                     }
                 }
                 /* not color: */
@@ -6689,6 +6699,7 @@ public class ModelStorageBase extends ModelSerialCloneable {
         ySlopeY /= (float) (jBound - 1);
         zSlopeY /= (float) (jBound - 1);
 
+        boolean exportComplex = ( values.length == (2 * iBound * jBound) ) ? true : false;
         double real, imaginary, mag;
 
         /* loop over the 2D image (values) we're writing into */
@@ -6748,14 +6759,22 @@ public class ModelStorageBase extends ModelSerialCloneable {
                     /* if complex: */
                     else if ( bufferType == COMPLEX )
                     {
-                        real = getFloat(index * 2);
-                        imaginary = getFloat(index * 2 + 1);
-
-                        if (logMagDisp == true) {
-                            mag = Math.sqrt((real * real) + (imaginary * imaginary));
-                            values[j * iBound + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
-                        } else {
-                            values[j * iBound + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                        if ( exportComplex )
+                        {
+                            values[(j * iBound + i) * 2 + 0] = getFloat(index * 2);
+                            values[(j * iBound + i) * 2 + 1] = getFloat(index * 2 + 1);
+                        }
+                        else
+                        {
+                            real = getFloat(index * 2);
+                            imaginary = getFloat(index * 2 + 1);
+                            
+                            if (logMagDisp == true) {
+                                mag = Math.sqrt((real * real) + (imaginary * imaginary));
+                                values[j * iBound + i] = (float) (0.4342944819 * Math.log((1.0 + mag)));
+                            } else {
+                                values[j * iBound + i] = (float) Math.sqrt((real * real) + (imaginary * imaginary));
+                            }
                         }
                     }
                     /* not color: */
