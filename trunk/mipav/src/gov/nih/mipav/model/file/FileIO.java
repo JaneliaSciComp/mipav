@@ -8971,25 +8971,24 @@ public class FileIO {
              * if (varArray[j].vattArray[k].name.equals("modality")) {                 String modality =
              * varArray[j].vattArray[k].getValueString();
              *
-             *   if (modality.equals("PET__")) { myFileInfo.setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY);
+             * if (modality.equals("PET__")) { myFileInfo.setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY);
              * myFileInfo.setValue("0008,0060", "PT");                 } else if (modality.equals("MRI__")) {
              * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE); myFileInfo.setValue("0008,0060", "MR");       }
              * else if (modality.equals("SPECT")) {
              * myFileInfo.setModality(FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY);
              * myFileInfo.setValue("0008,0060", "ST");
              *
-             *       //} else if (modality.equals("GAMMA")) {                     //
-             * myFileInfo.setModality(FileInfoBase.);   myFileInfo.setValue("0008,0060",                     // "");  }
-             * else if (modality.equals("MRS__")) {
+             *    //} else if (modality.equals("GAMMA")) {                     // myFileInfo.setModality(FileInfoBase.);
+             *   myFileInfo.setValue("0008,0060",                     // "");  } else if (modality.equals("MRS__")) {
              * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY); myFileInfo.setValue("0008,0060",
              * "MS");                 } else if (modality.equals("MRA__")) {
              * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY); myFileInfo.setValue("0008,0060",
              * "MA");                 } else if (modality.equals("CT___")) {
              * myFileInfo.setModality(FileInfoBase.COMPUTED_TOMOGRAPHY); myFileInfo.setValue("0008,0060", "CT");
              *
-             *       //} else if (modality.equals("DSA__")) {                     //
-             * myFileInfo.setModality(FileInfoBase.); myFileInfo.setValue("0008,0060", "");                 } else if
-             * (modality.equals("DR___")) { myFileInfo.setModality(FileInfoBase.DIGITAL_RADIOGRAPHY);
+             *    //} else if (modality.equals("DSA__")) {                     // myFileInfo.setModality(FileInfoBase.);
+             * myFileInfo.setValue("0008,0060", "");                 } else if (modality.equals("DR___")) {
+             * myFileInfo.setModality(FileInfoBase.DIGITAL_RADIOGRAPHY);
              * myFileInfo.setValue("0008,0060", "DX");                 }             }         }     } }}*/
 
             if ((image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT) ||
@@ -9046,18 +9045,9 @@ public class FileIO {
 
             myFileInfo.setDataType(image.getType());
 
+            FileDicomTag tag = null;
             Object obj = null;
-            float slLoc = 0;
-
-            FileDicomTag tag = myFileInfo.getTag("0020,1041");
-
-            if (tag != null) {
-                obj = tag.getValue(false);
-            }
-
-            if (obj != null) {
-                slLoc = Float.valueOf((String) obj).floatValue();
-            }
+            float slLoc;
 
             float sliceResolution = myFileInfo.getResolutions()[2];
 
@@ -9077,6 +9067,8 @@ public class FileIO {
                 invMatrix.invert();
 
                 matrix.transform(image.getFileInfo(0).getOrigin(), axialOrigin);
+
+                slLoc = axialOrigin[2];
 
                 // see if the original dicom a minc was created from was part of a larger volume.  if so, preserve the
                 // instance number it had
