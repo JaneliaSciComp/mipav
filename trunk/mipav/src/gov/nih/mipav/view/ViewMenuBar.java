@@ -208,10 +208,8 @@ public class ViewMenuBar {
                                                              }),
                                         menuBuilder.makeMenu("Filters (wavelet)", false,
                                                              new JMenuItem[] { // menuBuilder.buildMenuItem("Maxima",
-                                                                               // null,
-
-
-        // null, null),
+                                                                               // null, null, null),
+                                                                 menuBuilder.buildMenuItem("Denoising BLS GSM", "blsGSM", 0, null, false),
                                                                  menuBuilder.buildMenuItem("Thresholding",
                                                                                            "waveletThreshold", 0, null,
                                                                                            false),
@@ -1173,6 +1171,7 @@ public class ViewMenuBar {
         } else if (numberOfDimensions == 3) {
             menuBuilder.setMenuItemEnabled("Adaptive noise reduction", false);
             menuBuilder.setMenuItemEnabled("Convert 4D to 3D", false);
+            menuBuilder.setMenuItemEnabled("Denoising BLS GSM", false);
             menuBuilder.setMenuItemEnabled("Extract 3D subset from 4D", false);
             menuBuilder.setMenuItemEnabled("Graph based", false);
             menuBuilder.setMenuItemEnabled("Optimized automatic registration 3.5D", false);
