@@ -21,7 +21,7 @@ import javax.swing.*;
  * Dialog to get user input, then call the algorithm. The user has the option to generate a new image or replace the
  * source image. It should be noted that the algorithms are executed in their own threads.
  *
- * @version  November 1, 2006
+ * @version  November 2, 2006
  * @see      AlgorithmDenoisingBLS_GSM
  */
 public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
@@ -65,13 +65,6 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     //private static final long serialVersionUID = -7693130193527088045L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** DOCUMENT ME! */
-    private boolean createGabor = true;
-
-    /** DOCUMENT ME! */
-    private JCheckBox createGaborCheckBox;
-
     /** DOCUMENT ME! */
     private ButtonGroup destinationGroup;
 
@@ -85,31 +78,10 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     private JPanel filterPanel;
 
     /** DOCUMENT ME! */
-    private float freqU;
-
-    /** DOCUMENT ME! */
     private AlgorithmDenoisingBLS_GSM deAlgo = null;
 
     /** DOCUMENT ME! */
-    private float freqV;
-
-    /** DOCUMENT ME! */
     private ModelImage image; // source image
-
-    /** DOCUMENT ME! */
-    private JLabel labelFU;
-
-    /** DOCUMENT ME! */
-    private JLabel labelFV;
-
-    /** DOCUMENT ME! */
-    private JLabel labelSU;
-
-    /** DOCUMENT ME! */
-    private JLabel labelSV;
-
-    /** DOCUMENT ME! */
-    private JLabel labelTheta;
 
     /** DOCUMENT ME! */
     private JPanel mainPanel;
@@ -122,30 +94,6 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
 
     /** DOCUMENT ME! */
     private ModelImage resultImage = null; // result image
-
-    /** DOCUMENT ME! */
-    private float sigmaU;
-
-    /** DOCUMENT ME! */
-    private float sigmaV;
-
-    /** DOCUMENT ME! */
-    private JTextField textFU;
-
-    /** DOCUMENT ME! */
-    private JTextField textFV;
-
-    /** DOCUMENT ME! */
-    private JTextField textSU;
-
-    /** DOCUMENT ME! */
-    private JTextField textSV;
-
-    /** DOCUMENT ME! */
-    private JTextField textTheta;
-
-    /** DOCUMENT ME! */
-    private float theta;
 
     /** DOCUMENT ME! */
     private String[] titles;
@@ -176,6 +124,52 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     private int method = ORTHOGONAL_WAVELET;
     
     private int filter = QMF9;
+    
+    private ButtonGroup methodGroup;
+    
+    private JRadioButton orthogonalButton;
+    
+    private JRadioButton undecimatedButton;
+    
+    private JRadioButton steerableButton;
+    
+    private JRadioButton fullButton;
+    
+    private JComboBox comboBoxFilter;
+    
+    private JLabel orientLabel;
+    
+    private JTextField orientText;
+    
+    private JLabel scaleLabel;
+    
+    private JTextField scaleText;
+    
+    private JLabel noiseLabel;
+    
+    private JTextField noiseText;
+    
+    private ButtonGroup noiseGroup;
+    
+    private JRadioButton psdButton;
+    
+    private JRadioButton whiteButton;
+    
+    private JLabel localXLabel;
+    
+    private JTextField localXText;
+    
+    private JLabel localYLabel;
+    
+    private JTextField localYText;
+    
+    private JCheckBox parentCheckBox;
+    
+    private JCheckBox boundaryCheckBox;
+    
+    private JCheckBox covarianceCheckBox;
+    
+    private JCheckBox optimizeCheckBox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -208,6 +202,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
         Object source = event.getSource();
+        int i;
 
         if (command.equals("OK")) {
 
@@ -218,7 +213,44 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
             dispose();
         } else if (source == helpButton) {
             MipavUtil.showHelp("");
-        }
+        } else if ((source == orthogonalButton) || (source == undecimatedButton) ||
+                   (source == steerableButton) || (source == fullButton)) {
+            if (orthogonalButton.isSelected()) {
+                if (comboBoxFilter.getItemCount() != 9) {
+                    comboBoxFilter.removeItemAt(0);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 5", 3);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 8", 4);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 9", 5);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 12", 6);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 13", 7);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 16", 8);
+                    comboBoxFilter.setSelectedIndex(5);
+                } // if (comboBoxFilter.getItemCount() != 9)
+                comboBoxFilter.setEnabled(true);
+                orientText.setText("3");
+                orientLabel.setEnabled(false);
+                orientText.setEnabled(false);
+            } // if (orthogonalButton.isSelected())
+            else if (undecimatedButton.isSelected()) {
+                if (comboBoxFilter.getItemCount() != 4) {
+                    comboBoxFilter.insertItemAt("Daubechies 1", 0);
+                    for (i = 9; i >= 4; i--) {
+                        comboBoxFilter.removeItemAt(i);
+                    }
+                } // if (comboBoxFilter.getItemCount() != 4)
+                comboBoxFilter.setSelectedIndex(0);
+                comboBoxFilter.setEnabled(true);
+                orientText.setText("3");
+                orientLabel.setEnabled(false);
+                orientText.setEnabled(false);
+            } // else if (undecimatedButton.isSelected()
+            else {
+                comboBoxFilter.setEnabled(false);
+                orientText.setText("8");
+                orientLabel.setEnabled(true);
+                orientText.setEnabled(true);
+            }
+        } 
     }
 
     // ************************************************************************
@@ -232,17 +264,14 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-        if (algorithm instanceof AlgorithmFrequencyFilter) {
+        if (algorithm instanceof AlgorithmDenoisingBLS_GSM) {
 
             if ((algorithm.isCompleted() == true) && (resultImage != null)) {
-
-                updateFileTypeInfo(image, resultImage, ModelStorageBase.FLOAT);
 
                 // resultImage is the same or smaller than image.
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
 
-                    // resultImage.setImageName("Frequency Filtered image");
                     new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -269,7 +298,6 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                     ((ViewJFrameImage) parentFrame).getComponentImage().setLogMagDisplay(true);
                 }
 
-                updateFileTypeInfo(image, ModelStorageBase.FLOAT);
                 image.notifyImageDisplayListeners(null, true);
             } else if (resultImage != null) {
 
@@ -304,12 +332,18 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
         
-        scriptParameters.getParams().put(ParameterFactory.newParameter("pre_rot_horiz_freq", freqU));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("pre_rot_vert_freq", freqV));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("pre_rot_horiz_sigma", sigmaU));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("pre_rot_vert_sigma", sigmaV));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("rotation_angle", theta));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_create_gabor_image", createGabor));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("noise_std_dev", sig));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_power_spectral_density", usePSD));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("local_neighborhood_x", blockSizeX));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("local_neighborhood_y", blockSizeY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_parent", useParent));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_boundary", useBoundary));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_scales", nScales));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_orientations", nOrientations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("include_covariance", includeCovar));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_optimize", optimize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("wavelet_method", method));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("wavelet_filter", filter));
     }
     
     /**
@@ -326,12 +360,66 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
             setDisplayLocReplace();
         }
         
-        setFreqU(scriptParameters.getParams().getFloat("pre_rot_horiz_freq"));
-        setFreqV(scriptParameters.getParams().getFloat("pre_rot_vert_freq"));
-        setSigmaU(scriptParameters.getParams().getFloat("pre_rot_horiz_sigma"));
-        setSigmaV(scriptParameters.getParams().getFloat("pre_rot_vert_sigma"));
-        setTheta(scriptParameters.getParams().getFloat("rotation_angle"));
-        setCreateGabor(scriptParameters.getParams().getBoolean("do_create_gabor_image"));
+        setSig(scriptParameters.getParams().getFloat("noise_std_dev"));
+        setUsePSD(scriptParameters.getParams().getBoolean("use_power_spectral_density"));
+        setBlockSizeX(scriptParameters.getParams().getInt("local_neighborhood_x"));
+        setBlockSizeY(scriptParameters.getParams().getInt("local_neighborhood_y"));
+        setUseParent(scriptParameters.getParams().getBoolean("use_parent"));
+        setUseBoundary(scriptParameters.getParams().getBoolean("use_boundary"));
+        setNScales(scriptParameters.getParams().getInt("number_of_scales"));
+        setNOrientations(scriptParameters.getParams().getInt("number_of_orientations"));
+        setIncludeCovar(scriptParameters.getParams().getBoolean("include_covariance"));
+        setOptimize(scriptParameters.getParams().getBoolean("do_optimize"));
+        setMethod(scriptParameters.getParams().getBoolean("wavelet_method"));
+        setFilter(scriptParameters.getParams().getBoolean("wavelet_filter"));
+    }
+    
+    public void setSig(float sig) {
+        this.sig = sig;
+    }
+    
+    public void setUsePSD(boolean usePSD) {
+        this.usePSD = usePSD;
+    }
+    
+    public void setBlockSizeX(int blockSizeX) {
+        this.blockSizeX = blockSizeX;
+    }
+    
+    public void setBlockSizeY(int blockSizeY) {
+        this.blockSizeY = blockSizeY;
+    }
+    
+    public void setUseParent(boolean useParent) {
+        this.useParent = useParent;
+    }
+    
+    public void setUseBoundary(boolean useBoundary) {
+        this.useBoundary = useBoundary;
+    }
+    
+    public void setNScales(int nScales) {
+        this.nScales = nScales;
+    }
+    
+    public void setNOrientations(int nOrientations) {
+        this.nOrientations = nOrientations;
+    }
+    
+    public void setIncludeCovar(boolean includeCovar) {
+        this.includeCovar = includeCovar;
+    }
+    
+    public void setOptimize(boolean optimize) {
+        this.optimize = optimize;
+    }
+    
+    public void setMethod(int method) {
+        this.method = method;
+    }
+    
+    public void setFilter(int filter) {
+        this.filter = filter;
     }
     
     /**
@@ -341,15 +429,6 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         if (displayLoc == NEW) {
             AlgorithmParameters.storeImageInRunner(getResultImage());
         }
-    }
-
-    /**
-     * Accessor that determines whether or not a Gabor filter image is created.
-     *
-     * @param  createGabor  variable determining whether or not a Gabor filter image is created.
-     */
-    public void setCreateGabor(boolean createGabor) {
-        this.createGabor = createGabor;
     }
 
     /**
@@ -367,57 +446,14 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         displayLoc = REPLACE;
     }
 
-    /**
-     * Accessor that sets the prerotation horizontal frequency variable.
-     *
-     * @param  scale  Value to set prerotation horizontal frequency to.
-     */
-    public void setFreqU(float scale) {
-        freqU = scale;
-    }
-
-    /**
-     * Accessor that sets the prerotation vertical frequency variable.
-     *
-     * @param  scale  Value to set prerotation vertical frequency to.
-     */
-    public void setFreqV(float scale) {
-        freqV = scale;
-    }
-
-    /**
-     * Accessor that sets the prerotation horizontal standard deviation variable.
-     *
-     * @param  scale  Value to set prerotation horizontal standard deviation to.
-     */
-    public void setSigmaU(float scale) {
-        sigmaU = scale;
-    }
-
-    /**
-     * Accessor that sets the prerotation vertical standard deviation variable.
-     *
-     * @param  scale  Value to set prerotation vertical standard deviation to.
-     */
-    public void setSigmaV(float scale) {
-        sigmaV = scale;
-    }
-
-    /**
-     * Accessor that sets the rotation angle in degrees.
-     *
-     * @param  scale  Value to set rotation angle in degrees to.
-     */
-    public void setTheta(float scale) {
-        theta = scale;
-    }
+    
 
     /**
      * Once all the necessary variables are set, call the Frequency Filter algorithm based on what type of image this is
      * and whether or not there is a separate destination image.
      */
     protected void callAlgorithm() {
-        String name = makeImageName(image.getImageName(), "_gaborFilter");
+        String name = makeImageName(image.getImageName(), "_denoisingBLS_GSM");
 
         if (displayLoc == NEW) {
 
@@ -504,7 +540,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                     deAlgo.run();
                 }
             } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog GaborFilter: unable to allocate enough memory");
+                MipavUtil.displayError("Dialog DenoisingBLS_GSM: unable to allocate enough memory");
 
                 return;
             }
@@ -515,7 +551,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
-        setTitle("Gabor Filter");
+        setTitle("Denoising BLS_GSM");
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 3;
@@ -523,100 +559,184 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         gbc.weightx = 1;
 
         filterPanel = new JPanel(new GridBagLayout());
-        filterPanel.setBorder(buildTitledBorder("Frequency domain filter specifications"));
+        filterPanel.setBorder(buildTitledBorder("Denoising Bayesian Least Squares Gray Scale Mixture"));
+        
+        methodGroup = new ButtonGroup();
+        orthogonalButton = new JRadioButton("Orthogonal wavelet", true);
+        orthogonalButton.setFont(serif12);
+        orthogonalButton.setForeground(Color.black);
+        orthogonalButton.addActionListener(this);
+        methodGroup.add(orthogonalButton);
+        
+        undecimatedButton = new JRadioButton("Undecimated orthgonal wavelet", false);
+        undecimatedButton.setFont(serif12);
+        undecimatedButton.setForeground(Color.black);
+        undecimatedButton.addActionListener(this);
+        methodGroup.add(undecimatedButton);
+        
+        steerableButton = new JRadioButton("Steerable pyramid", false);
+        steerableButton.setFont(serif12);
+        steerableButton.setForeground(Color.black);
+        steerableButton.addActionListener(this);
+        methodGroup.add(steerableButton);
+        
+        fullButton = new JRadioButton("Full steerable pyramid", false);
+        fullButton.setFont(serif12);
+        fullButton.setForeground(Color.black);
+        fullButton.addActionListener(this);
+        methodGroup.add(fullButton);
+        
+        comboBoxFilter = new JComboBox();
+        comboBoxFilter.setFont(serif12);
+        comboBoxFilter.setBackground(Color.white);
+        comboBoxFilter.setAlignmentX(Component.LEFT_ALIGNMENT);
+        comboBoxFilter.insertItemAt("Daubechies 2", 0);
+        comboBoxFilter.insertItemAt("Daubechies 3", 1);
+        comboBoxFilter.insertItemAt("Daubechies 4", 2);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 5", 3);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 8", 4);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 9", 5);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 12", 6);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 13", 7);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 16", 8);
+        comboBoxFilter.setSelectedIndex(5);
+        
+        orientLabel = new JLabel("Number of orientations");
+        orientLabel.setForeground(Color.black);
+        orientLabel.setFont(serif12);
+        orientLabel.setEnabled(false);
+        
+        orientText = new JTextField(10);
+        orientText.setText("3");
+        orientText.setFont(serif12);
+        orientText.setEnabled(false);
+        
+        scaleLabel = new JLabel("Number of scales");
+        scaleLabel.setForeground(Color.black);
+        scaleLabel.setFont(serif12);
+        scaleLabel.setEnabled(true);
+        
+        scaleText = new JTextField(10);
+        scaleText.setText("4");
+        scaleText.setFont(serif12);
+        scaleText.setEnabled(true);
+        
+        noiseLabel = new JLabel("Noise standard deviation");
+        noiseLabel.setForeground(Color.black);
+        noiseLabel.setFont(serif12);
+        noiseLabel.setEnabled(true);
+        
+        noiseText = new JTextField(10);
+        noiseText.setText("1.0");
+        noiseText.setFont(serif12);
+        noiseText.setEnabled(true);
+        
+        noiseGroup = new ButtonGroup();
+        whiteButton = new JRadioButton("Use white noise", true);
+        whiteButton.setFont(serif12);
+        whiteButton.setForeground(Color.black);
+        noiseGroup.add(whiteButton);
+        
+        psdButton = new JRadioButton("Use power spectral density", false);
+        psdButton.setFont(serif12);
+        psdButton.setForeground(Color.black);
+        noiseGroup.add(psdButton);
 
-        labelFU = new JLabel("Prerotation horizontal frequency -1.0 to 1.0 ");
-        labelFU.setForeground(Color.black);
-        labelFU.setFont(serif12);
-        labelFU.setEnabled(true);
-
-        textFU = new JTextField(10);
-        freqU = image.getFreqU();
-        textFU.setText(String.valueOf(freqU));
-        textFU.setFont(serif12);
-        textFU.setEnabled(true);
-
-        labelFV = new JLabel("Prerotation vertical frequency -1.0 to 1.0 ");
-        labelFV.setForeground(Color.black);
-        labelFV.setFont(serif12);
-        labelFV.setEnabled(true);
-
-        textFV = new JTextField(10);
-        freqV = image.getFreqV();
-        textFV.setText(String.valueOf(freqV));
-        textFV.setFont(serif12);
-        textFV.setEnabled(true);
-
-        labelSU = new JLabel("Prerotation horizontal standard deviation > 0.0 ");
-        labelSU.setForeground(Color.black);
-        labelSU.setFont(serif12);
-        labelSU.setEnabled(true);
-
-        textSU = new JTextField(10);
-        sigmaU = image.getSigmaU();
-        textSU.setText(String.valueOf(sigmaU));
-        textSU.setFont(serif12);
-        textSU.setEnabled(true);
-
-        labelSV = new JLabel("Prerotation vertical standard deviation > 0.0 ");
-        labelSV.setForeground(Color.black);
-        labelSV.setFont(serif12);
-        labelSV.setEnabled(true);
-
-        textSV = new JTextField(10);
-        sigmaV = image.getSigmaV();
-        textSV.setText(String.valueOf(sigmaV));
-        textSV.setFont(serif12);
-        textSV.setEnabled(true);
-
-        labelTheta = new JLabel("Rotation angle in degrees ");
-        labelTheta.setForeground(Color.black);
-        labelTheta.setFont(serif12);
-        labelTheta.setEnabled(true);
-
-        textTheta = new JTextField(10);
-        theta = (float) (image.getTheta() * 180.0 / Math.PI);
-        textTheta.setText(String.valueOf(theta));
-        textTheta.setFont(serif12);
-        textTheta.setEnabled(true);
-
-        createGaborCheckBox = new JCheckBox("Create an image of the Gabor filter");
-        createGaborCheckBox.setFont(serif12);
-        createGaborCheckBox.setForeground(Color.black);
-        createGaborCheckBox.setSelected(true);
-        createGaborCheckBox.setEnabled(true);
+        localXLabel = new JLabel("Local neighborhood X (odd number)");
+        localXLabel.setForeground(Color.black);
+        localXLabel.setFont(serif12);
+        localXLabel.setEnabled(true);
+        
+        localXText = new JTextField(10);
+        localXText.setText("3");
+        localXText.setFont(serif12);
+        localXText.setEnabled(true);
+        
+        localYLabel = new JLabel("Local neighborhood Y (odd number)");
+        localYLabel.setForeground(Color.black);
+        localYLabel.setFont(serif12);
+        localYLabel.setEnabled(true);
+        
+        localYText = new JTextField(10);
+        localYText.setText("3");
+        localYText.setFont(serif12);
+        localYText.setEnabled(true);
+        
+        parentCheckBox = new JCheckBox("Use parent");
+        parentCheckBox.setFont(serif12);
+        parentCheckBox.setForeground(Color.black);
+        parentCheckBox.setSelected(true);
+        parentCheckBox.setEnabled(true);
+        
+        boundaryCheckBox = new JCheckBox("Use boundary");
+        boundaryCheckBox.setFont(serif12);
+        boundaryCheckBox.setForeground(Color.black);
+        boundaryCheckBox.setSelected(true);
+        boundaryCheckBox.setEnabled(true);
+        
+        covarianceCheckBox = new JCheckBox("Include covariance in GSM model");
+        covarianceCheckBox.setFont(serif12);
+        covarianceCheckBox.setForeground(Color.black);
+        covarianceCheckBox.setSelected(true);
+        covarianceCheckBox.setEnabled(true);
+        
+        optimizeCheckBox = new JCheckBox("Optimize");
+        optimizeCheckBox.setFont(serif12);
+        optimizeCheckBox.setForeground(Color.black);
+        optimizeCheckBox.setSelected(true);
+        optimizeCheckBox.setEnabled(true);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
         gbc.weightx = .5;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        filterPanel.add(labelFU, gbc);
-        gbc.gridx = 1;
-        filterPanel.add(textFU, gbc);
-        gbc.gridx = 0;
+        filterPanel.add(orthogonalButton, gbc);
         gbc.gridy = 1;
-        filterPanel.add(labelFV, gbc);
-        gbc.gridx = 1;
-        filterPanel.add(textFV, gbc);
-        gbc.gridx = 0;
+        filterPanel.add(undecimatedButton, gbc);
         gbc.gridy = 2;
-        filterPanel.add(labelSU, gbc);
-        gbc.gridx = 1;
-        filterPanel.add(textSU, gbc);
-        gbc.gridx = 0;
+        filterPanel.add(steerableButton, gbc);
         gbc.gridy = 3;
-        filterPanel.add(labelSV, gbc);
-        gbc.gridx = 1;
-        filterPanel.add(textSV, gbc);
-        gbc.gridx = 0;
+        filterPanel.add(fullButton, gbc);
         gbc.gridy = 4;
-        filterPanel.add(labelTheta, gbc);
-        gbc.gridx = 1;
-        filterPanel.add(textTheta, gbc);
-        gbc.gridx = 0;
+        filterPanel.add(comboBoxFilter, gbc);
         gbc.gridy = 5;
-        filterPanel.add(createGaborCheckBox, gbc);
+        filterPanel.add(orientLabel, gbc);
+        gbc.gridx = 1;
+        filterPanel.add(orientText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 6;
+        filterPanel.add(scaleLabel, gbc);
+        gbc.gridx = 1;
+        filterPanel.add(scaleText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 7;
+        filterPanel.add(noiseLabel, gbc);
+        gbc.gridx = 1;
+        filterPanel.add(noiseText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 8;
+        filterPanel.add(whiteButton, gbc);
+        gbc.gridy = 9;
+        filterPanel.add(psdButton, gbc);
+        gbc.gridy = 10;
+        filterPanel.add(localXLabel, gbc);
+        gbc.gridx = 1;
+        filterPanel.add(localXText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 11;
+        filterPanel.add(localYLabel, gbc);
+        gbc.gridx = 1;
+        filterPanel.add(localYText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 12;
+        filterPanel.add(parentCheckBox, gbc);
+        gbc.gridy = 13;
+        filterPanel.add(boundaryCheckBox, gbc);
+        gbc.gridy = 14;
+        filterPanel.add(covarianceCheckBox, gbc);
+        gbc.gridy = 15;
+        filterPanel.add(optimizeCheckBox, gbc);
 
         destinationPanel = new JPanel(new GridLayout(2, 1));
         destinationPanel.setForeground(Color.black);
@@ -669,59 +789,125 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
         }
-
-        tmpStr = textFU.getText();
-
-        if (testParameter(tmpStr, -1.0, 1.0)) {
-            freqU = Float.valueOf(tmpStr).floatValue();
+        
+        if (orthogonalButton.isSelected()) {
+            method = ORTHOGONAL_WAVELET;
+        }
+        else if (undecimatedButton.isSelected()) {
+            method = UNDECIMATED_ORTHOGONAL_WAVELET;
+        }
+        else if (steerableButton.isSelected()) {
+            method = STEERABLE_PYRAMID;
+        }
+        else if (fullButton.isSelected()){
+            method = FULL_STEERABLE_PYRAMID;
+        }
+        
+        tmpStr = (String)comboBoxFilter.getSelectedItem();
+        if (tmpStr.equals("Daubechies 1")) {
+            filter = DAUB1;
+        }
+        else if (tmpStr.equals("Daubechies 2")) {
+            filter = DAUB2;
+        }
+        else if (tmpStr.equals("Daubechies 3")) {
+            filter = DAUB3;
+        }
+        else if (tmpStr.equals("Daubechies 4")) {
+            filter = DAUB4;
+        }
+        else if (tmpStr.equals("Quadrature Mirror Filter 5")) {
+            filter = QMF5;
+        }
+        else if (tmpStr.equals("Quadrature Mirror Filter 8")) {
+            filter = QMF8;
+        }
+        else if (tmpStr.equals("Quadrature Mirror Filter 9")) {
+            filter = QMF9;
+        }
+        else if (tmpStr.equals("Quadrature Mirror Filter 12")) {
+            filter = QMF12;
+        }
+        else if (tmpStr.equals("Quadrature Mirror Filter 13")) {
+            filter = QMF13;
+        }
+        else if (tmpStr.equals("Quadrature Mirror Filter 16")) {
+            filter = QMF16;
+        }
+        
+        tmpStr = orientText.getText();
+        if (testParameter(tmpStr, 1, 100)) {
+            nOrientations = Integer.valueOf(tmpStr).intValue();
         } else {
-            MipavUtil.displayError("Horizontal frequency must be between -1.0 and 1.0");
-            textFU.requestFocus();
-            textFU.selectAll();
-
+            MipavUtil.displayError("Number of orientations must be between 1 and 100");
+            orientText.requestFocus();
+            orientText.selectAll();
             return false;
         }
-
-        tmpStr = textFV.getText();
-
-        if (testParameter(tmpStr, -1.0, 1.0)) {
-            freqV = Float.valueOf(tmpStr).floatValue();
+        
+        tmpStr = scaleText.getText();
+        if (testParameter(tmpStr, 1, 20)) {
+            nScales = Integer.valueOf(tmpStr).intValue();
         } else {
-            MipavUtil.displayError("Vertical frequency must be between -1.0 and 1.0");
-            textFV.requestFocus();
-            textFV.selectAll();
-
+            MipavUtil.displayError("Number of scales must be between 1 and 20");
+            scaleText.requestFocus();
+            scaleText.selectAll();
             return false;
         }
-
-        tmpStr = textSU.getText();
-
-        if (testParameter(tmpStr, 1.0E-6, 1.0E6)) {
-            sigmaU = Float.valueOf(tmpStr).floatValue();
+        
+        tmpStr = noiseText.getText();
+        if (testParameter(tmpStr, 0.0, 1.0E8)) {
+            sig = Float.valueOf(tmpStr).floatValue();
         } else {
-            MipavUtil.displayError("Horizontal standard deviation must be between 1.0E-6 and 1.0e6");
-            textSU.requestFocus();
-            textSU.selectAll();
-
+            MipavUtil.displayError("Noise standard deviation must be between 0.0 and 1.0E8");
+            noiseText.requestFocus();
+            noiseText.selectAll();
             return false;
         }
-
-        tmpStr = textSV.getText();
-
-        if (testParameter(tmpStr, 1.0E-6, 1.0E6)) {
-            sigmaV = Float.valueOf(tmpStr).floatValue();
+        
+        tmpStr = localXText.getText();
+        if (testParameter(tmpStr, 1, image.getExtents()[0])) {
+            blockSizeX = Integer.valueOf(tmpStr).intValue();
         } else {
-            MipavUtil.displayError("Vertical standard deviation must be between 1.0E-6 and 1.0E6");
-            textSV.requestFocus();
-            textSV.selectAll();
-
+            MipavUtil.displayError("Local neighborhood X must be between 1 and " +
+                                    image.getExtents()[0]);
+            localXText.requestFocus();
+            localXText.selectAll();
             return false;
         }
+        if ((blockSizeX % 2) == 0) {
+            MipavUtil.displayError("Local neighborhood X must be an odd number");
+            localXText.requestFocus();
+            localXText.selectAll();
+            return false;    
+        }
+        
+        tmpStr = localYText.getText();
+        if (testParameter(tmpStr, 1, image.getExtents()[1])) {
+            blockSizeY = Integer.valueOf(tmpStr).intValue();
+        } else {
+            MipavUtil.displayError("Local neighborhood Y must be between 1 and " +
+                                    image.getExtents()[1]);
+            localYText.requestFocus();
+            localYText.selectAll();
+            return false;
+        }
+        if ((blockSizeY % 2) == 0) {
+            MipavUtil.displayError("Local neighborhood Y must be an odd number");
+            localYText.requestFocus();
+            localYText.selectAll();
+            return false;    
+        }
 
-        tmpStr = textTheta.getText();
-        theta = (float) (Float.valueOf(tmpStr).floatValue() * Math.PI / 180.0);
-
-        createGabor = createGaborCheckBox.isSelected();
+        usePSD = psdButton.isSelected();
+        
+        useParent = parentCheckBox.isSelected();
+        
+        useBoundary = boundaryCheckBox.isSelected();
+        
+        includeCovar = covarianceCheckBox.isSelected();
+        
+        optimize = optimizeCheckBox.isSelected();
 
         return true;
     }
