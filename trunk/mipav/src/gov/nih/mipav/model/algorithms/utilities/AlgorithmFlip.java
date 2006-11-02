@@ -5,8 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
-
 import java.io.*;
 
 
@@ -104,203 +102,105 @@ public class AlgorithmFlip extends AlgorithmBase {
      *                  is to processed independently then nImages equals the number of images in the volume.
      */
     private void calcInPlace(int nImages) {
-        int x, y, j, index, s;
-        int length, totalLength;
-        int start;
-        float[] buffer;
-        float[] resultBuffer;
-        int xDim = srcImage.getExtents()[0];
-        int yDim = srcImage.getExtents()[1];
-        int cf;
+        int slice;
+        float[] sliceBuffer;
+        float[] sliceBufferTemp = null;
+        int buffFactor;
         boolean logMagDisplay = false;
 
         try {
 
             if (srcImage.isColorImage()) {
-                cf = 4;
+                buffFactor = 4;
             } else if ((srcImage.getType() == ModelStorageBase.COMPLEX) ||
                            (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
-                cf = 2;
+                buffFactor = 2;
                 logMagDisplay = srcImage.getLogMagDisplay();
             } else {
-                cf = 1;
+                buffFactor = 1;
             }
 
-            length = cf * srcImage.getSliceSize();
-            totalLength = length * nImages;
-            buffer = new float[length];
-            resultBuffer = new float[length * nImages];
+            slice = buffFactor * srcImage.getSliceSize();
+            sliceBuffer = new float[slice];
             fireProgressStateChanged(srcImage.getImageName(), "Flipping image ...");
         } catch (OutOfMemoryError e) {
-            buffer = null;
-            resultBuffer = null;
             System.gc();
             displayError("Algorithm Flip: Out of memory");
             setCompleted(false);
-            
-
             return;
         }
 
-        int mod = totalLength / 10; // mod is 10 percent of length
-        
+        int mod = nImages / 10; // mod is 10 percent of length
 
-        for (s = 0; (s < nImages) && !threadStopped; s++) {
-            start = s * length;
-
-            try {
-                srcImage.exportData(start, length, buffer); // locks and releases lock
-            } catch (IOException error) {
-                displayError("Algorithm Flip: Image(s) locked");
-                setCompleted(false);
-                
-
-                return;
-            }
-
-            if (cf == 1) {
-
-                if (flipAxis == Y_AXIS) {
-
-                    for (y = 0; (y < yDim) && !threadStopped; y++) {
-
-                        for (x = 0; (x < xDim) && !threadStopped; x++) {
-                            index = ((y * xDim) + x);
-
-                            if ((((start + index) % mod) == 0)) {
-                                fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) * 100));
-                            }
-
-                            resultBuffer[start + index] = buffer[(y * xDim) + (xDim - 1 - x)];
-                        }
-                    }
-                } else if (flipAxis == X_AXIS) {
-
-                    for (y = 0; (y < yDim) && !threadStopped; y++) {
-
-                        for (x = 0; (x < xDim) && !threadStopped; x++) {
-                            index = ((y * xDim) + x);
-
-                            if ((((start + index) % mod) == 0)) {
-                                fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) * 100));
-                            }
-
-                            resultBuffer[start + index] = buffer[((yDim - 1 - y) * xDim) + x];
-                        }
-                    }
-                } else {
-                    for (y = 0; (y < yDim) && !threadStopped; y++) {
-
-                        for (x = 0; (x < xDim) && !threadStopped; x++) {
-                            index = ( (y * xDim) + x);
-                            resultBuffer[((nImages - 1)*length) - start + index] = buffer[index];
-                        }
-                    }
-                }
-            } // end of if (cf == 1)
-            else { // cf == 2 or 4
-
-                if (flipAxis == Y_AXIS) {
-
-                    for (y = 0; (y < yDim) && !threadStopped; y++) {
-
-                        for (x = 0; (x < xDim) && !threadStopped; x++) {
-
-                            for (j = 0; (j < cf) && !threadStopped; j++) {
-                                index = ((cf * y * xDim) + (cf * x) + j);
-
-                                if ((((start + index) % mod) == 0)) {
-                                    fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) *
-                                                                           100));
-                                }
-
-                                resultBuffer[start + index] = buffer[(cf * y * xDim) + (cf * (xDim - 1 - x)) + j];
-                            }
-                        }
-                    }
-                } else if (flipAxis == X_AXIS) {
-
-                    for (y = 0; (y < yDim) && !threadStopped; y++) {
-
-                        for (x = 0; (x < xDim) && !threadStopped; x++) {
-
-                            for (j = 0; (j < cf) && !threadStopped; j++) {
-                                index = ((cf * y * xDim) + (cf * x) + j);
-
-                                if ((((start + index) % mod) == 0)) {
-                                    fireProgressStateChanged(Math.round((float) (start + index) / (totalLength - 1) *
-                                                                           100));
-                                }
-
-                                resultBuffer[start + index] = buffer[(cf * (yDim - 1 - y) * xDim) + (cf * x) + j];
-                            }
-                        }
-                    }
-                } else {
-                    for (y = 0; (y < yDim) && !threadStopped; y++) {
-
-                        for (x = 0; (x < xDim) && !threadStopped; x++) {
-
-                            for (j = 0; (j < cf) && !threadStopped; j++) {
-                                index = ( (cf * y * xDim) + (cf * x) + j);
-                                resultBuffer[((nImages - 1)*length) - start + index] = buffer[index];
-                            }
-                        }
-                    }
-                }
-
-            } // end of else for cf == 2 or 4
-        }
-
-        if (threadStopped) {
-            buffer = null;
-            resultBuffer = null;
-            finalize();
-
-            return;
-        }
-
-        try {
-
-            if (cf == 2) {
-                srcImage.importData(0, resultBuffer, false);
-            } else {
-                srcImage.importData(0, resultBuffer, true);
-            }
-        } catch (IOException error) {
-            resultBuffer = null;
-            buffer = null;
-            displayError("Algorithm Flip: Image(s) locked");
-            setCompleted(false);
-            
-
-            return;
-        } catch (OutOfMemoryError e) {
-            resultBuffer = null;
-            buffer = null;
-            System.gc();
-            displayError("Algorithm Flip: Out of memory");
-            setCompleted(false);
-            
-
-            return;
-        }
-
-        if (cf == 2) {
-            srcImage.setLogMagDisplay(logMagDisplay);
-            srcImage.calcMinMaxMag(logMagDisplay);
-        }
-
-        FileInfoBase[] fileInfo = srcImage.getFileInfo();
-
+        /* axisOrder is always the default: (no coordinate axis remapping) */
+        int[] axisOrder = { 0, 1, 2 };
+        /* axisFlip depends on flipAxis: */
+        boolean[] axisFlip = { false, false, false };
+        int index = 2;
         if (flipAxis == Y_AXIS) {
             index = 0;
         } else if (flipAxis == X_AXIS) {
             index = 1;
-        } else {
-            index = 2;
+        }
+        axisFlip[index] = true;
+
+        int tDim = 1;
+        int volume = 1;
+        int zDim = 1;
+        if (srcImage.getNDims() == 4) {
+            zDim = srcImage.getExtents()[2];
+            tDim = srcImage.getExtents()[3];
+            volume = slice * zDim;
+        }
+        else if (srcImage.getNDims() == 3) {
+            zDim = srcImage.getExtents()[2];
         }
 
+        /* If flipping the z-axis, then loop 1/2 the times and swap the z slices... */
+        if ( index == 2 )
+        {
+            zDim /= 2;
+            sliceBufferTemp = new float[slice];
+        }
+
+        /* For each slice: */
+        for (int t = 0; (t < tDim) && !threadStopped; t++) {
+            for (int z = 0; (z < zDim) && !threadStopped; z++) {
+                if ((((t * zDim + z) % mod) == 0)) {
+                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / (nImages - 1) * 100));
+                }
+
+                try {
+                    srcImage.export( axisOrder, axisFlip, t, z, sliceBuffer);
+                    if ( index == 2 )
+                    {
+                        int zTemp = (srcImage.getExtents()[2] - 1 - z);
+                        srcImage.export( axisOrder, axisFlip, t, zTemp, sliceBufferTemp);
+                        srcImage.importData(t * volume + zTemp * slice, sliceBufferTemp, false);
+                    }
+                    srcImage.importData(t * volume + z * slice, sliceBuffer, false);
+                } catch (IOException error) {
+                    displayError("AlgorithmSubset reports: Destination image already locked.");
+                    setCompleted(false);
+                    return;
+                }
+            }
+        }
+
+        if (threadStopped) {
+            sliceBuffer = null;
+            sliceBufferTemp = null;
+            finalize();
+            return;
+        }
+
+        if (buffFactor == 2) {
+            srcImage.setLogMagDisplay(logMagDisplay);
+            srcImage.calcMinMaxMag(logMagDisplay);
+        }
+
+        /* Update FileInfo for mapping into DICOM space: */
+        FileInfoBase[] fileInfo = srcImage.getFileInfo();
         float loc = fileInfo[0].getOrigin(index);
         int orient = fileInfo[0].getAxisOrientation(index);
 
@@ -310,14 +210,11 @@ public class AlgorithmFlip extends AlgorithmBase {
         } else {
             loc = loc + ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
         }
-
         orient = FileInfoBase.oppositeOrient(orient);
-
         for (int i = 0; i < fileInfo.length; i++) {
             fileInfo[i].setAxisOrientation(orient, index);
             fileInfo[i].setOrigin(loc, index);
         }
-
         
         setCompleted(true);
     }
