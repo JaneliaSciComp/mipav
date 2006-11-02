@@ -2,16 +2,11 @@ package gov.nih.mipav.model.algorithms;
 
 
 import gov.nih.mipav.*;
-
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
 import gov.nih.mipav.view.*;
-
 import java.io.*;
-
 import java.util.*;
-
 import javax.vecmath.*;
 
 
@@ -25,18 +20,20 @@ import javax.vecmath.*;
      Oxford Centre for Functional Magnetic Resonance Imaging of the Brain<br>
  * </pre>
  *
- * See the document BrainExtraction.pdf for a detailed description of the algorithm as implemented in this class. A few
- * modifications to the original algorithm were made.
- *
+ * <p>See the document BrainExtraction.pdf for a detailed description of the algorithm as implemented in this class. A
+ * few modifications to the original algorithm were made.</p>
  */
 public class AlgorithmBrainExtractor extends AlgorithmBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** Indicates that the image is in Sagittal or Coronal orientation */
+    /** Indicates that the image is in Sagittal or Coronal orientation. */
     public static final int SAT_COR = 0;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** Controls how much the image influences the surface evolution. */
+    protected float imageFactor = 0.08f;
 
     /** Stores curvature information of the surface. */
     protected float[] m_afCurvature;
@@ -44,7 +41,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** Triangle edge length. */
     protected float[] m_afLength;
 
-    /** Surface triangle connection  */
+    /** Surface triangle connection. */
     protected int[] m_aiConnect;
 
     /** The 3D MRI image stored as a 1D array. The mapping from (x,y,z) to 1D is: index = x + xbound*(y + ybound*z). */
@@ -56,26 +53,20 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** Surface adjacentcy list. */
     protected UnorderedSetInt[] m_akAdjacent;
 
-    /** Surface normals */
+    /** Surface normals. */
     protected Vector3f[] m_akSNormal;
 
-    /** Surface tangents */
+    /** Surface tangents. */
     protected Vector3f[] m_akSTangent;
 
     /** Surface vertex list. */
     protected Point3f[] m_akVertex;
 
-    /** Average vector */
+    /** Average vector. */
     protected Point3f[] m_akVMean;
 
-    /** Vertex normal */
+    /** Vertex normal. */
     protected Vector3f[] m_akVNormal;
-
-    /** Factored used to adjust image influence - this is a fixed value.  */
-    private float m_fBrainSelection;
-
-    /** Controls how much the image influences the surface evolution. */
-    protected float imageFactor = 0.08f;
 
     /** DOCUMENT ME! */
     protected float m_fEParam, m_fFParam;
@@ -101,13 +92,13 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** The size of a voxel, in voxel units. */
     protected float m_fXDelta, m_fYDelta, m_fZDelta;
 
-    /** Backgroung threshold */
+    /** Backgroung threshold. */
     protected int m_iBackThreshold;
 
-    /** High threshold */
+    /** High threshold. */
     protected int m_iBrightThreshold;
 
-    /** Dilation size used in generating boundary from the surface */
+    /** Dilation size used in generating boundary from the surface. */
     protected int m_iDMax;
 
     /** The length of the vector _normal_ to the surface to sample along. */
@@ -135,7 +126,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     protected Point3f m_kCenter = new Point3f();
 
     /** Edge map. */
-    protected HashMap m_kEMap; // map<Edge,int>
+    protected HashMap m_kEMap; 
 
     /** Used to rotate the initial mesh into the same orientation as the data. */
     protected Matrix3f m_kRotate;
@@ -152,8 +143,6 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** factor above median at which edge values are taken to zero. */
     private float aboveMedian = 1.5f;
 
-    /** Description the axis orientations of the image. */
-    private int[] axisOrientation;
 
     /** DOCUMENT ME! */
     private float[] box;
@@ -167,8 +156,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /** Factor used in controlling the input of the tangetial component of the surface evolution. */
     private float fUpdate1 = 0.5f;
 
-    /** Reference to the source image. */
-    private ModelImage image;
+    /** Factored used to adjust image influence - this is a fixed value. */
+    private float m_fBrainSelection;
 
     /** The number of voxels that define the brain. */
     private int nBrainVoxels = 0;
@@ -193,11 +182,11 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
     /**
      * Create an extractor for segmenting the brain from a 3D magnetic resonance image.
      *
-     * @param  srcImg          The source image. Should be MR image of the brain
-     * @param  orientation     Image orienation
-     * @param  runOneIteration Run one iteration so that one can observe initial surface location.
-     * @param  estimateSphere  Use sphere as the initial surface to be evolved.
-     * @param  centerPoint     The center of the initial ellipsoid or sphere.
+     * @param  srcImg           The source image. Should be MR image of the brain
+     * @param  orientation      Image orienation
+     * @param  runOneIteration  Run one iteration so that one can observe initial surface location.
+     * @param  estimateSphere   Use sphere as the initial surface to be evolved.
+     * @param  centerPoint      The center of the initial ellipsoid or sphere.
      */
     public AlgorithmBrainExtractor(ModelImage srcImg, int orientation, boolean runOneIteration, boolean estimateSphere,
                                    Point3f centerPoint) {
@@ -231,12 +220,13 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         box[0] = (m_iXBound - 1) * m_fXDelta;
         box[1] = (m_iYBound - 1) * m_fYDelta;
         box[2] = (m_iZBound - 1) * m_fZDelta;
-
+        
+        
+        srcImage = srcImg;
         /* Read the direction vector from the MipavCoordinateSystems class: */
-        direction = MipavCoordinateSystems.getModelDirections( srcImage );
+        direction = MipavCoordinateSystems.getModelDirections(srcImg);
 
         startLocation = srcImg.getFileInfo()[0].getOrigin();
-        image = srcImg;
 
         // The histogram analysis is best performed by binning into 8-bit
         // data.  The image term in the evolution scheme depends only on a
@@ -335,7 +325,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         imageFactor = 0.1f;
         m_fStiffness = 0.2f;
 
-        fireProgressStateChanged(image.getImageName(), "Extracting brain ...");
+        fireProgressStateChanged(srcImage.getImageName(), "Extracting brain ...");
 
 
         if (runOneIter == true) {
@@ -345,6 +335,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         }
 
         for (int iStep = 1; (iStep <= iMaxStep) && !threadStopped; iStep++) {
+
             if (secondStageErosion) {
                 fireProgressStateChanged(Math.round((iStep * 100.0f) / 800 * 25));
             } else {
@@ -453,7 +444,6 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             System.out.println(" Problem saving mesh.");
         }
 
-
         setCompleted(true);
     }
 
@@ -474,11 +464,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         m_akSTangent = null;
         m_afCurvature = null;
 
-        axisOrientation = null;
         direction = null;
         startLocation = null;
         box = null;
-        image = null;
         m_aiImage = null;
         m_aiMask = null;
 
@@ -709,14 +697,14 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         int iSubdivisions = 5; // 6 =  32K triangles
 
         // iSubdivisions = 6;
-        fMin = (float) image.getMin();
-        fMax = (float) image.getMax();
+        fMin = (float) srcImage.getMin();
+        fMax = (float) srcImage.getMax();
 
         // Remap image data to 0 - 1023
         float fMult = 1023.0f / (fMax - fMin);
 
         for (i = 0; i < m_iQuantity; i++) {
-            m_aiImage[i] = (int) (fMult * (image.getFloat(i) - fMin));
+            m_aiImage[i] = (int) (fMult * (srcImage.getFloat(i) - fMin));
         }
 
         // Based on empirical studies, these parameters seem to work well.
@@ -774,14 +762,14 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
      */
     public void runAlgorithm() {
 
-        if (image == null) {
+        if (srcImage == null) {
             displayError("Source Image is null");
             finalize();
 
             return;
         }
 
-        if (image.getNDims() != 3) {
+        if (srcImage.getNDims() != 3) {
             displayError("Source Image must be 3D");
             finalize();
 
@@ -972,9 +960,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         computeVertexNormals();
         computeVertexInformation();
 
-        int xDim = image.getExtents()[0] - 1;
-        int yDim = image.getExtents()[1] - 1;
-        int zDim = image.getExtents()[2] - 1;
+        int xDim = srcImage.getExtents()[0] - 1;
+        int yDim = srcImage.getExtents()[1] - 1;
+        int zDim = srcImage.getExtents()[2] - 1;
 
         // update the vertices
         for (int i = 0; i < m_iVQuantity; i++) {
@@ -1064,9 +1052,9 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                     if (iIntensity > m_iBackThreshold) {
 
                         // transform to ellipsoid coordinates
-                        float fX = ((float)(iX)) - m_kCenter.x;
-                        float fY = ((float)(iY)) - m_kCenter.y;
-                        float fZ = ((float)(iZ)) - m_kCenter.z;
+                        float fX = ((float) (iX)) - m_kCenter.x;
+                        float fY = ((float) (iY)) - m_kCenter.y;
+                        float fZ = ((float) (iZ)) - m_kCenter.z;
                         kP.x = (fX * m_kRotate.m00) + (fY * m_kRotate.m10) + (fZ * m_kRotate.m20);
                         kP.y = (fX * m_kRotate.m01) + (fY * m_kRotate.m11) + (fZ * m_kRotate.m21);
                         kP.z = (fX * m_kRotate.m02) + (fY * m_kRotate.m12) + (fZ * m_kRotate.m22);
@@ -1497,6 +1485,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         // E1 = 2*E0 + 3*T0
         // T1 = 4*T0
         m_iVQuantity = 6;
+
         int m_iEQuantity = 12;
         m_iTQuantity = 8;
 
@@ -1668,17 +1657,20 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         // rotate, scale, and translate sphere to get ellipsoid
         float resXFactor = m_fXDelta /
-                               (float) Math.sqrt((m_kRotate.m00 * m_kRotate.m00 * m_fXDelta * m_fXDelta) +
-                                                     (m_kRotate.m01 * m_kRotate.m01 * m_fYDelta * m_fYDelta) +
-                                                     (m_kRotate.m02 * m_kRotate.m02 * m_fZDelta * m_fZDelta));
+                               (float)
+                                   Math.sqrt((m_kRotate.m00 * m_kRotate.m00 * m_fXDelta * m_fXDelta) +
+                                                 (m_kRotate.m01 * m_kRotate.m01 * m_fYDelta * m_fYDelta) +
+                                                 (m_kRotate.m02 * m_kRotate.m02 * m_fZDelta * m_fZDelta));
         float resYFactor = m_fYDelta /
-                               (float) Math.sqrt((m_kRotate.m10 * m_kRotate.m10 * m_fXDelta * m_fXDelta) +
-                                                     (m_kRotate.m11 * m_kRotate.m11 * m_fYDelta * m_fYDelta) +
-                                                     (m_kRotate.m12 * m_kRotate.m12 * m_fZDelta * m_fZDelta));
+                               (float)
+                                   Math.sqrt((m_kRotate.m10 * m_kRotate.m10 * m_fXDelta * m_fXDelta) +
+                                                 (m_kRotate.m11 * m_kRotate.m11 * m_fYDelta * m_fYDelta) +
+                                                 (m_kRotate.m12 * m_kRotate.m12 * m_fZDelta * m_fZDelta));
         float resZFactor = m_fZDelta /
-                               (float) Math.sqrt((m_kRotate.m20 * m_kRotate.m20 * m_fXDelta * m_fXDelta) +
-                                                     (m_kRotate.m21 * m_kRotate.m21 * m_fYDelta * m_fYDelta) +
-                                                     (m_kRotate.m22 * m_kRotate.m22 * m_fZDelta * m_fZDelta));
+                               (float)
+                                   Math.sqrt((m_kRotate.m20 * m_kRotate.m20 * m_fXDelta * m_fXDelta) +
+                                                 (m_kRotate.m21 * m_kRotate.m21 * m_fYDelta * m_fYDelta) +
+                                                 (m_kRotate.m22 * m_kRotate.m22 * m_fZDelta * m_fZDelta));
 
         for (i = 0; i < m_iVQuantity; i++) {
             m_akVertex[i].x *= m_afLength[0];
@@ -1916,8 +1908,8 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         floodFill((int) fXC, (int) fYC, (int) fZC);
 
-        float fMin = (float) image.getMin();
-        float fMax = (float) image.getMax();
+        float fMin = (float) srcImage.getMin();
+        float fMax = (float) srcImage.getMax();
 
         if (extractPaint) {
             BitSet bitSet = new BitSet(m_aiMask.length);
@@ -1929,13 +1921,13 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
                 }
             }
 
-            image.setMask(bitSet);
+            srcImage.setMask(bitSet);
         } else {
 
             for (int m = 0; m < m_aiMask.length; m++) {
 
                 if (m_aiMask[m] == 0) {
-                    image.set(m, fMin);
+                    srcImage.set(m, fMin);
                 }
             }
         }
@@ -1973,7 +1965,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
 
             try {
-                image.exportData(0, m_iQuantity, buffer);
+                srcImage.exportData(0, m_iQuantity, buffer);
             } catch (IOException er) {
                 MipavUtil.displayError("AlgorithmBrainExtractor: IO error on image export data");
 
@@ -2183,7 +2175,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
             try {
 
-                image.importData(0, buffer, false);
+                srcImage.importData(0, buffer, false);
 
 
             } catch (IOException er) {
@@ -2215,7 +2207,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
             }
         }
 
-        image.calcMinMax();
+        srcImage.calcMinMax();
     }
 
     /**
@@ -2413,14 +2405,14 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
         float[] tCoord;
         int i;
 
-        String kName = image.getUserInterface().getDefaultDirectory() + image.getImageName() + "_brain.sur";
+        String kName = srcImage.getUserInterface().getDefaultDirectory() + srcImage.getImageName() + "_brain.sur";
 
-        if (image.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) {
+        if (srcImage.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) {
 
             // Get the DICOM transform that describes the transformation from
             // axial to this image orientation
-            dicomMatrix = (TransMatrix) (image.getMatrix().clone());
-            inverseDicomMatrix = (TransMatrix) (image.getMatrix().clone());
+            dicomMatrix = (TransMatrix) (srcImage.getMatrix().clone());
+            inverseDicomMatrix = (TransMatrix) (srcImage.getMatrix().clone());
             inverseDicomMatrix.invert();
             inverseDicomArray = inverseDicomMatrix.getMatrix();
             inverseDicomMatrix = null;
@@ -2490,7 +2482,7 @@ public class AlgorithmBrainExtractor extends AlgorithmBase {
 
         float fIMin = (float) m_iMedianIntensity;
         float fIMax = (float) m_iBackThreshold;
-        int iHalfMaxDepth = m_iMaxDepth/2;
+        int iHalfMaxDepth = m_iMaxDepth / 2;
 
         // TO DO.  The ray depth should be in millimeters, not voxel units.
         // For now I'll just use the value as specified.  Later I need to
