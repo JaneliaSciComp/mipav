@@ -27,44 +27,80 @@ import javax.swing.*;
 public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
-    private static final int ORTHOGONAL_WAVELET = 1;
-    
-    private static final int UNDECIMATED_ORTHOGONAL_WAVELET = 2;
-    
-    private static final int STEERABLE_PYRAMID = 3;
-    
-    private static final int FULL_STEERABLE_PYRAMID = 4;
-    
-    // Possible repres2 values
-    private static final int NONE = 0;
-    
-    private static final int HAAR = 1; // Haar wavelet
-    
-    // Symmetric quadrature mirror filters
-    private static final int QMF5 = 2;
-    
-    private static final int QMF8 = 3;
-    
-    private static final int QMF9 = 4;
-    
-    private static final int QMF12 = 5;
-    
-    private static final int QMF13 = 6;
-    
-    private static final int QMF16 = 7;
-    
-    // Daubechies wavelet
-    private static final int DAUB1 = 8;
-    
-    private static final int DAUB2 = 9;
-    
-    private static final int DAUB3 = 10;
-    
-    private static final int DAUB4 = 11;
+
     /** Use serialVersionUID for interoperability. */
-    //private static final long serialVersionUID = -7693130193527088045L;
+    private static final long serialVersionUID = -8519961604071482971L;
+
+    /** DOCUMENT ME! */
+    private static final int ORTHOGONAL_WAVELET = 1;
+
+    /** DOCUMENT ME! */
+    private static final int UNDECIMATED_ORTHOGONAL_WAVELET = 2;
+
+    /** DOCUMENT ME! */
+    private static final int STEERABLE_PYRAMID = 3;
+
+    /** DOCUMENT ME! */
+    private static final int FULL_STEERABLE_PYRAMID = 4;
+
+    /** Possible repres2 values. */
+    private static final int NONE = 0;
+
+    /** DOCUMENT ME! */
+    private static final int HAAR = 1; // Haar wavelet
+
+    /** Symmetric quadrature mirror filters. */
+    private static final int QMF5 = 2;
+
+    /** DOCUMENT ME! */
+    private static final int QMF8 = 3;
+
+    /** DOCUMENT ME! */
+    private static final int QMF9 = 4;
+
+    /** DOCUMENT ME! */
+    private static final int QMF12 = 5;
+
+    /** DOCUMENT ME! */
+    private static final int QMF13 = 6;
+
+    /** DOCUMENT ME! */
+    private static final int QMF16 = 7;
+
+    /** Daubechies wavelet. */
+    private static final int DAUB1 = 8;
+
+    /** DOCUMENT ME! */
+    private static final int DAUB2 = 9;
+
+    /** DOCUMENT ME! */
+    private static final int DAUB3 = 10;
+
+    /** DOCUMENT ME! */
+    private static final int DAUB4 = 11;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** DOCUMENT ME! */
+    private int blockSizeX = 3;
+
+    /** DOCUMENT ME! */
+    private int blockSizeY = 3;
+
+    /** DOCUMENT ME! */
+    private JCheckBox boundaryCheckBox;
+
+    /** DOCUMENT ME! */
+    private JComboBox comboBoxFilter;
+
+    /** DOCUMENT ME! */
+    private JCheckBox covarianceCheckBox;
+
+    /** DOCUMENT ME! */
+    private AlgorithmDenoisingBLS_GSM deAlgo = null;
+
+    /** Use serialVersionUID for interoperability. */
+    // private static final long serialVersionUID = -7693130193527088045L;
     /** DOCUMENT ME! */
     private ButtonGroup destinationGroup;
 
@@ -75,19 +111,79 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     private int displayLoc; // Flag indicating if a new image is to be generated
 
     /** DOCUMENT ME! */
+    private int filter = QMF9;
+
+    /** DOCUMENT ME! */
     private JPanel filterPanel;
 
     /** DOCUMENT ME! */
-    private AlgorithmDenoisingBLS_GSM deAlgo = null;
+    private JRadioButton fullButton;
 
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
     /** DOCUMENT ME! */
+    private boolean includeCovar = true;
+
+    /** DOCUMENT ME! */
+    private JLabel localXLabel;
+
+    /** DOCUMENT ME! */
+    private JTextField localXText;
+
+    /** DOCUMENT ME! */
+    private JLabel localYLabel;
+
+    /** DOCUMENT ME! */
+    private JTextField localYText;
+
+    /** DOCUMENT ME! */
     private JPanel mainPanel;
 
     /** DOCUMENT ME! */
+    private int method = ORTHOGONAL_WAVELET;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup methodGroup;
+
+    /** DOCUMENT ME! */
     private JRadioButton newImage;
+
+    /** DOCUMENT ME! */
+    private ButtonGroup noiseGroup;
+
+    /** DOCUMENT ME! */
+    private JLabel noiseLabel;
+
+    /** DOCUMENT ME! */
+    private JTextField noiseText;
+
+    /** DOCUMENT ME! */
+    private int nOrientations = 3;
+
+    /** DOCUMENT ME! */
+    private int nScales = 4;
+
+    /** DOCUMENT ME! */
+    private boolean optimize = true;
+
+    /** DOCUMENT ME! */
+    private JCheckBox optimizeCheckBox;
+
+    /** DOCUMENT ME! */
+    private JLabel orientLabel;
+
+    /** DOCUMENT ME! */
+    private JTextField orientText;
+
+    /** DOCUMENT ME! */
+    private JRadioButton orthogonalButton;
+
+    /** DOCUMENT ME! */
+    private JCheckBox parentCheckBox;
+
+    /** DOCUMENT ME! */
+    private JRadioButton psdButton;
 
     /** DOCUMENT ME! */
     private JRadioButton replaceImage;
@@ -96,80 +192,37 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     private ModelImage resultImage = null; // result image
 
     /** DOCUMENT ME! */
+    private JLabel scaleLabel;
+
+    /** DOCUMENT ME! */
+    private JTextField scaleText;
+
+    /** DOCUMENT ME! */
+    private float sig = 1.0f;
+
+    /** DOCUMENT ME! */
+    private JRadioButton steerableButton;
+
+    /** DOCUMENT ME! */
     private String[] titles;
 
     /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-    
-    private float sig = 1.0f;
-    
-    private boolean usePSD = false;
-    
-    private int blockSizeX = 3;
-    
-    private int blockSizeY = 3;
-    
-    private boolean useParent = true;
-    
-    private boolean useBoundary = true;
-    
-    private int nScales = 4;
-    
-    private int nOrientations = 3;
-    
-    private boolean includeCovar = true;
-    
-    private boolean optimize = true;
-    
-    private int method = ORTHOGONAL_WAVELET;
-    
-    private int filter = QMF9;
-    
-    private ButtonGroup methodGroup;
-    
-    private JRadioButton orthogonalButton;
-    
     private JRadioButton undecimatedButton;
-    
-    private JRadioButton steerableButton;
-    
-    private JRadioButton fullButton;
-    
-    private JComboBox comboBoxFilter;
-    
-    private JLabel orientLabel;
-    
-    private JTextField orientText;
-    
-    private JLabel scaleLabel;
-    
-    private JTextField scaleText;
-    
-    private JLabel noiseLabel;
-    
-    private JTextField noiseText;
-    
-    private ButtonGroup noiseGroup;
-    
-    private JRadioButton psdButton;
-    
+
+    /** DOCUMENT ME! */
+    private boolean useBoundary = true;
+
+    /** DOCUMENT ME! */
+    private boolean useParent = true;
+
+    /** DOCUMENT ME! */
+    private boolean usePSD = false;
+
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
+
+    /** DOCUMENT ME! */
     private JRadioButton whiteButton;
-    
-    private JLabel localXLabel;
-    
-    private JTextField localXText;
-    
-    private JLabel localYLabel;
-    
-    private JTextField localYText;
-    
-    private JCheckBox parentCheckBox;
-    
-    private JCheckBox boundaryCheckBox;
-    
-    private JCheckBox covarianceCheckBox;
-    
-    private JCheckBox optimizeCheckBox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -213,9 +266,11 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
             dispose();
         } else if (source == helpButton) {
             MipavUtil.showHelp("");
-        } else if ((source == orthogonalButton) || (source == undecimatedButton) ||
-                   (source == steerableButton) || (source == fullButton)) {
+        } else if ((source == orthogonalButton) || (source == undecimatedButton) || (source == steerableButton) ||
+                       (source == fullButton)) {
+
             if (orthogonalButton.isSelected()) {
+
                 if (comboBoxFilter.getItemCount() != 9) {
                     comboBoxFilter.removeItemAt(0);
                     comboBoxFilter.insertItemAt("Quadrature Mirror Filter 5", 3);
@@ -226,18 +281,22 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                     comboBoxFilter.insertItemAt("Quadrature Mirror Filter 16", 8);
                     comboBoxFilter.setSelectedIndex(5);
                 } // if (comboBoxFilter.getItemCount() != 9)
+
                 comboBoxFilter.setEnabled(true);
                 orientText.setText("3");
                 orientLabel.setEnabled(false);
                 orientText.setEnabled(false);
             } // if (orthogonalButton.isSelected())
             else if (undecimatedButton.isSelected()) {
+
                 if (comboBoxFilter.getItemCount() != 4) {
                     comboBoxFilter.insertItemAt("Daubechies 1", 0);
+
                     for (i = 9; i >= 4; i--) {
                         comboBoxFilter.removeItemAt(i);
                     }
                 } // if (comboBoxFilter.getItemCount() != 4)
+
                 comboBoxFilter.setSelectedIndex(0);
                 comboBoxFilter.setEnabled(true);
                 orientText.setText("3");
@@ -250,7 +309,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                 orientLabel.setEnabled(true);
                 orientText.setEnabled(true);
             }
-        } 
+        }
     }
 
     // ************************************************************************
@@ -264,6 +323,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
      * @param  algorithm  Algorithm that caused the event.
      */
     public void algorithmPerformed(AlgorithmBase algorithm) {
+
         if (algorithm instanceof AlgorithmDenoisingBLS_GSM) {
 
             if ((algorithm.isCompleted() == true) && (resultImage != null)) {
@@ -289,7 +349,8 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame) (imageFrames.elementAt(i)));
+                        ((ViewJFrameBase) parentFrame).getUserInterface().registerFrame((Frame)
+                                                                                        (imageFrames.elementAt(i)));
                     }
                 }
 
@@ -324,111 +385,23 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     public ModelImage getResultImage() {
         return resultImage;
     }
-    
+
     /**
-     * {@inheritDoc}
+     * DOCUMENT ME!
+     *
+     * @param  blockSizeX  DOCUMENT ME!
      */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("noise_std_dev", sig));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("use_power_spectral_density", usePSD));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("local_neighborhood_x", blockSizeX));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("local_neighborhood_y", blockSizeY));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("use_parent", useParent));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("use_boundary", useBoundary));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_scales", nScales));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_orientations", nOrientations));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("include_covariance", includeCovar));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_optimize", optimize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("wavelet_method", method));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("wavelet_filter", filter));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
-            setDisplayLocNew();
-        } else {
-            setDisplayLocReplace();
-        }
-        
-        setSig(scriptParameters.getParams().getFloat("noise_std_dev"));
-        setUsePSD(scriptParameters.getParams().getBoolean("use_power_spectral_density"));
-        setBlockSizeX(scriptParameters.getParams().getInt("local_neighborhood_x"));
-        setBlockSizeY(scriptParameters.getParams().getInt("local_neighborhood_y"));
-        setUseParent(scriptParameters.getParams().getBoolean("use_parent"));
-        setUseBoundary(scriptParameters.getParams().getBoolean("use_boundary"));
-        setNScales(scriptParameters.getParams().getInt("number_of_scales"));
-        setNOrientations(scriptParameters.getParams().getInt("number_of_orientations"));
-        setIncludeCovar(scriptParameters.getParams().getBoolean("include_covariance"));
-        setOptimize(scriptParameters.getParams().getBoolean("do_optimize"));
-        setMethod(scriptParameters.getParams().getBoolean("wavelet_method"));
-        setFilter(scriptParameters.getParams().getBoolean("wavelet_filter"));
-    }
-    
-    public void setSig(float sig) {
-        this.sig = sig;
-    }
-    
-    public void setUsePSD(boolean usePSD) {
-        this.usePSD = usePSD;
-    }
-    
     public void setBlockSizeX(int blockSizeX) {
         this.blockSizeX = blockSizeX;
     }
-    
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  blockSizeY  DOCUMENT ME!
+     */
     public void setBlockSizeY(int blockSizeY) {
         this.blockSizeY = blockSizeY;
-    }
-    
-    public void setUseParent(boolean useParent) {
-        this.useParent = useParent;
-    }
-    
-    public void setUseBoundary(boolean useBoundary) {
-        this.useBoundary = useBoundary;
-    }
-    
-    public void setNScales(int nScales) {
-        this.nScales = nScales;
-    }
-    
-    public void setNOrientations(int nOrientations) {
-        this.nOrientations = nOrientations;
-    }
-    
-    public void setIncludeCovar(boolean includeCovar) {
-        this.includeCovar = includeCovar;
-    }
-    
-    public void setOptimize(boolean optimize) {
-        this.optimize = optimize;
-    }
-    
-    public void setMethod(int method) {
-        this.method = method;
-    }
-    
-    public void setFilter(int filter) {
-        this.filter = filter;
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
     }
 
     /**
@@ -446,7 +419,96 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         displayLoc = REPLACE;
     }
 
-    
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  filter  DOCUMENT ME!
+     */
+    public void setFilter(int filter) {
+        this.filter = filter;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  includeCovar  DOCUMENT ME!
+     */
+    public void setIncludeCovar(boolean includeCovar) {
+        this.includeCovar = includeCovar;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  method  DOCUMENT ME!
+     */
+    public void setMethod(int method) {
+        this.method = method;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  nOrientations  DOCUMENT ME!
+     */
+    public void setNOrientations(int nOrientations) {
+        this.nOrientations = nOrientations;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  nScales  DOCUMENT ME!
+     */
+    public void setNScales(int nScales) {
+        this.nScales = nScales;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  optimize  DOCUMENT ME!
+     */
+    public void setOptimize(boolean optimize) {
+        this.optimize = optimize;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  sig  DOCUMENT ME!
+     */
+    public void setSig(float sig) {
+        this.sig = sig;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  useBoundary  DOCUMENT ME!
+     */
+    public void setUseBoundary(boolean useBoundary) {
+        this.useBoundary = useBoundary;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  useParent  DOCUMENT ME!
+     */
+    public void setUseParent(boolean useParent) {
+        this.useParent = useParent;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  usePSD  DOCUMENT ME!
+     */
+    public void setUsePSD(boolean usePSD) {
+        this.usePSD = usePSD;
+    }
+
 
     /**
      * Once all the necessary variables are set, call the Frequency Filter algorithm based on what type of image this is
@@ -463,15 +525,15 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                 resultImage.resetVOIs();
 
                 // Make algorithm
-                deAlgo = new AlgorithmDenoisingBLS_GSM(resultImage, image, sig, usePSD, blockSizeX,
-                         blockSizeY, useParent, useBoundary, nScales, nOrientations, includeCovar,
-                         optimize, method, filter);
+                deAlgo = new AlgorithmDenoisingBLS_GSM(resultImage, image, sig, usePSD, blockSizeX, blockSizeY,
+                                                       useParent, useBoundary, nScales, nOrientations, includeCovar,
+                                                       optimize, method, filter);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
                 // This is made possible by implementing AlgorithmedPerformed interface
                 deAlgo.addListener(this);
-                
+
                 createProgressBar(image.getImageName(), deAlgo);
 
                 // Hide dialog since the algorithm is about to run
@@ -502,9 +564,9 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                deAlgo = new AlgorithmDenoisingBLS_GSM(resultImage, image, sig, usePSD, blockSizeX,
-                        blockSizeY, useParent, useBoundary, nScales, nOrientations, includeCovar,
-                        optimize, method, filter);
+                deAlgo = new AlgorithmDenoisingBLS_GSM(resultImage, image, sig, usePSD, blockSizeX, blockSizeY,
+                                                       useParent, useBoundary, nScales, nOrientations, includeCovar,
+                                                       optimize, method, filter);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
                 // notify this object when it has completed or failed. See algorithm performed event.
@@ -512,7 +574,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                 deAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), deAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -548,6 +610,66 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
     }
 
     /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.getParams().getBoolean(AlgorithmParameters.DO_OUTPUT_NEW_IMAGE)) {
+            setDisplayLocNew();
+        } else {
+            setDisplayLocReplace();
+        }
+
+        setSig(scriptParameters.getParams().getFloat("noise_std_dev"));
+        setUsePSD(scriptParameters.getParams().getBoolean("use_power_spectral_density"));
+        setBlockSizeX(scriptParameters.getParams().getInt("local_neighborhood_x"));
+        setBlockSizeY(scriptParameters.getParams().getInt("local_neighborhood_y"));
+        setUseParent(scriptParameters.getParams().getBoolean("use_parent"));
+        setUseBoundary(scriptParameters.getParams().getBoolean("use_boundary"));
+        setNScales(scriptParameters.getParams().getInt("number_of_scales"));
+        setNOrientations(scriptParameters.getParams().getInt("number_of_orientations"));
+        setIncludeCovar(scriptParameters.getParams().getBoolean("include_covariance"));
+        setOptimize(scriptParameters.getParams().getBoolean("do_optimize"));
+        setMethod(scriptParameters.getParams().getInt("wavelet_method"));
+        setFilter(scriptParameters.getParams().getInt("wavelet_filter"));
+
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(getResultImage(), (displayLoc == NEW));
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("noise_std_dev", sig));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_power_spectral_density", usePSD));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("local_neighborhood_x", blockSizeX));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("local_neighborhood_y", blockSizeY));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_parent", useParent));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("use_boundary", useBoundary));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_scales", nScales));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("number_of_orientations", nOrientations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("include_covariance", includeCovar));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_optimize", optimize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("wavelet_method", method));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("wavelet_filter", filter));
+    }
+
+    /**
      * Sets up the GUI (panels, buttons, etc) and displays it on the screen.
      */
     private void init() {
@@ -560,32 +682,32 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
 
         filterPanel = new JPanel(new GridBagLayout());
         filterPanel.setBorder(buildTitledBorder("Denoising Bayesian Least Squares Gray Scale Mixture"));
-        
+
         methodGroup = new ButtonGroup();
         orthogonalButton = new JRadioButton("Orthogonal wavelet", true);
         orthogonalButton.setFont(serif12);
         orthogonalButton.setForeground(Color.black);
         orthogonalButton.addActionListener(this);
         methodGroup.add(orthogonalButton);
-        
+
         undecimatedButton = new JRadioButton("Undecimated orthgonal wavelet", false);
         undecimatedButton.setFont(serif12);
         undecimatedButton.setForeground(Color.black);
         undecimatedButton.addActionListener(this);
         methodGroup.add(undecimatedButton);
-        
+
         steerableButton = new JRadioButton("Steerable pyramid", false);
         steerableButton.setFont(serif12);
         steerableButton.setForeground(Color.black);
         steerableButton.addActionListener(this);
         methodGroup.add(steerableButton);
-        
+
         fullButton = new JRadioButton("Full steerable pyramid", false);
         fullButton.setFont(serif12);
         fullButton.setForeground(Color.black);
         fullButton.addActionListener(this);
         methodGroup.add(fullButton);
-        
+
         comboBoxFilter = new JComboBox();
         comboBoxFilter.setFont(serif12);
         comboBoxFilter.setBackground(Color.white);
@@ -600,43 +722,43 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         comboBoxFilter.insertItemAt("Quadrature Mirror Filter 13", 7);
         comboBoxFilter.insertItemAt("Quadrature Mirror Filter 16", 8);
         comboBoxFilter.setSelectedIndex(5);
-        
+
         orientLabel = new JLabel("Number of orientations");
         orientLabel.setForeground(Color.black);
         orientLabel.setFont(serif12);
         orientLabel.setEnabled(false);
-        
+
         orientText = new JTextField(10);
         orientText.setText("3");
         orientText.setFont(serif12);
         orientText.setEnabled(false);
-        
+
         scaleLabel = new JLabel("Number of scales");
         scaleLabel.setForeground(Color.black);
         scaleLabel.setFont(serif12);
         scaleLabel.setEnabled(true);
-        
+
         scaleText = new JTextField(10);
         scaleText.setText("4");
         scaleText.setFont(serif12);
         scaleText.setEnabled(true);
-        
+
         noiseLabel = new JLabel("Noise standard deviation");
         noiseLabel.setForeground(Color.black);
         noiseLabel.setFont(serif12);
         noiseLabel.setEnabled(true);
-        
+
         noiseText = new JTextField(10);
         noiseText.setText("1.0");
         noiseText.setFont(serif12);
         noiseText.setEnabled(true);
-        
+
         noiseGroup = new ButtonGroup();
         whiteButton = new JRadioButton("Use white noise", true);
         whiteButton.setFont(serif12);
         whiteButton.setForeground(Color.black);
         noiseGroup.add(whiteButton);
-        
+
         psdButton = new JRadioButton("Use power spectral density", false);
         psdButton.setFont(serif12);
         psdButton.setForeground(Color.black);
@@ -646,40 +768,40 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         localXLabel.setForeground(Color.black);
         localXLabel.setFont(serif12);
         localXLabel.setEnabled(true);
-        
+
         localXText = new JTextField(10);
         localXText.setText("3");
         localXText.setFont(serif12);
         localXText.setEnabled(true);
-        
+
         localYLabel = new JLabel("Local neighborhood Y (odd number)");
         localYLabel.setForeground(Color.black);
         localYLabel.setFont(serif12);
         localYLabel.setEnabled(true);
-        
+
         localYText = new JTextField(10);
         localYText.setText("3");
         localYText.setFont(serif12);
         localYText.setEnabled(true);
-        
+
         parentCheckBox = new JCheckBox("Use parent");
         parentCheckBox.setFont(serif12);
         parentCheckBox.setForeground(Color.black);
         parentCheckBox.setSelected(true);
         parentCheckBox.setEnabled(true);
-        
+
         boundaryCheckBox = new JCheckBox("Use boundary");
         boundaryCheckBox.setFont(serif12);
         boundaryCheckBox.setForeground(Color.black);
         boundaryCheckBox.setSelected(true);
         boundaryCheckBox.setEnabled(true);
-        
+
         covarianceCheckBox = new JCheckBox("Include covariance in GSM model");
         covarianceCheckBox.setFont(serif12);
         covarianceCheckBox.setForeground(Color.black);
         covarianceCheckBox.setSelected(true);
         covarianceCheckBox.setEnabled(true);
-        
+
         optimizeCheckBox = new JCheckBox("Optimize");
         optimizeCheckBox.setFont(serif12);
         optimizeCheckBox.setForeground(Color.black);
@@ -789,124 +911,125 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         } else if (newImage.isSelected()) {
             displayLoc = NEW;
         }
-        
+
         if (orthogonalButton.isSelected()) {
             method = ORTHOGONAL_WAVELET;
-        }
-        else if (undecimatedButton.isSelected()) {
+        } else if (undecimatedButton.isSelected()) {
             method = UNDECIMATED_ORTHOGONAL_WAVELET;
-        }
-        else if (steerableButton.isSelected()) {
+        } else if (steerableButton.isSelected()) {
             method = STEERABLE_PYRAMID;
-        }
-        else if (fullButton.isSelected()){
+        } else if (fullButton.isSelected()) {
             method = FULL_STEERABLE_PYRAMID;
         }
-        
-        tmpStr = (String)comboBoxFilter.getSelectedItem();
+
+        tmpStr = (String) comboBoxFilter.getSelectedItem();
+
         if (tmpStr.equals("Daubechies 1")) {
             filter = DAUB1;
-        }
-        else if (tmpStr.equals("Daubechies 2")) {
+        } else if (tmpStr.equals("Daubechies 2")) {
             filter = DAUB2;
-        }
-        else if (tmpStr.equals("Daubechies 3")) {
+        } else if (tmpStr.equals("Daubechies 3")) {
             filter = DAUB3;
-        }
-        else if (tmpStr.equals("Daubechies 4")) {
+        } else if (tmpStr.equals("Daubechies 4")) {
             filter = DAUB4;
-        }
-        else if (tmpStr.equals("Quadrature Mirror Filter 5")) {
+        } else if (tmpStr.equals("Quadrature Mirror Filter 5")) {
             filter = QMF5;
-        }
-        else if (tmpStr.equals("Quadrature Mirror Filter 8")) {
+        } else if (tmpStr.equals("Quadrature Mirror Filter 8")) {
             filter = QMF8;
-        }
-        else if (tmpStr.equals("Quadrature Mirror Filter 9")) {
+        } else if (tmpStr.equals("Quadrature Mirror Filter 9")) {
             filter = QMF9;
-        }
-        else if (tmpStr.equals("Quadrature Mirror Filter 12")) {
+        } else if (tmpStr.equals("Quadrature Mirror Filter 12")) {
             filter = QMF12;
-        }
-        else if (tmpStr.equals("Quadrature Mirror Filter 13")) {
+        } else if (tmpStr.equals("Quadrature Mirror Filter 13")) {
             filter = QMF13;
-        }
-        else if (tmpStr.equals("Quadrature Mirror Filter 16")) {
+        } else if (tmpStr.equals("Quadrature Mirror Filter 16")) {
             filter = QMF16;
         }
-        
+
         tmpStr = orientText.getText();
+
         if (testParameter(tmpStr, 1, 100)) {
             nOrientations = Integer.valueOf(tmpStr).intValue();
         } else {
             MipavUtil.displayError("Number of orientations must be between 1 and 100");
             orientText.requestFocus();
             orientText.selectAll();
+
             return false;
         }
-        
+
         tmpStr = scaleText.getText();
+
         if (testParameter(tmpStr, 1, 20)) {
             nScales = Integer.valueOf(tmpStr).intValue();
         } else {
             MipavUtil.displayError("Number of scales must be between 1 and 20");
             scaleText.requestFocus();
             scaleText.selectAll();
+
             return false;
         }
-        
+
         tmpStr = noiseText.getText();
+
         if (testParameter(tmpStr, 0.0, 1.0E8)) {
             sig = Float.valueOf(tmpStr).floatValue();
         } else {
             MipavUtil.displayError("Noise standard deviation must be between 0.0 and 1.0E8");
             noiseText.requestFocus();
             noiseText.selectAll();
+
             return false;
         }
-        
+
         tmpStr = localXText.getText();
+
         if (testParameter(tmpStr, 1, image.getExtents()[0])) {
             blockSizeX = Integer.valueOf(tmpStr).intValue();
         } else {
-            MipavUtil.displayError("Local neighborhood X must be between 1 and " +
-                                    image.getExtents()[0]);
+            MipavUtil.displayError("Local neighborhood X must be between 1 and " + image.getExtents()[0]);
             localXText.requestFocus();
             localXText.selectAll();
+
             return false;
         }
+
         if ((blockSizeX % 2) == 0) {
             MipavUtil.displayError("Local neighborhood X must be an odd number");
             localXText.requestFocus();
             localXText.selectAll();
-            return false;    
+
+            return false;
         }
-        
+
         tmpStr = localYText.getText();
+
         if (testParameter(tmpStr, 1, image.getExtents()[1])) {
             blockSizeY = Integer.valueOf(tmpStr).intValue();
         } else {
-            MipavUtil.displayError("Local neighborhood Y must be between 1 and " +
-                                    image.getExtents()[1]);
+            MipavUtil.displayError("Local neighborhood Y must be between 1 and " + image.getExtents()[1]);
             localYText.requestFocus();
             localYText.selectAll();
+
             return false;
         }
+
         if ((blockSizeY % 2) == 0) {
             MipavUtil.displayError("Local neighborhood Y must be an odd number");
             localYText.requestFocus();
             localYText.selectAll();
-            return false;    
+
+            return false;
         }
 
         usePSD = psdButton.isSelected();
-        
+
         useParent = parentCheckBox.isSelected();
-        
+
         useBoundary = boundaryCheckBox.isSelected();
-        
+
         includeCovar = covarianceCheckBox.isSelected();
-        
+
         optimize = optimizeCheckBox.isSelected();
 
         return true;
