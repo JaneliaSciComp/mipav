@@ -1710,8 +1710,7 @@ public class VOIHandler extends JComponent
         else if (mode == ViewJComponentEditImage.PROTRACTOR) {}
         else if (mode == ViewJComponentEditImage.NEW_POINT) { // impossible for LINE
 
-            if (!(mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
-               System.err.println("SHIFT IS DOWN!");
+            if ((mouseEvent.isShiftDown() == true || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                 nVOI = VOIs.size();
                 for (i = 0; i < nVOI; i++) {
                     if (VOIs.VOIAt(i).isActive()) {
