@@ -11,30 +11,21 @@ import javax.swing.tree.DefaultMutableTreeNode;
 public class ScriptTreeNode extends DefaultMutableTreeNode {
     private String defaultName;
 
-    private String nodeType;
+    private int nodeType;
 
     private String filePath;
 
-    public ScriptTreeNode(Object userObject, String nodeType) {
+    public ScriptTreeNode(Object userObject, int nodeType) {
         super();
         super.setUserObject(userObject);
         this.nodeType = nodeType;
-        setDefaultName((String) userObject);
     }
 
-    public String getDefaultName() {
-        return defaultName;
-    }
-
-    public void setDefaultName(String defaultName) {
-        this.defaultName = defaultName;
-    }
-
-    public String getNodeType() {
+    public int getNodeType() {
         return nodeType;
     }
 
-    public void setNodeType(String nodeType) {
+    public void setNodeType(int nodeType) {
         this.nodeType = nodeType;
     }
 
