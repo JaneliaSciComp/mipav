@@ -516,6 +516,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }    
             }
         } // else if ((ndy > npy) && (ndx <= npx))
+
         
         if (repres1 == ORTHOGONAL_WAVELET) {
             imagArray = new double[npx*npy];
@@ -570,14 +571,19 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 delta = mirrorExtension(delta, npx, npy, bx, by);
             }
             else {
-                aux = delta;
+                aux = new double[npx * npy];
+                for (i = 0; i < delta.length; i++) {
+                    aux[i] = delta[i];
+                }
+                
                 delta = new double[(npx + 2*bx)*(npy + 2*by)];
                 for (y = 0; y < npy; y++) {
                     for (x = 0; x < npx; x++) {
-                        delta[x + bx + (npx + 2*bx)*(y + by)] = aux[x + npx*by];
+                        delta[x + bx + (npx + 2*bx)*(y + by)] = aux[x + npx*y];
                     }
                 }
             }
+
             deltax = npx + 2*bx;
             deltay = npy + 2*by;
         } // if (useBoundary)
@@ -766,14 +772,18 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private double[] decompReconstFull(double im[], int imx, int imy, double noise[],
                                        int noisex, int noisey) {
         double fh[] = null;
-        Vector pind = null;
+        Vector pind = new Vector();
         Vector pyr = null;
         Vector pyrN = null;
         Vector pyrh;
         int bandNum;
         int nband;
         double aux[] = null;
+        double oldaux[] = null;
+        int newx;
+        int newy;
         double auxn[] = null;
+        double oldauxn[] = null;
         int nsx[] = new int[1];
         int nsy[] = new int[1];
         int nsxn[] = new int[1];
@@ -821,7 +831,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 BLn = new double[nsy[0]][nsx[0]][1];
             } // else 
             // Because we are discarding 2 coefficients on every dimension
-            var = Math.sqrt(((nsx[0]-2)*(nsy[0]-2))/(nsx[0]*nsy[0]));
+            var = Math.sqrt(((nsx[0]-2.0)*(nsy[0]-2.0))/(nsx[0]*nsy[0]));
             for (j = 0; j < nsy[0]; j++) {
                 for (i = 0; i < nsx[0]; i++) {
                     index = i + j * nsx[0];
@@ -834,8 +844,24 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 auxn = pyrBand(pyrN, pind, nband+nOrientations-1, nsxnn, nsynn);
                 // Resample 2x2 the parent if not in the high-pass oriented subbands.
                 if (nband > nOrientations+1) {
-                    expand(aux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
-                    expand(auxn, 2.0, nsxnn[0], nsynn[0], auxn, imagArray);    
+                    oldaux = new double[aux.length];
+                    for (i = 0; i < aux.length; i++) {
+                        oldaux[i] = aux[i];
+                    }
+                    newx = (int)Math.round(2.0*nsxn[0]);
+                    newy = (int)Math.round(2.0*nsyn[0]);
+                    aux = new double[newx*newy];
+                    imagArray = new double[newx*newy];
+                    expand(oldaux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
+                    oldauxn = new double[auxn.length];
+                    for (i = 0; i < auxn.length; i++) {
+                        oldauxn[i] = auxn[i];
+                    }
+                    newx = (int)Math.round(2.0*nsxnn[0]);
+                    newy = (int)Math.round(2.0*nsynn[0]);
+                    auxn = new double[newx*newy];
+                    imagArray = new double[newx*newy];
+                    expand(oldauxn, 2.0, nsxnn[0], nsynn[0], auxn, imagArray);  
                 } // if (nband > nOrientations+1)
                 for (j = 0; j < nsy[0]; j++) {
                     for (i = 0; i < nsx[0]; i++) {
@@ -906,7 +932,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private double[] decompReconstW(double im[], int imx, int imy, int filter, double noise[],
             int noisex, int noisey) {
             double fh[] = null;
-            Vector pind = null;
+            Vector pind = new Vector();
             Vector pyr = null;
             Vector pyrN = null;
             Vector pyrh;
@@ -914,6 +940,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             int nband;
             double aux[] = null;
             double auxn[] = null;
+            double oldaux[] = null;
+            double oldauxn[] = null;
+            int newx;
+            int newy;
             int nsx[] = new int[1];
             int nsy[] = new int[1];
             int nsxn[] = new int[1];
@@ -931,8 +961,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             int blx;
             int bly;
             int intMat[];
-            int fhx[] = null;
-            int fhy[] = null;
+            int fhx[] = new int[1];
+            int fhy[] = new int[1];
             
             // Number of orientations: vertical, horizontal, and mixed diagonals
             // (for compatibility)
@@ -972,9 +1002,25 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
                 if (prnt) {
                     aux = pyrBand(pyr, pind, nband+nOrientations-1, nsxn, nsyn);
-                    expand(aux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
+                    oldaux = new double[aux.length];
+                    for (i = 0; i < aux.length; i++) {
+                        oldaux[i] = aux[i];
+                    }
+                    newx = (int)Math.round(2.0*nsxn[0]);
+                    newy = (int)Math.round(2.0*nsyn[0]);
+                    aux = new double[newx*newy];
+                    imagArray = new double[newx*newy];
+                    expand(oldaux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
                     auxn = pyrBand(pyrN, pind, nband+nOrientations-1, nsxn, nsyn);
-                    expand(auxn, 2.0, nsxn[0], nsyn[0], auxn, imagArray);
+                    oldauxn = new double[auxn.length];
+                    for (i = 0; i < auxn.length; i++) {
+                        oldauxn[i] = auxn[i];
+                    }
+                    newx = (int)Math.round(2.0*nsxn[0]);
+                    newy = (int)Math.round(2.0*nsyn[0]);
+                    auxn = new double[newx*newy];
+                    imagArray = new double[newx*newy];
+                    expand(oldauxn, 2.0, nsxn[0], nsyn[0], auxn, imagArray);
                     for (j = 0; j < nsy[0]; j++) {
                         for (i = 0; i < nsx[0]; i++) {
                             index = i + j * nsx[0];
@@ -1044,14 +1090,18 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private double[] decompReconstWU(double im[], int imx, int imy, int daubOrder,
                                      double noise[], int noisex, int noisey) {
         double fh[] = null;
-        Vector pind = null;
+        Vector pind = new Vector();
         Vector pyr = null;
         Vector pyrN = null;
         Vector pyrh;
         int bandNum;
         int nband;
         double aux[] = null;
+        double oldaux[];
+        int newx;
+        int newy;
         double auxn[] = null;
+        double oldauxn[] = null;
         int nsx[] = new int[1];
         int nsy[] = new int[1];
         int nsxn[] = new int[1];
@@ -1103,7 +1153,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 BLn = new double[nsy[0]][nsx[0]][1];
             } // else 
             // Because we are discarding 2 coefficients on every dimension
-            var = Math.sqrt(((nsx[0]-2)*(nsy[0]-2))/(nsx[0]*nsy[0]));
+            var = Math.sqrt(((nsx[0]-2.0)*(nsy[0]-2.0))/(nsx[0]*nsy[0]));
             for (j = 0; j < nsy[0]; j++) {
                 for (i = 0; i < nsx[0]; i++) {
                     index = i + j * nsx[0];
@@ -1116,8 +1166,24 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 auxn = pyrBand(pyrN, pind, nband+nOrientations-1, nsxnn, nsynn);
                 // Resample 2x2 the parent if not in the high-pass oriented subbands
                 if (nband > nOrientations + 1) {
-                    expand(aux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
-                    expand(auxn, 2.0, nsxnn[0], nsynn[0], auxn, imagArray);    
+                    oldaux = new double[aux.length];
+                    for (i = 0; i < aux.length; i++) {
+                        oldaux[i] = aux[i];
+                    }
+                    newx = (int)Math.round(2.0*nsxn[0]);
+                    newy = (int)Math.round(2.0*nsyn[0]);
+                    aux = new double[newx*newy];
+                    imagArray = new double[newx*newy];
+                    expand(oldaux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
+                    oldauxn = new double[auxn.length];
+                    for (i = 0; i < auxn.length; i++) {
+                        oldauxn[i] = auxn[i];
+                    }
+                    newx = (int)Math.round(2.0*nsxn[0]);
+                    newy = (int)Math.round(2.0*nsyn[0]);
+                    auxn = new double[newx*newy];
+                    imagArray = new double[newx*newy];
+                    expand(oldauxn, 2.0, nsxnn[0], nsynn[0], auxn, imagArray);  
                 }
                 for (j = 0; j < nsy[0]; j++) {
                     for (i = 0; i < nsx[0]; i++) {
@@ -1186,7 +1252,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private double[] decompReconst(double fn[], int fnx, int fny, double noise[],
                                   int noisex, int noisey) {
         double fh[] = null;
-        Vector pind = null;
+        Vector pind = new Vector();
         Vector pyr = null;
         Vector pyrN = null;
         Vector pyrh;
@@ -1217,6 +1283,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (error == 1) {
             return null;
         }
+        
         pyrN = buildSFpyr(noise, noisex, noisey, nScales, nOrientations-1, 1.0, pind);
         if (error == 1) {
             return null;
@@ -1238,7 +1305,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 BLn = new double[nsy[0]][nsx[0]][1];
             } // else 
             // Because we are discarding 2 coefficients on every dimension
-            var = Math.sqrt(((nsx[0]-2)*(nsy[0]-2))/(nsx[0]*nsy[0]));
+            var = Math.sqrt(((nsx[0]-2.0)*(nsy[0]-2.0))/(nsx[0]*nsy[0]));
             for (j = 0; j < nsy[0]; j++) {
                 for (i = 0; i < nsx[0]; i++) {
                     index = i + j * nsx[0];
@@ -1701,9 +1768,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int y;
         double temp[];
         
-        if (result == null) {
-            result = new double[xrdim * yrdim];
-        }
+        System.out.println("xdim = " + xdim + " ydim = " + ydim + " xrdim = " + xrdim + " yrdim = " + yrdim);
+        System.out.println("xstart = " + xstart + " xstep = " + xstep + " ystart = " + ystart + " ystep = " + ystep);
         
         xstart--;
         ystart--;
@@ -1747,6 +1813,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * with zeros in the unsampled image.  The convolution is done in 9
      * sections so that the mod operation is not performed unnecessarily.
      * @param image
+     * @param imx
+     * @param imy
      * @param filt
      * @param xfdim
      * @param yfdim
@@ -1812,6 +1880,15 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 for (yres = ypos + ydim, filtPos = 0, xFiltStop = xfdim;
                     xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
                     for (xres = xpos; filtPos < xFiltStop; filtPos++, xres++) {
+                        if (filtPos >= filt.length) {
+                            System.out.println("filtPos = " + filtPos);
+                        }
+                        if (yres%ydim >= imval.length) {
+                            System.out.println("yres = " + yres + " ydim = " + ydim);
+                        }
+                        if (xres >= imval[0].length) {
+                            System.out.println("xres = " + xres);
+                        }
                         imval[yres%ydim][xres] += val * filt[filtPos];
                     }
                 }    
@@ -1954,19 +2031,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int levsm1[];
         double ires[] = null;
         boolean anyOne;
-        int x[] = null;
-        int y[] = null;
+        int x[] = new int[1];
+        int y[] = new int[1];
         boolean anyB1;
         boolean anyB2;
         boolean anyB3;
-        
-        if (resX == null) {
-            resX = new int[1];
-        }
-        
-        if (resY == null) {
-            resY = new int[1];
-        }
         
         if (levs == null) {
             allLevs = true;
@@ -2087,23 +2156,23 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             
             if (res_sz[0] == 1) {
-                res = null;
+                res = new double[res_sz[0]*res_sz[1]];
                 upConv(nres, nresx[0], nresy[0], kernel, 1, kernel.length,
                              edges, 1, 2, 1, stag, res_sz[0], res_sz[1],
                              res, res_sz[0], res_sz[1]);    
             }
             else if (res_sz[1] == 1) {
-                res = null;
+                res = new double[res_sz[0]*res_sz[1]];
                 upConv(nres, nresx[0], nresy[0], kernel, kernel.length, 1,
                              edges, 2, 1, stag, 1, res_sz[0], res_sz[1],
                              res, res_sz[0], res_sz[1]);    
             }
             else {
-                ires = null;
+                ires = new double[lres_sz[0]*lres_sz[1]];
                 upConv(nres, nresx[0], nresy[0], kernel, 1, kernel.length,
                               edges, 1, 2, 1, stag, lres_sz[0], lres_sz[1],
                               ires, lres_sz[0], lres_sz[1]); 
-                res = null;
+                res = new double[res_sz[0]*res_sz[1]];
                 upConv(ires, lres_sz[0], lres_sz[1], kernel, kernel.length, 1,
                              edges, 2, 1, stag, 1, res_sz[0], res_sz[1],
                              res, res_sz[0], res_sz[1]);
@@ -2136,40 +2205,45 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
             }
             if (res_sz[0] == 1) {
+                res = new double[res_sz[0]*res_sz[1]];
                 upConv(pyrBand(pyr, ind, 0, x, y), x[0], y[0], 
                        hkernel, 1, hkernel.length, edges, 1, 2, 1, 2, 
                        res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);
             }
             else if (res_sz[1] == 1) {
+                res = new double[res_sz[0]*res_sz[1]];
                 upConv(pyrBand(pyr, ind, 0, x, y), x[0], y[0],
                        hkernel, hkernel.length, 1, edges, 2, 1, 2, 1,
                        res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);    
             }
             else {
                 if (anyB1) { // horizontal
-                    ires = null;
+                    ires = new double[hres_sz[0]*hres_sz[1]];
                     upConv(pyrBand(pyr, ind, 0, x, y), x[0], y[0],
                            kernel, 1, kernel.length, edges, 1, 2, 1, stag,
                            hres_sz[0], hres_sz[1], ires, hres_sz[0], hres_sz[1]);
                     // Destructively modify res
+                    res = new double[res_sz[0]*res_sz[1]];
                     upConv(ires, hres_sz[0], hres_sz[1], hkernel, hkernel.length, 1,
                            edges, 2, 1, 2, 1, res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);
                 } // 
                 if (anyB2) { // vertical
-                    ires = null;
+                    ires = new double[lres_sz[0]*lres_sz[1]];
                     upConv(pyrBand(pyr, ind, 1, x, y), x[0], y[0],
                            hkernel, 1, hkernel.length, edges, 1, 2, 1, 2,
                            lres_sz[0], lres_sz[1], ires, lres_sz[0], lres_sz[1]);
                     // Destructively modify res
+                    res = new double[res_sz[0]*res_sz[1]];
                     upConv(ires, lres_sz[0], lres_sz[1], kernel, kernel.length, 1,
                            edges, 2, 1, stag, 1, res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);    
                 } // if (anyB2) 
                 if (anyB3) { // diagonal
-                    ires = null;
+                    ires = new double[hres_sz[0]*hres_sz[1]];
                     upConv(pyrBand(pyr, ind, 2, x, y), x[0], y[0],
                            hkernel, 1, hkernel.length, edges, 1, 2, 1, 2,
                            hres_sz[0], hres_sz[1], ires, hres_sz[0], hres_sz[1]);
                     // Destructively modify res
+                    res = new double[res_sz[0]*res_sz[1]];
                     upConv(ires, hres_sz[0], hres_sz[1], hkernel, hkernel.length, 1,
                            edges, 2, 1, 2, 1, res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);    
                 } // if (anyB3) 
@@ -3207,9 +3281,7 @@ MATLAB description:
         int offset[] = new int[2];
         int i,j,kx,ky,index;
         double mtxr[];
-        double mtxi[];
         double resr[] = null;
-        double resi[] = null;
         int indexW;
         double C_w[][] = null;
         int inum;
@@ -3258,7 +3330,7 @@ MATLAB description:
         double rmat2[][];
         double rmat3[][];
         double rmat4[][];
-        int i2, j2;
+        int j2;
         int nx, ny;
         double max;
         
@@ -3294,7 +3366,6 @@ MATLAB description:
         // Compute covariance of noise from 'noise'
         n = 0;
         mtxr = new double[nv*nh];
-        mtxi = new double[nv*nh];
         for (ny = -Ly; ny <= Ly; ny++) { // Spatial neighbors
             for (nx = -Lx; nx <= Lx; nx++) {
                 n = n + 1;
@@ -3306,7 +3377,8 @@ MATLAB description:
                 }
                 offset[0] = nx;
                 offset[1] = ny;
-                shift(mtxr, mtxi, nh, nv, offset, resr, resi);
+                resr = new double[mtxr.length];
+                shiftReal(mtxr, nh, nv, offset, resr);
                 foo = new double[nblv][nblh];
                 for (ky = 0, indexW = 0; ky < nblv; ky++) {
                     for (kx = 0; kx < nblh; kx++) {
@@ -3317,6 +3389,7 @@ MATLAB description:
                 }
             } // for (j = -Ly; j <= Ly; j++)
         } // for (i = -Lx; i <= Lx; i++)
+        
         
         if (prnt) { // parent
             n = n + 1;
@@ -3378,7 +3451,8 @@ MATLAB description:
                 }
                 offset[0] = nx;
                 offset[1] = ny;
-                shift(mtxr, mtxi, nh, nv, offset, resr, resi);
+                resr = new double[mtxr.length];
+                shiftReal(mtxr, nh, nv, offset, resr);
                 foo = new double[nblv][nblh];
                 for (ky = 0, indexW = 0; ky < nblv; ky++) {
                     for (kx = 0; kx < nblh; kx++) {
@@ -3404,7 +3478,7 @@ MATLAB description:
         
         // For modulating the local stdv of noise
         // For now leave out code for case with sig a vector
-
+        
         eig = new EigenvalueDecomposition(new Matrix(C_w));
         eigenvalue = eig.getRealEigenvalues();
 
@@ -3423,6 +3497,9 @@ MATLAB description:
                  S[i][j] = S[i][j] * var;
             }
         }
+        
+        
+  
         iS = (new Matrix(S)).inverse().getArray();
         for (i = 0; i < noise.length; i++) {
             for (j = 0; j < noise[i].length; j++) {
@@ -3452,6 +3529,7 @@ MATLAB description:
         }
         
         // C_x = C_y - C_w as signal and noise are assumed to be independent
+        C_x = new double[n][n];
         for (j = 0; j < N; j++) {
             for (i = 0; i < N; i++) {
                 C_x[j][i] = C_y[j][i] - C_w[j][i];
@@ -3566,7 +3644,7 @@ MATLAB description:
             pg1_lz = new double[nsamp_z];
             for (j = 0; j < nsamp_z; j++) {
                 pg1_lz[j] = laz[0][j] + 1.0;
-                for (i = 1; i < nexp; i++) {
+                for (i = 1; i < N; i++) {
                    pg1_lz[j] *= (laz[i][j] + 1.0); 
                 }
                 pg1_lz[j] = 1.0/Math.sqrt(pg1_lz[j]);
@@ -3865,7 +3943,7 @@ MATLAB description:
             for (j = i; j < xdim; j++) {
                 tmp = 0.0;
                 for (k = 0; k < ydim; k++) {
-                    tmp += mat[i][k] * mat[k][j];
+                    tmp += mat[k][i] * mat[k][j];
                 }
                 res[i][j] = tmp;
                 res[j][i] = tmp;
@@ -3926,9 +4004,6 @@ MATLAB description:
         
         fmx = (int)Math.round(f*mx);
         fmy = (int)Math.round(f*my);
-        
-        ter = new double[fmx*fmy];
-        tei = new double[fmx*fmy];
         
         cx = (int)Math.ceil(fmx/2.0);
         evenmx = (fmx == ((fmx/2)*2));
@@ -4030,7 +4105,6 @@ MATLAB description:
      */
     private void shiftReal(double mtxr[], int dimx, int dimy, int offset[],
                        double resr[]) {
-        resr = new double[mtxr.length];
         int n;
         int offsetx;
         int offsety;
@@ -4086,8 +4160,6 @@ MATLAB description:
      */
     private void shift(double mtxr[], double mtxi[], int dimx, int dimy, int offset[],
                        double resr[], double resi[]) {
-        resr = new double[mtxr.length];
-        resi = new double[mtxr.length];
         int n;
         int offsetx;
         int offsety;
@@ -4147,12 +4219,7 @@ MATLAB description:
         
         arr = (double[])pyr.get(band); 
         intMat = (int[])pind.get(band);
-        if (x == null) {
-            x = new int[1];
-        }
-        if (y == null) {
-            y = new int[1];
-        }
+        
         x[0] = intMat[0];
         y[0] = intMat[1];
         return arr;
@@ -4273,6 +4340,8 @@ MATLAB description:
         }
         
         // Radial transition function (a raised cosine in log-frequency)
+        xrcos = new double[259];
+        yrcos = new double[259];
         rcosFn(twidth, (-twidth/2.0), 0.0, 1.0, xrcos, yrcos);
         for (i = 0; i < yrcos.length; i++) {
             yrcos[i] = Math.sqrt(yrcos[i]);
@@ -4884,7 +4953,7 @@ MATLAB description:
     private Vector buildWpyr(double[] im, int imx, int imy, int ht, int filt, int edges,
             Vector pind) {
         // pyr is a vector containing the N pyramid subbands, ordered from fine to coarse.
-        Vector pyr = null;
+        Vector pyr = new Vector();
         double kernel[];
         double hkernel[];
         int stag;
@@ -4912,7 +4981,7 @@ MATLAB description:
         int lohiy[] = new int[1];
         int hilox[] = new int[1];
         int hiloy[] = new int[1];
-        Vector nind = null;
+        Vector nind = new Vector();
         Vector npyr;
         
         kernel = namedFilter(filt, 0);
@@ -5496,13 +5565,7 @@ MATLAB description:
                 return;
             }
         } // if (n > 1)
-        yl = new double[m][n];
-        if (Math. min(m,n) == 1) {
-            yh = new double[m][L*n];
-        }
-        else {
-            yh = new double[m][3*L*n];
-        }
+        
         MRDWT(im, m, n, h, lh, L, yl, yh);
     }
     
@@ -5855,7 +5918,7 @@ MATLAB description:
      */
     private Vector buildWUpyr(double im[], int imx, int imy, int nScales,
                               int daubOrder, Vector pind) {
-        Vector pyr = null;
+        Vector pyr = new Vector();
         double h[];
         double lpr[][] = null;
         double yh[][] = null;
@@ -5891,6 +5954,13 @@ MATLAB description:
             return null;
         }
         // Performs the decomposition
+        lpr = new double[imy][imx];
+        if (Math.min(imx, imy) == 1) {
+            yh = new double[imy][(nScales+1)*imx];
+        }
+        else {
+            yh = new double[imy][3*(nScales+1)*imx];
+        }
         mrdwt(im, imx, imy, h, h.length, 1, nScales+1, lpr, yh);
         if (error == 1) {
             return null;
@@ -6103,6 +6173,8 @@ MATLAB description:
         }
         
         // Radial transition function (a raised cosine in log-frequency)
+        xrcos = new double[259];
+        yrcos = new double[259];
         rcosFn(twidth, (-twidth/2.0), 0.0, 1.0, xrcos, yrcos);
         for (i = 0; i < yrcos.length; i++) {
             yrcos[i] = Math.sqrt(yrcos[i]);
@@ -6220,7 +6292,7 @@ MATLAB description:
         double lomask[][];
         Vector pyr = new Vector();
         Vector npyr;
-        Vector nind = null;
+        Vector nind = new Vector();
         pind = new Vector();
         logy = lograd.length;
         logx = lograd[0].length;
@@ -6510,8 +6582,7 @@ MATLAB description:
         int i, j;
         int sz = 256; // arbitrary
         double var;
-        X = new double[sz+3];
-        Y = new double[sz+3];
+
         for (i = -sz-1, j = 0; i <= 1; i++, j++) {
             X[j] = Math.PI * i / (2.0 * sz);
         }
