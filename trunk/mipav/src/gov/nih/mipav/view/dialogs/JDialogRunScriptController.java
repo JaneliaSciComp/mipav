@@ -344,7 +344,7 @@ public class JDialogRunScriptController implements ActionListener {
                 String imageName = ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim();
                 xmlDoc.append("<Image");
                 xmlDoc.append(" name=\"" + imageName + "\"");
-                xmlDoc.append(" defaultName= \"" + node.getDefaultName() + "\"");
+                xmlDoc.append(" defaultName= \"" + (String)node.getUserObject() + "\"");
                 xmlDoc.append(" filePath= \"" + model.getScriptImage((String) node.getUserObject()).getFileLocation() +
                               " \" " + ">\n"); // images
 

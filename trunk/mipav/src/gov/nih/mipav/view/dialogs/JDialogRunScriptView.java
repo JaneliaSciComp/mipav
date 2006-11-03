@@ -12,6 +12,8 @@ import java.awt.event.*;
 
 import java.util.*;
 
+import java.io.*;
+
 import javax.swing.*;
 import javax.swing.tree.*;
 
@@ -27,16 +29,19 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private static final String SCRIPTNODE = "Script Exectuer";
+    private static final int SCRIPTNODE = 0;
 
     /** DOCUMENT ME! */
-    private static final String IMAGENODE = "ImageNode";
+    
+    private static final int IMAGEPLACEHOLDERNODE = 1;
+    
+    private static final int IMAGENODE = 2;
+    
+    /** DOCUMENT ME! */
+    private static final int VOINODE = 3;
 
     /** DOCUMENT ME! */
-    private static final String VOINODE = "VioNode";
-
-    /** DOCUMENT ME! */
-    private static final String ROOTNODE = "Root";
+    private static final int ROOTNODE = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -88,6 +93,14 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     /** DOCUMENT ME! */
     private JScrollPane treeScroll;
 
+    private int dropSource = 0;
+
+    private static final int IMAGE_DROP = 0;
+    private static final int VOI_DROP   = 1;
+    private static final int TREE_DROP  = 2;
+    
+    private static final String VOI_EMPTY = "[Insert VOI]";
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -182,7 +195,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         tree.addMouseListener(listener);
         tree.setDropTarget(new DropJTreeLister());
         tree.setName("Script Tree");
-        tree.setCellRenderer(new MyRenderer());
+        tree.setCellRenderer(new TreeRenderer());
         tree.setRootVisible(false);
         treeScroll = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
@@ -344,19 +357,57 @@ public class JDialogRunScriptView implements ActionListener, Observer {
      *          assigned to them, <code>false</code> otherwise.
      */
     protected boolean isTreeReadyForScriptExecution() {
-        Enumeration bf = root.breadthFirstEnumeration();
+    	ScriptTreeNode scriptNode = (ScriptTreeNode)root.getChildAt(0);
 
-        while (bf.hasMoreElements()) {
-            ScriptTreeNode node = node = (ScriptTreeNode) bf.nextElement();
-
-            if ((node.toString().startsWith("$")) || (node.toString().indexOf("VOI Needed") != -1)) {
-                tree.addSelectionPath(new TreePath(node.getPath()));
-                MipavUtil.displayWarning("Image or VOI placeholders still found.  Script execution aborted.");
-
-                return false;
-            }
-        }
-
+	
+    	int numImagePlaceHolders = scriptNode.getChildCount();
+    	int [] numImages = new int[numImagePlaceHolders];
+    	
+    	ScriptTreeNode imagePHNode = null;
+    	ScriptTreeNode imageNode = null;
+    	int numVOIs;
+    	
+    	for (int i = 0; i < numImagePlaceHolders; i++) {
+    		imagePHNode = (ScriptTreeNode)scriptNode.getChildAt(i);
+    		numImages[i] = imagePHNode.getChildCount();
+    		for (int j = 0; j < numImages[i]; j++) {
+    			imageNode = (ScriptTreeNode)imagePHNode.getChildAt(j);
+    			numVOIs = imageNode.getChildCount();
+    			for (int k = 0; k < numVOIs; k++) {
+    				if ( ((ScriptTreeNode)imageNode.getChildAt(k)).getUserObject().equals(VOI_EMPTY)  ) {
+    					tree.setSelectionPath(new TreePath(((ScriptTreeNode)imageNode.getChildAt(k)).getPath()));
+    					MipavUtil.displayWarning("VOI Placeholder is empty");
+    					
+    					return false;
+    				}
+    			}
+    		}
+    	}
+    	
+    	//now make sure we have equal numbers under each placeholder
+    	
+    	if (numImages[0] == 0) {
+    		tree.setSelectionPath(new TreePath(((ScriptTreeNode)scriptNode.getChildAt(0)).getPath()));
+			MipavUtil.displayWarning("Placeholder is missing an image");
+			return false;
+    	}
+    	
+    	for (int i = 0; i < numImages.length -1 ; i++) {
+    		
+    		if (numImages[i+1] == 0) {
+    			tree.setSelectionPath(new TreePath(((ScriptTreeNode)scriptNode.getChildAt(i+1)).getPath()));
+    			MipavUtil.displayWarning("Placeholder is missing an image");
+    			return false;
+    		} else if (numImages[i] != numImages[i+1]) {
+    			TreePath [] paths = new TreePath[2];
+    			paths[0] = new TreePath(((ScriptTreeNode)scriptNode.getChildAt(i)).getPath());
+    			paths[1] = new TreePath(((ScriptTreeNode)scriptNode.getChildAt(i+1)).getPath());
+    			tree.setSelectionPaths(paths);
+    			MipavUtil.displayWarning("Unequal number of images under each image placeholder");
+    			return false;
+    		}
+    	}
+    	
         return true;
     }
 
@@ -455,7 +506,9 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         list.addMouseListener(listener);
         list.setName(name);
         list.setSelectedIndex(0);
-
+        list.setTransferHandler(new ArrayListTransferHandler());
+      
+        
         JScrollPane scroll = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                                              JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
             public Dimension getPreferredSize() {
@@ -488,9 +541,9 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                                        ((ScriptTreeNode) ((DefaultTreeModel) tree.getModel()).getRoot()).getChildAt(j).getChildAt(index[1]));
             String selectNodeName = (String) selectedNode.getUserObject();
 
-            if (selectedNode.getNodeType().equalsIgnoreCase(this.IMAGENODE)) {
+            if (selectedNode.getNodeType() == IMAGENODE) {
                 copyNodes[j] = node;
-            } else if (selectedNode.getNodeType().equalsIgnoreCase(this.VOINODE)) {
+            } else if (selectedNode.getNodeType() == VOINODE) {
                 copyNodes[j] = (ScriptTreeNode) node.getChildAt(index[2]);
             }
 
@@ -544,19 +597,19 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         ScriptTreeNode newNode = new ScriptTreeNode("Script Executer", this.SCRIPTNODE);
         this.numberOfExecuters++;
 
-        ScriptTreeNode[] imageNodes;
+        ScriptTreeNode[] imagePlaceHolderNodes;
         ScriptTreeNode voi = null;
-        imageNodes = new ScriptTreeNode[imagePlaceHolders.length];
+        imagePlaceHolderNodes = new ScriptTreeNode[imagePlaceHolders.length];
 
         for (int i = 0; i < imagePlaceHolders.length; i++) {
-            imageNodes[i] = new ScriptTreeNode(imagePlaceHolders[i] + " (" + imageActions[i] + " -- " + imageLabels[i] +
-                                               ")", this.IMAGENODE);
-            newNode.add(imageNodes[i]);
+        	imagePlaceHolderNodes[i] = new ScriptTreeNode(imagePlaceHolders[i] + " (" + imageActions[i] + " -- " + imageLabels[i] +
+                                               ")", this.IMAGEPLACEHOLDERNODE);
+            newNode.add(imagePlaceHolderNodes[i]);
 
-            for (int j = 0; j < numberofVOIs[i]; j++) {
-                voi = new ScriptTreeNode("VOI Needed", this.VOINODE);
-                imageNodes[i].add(voi);
-            }
+      //      for (int j = 0; j < numberofVOIs[i]; j++) {
+       //         voi = new ScriptTreeNode("VOI", this.VOIPLACEHOLDERNODE);
+       //         imagePlaceHolderNodes[i].add(voi);
+         //   }
         }
 
         return newNode;
@@ -661,7 +714,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             int ii = 0;
             imageNodes[ii] = new ScriptTreeNode(executer.getChildNodes().item(i).getAttributes().getNamedItem("name").getNodeValue(),
                                                 this.IMAGENODE);
-            imageNodes[ii].setDefaultName(executer.getChildNodes().item(i).getAttributes().getNamedItem("defaultName").getNodeValue());
+            
             imageNodes[ii].setFilePath(executer.getChildNodes().item(i).getAttributes().getNamedItem("filePath").getNodeValue());
 
             // imageNodes[ii] = new
@@ -779,7 +832,6 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             newNode.add((ScriptTreeNode) node.children().nextElement());
         }
 
-        newNode.setDefaultName(node.getDefaultName());
         ((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, parentNode, parentNode.getIndex(node));
         ((DefaultTreeModel) tree.getModel()).removeNodeFromParent(node);
         expandAll(tree, new TreePath(newNode.getPath()), true);
@@ -787,6 +839,123 @@ public class JDialogRunScriptView implements ActionListener, Observer {
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
+    
+    private class ArrayListTransferHandler extends TransferHandler {
+    	DataFlavor localArrayListFlavor, serialArrayListFlavor;
+        String localArrayListType = DataFlavor.javaJVMLocalObjectMimeType +
+                                    ";class=java.util.ArrayList";
+        JList source = null;
+        int[] indices = null;
+        int addIndex = -1; //Location where items were added
+        int addCount = 0;  //Number of items added
+
+        public ArrayListTransferHandler() {
+            try {
+                localArrayListFlavor = new DataFlavor(localArrayListType);
+            } catch (ClassNotFoundException e) {
+                System.out.println(
+                 "ArrayListTransferHandler: unable to create data flavor");
+            }
+            serialArrayListFlavor = new DataFlavor(ArrayList.class,
+                                                  "ArrayList");
+        }
+
+       
+
+       
+
+        private boolean hasLocalArrayListFlavor(DataFlavor[] flavors) {
+            if (localArrayListFlavor == null) {
+                return false;
+            }
+
+            for (int i = 0; i < flavors.length; i++) {
+                if (flavors[i].equals(localArrayListFlavor)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean hasSerialArrayListFlavor(DataFlavor[] flavors) {
+            if (serialArrayListFlavor == null) {
+                return false;
+            }
+
+            for (int i = 0; i < flavors.length; i++) {
+                if (flavors[i].equals(serialArrayListFlavor)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public boolean canImport(JComponent c, DataFlavor[] flavors) {
+            if (hasLocalArrayListFlavor(flavors))  { return true; }
+            if (hasSerialArrayListFlavor(flavors)) { return true; }
+            return false;
+        }
+
+        protected Transferable createTransferable(JComponent c) {
+            if (c instanceof JList) {
+                source = (JList)c;
+                indices = source.getSelectedIndices();
+                Object[] values = source.getSelectedValues();
+                if (values == null || values.length == 0) {
+                    return null;
+                }
+                ArrayList alist = new ArrayList(values.length);
+                for (int i = 0; i < values.length; i++) {
+                    Object o = values[i];
+                    String str = o.toString();
+                    if (str == null) str = "";
+                    alist.add(str);
+                }
+                return new ArrayListTransferable(alist);
+            }
+            return null;
+        }
+
+        public int getSourceActions(JComponent c) {
+            return COPY_OR_MOVE;
+        }
+
+        public class ArrayListTransferable implements Transferable {
+            ArrayList data;
+
+            public ArrayListTransferable(ArrayList alist) {
+                data = alist;
+            }
+
+            public Object getTransferData(DataFlavor flavor)
+                                     throws UnsupportedFlavorException {
+                if (!isDataFlavorSupported(flavor)) {
+                    throw new UnsupportedFlavorException(flavor);
+                }
+                return data;
+            }
+
+            public DataFlavor[] getTransferDataFlavors() {
+                return new DataFlavor[] { localArrayListFlavor,
+                                          serialArrayListFlavor };
+            }
+
+            public boolean isDataFlavorSupported(DataFlavor flavor) {
+                if (localArrayListFlavor.equals(flavor)) {
+                    return true;
+                }
+                if (serialArrayListFlavor.equals(flavor)) {
+                    return true;
+                }
+                return false;
+            }
+        }
+    }
+    
+    
+
+    
+    
     /**
      * DOCUMENT ME!
      */
@@ -812,10 +981,11 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         public void mousePressed(MouseEvent e) {
 
             if (((Component) e.getSource()).getName().equalsIgnoreCase("Images List")) {
+            	dropSource = IMAGE_DROP;
                 selectedListIndicies = ((JList) e.getSource()).getSelectedIndices();
-
-                if ((selectedListIndicies.length > 1) && (e.getModifiers() != MouseEvent.BUTTON3_MASK)) {
-                    return;
+                
+                if (selectedListIndicies.length > 1) {
+                	
                 }
 
                 if ((selectedListIndicies.length > 1) && (e.getModifiers() == MouseEvent.BUTTON3_MASK)) {
@@ -869,49 +1039,52 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                     } // if
                 } // for
             } // source equals imageList
-
+            else if (((Component) e.getSource()).getName().equalsIgnoreCase("VOIs from above image List")) {
+            	
+            	dropSource = VOI_DROP;
+            }
+            
+            
             if (((Component) e.getSource()).getName().equalsIgnoreCase("Script Tree")) {
 
                 if (e.getModifiers() == InputEvent.BUTTON3_MASK) {
+                	int type;
                     Point pt = e.getPoint();
                     TreePath pathTarget = tree.getPathForLocation(pt.x, pt.y);
                     selectedNode = (ScriptTreeNode) pathTarget.getLastPathComponent();
                     parentNode = (ScriptTreeNode) selectedNode.getParent();
                     selectedNodeName = (String) selectedNode.getUserObject();
 
-                    if (((String) selectedNode.getUserObject()).indexOf("$Image") != -1) {
-                        return;
+                    type = selectedNode.getNodeType();
+
+                    if (type == IMAGEPLACEHOLDERNODE ||
+                    		type == SCRIPTNODE ||
+                    		(type == VOINODE && selectedNodeName.equals(VOI_EMPTY))) {
+                    	return;
                     }
+                    else {
+                    	JMenuItem deleteMenuItem = new JMenuItem("Delete");
+                        deleteMenuItem.addActionListener(new java.awt.event.ActionListener() {
+                                public void actionPerformed(java.awt.event.ActionEvent e) {
 
-                    if (((String) selectedNode.getUserObject()).indexOf("VOI Needed") != -1) {
-                        return;
+                                	if (selectedNode.getNodeType() == VOINODE) {
+                                		updateNode(selectedNode, VOI_EMPTY);
+                                	} else {
+                                		DefaultTreeModel model = (DefaultTreeModel)tree.getModel();
+                                		model.removeNodeFromParent(selectedNode);
+                                	}
+                                	expandAll(tree, true);
+                                }
+                            } // new ActionListener
+                                                        ); // addActionListener
+
+                        JPopupMenu popup = new JPopupMenu();
+                        popup.add(deleteMenuItem);
+
+                        // popup.add(applyAllMenuItem);
+                        popup.show(tree, pt.x + 10, pt.y + 10);
                     }
-
-                    JMenuItem deleteMenuItem = new JMenuItem("Delete");
-                    deleteMenuItem.addActionListener(new java.awt.event.ActionListener() {
-                            public void actionPerformed(java.awt.event.ActionEvent e) {
-
-                                if ((selectedNodeName.indexOf("Script") != -1)) {
-                                    ((DefaultTreeModel) tree.getModel()).removeNodeFromParent(selectedNode);
-                                    numberOfExecuters--;
-
-                                    return;
-                                } else {
-                                    resetNode = new ScriptTreeNode(selectedNode.getDefaultName(),
-                                                                   selectedNode.getNodeType());
-                                }
-
-                                while (selectedNode.children().hasMoreElements()) {
-                                    resetNode.add((ScriptTreeNode) selectedNode.children().nextElement());
-                                }
-
-                                ((DefaultTreeModel) tree.getModel()).insertNodeInto(resetNode, parentNode,
-                                                                                    parentNode.getIndex(selectedNode));
-                                ((DefaultTreeModel) tree.getModel()).removeNodeFromParent(selectedNode);
-                                expandAll(tree, new TreePath(resetNode.getPath()), true);
-                            }
-                        } // new ActionListener
-                                                    ); // addActionListener
+                    
 
                     // TODO: Apply to all script executers does not work currently.  null pointer exception on first
                     // line of updateNode()
@@ -922,22 +1095,16 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                     // } // actionPerformed    } // new ActionListener                                  ); //
                     // addActionListener
 
-                    JPopupMenu popup = new JPopupMenu();
-                    popup.add(deleteMenuItem);
-
-                    // popup.add(applyAllMenuItem);
-                    popup.show(tree, pt.x + 10, pt.y + 10);
                 } // right mouse button clicked
 
                 return;
             } // source equals scriptTree
 
             JComponent c = (JComponent) e.getSource();
+            //System.err.println("Transfer handler component: " + c.getClass() + "....more: " + c.toString());
             TransferHandler handler = c.getTransferHandler();
 
-            if (selectedListIndicies.length == 1) {
-                handler.exportAsDrag(c, e, TransferHandler.COPY);
-            }
+            handler.exportAsDrag(c, e, TransferHandler.COPY);
         }
     }
 
@@ -956,30 +1123,32 @@ public class JDialogRunScriptView implements ActionListener, Observer {
          */
         public void drop(DropTargetDropEvent dtde) {
             Transferable transferable = dtde.getTransferable();
-            DataFlavor[] flavors = transferable.getTransferDataFlavors();
+            //DataFlavor[] flavors = transferable.getTransferDataFlavors();
             DataFlavor dataFlavor = null;
-
-            /*
-             * Finds the data flavor for transfering plain text, uses that to retreive the text of the image/voi being
-             * transfered
-             */
-            for (int k = 0; k < flavors.length; k++) {
-
-                if (flavors[k].isMimeTypeEqual("text/plain") && (flavors[k].isRepresentationClassSerializable())) {
-                    dataFlavor = flavors[k];
-                }
-            }
-
-            String text = null;
-
+            
             try {
-                text = (String) transferable.getTransferData(dataFlavor);
+            	dataFlavor = new DataFlavor(DataFlavor.javaJVMLocalObjectMimeType +
+                ";class=java.util.ArrayList");
+            } catch (ClassNotFoundException c) {
+            	c.printStackTrace();
+            }
+                  
+            String[] text = null;
+            ArrayList list = null;
+            
+            try {
+            	list = ((ArrayList)transferable.getTransferData(dataFlavor));
+            	text = new String[list.size()];
+            	for (int i = 0; i < text.length; i++) {
+            		text[i] = (String)list.get(i);
+            	}
             } catch (java.io.IOException ioe) {
                 ioe.printStackTrace();
             } catch (UnsupportedFlavorException ufe) {
                 ufe.printStackTrace();
             }
 
+            
             int action = dtde.getDropAction();
             Point pt = dtde.getLocation();
             TreePath pathTarget = tree.getPathForLocation(pt.x, pt.y);
@@ -988,21 +1157,131 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                 return;
             }
 
-            ScriptTreeNode oldNode = (ScriptTreeNode) pathTarget.getLastPathComponent();
-            String oldNodeName = (String) oldNode.getUserObject();
-
-            if ((oldNodeName.indexOf("Script") != -1)) {
+            ScriptTreeNode targetNode = (ScriptTreeNode) pathTarget.getLastPathComponent();
+            ScriptTreeNode newNode = null;
+            ScriptTreeNode parentNode = (ScriptTreeNode) targetNode.getParent();
+            
+            int targetNodeType = targetNode.getNodeType();
+            int newNodeType = IMAGENODE;
+            
+            if (targetNodeType == SCRIPTNODE) {
+            	dtde.acceptDrop(action);
+                dtde.dropComplete(true);
                 return;
             }
-
-            ScriptTreeNode newNode = new ScriptTreeNode(text, oldNode.getNodeType());
-            ScriptTreeNode parentNode = (ScriptTreeNode) oldNode.getParent();
-
+            
+            //set up what type of node the new node will be
+            if (targetNodeType == IMAGEPLACEHOLDERNODE ||
+            		targetNodeType == IMAGENODE) {
+            	newNodeType = IMAGENODE;
+            } else if (targetNodeType == VOINODE ||
+            		targetNodeType == VOINODE) {
+            	newNodeType = VOINODE;
+            }
+            
+            ScriptTreeNode voiNode = null;
+            
+            int voiCount = 0;
+            int childCount = 0;
+            int currentVOIIndex = 0;
+            
+            childCount = targetNode.getChildCount();
+            
+            int targetIndex = targetNode.getParent().getIndex(targetNode);
+            int targetParentIndex = 0;
+            
+            //add or replace nodes one by one
+            for (int i = 0; i < text.length; i++) {
+            	
+            	
+            	if (targetNodeType == IMAGEPLACEHOLDERNODE &&
+            			dropSource == IMAGE_DROP) {
+            		newNode = new ScriptTreeNode(text[i], newNodeType);
+            		//inserting into placeholder as new image node
+            		// look for last image child and append after that
+            		
+            		//first add all required VOIs
+            		voiCount = model.getNumberOfRequiredVOIsForScriptImages()[targetIndex];
+            		for (int j = 0; j < voiCount; j++) {
+            			voiNode = new ScriptTreeNode(VOI_EMPTY, VOINODE);
+            			newNode.add(voiNode);
+            		}
+            		
+            		((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, targetNode, childCount);
+            		
+            		//expandAll(tree, new TreePath(newNode.getPath()), true);
+            	} else if (targetNodeType == IMAGENODE &&
+            			dropSource == IMAGE_DROP) {
+            			newNode = new ScriptTreeNode(text[i], newNodeType);
+            			targetNode.removeAllChildren();
+            			
+            			targetParentIndex = targetNode.getParent().getParent().getIndex(targetNode.getParent());
+            			
+                        voiCount = model.getNumberOfRequiredVOIsForScriptImages()[targetParentIndex];
+                		
+                		for (int j = 0; j < voiCount; j++) {
+                			voiNode = new ScriptTreeNode(VOI_EMPTY, VOINODE);
+                			newNode.add(voiNode);
+                		}
+                		((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, parentNode, parentNode.getIndex(targetNode));
+                        ((DefaultTreeModel) tree.getModel()).removeNodeFromParent(targetNode);
+                        expandAll(tree, true);
+                        dtde.acceptDrop(action);
+                        dtde.dropComplete(true);
+                        return;
+            			
+            	} else if (targetNodeType == VOINODE &&
+            			dropSource == VOI_DROP) {
+            		String targetImageName = (String)((ScriptTreeNode)targetNode.getParent()).getUserObject();
+            		String sourceImageName = ((JList) ((JScrollPane) getComponentByName("Images List: scroll")).getViewport().getView())
+                    .getSelectedValue().toString();
+            		
+            		if (!(targetImageName.equalsIgnoreCase(sourceImageName))) {
+            			MipavUtil.displayWarning("Source image does not contain this VOI");
+            			dtde.acceptDrop(action);
+                        dtde.dropComplete(true);
+                        return;
+            		} else {
+            			updateNode(targetNode, text[i]);
+            			dtde.acceptDrop(action);
+                        dtde.dropComplete(true);
+                        return;
+            		}
+            		
+            	} else if (targetNodeType == IMAGENODE &&
+            			dropSource == VOI_DROP) {
+            		//populate as many VOI nodes as have been dropped...if conditions allow
+            		if (childCount > currentVOIIndex) {
+            			System.err.println("Current VOI Index is: " + currentVOIIndex);
+            			voiNode = (ScriptTreeNode)targetNode.getChildAt(currentVOIIndex);
+            			updateNode(voiNode, text[i]);
+            			currentVOIIndex++;
+            		}
+            		
+            	}
+            }
+            dtde.acceptDrop(action);
+            dtde.dropComplete(true);
+            if (newNode != null) {
+            	expandAll(tree, true);
+            	
+            	return;
+            }
+            else if (newNode == null) {
+            	expandAll(tree, true);
+            	
+            	return;	
+            }
+            
+            // CANT GET HERE....
+            
+            newNode = new ScriptTreeNode(text, newNodeType);
+            
             /*
              * If the drop target is a VOI Node, checks if the parent node is equal to the selected node, if not then
              * this VOI does not go with this image, a warning message is shown, and no action if performed
              */
-            if (oldNode.getNodeType().equalsIgnoreCase(VOINODE)) {
+            if (targetNodeType == VOINODE) {
 
                 if (!(((JList) ((JScrollPane) getComponentByName("Images List: scroll")).getViewport().getView())
                           .getSelectedValue().toString().equalsIgnoreCase(parentNode.getUserObject().toString()))) {
@@ -1012,30 +1291,30 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                 }
             }
 
-            if ((oldNode.getNodeType().equalsIgnoreCase(IMAGENODE)) &&
-                    (oldNode.getChildCount() ==
+            if ((targetNode.getNodeType() == IMAGEPLACEHOLDERNODE) &&
+                    (targetNode.getChildCount() ==
                          ((JList)
                                   ((JScrollPane) getComponentByName("VOIs from above image List: scroll")).getViewport().getView())
                          .getModel().getSize())) {
 
-                for (int i = 0; i < oldNode.getChildCount(); i++) {
+                for (int i = 0; i < targetNode.getChildCount(); i++) {
                     String voiName = ((JList)
                                           ((JScrollPane) getComponentByName("VOIs from above image List: scroll"))
                                               .getViewport().getView()).getModel().getElementAt(i).toString();
                     ScriptTreeNode voiChildNode = new ScriptTreeNode(voiName, VOINODE);
-                    voiChildNode.setDefaultName("VOI Needed");
                     newNode.add(voiChildNode);
                 } // for
             } else {
 
-                while (oldNode.children().hasMoreElements()) {
-                    newNode.add((ScriptTreeNode) oldNode.children().nextElement());
+                while (targetNode.children().hasMoreElements()) {
+                    newNode.add((ScriptTreeNode) targetNode.children().nextElement());
                 }
             }
 
-            newNode.setDefaultName(oldNode.getDefaultName());
-            ((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, parentNode, parentNode.getIndex(oldNode));
-            ((DefaultTreeModel) tree.getModel()).removeNodeFromParent(oldNode);
+            
+            
+            ((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, parentNode, parentNode.getIndex(targetNode));
+            ((DefaultTreeModel) tree.getModel()).removeNodeFromParent(targetNode);
             expandAll(tree, new TreePath(newNode.getPath()), true);
             dtde.acceptDrop(action);
             dtde.dropComplete(true);
@@ -1049,21 +1328,22 @@ public class JDialogRunScriptView implements ActionListener, Observer {
      * modelImage){ this.modelImage = modelImage; } public ModelImage getModelImage(){ return this.modelImage; } public
      * String toString(){ return modelImage.getImageName(); } }.
      */
-    private class MyRenderer extends DefaultTreeCellRenderer {
+    private class TreeRenderer extends DefaultTreeCellRenderer {
 
         /** Use serialVersionUID for interoperability. */
         private static final long serialVersionUID = 5484058426833940837L;
 
         /** DOCUMENT ME! */
-        Icon imageIcon, voiIcon, scriptIcon;
+        Icon imageIcon, voiIcon, scriptIcon, emptyIcon;
 
         /**
-         * Creates a new MyRenderer object.
+         * Creates a new TreeRenderer object.
          */
-        public MyRenderer() {
+        public TreeRenderer() {
             this.imageIcon = MipavUtil.getIcon("cube.gif");
             this.voiIcon = MipavUtil.getIcon("polygon.gif");
             this.scriptIcon = MipavUtil.getIcon("script.gif");
+            this.emptyIcon = MipavUtil.getIcon("emptytree.gif");
         }
 
         /**
@@ -1085,22 +1365,39 @@ public class JDialogRunScriptView implements ActionListener, Observer {
 
             ScriptTreeNode node = (ScriptTreeNode) value;
 
-            if (node.getUserObject().toString().equalsIgnoreCase(node.getDefaultName())) {
-                this.setForeground(Color.GRAY);
+            if (node.getNodeType() == IMAGEPLACEHOLDERNODE 
+            		&& node.getChildCount() > 0) {
+            	this.setForeground(Color.BLACK);
             }
-
-            if ((node.getUserObject().toString().indexOf("$Image") != -1) ||
-                    (node.getUserObject().toString().indexOf("$image") != -1)) {
-                setIcon(imageIcon);
-            } else if (model.isImage(node.getUserObject().toString())) {
-                setIcon(imageIcon);
-            } else if (!(node.isRoot()) && (((ScriptTreeNode) node.getParent()).isRoot())) {
-                setIcon(scriptIcon);
-                this.setForeground(Color.BLACK);
+            
+            if (node.getNodeType() == SCRIPTNODE) {
+            	setIcon(scriptIcon);
+            	this.setForeground(Color.BLACK);
+            } else if (node.getNodeType() == IMAGEPLACEHOLDERNODE){
+            	if (node.getChildCount() > 0) {
+            		setForeground(Color.BLACK);
+            	} else {
+            		setForeground(Color.GRAY);
+            	}            	            	
+            	setIcon(emptyIcon);
+            } else if (node.getNodeType() == IMAGENODE) {
+            	setIcon(imageIcon);
+            	setForeground(Color.BLACK);
+            	
+            	int index = node.getParent().getIndex(node);
+            	setText("(run-" + (index + 1) + ") " + getText());
+            	
+            } else if (node.getNodeType() == VOINODE) {
+            	if (((String)node.getUserObject()).equals(VOI_EMPTY)) {
+            		setForeground(Color.GRAY);
+            	} else {
+            		setForeground(Color.BLACK);
+            	}
+            	setIcon(voiIcon);
             } else {
-                setIcon(voiIcon);
+            	setIcon(null);
             }
-
+            
             return this;
         }
     }
