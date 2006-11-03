@@ -1519,9 +1519,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
                 seedVal = imageBufferActive[(yS * imageDim.width) + xS];
                 regionGrow(xPG, yPG, zPG, seedVal, null, true);
             }
-
-            triImageFrame.updatePaint(imageActive.getMask());
-            triImageFrame.updateImages();
+            imageActive.notifyImageDisplayListeners(null, true);
         } // end of else if (mode == PAINT_CAN)
         else if (mode == POINT_VOI) {
 
@@ -2090,7 +2088,7 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
     /**
      * This method creates a buffer that will be used to make an image of the
-     * painted area on-screen. 
+     * painted area on-screen.
      *
      * @param paintImageBuffer int[] the buffer to fill that will make the
      * paint image

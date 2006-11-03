@@ -23,7 +23,8 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Opacity value used by the paint brush. value = 1.0 - opaque value = 0.25 - default (mostly see through) */
+    /** Opacity value used by the paint brush. value = 1.0 - opaque value =
+     * 0.25 - default (mostly see through) */
     public float OPACITY = 0.25f;
 
     /** alphaBlending values for compositing two images. */
@@ -38,80 +39,76 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     /** imageB - model for image B. */
     protected ModelImage imageB;
 
-    /** DOCUMENT ME! */
+    /** the image rendered in 2D graphics: */
     protected Image[] img;
 
     private int[] paintImageBuffer = null;
 
-    /** DOCUMENT ME! */
+    /** current slice for 3D images: */
     protected int slice = -99;
 
-    /** DOCUMENT ME! */
-    protected String string;
+    /** offset ranging from -255 to 255 add to each scaled red, green, and
+     * blue */
+    private int brightness; 
 
-    /** DOCUMENT ME! */
-    private int brightness; // offset ranging from -255 to 255 add to each
-                            // scaled red, green, and blue
+    /** scale factor ranging from 0.1 to 10.0 by which to multiply each red,
+     * green, and blue */
+    private float contrast; 
 
-    /** DOCUMENT ME! */
-    private float contrast; // scale factor ranging from 0.1 to 10.0
-                            // by which to multiply each red, green, and blue
+    /** whether or not to dispose of imageA and imageB true unless
+     * ViewJFrameAnimate was passed an unscaled 3D image */
+    private boolean disposeImage; 
 
-    /** DOCUMENT ME! */
-    private boolean disposeImage; // whether or not to dispose of imageA and imageB
-                                  // true unless ViewJFrameAnimate was passed an
-                                  // unscaled 3D image
+    /** whether or not the brightness/contrast filter has been invoked */
+    private boolean haveFiltered = false; 
 
-    /** DOCUMENT ME! */
-    private boolean haveFiltered = false; // whether or not the brightness/
-                                          // contrast filter has been invoked
+    /** set true if deleteSlice hit in ViewJFrameAnimate */
+    private boolean[] ignoreSlice; 
 
-    /** DOCUMENT ME! */
-    private boolean[] ignoreSlice; // set true if deleteSlice hit in ViewJFrameAnimate
-
-    /** DOCUMENT ME! */
+    /** Which image is currently active */
     private ModelImage imageActive = null;
 
     /** DOCUMENT ME! */
     private MediaTracker mt = null;
 
-    /** DOCUMENT ME! */
-    private int nRow, nColumn; // in 4D row and column numbers for z slices
+    /** in 4D row and column numbers for z slices */
+    private int nRow, nColumn; 
 
-    /** DOCUMENT ME! */
-    private int nVOI; // number of vois
+    /** number of vois */
+    private int nVOI; 
 
-    /** DOCUMENT ME! */
-    private int originalZDim; // the number of z slices in a 4D image
+    /** the number of z slices in a 4D image equal to zDim before the
+     * JDialogAnimate 4D to 3D conversion */
+    private int originalZDim; 
 
-    // equal to zDim before the JDialogAnimate 4D to 3D conversion
-
-    /** Buffer used to indicate if the pixel location is painted (true) or unpainted (false). */
+    /** Buffer used to indicate if the pixel location is painted (true) or
+     * unpainted (false). */
     private BitSet paintBitmap;
 
-    /** Buffer that displays the combined paintBitmap and pixBuffer buffers. */
+    /** Buffer that displays the combined paintBitmap and pixBuffer
+     * buffers. */
     private int[] paintBuffer = null;
 
-    /** DOCUMENT ME! */
+    /** Border color, red, green, and blue components: */
     private int red, green, blue;
 
-    /** DOCUMENT ME! */
-    private boolean showNumbers; // whether to number each z slice for 4D
+    /** whether to number each z slice for 4D */
+    private boolean showNumbers; 
 
     /** DOCUMENT ME! */
     private ViewVOIVector VOIs;
 
-    /** DOCUMENT ME! */
+    /** image x, y, z dimensions in FileCoordinates */
     private int xDim, yDim, zDim;
 
-    /** DOCUMENT ME! */
-    private int[] xLabel; // in 4D x location of slice numbering string
+    /** in 4D x location of slice numbering string */
+    private int[] xLabel; 
 
-    /** DOCUMENT ME! */
-    private int[] yLabel; // in 4D y location of slice numbering string
+    /** in 4D y location of slice numbering string */
+    private int[] yLabel; 
 
-    /** DOCUMENT ME! */
-    private String[] zString; // string for displaying slice number
+    /** string for displaying slice number */
+    private String[] zString; 
 
     /** PatientSlice contains all the Patient Coordinate system view-specific
      * data for rendering this component: */
@@ -167,7 +164,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
             ignoreSlice[i] = false;
         }
 
-        string = "0";
         xDim = imageA.getExtents()[0];
         yDim = imageA.getExtents()[1];
 
@@ -297,7 +293,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     public void finalizeLocal() {
 
         if (img != null) {
-
             for (int i = 0; i < img.length; i++) {
 
                 if (img[i] != null) {
@@ -305,11 +300,8 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
                     img[i] = null;
                 }
             }
-
             img = null;
         }
-
-        string = null;
     }
 
 

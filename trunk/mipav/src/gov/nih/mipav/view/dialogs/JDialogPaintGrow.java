@@ -1452,8 +1452,6 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
 
                 if ((temp == temp2) && isRegionGrow) {
                     temp.updatePaint(paintRegion, backup, true);
-                } else {
-                    temp.updatePaint(paintRegion, backup, false);
                 }
             } else if (frame instanceof ViewJFramePaintVasculature) {
 
