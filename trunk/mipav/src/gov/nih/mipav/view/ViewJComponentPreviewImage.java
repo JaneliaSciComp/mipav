@@ -6,12 +6,10 @@ import gov.nih.mipav.model.structures.*;
 import java.awt.*;
 import java.awt.image.*;
 
-import java.io.*;
-
-
 /**
- * Preview image displayed when the user clicks on an image file in the directory tree. For black and white, a default
- * LUT is created. The image is resized if the panel holding it is resized.
+ * Preview image displayed when the user clicks on an image file in the
+ * directory tree. For black and white, a default LUT is created. The image is
+ * resized if the panel holding it is resized.
  *
  * @author   Neva Cherniavsky
  * @version  1.0
@@ -58,22 +56,25 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     /** DOCUMENT ME! */
     private PreviewImageContainer parent;
 
-    /** PatientSlice contains all the Patient Coordinate system view-specific
-     * data for rendering this component: */
+    /** PatientSlice interfaces with the ModelImage class to render the image
+     * w/LUT changes for this component. Slices are rendered in
+     * FileCoordinates. */
     private PatientSlice m_kPatientSlice;
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
-     * Creates new preview image from the model image. The extents will only be 2D. The parent is needed because of the
-     * order in which Java calls methods when a component is resized.
+     * Creates new preview image from the model image. The extents will only
+     * be 2D. The parent is needed because of the order in which Java calls
+     * methods when a component is resized.
      *
      * @param  _image   Model image to create preview image from.
      * @param  extents  X and Y dimensions of image
      * @param  _parent  Frame that called this
      */
-    public ViewJComponentPreviewImage(ModelImage _image, int[] extents, PreviewImageContainer _parent) {
+    public ViewJComponentPreviewImage(ModelImage _image, int[] extents,
+                                      PreviewImageContainer _parent) {
         super( extents[0], extents[1], _image);
         imageSize = extents[0] * extents[1];
 
@@ -133,7 +134,8 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
     }
 
     /**
-     * Size set to object size. Need to get real panel size first from the parent, then reset the image size.
+     * Size set to object size. Need to get real panel size first from the
+     * parent, then reset the image size.
      *
      * @return  Dimension with the size
      */
@@ -160,7 +162,6 @@ public class ViewJComponentPreviewImage extends ViewJComponentBase {
      * (packed) properly (i.e. aRGB)
      * @param  haveFilter  DOCUMENT ME!
      */
-
     public void importImage(int[] data, boolean haveFilter) {
 
         // If the MemoryImageSource and createImage steps are separated, then
