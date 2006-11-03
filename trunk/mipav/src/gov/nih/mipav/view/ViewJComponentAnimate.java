@@ -1,6 +1,5 @@
 package gov.nih.mipav.view;
 
-
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -42,13 +41,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     /** DOCUMENT ME! */
     protected Image[] img;
 
-    /** DOCUMENT ME! */
-    protected int interpMode = SMOOTH;
-
     private int[] paintImageBuffer = null;
-
-    /** mode - used to describe the cursor mode. */
-    protected int mode;
 
     /** DOCUMENT ME! */
     protected int slice = -99;
@@ -80,9 +73,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     private ModelImage imageActive = null;
 
     /** DOCUMENT ME! */
-    private MemoryImageSource memImage;
-
-    /** DOCUMENT ME! */
     private MediaTracker mt = null;
 
     /** DOCUMENT ME! */
@@ -102,38 +92,23 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     /** Buffer that displays the combined paintBitmap and pixBuffer buffers. */
     private int[] paintBuffer = null;
 
-    /** Buffer used to store ARGB images of the image presently being displayed. */
-    private int[] pixBuffer = null;
-
     /** DOCUMENT ME! */
     private int red, green, blue;
-
-    /** DOCUMENT ME! */
-    private float resX, resY; // x and y resolutions
 
     /** DOCUMENT ME! */
     private boolean showNumbers; // whether to number each z slice for 4D
 
     /** DOCUMENT ME! */
-    private boolean showSliceNumber; // whether to number complete frame for 3D
-
-    /** DOCUMENT ME! */
     private ViewVOIVector VOIs;
 
     /** DOCUMENT ME! */
-    private int xDim, yDim, zSlice, zDim;
+    private int xDim, yDim, zDim;
 
     /** DOCUMENT ME! */
     private int[] xLabel; // in 4D x location of slice numbering string
 
     /** DOCUMENT ME! */
     private int[] yLabel; // in 4D y location of slice numbering string
-
-    /** DOCUMENT ME! */
-    private float zoomX = 1; // magnification, here zoomX = zoomY
-
-    /** DOCUMENT ME! */
-    private float zoomY = 1; // and zoom is always a power of 2
 
     /** DOCUMENT ME! */
     private String[] zString; // string for displaying slice number
@@ -167,6 +142,8 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
 
         super(new Dimension(_imageA.getExtents()[0], _imageA.getExtents()[1]));
 
+        interpMode = SMOOTH;
+
         frame = _frame;
         imageA = _imageA;
         imageB = _imageB;
@@ -194,29 +171,28 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
         xDim = imageA.getExtents()[0];
         yDim = imageA.getExtents()[1];
 
-        resX = imageA.getFileInfo(0).getResolutions()[0];
-        resY = imageA.getFileInfo(0).getResolutions()[1];
+        resolutionX = imageA.getFileInfo(0).getResolutions()[0];
+        resolutionY = imageA.getFileInfo(0).getResolutions()[1];
 
-        if ((resX <= 0.0f) || (resY <= 0.0f)) {
-            resX = 1.0f;
-            resY = 1.0f;
+        if ((resolutionX <= 0.0f) || (resolutionY <= 0.0f)) {
+            resolutionX = 1.0f;
+            resolutionY = 1.0f;
         }
 
-        if (resX >= resY) {
-            resX = resX / resY;
-            resY = 1.0f;
-        } else if (resY > resX) {
-            resY = resY / resX;
-            resX = 1.0f;
+        if (resolutionX >= resolutionY) {
+            resolutionX = resolutionX / resolutionY;
+            resolutionY = 1.0f;
+        } else if (resolutionY > resolutionX) {
+            resolutionY = resolutionY / resolutionX;
+            resolutionX = 1.0f;
         }
 
-        setSize(Math.round(imageDim.width * resX), Math.round(imageDim.height * resY));
+        setSize(Math.round(imageDim.width * resolutionX), Math.round(imageDim.height * resolutionY));
 
         alphaBlend = alphaBl;
         alphaBlend = frame.getAlphaBlend();
         System.err.println( alphaBlend );
-        
-        pixBuffer = pixelBuffer;
+
         paintBitmap = imageA.getMask();
 
         /* create the slice renderer for this orientation: */
@@ -276,8 +252,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      * @param  gcFlag  if true garbage collector should be called.
      */
     public void dispose(boolean gcFlag) {
-
-        pixBuffer = null;
         paintBuffer = null;
         paintBitmap = null;
         imageActive = null;
@@ -395,15 +369,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     }
 
     /**
-     * Gets the interpolation mode.
-     *
-     * @return  returns the interpolation mode
-     */
-    public int getInterpMode() {
-        return interpMode;
-    }
-
-    /**
      * Accessor that returns float OPACITY.
      *
      * @return  OPACITY
@@ -429,7 +394,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     public Dimension getPreferredSize() {
 
         try {
-            return new Dimension(Math.round(zoomX * imageDim.width * resX), Math.round(zoomY * imageDim.height * resY));
+            return new Dimension(Math.round(zoomX * imageDim.width * resolutionX), Math.round(zoomY * imageDim.height * resolutionY));
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentBase.getPreferredSize");
@@ -459,10 +424,10 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
         try {
 
             if (wh == null) {
-                return new Dimension(Math.round(zoomX * imageDim.width * resX),
-                                     Math.round(zoomY * imageDim.height * resY));
+                return new Dimension(Math.round(zoomX * imageDim.width * resolutionX),
+                                     Math.round(zoomY * imageDim.height * resolutionY));
             } else {
-                wh.setSize(Math.round(zoomX * imageDim.width * resX), Math.round(zoomY * imageDim.height * resY));
+                wh.setSize(Math.round(zoomX * imageDim.width * resolutionX), Math.round(zoomY * imageDim.height * resolutionY));
 
                 return wh;
             }
@@ -571,18 +536,18 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
                     makePaintBitmapBorder(paintImageBuffer, paintBitmap, slice, frame);
                 }
 
-                int zoomedWidth = Math.round(zoomX * img[slice].getWidth(this) * resX);
-                int zoomedHeight = Math.round(zoomY * img[slice].getHeight(this) * resY);
+                int zoomedWidth = Math.round(zoomX * img[slice].getWidth(this) * resolutionX);
+                int zoomedHeight = Math.round(zoomY * img[slice].getHeight(this) * resolutionY);
 
                 g.setClip(getVisibleRect());
 
-                if (((zoomX * resX) != 1.0f) || ((zoomY * resY) != 1.0f)) {
+                if (((zoomX * resolutionX) != 1.0f) || ((zoomY * resolutionY) != 1.0f)) {
                     g.drawImage(img[slice], 0, 0, (int) (zoomedWidth + 0.5), (int) (zoomedHeight + 0.5),
                                 0, 0, imageDim.width, imageDim.height, this);
                 } else {
                     g.drawImage(img[slice], 0, 0, this);
                 }
-                
+
                 memImage = new MemoryImageSource(imageDim.width, imageDim.height, paintImageBuffer, 0, imageDim.width);
                 Image paintImage = createImage(memImage); // the image representing the paint mask
                 // change rendering hint back from BILINEAR to nearest neighbor so that
@@ -599,19 +564,19 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
                     g.setColor(Color.white);
 
                     for (i = 0; i < originalZDim; i++) {
-                        g.drawString(zString[i], (int) ((zoomX * resX * xLabel[i]) + 0.5),
-                                     (int) ((zoomY * resY * yLabel[i]) + 0.5));
+                        g.drawString(zString[i], (int) ((zoomX * resolutionX * xLabel[i]) + 0.5),
+                                     (int) ((zoomY * resolutionY * yLabel[i]) + 0.5));
                     }
                 }
 
                 if (showSliceNumber) {
                     g.setFont(MipavUtil.font12);
                     g.setColor(Color.white);
-                    g.drawString(zString[slice], 5, (int) ((zoomY * resY * imageDim.height) + 0.5) - 5);
+                    g.drawString(zString[slice], 5, (int) ((zoomY * resolutionY * imageDim.height) + 0.5) - 5);
                 }
 
                 for (i = nVOI - 1; i >= 0; i--) {
-                    VOIs.VOIAt(i).drawSelf(zoomX, zoomY, resX, resY, 0, 0, imageActive.getFileInfo(0).getResolutions(),
+                    VOIs.VOIAt(i).drawSelf(zoomX, zoomY, resolutionX, resolutionY, 0, 0, imageActive.getFileInfo(0).getResolutions(),
                                            imageActive.getFileInfo(0).getUnitsOfMeasure(), slice, FileInfoBase.UNKNOWN_ORIENT, g);
                 }
             } // if (img != null)
@@ -687,21 +652,10 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
      * @param  paintBuff   storage buffer used to display the combined paintBitmap and pixBuffer buffers
      */
     public void setBuffers(float[] imgBufferA, float[] imgBufferB, int[] pixBuff, int[] paintBuff) {
-
-        pixBuffer = pixBuff;
         paintBuffer = paintBuff;
         m_kPatientSlice.setBuffers( imgBufferA, imgBufferB );
     }
 
-
-    /**
-     * Sets the interpolation mode.
-     *
-     * @param  mode  mode to set it to
-     */
-    public void setInterpMode(int mode) {
-        interpMode = mode;
-    }
 
     /**
      * For 4D sets the numbering string of each z slice and its x and y positions.
@@ -813,15 +767,6 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     }
 
     /**
-     * In 3D whether to show number for complete frame.
-     *
-     * @param  flag  if true show number for complete frame
-     */
-    public void setShowSliceNumber(boolean flag) {
-        showSliceNumber = flag;
-    }
-
-    /**
      * Accessor that sets the slice of the image.
      *
      * @param  _slice  image slice to be displayed
@@ -854,7 +799,7 @@ public class ViewJComponentAnimate extends ViewJComponentBase {
     public void setZoom(float zX, float zY) {
         zoomX = zX;
         zoomY = zY;
-        setSize(Math.round(zX * imageDim.width * resX), Math.round(zY * imageDim.height * resY));
+        setSize(Math.round(zX * imageDim.width * resolutionX), Math.round(zY * imageDim.height * resolutionY));
     }
 
     /**

@@ -298,27 +298,27 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public static ModelRGB initRGB( ModelImage img ) throws OutOfMemoryError
     {
         ModelRGB newRGB = null;
-        
+
         if ( img.isColorImage() )
         {
             float[] x = new float[4];
             float[] y = new float[4];
             float[] z = new float[4];
             Dimension dim = new Dimension(256, 256);
-            
+
             // Set ModelRGB min max values;
             x[0] = 0;
             y[0] = dim.height - 1;
-            
+
             x[1] = 255 * 0.333f;
             y[1] = (dim.height - 1) - ((dim.height - 1) / 3.0f);
-            
+
             x[2] = 255 * 0.667f;
             y[2] = (dim.height - 1) - ((dim.height - 1) * 0.67f);
-            
+
             x[3] = 255;
             y[3] = 0;
-            
+
             int[] RGBExtents = new int[2];
             RGBExtents[0] = 4;
             RGBExtents[1] = 256;
@@ -1554,8 +1554,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             new JDialogImageMath(this, getActiveImage());
         } else if (command.equals("matchImages")) {
             new JDialogMatchImages(this, getActiveImage());
-        } else if (command.equals("InverseOrder")) {
-            new JDialogInverseOrder(this, getActiveImage()).callAlgorithm();
         } else if (command.equals("performRAHE")) {
 
             // JDialogAHE ahe =
