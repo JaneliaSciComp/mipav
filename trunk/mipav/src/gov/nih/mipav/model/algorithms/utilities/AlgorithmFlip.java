@@ -204,8 +204,7 @@ public class AlgorithmFlip extends AlgorithmBase {
         float loc = fileInfo[0].getOrigin(index);
         int orient = fileInfo[0].getAxisOrientation(index);
 
-        if ((orient == FileInfoBase.ORI_L2R_TYPE) || (orient == FileInfoBase.ORI_S2I_TYPE) ||
-                (orient == FileInfoBase.ORI_P2A_TYPE)) {
+        if ( loc > 0.0f ) {
             loc = loc - ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
         } else {
             loc = loc + ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
@@ -214,8 +213,11 @@ public class AlgorithmFlip extends AlgorithmBase {
         for (int i = 0; i < fileInfo.length; i++) {
             fileInfo[i].setAxisOrientation(orient, index);
             fileInfo[i].setOrigin(loc, index);
+            if ( index == 2 )
+            {
+                fileInfo[i].setOrigin( loc + (fileInfo[0].getResolutions()[index] * i), index);
+            }
         }
-        
         setCompleted(true);
     }
 
