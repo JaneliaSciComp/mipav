@@ -33,9 +33,11 @@ import javax.vecmath.*;
 
 
 /**
- * A Java3D-based dialog for surfaces represented as triangle meshes. The surfaces are displayed in the 3D viewer that
- * already contains a 3D image. The mouse behavior is the same for the image as it is for the surfaces, so that when the
- * user zooms or rotates, it looks like the surfaces are part of the tri-image.
+ * A Java3D-based dialog for surfaces represented as triangle meshes. The
+ * surfaces are displayed in the 3D viewer that already contains a 3D
+ * image. The mouse behavior is the same for the image as it is for the
+ * surfaces, so that when the user zooms or rotates, it looks like the
+ * surfaces are part of the tri-image.
  *
  * @author  David Eberly
  * @author  Neva Cherniavsky
@@ -3950,10 +3952,14 @@ public class JPanelSurface extends JPanelRendererBase
                     }
 
                     direction = ModelTriangleMesh.getDirection();
-//                     System.err.println( "DIRECTION: " + direction[0] + " " + direction[1] + " " + direction[2] );
-//                     boolean[] aiFlip = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
-//                     System.err.println( "MODEL FLIP: " + aiFlip[0] + " " + aiFlip[1] + " " + aiFlip[2] );
-
+                    int[] imageDirection = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
+                    if ( (direction[0] != imageDirection[0]) ||
+                         (direction[1] != imageDirection[1]) ||
+                         (direction[2] != imageDirection[2])   )
+                    {
+                        MipavUtil.displayError( "ModelTriangleMesh surface orientation does not match ModelImage orientation" );
+                    }
+                    
                     startLocation = ModelTriangleMesh.getStartLocation();
                     akVertex = akComponent[i].getVertexCopy();
                     aiConnect = akComponent[i].getIndexCopy();
