@@ -485,8 +485,10 @@ public class JDialogRunScriptController implements ActionListener {
 
             String[] scriptVars = model.getScriptImageVars();
 
-            Vector scriptExecutors = view.getUserSelectedImages();
-            Vector scriptExecutorsVOIs = view.getUserSelectedVOIs();
+            Vector scriptExecutors = new Vector();
+            Vector scriptExecutorsVOIs = new Vector();
+            view.fillImagesVOIs(scriptExecutors, scriptExecutorsVOIs);
+            
 
             for (int i = 0; i < scriptExecutors.size(); i++) {
                 Vector scriptImages = (Vector) scriptExecutors.elementAt(i);

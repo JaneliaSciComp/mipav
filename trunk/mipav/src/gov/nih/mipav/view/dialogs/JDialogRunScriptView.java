@@ -93,6 +93,9 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     /** DOCUMENT ME! */
     private JScrollPane treeScroll;
 
+    /** Keep a reference to the VOI List to turn on and off if multiple images are selected */
+    private JList voiList = null;
+        
     private int dropSource = 0;
 
     private static final int IMAGE_DROP = 0;
@@ -274,48 +277,50 @@ public class JDialogRunScriptView implements ActionListener, Observer {
      *
      * @return  A list of images to be used in the script.
      */
-    public Vector getUserSelectedImages() {
-        Vector scriptExecuters = new Vector(0);
-
-        for (int i = 0; i < root.getChildCount(); i++) {
-            Vector imageNames = new Vector(0);
-
-            for (int j = 0; j < ((TreeNode) root.getChildAt(i)).getChildCount(); j++) {
-                String imageName = ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim();
-                imageNames.add(imageName);
-            }
-
-            scriptExecuters.add(imageNames);
-        }
-
-        return scriptExecuters;
+    public void fillImagesVOIs(Vector imageHolder, Vector voiHolder) {
+     
+        ScriptTreeNode scriptNode = (ScriptTreeNode)root.getChildAt(0);
+    	
+    	int numImagePlaceHolders = scriptNode.getChildCount();
+    	int [] numImages = new int[numImagePlaceHolders];
+    	
+    	//find out how many "executers" we will have
+    	int numExecuters = ((ScriptTreeNode)scriptNode.getChildAt(0)).getChildCount();
+    	Vector [] imageNames = new Vector[numExecuters];
+    	Vector [] voiNames = new Vector[numExecuters];
+    	
+    	for (int i = 0; i < numExecuters; i++) {
+    		imageNames[i] = new Vector();
+    		voiNames[i] = new Vector();
+    	}
+    	
+    	
+    	ScriptTreeNode imagePHNode = null;
+    	ScriptTreeNode imageNode = null;
+    	int numVOIs;
+    	
+    	for (int i = 0; i < numImagePlaceHolders; i++) {
+    		imagePHNode = (ScriptTreeNode)scriptNode.getChildAt(i);
+    		numImages[i] = imagePHNode.getChildCount();
+    		for (int j = 0; j < numImages[i]; j++) {
+    			imageNode = (ScriptTreeNode)imagePHNode.getChildAt(j);
+    			imageNames[j].add(((String)imageNode.getUserObject()).trim());
+    			
+    			
+    			numVOIs = imageNode.getChildCount();
+    			for (int k = 0; k < numVOIs; k++) {
+    				voiNames[j].add(((String)((ScriptTreeNode)imageNode.getChildAt(k)).getUserObject()).trim());
+    			}
+    		}
+    	}
+    	
+    	for (int i = 0; i < numExecuters; i++) {
+    		imageHolder.add(imageNames[i]);
+    		voiHolder.add(voiNames[i]);
+    	}
+    	
     }
-
-    /**
-     * Gets the list of VOIs selected by the user in this dialog. Should be in the order that the VOIs are used in the
-     * script.
-     *
-     * @return  A list of VOIs to be used in the script.
-     */
-    public Vector getUserSelectedVOIs() {
-        Vector scriptExecuters = new Vector(0);
-
-        for (int i = 0; i < root.getChildCount(); i++) {
-            Vector voiPaths = new Vector(0);
-
-            for (int j = 0; j < ((TreeNode) root.getChildAt(i)).getChildCount(); j++) {
-
-                for (int k = 0; k < ((TreeNode) root.getChildAt(i).getChildAt(j)).getChildCount(); k++) {
-                    String voi = ((TreeNode) root.getChildAt(i).getChildAt(j).getChildAt(k)).toString().trim();
-                    voiPaths.add(voi);
-                }
-            }
-
-            scriptExecuters.add(voiPaths);
-        }
-
-        return scriptExecuters;
-    }
+   
 
     /**
      * ***************************************************************************************************** Called when
@@ -487,16 +492,9 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         Object[] contents = null;
         listModel = new DefaultListModel();
 
-        if (name.equalsIgnoreCase("Images List")) {
-            contents = model.getAvailableImageList().toArray();
-        }
+       
 
-        if (name.equalsIgnoreCase("VOIs from above image List")) {
-
-            if ((model.getAvailableImageList() != null) && (model.getAvailableImageList().size() > 0)) {
-                contents = ((ScriptImage) model.getAvailableImageList().get(0)).getScriptVOIs();
-            }
-        }
+        
 
         populateModel(contents);
 
@@ -508,6 +506,18 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         list.setSelectedIndex(0);
         list.setTransferHandler(new ArrayListTransferHandler());
       
+        if (name.equalsIgnoreCase("Images List")) {
+            contents = model.getAvailableImageList().toArray();
+        }
+        
+        if (name.equalsIgnoreCase("VOIs from above image List")) {
+            if ((model.getAvailableImageList() != null) && (model.getAvailableImageList().size() > 0)) {
+                contents = ((ScriptImage) model.getAvailableImageList().get(0)).getScriptVOIs();
+            }
+            voiList = list;
+        }
+        
+       
         
         JScrollPane scroll = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                                              JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
@@ -973,6 +983,8 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         /** DOCUMENT ME! */
         String selectedNodeName;
 
+        MouseEvent firstMouseEvent = null;
+        
         /**
          * DOCUMENT ME!
          *
@@ -981,71 +993,32 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         public void mousePressed(MouseEvent e) {
 
             if (((Component) e.getSource()).getName().equalsIgnoreCase("Images List")) {
-            	dropSource = IMAGE_DROP;
                 selectedListIndicies = ((JList) e.getSource()).getSelectedIndices();
                 
+                //turn off the VOI Drag option as long as more than 1 image is selected
                 if (selectedListIndicies.length > 1) {
-                	
+                	voiList.setEnabled(false);
+                	voiList.removeAll();
+                } else {
+                	voiList.setEnabled(true);
+                	ScriptImage image = (ScriptImage) ((JList) e.getSource()).getSelectedValue();
+                    JList voiList = null;
+                    Component[] components = frame.getContentPane().getComponents();
+
+                    for (int i = 0; i < frame.getContentPane().getComponents().length; i++) {
+
+                        if ((components[i].getName() != null) &&
+                                (components[i].getName().equalsIgnoreCase("VOIs from above image List: scroll"))) {
+                            voiList = ((JList)
+                                           ((JScrollPane) frame.getContentPane().getComponents()[i]).getViewport().getView());
+
+                            // voiList.setListData(image.getModelImage().getVOIs());
+                            voiList.setListData(image.getScriptVOIs());
+                        } // if
+                    } // for
                 }
-
-                if ((selectedListIndicies.length > 1) && (e.getModifiers() == MouseEvent.BUTTON3_MASK)) {
-
-                    if (root.getChildAt(0).getChildCount() == 1) {
-                        Point pt = e.getPoint();
-                        JPopupMenu popup = new JPopupMenu();
-                        JMenuItem sequentialMenuItem = new JMenuItem("Add Images Sequentially to Executers");
-                        sequentialMenuItem.addActionListener(new java.awt.event.ActionListener() {
-                                public void actionPerformed(java.awt.event.ActionEvent e) {
-
-                                    if (selectedListIndicies.length > numberOfExecuters) {
-                                        int additionalExecuters = selectedListIndicies.length - numberOfExecuters;
-
-                                        for (int i = 0; i < additionalExecuters; i++) {
-                                            controller.actionPerformed(new ActionEvent(this, 0,
-                                                                                       "Add new script executer"));
-                                        }
-                                    }
-
-                                    // get first image node
-                                    for (int j = 0; j < selectedListIndicies.length; j++) {
-                                        String imageName = ((JList)
-                                                                ((JScrollPane) getComponentByName("Images List: scroll"))
-                                                                    .getViewport().getView()).getModel().getElementAt(j).toString();
-                                        updateNode((ScriptTreeNode) root.getChildAt(j).getChildAt(0), imageName);
-                                    }
-                                }
-                            }); // addActionListener
-
-                        popup.add(sequentialMenuItem);
-                        popup.show((Component) e.getSource(), pt.x + 10, pt.y + 10);
-
-                        return;
-                    } // if only one image
-                } // more than one image selected, and button 3
-
-                ScriptImage image = (ScriptImage) ((JList) e.getSource()).getSelectedValue();
-                JList voiList = null;
-                Component[] components = frame.getContentPane().getComponents();
-
-                for (int i = 0; i < frame.getContentPane().getComponents().length; i++) {
-
-                    if ((components[i].getName() != null) &&
-                            (components[i].getName().equalsIgnoreCase("VOIs from above image List: scroll"))) {
-                        voiList = ((JList)
-                                       ((JScrollPane) frame.getContentPane().getComponents()[i]).getViewport().getView());
-
-                        // voiList.setListData(image.getModelImage().getVOIs());
-                        voiList.setListData(image.getScriptVOIs());
-                    } // if
-                } // for
-            } // source equals imageList
-            else if (((Component) e.getSource()).getName().equalsIgnoreCase("VOIs from above image List")) {
-            	
-            	dropSource = VOI_DROP;
-            }
-            
-            
-            if (((Component) e.getSource()).getName().equalsIgnoreCase("Script Tree")) {
+                
+            } else if (((Component) e.getSource()).getName().equalsIgnoreCase("Script Tree")) {
 
                 if (e.getModifiers() == InputEvent.BUTTON3_MASK) {
                 	int type;
@@ -1097,15 +1070,39 @@ public class JDialogRunScriptView implements ActionListener, Observer {
 
                 } // right mouse button clicked
 
-                return;
             } // source equals scriptTree
-
-            JComponent c = (JComponent) e.getSource();
-            //System.err.println("Transfer handler component: " + c.getClass() + "....more: " + c.toString());
-            TransferHandler handler = c.getTransferHandler();
-
-            handler.exportAsDrag(c, e, TransferHandler.COPY);
+            
+            if (((Component) e.getSource()).getName().equalsIgnoreCase("Images List")) {
+            	dropSource = IMAGE_DROP;
+            //	System.err.println("SOURCE IS IMAGE_DROP");
+        	} else if (e.getSource().equals(voiList)) {
+         //   	System.err.println("SOURCE IS VOI_DROP");
+            	dropSource = VOI_DROP;
+            }
+            
+            firstMouseEvent = e;
+            //e.consume();
         }
+        
+        public void mouseDragged(MouseEvent e) {
+        	
+        	
+        	int dx = Math.abs(e.getX() - firstMouseEvent.getX());
+            int dy = Math.abs(e.getY() - firstMouseEvent.getY());
+            //Arbitrarily define a 5-pixel shift as the
+            //official beginning of a drag.
+            if (dx > 5 || dy > 5) {
+            	JComponent c = (JComponent) e.getSource();
+                //System.err.println("Transfer handler component: " + c.getClass() + "....more: " + c.toString());
+                TransferHandler handler = c.getTransferHandler();
+
+                handler.exportAsDrag(c, e, TransferHandler.COPY);
+                firstMouseEvent = null;
+            }
+        	
+        	
+        }
+        
     }
 
     /**
@@ -1196,6 +1193,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             	
             	if (targetNodeType == IMAGEPLACEHOLDERNODE &&
             			dropSource == IMAGE_DROP) {
+            	//	System.err.println("TARGET TYPE PLACEHOLDERNODE, SOURCE TYPE IMAGE");
             		newNode = new ScriptTreeNode(text[i], newNodeType);
             		//inserting into placeholder as new image node
             		// look for last image child and append after that
@@ -1212,6 +1210,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             		//expandAll(tree, new TreePath(newNode.getPath()), true);
             	} else if (targetNodeType == IMAGENODE &&
             			dropSource == IMAGE_DROP) {
+            	//	System.err.println("TARGET TYPE IMAGENODE, SOURCE TYPE IMAGE");
             			newNode = new ScriptTreeNode(text[i], newNodeType);
             			targetNode.removeAllChildren();
             			
@@ -1232,6 +1231,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             			
             	} else if (targetNodeType == VOINODE &&
             			dropSource == VOI_DROP) {
+            //		System.err.println("TARGET TYPE VOINODE, SOURCE TYPE VOI");
             		String targetImageName = (String)((ScriptTreeNode)targetNode.getParent()).getUserObject();
             		String sourceImageName = ((JList) ((JScrollPane) getComponentByName("Images List: scroll")).getViewport().getView())
                     .getSelectedValue().toString();
@@ -1250,9 +1250,21 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             		
             	} else if (targetNodeType == IMAGENODE &&
             			dropSource == VOI_DROP) {
+          //  		System.err.println("TARGET TYPE IMAGENODE, SOURCE TYPE IMAGE");
+            		String targetImageName = (String)targetNode.getUserObject();
+            		String sourceImageName = ((JList) ((JScrollPane) getComponentByName("Images List: scroll")).getViewport().getView())
+                    .getSelectedValue().toString();
+            		
+            		if (!(targetImageName.equalsIgnoreCase(sourceImageName))) {
+            			MipavUtil.displayWarning("Source image does not contain this VOI");
+            			dtde.acceptDrop(action);
+                        dtde.dropComplete(true);
+                        return;
+            		}
+            		
             		//populate as many VOI nodes as have been dropped...if conditions allow
             		if (childCount > currentVOIIndex) {
-            			System.err.println("Current VOI Index is: " + currentVOIIndex);
+            	//		System.err.println("Current VOI Index is: " + currentVOIIndex);
             			voiNode = (ScriptTreeNode)targetNode.getChildAt(currentVOIIndex);
             			updateNode(voiNode, text[i]);
             			currentVOIIndex++;
@@ -1262,62 +1274,8 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             }
             dtde.acceptDrop(action);
             dtde.dropComplete(true);
-            if (newNode != null) {
-            	expandAll(tree, true);
-            	
-            	return;
-            }
-            else if (newNode == null) {
-            	expandAll(tree, true);
-            	
-            	return;	
-            }
             
-            // CANT GET HERE....
-            
-            newNode = new ScriptTreeNode(text, newNodeType);
-            
-            /*
-             * If the drop target is a VOI Node, checks if the parent node is equal to the selected node, if not then
-             * this VOI does not go with this image, a warning message is shown, and no action if performed
-             */
-            if (targetNodeType == VOINODE) {
-
-                if (!(((JList) ((JScrollPane) getComponentByName("Images List: scroll")).getViewport().getView())
-                          .getSelectedValue().toString().equalsIgnoreCase(parentNode.getUserObject().toString()))) {
-                    MipavUtil.displayWarning("VOIs must be from same image.");
-
-                    return;
-                }
-            }
-
-            if ((targetNode.getNodeType() == IMAGEPLACEHOLDERNODE) &&
-                    (targetNode.getChildCount() ==
-                         ((JList)
-                                  ((JScrollPane) getComponentByName("VOIs from above image List: scroll")).getViewport().getView())
-                         .getModel().getSize())) {
-
-                for (int i = 0; i < targetNode.getChildCount(); i++) {
-                    String voiName = ((JList)
-                                          ((JScrollPane) getComponentByName("VOIs from above image List: scroll"))
-                                              .getViewport().getView()).getModel().getElementAt(i).toString();
-                    ScriptTreeNode voiChildNode = new ScriptTreeNode(voiName, VOINODE);
-                    newNode.add(voiChildNode);
-                } // for
-            } else {
-
-                while (targetNode.children().hasMoreElements()) {
-                    newNode.add((ScriptTreeNode) targetNode.children().nextElement());
-                }
-            }
-
-            
-            
-            ((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, parentNode, parentNode.getIndex(targetNode));
-            ((DefaultTreeModel) tree.getModel()).removeNodeFromParent(targetNode);
-            expandAll(tree, new TreePath(newNode.getPath()), true);
-            dtde.acceptDrop(action);
-            dtde.dropComplete(true);
+            expandAll(tree, true);
         }
     }
 
