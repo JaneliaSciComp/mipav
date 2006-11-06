@@ -58,11 +58,7 @@ public class ScriptImage {
     }
 
     public String toString() {
-        if (isImageOpenedByScriptDialog) {
-            return getFileLocation();
-        } else {
-            return getImageName();
-        }
+    	return getImageName();
     }
 
     public String getFileLocation() {
@@ -93,6 +89,7 @@ public class ScriptImage {
 
         ScriptVOI[] voiArr = getScriptVOIs();
         for (int i = 0; i < voiArr.length; i++) {
+        	System.err.println("Checking against: " + voiArr[i].getVoiName());
             if (voiArr[i].getVoiName().equalsIgnoreCase(name)) {
                 return voiArr[i];
             }
@@ -118,4 +115,9 @@ public class ScriptImage {
     public void setExtents(int[] extents) {
         this.extents = extents;
     }
+    
+    public boolean isOpenedByScript() {
+    	return this.isImageOpenedByScriptDialog;
+    }
+    
 }

@@ -505,7 +505,8 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         list.setName(name);
         list.setSelectedIndex(0);
         list.setTransferHandler(new ArrayListTransferHandler());
-      
+        list.setCellRenderer(new CustomCellRenderer());
+        
         if (name.equalsIgnoreCase("Images List")) {
             contents = model.getAvailableImageList().toArray();
         }
@@ -982,8 +983,6 @@ public class JDialogRunScriptView implements ActionListener, Observer {
 
         /** DOCUMENT ME! */
         String selectedNodeName;
-
-        MouseEvent firstMouseEvent = null;
         
         /**
          * DOCUMENT ME!
@@ -991,34 +990,8 @@ public class JDialogRunScriptView implements ActionListener, Observer {
          * @param  e  DOCUMENT ME!
          */
         public void mousePressed(MouseEvent e) {
-
-            if (((Component) e.getSource()).getName().equalsIgnoreCase("Images List")) {
-                selectedListIndicies = ((JList) e.getSource()).getSelectedIndices();
-                
-                //turn off the VOI Drag option as long as more than 1 image is selected
-                if (selectedListIndicies.length > 1) {
-                	voiList.setEnabled(false);
-                	voiList.removeAll();
-                } else {
-                	voiList.setEnabled(true);
-                	ScriptImage image = (ScriptImage) ((JList) e.getSource()).getSelectedValue();
-                    JList voiList = null;
-                    Component[] components = frame.getContentPane().getComponents();
-
-                    for (int i = 0; i < frame.getContentPane().getComponents().length; i++) {
-
-                        if ((components[i].getName() != null) &&
-                                (components[i].getName().equalsIgnoreCase("VOIs from above image List: scroll"))) {
-                            voiList = ((JList)
-                                           ((JScrollPane) frame.getContentPane().getComponents()[i]).getViewport().getView());
-
-                            // voiList.setListData(image.getModelImage().getVOIs());
-                            voiList.setListData(image.getScriptVOIs());
-                        } // if
-                    } // for
-                }
-                
-            } else if (((Component) e.getSource()).getName().equalsIgnoreCase("Script Tree")) {
+//System.err.println("MOUSE PRESSED");
+            if (((Component) e.getSource()).getName().equalsIgnoreCase("Script Tree")) {
 
                 if (e.getModifiers() == InputEvent.BUTTON3_MASK) {
                 	int type;
@@ -1080,28 +1053,27 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             	dropSource = VOI_DROP;
             }
             
-            firstMouseEvent = e;
-            //e.consume();
         }
         
-        public void mouseDragged(MouseEvent e) {
-        	
-        	
-        	int dx = Math.abs(e.getX() - firstMouseEvent.getX());
-            int dy = Math.abs(e.getY() - firstMouseEvent.getY());
-            //Arbitrarily define a 5-pixel shift as the
-            //official beginning of a drag.
-            if (dx > 5 || dy > 5) {
-            	JComponent c = (JComponent) e.getSource();
-                //System.err.println("Transfer handler component: " + c.getClass() + "....more: " + c.toString());
-                TransferHandler handler = c.getTransferHandler();
+        public void mouseReleased(MouseEvent e) {
+        	if (((Component) e.getSource()).getName().equalsIgnoreCase("Images List")) {
+                selectedListIndicies = ((JList) e.getSource()).getSelectedIndices();
+                
+                
+                //turn off the VOI Drag option as long as more than 1 image is selected
+                if (selectedListIndicies.length > 1) {
+                	
+                	voiList.setListData(new Vector());
+                } else {
+                	ScriptImage image = (ScriptImage) ((JList) e.getSource()).getSelectedValue();
 
-                handler.exportAsDrag(c, e, TransferHandler.COPY);
-                firstMouseEvent = null;
+                    voiList.setListData(image.getScriptVOIs());
+                    
+                }
+                
             }
-        	
-        	
         }
+        
         
     }
 
@@ -1359,4 +1331,65 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             return this;
         }
     }
+    
+    private class CustomCellRenderer extends JLabel 
+    implements ListCellRenderer {
+
+    	   public CustomCellRenderer () {
+    	       // Don't paint behind the component
+    	       setOpaque(true);
+    	   }
+
+    	   // Set the attributes of the 
+    	   //class and return a reference
+    	   public Component 
+    	     getListCellRendererComponent(JList list,
+    	         Object value, // value to display
+    	         int index,    // cell index
+    	         boolean iss,  // is selected
+    	         boolean chf)  // cell has focus?
+    	   {
+    	   
+
+
+    	        // Set the text and 
+    	        //background color for rendering
+    		   
+    		   if (value instanceof ScriptImage) {
+    			   if (((ScriptImage)value).isOpenedByScript()) {
+    				   
+    				   setForeground(Color.BLUE);
+    			   } else {
+    				   setForeground(Color.BLACK);
+    			   }
+    			   setText(((ScriptImage)value).getImageName());
+    			   setToolTipText(((ScriptImage)value).getFileLocation());
+    		   } else if (value instanceof ScriptVOI) {
+    			   if (((ScriptVOI)value).getVoiFileLocation() == null) {
+    				   setForeground(Color.BLACK);
+    			   } else {
+    				   setForeground(Color.BLUE);
+    				   setToolTipText(((ScriptVOI)value).getVoiFileLocation());
+    			   }
+    			   
+    			   setText(((ScriptVOI)value).toString());
+    			   
+    		   }
+    		      	       
+
+    	         // Set a border if the 
+    	         //list item is selected
+    	        if (iss) {
+    	        	setBorder(BorderFactory.createLineBorder(
+    	              Color.GRAY, 1));
+    	        	setBackground(Color.LIGHT_GRAY);
+    	        } else {
+    	            setBorder(null);
+    	            setBackground(list.getBackground());
+    	        }
+
+    	        return this;
+    	    }
+    	 }
+    
 } // class

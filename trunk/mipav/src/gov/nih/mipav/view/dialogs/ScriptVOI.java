@@ -15,7 +15,6 @@ public class ScriptVOI {
     public ScriptVOI(VOI voi, String imageName, String imageFileLocation) {
         this.voiName = voi.getName();
         // voi.setActive(true);
-
         String defaultFileLocation = FileUtility.getFileDirectory(imageFileLocation) + "defaultVOIs_" + imageName + File.separator;
         String fileName = defaultFileLocation + voiName + ".xml";
 
@@ -35,7 +34,8 @@ public class ScriptVOI {
     }
 
     public String toString() {
-        return this.voiFileLocation + this.voiName;
+    	
+    	return this.getVoiName();      	
     }
 
     public String getVoiFileLocation() {
