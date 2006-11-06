@@ -21,12 +21,14 @@ import javax.swing.event.*;
 
 
 /**
- * Dialog to turn slices bounding box of surface renderer on and off, and to change the color of the frame. This dialog
- * also control the X, Y, Z slices movements.
+ * Dialog to turn slices bounding box of surface renderer on and off, and to
+ * change the color of the frame. This dialog also control the X, Y, Z slices
+ * movements.
  */
-public class JPanelSlices extends JPanelRendererBase implements ChangeListener, MouseListener { // for slider changes
-                                                                                                // (LOD change){
-
+public class JPanelSlices extends JPanelRendererBase
+    implements ChangeListener,  // for slider changes
+               MouseListener    // (LOD change)
+{
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Use serialVersionUID for interoperability. */
@@ -59,10 +61,10 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     /** Bounding box control panel. */
     private JPanel boundingBoxPanel;
 
-    /** Check box for turning x on and off. */
+    /** Check box for turning bounding boxes on and off. */
     private JCheckBox[] boundingCheck = new JCheckBox[3];
 
-    /** Color button for changing x color. */
+    /** Color button for changing bounding box color. */
     private JButton[] colorButton = new JButton[3];
 
     /** Color chooser dialog. */
@@ -158,8 +160,9 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Changes color of slices box frame and button if color button was pressed; turns bounding box on and off if
-     * checkbox was pressed; and closes dialog if "Close" button was pressed.
+     * Changes color of slices box frame and button if color button was
+     * pressed; turns bounding box on and off if checkbox was pressed; and
+     * closes dialog if "Close" button was pressed.
      *
      * @param  event  Event that triggered function.
      */
@@ -175,7 +178,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         for ( int i = 0; i < 3; i++ )
         {
             if (source == boundingCheck[i]) {
-                
+
                 if (boundingCheck[i].isSelected()) {
                     ((SurfaceRender) renderBase).updateBoxSlicePos( true );
                     ((SurfaceRender) renderBase).showBoxSlice(i);
@@ -231,8 +234,10 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Builds panel that has 3 sliders for the 3 planes shown, 3 checkboxes for showing the planes, 3 text boxes for the
-     * current values of the sliders, and a fourth slider and text box for the time dimension, if necessary.
+     * Builds panel that has 3 sliders for the 3 planes shown, 3 checkboxes
+     * for showing the planes, 3 text boxes for the current values of the
+     * sliders, and a fourth slider and text box for the time dimension, if
+     * necessary.
      */
     public void buildControlPanel() {
         int levelX = 0, levelY = 1, levelZ = 2;
@@ -554,7 +559,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * When 3D texture volume render is invoked, disable all the slices and bounding frame boxes.
+     * When 3D texture volume render is invoked, disable all the slices and
+     * bounding frame boxes.
      */
     public void disableSlices() {
 
@@ -575,12 +581,6 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      * Dispose memory.
      */
     public void dispose() {
-//         boundingCheckX = null;
-//         boundingCheckY = null;
-//         boundingCheckZ = null;
-//         colorButtonX = null;
-//         colorButtonY = null;
-//         colorButtonZ = null;
         boundingBoxPanel = null;
         opacityLabelX = null;
         opacityLabelY = null;
@@ -767,7 +767,13 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         return xProbe;
     }
 
-
+    /**
+     * Get the current slider value for the slider that matches the
+     * orientation input parameter.
+     * @param orientation, either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT.
+     * @return The slider position for the given orientation is returned.  *
+     */
     public int getSlice( int orientation )
     {
         if ( orientation == FileInfoBase.AXIAL )
@@ -781,35 +787,36 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
         return zSlice;
     }
 
-    public void setCenter( int i, int j, int k )
+    /**
+     * Sets the three slider positions, based on the position of the
+     * three orthogonal planes: AXIAL, CORONAL, and SAGITTAL.
+     * @param x, center x-position in FileCoordinates
+     * @param y, center y-position in FileCoordinates
+     * @param z, center z-position in FileCoordinates
+     */
+    public void setCenter( int x, int y, int z )
     {
-        int[] center = { i, j, k };
-        /* MipavCoordinateSystems upgrade: this goes in
-         * MipavCoordinateSystems.FileToModel: */
-        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.AXIAL );
-        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.CORONAL );
-        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.SAGITTAL );
-
-        setXSlicePos( center[ axialOrder[2] ] );
-        setYSlicePos( center[ coronalOrder[2] ] );
-        setZSlicePos( center[ sagittalOrder[2] ] );
+        Point3Df center = new Point3Df();
+        MipavCoordinateSystems.FileToModel( new Point3Df( x, y, z ), center,
+                                            renderBase.getImageA() );
+        setXSlicePos( (int)center.x );
+        setYSlicePos( (int)center.y );
+        setZSlicePos( (int)center.z );
     }
 
+    /**
+     * Gets the three slider positions, representing the center point of the
+     * three orthogonal planes. The center point is translated from local
+     * ModelCoordinates into FileCoordinates.
+     * @return, the center of the three orthogonal planes (the three slider
+     * positions) in FileCoordinates.
+     */
     public Point3Df getCenter( )
     {
-        /* MipavCoordinateSystems upgrade: this goes in
-         * MipavCoordinateSystems.FileToModel: */
-        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.AXIAL );
-        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.CORONAL );
-        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( renderBase.getImageA(), FileInfoBase.SAGITTAL );
-
-        float[] fileCenter = new float[3];
-        fileCenter[ axialOrder[2] ] = xSlice;
-        fileCenter[ coronalOrder[2] ] = ySlice;
-        fileCenter[ sagittalOrder[2] ] = zSlice;
-
-        Point3Df fileSlice = new Point3Df( fileCenter[0], fileCenter[1], fileCenter[2] );
-        return fileSlice;
+        Point3Df center = new Point3Df();
+        MipavCoordinateSystems.ModelToFile( new Point3Df( xSlice, ySlice, zSlice ), center,
+                                            renderBase.getImageA() );
+        return center;
     }
 
     /**
@@ -824,7 +831,7 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     /**
      * slice slider visible or not.
      *
-     * @return  sliceVisible if <code>true</code> visible, otherwise invisible.
+     * @return sliceVisible if <code>true</code> visible, otherwise invisible.
      */
     public boolean getVisible( int orientation )
     {
@@ -978,8 +985,6 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
      * @param  frameHeight  DOCUMENT ME!
      */
     public void resizePanel(int panelWidth, int frameHeight) {
-
-        // /
         scroller.setPreferredSize(new Dimension(panelWidth, frameHeight - 40));
         scroller.setSize(new Dimension(panelWidth, frameHeight - 40));
         scroller.revalidate();
@@ -1025,8 +1030,9 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Sets the scene state appropriately, so that the slices that are supposed to be visible are showing, the ones that
-     * aren't are hidden, and the sliders are starting at the appropriate value.
+     * Sets the scene state appropriately, so that the slices that are
+     * supposed to be visible are showing, the ones that aren't are hidden,
+     * and the sliders are starting at the appropriate value.
      *
      * @param  scene  The state of the scene.
      */
@@ -1110,7 +1116,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Sets the x slider and the labels beside and beneath it to the state given by <code>flag</code>.
+     * Sets the x slider and the labels beside and beneath it to the state
+     * given by <code>flag</code>.
      *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
@@ -1143,7 +1150,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Sets the y slider and the labels beside and beneath it to the state given by <code>flag</code>.
+     * Sets the y slider and the labels beside and beneath it to the state
+     * given by <code>flag</code>.
      *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
@@ -1176,7 +1184,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Sets the z slider and the labels beside and beneath it to the state given by <code>flag</code>.
+     * Sets the z slider and the labels beside and beneath it to the state
+     * given by <code>flag</code>.
      *
      * @param  flag  if <code>true</code> enable, otherwise disable.
      */
@@ -1190,7 +1199,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Sets how the image plane should be displayed depending on value of slider.
+     * Sets how the image plane should be displayed depending on value of
+     * slider.
      *
      * @param  e  Event that triggered this function.
      */
@@ -1323,7 +1333,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Helper method that adds components to the control panel for the grid bag layout.
+     * Helper method that adds components to the control panel for the grid
+     * bag layout.
      *
      * @param  c    Component added to the control panel.
      * @param  gbc  GridBagConstraints of added component.
@@ -1341,7 +1352,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Helper method that adds components to the control panel for the grid bag layout.
+     * Helper method that adds components to the control panel for the grid
+     * bag layout.
      *
      * @param  c    Component added to the control panel.
      * @param  gbc  GridBagConstraints of added component.
@@ -1410,7 +1422,8 @@ public class JPanelSlices extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Builds the time (4D) slider. No check box, because there is no plane to turn off.
+     * Builds the time (4D) slider. No check box, because there is no plane to
+     * turn off.
      */
     private void buildTimeSlider() {
         GridBagConstraints cpGBC = new GridBagConstraints();
