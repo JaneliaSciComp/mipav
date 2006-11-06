@@ -1604,11 +1604,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
 
-    /* MipavCoordinateSystems upgrade: TODO: */
     /**
-     * sets the crosshair positions and slices for each of the triImages. The inputs are in ModelImage Coordinates, and
-     * are passed to the triImages in ModelImage Coordinates. Each triImage converts from ModelImage space to the local
-     * Patient Coordinate space.
+     * sets the crosshair positions and slices for each of the triImages. The
+     * inputs are in FileCoordinates, and are passed to the triImages in
+     * FileCoordinates. Each triImage converts from FileCoordinates to the
+     * local PatientCoordinate space, based on the triImage orientation
+     * (FileInfoBase.AXIAL, FileInfoBase.CORONAL, FileInfoBase.SAGITTAL).
      *
      * @param  i  model space coordinate
      * @param  j  model space coordinate

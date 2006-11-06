@@ -3366,13 +3366,15 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     }
 
     /**
-     * Sets position data to display in message bar - for DICOM and MINC images, gives patient position as well. The
-     * image's associated transformation must be FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL or the function returns null.
+     * Sets position data to display in message bar - for DICOM and MINC
+     * images, gives patient position as well. The image's associated
+     * transformation must be FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL or the
+     * function returns null.
      *
      * @param   fileInfo  File info object of image displayed.
-     * @param   x         Event that triggered this call.
-     * @param   y         DOCUMENT ME!
-     * @param   zSlice    Index to slice in the Z-plane.
+     * @param   x         Position x-value in FileCoordinates
+     * @param   y         Position y-value in FileCoordinates
+     * @param   zSlice    Position z-value (slice) in FileCoordinates
      *
      * @return  An array of strings that represent patient position.
      */
@@ -3892,27 +3894,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         return getBrushSize() / 2;
     }
 
-    /**
-     * Converts the screen cursor x-coordinate to scaled version using the image's pixel resolution and zoom.
-     *
-     * @param   x  the cursor's x-coordinate
-     *
-     * @return  x-coordinate in image space
-     */
-    public int getScaledX(int x) {
-        return (int) (x / (getZoomX() * resolutionX));
-    }
-
-    /**
-     * Converts the screen cursor y-coordinate to scaled version using the image's pixel resolution and zoom.
-     *
-     * @param   y  the cursor's y-coordinate
-     *
-     * @return  x-coordinate in image space
-     */
-    public int getScaledY(int y) {
-        return (int) (y / (getZoomY() * resolutionY));
-    }
 
     /**
      * DOCUMENT ME!

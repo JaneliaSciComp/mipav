@@ -491,16 +491,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
             sliceDir = XY;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A))) {
             // triplanar image : XY panel
-            /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
-            Point2Df screenFactor =
-                new Point2Df( (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomX() *
-                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionX()),
-                              (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getZoomY() *
-                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).getResolutionY())
-                              );
-
-            Point3Df patientMousePoint = new Point3Df( mouseEvent.getX()/screenFactor.x, mouseEvent.getY()/screenFactor.y,
-                                                       image.getTriImageFrame().getAxialComponentSlice() );
+            int slice = image.getTriImageFrame().getAxialComponentSlice();
+            Point3Df patientMousePoint = new Point3Df();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.AXIAL_A).ScreenToLocal( new Point3Df(  mouseEvent.getX(),
+                                                                                                           mouseEvent.getY(),
+                                                                                                           slice ),
+                                                                                            patientMousePoint );
             Point3Df pt = new Point3Df();
             MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.AXIAL );
             xS = (int)pt.x;
@@ -512,16 +508,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 			else if  (origDir == FileInfoBase.SAGITTAL) sliceDir = XZ;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A))) {
             // triplanar image : XZ panel
-            /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
-            Point2Df screenFactor =
-                new Point2Df( (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomX() *
-                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionX()),
-                              (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getZoomY() *
-                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).getResolutionY())
-                              );
-
-            Point3Df patientMousePoint = new Point3Df( mouseEvent.getX()/screenFactor.x, mouseEvent.getY()/screenFactor.y,
-                                                       image.getTriImageFrame().getCoronalComponentSlice() );
+            int slice = image.getTriImageFrame().getCoronalComponentSlice();
+            Point3Df patientMousePoint = new Point3Df();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.CORONAL_A).ScreenToLocal( new Point3Df(  mouseEvent.getX(),
+                                                                                                             mouseEvent.getY(),
+                                                                                                             slice ),
+                                                                                              patientMousePoint );
             Point3Df pt = new Point3Df();
             MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.CORONAL );
             xS = (int)pt.x;
@@ -533,16 +525,12 @@ public class JDialogPowerPaint extends JDialogBase implements MouseListener, Mou
 			else if  (origDir == FileInfoBase.SAGITTAL) sliceDir = ZY;
         } else if (mouseEvent.getComponent().equals(image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A))) {
             // triplanar image : ZY panel
-            /* MipavCoordinateSystems upgrade TODO: transformations between coordinate systems to be done by one class: */
-            Point2Df screenFactor =
-                new Point2Df( (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomX() *
-                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionX()),
-                              (image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getZoomY() *
-                               image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).getResolutionY())
-                              );
-
-            Point3Df patientMousePoint = new Point3Df( mouseEvent.getX()/screenFactor.x, mouseEvent.getY()/screenFactor.y,
-                                                       image.getTriImageFrame().getSagittalComponentSlice() );
+            int slice = image.getTriImageFrame().getSagittalComponentSlice();
+            Point3Df patientMousePoint = new Point3Df();
+            image.getTriImageFrame().getTriImage(ViewJFrameTriImage.SAGITTAL_A).ScreenToLocal( new Point3Df(  mouseEvent.getX(),
+                                                                                                              mouseEvent.getY(),
+                                                                                                              slice ),
+                                                                                               patientMousePoint );
             Point3Df pt = new Point3Df();
             MipavCoordinateSystems.PatientToFile( patientMousePoint, pt, image, FileInfoBase.SAGITTAL );
             xS = (int)pt.x;
