@@ -32,12 +32,16 @@ import javax.vecmath.*;
 
 
 /**
- * Frame that holds the surface renderer. This frame is only possible to activate if a three dimensional image is
- * loaded. The image shows up in the frame as the three planes, with an axial view, a coronal view, and a sagittal view.
- * The user can slide these planes up and down and can turn them on and off. The user can also load in surfaces created
- * from the original image. These 3D surfaces will appear in the proper place within the three image planes. There are
- * many options for viewing the surfaces. Additionally, the user can change the view mode, so that the mouse causes the
- * view to "fly". The user can then record the different mouse actions and play them back.
+ * Frame that holds the surface renderer. This frame is only possible to
+ * activate if a three dimensional image is loaded. The image shows up in the
+ * frame as the three planes, with an axial view, a coronal view, and a
+ * sagittal view.  The user can slide these planes up and down and can turn
+ * them on and off. The user can also load in surfaces created from the
+ * original image. These 3D surfaces will appear in the proper place within
+ * the three image planes. There are many options for viewing the
+ * surfaces. Additionally, the user can change the view mode, so that the
+ * mouse causes the view to "fly". The user can then record the different
+ * mouse actions and play them back.
  *
  * @see  ViewJComponentSurfaceImage
  * @see  JDialogSurface
@@ -160,11 +164,13 @@ public class SurfaceRender extends RenderViewBase {
     private TransformGroup[] m_kObjPlaneProbe_TG = new TransformGroup[3];
 
     /**
-     * The Transform3D used to position the planes based on the Probe position and angle. The planes are rotates about
-     * the intersection between the probe and the plane, which may or may not be in the center of the plane. This
-     * transform allows non-origin rotations by conactenating the translation to the origin, rotation, and translation
-     * matricies into one transform, which is used to set the Transforms for the TransformGroups above and also to
-     * sample the ModelImage data on the diagonal slice:
+     * The Transform3D used to position the planes based on the Probe position
+     * and angle. The planes are rotates about the intersection between the
+     * probe and the plane, which may or may not be in the center of the
+     * plane. This transform allows non-origin rotations by conactenating the
+     * translation to the origin, rotation, and translation matricies into one
+     * transform, which is used to set the Transforms for the TransformGroups
+     * above and also to sample the ModelImage data on the diagonal slice:
      */
     private Transform3D m_kProbeTransform = new Transform3D();
 
@@ -301,9 +307,11 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Makes a frame and puts the three image planes into it. Creates the scene graph which dictates the behavior of the
-     * image planes and surfaces. Initializes the surface dialog and the mouse recorder dialog, so that this original
-     * view is saved. When the user opens these dialogs, they have already been created; they are just set to visible.
+     * Makes a frame and puts the three image planes into it. Creates the
+     * scene graph which dictates the behavior of the image planes and
+     * surfaces. Initializes the surface dialog and the mouse recorder dialog,
+     * so that this original view is saved. When the user opens these dialogs,
+     * they have already been created; they are just set to visible.
      *
      * @param  _imageA  First image to display, cannot be null.
      * @param  _LUTa    LUT of the imageA (if null grayscale LUT is constructed).
@@ -609,8 +617,9 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Constructs main frame structures for 3 image planes. Makes the LUT if necessary, then sets up the buffer arrays
-     * appropriately and calls the constructors for the three image planes.
+     * Constructs main frame structures for 3 image planes. Makes the LUT if
+     * necessary, then sets up the buffer arrays appropriately and calls the
+     * constructors for the three image planes.
      */
     public void configureVolumeFrame() {
 
@@ -1028,7 +1037,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Gets the current scene state, in terms of what numbers the slices are on and whether or not they are visible.
+     * Gets the current scene state, in terms of what numbers the slices are
+     * on and whether or not they are visible.
      *
      * @return  A SceneState object with the variables set appropriately.
      */
@@ -1072,7 +1082,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Return the segmentation region map image which contains info on where the vascualture, etc are located.
+     * Return the segmentation region map image which contains info on where
+     * the vascualture, etc are located.
      *
      * @return  (vessel, etc) segmentation image
      */
@@ -1217,9 +1228,11 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Constructs main frame structures for 3 image planes. Makes the LUT if necessary, then sets up the buffer arrays
-     * appropriately and calls the constructors for the three image planes. Used by the switch between aligned volume
-     * texture rendering and the volume texture rendering. Changed to public to allow updating after the volume is
+     * Constructs main frame structures for 3 image planes. Makes the LUT if
+     * necessary, then sets up the buffer arrays appropriately and calls the
+     * constructors for the three image planes. Used by the switch between
+     * aligned volume texture rendering and the volume texture
+     * rendering. Changed to public to allow updating after the volume is
      * sculpted.
      */
     public void reConfigureVolumeFrame() {
@@ -1321,7 +1334,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Overrides the parent resetImage method. This method reset the surface volume to the original position.
+     * Overrides the parent resetImage method. This method reset the surface
+     * volume to the original position.
      */
     public void resetAxisX() {
         super.resetAxisX();
@@ -1329,7 +1343,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Overrides the parent resetImage method. This method reset the surface volume to the original position.
+     * Overrides the parent resetImage method. This method reset the surface
+     * volume to the original position.
      */
     public void resetAxisY() {
         super.resetAxisY();
@@ -1337,7 +1352,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Overrides the parent resetImage method. This method reset the surface volume to the original position.
+     * Overrides the parent resetImage method. This method reset the surface
+     * volume to the original position.
      */
     public void resetImage() {
         super.resetImage();
@@ -1397,14 +1413,16 @@ public class SurfaceRender extends RenderViewBase {
     /**
      * Hack. Set the update 3D texture volume win-level flag.
      *
-     * @param  flag  true update 3D texture volume with win-level, false not update.
+     * @param flag true update 3D texture volume with win-level, false not
+     * update.
      */
     public void setDisplayMode3D(boolean flag) {
         volumeDisplayMode3D = flag;
     }
 
     /**
-     * Sets the GUI components to their proper state before the action is dispatched from the player.
+     * Sets the GUI components to their proper state before the action is
+     * dispatched from the player.
      *
      * @param  scene  The state of the scene.
      */
@@ -1615,19 +1633,22 @@ public class SurfaceRender extends RenderViewBase {
     /**
      * Set the parallel rotation flag from the viewJFrameVolumeView.
      *
-     * @param  flag  <code>true</code> set all the renderer to parallel rotation, <code>false</code> parallel rotation
-     *               mode off.
+     * @param flag <code>true</code> set all the renderer to parallel
+     * rotation, <code>false</code> parallel rotation mode off.
      */
     public void setParallelRotation(boolean flag) {
         parallelRotation = flag;
     }
 
     /**
-     * Sets the Transform3D for the slices based on the Probe Transform. To allow rotation about the probe position, and
-     * not just the center of the slices, the probe translation and rotation protions of the matrix are separated. First
-     * the center of the slice is translated from the probe position to the origin, then rotated, then translated back
-     * to the probe position. The three transformations are concatenated into one Transform3D, which is used to display
-     * the slices, boxes, and to sample the ModelImage on the diagonal:
+     * Sets the Transform3D for the slices based on the Probe Transform. To
+     * allow rotation about the probe position, and not just the center of the
+     * slices, the probe translation and rotation protions of the matrix are
+     * separated. First the center of the slice is translated from the probe
+     * position to the origin, then rotated, then translated back to the probe
+     * position. The three transformations are concatenated into one
+     * Transform3D, which is used to display the slices, boxes, and to sample
+     * the ModelImage on the diagonal:
      *
      * @param  kTransform  current probe transform
      * @param  bTwist      true if there is twist about the probe axis
@@ -1678,8 +1699,9 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Set the reference to ray based renderer, raycast renderer or shear warp renderer. This method set the clipping
-     * dialog to control the both the 3D texture renderer and raycast based renderer.
+     * Set the reference to ray based renderer, raycast renderer or shear warp
+     * renderer. This method set the clipping dialog to control the both the
+     * 3D texture renderer and raycast based renderer.
      *
      * @param  _rayBasedRender  VolumeRenderer reference
      */
@@ -1762,7 +1784,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Set the image which we can check to see if the probe is hitting anything important (such as vessels, etc).
+     * Set the image which we can check to see if the probe is hitting
+     * anything important (such as vessels, etc).
      *
      * @param  img  segmentation image
      */
@@ -1872,8 +1895,9 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Accessor that sets the volumeDisplayMode flag. If true image is displayed as a volume. If false image is
-     * displayed as three orthogonal planes.
+     * Accessor that sets the volumeDisplayMode flag. If true image is
+     * displayed as a volume. If false image is displayed as three orthogonal
+     * planes.
      *
      * @param  volDisplayMode  if true image is displayed as a volume ( 3D texture or 2D array Texture).
      */
@@ -1882,8 +1906,9 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Set the volume view mode to true from the ViewJFrameVolumeView During mouse recorder displaying, the flag control
-     * the updating of the opacity histogram.
+     * Set the volume view mode to true from the ViewJFrameVolumeView During
+     * mouse recorder displaying, the flag control the updating of the opacity
+     * histogram.
      *
      * @param  flag  <code>true</code> means mode on, <code>false</code> means mode off.
      */
@@ -2166,18 +2191,23 @@ public class SurfaceRender extends RenderViewBase {
         screen.z = (-2.0f * zBox) * (model.z / ((float)zDim-1)) + zBox;
     }
 
-
     /**
-     * Update the X, Y, Z box frame positions.
+     * sets up the values for the ViewJComponentBoxSlice array. Reorders the
+     * three boxSlice (x,y,z) coordinates and mode value into local
+     * ModelCoordinates.
+     * @param Point3Df[] the reordered (x,y,z) coordinates for each boxSlice
+     * remapped into ModelCoordinates.
+     * @param boxSliceConstants, the reordered mode value (X_SLICE, Y_SLICE,
+     * Z_SLICE) remapped into ModelCoordinates
      */
-    public void updateBoxSlicePos( boolean bParentUpdate  ) {
-        /* MipavCoordinateSystems upgrade: this goes in
-         * MipavCoordinateSystems.FileToModel: */
-        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.AXIAL );
-        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.CORONAL );
-        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.SAGITTAL );
-
-
+    private void getBoxSliceInScreen( Point3Df[] screenBoxPoints, int[] boxSliceConstants )
+    {
+        Point3Df modelIndex = new Point3Df();
+        MipavCoordinateSystems.FileToModel( new Point3Df( 0, 1, 2 ), modelIndex, imageA );
+        boxSliceConstants[0] = (int)modelIndex.x;
+        boxSliceConstants[1] = (int)modelIndex.y;
+        boxSliceConstants[2] = (int)modelIndex.z;
+        
         float[][] boxPoints = new float[3][];
         for ( int i = 0; i < 3; i++ )
         {
@@ -2185,24 +2215,30 @@ public class SurfaceRender extends RenderViewBase {
             boxPoints[i][0] = xDim-1;
             boxPoints[i][1] = yDim-1;
             boxPoints[i][2] = zDim-1;
+            
+            boxPoints[i][boxSliceConstants[i]] = slicePanel.getSlice( i );
         }
-        boxPoints[0][axialOrder[2]] = slicePanel.getSlice( FileInfoBase.AXIAL );
-        boxPoints[1][coronalOrder[2]] = slicePanel.getSlice( FileInfoBase.CORONAL );
-        boxPoints[2][sagittalOrder[2]] = slicePanel.getSlice( FileInfoBase.SAGITTAL );
+        
+        for ( int i = 0; i < 3; i++ )
+        {
+            this.ModelToScreen( new Point3Df( boxPoints[i][0], boxPoints[i][1], boxPoints[i][2] ),
+                                screenBoxPoints[i] );
+        }
+    }
 
+
+    /**
+     * Update the X, Y, Z box frame positions.
+     * @param bParentUpdate, if true, update the positions in the ParentFrame.
+     */
+    public void updateBoxSlicePos( boolean bParentUpdate  ) {
         Point3Df[] screenBoxPoints = new Point3Df[3];
         for ( int i = 0; i < 3; i++ )
         {
             screenBoxPoints[i] = new Point3Df();
-            this.ModelToScreen( new Point3Df( boxPoints[i][0], boxPoints[i][1], boxPoints[i][2] ),
-                                screenBoxPoints[i] );
         }
-
-        int[] modelSliceConstants = new int[3];
-        modelSliceConstants[0] = axialOrder[2];
-        modelSliceConstants[1] = coronalOrder[2];
-        modelSliceConstants[2] = sagittalOrder[2];
-
+        int[] boxSliceConstants = new int[3];
+        getBoxSliceInScreen( screenBoxPoints, boxSliceConstants );
 
         Point3Df center = slicePanel.getCenter();
         for ( int i = 0; i < 3; i++ )
@@ -2210,7 +2246,7 @@ public class SurfaceRender extends RenderViewBase {
             boxSlices[i].setSlices( screenBoxPoints[i].x,
                                     screenBoxPoints[i].y,
                                     screenBoxPoints[i].z,
-                                    modelSliceConstants[i] );
+                                    boxSliceConstants[i] );
 
             QuadArray kGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.TEXTURE_COORDINATE_2);
             kGeometry.setCoordinates( 0, boxSlices[i].getVertices() );
@@ -2265,8 +2301,9 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Called when the underlying data has changed, due to sculpting. Calls the ViewJFrameVolumeView updateSliceData
-     * function to update the data in the slices.
+     * Called when the underlying data has changed, due to sculpting. Calls
+     * the ViewJFrameVolumeView updateSliceData function to update the data in
+     * the slices.
      */
     public void updateData() {
 
@@ -2279,8 +2316,9 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * This methods calls the componentImage's REPAINT method to redraw the screen. The extents on this image have
-     * changed, so the extents need to be read in again and menus, panes and slide bars adjusted accordingly.
+     * This methods calls the componentImage's REPAINT method to redraw the
+     * screen. The extents on this image have changed, so the extents need to
+     * be read in again and menus, panes and slide bars adjusted accordingly.
      *
      * @return  DOCUMENT ME!
      */
@@ -2289,11 +2327,14 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Build a image with the current rotational transformation matrix. Step.1 convert the java3D transform matrix into
-     * a quaternion component. Step.2 convert the quaternion into image( our world ) coordinate system. Step.3 convert
-     * the quaternion into a rotatin matrix. Quaternion q ( w, x, y, z ): rotation of w around the vector ( x, y, z );
-     * Convert the quaternion into a rotation matrix. / \ | 1-2*y^2-2*z^2 2*x*y-2*w*z 2*x*z+2*w*y | | 2*xy+2*w*z
-     * 1-2*x^2-2*z^2 2*y*z-2*w*x | | 2*x*z-2*w*y 2*y*z+2*w*x 1-2*x^2-2*y^2 | \ / Step.4 Calling the transform algorithm
+     * Build a image with the current rotational transformation matrix. Step.1
+     * convert the java3D transform matrix into a quaternion component. Step.2
+     * convert the quaternion into image( our world ) coordinate
+     * system. Step.3 convert the quaternion into a rotatin matrix. Quaternion
+     * q ( w, x, y, z ): rotation of w around the vector ( x, y, z ); Convert
+     * the quaternion into a rotation matrix. / \ | 1-2*y^2-2*z^2 2*x*y-2*w*z
+     * 2*x*z+2*w*y | | 2*xy+2*w*z 1-2*x^2-2*z^2 2*y*z-2*w*x | | 2*x*z-2*w*y
+     * 2*y*z+2*w*x 1-2*x^2-2*y^2 | \ / Step.4 Calling the transform algorithm
      * to extract the image.
      */
     public void updateImageFromRotation() {
@@ -2367,7 +2408,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * This methods calls the componentImage's update method to redraw the screen - fastest of the three update methods.
+     * This methods calls the componentImage's update method to redraw the
+     * screen - fastest of the three update methods.
      *
      * @return  Confirms successful update.
      */
@@ -2380,7 +2422,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * This methods calls the componentImage's update method to redraw the screen. Without LUT changes.
+     * This methods calls the componentImage's update method to redraw the
+     * screen. Without LUT changes.
      *
      * @param   flag  forces show to re import image and calc. java image
      *
@@ -2400,7 +2443,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * This methods calls the componentImage's update method to redraw the screen. Without LUT changes.
+     * This methods calls the componentImage's update method to redraw the
+     * screen. Without LUT changes.
      *
      * @param   LUTa        DOCUMENT ME!
      * @param   LUTb        DOCUMENT ME!
@@ -2422,8 +2466,9 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * This method is normally called by JPanelLights when a light bulb property changes. It is up to this instance to
-     * decide how to update the rendering.
+     * This method is normally called by JPanelLights when a light bulb
+     * property changes. It is up to this instance to decide how to update the
+     * rendering.
      */
     public void updateLighting() {
 
@@ -2544,7 +2589,8 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Update the raycast based renderer. JPanelSurface mouse release event invokes this method call.
+     * Update the raycast based renderer. JPanelSurface mouse release event
+     * invokes this method call.
      */
     public void updateRaycastRender() {
 
@@ -2820,8 +2866,9 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * Constructs main frame structures for 3 image planes. Makes the LUT if necessary, then sets up the buffer arrays
-     * appropriately and calls the constructors for the three image planes.
+     * Constructs main frame structures for 3 image planes. Makes the LUT if
+     * necessary, then sets up the buffer arrays appropriately and calls the
+     * constructors for the three image planes.
      */
     private void configureSliceFrame() {
 
@@ -2930,8 +2977,6 @@ public class SurfaceRender extends RenderViewBase {
      */
     private Vector4f generateCoordMaps( int orientation, int texCoord )
     {
-        /* MipavCoordinateSystems upgrade: this goes in
-         * MipavCoordinateSystems.FileToModel: */
         int[] axisOrder = MipavCoordinateSystems.getAxisOrder( imageA, orientation );
         float[] coordMapArray = new float[3];
         coordMapArray[0] = (maxBox/xBox) / 2.0f;
@@ -2960,11 +3005,13 @@ public class SurfaceRender extends RenderViewBase {
 
 
     /**
-     * Creates the scene graph, made up of a branch group parent, a transform group under that which applies mouse
-     * behavior and lights to the scene, and three branch groups under the transform group for each of the three image
-     * planes. The surfaces that can be added would be children of the transform group. Each image plane has a transform
-     * group associated with it and beneath that, a box shape where the texture maps are applied. The shape is what is
-     * actually displayed.
+     * Creates the scene graph, made up of a branch group parent, a transform
+     * group under that which applies mouse behavior and lights to the scene,
+     * and three branch groups under the transform group for each of the three
+     * image planes. The surfaces that can be added would be children of the
+     * transform group. Each image plane has a transform group associated with
+     * it and beneath that, a box shape where the texture maps are
+     * applied. The shape is what is actually displayed.
      */
     private void createImageSceneGraph() {
 
@@ -3052,12 +3099,6 @@ public class SurfaceRender extends RenderViewBase {
             maxBox = zBox;
         }
 
-        /* MipavCoordinateSystems upgrade: this goes in
-         * MipavCoordinateSystems.FileToModel: */
-        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.AXIAL );
-        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.CORONAL );
-        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.SAGITTAL );
-
         // Define vectors used for mapping each coordinate from its
         // real range X=[0,xdim-1], Y=[0,ydim-1], Z=[0,zdim-1] into
         // the (s,t,r) texture coordinates where each texture coordinate
@@ -3074,9 +3115,12 @@ public class SurfaceRender extends RenderViewBase {
             coordMaps[2][i] = generateCoordMaps( FileInfoBase.SAGITTAL, i );
         }
 
-        /* MipavCoordinateSystems upgrade: the following logic is to match
-         * TextureCoordinate Maps to the ViewJComponentBoxSlice Vertex
-         * Array: */
+        /* The following logic is to match TextureCoordinate Maps to the
+         * ViewJComponentBoxSlice Vertex Array: */
+        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.AXIAL );
+        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.CORONAL );
+        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.SAGITTAL );
+
         if ( (axialOrder[0] > axialOrder[1]) && (axialOrder[2] != 0) )
         {
             Vector4f temp = coordMaps[0][0];
@@ -3122,30 +3166,13 @@ public class SurfaceRender extends RenderViewBase {
         yBox = yBox / maxBox;
         zBox = zBox / maxBox;
 
-        float[][] boxPoints = new float[3][];
-        for ( int i = 0; i < 3; i++ )
-        {
-            boxPoints[i] = new float[3];
-            boxPoints[i][0] = xDim-1;
-            boxPoints[i][1] = yDim-1;
-            boxPoints[i][2] = zDim-1;
-        }
-        boxPoints[0][axialOrder[2]] = slicePanel.getSlice( FileInfoBase.AXIAL );
-        boxPoints[1][coronalOrder[2]] = slicePanel.getSlice( FileInfoBase.CORONAL );
-        boxPoints[2][sagittalOrder[2]] = slicePanel.getSlice( FileInfoBase.SAGITTAL );
-
+        int[] boxSliceConstants = new int[3];
         Point3Df[] screenBoxPoints = new Point3Df[3];
         for ( int i = 0; i < 3; i++ )
         {
             screenBoxPoints[i] = new Point3Df();
-            this.ModelToScreen( new Point3Df( boxPoints[i][0], boxPoints[i][1], boxPoints[i][2] ),
-                                screenBoxPoints[i] );
         }
-
-        int[] modelSliceConstants = new int[3];
-        modelSliceConstants[0] = axialOrder[2];
-        modelSliceConstants[1] = coronalOrder[2];
-        modelSliceConstants[2] = sagittalOrder[2];
+        getBoxSliceInScreen( screenBoxPoints, boxSliceConstants );
 
         Color[] sliceColors = new Color[3];
         sliceColors[0] = Color.red;
@@ -3158,7 +3185,7 @@ public class SurfaceRender extends RenderViewBase {
             boxSlices[i] = new ViewJComponentBoxSlice( screenBoxPoints[i].x,
                                                        screenBoxPoints[i].y,
                                                        screenBoxPoints[i].z,
-                                                       modelSliceConstants[i]);
+                                                       boxSliceConstants[i]);
             boxSlices[i].setColor(sliceColors[i]);
 
 
@@ -3282,8 +3309,8 @@ public class SurfaceRender extends RenderViewBase {
 
 
     /**
-     * Determine the current viewing transformation and pass it to the texture volume renderer so that it can update
-     * itself.
+     * Determine the current viewing transformation and pass it to the texture
+     * volume renderer so that it can update itself.
      */
     private void updateTextureVolumeRender() {
 
@@ -3413,9 +3440,10 @@ public class SurfaceRender extends RenderViewBase {
     }
 
     /**
-     * This function calculates the scale factor for zooming in parallel projection. The scenario is to calculate the
-     * distance between the origin boxframe center and tranformed boxframe center. This distance is used to compute the
-     * screen scale factor.
+     * This function calculates the scale factor for zooming in parallel
+     * projection. The scenario is to calculate the distance between the
+     * origin boxframe center and tranformed boxframe center. This distance is
+     * used to compute the screen scale factor.
      *
      * @param  kTransform  The tranformation matrix from tranformChanged().
      */
