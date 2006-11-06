@@ -356,6 +356,62 @@ public abstract class ViewJComponentBase extends JComponent {
     }
 
     /**
+     * Converts the screen cursor x-coordinate to scaled version using the
+     * image's pixel resolution and zoom.
+     *
+     * @param   x  the cursor's x-coordinate
+     *
+     * @return  x-coordinate in image space
+     */
+    public int getScaledX(int x) {
+        return (int) (x / (zoomX * resolutionX));
+    }
+
+    /**
+     * Converts the screen cursor y-coordinate to scaled version using the
+     * image's pixel resolution and zoom.
+     *
+     * @param   y  the cursor's y-coordinate
+     *
+     * @return  x-coordinate in image space
+     */
+    public int getScaledY(int y) {
+        return (int) (y / (zoomY * resolutionY));
+    }
+
+    /**
+     * LocalToScreen converts a point from local coordinates to screen coordinates.
+     * @param localPoint, a 3D point, where x,y represent the point in local
+     * slice coordinates and the z value is the slice value.
+     * @param screenPoint, the transfromed localPoint, scaled with the image
+     * pixel resolution and zoom.
+     */
+    public void LocalToScreen( Point3Df localPoint, Point3Df screenPoint )
+    {
+        screenPoint.x = localPoint.x * ( zoomX * resolutionX );
+        screenPoint.y = localPoint.y * ( zoomY * resolutionY );
+        /* store but do not transform the z value (z = slice displayed) */
+        screenPoint.z = localPoint.z;
+    }
+
+    /**
+     * ScreenToLocal converts a point from screen coordinates to local coordinates.
+     * @param screenPoint, a 3D point, where x,y represent the point in local
+     * slice coordinates and the z value is the slice value. screenPoint is
+     * usually taken from the MouseEvent point.
+     * @param localPoint, the transfromed point in local slice
+     * coordinates. The z-value represents the current slice.
+     */
+    public void ScreenToLocal( Point3Df screenPoint, Point3Df localPoint )
+    {
+        localPoint.x = screenPoint.x / ( zoomX * resolutionX );
+        localPoint.y = screenPoint.y / ( zoomY * resolutionY );
+        /* store but do not transform the z value (z = slice displayed) */
+        localPoint.z = screenPoint.z;
+    }
+
+
+    /**
      * Returns whether to enable the showIntensity checkbox for mag. box
      *
      * @param   g             DOCUMENT ME!

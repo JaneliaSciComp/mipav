@@ -12,10 +12,10 @@ import javax.vecmath.*;
 /**
  *
  * PatientSlice provides oriented or non-oriented interface to the ModelImage
- * data for rendering.
+ * data for rendering, with LUT changes.
  *
  * The PatientSlice class should be used any time a 2D slice of the ModelImage
- * is needed.
+ * is needed for rendering purposes.
  *
  * The PatientSlice class can be used to extract any axial, coronal, sagittal
  * slice from the ModelImage, or slices in the native file coordinates.
@@ -37,6 +37,7 @@ import javax.vecmath.*;
  * @see ViewJComponentTriImage.java
  * @see ViewJComponentTriSliceImage.java
  * @see PlaneRender.java
+ * @see MipavCoordinateSystems.java
  */
 public class PatientSlice
 {
@@ -201,7 +202,7 @@ public class PatientSlice
     }
 
     /**
-     * Calculate the volume center in patient coordinates and set the z-value
+     * Calculate the volume center in PatientCoordinates and set the z-value
      * for this slice
      */
     private void center()
@@ -215,7 +216,7 @@ public class PatientSlice
     }
 
     /**
-     * Return the current center of the volume in File Coordinates
+     * Return the current center of the volume in FileCoordinates
      * @return volume center in FileCoordinates
      */
     public Point3Df getCenter()
