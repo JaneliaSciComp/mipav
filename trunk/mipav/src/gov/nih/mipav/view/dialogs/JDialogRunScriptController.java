@@ -60,10 +60,7 @@ public class JDialogRunScriptController implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         String command = e.getActionCommand();
 
-        if (command.equalsIgnoreCase("Add new script executer")) {
-            view.addExecuter(model.getScriptImageVars(), model.getScriptImageLabels(), model.getScriptImageActions(),
-                             model.getNumberOfRequiredVOIsForScriptImages());
-        } else if (command.equalsIgnoreCase("Run script")) {
+        if (command.equalsIgnoreCase("Run script")) {
             runScript();
         } else if (command.equalsIgnoreCase("Add image from file")) {
             ModelImage newImage = openImageWithoutFrame();
@@ -115,6 +112,7 @@ public class JDialogRunScriptController implements ActionListener {
 
             model.addVOI(fileName, directory, selectedIndex);
         } else if (command.equalsIgnoreCase("Save current image and VOI selections")) {
+        	if (view.isTreeReadyForScriptExecution()) {
             String xmlTree = parseTreeToXML(view.getTreeRoot());
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Save script to XML");
@@ -130,6 +128,7 @@ public class JDialogRunScriptController implements ActionListener {
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             }
+        	}
         } else if (command.equalsIgnoreCase("Open saved image and VOI selections")) {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Open saved image and VOI selections");
@@ -330,33 +329,57 @@ public class JDialogRunScriptController implements ActionListener {
      * @return  DOCUMENT ME!
      */
     private String parseTreeToXML(TreeNode root) {
+    	
+    	ScriptTreeNode scriptNode = (ScriptTreeNode)root.getChildAt(0);
+    	int numImagePlaceHolders = scriptNode.getChildCount();
+    	int [] numImages = new int[numImagePlaceHolders];
+    	
+//    	find out how many "executers" we will have
+    	int numExecuters = ((ScriptTreeNode)scriptNode.getChildAt(0)).getChildCount();
+    	
+    	ScriptTreeNode imagePHNode = null;
+    	ScriptTreeNode imageNode = null;
+    	ScriptTreeNode voiNode = null;
+    	
+    	int numVOIs;
+    	
+    	
         StringBuffer xmlDoc = new StringBuffer();
         xmlDoc.append("<" + "root" + ">\n");
 
-        for (int i = 0; i < root.getChildCount(); i++) {
-            xmlDoc.append("<" + ((TreeNode) root.getChildAt(i)).toString().trim() + ">\n"); // script executer
-
-            for (int j = 0; j < ((TreeNode) root.getChildAt(i)).getChildCount(); j++) {
-                ScriptTreeNode node = (ScriptTreeNode) root.getChildAt(i).getChildAt(j);
-
+        for (int i = 0; i < numExecuters; i++) {
+                        
+            for (int j = 0; j < numImagePlaceHolders; j++) {
+            	imagePHNode = (ScriptTreeNode) scriptNode.getChildAt(j);
+            	imageNode = (ScriptTreeNode)imagePHNode.getChildAt(i);
                 // System.out.println("file--: " +
                 // model.getScriptModelImage((String)node.getUserObject()).getFileLocation());
-                String imageName = ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim();
+                String imageName = ((String)imageNode.getUserObject()).trim();
                 xmlDoc.append("<Image");
                 xmlDoc.append(" name=\"" + imageName + "\"");
-                xmlDoc.append(" defaultName= \"" + (String)node.getUserObject() + "\"");
-                xmlDoc.append(" filePath= \"" + model.getScriptImage((String) node.getUserObject()).getFileLocation() +
+                xmlDoc.append(" filePath= \"" + model.getScriptImage(imageName).getFileLocation() +
                               " \" " + ">\n"); // images
 
                 // xmlDoc.append("<filePath>" +
                 // model.getScriptModelImage((String)node.getUserObject()).getFileLocation() + "</filePath>\n");
                 // VOIs
-                for (int k = 0; k < ((TreeNode) root.getChildAt(i).getChildAt(j)).getChildCount(); k++) {
-                    String voiName = ((TreeNode) root.getChildAt(i).getChildAt(j).getChildAt(k)).toString().trim();
+                numVOIs = imageNode.getChildCount();
+                
+                System.err.println("image name: " + imageName);
+                
+                for (int k = 0; k < numVOIs; k++) {
+                	voiNode = (ScriptTreeNode)imageNode.getChildAt(k);
+                    String voiName = ((String)voiNode.getUserObject()).trim();
+                    System.err.println("VOIName: " + voiName);
+                    if (model.getScriptImage(imageName) ==  null) {
+                    	System.err.println("scriptimage null");
+                    } else if (model.getScriptImage(imageName).getScriptVOI(voiName) == null) {
+                    	System.err.println("script image VOI is null...");
+                    }
                     String filePath = model.getScriptImage(imageName).getScriptVOI(voiName).getVoiFileLocation();
 
                     if (filePath == null) {
-                        String imageFilePath = model.getScriptImage((String) node.getUserObject()).getFileLocation();
+                        String imageFilePath = model.getScriptImage(imageName).getFileLocation();
                         String voiFileLocation = imageFilePath.substring(0,
                                                                          imageFilePath.lastIndexOf(File.separator) + 1) +
                                                  "defaultVOIs_" + imageName + File.separator;
@@ -367,7 +390,7 @@ public class JDialogRunScriptController implements ActionListener {
                         } else {
                             Object[] options = { "Save", "Set File Location" };
                             int userSelection = JOptionPane.showOptionDialog(null,
-                                                                             "Uable to locate VOI: " + voiName +
+                                                                             "Unable to locate VOI: " + voiName +
                                                                              ", in default MIPAV location either save it now, or set its location on the file system",
                                                                              "Question", JOptionPane.DEFAULT_OPTION,
                                                                              JOptionPane.QUESTION_MESSAGE, null,
@@ -411,7 +434,7 @@ public class JDialogRunScriptController implements ActionListener {
                 xmlDoc.append("</Image>\n");
             }
 
-            xmlDoc.append("</" + ((TreeNode) root.getChildAt(i)).toString().trim() + ">\n");
+           // xmlDoc.append("</" + ((TreeNode) root.getChildAt(i)).toString().trim() + ">\n");
         }
 
         xmlDoc.append("</" + "root" + ">\n");
