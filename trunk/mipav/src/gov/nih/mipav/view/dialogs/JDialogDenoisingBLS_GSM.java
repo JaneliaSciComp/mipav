@@ -21,7 +21,7 @@ import javax.swing.*;
  * Dialog to get user input, then call the algorithm. The user has the option to generate a new image or replace the
  * source image. It should be noted that the algorithms are executed in their own threads.
  *
- * @version  November 2, 2006
+ * @version  November 7, 2006
  * @see      AlgorithmDenoisingBLS_GSM
  */
 public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
@@ -272,7 +272,6 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
             if (orthogonalButton.isSelected()) {
 
                 if (comboBoxFilter.getItemCount() != 9) {
-                    comboBoxFilter.removeItemAt(0);
                     comboBoxFilter.insertItemAt("Quadrature Mirror Filter 5", 3);
                     comboBoxFilter.insertItemAt("Quadrature Mirror Filter 8", 4);
                     comboBoxFilter.insertItemAt("Quadrature Mirror Filter 9", 5);
@@ -288,14 +287,11 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
                 orientText.setEnabled(false);
             } // if (orthogonalButton.isSelected())
             else if (undecimatedButton.isSelected()) {
-
-                if (comboBoxFilter.getItemCount() != 4) {
-                    comboBoxFilter.insertItemAt("Daubechies 1", 0);
-
-                    for (i = 9; i >= 4; i--) {
+                if (comboBoxFilter.getItemCount() != 3) {
+                    for (i = 8; i >= 3; i--) {
                         comboBoxFilter.removeItemAt(i);
                     }
-                } // if (comboBoxFilter.getItemCount() != 4)
+                } // if (comboBoxFilter.getItemCount() != 3)
 
                 comboBoxFilter.setSelectedIndex(0);
                 comboBoxFilter.setEnabled(true);
@@ -924,9 +920,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
 
         tmpStr = (String) comboBoxFilter.getSelectedItem();
 
-        if (tmpStr.equals("Daubechies 1")) {
-            filter = DAUB1;
-        } else if (tmpStr.equals("Daubechies 2")) {
+       if (tmpStr.equals("Daubechies 2")) {
             filter = DAUB2;
         } else if (tmpStr.equals("Daubechies 3")) {
             filter = DAUB3;
