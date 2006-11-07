@@ -180,7 +180,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         opacitySlider.setMajorTickSpacing(20);
         opacitySlider.setValue(30);
         opacitySlider.setPaintTicks(true);
-        opacitySlider.setEnabled(true);
+        opacitySlider.setEnabled(false);
         opacitySlider.addChangeListener(this);
 
         JLabel maximum = new JLabel(String.valueOf(1));
@@ -675,10 +675,10 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             checkboxIncludeForProcessing.setSelected(voi.getProcess());
 
             if (voi.getDisplayMode() == VOI.BOUNDARY) {
-                checkboxBoundary.setSelected(true);
+                checkboxBoundary.setSelected(false);
                 opacitySlider.setEnabled(false);
             } else {
-                checkboxBoundary.setSelected(false);
+                checkboxBoundary.setSelected(true);
                 opacitySlider.setEnabled(true);
             }
 
@@ -811,9 +811,9 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             }
 
             if (checkboxBoundary.isSelected() == true) {
-                voi.setDisplayMode(VOI.BOUNDARY);
-            } else {
                 voi.setDisplayMode(VOI.SOLID);
+            } else {
+                voi.setDisplayMode(VOI.BOUNDARY);
             }
 
             voi.setColor(colorVOI);
@@ -1088,9 +1088,9 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
 
            if (source == checkboxBoundary) {
                if (checkboxBoundary.isSelected()) {
-                   opacitySlider.setEnabled(false);
-               } else {
                    opacitySlider.setEnabled(true);
+               } else {
+                   opacitySlider.setEnabled(false);
                }
            }
        }

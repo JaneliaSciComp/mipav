@@ -1310,7 +1310,7 @@ public abstract class ViewJFrameBase extends JFrame
         }
 
         try {
-            ViewFileChooserBase fileChooser = new ViewFileChooserBase(userInterface, true, false);
+            ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
             fileChooser.setMulti(userInterface.getLastStackFlag());
 
             JFileChooser chooser = fileChooser.getFileChooser();
@@ -1413,7 +1413,7 @@ public abstract class ViewJFrameBase extends JFrame
             } else {
 
                 try {
-                    ViewFileChooserBase fileChooser = new ViewFileChooserBase(userInterface, true, true);
+                    ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, true);
 
                     try {
 
@@ -2502,7 +2502,7 @@ public abstract class ViewJFrameBase extends JFrame
             } else {
 
                 try {
-                    ViewFileChooserBase fileChooser = new ViewFileChooserBase(userInterface, true, true);
+                    ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, true);
 
                     try {
 

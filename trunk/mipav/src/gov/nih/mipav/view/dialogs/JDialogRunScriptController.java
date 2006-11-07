@@ -9,7 +9,6 @@ import gov.nih.mipav.view.*;
 import java.awt.event.*;
 
 import java.io.*;
-
 import java.util.*;
 
 import javax.swing.*;
@@ -63,13 +62,20 @@ public class JDialogRunScriptController implements ActionListener {
         if (command.equalsIgnoreCase("Run script")) {
             runScript();
         } else if (command.equalsIgnoreCase("Add image from file")) {
-            ModelImage newImage = openImageWithoutFrame();
+        	ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+        	JFileChooser chooser = fileChooser.getFileChooser();
+        	chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+        	int returnVal = chooser.showOpenDialog(null);
 
-            if (newImage != null) {
-                model.addToAvailableImageList(newImage.getImageName(),
-                                              newImage.getImageDirectory() + newImage.getImageFileName(),
-                                              newImage.getExtents(), newImage.getVOIs());
-                newImage.disposeLocal();
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+            	boolean isMultiFile = fileChooser.isMulti();
+            	
+            	File [] files = chooser.getSelectedFiles();
+            	for (int i = 0; i < files.length; i++) {
+            		model.addToAvailableImageList(files[i].getName(), 
+            				files[i].getPath(), isMultiFile);
+            		System.err.println(files[i]);
+            	}
             }
         } else if (command.equalsIgnoreCase("Add VOI from file")) {
 
@@ -104,13 +110,17 @@ public class JDialogRunScriptController implements ActionListener {
             int returnValue = chooser.showOpenDialog(view.getFrame());
 
             if (returnValue == JFileChooser.APPROVE_OPTION) {
+            	File [] files = chooser.getSelectedFiles();
+            	for (int i = 0; i < files.length; i++) {
+            		model.addVOI(files[i].getName(), files[i].getPath(), selectedIndex);
+            	}
                 fileName = chooser.getSelectedFile().getName();
                 directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
             } else {
                 return;
             }
 
-            model.addVOI(fileName, directory, selectedIndex);
+            
         } else if (command.equalsIgnoreCase("Save current image and VOI selections")) {
         	if (view.isTreeReadyForScriptExecution()) {
             String xmlTree = parseTreeToXML(view.getTreeRoot());
@@ -183,103 +193,16 @@ public class JDialogRunScriptController implements ActionListener {
     }
 
     /**
-     * Opens a file chooser, allowing the user to select an image which should be opened. Exactly the same as
-     * ViewUserInterface.openImageFrame() but skips image frame creation.
-     *
-     * @return  The new image from the file the user selects, may be null if there is a problem opening the file.
-     *
-     * @see     ViewUserInterface#openImageFrame()
-     */
-    public ModelImage openImageWithoutFrame() {
-        ViewOpenFileUI openFile = new ViewOpenFileUI(true);
-        boolean stackFlag = ViewUserInterface.getReference().getLastStackFlag();
-
-        // set the filter type to the preferences saved filter
-        int filter = ViewImageFileFilter.TECH;
-
-        try {
-            filter = Integer.parseInt(Preferences.getProperty("FilenameFilter"));
-        } catch (NumberFormatException nfe) {
-
-            // an invalid value was set in preferences -- so fix it!
-            filter = ViewImageFileFilter.TECH;
-            Preferences.setProperty("FilenameFilter", Integer.toString(filter));
-        }
-
-        openFile.setFilterType(filter);
-        openFile.setPutInFrame(false);
-
-        // Matt through in a _false_ to get it to compile - 12/31/2002
-        // Vector openImageNames = openFile.open(stackFlag, false);
-        // This arraylist allows multiple selections but in order for this method to compile as it is , i only
-        // used the zero'th element to return the Model Image
-        ArrayList openImageNames = openFile.open(stackFlag, false);
-
-        if (openImageNames == null) {
-            return null;
-        }
-
-        // if open failed, then imageNames will be null
-        if (openImageNames == null) {
-            return null;
-        }
-
-        boolean sizeChanged = false;
-
-        // if the SaveAllOnSave preference flag is set, then
-        // load all the files associated with this image (VOIs, LUTs, etc.)
-        if (Preferences.is(Preferences.PREF_SAVE_ALL_ON_SAVE)) {
-
-            for (int i = 0; i < openImageNames.size(); i++) {
-
-                try {
-                    String name = (String) openImageNames.get(i);
-                    ModelImage img = ViewUserInterface.getReference().getRegisteredImageByName(name);
-
-                    // get frame for image
-                    ViewJFrameImage imgFrame = img.getParentFrame();
-
-                    // if the image size was changed to FLOAT, then don't
-                    // load any luts (chances are they won't work)
-                    if (!sizeChanged) {
-
-                        // load any luts
-                        imgFrame.loadLUT(true, true);
-                    }
-
-                    // load any vois
-                    imgFrame.loadAllVOIs(true);
-                } catch (IllegalArgumentException iae) {
-
-                    // MipavUtil.displayError("There was a problem with the supplied name.\n" );
-                    Preferences.debug("Illegal Argument Exception in " + "ViewUserInterface.openImageFrame(). " +
-                                      "Somehow the Image list sent an incorrect name to " +
-                                      "the image image hashtable. " + "\n", 1);
-                    Preferences.debug("Bad argument.");
-                }
-            }
-        }
-
-        if (openFile.getImage2() != null) {
-            MipavUtil.displayWarning("Found that a second image was automatically opened along with the file selected.  It has been automatically closed.");
-            openFile.getImage2().disposeLocal();
-        }
-
-        return openFile.getImage();
-    }
-
-    /**
      * DOCUMENT ME!
      *
      * @param   imageLocation  DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
      */
-    private String openImageWithFrame(String imageLocation) {
+    private String openImageWithFrame(String imageLocation, boolean doMulti) {
         ViewOpenFileUI openFile = new ViewOpenFileUI(true);
-        boolean stackFlag = ViewUserInterface.getReference().getLastStackFlag();
-
-        String imageName = openFile.open(imageLocation, stackFlag, null);
+        
+        String imageName = openFile.open(imageLocation, doMulti, null);
 
         // if open failed, then imageName will be null
         if (imageName == null) {
@@ -523,14 +446,15 @@ public class JDialogRunScriptController implements ActionListener {
 
                     // open any images which were selected from disk in this dialog, then replace their filepath with
                     // their new image name
-                    String imageElement = (String) scriptImages.elementAt(j);
-
-                    if (imageElement.indexOf(File.separator) != -1) {
-                        String imageName = openImageWithFrame(imageElement);
+                    ScriptImage si = model.getScriptImage((String) scriptImages.elementAt(j));
+                   
+                    if (si.isOpenedByScript()) {
+                    	
+                    	String imageName = openImageWithFrame(si.getFileLocation(), si.isMultiFile());
                         scriptImages.setElementAt(imageName, j);
                         imagesOpenedByDialog.addElement(ViewUserInterface.getReference().getRegisteredImageByName(imageName));
                     }
-
+                    
                     Preferences.debug("run dialog:\tScript execution #" + i + "\t" + scriptVars[j] + " -> " +
                                       scriptImages.elementAt(j) + "\n", Preferences.DEBUG_SCRIPTING);
                 }
