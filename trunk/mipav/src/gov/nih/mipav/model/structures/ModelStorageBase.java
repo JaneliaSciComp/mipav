@@ -839,7 +839,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice magnitude data into values array.
      *
@@ -1599,7 +1598,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
 
 
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -1614,7 +1612,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -1629,7 +1626,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -1644,7 +1640,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -1659,7 +1654,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -1674,7 +1668,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         exportData(slice * length, length, values);
     }
 
-    /* MipavCoordinateSystems upgrade TODO: remove hard-coded export functions: */
     /**
      * export XY slice into values array.
      *
@@ -6484,7 +6477,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return export( axisOrder, axisFlip, tSlice, slice, values );
     }
 
-    /* MipavCoordinateSystems upgrade TODO: : */
     /**
      * Exports data based on the mapping from ModelImage space to Patient
      * space. The mapping parameters are passed in as the axisOrder and
@@ -6808,7 +6800,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
 
-    /* MipavCoordinateSystems upgrade TODO: : */
     /** Returns the image width, based on the Patient Coordinates orientation
      * from which the data will be viewed:
      * @param orientation, the Patient-Viewing orientation
@@ -6824,7 +6815,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return dimExtents[ aiAxisOrder[0] ];
     }
 
-    /* MipavCoordinateSystems upgrade TODO: : */
     /** Returns the image height, based on the Patient Coordinates orientation
      * from which the data will be viewed:
      * @param orientation, the Patient-Viewing orientation
@@ -6840,7 +6830,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return dimExtents[ aiAxisOrder[1] ];
     }
 
-    /* MipavCoordinateSystems upgrade TODO: : */
     /**
      * Returns the resolutions for the image translated into the
      * Patient-Coordinate systsm:
@@ -6902,7 +6891,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
 
-    /* MipavCoordinateSystems upgrade TODO: : */
     /**
      * Returns the units of measure for the image translated into the
      * Patient-Coordinate systsm:
@@ -6931,7 +6919,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         return unitsReturn;
     }
 
-    /* MipavCoordinateSystems upgrade TODO: : */
     /**
      * Returns the image extents translated into the Patient-Coordinate
      * systsm:
