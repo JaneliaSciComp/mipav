@@ -110,8 +110,8 @@ public class ViewFileChooserBase {
      * @param  openDialog  DOCUMENT ME!
      * @param  isSaveAs    DOCUMENT ME!
      */
-    public ViewFileChooserBase(ViewUserInterface UI, boolean openDialog, boolean isSaveAs) {
-        this.UI = UI;
+    public ViewFileChooserBase(boolean openDialog, boolean isSaveAs) {
+        this.UI = ViewUserInterface.getReference();
 
         this.saveAs = isSaveAs;
 

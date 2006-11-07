@@ -67,7 +67,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
      *                     indicates the UI will be displayed, and <code>false</code> is that it will not be displayed.
      */
     public ViewOpenFileUI(boolean openDialog) {
-        super(ViewUserInterface.getReference(), openDialog, false);
+        super(openDialog, false);
     }
 
     /**
@@ -81,7 +81,7 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
      * @deprecated  Shouldn't pass around the UI since it's a singleton.
      */
     public ViewOpenFileUI(ViewUserInterface ui, boolean openDialog) {
-        super(ui, openDialog, false);
+        super(openDialog, false);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

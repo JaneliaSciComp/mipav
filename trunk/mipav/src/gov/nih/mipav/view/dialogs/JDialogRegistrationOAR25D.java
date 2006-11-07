@@ -1088,7 +1088,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
 
         // Setting panel
         JPanel settingsPanel = new JPanel();
-        settingsPanel.setBorder(BorderFactory.createTitledBorder("Optimization settings"));
+        settingsPanel.setBorder(buildTitledBorder("Optimization settings"));
         settingsPanel.setLayout(new BoxLayout(settingsPanel, BoxLayout.Y_AXIS));
 
         JPanel bracketPanel = new JPanel();
@@ -1096,6 +1096,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         bracketPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
         JLabel bracketBoundLabel = new JLabel("Multiple of tolerance to bracket the minimum: ", JLabel.LEFT);
+        bracketBoundLabel.setFont(serif12);
         bracketPanel.add(bracketBoundLabel, BorderLayout.WEST);
         bracketPanel.setToolTipText("Used for translation, scale and skew.");
         bracketBoundText = new JTextField(String.valueOf(bracketBound), 5);
@@ -1103,6 +1104,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         bracketPanel.add(bracketBoundText, BorderLayout.CENTER);
 
         JLabel bracketInstruct = new JLabel("Recommended values 1-20.", JLabel.RIGHT);
+        bracketInstruct.setFont(serif12);
         bracketPanel.add(bracketInstruct, BorderLayout.SOUTH);
 
         JPanel maxIterPanel = new JPanel();
@@ -1110,6 +1112,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         maxIterPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
         JLabel maxIterationsLabel = new JLabel("Number of iterations: ", JLabel.LEFT);
+        maxIterationsLabel.setFont(serif12);
         maxIterPanel.add(maxIterationsLabel, BorderLayout.WEST);
         maxIterPanel.setToolTipText("Used for levelOne. Other levels are multiples of this #.");
         maxIterationsText = new JTextField(String.valueOf(maxIter), 5);
@@ -1117,6 +1120,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         maxIterPanel.add(maxIterationsText, BorderLayout.CENTER);
 
         JLabel maxIterInstruct = new JLabel("Recommended value 1-5.", JLabel.RIGHT);
+        maxIterInstruct.setFont(serif12);
         maxIterPanel.add(maxIterInstruct, BorderLayout.SOUTH);
 
         JPanel numMinPanel = new JPanel();
@@ -1124,6 +1128,7 @@ public class JDialogRegistrationOAR25D extends JDialogScriptableBase
         numMinPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
 
         JLabel numMinLabel = new JLabel("Number of minima from Level 8 to test at Level 4: ", JLabel.LEFT);
+        numMinLabel.setFont(serif12);
         numMinPanel.add(numMinLabel, BorderLayout.WEST);
         numMinPanel.setToolTipText("Increasing will significantly increase processing time.");
         numMinText = new JTextField(String.valueOf(numMinima), 5);

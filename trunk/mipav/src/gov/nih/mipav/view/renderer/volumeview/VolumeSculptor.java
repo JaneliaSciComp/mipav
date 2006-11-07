@@ -446,8 +446,7 @@ public class VolumeSculptor extends Sculptor {
             } else {
 
                 try {
-                    ViewFileChooserBase fileChooser = new ViewFileChooserBase(ViewUserInterface.getReference(), true,
-                                                                              true);
+                    ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, true);
 
                     if (!fileChooser.useAWT()) {
                         JFileChooser chooser = fileChooser.getFileChooser();

@@ -67,7 +67,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     private MouseListener listener;
 
     /** DOCUMENT ME! */
-    private DefaultListModel listModel;
+   // private DefaultListModel listModel;
 
     /** DOCUMENT ME! */
     private JDialogRunScriptModel model;
@@ -96,6 +96,8 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     /** Keep a reference to the VOI List to turn on and off if multiple images are selected */
     private JList voiList = null;
         
+    private JList imageList = null;
+    
     private int dropSource = 0;
 
     private static final int IMAGE_DROP = 0;
@@ -243,16 +245,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     public JFrame getFrame() {
         return this.frame;
     }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public DefaultListModel getListModel() {
-        return this.listModel;
-    }
-
+   
     /**
      * DOCUMENT ME!
      *
@@ -332,19 +325,13 @@ public class JDialogRunScriptView implements ActionListener, Observer {
      */
     public void update(Observable o, Object arg) {
 
-        if ((JScrollPane) getComponentByName("Images List: scroll") == null) {
-            return;
-        }
-
-        JList imageList = ((JList) ((JScrollPane) getComponentByName("Images List: scroll")).getViewport().getView());
+    	//imageList.setListData(model.getAvailableImageList().toArray());
         imageList.setModel(populateModel(model.getAvailableImageList().toArray()));
-
+                
         if (imageList.getSelectedIndex() == -1) {
             imageList.setSelectedIndex(0);
         }
-
-        JList voiList = ((JList)
-                             ((JScrollPane) getComponentByName("VOIs from above image List: scroll")).getViewport().getView());
+        imageList.validate();
 
         if ((model.getAvailableImageList() != null) && (model.getAvailableImageList().size() > 0)) {
             voiList.setListData((((ScriptImage) imageList.getSelectedValue()).getScriptVOIs()));
@@ -490,15 +477,17 @@ public class JDialogRunScriptView implements ActionListener, Observer {
      */
     private void addScrollList(String name) {
         Object[] contents = null;
-        listModel = new DefaultListModel();
 
-       
-
+        if (name.equalsIgnoreCase("Images List")) {
+            contents = model.getAvailableImageList().toArray();
+        } else if (name.equalsIgnoreCase("VOIs from above image List")) {
+            if ((model.getAvailableImageList() != null) && (model.getAvailableImageList().size() > 0)) {
+                contents = ((ScriptImage) model.getAvailableImageList().get(0)).getScriptVOIs();
+            }
+            
+        }
         
-
-        populateModel(contents);
-
-        JList list = new JList(listModel);
+        JList list = new JList(populateModel(contents));
         list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         list.setDragEnabled(true);
         list.addMouseListener(listener);
@@ -508,16 +497,10 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         list.setCellRenderer(new CustomCellRenderer());
         
         if (name.equalsIgnoreCase("Images List")) {
-            contents = model.getAvailableImageList().toArray();
+            imageList = list;
+        } else if (name.equalsIgnoreCase("VOIs from above image List")) {
+        	voiList = list;
         }
-        
-        if (name.equalsIgnoreCase("VOIs from above image List")) {
-            if ((model.getAvailableImageList() != null) && (model.getAvailableImageList().size() > 0)) {
-                contents = ((ScriptImage) model.getAvailableImageList().get(0)).getScriptVOIs();
-            }
-            voiList = list;
-        }
-        
        
         
         JScrollPane scroll = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
@@ -645,16 +628,21 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             addLabel(labelNames[b]);
         }
 
-        String[] buttonNames = { "Run Script", "Add new script executer", "Add image from file", "Add VOI from file" };
+        String[] buttonNames = { "Run Script", "Add image from file", "Add VOI from file" };
 
         for (int c = 0; c < buttonNames.length; c++) {
             addButton(buttonNames[c]);
         }
 
         String[] menuItems = {
-            "File", "Open saved image and VOI selections", "Save current image and VOI selections",
-            "View current script contents", "Close"
+            "File", "View current script contents", "Close"
         };
+        /*
+        String[] menuItems = {
+                "File", "Open saved image and VOI selections", "Save current image and VOI selections",
+                "View current script contents", "Close"
+            };
+        */
         addMenu(menuItems);
 
         for (int i = 0; i < frame.getContentPane().getComponents().length; i++) {
@@ -1045,20 +1033,18 @@ public class JDialogRunScriptView implements ActionListener, Observer {
 
             } // source equals scriptTree
             
-            if (((Component) e.getSource()).getName().equalsIgnoreCase("Images List")) {
+            if (e.getSource().equals(imageList)) {
             	dropSource = IMAGE_DROP;
             //	System.err.println("SOURCE IS IMAGE_DROP");
         	} else if (e.getSource().equals(voiList)) {
          //   	System.err.println("SOURCE IS VOI_DROP");
             	dropSource = VOI_DROP;
             }
-            
         }
         
         public void mouseReleased(MouseEvent e) {
-        	if (((Component) e.getSource()).getName().equalsIgnoreCase("Images List")) {
+        	if (e.getSource().equals(imageList)) {
                 selectedListIndicies = ((JList) e.getSource()).getSelectedIndices();
-                
                 
                 //turn off the VOI Drag option as long as more than 1 image is selected
                 if (selectedListIndicies.length > 1) {
@@ -1066,9 +1052,12 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                 	voiList.setListData(new Vector());
                 } else {
                 	ScriptImage image = (ScriptImage) ((JList) e.getSource()).getSelectedValue();
-
-                    voiList.setListData(image.getScriptVOIs());
-                    
+                	if (image.getScriptVOIs() != null) {
+                		voiList.setListData(image.getScriptVOIs());
+                	} else {
+                		voiList.removeAll();
+                		//voiList.setListData(new Vector());
+                	}
                 }
                 
             }
@@ -1357,13 +1346,21 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     		   
     		   if (value instanceof ScriptImage) {
     			   if (((ScriptImage)value).isOpenedByScript()) {
+    				   if (((ScriptImage)value).isMultiFile()) {
+    					   setToolTipText("[multi-file]" + ((ScriptImage)value).getFileLocation());
+    				   } else {
+    					   setToolTipText(((ScriptImage)value).getFileLocation());
+    				   }
     				   
     				   setForeground(Color.BLUE);
     			   } else {
+    				   setToolTipText(((ScriptImage)value).getFileLocation());
     				   setForeground(Color.BLACK);
     			   }
     			   setText(((ScriptImage)value).getImageName());
-    			   setToolTipText(((ScriptImage)value).getFileLocation());
+    			   
+    			   
+    			   
     		   } else if (value instanceof ScriptVOI) {
     			   if (((ScriptVOI)value).getVoiFileLocation() == null) {
     				   setForeground(Color.BLACK);

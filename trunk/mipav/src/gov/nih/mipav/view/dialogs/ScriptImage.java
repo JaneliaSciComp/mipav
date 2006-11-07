@@ -13,7 +13,8 @@ public class ScriptImage {
 
     private String fileLocation;
 
-    private int[] extents;
+    private boolean isMultiFile = false;
+    
 
     private ScriptVOI[] scriptVOIs;
 
@@ -25,36 +26,18 @@ public class ScriptImage {
         Object[] vois = modelImage.getVOIs().toArray();
         scriptVOIs = new ScriptVOI[vois.length];
 
-        int[] x = new int[2];
-        int[] y = new int[2];
-        int[] z = new int[2];
-
         for (int i = 0; i < vois.length; i++) {
             scriptVOIs[i] = new ScriptVOI((VOI) vois[i], imageName, fileLocation);
-            ((VOI) vois[i]).getBounds(x, y, z);
         }
 
-        setExtents(modelImage.getExtents());
     }
     
-    public ScriptImage(String imageName, String fileLocation, int[] extents, VOIVector VOIs) {
+    public ScriptImage(String imageName, String fileLocation, boolean isMulti) {
         isImageOpenedByScriptDialog = true;
         
         this.imageName = imageName;
         this.fileLocation = fileLocation;
-        Object[] vois = VOIs.toArray();
-        scriptVOIs = new ScriptVOI[vois.length];
-
-        int[] x = new int[2];
-        int[] y = new int[2];
-        int[] z = new int[2];
-
-        for (int i = 0; i < vois.length; i++) {
-            scriptVOIs[i] = new ScriptVOI((VOI) vois[i], imageName, fileLocation);
-            ((VOI) vois[i]).getBounds(x, y, z);
-        }
-
-        setExtents(extents);
+        this.isMultiFile = isMulti;
     }
 
     public String toString() {
@@ -107,17 +90,13 @@ public class ScriptImage {
         newScriptVOIs[newScriptVOIs.length - 1] = scriptVOI;
         setScriptVOIs(newScriptVOIs);
     }
-
-    public int[] getExtents() {
-        return extents;
-    }
-
-    public void setExtents(int[] extents) {
-        this.extents = extents;
-    }
     
     public boolean isOpenedByScript() {
     	return this.isImageOpenedByScriptDialog;
+    }
+    
+    public boolean isMultiFile() {
+    	return this.isMultiFile;
     }
     
 }

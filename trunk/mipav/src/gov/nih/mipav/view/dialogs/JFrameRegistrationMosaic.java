@@ -940,7 +940,7 @@ public class JFrameRegistrationMosaic extends JFrame
         int i;
 
         try {
-            ViewFileChooserBase fileChooser = new ViewFileChooserBase(ViewUserInterface.getReference(), true, bSave);
+            ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, bSave);
 
             if (!fileChooser.useAWT()) {
                 JFileChooser chooser = fileChooser.getFileChooser();
