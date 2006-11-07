@@ -855,15 +855,17 @@ public class SurfaceRender extends RenderViewBase {
      * @param  kPoint  probe entry point in ModelStorageBase Coordinates
      */
     public void drawRFAPoint(Point3f kPoint) {
-
         /* Scale coordinates for the probe: */
+        kPoint.x /= (float)xDim;
+        kPoint.y /= (float)yDim;
+        kPoint.z /= (float)zDim;
+
         kPoint.x = -xBox + (2 * kPoint.x * xBox);
         kPoint.y = -(yBox - (2 * kPoint.y * yBox));
         kPoint.z = -(zBox - (2 * kPoint.z * zBox));
 
         /* update the probe position: */
-        probePanel.getProbeBase().updatePosition(kPoint);
-        updateProbePos();
+        probePanel.getProbeBase().updatePosition( kPoint );
     }
 
     /**

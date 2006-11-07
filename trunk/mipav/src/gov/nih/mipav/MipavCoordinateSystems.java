@@ -5,7 +5,6 @@ import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
 
-/* MipavCoordinateSystems upgrade: TODO: TEMPORARY CLASS: */
 /**
  * MipavCoordinateSystems class. This is a temporary class to define and
  * isolate the different Coordinate Systems in Mipav. The class functionality
