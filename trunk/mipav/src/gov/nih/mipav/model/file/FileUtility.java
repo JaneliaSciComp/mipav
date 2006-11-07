@@ -2,10 +2,9 @@ package gov.nih.mipav.model.file;
 
 import java.io.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 import java.util.TreeMap;
-import java.util.TreeSet;
+
 
 /**
  * @version 1.0

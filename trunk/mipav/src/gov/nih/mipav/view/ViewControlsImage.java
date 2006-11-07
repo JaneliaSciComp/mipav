@@ -1,7 +1,6 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.scripting.ScriptRecorder;
 
 import java.awt.*;
