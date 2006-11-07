@@ -370,6 +370,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("PowerPaint")) {
             new JDialogPowerPaint(this, getImageA());
         } else if (command.equals("AdvancedPaint")) {
+        	menuBuilder.setMenuItemEnabled("Extract image(B)", true);
             new JDialogMultiPaint(this, getImageA());
             getControls().getTools().setPaintBrushButtonSelected();
             componentImage.setMode(ViewJComponentEditImage.PAINT_VOI);
@@ -631,7 +632,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 linkTriFrame.setImageSelectorPanelVisible(true); // set the selector panel to visible in the
                                                                  // ViewJFrameTriImage, if it exists
             }
-
+            
+            menuBuilder.setMenuItemEnabled("Extract image(B)", true);
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
             menuBuilder.setMenuItemEnabled("Clone/extract image(B)", true);
 
