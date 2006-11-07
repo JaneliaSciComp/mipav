@@ -1135,6 +1135,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (error == 1) {
             return null;
         }
+        
         pyrN = buildWUpyr(noise, noisex, noisey, nScales, daubOrder, pind);
         if (error == 1) {
             return null;
@@ -2297,20 +2298,20 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double h[];
         double yh[] = null;
         int nband;
-        int last;
         int nsc;
         int nor;
-        int first;
         double band[];
+        double oldband[] = null;
+        int newx;
+        int newy;
         int sh;
         double lpr[] = null;
-        int intMat[];
-        int bandx[] = null;
-        int bandy[] = null;
+        int bandx[] = new int[1];
+        int bandy[] = new int[1];
         int i, j;
         int twoPow;
         double bandi[] = null;
-        int offset[] = new int[1];
+        int offset[] = new int[2];
         double temp[];
         int yhx = 0;
         int yhy = 0;
@@ -2324,17 +2325,13 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         nband = 1;
         // Empty "high pass residual band" for compatibility with full steerpyr 2
-        intMat = (int[])pind.get(0);
-        last = intMat[0]*intMat[1];
         // The number of scales corresponds to the number of pyramid levels
         // (also for compatibility)
         for (nsc = 1; nsc <= nScales+1; nsc++) {
             for (nor = 1; nor <= nOrientations; nor++) {
                 nband = nband + 1;
-                first = last + 1;
-                intMat = (int[])pind.get(nband-1);
-                last = first + intMat[0]*intMat[1] - 1;
                 band = pyrBand(pyr, pind, nband-1, bandx, bandy);
+                System.out.println("nband-1 = " + (nband-1) + " bandx[0] = " + bandx[0] + " bandy[0] = " + bandy[0]);
                 // Approximate phase compensation
                 twoPow = 1;
                 for (i = 0; i < nsc; i++) {
@@ -2346,9 +2343,17 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     for (i = 0; i < nsc-2; i++) {
                         twoPow *= 2;
                     }
-                    expand(band, twoPow, bandx[0], bandy[0], band, bandi);
-                    bandx[0] = (int)Math.round(twoPow*bandx[0]);
-                    bandy[0] = (int)Math.round(twoPow*bandy[0]);
+                    oldband = new double[band.length];
+                    for (i = 0; i < band.length; i++) {
+                        oldband[i] = band[i];
+                    }
+                    newx = (int)Math.round(twoPow*bandx[0]);
+                    newy = (int)Math.round(twoPow*bandy[0]);
+                    band = new double[newx*newy];
+                    bandi = new double[newx*newy];
+                    expand(oldband, twoPow, bandx[0], bandy[0], band, bandi);
+                    bandx[0] = newx;
+                    bandy[0] = newy;
                 } // if (nsc > 2)
                 if (nor == 1) { // horizontal
                     twoPow = 1;
@@ -2374,7 +2379,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     shiftReal(band, bandx[0], bandy[0], offset, band);
                 } // else 
                 if (yh == null) {
-                    yh = band;
+                    yh = new double[band.length];
+                    for (i = 0; i < band.length; i++) {
+                        yh[i] = band[i];
+                    }
                     yhy = bandy[0];
                     yhx = bandx[0];
                 }
@@ -2393,7 +2401,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                             temp[i + yhx + j*(yhx + bandx[0])] = band[i + j*bandx[0]];
                         }
                     }
-                    yh = temp;
+                    yh = new double[yhy*(yhx + bandx[0])];
+                    for (i = 0; i < yh.length; i++) {
+                        yh[i] = temp[i];
+                    }
                     yhx = yhx + bandx[0];
                 } // else
             } // for (nor = 1; nor <= nOrientations; nor++)
@@ -2401,13 +2412,16 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         nband = nband + 1;
         band = pyrBand(pyr, pind, nband-1, bandx, bandy);
+        System.out.println("nband-1 = " + (nband-1) + " bandx[0] = " + bandx[0] + " bandy[0] = " + bandy[0]);
         twoPow = 1;
         for (i = 0; i < nScales; i++) {
             twoPow *= 2;
         }
-        expand(band, twoPow, bandx[0], bandy[0], lpr, bandi);
         lprx = (int)Math.round(twoPow*bandx[0]);
         lpry = (int)Math.round(twoPow*bandy[0]);
+        lpr = new double[lprx*lpry];
+        bandi = new double[lprx*lpry];
+        expand(band, twoPow, bandx[0], bandy[0], lpr, bandi);
         res = mirdwt(lpr, lprx, lpry, yh, yhx, yhy, h,
                      h.length, 1, nScales+1);
         return res;
@@ -2468,6 +2482,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         /* Check for consistency of rows and columns of yl, yh */
         if (Math.min(m,n) > 1) {
             if ((m != mh) || (3*n*L != nh)) {
+                System.out.println("m = " + m + " mh = " + mh + " n = " + n + " L = " + L + " nh = " + nh);
                 MipavUtil.displayError("Dimensions of first two input matrices not consistent");
                 error = 1;
                 return null;
@@ -3372,6 +3387,7 @@ MATLAB description:
         int j2;
         int nx, ny;
         double max;
+        boolean SNonZero;
         
         nv = y.length;
         nh = y[0].length;
@@ -3537,16 +3553,20 @@ MATLAB description:
             }
         }
         
-        
-  
-        /*for (j = 0; j < N; j++) {
-            Preferences.debug(" j = " + j + "\n");
+        SNonZero = false;
+        for (j = 0; j < N; j++) {
             for (i = 0; i < N; i++) {
-                Preferences.debug(S[j][i] + " ");
+                if (S[j][i] != 0.0) {
+                    SNonZero = true;
+                }
             }
-            Preferences.debug("\n");
-        }*/
-        iS = (new Matrix(S)).inverse().getArray();
+        }
+        if (SNonZero) {
+            iS = (new Matrix(S)).inverse().getArray();
+        }
+        else {
+            iS = new double[N][N];
+        }
         for (i = 0; i < noise.length; i++) {
             for (j = 0; j < noise[i].length; j++) {
                 noise[i][j] = null;;
@@ -5839,11 +5859,9 @@ MATLAB description:
      * @param f Shrink by this factor in each dimension
      * @param tsr Real part of shrunk result
      * @param tsi Imaginary part of shrunk result
-     * @param tsx First dimension of shrunk result
-     * @param tsy Second dimension of shrunk result
      */
     private void shrink(double t[], int tx, int ty, int f,
-                        double tsr[], double tsi[], int tsx[], int tsy[]) {
+                        double tsr[], double tsi[]) {
         FFTUtility fftUtil;
         int i, j, i2, j2;
         int cx;
@@ -5856,16 +5874,13 @@ MATLAB description:
         int intArr[] = new int[2];
         double tr[] = new double[t.length];
         double ti[] = new double[t.length];
+        int tsx;
+        int tsy;
         
         for (i = 0; i < t.length; i++) {
             tr[i] = t[i];
         }
-        if (tsx == null) {
-            tsx = new int[1];
-        }
-        if (tsy == null) {
-            tsy = new int[1];
-        }
+        
         // forward FFT
         fftUtil = new FFTUtility(tr, ti, ty, tx, 1, -1, FFTUtility.FFT);
         fftUtil.run();
@@ -5878,11 +5893,8 @@ MATLAB description:
             tr[i] = tr[i]/(f*f);
             ti[i] = ti[i]/(f*f);
         }
-        tsx[0] = tx/f;
-        tsy[0] = ty/f;
-        
-        tsr = new double[tsx[0]*tsy[0]];
-        tsi = new double[tsx[0]*tsy[0]];
+        tsx = tx/f;
+        tsy = ty/f;
         
         cx = (int)Math.ceil(tx/2.0);
         cy = (int)Math.ceil(ty/2.0);
@@ -5906,22 +5918,22 @@ MATLAB description:
         x1 = cx + 2*evenx - (int)Math.floor(tx/(2.0*f));
         x2 = cx + (int)Math.floor(tx/(2.0*f));
         
-        for (j = eveny, j2 = y1-1; j < tsy[0]; j++, j2++) {
-            for (i = evenx, i2 = x1-1; i < tsx[0]; i++, i2++) {
-                tsr[i + tsx[0]*j] = tr[i2 + tx*j2];
-                tsi[i + tsx[0]*j] = ti[i2 + tx*j2];
+        for (j = eveny, j2 = y1-1; j < tsy; j++, j2++) {
+            for (i = evenx, i2 = x1-1; i < tsx; i++, i2++) {
+                tsr[i + tsx*j] = tr[i2 + tx*j2];
+                tsi[i + tsx*j] = ti[i2 + tx*j2];
             }
         } // for (j = eveny, j2 = y1-1; j < tsy[0]; j++, j2++)
         
         if (evenmy) {
-            for (j = eveny, j2 = y1-1; j < tsy[0]; j++, j2++) {
-                tsr[tsx[0]*j] = (tr[x1-2 + tx*j2] + tr[x2 + tx*j2])/2.0;
-                tsi[tsx[0]*j] = (ti[x1-2 + tx*j2] + ti[x2 + tx*j2])/2.0;
+            for (j = eveny, j2 = y1-1; j < tsy; j++, j2++) {
+                tsr[tsx*j] = (tr[x1-2 + tx*j2] + tr[x2 + tx*j2])/2.0;
+                tsi[tsx*j] = (ti[x1-2 + tx*j2] + ti[x2 + tx*j2])/2.0;
             }
         } // if (evenmy)
         
         if (evenmx) {
-            for (i = evenx, i2 = x1-1; i < tsx[0]; i++, i2++) {
+            for (i = evenx, i2 = x1-1; i < tsx; i++, i2++) {
                 tsr[i] = (tr[i2 + tx*(y1-2)] + tr[i2 + tx*y2])/2.0;
                 tsi[i] = (ti[i2 + tx*(y1-2)] + ti[i2 + tx*y2])/2.0;
             }
@@ -5934,15 +5946,15 @@ MATLAB description:
                     ti[x1-2 + tx*y2] + ti[x2 + tx*y2])/4.0;
         } // if (evenmx && evenmy)
         
-        center(tsr, tsi, tsx[0], tsy[0]);
+        center(tsr, tsi, tsx, tsy);
         intArr[0] = 1 - evenx;
         intArr[1] = 1 - eveny;
-        shift(tsr, tsi, tsx[0], tsy[0], intArr, tsr, tsi);
+        shift(tsr, tsi, tsx, tsy, intArr, tsr, tsi);
         // Inverse FFT
-        fftUtil = new FFTUtility(tsr, tsi, tsy[0], tsx[0], 1, +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(tsr, tsi, tsy, tsx, 1, +1, FFTUtility.FFT);
         fftUtil.run();
         fftUtil.finalize();
-        fftUtil = new FFTUtility(tsr, tsi, 1, tsy[0], tsx[0], +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(tsr, tsi, 1, tsy, tsx, +1, FFTUtility.FFT);
         fftUtil.run();
         fftUtil.finalize();
         return;
@@ -5964,6 +5976,7 @@ MATLAB description:
     private Vector buildWUpyr(double im[], int imx, int imy, int nScales,
                               int daubOrder, Vector pind) {
         Vector pyr = new Vector();
+        double dummy[] = new double[1];
         double h[];
         double lpr[][] = null;
         double yh[][] = null;
@@ -5973,6 +5986,9 @@ MATLAB description:
         int nsc;
         int nor;
         double band[];
+        double oldband[] = null;
+        int newx;
+        int newy;
         int bandx;
         int bandy;
         int j;
@@ -5981,8 +5997,6 @@ MATLAB description:
         int twoPow;
         int intArr[] = new int[2];
         double bandi[] = null;
-        int sx[] = new int[1];
-        int sy[] = new int[1];
         int intMat[];
         double h_1[] = null;
         
@@ -6012,6 +6026,7 @@ MATLAB description:
         }
         
         // Reorganize the output, forcing the same format as with buildFullSFpyr2
+        pyr.add(dummy);
         if (pind != null) {
             pind.removeAllElements();
         }
@@ -6068,9 +6083,17 @@ MATLAB description:
                     for (i = 0; i < nsc-2; i++) {
                         twoPow *= 2;
                     }
-                    shrink(band, bandx, bandy, twoPow, band, bandi, sx, sy);
-                    bandx = sx[0];
-                    bandy = sy[0];
+                    oldband = new double[band.length];
+                    for (i = 0; i < band.length; i++) {
+                        oldband[i] = band[i];
+                    }
+                    newx = bandx/twoPow;
+                    newy = bandy/twoPow;
+                    band = new double[newx*newy];
+                    bandi = new double[newx*newy];
+                    shrink(oldband, bandx, bandy, twoPow, band, bandi);
+                    bandx = newx;
+                    bandy = newy;
                 } // if (nsc > 2)
                 pyr.add(band);
                 pind.removeElementAt(nband-1);
@@ -6093,9 +6116,17 @@ MATLAB description:
         for (i = 0; i < nsc; i++) {
             twoPow *= 2;
         }
-        shrink(band, bandx, bandy, twoPow, band, bandi, sx, sy);
-        bandx = sx[0];
-        bandy = sy[0];
+        oldband = new double[band.length];
+        for (i = 0; i < band.length; i++) {
+            oldband[i] = band[i];
+        }
+        newx = bandx/twoPow;
+        newy = bandy/twoPow;
+        band = new double[newx*newy];
+        bandi = new double[newx*newy];
+        shrink(oldband, bandx, bandy, twoPow, band, bandi);
+        bandx = newx;
+        bandy = newy;
         pyr.add(band);
         pind.removeElementAt(nband);
         intMat = new int[2];
