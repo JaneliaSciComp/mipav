@@ -16,11 +16,7 @@ import java.awt.event.*;
 import java.awt.image.*;
 
 import java.io.*;
-
-import java.util.*;
-
 import javax.media.j3d.*;
-
 import javax.vecmath.*;
 
 
@@ -300,34 +296,42 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * Given a point in FileCoordinates, draw it in local PatientCoordinates
-     * with a red sphere:
+     * Given a point in FileCoordinates, transform the point to local
+     * PatientCoordinates, and draw with a red sphere:
      *
      * @param  kPoint  RFA indicator point coordinate
      */
     public void drawRFAPoint(Point3f kPoint) {
 
+        /* FileToPatient: */
         Point3Df patientPt = new Point3Df();
         MipavCoordinateSystems.FileToPatient( new Point3Df( kPoint.x,
                                                             kPoint.y,
                                                             kPoint.z ),
                                               patientPt, m_kImageA,
                                               m_iPlaneOrientation );
-        Point3Df quadPt = new Point3Df();
-        this.PatientToQuad( patientPt, quadPt );
+        /* PatientToLocal: */
+        Point3Df localPt = new Point3Df();
+        this.PatientToLocal( patientPt, localPt );
 
         /* If this is the first time drawing, create the BranchGroup to hold
          * the sphere representation: */
         if (m_kRFA_BranchGroup == null) {
-            Shape3D kSphere = new Sphere(0.025f).getShape();
+            PolygonAttributes kPolygonAttributes = new PolygonAttributes();
+            kPolygonAttributes.setCullFace(PolygonAttributes.CULL_NONE);
+            Material kMaterial = new Material( m_akColors[0], m_akColors[0], m_akColors[0],
+                                               m_akColors[0], 1.0f);
+            Appearance kAppearance = new Appearance();
+            kAppearance.setMaterial(kMaterial);
+            kAppearance.setPolygonAttributes(kPolygonAttributes);
+            Shape3D kSphere = new Sphere( 0.025f ).getShape();
 
-            kSphere.getAppearance().
-                getMaterial().setEmissiveColor(new Color3f(1f, 0f, 0f));
+            kSphere.setAppearance( kAppearance );
             kSphere.setPickable(false);
 
             Transform3D kTransform = new Transform3D();
 
-            kTransform.set(new Vector3f(quadPt.x, quadPt.y, 0.05f));
+            kTransform.set(new Vector3f(localPt.x, -localPt.y, -2.5f));
 
             TransformGroup kTransformGroup = new TransformGroup();
 
@@ -346,7 +350,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         else {
             Transform3D kTransform = new Transform3D();
 
-            kTransform.set(new Vector3f(quadPt.x, quadPt.y, quadPt.z));
+            kTransform.set(new Vector3f(localPt.x, -localPt.y, -2.5f));
 
             TransformGroup kTransformGroup =
                 (TransformGroup) (m_kRFA_BranchGroup.getChild(0));
@@ -518,12 +522,12 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
              * information to the parent class: */
             if (m_bEntryPointSelect) {
 
-                /* Calculate the center of the mouse in QUAD coordineates, taking
+                /* Calculate the center of the mouse in LOCAL coordineates, taking
                  * into account zoom and translate: */
-                Point3Df quadPt = new Point3Df();
-                this.MouseToQuad(kEvent.getX(), kEvent.getY(), quadPt, false);
+                Point3Df localPt = new Point3Df();
+                this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, false);
                 Point3Df patientPt = new Point3Df();
-                this.QuadToPatient( quadPt, patientPt );
+                this.LocalToPatient( localPt, patientPt );
                 Point3Df kRFAPoint = new Point3Df();
                 MipavCoordinateSystems.PatientToFile(patientPt, kRFAPoint, m_kImageA,
                                                      m_iPlaneOrientation );
@@ -1051,52 +1055,16 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     }
 
     /**
-     * LocalToScreen converts a point from local coordinates to screen coordinates.
-     * @param patient, 
-     * @param screen, the transfromed patient point, with scale and teanslation
-     */
-    private void LocalToScreen( Point2Df patient, Point2Df screen )
-    {
-//         fCenterX = (fCenterX - m_fX0) / m_fXRange;
-//         fCenterY = (fCenterY - m_fY0) / m_fYRange;
-
-
-        int iCanvasWidth = m_kCanvas.getWidth();
-        int iCanvasHeight = m_kCanvas.getHeight();
-
-        //afCenter[1] = (float) ((m_iCanvasHeight - 1) - iY - ((m_iCanvasHeight - 1) / 2.0f)) / m_fDivY;
-        screen.x = patient.x;
-        screen.y = patient.y;
-
-        screen.y += m_fYTranslate;
-        screen.y *= m_fZoomScale;
-
-        screen.y *= (float) iCanvasWidth / 2.0f;
-        screen.y += ((iCanvasHeight - 1) / 2.0f);
-        screen.y = (float) ((iCanvasHeight - 1) - screen.y - ((iCanvasHeight - 1) / 2.0f)) / ((float) iCanvasWidth / 2.0f);
-
-        screen.y /= m_fZoomScale;
-        screen.y -= m_fYTranslate;
-
-        if (screen.y < m_fY0) {
-            screen.y = m_fY0;
-        }
-
-        if (screen.y > m_fY1) {
-            screen.y = m_fY1;
-        }
-    }
-
-
-    /**
-     * Calculate the center of the mouse in the QUAD coordinates, taking into
-     * account zoom and translate:
+     * Calculate the position of the mouse in the Local Coordinates, taking
+     * into account zoom and translate:
      *
-     * @param  iX        mouse x coordinate value
-     * @param  iY        mouse y coordinate value
-     * @param  afCenter  center in QUAD coordinates
+     * @param iX mouse x coordinate value
+     * @param iY mouse y coordinate value
+     * @param kLocal mouse position in Local Coordinates
+     * @param bSetCenter if true updates the position for rendering the x-bar
+     * and y-bar colored axes (for left mouse drag)
      */
-    private void MouseToQuad(int iX, int iY, Point3Df kQuad, boolean bSetCenter )
+    private void ScreenToLocal(int iX, int iY, Point3Df kLocal, boolean bSetCenter )
     {
         int iCanvasWidth = m_kCanvas.getWidth();
         int iCanvasHeight = m_kCanvas.getHeight();
@@ -1105,52 +1073,58 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         float fHalfWidth = ((float) iCanvasWidth-1) / 2.0f;
         float fHalfHeight = ((float) iCanvasHeight-1) / 2.0f;
 
-        kQuad.x = ((float) (iX - fHalfWidth)) / fHalfWidth;
-        kQuad.y = ((float) (iY - fHalfHeight)) / fHalfWidth;
+        kLocal.x = ((float) (iX - fHalfWidth)) / fHalfWidth;
+        kLocal.y = ((float) (iY - fHalfHeight)) / fHalfWidth;
 
-        kQuad.x /= m_fZoomScale;
-        kQuad.y /= m_fZoomScale;
+        kLocal.x /= m_fZoomScale;
+        kLocal.y /= m_fZoomScale;
 
-        kQuad.x -= m_fXTranslate;
-        kQuad.y -= m_fYTranslate;
+        kLocal.x -= m_fXTranslate;
+        kLocal.y -= m_fYTranslate;
 
         /* Bounds checking: */
-        kQuad.x = Math.min( Math.max( kQuad.x, m_fX0 ), m_fX1 );
-        kQuad.y = Math.min( Math.max( kQuad.y, m_fY0 ), m_fY1 );
+        kLocal.x = Math.min( Math.max( kLocal.x, m_fX0 ), m_fX1 );
+        kLocal.y = Math.min( Math.max( kLocal.y, m_fY0 ), m_fY1 );
 
         if ( bSetCenter )
         {
-            m_fCenterX = kQuad.x;
-            m_fCenterY = kQuad.y;
+            m_fCenterX = kLocal.x;
+            m_fCenterY = kLocal.y;
         }
 
         /* Normalize: */
-        kQuad.x = (kQuad.x - m_fX0) / m_fXRange;
-        kQuad.y = (kQuad.y - m_fY0) / m_fYRange;
-        kQuad.z = m_iSlice / (float)(m_aiLocalImageExtents[2] - 1);
+        kLocal.x = (kLocal.x - m_fX0) / m_fXRange;
+        kLocal.y = (kLocal.y - m_fY0) / m_fYRange;
+        kLocal.z = m_iSlice / (float)(m_aiLocalImageExtents[2] - 1);
     }
 
-    /* Convert the position in Quad coordinates into PatientCoordinates:
-     * @param quadPt, the current point in QuadCoordinates
-     * @param patientPt transformed quadPt in PatientCoordinates
+    /* Convert the position in LocalCoordinates (rendering space) into
+     * PatientCoordinates:
+     * @param localPt, the current point in LocalCoordinates
+     * @param patientPt transformed localPt in PatientCoordinates
      */
-    private void QuadToPatient( Point3Df quadPt, Point3Df patientPt )
+    private void LocalToPatient( Point3Df localPt, Point3Df patientPt )
     {
-        patientPt.x = quadPt.x * (m_aiLocalImageExtents[0] - 1);
-        patientPt.y = quadPt.y * (m_aiLocalImageExtents[1] - 1);
-        patientPt.z = quadPt.z * (m_aiLocalImageExtents[2] - 1);
+        patientPt.x = localPt.x * (m_aiLocalImageExtents[0] - 1);
+        patientPt.y = localPt.y * (m_aiLocalImageExtents[1] - 1);
+        patientPt.z = localPt.z * (m_aiLocalImageExtents[2] - 1);
     }
 
-        
-    private void PatientToQuad( Point3Df patientPt, Point3Df quadPt )
+    /**
+     * Convert the position in PatientCoordinates into Local rendering
+     * coordinates:
+     * @param patientPt the current point in PatientCoordinates
+     * @param localPt, the transformed point in LocalCoordinates
+     */
+    private void PatientToLocal( Point3Df patientPt, Point3Df localPt )
     {
-        quadPt.x = patientPt.x / (float)(m_aiLocalImageExtents[0] - 1);
-        quadPt.y = patientPt.y / (float)(m_aiLocalImageExtents[1] - 1);
-        quadPt.z = patientPt.z / (float)(m_aiLocalImageExtents[2] - 1);
+        localPt.x = patientPt.x / (float)(m_aiLocalImageExtents[0] - 1);
+        localPt.y = patientPt.y / (float)(m_aiLocalImageExtents[1] - 1);
+        localPt.z = patientPt.z / (float)(m_aiLocalImageExtents[2] - 1);
 
-        quadPt.x = (quadPt.x * m_fXRange) + m_fX0;
-        quadPt.y = (quadPt.y * m_fYRange) + m_fY0;
-        quadPt.z = 1.0f;
+        localPt.x = (localPt.x * m_fXRange) + m_fX0;
+        localPt.y = (localPt.y * m_fYRange) + m_fY0;
+        localPt.z = 1.0f;
     }
 
 
@@ -1362,10 +1336,10 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
             return;
         }
 
-        /* Calculate the center of the mouse in quad coordineates, taking into
+        /* Calculate the center of the mouse in local coordineates, taking into
          * account zoom and translate: */
-        Point3Df quadPt = new Point3Df();
-        this.MouseToQuad(kEvent.getX(), kEvent.getY(), quadPt, true);
+        Point3Df localPt = new Point3Df();
+        this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, true);
 
         drawLabels();
 
@@ -1373,7 +1347,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
          * PlaneRenders and the SurfaceRender with the changed Z position
          * of the planes with color matching the moved bar: */
         Point3Df patientPt = new Point3Df();
-        this.QuadToPatient( quadPt, patientPt );
+        this.LocalToPatient( localPt, patientPt );
         Point3Df volumePt = new Point3Df();
         MipavCoordinateSystems.PatientToFile( patientPt, volumePt, m_kImageA, m_iPlaneOrientation );
         m_kParent.setSliceFromPlane( volumePt );
@@ -1418,8 +1392,8 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
     private void processRightMouseDrag(MouseEvent kEvent) {
 
         /* Get the coordinates of the mouse position in local coordinates: */
-        Point3Df quadPt = new Point3Df();
-        this.MouseToQuad(kEvent.getX(), kEvent.getY(), quadPt, false);
+        Point3Df localPt = new Point3Df();
+        this.ScreenToLocal(kEvent.getX(), kEvent.getY(), localPt, false);
         m_kActiveLookupTable = null;
 
         /* Get which image is active, either m_kImageA or m_kImageB: */
@@ -1434,7 +1408,7 @@ public class PlaneRender extends VolumeCanvas3D implements MouseMotionListener, 
         m_kPatientSlice.setActiveImage( m_kActiveImage );
         m_kActiveLookupTable = m_kPatientSlice.getActiveLookupTable();
 
-        if ( m_kWinLevel.updateWinLevel( quadPt.x, quadPt.y, m_bFirstDrag, m_kActiveLookupTable, m_kActiveImage ) )
+        if ( m_kWinLevel.updateWinLevel( localPt.x, localPt.y, m_bFirstDrag, m_kActiveLookupTable, m_kActiveImage ) )
         {
             if ( m_kActiveImage == m_kImageA )
             {
