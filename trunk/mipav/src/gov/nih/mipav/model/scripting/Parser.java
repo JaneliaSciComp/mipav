@@ -194,15 +194,6 @@ public class Parser {
             }
         }
 
-        // if the -hide argument was specified, we require an Exit command somewhere in the script.  otherwise mipav
-        // will appear to "hang"
-        if (!ViewUserInterface.getReference().isAppFrameVisible() && !hasExitAction(scriptFile)) {
-
-            // TODO: maybe automatically add the exit command to the end of the script...
-            throw new ParserException(scriptFile, 0,
-                                      "Scripts run with the -hide option must close MIPAV with an Exit command.");
-        }
-
         ParserEngine parser = new ParserEngine(scriptFile, true);
 
         while (parser.hasMoreLinesToParse()) {
@@ -227,6 +218,12 @@ public class Parser {
                     throw exception;
                 }
             }
+        }
+
+        // if the -hide argument was specified, we require an Exit command somewhere in the script.  otherwise mipav
+        // will appear to "hang"
+        if (!ViewUserInterface.getReference().isAppFrameVisible() && !hasExitAction(scriptFile)) {
+            new ActionExit().scriptRun(new ParameterTable());
         }
     }
 
