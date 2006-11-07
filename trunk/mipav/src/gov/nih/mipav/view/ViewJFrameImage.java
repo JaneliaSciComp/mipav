@@ -2586,6 +2586,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("CorrectSpace")) {
             new JDialogCorrectSpacing(this, getActiveImage()).callAlgorithm();
         }
+        else if (command.equals("ToggleImageIntensities")) {
+        	controls.toggleSlider();
+        }
     }
 
     /**
@@ -3218,7 +3221,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             case KeyEvent.VK_LEFT:
             case KeyEvent.VK_RIGHT:
                 getComponentImage().getVOIHandler().handleArrowKeysVOI(e);
-
+            	
                 return;
         }
 

@@ -2659,6 +2659,7 @@ public class Preferences {
         str += "MemoryUsage,CTRLM;";
         str += "quickLUT,Q;";
         str += "ShowPaintBorder,B;";
+        str += "ToggleImageIntensities,T;";
 
 
         // build quicklist shortcuts

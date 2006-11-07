@@ -155,11 +155,12 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
 
             if (radioImageA.isSelected()) {
                 frame.setActiveImage(ViewJFrameImage.IMAGE_A); // Image A
-
+                frame.updateImages();
                 // Sets the spinner (on paint toolbar) values used in paint based on image type
                 toolBarObj.setSpinnerValues(frame.getImageA().getType());
             } else if (radioImageB.isSelected()) {
                 frame.setActiveImage(ViewJFrameImage.IMAGE_B); // Image B
+                frame.updateImages();
                 toolBarObj.setSpinnerValues(frame.getImageB().getType());
             }
         }
@@ -835,5 +836,25 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         label5.setForeground(Color.black);
         label5.setFont(font12);
         zImageSliderDictionary.put(new Integer(sliderResolutionInt), label5);
+    }
+    
+    
+    
+    /**
+     * This method toggles between the intensities
+     * between Image A and Image B
+     * 
+     * 
+     */
+    public void toggleSlider() {
+    	if(alphaSlider != null) {
+    		int value = alphaSlider.getValue();
+    		if(value != 100) {
+    			alphaSlider.setValue(100);
+    		}
+    		else {
+    			alphaSlider.setValue(0);
+    		}
+    	}
     }
 }
