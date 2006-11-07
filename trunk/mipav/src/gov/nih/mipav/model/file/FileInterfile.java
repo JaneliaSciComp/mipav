@@ -410,7 +410,7 @@ public class FileInterfile extends FileBase {
             raFile = new RandomAccessFile(file, "r");
             fileLength = raFile.length();
 
-            fileInfo = new FileInfoInterfile(originalFileName, fileDir, FileBase.INTERFILE); // dummy fileInfo
+            fileInfo = new FileInfoInterfile(originalFileName, fileDir, FileUtility.INTERFILE); // dummy fileInfo
 
             imgResols[0] = 1.0f;
             imgResols[1] = 1.0f;
@@ -1438,7 +1438,7 @@ public class FileInterfile extends FileBase {
             fileInfo = (FileInfoInterfile) image.getFileInfo(0);
         } catch (ClassCastException e) { // If it isn't, catch the exception
                                          // and make a new fileInfo
-            fileInfo = new FileInfoInterfile(fileName, fileDir, FileBase.INTERFILE);
+            fileInfo = new FileInfoInterfile(fileName, fileDir, FileUtility.INTERFILE);
             simple = true; // Write the header without all the Interfile info
         }
 

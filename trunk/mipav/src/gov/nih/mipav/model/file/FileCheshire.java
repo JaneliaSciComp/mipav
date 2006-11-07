@@ -149,7 +149,7 @@ public class FileCheshire extends FileBase {
 
 
         if (fileInfo == null) { // if the file info does not yet exist: make it
-            fileInfo = new FileInfoCheshire(fileName, fileDir, FileBase.CHESHIRE);
+            fileInfo = new FileInfoCheshire(fileName, fileDir, FileUtility.CHESHIRE);
         }
 
         fileInfo.setEndianess(BIG_ENDIAN);
@@ -263,7 +263,7 @@ public class FileCheshire extends FileBase {
     public ModelImage readImage() throws IOException, OutOfMemoryError {
         int i;
 
-        fileInfo = new FileInfoCheshire(fileName, fileDir, FileBase.CHESHIRE);
+        fileInfo = new FileInfoCheshire(fileName, fileDir, FileUtility.CHESHIRE);
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             raFile.close();

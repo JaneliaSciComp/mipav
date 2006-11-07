@@ -894,7 +894,7 @@ public class FileMagnetomVision extends FileBase {
 
             fileHeader = new File(fileDir + fileName);
             raFile = new RandomAccessFile(fileHeader, "r");
-            fileInfo = new FileInfoMagnetomVision(fileName, fileDir, FileBase.MAGNETOM_VISION);
+            fileInfo = new FileInfoMagnetomVision(fileName, fileDir, FileUtility.MAGNETOM_VISION);
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory in FileGEGenesis.setFileName.");
             throw new IOException();

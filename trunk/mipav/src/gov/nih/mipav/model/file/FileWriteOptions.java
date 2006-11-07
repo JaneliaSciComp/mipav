@@ -60,7 +60,7 @@ public class FileWriteOptions {
     private int fileStartNumber = 0;
 
     /** DOCUMENT ME! */
-    private int fileType = FileBase.UNDEFINED;
+    private int fileType = FileUtility.UNDEFINED;
 
     /** DOCUMENT ME! */
     private int green;

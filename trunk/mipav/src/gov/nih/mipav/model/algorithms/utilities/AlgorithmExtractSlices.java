@@ -161,7 +161,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
         
 
         // No DICOM 4D images
-        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             // determine along which axis the imagePositionCoords the image varies
             if (srcImage.getFileInfo(1) != null) {
@@ -241,7 +241,7 @@ public class AlgorithmExtractSlices extends AlgorithmBase {
 
                         // set file info for the slice.
                         // ... but do something special for DICOM images
-                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                             FileInfoDicom fileInfoBuffer; // buffer of type DICOM
                             fileInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(zSrc).clone(); // copy into buffer
 

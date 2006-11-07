@@ -2995,7 +2995,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         // set up save options
         FileWriteOptions options = new FileWriteOptions("", "", true);
 
-        options.setFileType(FileBase.XML);
+        options.setFileType(FileUtility.XML);
 
         if (img.getNDims() == 3) {
             options.setBeginSlice(0);
@@ -3009,7 +3009,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         String extension = null;
         String directory = null;
         String suffix = null;
-        int fileType = FileBase.UNDEFINED;
+        int fileType = FileUtility.UNDEFINED;
         ViewImageFileFilter vFilter = null;
         int i;
         int filterType = -1;
@@ -3178,7 +3178,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         // part of the name
         String baseName = new String(fileName);
 
-        if (fileType == FileBase.DICOM) {
+        if (fileType == FileUtility.DICOM) {
             int index = fileName.lastIndexOf(".");
 
             if (index > 0) {
@@ -3211,7 +3211,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         for (i = 0; i < fileInfo.length; i++) {
             fileInfo[i].setFileDirectory(directory);
 
-            if (fileType == FileBase.DICOM) {
+            if (fileType == FileUtility.DICOM) {
                 fileInfo[i].setFileName(baseName + (i + 1) + ".dcm");
             } else {
                 fileInfo[i].setFileName(fileName);

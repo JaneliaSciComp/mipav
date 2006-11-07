@@ -396,7 +396,7 @@ public class FileTiff extends FileBase {
             }
 
             long saveLoc = raFile.getFilePointer();
-            fileInfo = new FileInfoTiff(fileName, fileDir, FileBase.TIFF); // dummy fileInfo
+            fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF); // dummy fileInfo
             fileInfo.setEndianess(endianess);
             imageSlice = 0;
             IFDoffsets[imageSlice] = getInt(endianess);
@@ -493,7 +493,7 @@ public class FileTiff extends FileBase {
             if (!foundTag43314) {
 
                 while (moreIFDs) {
-                    fileInfo = new FileInfoTiff(fileName, fileDir, FileBase.TIFF);
+                    fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
                     fileInfo.setExtents(imgExtents);
                     raFile.seek(IFDoffsets[imageSlice]);
                     moreIFDs = openIFD(fileInfo);
@@ -509,7 +509,7 @@ public class FileTiff extends FileBase {
                 } // while (moreIFDs)
             } // if (!foundTag43314)
             else { // foundTag43314
-                fileInfo = new FileInfoTiff(fileName, fileDir, FileBase.TIFF);
+                fileInfo = new FileInfoTiff(fileName, fileDir, FileUtility.TIFF);
                 fileInfo.setExtents(imgExtents);
                 fileInfo.setDataType(image.getType());
 
@@ -683,7 +683,7 @@ public class FileTiff extends FileBase {
         }
 
         // Create the fileInfo and set up the extents/resolutions/units of measure
-        fileInfo = new FileInfoTiff(series.getName(), "", FileBase.TIFF);
+        fileInfo = new FileInfoTiff(series.getName(), "", FileUtility.TIFF);
         fileInfo.setExtents(imgExtents);
         fileInfo.setResolutions(imgRes);
         fileInfo.setUnitsOfMeasure(units);

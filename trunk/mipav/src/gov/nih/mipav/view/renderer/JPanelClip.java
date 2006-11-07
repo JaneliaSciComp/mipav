@@ -3628,7 +3628,7 @@ public class JPanelClip extends JPanelRendererBase
         String extension = null;
         String directory = null;
         String suffix = null;
-        int fileType = FileBase.UNDEFINED;
+        int fileType = FileUtility.UNDEFINED;
         ModelImage img = null;
         ViewImageFileFilter vFilter = null;
         ModelImage kImageA = ((SurfaceRender) renderBase).getImageA();
@@ -3808,7 +3808,7 @@ public class JPanelClip extends JPanelRendererBase
                 filebase = new String(fName);
             }
 
-            if (options.getFileType() == FileBase.DICOM) {
+            if (options.getFileType() == FileUtility.DICOM) {
                 int newIndex = filebase.length();
 
                 for (i = filebase.length() - 1; i >= 0; i--) {
@@ -3848,7 +3848,7 @@ public class JPanelClip extends JPanelRendererBase
         // part of the name
         String baseName = new String(fileName);
 
-        if (fileType == FileBase.DICOM) {
+        if (fileType == FileUtility.DICOM) {
             int index = fileName.lastIndexOf(".");
 
             if (index > 0) {
@@ -3881,7 +3881,7 @@ public class JPanelClip extends JPanelRendererBase
         for (i = 0; i < fileInfo.length; i++) {
             fileInfo[i].setFileDirectory(directory);
 
-            if (fileType == FileBase.DICOM) {
+            if (fileType == FileUtility.DICOM) {
                 fileInfo[i].setFileName(baseName + (i + 1) + ".dcm");
             } else {
                 fileInfo[i].setFileName(fileName);

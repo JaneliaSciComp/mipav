@@ -86,7 +86,7 @@ public class AlgorithmSubset extends AlgorithmBase {
 
         // No DICOM 4D images
         if (removeDim == REMOVE_T) {
-            if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+            if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                 
                 // determine along which axis the imagePositionCoords the image varies
                 if (srcImage.getFileInfo(1) != null) {

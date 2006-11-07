@@ -97,7 +97,7 @@ public class ActionCreateBlankImage extends ActionImageProcessorBase {
     public static final FileInfoBase getRawFileInfo(ParameterTable parameters) {
         String imgDir = ViewUserInterface.getReference().getDefaultDirectory();
         String imgFile = "new_blank_image.raw";
-        FileInfoBase fileInfo = new FileInfoImageXML(imgFile, imgDir, FileBase.RAW);
+        FileInfoBase fileInfo = new FileInfoImageXML(imgFile, imgDir, FileUtility.RAW);
 
         fileInfo.setDataType(parameters.getInt(FILE_RAW_DATA_TYPE));
         fileInfo.setEndianess(parameters.getBoolean(FILE_RAW_ENDIANESS));

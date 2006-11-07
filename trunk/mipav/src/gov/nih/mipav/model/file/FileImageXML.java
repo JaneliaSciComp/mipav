@@ -123,7 +123,7 @@ public class FileImageXML extends FileXML {
      */
     public FileImageXML(ViewUserInterface _UI, String fName, String fDir) {
         super(_UI, fName, fDir);
-        fileInfo = new FileInfoImageXML(fName, fDir, FileBase.XML);
+        fileInfo = new FileInfoImageXML(fName, fDir, FileUtility.XML);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -388,7 +388,7 @@ public class FileImageXML extends FileXML {
 
         TalairachTransformInfo talairach = new TalairachTransformInfo();
 
-        fileInfo = new FileInfoImageXML(fileName, fileDir, FileBase.XML);
+        fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.XML);
 
         // System.err.println("Beginning header read");
         resolutions = readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory(), talairach);
@@ -589,7 +589,7 @@ public class FileImageXML extends FileXML {
         float[][] resolutions = null;
 
         if (fileInfo == null) { // if no file info yet, make it.
-            fileInfo = new FileInfoImageXML(fileName, fileDir, FileBase.XML);
+            fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.XML);
 
             resolutions = readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory(), talairach);
 
@@ -757,7 +757,7 @@ public class FileImageXML extends FileXML {
         } catch (ClassCastException e) { // If it isn't, catch the exception
 
             // and make a new fileInfo
-            fileInfo = new FileInfoImageXML(headerName, headerDir, FileBase.XML);
+            fileInfo = new FileInfoImageXML(headerName, headerDir, FileUtility.XML);
             simple = true; // Write the header without all the Analyze info
         }
 

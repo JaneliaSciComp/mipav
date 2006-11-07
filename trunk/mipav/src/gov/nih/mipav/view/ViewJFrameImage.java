@@ -4916,7 +4916,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                               menuBuilder.isMenuItemSelected("Scripting toolbar"),
                               componentImage.getVOIHandler().getVOI_ID());
 
-        if (getActiveImage().getFileInfo(0).getFileFormat() == FileBase.DICOM) {
+        if (getActiveImage().getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
 
             // menuBuilder.setMenuItemEnabled("Show image/DICOM overlay", true);
             menuBuilder.setMenuItemEnabled("DICOM overlay options", true);

@@ -1732,7 +1732,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
         try {
             gvfImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_uvf",
-                               FileBase.XML, true);
+                               FileUtility.XML, true);
         } catch (OutOfMemoryError error) {
 
             if (gvfImage != null) {
@@ -1765,7 +1765,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
         try {
             gvfImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_vvf",
-                               FileBase.XML, true);
+                               FileUtility.XML, true);
         } catch (OutOfMemoryError error) {
 
             if (gvfImage != null) {
@@ -1798,7 +1798,7 @@ public class AlgorithmGVF extends AlgorithmBase {
 
         try {
             gvfImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_wvf",
-                               FileBase.XML, true);
+                               FileUtility.XML, true);
         } catch (OutOfMemoryError error) {
 
             if (gvfImage != null) {

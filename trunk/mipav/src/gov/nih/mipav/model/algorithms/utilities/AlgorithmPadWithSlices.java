@@ -209,7 +209,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                     if (z == 0) {
                         currentSlices = frontSlices;
 
-                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                             imagePositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z))
                                                                        .parseTagValue("0020,0032"));
                             nextPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z + 1))
@@ -218,7 +218,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
                     } else {
                         currentSlices = backSlices;
 
-                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                             imagePositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z - 1))
                                                                        .parseTagValue("0020,0032"));
                             lastPositionCoords = convertIntoFloat(((FileInfoDicom) srcImage.getFileInfo(z - 2))
@@ -268,7 +268,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
 
                     for (j = 0; j < currentSlices; j++) {
 
-                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                             FileInfoDicom fileInfoBuffer; // buffer of type DICOM
 
                             if (z != oldZdim) {
@@ -459,7 +459,7 @@ public class AlgorithmPadWithSlices extends AlgorithmBase {
 
                     // set file info for the slice.
                     // ... but do something special for DICOM images
-                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                         FileInfoDicom fileInfoBuffer; // buffer of type DICOM
                         fileInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(z).clone(); // copy into buffer
 

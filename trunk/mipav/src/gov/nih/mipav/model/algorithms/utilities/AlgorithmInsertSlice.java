@@ -529,7 +529,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
                         return;
                     }
 
-                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                         FileInfoDicom fileInfoBuffer; // buffer of type DICOM
 
                         if (z != oldZdim) {
@@ -752,7 +752,7 @@ public class AlgorithmInsertSlice extends AlgorithmBase {
 
                     // set file info for the slice.
                     // ... but do something special for DICOM images
-                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                         FileInfoDicom fileInfoBuffer; // buffer of type DICOM
                         fileInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(z).clone(); // copy into buffer
 

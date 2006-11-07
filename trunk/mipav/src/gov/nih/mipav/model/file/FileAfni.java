@@ -4473,7 +4473,7 @@ public class FileAfni extends FileBase {
             raFile = new RandomAccessFile(file, "r");
             fileLength = raFile.length();
 
-            fileInfo = new FileInfoAfni(fileName, fileDir, FileBase.AFNI); // dummy fileInfo
+            fileInfo = new FileInfoAfni(fileName, fileDir, FileUtility.AFNI); // dummy fileInfo
 
             if (presentViewType == FileInfoAfni.AFNI_ORIG) {
                 haveReadOrig = true;

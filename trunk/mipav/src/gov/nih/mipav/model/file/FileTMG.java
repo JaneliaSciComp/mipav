@@ -115,7 +115,7 @@ public class FileTMG extends FileBase {
             file = new File(fileDir + fileName);
 
             endianess = FileBase.LITTLE_ENDIAN; // false
-            fileInfo = new FileInfoTMG(fileName, fileDir, FileBase.MRC);
+            fileInfo = new FileInfoTMG(fileName, fileDir, FileUtility.MRC);
 
             raFile = new RandomAccessFile(file, "r");
 

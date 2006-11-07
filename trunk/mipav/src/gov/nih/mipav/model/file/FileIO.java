@@ -265,169 +265,7 @@ public class FileIO {
 
     }
 
-    /**
-     * Gets the file extension based on the filetype of the image.
-     *
-     * @param   fileType  Type of file, found in FileBase.
-     *
-     * @return  The appropriate file extension.
-     *
-     * @see     FileBase
-     */
-    public static final String getSuffix(int fileType) {
-        String suffix = null;
-
-        switch (fileType) {
-
-            case FileBase.JIMI:
-                suffix = ".jpg";
-                break;
-
-            case FileBase.RAW:
-                suffix = ".raw";
-                break;
-
-            case FileBase.DICOM:
-                suffix = ".dcm";
-                break;
-
-            case FileBase.MEDVISION:
-                suffix = ".bin";
-                break;
-
-            case FileBase.MAP:
-                suffix = ".map";
-                break;
-
-            case FileBase.MINC:
-                suffix = ".mnc";
-                break;
-
-            case FileBase.AVI:
-                suffix = ".avi";
-                break;
-
-            case FileBase.QT:
-                suffix = ".mov";
-                break;
-
-            case FileBase.CHESHIRE:
-                suffix = ".imc";
-                break;
-
-            case FileBase.CHESHIRE_OVERLAY:
-                suffix = ".oly";
-                break;
-
-            case FileBase.VOI_FILE:
-                suffix = ".voi";
-                break;
-
-            case FileBase.ANALYZE:
-                suffix = ".img";
-                break;
-
-            case FileBase.MGH:
-
-                // Uses .mgh for uncompressed storage
-                // Uses .mgz or .mgh.gz for compressed storage
-                suffix = ".mgh";
-                break;
-
-            case FileBase.NIFTI:
-
-                // uses .hdr and .img for 2 file storage
-                // uses .nii for 1 file storage
-                suffix = ".nii";
-                break;
-
-            case FileBase.NRRD:
-
-                // uses .nhdr for header and any nhdr designated extension for data
-                // in 2 file storage
-                // uses .nrrd for 1 file storage
-                suffix = ".nrrd";
-                break;
-
-            case FileBase.SPM:
-                suffix = ".spm";
-                break;
-
-            case FileBase.TIFF:
-                suffix = ".tiff";
-                break;
-
-            case FileBase.LSM:
-                suffix = ".lsm";
-                break;
-
-            case FileBase.STK:
-                suffix = ".stk";
-                break;
-
-            case FileBase.AFNI:
-                suffix = ".afni";
-                break;
-
-            case FileBase.ICS:
-                suffix = ".ics";
-                break;
-
-            case FileBase.INTERFILE:
-                suffix = ".hdr";
-                break;
-
-            case FileBase.BIORAD:
-                suffix = ".pic";
-                break;
-
-            case FileBase.FITS:
-                suffix = ".fits";
-                break;
-
-            case FileBase.DM3:
-                suffix = ".dm3";
-                break;
-
-            case FileBase.TMG:
-                suffix = ".tmg";
-                break;
-
-            case FileBase.MRC:
-                suffix = ".mrc";
-                break;
-
-            case FileBase.OSM:
-                suffix = ".wu";
-                break;
-
-            case FileBase.MAGNETOM_VISION:
-                suffix = ".ima";
-                break;
-
-            case FileBase.GE_GENESIS:
-                suffix = ".sig";
-                break;
-
-            case FileBase.GE_SIGNA4X:
-                suffix = ".gedno";
-                break;
-
-            case FileBase.MICRO_CAT:
-                suffix = ".log";
-                break;
-
-            case FileBase.XML:
-                suffix = ".xml";
-                break;
-
-            case FileBase.COR:
-                suffix = ".info";
-                break;
-        }
-
-        return suffix;
-    }
+    
 
     /**
      * Breaks the filename into basename and suffix, then returns the suffix.
@@ -577,25 +415,25 @@ public class FileIO {
 
         if (multiFile) {
 
-            if (fileType == FileBase.TIFF) {
-                fType = FileBase.TIFF_MULTIFILE;
-            } else if (fileType == FileBase.LSM) {
-                fType = FileBase.LSM_MULTIFILE;
-            } else if (fileType == FileBase.DICOM) {
-                fType = FileBase.DICOM;
+            if (fileType == FileUtility.TIFF) {
+                fType = FileUtility.TIFF_MULTIFILE;
+            } else if (fileType == FileUtility.LSM) {
+                fType = FileUtility.LSM_MULTIFILE;
+            } else if (fileType == FileUtility.DICOM) {
+                fType = FileUtility.DICOM;
             } // affords some posibilities
-            else if (fileType == FileBase.ANALYZE) {
-                fType = FileBase.ANALYZE_MULTIFILE;
+            else if (fileType == FileUtility.ANALYZE) {
+                fType = FileUtility.ANALYZE_MULTIFILE;
             } // under construction
-            else if (fileType == FileBase.NIFTI) {
-                fType = FileBase.NIFTI_MULTIFILE;
-            } else if (fileType == FileBase.RAW) {
-                fType = FileBase.RAW_MULTIFILE;
+            else if (fileType == FileUtility.NIFTI) {
+                fType = FileUtility.NIFTI_MULTIFILE;
+            } else if (fileType == FileUtility.RAW) {
+                fType = FileUtility.RAW_MULTIFILE;
             } // under construction
-            else if (fileType == FileBase.COR) {
-                fType = FileBase.COR;
-            } else if (fileType == FileBase.XML) {
-                fType = FileBase.XML_MULTIFILE;
+            else if (fileType == FileUtility.COR) {
+                fType = FileUtility.COR;
+            } else if (fileType == FileUtility.XML) {
+                fType = FileUtility.XML_MULTIFILE;
             }
         }
 
@@ -892,8 +730,8 @@ public class FileIO {
     /**
      * Presents a dialog for a user-entered definition of the image type.
      *
-     * @return  The image file type entered by the user, or FileBase.ERROR if FileIO is quiet or the dialog is
-     *          cancelled. see FileBase.ERROR see isQuiet()
+     * @return  The image file type entered by the user, or FileUtility.ERROR if FileIO is quiet or the dialog is
+     *          cancelled. see FileUtility.ERROR see isQuiet()
      *
      * @see     JDialogUnknownIO
      */
@@ -901,13 +739,13 @@ public class FileIO {
         int fileType;
 
         if (quiet) {
-            return FileBase.ERROR;
+            return FileUtility.ERROR;
         }
 
         unknownIODialog.setVisible(true);
 
         if (unknownIODialog.isCancelled()) {
-            fileType = FileBase.ERROR;
+            fileType = FileUtility.ERROR;
         } else {
             fileType = unknownIODialog.getImageType();
         }
@@ -949,118 +787,29 @@ public class FileIO {
         fileName.trim();
 
         String suffix = getSuffixFrom(fileName);
-
-        if (suffix.equalsIgnoreCase(".tif")) {
-            fileType = FileBase.TIFF;
-        } else if (suffix.equalsIgnoreCase(".tiff")) {
-            fileType = FileBase.TIFF;
-        } else if (suffix.equalsIgnoreCase(".lsm")) {
-            fileType = FileBase.LSM;
-        } else if (suffix.equalsIgnoreCase(".stk")) {
-            fileType = FileBase.STK;
-        } else if (suffix.equalsIgnoreCase(".jpeg")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".jpg")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".bmp")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".gif")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".pict")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".pic")) {
-            fileType = FileBase.UNDEFINED;
-
-            // Both Biorad and JIMI use the pic suffix
-            try {
-                File file = new File(fileDir + fileName);
-                RandomAccessFile raFile = new RandomAccessFile(file, "r");
-
-                raFile.seek(54L);
-
-                // little endian unsigned short
-                int b1 = raFile.readUnsignedByte();
-                int b2 = raFile.readUnsignedByte();
-                int fileID = ((b2 << 8) | b1); // Little Endian
-
-                raFile.close();
-
-                if (fileID == 12345) {
-                    fileType = FileBase.BIORAD;
-                } else {
-                    fileType = FileBase.JIMI;
-                }
-            } catch (OutOfMemoryError error) {
-                System.gc();
-            } catch (FileNotFoundException e) {
-                System.gc();
-            } catch (IOException e) {
-                System.gc();
-            }
-        } // else if (suffix.equalsIgnoreCase(".pic"))
-        else if (suffix.equalsIgnoreCase(".png")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".psd")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".dib")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".tga")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".xbm")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".xpm")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".xml")) {
-            fileType = FileBase.XML;
-        } else if (suffix.equalsIgnoreCase(".pcx")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".ico")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".cur")) {
-            fileType = FileBase.JIMI;
-        } else if (suffix.equalsIgnoreCase(".mgh")) {
-            fileType = FileBase.MGH;
-        } else if (suffix.equalsIgnoreCase(".mgz")) {
-            fileType = FileBase.MGH;
-        } else if (suffix.equalsIgnoreCase(".raw")) {
-            fileType = FileBase.RAW;
-        } else if (suffix.equalsIgnoreCase(".img")) {
-
-            // Both ANALYZE and NIFTI use .img and .hdr
-            if (doWrite) {
-                JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(UI.getMainFrame());
-
-                if (!choice.okayPressed()) {
-                    fileType = FileBase.ERROR;
-                } else if (choice.isAnalyzeFile()) {
-                    fileType = FileBase.ANALYZE;
-                } else {
-                    fileType = FileBase.NIFTI;
-                }
-            } // if (doWrite)
-            else { // read
-                fileType = FileBase.ANALYZE;
-
-                int p = fileName.lastIndexOf(".");
-                String fileHeaderName = fileName.substring(0, p + 1) + "hdr";
-
-                try {
-                    File file = new File(fileDir + fileHeaderName);
+        
+        fileType = FileUtility.getFileTypeFromSuffix(suffix);
+        
+        if (fileType == FileUtility.UNDEFINED) {
+        	if(suffix.equalsIgnoreCase(".pic")) {
+        		//Both Biorad and JIMI use the pic suffix
+        		try {
+                    File file = new File(fileDir + fileName);
                     RandomAccessFile raFile = new RandomAccessFile(file, "r");
 
-                    raFile.seek(344L);
+                    raFile.seek(54L);
 
-                    char[] niftiName = new char[4];
-
-                    for (i = 0; i < 4; i++) {
-                        niftiName[i] = (char) raFile.readUnsignedByte();
-                    }
+                    // little endian unsigned short
+                    int b1 = raFile.readUnsignedByte();
+                    int b2 = raFile.readUnsignedByte();
+                    int fileID = ((b2 << 8) | b1); // Little Endian
 
                     raFile.close();
 
-                    if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
-                            (niftiName[2] == '1') && (niftiName[3] == '\0')) {
-                        fileType = FileBase.NIFTI;
+                    if (fileID == 12345) {
+                        fileType = FileUtility.BIORAD;
+                    } else {
+                        fileType = FileUtility.JIMI;
                     }
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -1069,102 +818,88 @@ public class FileIO {
                 } catch (IOException e) {
                     System.gc();
                 }
-            } // else read
-        } else if (suffix.equalsIgnoreCase(".nii")) {
-            fileType = FileBase.NIFTI;
-        } else if (suffix.equalsIgnoreCase(".nhdr")) {
-            fileType = FileBase.NRRD;
-        } else if (suffix.equalsIgnoreCase(".nrrd")) {
-            fileType = FileBase.NRRD;
-        } else if (suffix.equalsIgnoreCase(".ima")) {
-            fileType = FileBase.DICOM;
+        	}
+        	else if(suffix.equalsIgnoreCase(".img")) {
+        		//Both ANALYZE and NIFTI use .img and .hdr
+                if (doWrite) {
+                    JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(UI.getMainFrame());
 
-            // Both Dicom and Siemens Magnetom Vision file type have the ima suffix
-            try {
-                File file = new File(fileDir + fileName);
-                RandomAccessFile raFile = new RandomAccessFile(file, "r");
+                    if (!choice.okayPressed()) {
+                        fileType = FileUtility.ERROR;
+                    } else if (choice.isAnalyzeFile()) {
+                        fileType = FileUtility.ANALYZE;
+                    } else {
+                        fileType = FileUtility.NIFTI;
+                    }
+                } 
+                else { // read
+                    fileType = FileUtility.ANALYZE;
 
-                raFile.seek(281L);
+                    int p = fileName.lastIndexOf(".");
+                    String fileHeaderName = fileName.substring(0, p + 1) + "hdr";
 
-                char[] ModelName = new char[15];
+                    try {
+                        File file = new File(fileDir + fileHeaderName);
+                        RandomAccessFile raFile = new RandomAccessFile(file, "r");
 
-                for (i = 0; i < 15; i++) {
-                    ModelName[i] = (char) raFile.readUnsignedByte();
+                        raFile.seek(344L);
+
+                        char[] niftiName = new char[4];
+
+                        for (i = 0; i < 4; i++) {
+                            niftiName[i] = (char) raFile.readUnsignedByte();
+                        }
+
+                        raFile.close();
+
+                        if ((niftiName[0] == 'n') && ((niftiName[1] == 'i') || (niftiName[1] == '+')) &&
+                                (niftiName[2] == '1') && (niftiName[3] == '\0')) {
+                            fileType = FileUtility.NIFTI;
+                        }
+                    } catch (OutOfMemoryError error) {
+                        System.gc();
+                    } catch (FileNotFoundException e) {
+                        System.gc();
+                    } catch (IOException e) {
+                        System.gc();
+                    }
                 }
+        	}
+        	else if(suffix.equalsIgnoreCase(".ima")) {
+        		//Both Dicom and Siemens Magnetom Vision file type have the ima suffix
+                try {
+                    File file = new File(fileDir + fileName);
+                    RandomAccessFile raFile = new RandomAccessFile(file, "r");
 
-                raFile.close();
+                    raFile.seek(281L);
 
-                String ModelNameString = new String(ModelName);
+                    char[] ModelName = new char[15];
 
-                if (ModelNameString.equals("MAGNETOM VISION")) {
-                    fileType = FileBase.MAGNETOM_VISION;
+                    for (i = 0; i < 15; i++) {
+                        ModelName[i] = (char) raFile.readUnsignedByte();
+                    }
+
+                    raFile.close();
+
+                    String ModelNameString = new String(ModelName);
+
+                    if (ModelNameString.equals("MAGNETOM VISION")) {
+                        fileType = FileUtility.MAGNETOM_VISION;
+                    }
+                    else {
+                    	fileType = FileUtility.DICOM;
+                    }
+                } catch (OutOfMemoryError error) {
+                    System.gc();
+                } catch (FileNotFoundException e) {
+                    System.gc();
+                } catch (IOException e) {
+                    System.gc();
                 }
-            } catch (OutOfMemoryError error) {
-                System.gc();
-            } catch (FileNotFoundException e) {
-                System.gc();
-            } catch (IOException e) {
-                System.gc();
-            }
-        } else if (suffix.equalsIgnoreCase(".dcm")) {
-            fileType = FileBase.DICOM;
-        } else if (suffix.equalsIgnoreCase(".bin")) {
-            fileType = FileBase.MEDVISION;
-        } else if (suffix.equalsIgnoreCase(".map")) {
-            fileType = FileBase.MAP;
-        } // Benes Trus special
-        else if (suffix.equalsIgnoreCase(".mnc")) {
-            fileType = FileBase.MINC;
-        } else if (suffix.equalsIgnoreCase(".avi")) {
-            fileType = FileBase.AVI;
-        } else if (suffix.equalsIgnoreCase(".imc")) {
-            fileType = FileBase.CHESHIRE;
-        } else if (suffix.equalsIgnoreCase(".oly")) {
-            fileType = FileBase.CHESHIRE_OVERLAY;
-        } // QuickTime on WIndows uses .QT and on MAC uses .mov
-        else if (suffix.equalsIgnoreCase(".qt")) {
-            fileType = FileBase.QT;
-        } else if (suffix.equalsIgnoreCase(".mov")) {
-            fileType = FileBase.QT;
-        } else if (suffix.equalsIgnoreCase(".head")) {
-            fileType = FileBase.AFNI;
-        } else if (suffix.equalsIgnoreCase(".brik")) {
-            fileType = FileBase.AFNI;
-        } else if (suffix.equalsIgnoreCase(".ics")) {
-            fileType = FileBase.ICS;
-        } else if (suffix.equalsIgnoreCase(".ids")) {
-            fileType = FileBase.ICS;
-        } else if (suffix.equalsIgnoreCase(".hdr")) {
-            fileType = FileBase.INTERFILE;
-        } else if (suffix.equalsIgnoreCase(".spm")) {
-            fileType = FileBase.SPM;
-        } else if (suffix.equalsIgnoreCase(".fits")) {
-            fileType = FileBase.FITS;
-        } else if (suffix.equalsIgnoreCase(".dm3")) {
-            fileType = FileBase.DM3;
-        } else if (suffix.equalsIgnoreCase(".tmg")) {
-            fileType = FileBase.TMG;
-        } else if (suffix.equalsIgnoreCase(".mrc")) {
-            fileType = FileBase.MRC;
-        } else if (suffix.equalsIgnoreCase(".wu")) {
-            fileType = FileBase.OSM;
-        } else if (suffix.equalsIgnoreCase(".sig")) {
-            fileType = FileBase.GE_GENESIS;
-        } else if (suffix.equalsIgnoreCase(".gedno")) {
-            fileType = FileBase.GE_SIGNA4X;
-        } else if (suffix.equalsIgnoreCase(".log")) {
-            fileType = FileBase.MICRO_CAT;
-        } else if (suffix.equalsIgnoreCase(".ct")) {
-            fileType = FileBase.MICRO_CAT;
-        } else if (suffix.equalsIgnoreCase(".info")) {
-            fileType = FileBase.COR;
-        } else if (suffix.equalsIgnoreCase(".info~")) {
-            fileType = FileBase.COR;
-        } else { // cannot automatically determine the filetype from the filename extension
-            fileType = FileBase.UNDEFINED;
+        	}
         }
 
-        // check to see if there are any user defined associations
+        //check to see if there are any user defined associations
         if (userDefinedFileTypeAssociations != null) {
 
             for (int k = 0; k < userDefinedFileTypeAssociations.length; k++) {
@@ -1213,6 +948,7 @@ public class FileIO {
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
+     * @return  <code>FileUtility.DICOM</code> if the file is a DICOM file, and <code>FileUtility.UNDEFINED</code> otherwise
      * @return  <code>FileBase.ANALYZE</code> if the file is a ANALYZE type, and <code>FileBase.UNDEFINED</code>
      *          otherwise
      *
@@ -1226,11 +962,11 @@ public class FileIO {
             boolean isAnalyze = FileAnalyze.isAnalyze(fileDir + fileName);
 
             if (isAnalyze) {
-                return FileBase.ANALYZE;
+                return FileUtility.ANALYZE;
             }
 
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
             if (!quiet) {
@@ -1240,7 +976,7 @@ public class FileIO {
                 Preferences.debug("FileIO: " + error + "\n");
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         }
 
     }
@@ -1267,11 +1003,11 @@ public class FileIO {
                 imageFile = null;
 
                 if (isDicom) {
-                    return FileBase.DICOM;
+                    return FileUtility.DICOM;
                 }
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
             if (!quiet) {
@@ -1281,7 +1017,7 @@ public class FileIO {
                 Preferences.debug("FileIO: " + error + "\n");
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         }
 
     }
@@ -1293,7 +1029,7 @@ public class FileIO {
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
-     * @return  <code>FileBase.gedno</code> if the file is a GE MR Signa 4.x file, and <code>FileBase.UNDEFINED</code>
+     * @return  <code>FileBase.gedno</code> if the file is a GE MR Signa 4.x file, and <code>FileUtility.UNDEFINED</code>
      *          otherwise
      *
      * @throws  IOException  DOCUMENT ME!
@@ -1308,11 +1044,11 @@ public class FileIO {
 
 
                 if (isGESigna4X) {
-                    return FileBase.GE_SIGNA4X;
+                    return FileUtility.GE_SIGNA4X;
                 }
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
             if (!quiet) {
@@ -1322,7 +1058,7 @@ public class FileIO {
                 Preferences.debug("FileIO: " + error + "\n");
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         }
 
     }
@@ -1334,7 +1070,7 @@ public class FileIO {
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
-     * @return  <code>FileBase.sig</code> if the file is a GE MR Signa 5.x file, and <code>FileBase.UNDEFINED</code>
+     * @return  <code>FileBase.sig</code> if the file is a GE MR Signa 5.x file, and <code>FileUtility.UNDEFINED</code>
      *          otherwise
      *
      * @throws  IOException  DOCUMENT ME!
@@ -1349,11 +1085,11 @@ public class FileIO {
 
 
                 if (isGESigna5X) {
-                    return FileBase.GE_GENESIS;
+                    return FileUtility.GE_GENESIS;
                 }
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
             if (!quiet) {
@@ -1363,7 +1099,7 @@ public class FileIO {
                 Preferences.debug("FileIO: " + error + "\n");
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         }
 
     }
@@ -1375,7 +1111,7 @@ public class FileIO {
      * @param   fileDir   Directory of the image file to read.
      *
      * @return  <code>FileBase.ima</code> if the file is a Siemens Magnetom Vision type, and <code>
-     *          FileBase.UNDEFINED</code> otherwise
+     *          FileUtility.UNDEFINED</code> otherwise
      *
      * @throws  IOException  DOCUMENT ME!
      */
@@ -1389,11 +1125,11 @@ public class FileIO {
 
 
                 if (isMagnetomVision) {
-                    return FileBase.MAGNETOM_VISION;
+                    return FileUtility.MAGNETOM_VISION;
                 }
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
             if (!quiet) {
@@ -1403,7 +1139,7 @@ public class FileIO {
                 Preferences.debug("FileIO: " + error + "\n");
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         }
 
     }
@@ -1414,7 +1150,7 @@ public class FileIO {
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
-     * @return  <code>FileBase.mnc</code> if the file is a MINC type, and <code>FileBase.UNDEFINED</code> otherwise
+     * @return  <code>FileBase.mnc</code> if the file is a MINC type, and <code>FileUtility.UNDEFINED</code> otherwise
      *
      * @throws  IOException  DOCUMENT ME!
      */
@@ -1428,11 +1164,11 @@ public class FileIO {
 
 
                 if (isMinc) {
-                    return FileBase.MINC;
+                    return FileUtility.MINC;
                 }
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
             if (!quiet) {
@@ -1442,7 +1178,7 @@ public class FileIO {
                 Preferences.debug("FileIO: " + error + "\n");
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         }
 
     }
@@ -1465,11 +1201,11 @@ public class FileIO {
 
 
             if (isNIFTI) {
-                return FileBase.NIFTI;
+                return FileUtility.NIFTI;
             }
 
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
             if (!quiet) {
@@ -1479,7 +1215,7 @@ public class FileIO {
                 Preferences.debug("FileIO: " + error + "\n");
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         }
 
     }
@@ -1512,10 +1248,10 @@ public class FileIO {
 
 
             if (isSPM) {
-                return FileBase.SPM;
+                return FileUtility.SPM;
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         } catch (OutOfMemoryError error) {
 
             if (!quiet) {
@@ -1525,7 +1261,7 @@ public class FileIO {
                 Preferences.debug("FileIO: " + error + "\n");
             }
 
-            return FileBase.UNDEFINED;
+            return FileUtility.UNDEFINED;
         }
 
     }
@@ -2555,7 +2291,7 @@ public class FileIO {
     public ModelImage readImage(String fileName, String fileDir, boolean multiFile, FileInfoBase fileInfo,
                                 int secondAddress, boolean loadB, boolean one) {
         ModelImage image = null;
-        int fileType = FileBase.UNDEFINED;
+        int fileType = FileUtility.UNDEFINED;
         int userDefinedFileType = 0;
         String userDefinedSuffix = null;
 
@@ -2577,48 +2313,46 @@ public class FileIO {
 
         if ((beginString.equalsIgnoreCase("d3proc")) || (beginString.equalsIgnoreCase("reco")) ||
                 (beginString.equalsIgnoreCase("2dseq"))) {
-            fileType = FileBase.BRUKER;
+            fileType = FileUtility.BRUKER;
         }
 
         try {
 
-            if (fileType != FileBase.BRUKER) {
+            if (fileType != FileUtility.BRUKER) {
                 fileType = getFileType(fileName, fileDir, false); // set the fileType based on the filename extension
 
-                if (fileType == FileBase.UNDEFINED) {
+                if (fileType == FileUtility.UNDEFINED) {
                     fileType = isDicom(fileName, fileDir);
                 }
 
-                if (fileType == FileBase.UNDEFINED) {
+                if (fileType == FileUtility.UNDEFINED) {
                     fileType = isGESigna4X(fileName, fileDir);
                 }
 
-                if (fileType == FileBase.UNDEFINED) {
+                if (fileType == FileUtility.UNDEFINED) {
                     fileType = isGESigna5X(fileName, fileDir);
                 }
 
-                if (fileType == FileBase.UNDEFINED) {
+                if (fileType == FileUtility.UNDEFINED) {
                     fileType = isMagnetomVision(fileName, fileDir);
                 }
 
-                if (fileType == FileBase.UNDEFINED) {
+                if (fileType == FileUtility.UNDEFINED) {
                     fileType = isMinc(fileName, fileDir);
                 }
+                
 
-                if (fileType == FileBase.UNDEFINED) {
-                    fileType = isSPM(fileName, fileDir);
-                }
 
-                if (fileType == FileBase.UNDEFINED) {
+       			if (fileType == FileUtility.UNDEFINED) {
 
                     fileType = isAnalyze(fileName, fileDir);
                 }
 
-                if (fileType == FileBase.UNDEFINED) {
+                if (fileType == FileUtility.UNDEFINED) {
                     fileType = isNIFTI(fileName, fileDir);
                 }
 
-                if (fileType == FileBase.UNDEFINED) { // if image type not defined by extension, popup
+                if (fileType == FileUtility.UNDEFINED) { // if image type not defined by extension, popup
                     fileType = getFileType(); // dialog to get user to define image type
                     userDefinedFileType = fileType;
                     userDefinedSuffix = "." + fileName.split("\\.")[1];
@@ -2643,7 +2377,7 @@ public class FileIO {
                 Preferences.debug("FileIO: " + ioe + "\n");
             }
 
-            fileType = FileBase.UNDEFINED;
+            fileType = FileUtility.UNDEFINED;
         }
 
 
@@ -2651,83 +2385,83 @@ public class FileIO {
 
             switch (fileType) {
 
-                case FileBase.TIFF:
+                case FileUtility.TIFF:
                     image = readTiff(fileName, fileDir, one);
                     break;
 
-                case FileBase.TIFF_MULTIFILE:
+                case FileUtility.TIFF_MULTIFILE:
                     image = readTiffMulti(fileName, fileDir);
                     break;
 
-                case FileBase.COR:
+                case FileUtility.COR:
                     image = readCOR(fileName, fileDir);
                     break;
 
-                case FileBase.BRUKER:
+                case FileUtility.BRUKER:
                     image = readBRUKER(fileName, fileDir, one);
                     break;
 
-                case FileBase.LSM:
+                case FileUtility.LSM:
                     image = readLSM(fileName, fileDir, secondAddress, one);
                     break;
 
-                case FileBase.LSM_MULTIFILE:
+                case FileUtility.LSM_MULTIFILE:
                     image = readLSMMulti(fileName, fileDir);
                     break;
 
-                case FileBase.STK:
+                case FileUtility.STK:
                     image = readSTK(fileName, fileDir, one);
                     break;
 
-                case FileBase.AVI:
+                case FileUtility.AVI:
                     image = readAvi(fileName, fileDir, one, false);
                     break;
 
-                case FileBase.QT:
+                case FileUtility.QT:
                     image = readAvi(fileName, fileDir, one, true);
                     break;
 
-                case FileBase.RAW:
+                case FileUtility.RAW:
                     image = readRaw(fileName, fileDir, fileInfo);
                     break;
 
-                case FileBase.RAW_MULTIFILE:
+                case FileUtility.RAW_MULTIFILE:
                     image = readRawMulti(fileName, fileDir, fileInfo);
                     break;
 
-                case FileBase.ANALYZE:
+                case FileUtility.ANALYZE:
                     image = readAnalyze(fileName, fileDir, one);
                     break;
 
-                case FileBase.MGH:
+                case FileUtility.MGH:
                     image = readMGH(fileName, fileDir, one);
                     break;
 
-                case FileBase.NIFTI:
+                case FileUtility.NIFTI:
                     image = readNIFTI(fileName, fileDir, one);
                     break;
 
-                case FileBase.NRRD:
+                case FileUtility.NRRD:
                     image = readNRRD(fileName, fileDir, one);
                     break;
 
-                case FileBase.SPM:
+                case FileUtility.SPM:
                     image = readSPM(fileName, fileDir, one);
                     break;
 
-                case FileBase.CHESHIRE:
+                case FileUtility.CHESHIRE:
                     image = readCheshire(fileName, fileDir);
                     break;
 
-                case FileBase.ANALYZE_MULTIFILE:
+                case FileUtility.ANALYZE_MULTIFILE:
                     image = readAnalyzeMulti(fileName, fileDir);
                     break;
 
-                case FileBase.NIFTI_MULTIFILE:
+                case FileUtility.NIFTI_MULTIFILE:
                     image = readNIFTIMulti(fileName, fileDir);
                     break;
 
-                case FileBase.DICOM:
+                case FileUtility.DICOM:
                     if (!multiFile) {
                         this.fileDir = fileDir;
                         image = readDicom(fileName, new String[] { fileName.trim() }, false);
@@ -2737,79 +2471,79 @@ public class FileIO {
 
                     break;
 
-                case FileBase.MEDVISION:
+                case FileUtility.MEDIVISION:
                     image = readMedVision(fileName, fileDir);
                     break;
 
-                case FileBase.MAP:
+                case FileUtility.MAP:
                     image = readMap(fileName, fileDir);
                     break;
 
-                case FileBase.JIMI:
+                case FileUtility.JIMI:
                     image = readJimi(fileName, fileDir, multiFile);
                     break;
 
-                case FileBase.MINC:
+                case FileUtility.MINC:
                     image = readMinc(fileName, fileDir, one);
                     break;
 
-                case FileBase.AFNI:
+                case FileUtility.AFNI:
                     image = readAfni(fileName, fileDir, loadB);
                     break;
 
-                case FileBase.ICS:
+                case FileUtility.ICS:
                     image = readICS(fileName, fileDir);
                     break;
 
-                case FileBase.INTERFILE:
+                case FileUtility.INTERFILE:
                     image = readInterfile(fileName, fileDir, one);
                     break;
 
-                case FileBase.BIORAD:
+                case FileUtility.BIORAD:
                     image = readBioRad(fileName, fileDir, one);
                     break;
 
-                case FileBase.FITS:
+                case FileUtility.FITS:
                     image = readFits(fileName, fileDir, one);
                     break;
 
-                case FileBase.DM3:
+                case FileUtility.DM3:
                     image = readDM3(fileName, fileDir, one);
                     break;
 
-                case FileBase.TMG:
+                case FileUtility.TMG:
                     image = readTMG(fileName, fileDir);
                     break;
 
-                case FileBase.MRC:
+                case FileUtility.MRC:
                     image = readMRC(fileName, fileDir);
                     break;
 
-                case FileBase.OSM:
+                case FileUtility.OSM:
                     image = readOSM(fileName, fileDir);
                     break;
 
-                case FileBase.MAGNETOM_VISION:
+                case FileUtility.MAGNETOM_VISION:
                     image = readMagnetomVision(fileName, fileDir, one);
                     break;
 
-                case FileBase.GE_GENESIS:
+                case FileUtility.GE_GENESIS:
                     image = readGEGenesis5X(fileName, fileDir);
                     break;
 
-                case FileBase.GE_SIGNA4X:
+                case FileUtility.GE_SIGNA4X:
                     image = readGESigna4X(fileName, fileDir);
                     break;
 
-                case FileBase.MICRO_CAT:
+                case FileUtility.MICRO_CAT:
                     image = readMicroCat(fileName, fileDir, one);
                     break;
 
-                case FileBase.XML:
+                case FileUtility.XML:
                     image = readXML(fileName, fileDir, one);
                     break;
 
-                case FileBase.XML_MULTIFILE:
+                case FileUtility.XML_MULTIFILE:
                     image = readXMLMulti(fileName, fileDir);
                     break;
 
@@ -3339,12 +3073,12 @@ public class FileIO {
             fileType = image.getFileInfo(0).getFileFormat();
         }
 
-        if (fileType == FileBase.UNDEFINED) { // if type is still undef, look for user input (when not quiet)
+        if (fileType == FileUtility.UNDEFINED) { // if type is still undef, look for user input (when not quiet)
             fileType = options.getFileType(); // get saved file type from options
             options.setSaveAs(true); // can't tell from extension, so must be a save as.
 
             // options.setSaveInSubdirectory(true);//  .... "" ...., so save into its own subdirectory.
-            if (fileType == FileBase.UNDEFINED) { // file type wasn't set, so call dialog
+            if (fileType == FileUtility.UNDEFINED) { // file type wasn't set, so call dialog
                 fileType = getFileType(); // popup dialog to determine filetype
 
                 if (unknownIODialog.isCancelled()) {
@@ -3352,21 +3086,21 @@ public class FileIO {
                 }
 
                 suffix = unknownIODialog.getSuffix(); // get the expected suffix from the dialog
-            } else if (fileType == FileBase.JIMI) { // if type is JIMI, then try and use suffix from fileInfo
+            } else if (fileType == FileUtility.JIMI) { // if type is JIMI, then try and use suffix from fileInfo
                 suffix = image.getFileInfo(0).getFileSuffix();
 
                 // if suffix wasn't set, then use the default suffix for fileType
                 if ((suffix == null) || suffix.equals("")) {
-                    suffix = getSuffix(fileType);
+                    suffix = FileUtility.getDefaultSuffix(fileType);
                 }
 
                 Preferences.debug("FileIO save:  suffix = " + suffix + "\n");
             } else {
-                suffix = getSuffix(fileType); // get suffix from what the file type should be
+                suffix = FileUtility.getDefaultSuffix(fileType); // get suffix from what the file type should be
             }
 
             options.setFileName(options.getFileName() + suffix); // append file extension
-        } else if (fileType == FileBase.JIMI) { // if type is JIMI, then try and use suffix from fileInfo
+        } else if (fileType == FileUtility.JIMI) { // if type is JIMI, then try and use suffix from fileInfo
 
             // if filename already has a suffix then don't need to do anything
             if (getSuffixFrom(options.getFileName()).equals("")) {
@@ -3374,7 +3108,7 @@ public class FileIO {
 
                 // if suffix wasn't set, then use the default suffix for fileType
                 if ((suffix == null) || suffix.equals("")) {
-                    suffix = getSuffix(fileType);
+                    suffix = FileUtility.getDefaultSuffix(fileType);
                 }
 
                 Preferences.debug("FileIO save:  suffix = " + suffix + "\n");
@@ -3386,14 +3120,14 @@ public class FileIO {
         if (!options.isSet()) {
             options.setFileType(fileType);
             options.setMultiFile(image.getFileInfo(0).getMultiFile());
-            options.setPackBitEnabled((fileType == FileBase.TIFF) &&
+            options.setPackBitEnabled((fileType == FileUtility.TIFF) &&
                                           ((image.getFileInfo(0).getDataType() == ModelStorageBase.BYTE) ||
                                                (image.getFileInfo(0).getDataType() == ModelStorageBase.UBYTE)));
         }
 
         if (options.isSaveAs() && !options.isSet()) {
 
-            if (!callDialog(image.getExtents(), (fileType == FileBase.TIFF), options)) {
+            if (!callDialog(image.getExtents(), (fileType == FileUtility.TIFF), options)) {
                 return;
             }
         }
@@ -3402,11 +3136,11 @@ public class FileIO {
 
         switch (fileType) {
 
-            case FileBase.RAW:
+            case FileUtility.RAW:
                 success = writeRaw(image, options);
                 break;
 
-            case FileBase.ANALYZE:
+            case FileUtility.ANALYZE:
                 success = writeAnalyze(image, options);
                 if (success) {
 
@@ -3415,7 +3149,7 @@ public class FileIO {
 
                         for (int i = 0; i < info.length; i++) {
                             info[i] = new FileInfoAnalyze(image.getFileInfo(0).getFileName(),
-                                                          image.getFileInfo(0).getFileDirectory(), FileBase.ANALYZE);
+                                                          image.getFileInfo(0).getFileDirectory(), FileUtility.ANALYZE);
                         }
 
                         FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
@@ -3425,7 +3159,7 @@ public class FileIO {
 
                 break;
 
-            case FileBase.NIFTI:
+            case FileUtility.NIFTI:
                 success = writeNIFTI(image, options);
                 if (success) {
 
@@ -3434,7 +3168,7 @@ public class FileIO {
 
                         for (int i = 0; i < info.length; i++) {
                             info[i] = new FileInfoNIFTI(image.getFileInfo(0).getFileName(),
-                                                        image.getFileInfo(0).getFileDirectory(), FileBase.NIFTI);
+                                                        image.getFileInfo(0).getFileDirectory(), FileUtility.NIFTI);
                         }
 
                         FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
@@ -3444,7 +3178,7 @@ public class FileIO {
 
                 break;
 
-            case FileBase.SPM:
+            case FileUtility.SPM:
                 success = writeSPM(image, options);
                 if (success) {
 
@@ -3453,7 +3187,7 @@ public class FileIO {
 
                         for (int i = 0; i < info.length; i++) {
                             info[i] = new FileInfoSPM(image.getFileInfo(0).getFileName(),
-                                                      image.getFileInfo(0).getFileDirectory(), FileBase.SPM);
+                                                      image.getFileInfo(0).getFileDirectory(), FileUtility.SPM);
                         }
 
                         FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
@@ -3463,60 +3197,60 @@ public class FileIO {
 
                 break;
 
-            case FileBase.TIFF:
+            case FileUtility.TIFF:
                 success = writeTiff(image, options);
                 break;
 
-            case FileBase.MGH:
+            case FileUtility.MGH:
                 success = writeMGH(image, options);
                 break;
 
-            case FileBase.DICOM:
+            case FileUtility.DICOM:
                 success = writeDicom(image, options);
                 break;
 
-            case FileBase.JIMI:
+            case FileUtility.JIMI:
                 success = writeJimi(image, options);
                 break;
 
-            case FileBase.MINC:
+            case FileUtility.MINC:
                 success = writeMinc(image, options);
                 break;
 
-            case FileBase.INTERFILE:
+            case FileUtility.INTERFILE:
                 success = writeInterfile(image, options);
                 break;
 
-            case FileBase.FITS:
+            case FileUtility.FITS:
                 success = writeFits(image, options);
                 break;
 
-            case FileBase.MRC:
+            case FileUtility.MRC:
                 success = writeMRC(image, options);
                 break;
 
-            case FileBase.OSM:
+            case FileUtility.OSM:
                 success = writeOSM(image, options);
                 break;
 
 
-            case FileBase.COR:
+            case FileUtility.COR:
                 success = writeCOR(image, options);
                 break;
 
-            case FileBase.AFNI:
+            case FileUtility.AFNI:
                 success = writeAfni(image, options);
                 break;
 
-            case FileBase.ICS:
+            case FileUtility.ICS:
                 success = writeICS(image, options);
                 break;
 
-            case FileBase.XML:
+            case FileUtility.XML:
                 success = writeXML(image, options);
                 break;
 
-            case FileBase.AVI:
+            case FileUtility.AVI:
                 success = writeAvi(image, options);
                 break;
 
@@ -3978,7 +3712,7 @@ public class FileIO {
                 }
             } else if (extents.length == 4) {
 
-                if ((options.getFileType() == FileBase.TIFF) || (options.getFileType() == FileBase.MINC)) {
+                if ((options.getFileType() == FileUtility.TIFF) || (options.getFileType() == FileUtility.MINC)) {
 
                     if (!((options.getBeginSlice() == 0) && (options.getEndSlice() == (extents[2] - 1)) &&
                               (options.getTimeSlice() == 0))) {
@@ -5769,7 +5503,7 @@ public class FileIO {
 
         for (int j = 0; j < fileInfo.length; j++) {
             fileInfo[j].setFileDirectory(fileDir);
-            fileInfo[j].setFileFormat(FileBase.JIMI);
+            fileInfo[j].setFileFormat(FileUtility.JIMI);
             modelImage.setFileInfo(fileInfo[j], j);
         }
 
@@ -6395,7 +6129,7 @@ public class FileIO {
         }
 
         try {
-            fileInfo = new FileInfoImageXML(fileName, fileDir, FileBase.RAW);
+            fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.RAW);
             image = new ModelImage(mapIODialog.getDataType(), mapIODialog.getExtents(), fileName, UI);
         } catch (OutOfMemoryError error) {
 
@@ -7508,7 +7242,7 @@ public class FileIO {
                 return null;
             }
 
-            fileInfo = new FileInfoImageXML(fileName, fileDir, FileBase.RAW);
+            fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.RAW);
             fileInfo.setDataType(rawIODialog.getDataType());
             fileInfo.setExtents(rawIODialog.getExtents());
             fileInfo.setUnitsOfMeasure(rawIODialog.getUnitsOfMeasure());
@@ -7610,7 +7344,7 @@ public class FileIO {
                 return null;
             }
 
-            fileInfo = new FileInfoImageXML(fileName, fileDir, FileBase.RAW);
+            fileInfo = new FileInfoImageXML(fileName, fileDir, FileUtility.RAW);
             fileInfo.setDataType(rawIODialog.getDataType());
             fileInfo.setExtents(rawIODialog.getExtents());
             fileInfo.setUnitsOfMeasure(rawIODialog.getUnitsOfMeasure());
@@ -8925,7 +8659,7 @@ public class FileIO {
             }
 
         } else { // Non DICOM images
-            myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileBase.DICOM);
+            myFileInfo = new FileInfoDicom(options.getFileName(), fileDir, FileUtility.DICOM);
 
             JDialogSaveDicom dialog = new JDialogSaveDicom(UI.getMainFrame(), image.getFileInfo(0), myFileInfo,
                                                            options.isScript());
@@ -8944,7 +8678,7 @@ public class FileIO {
             // datasets
 
             // necessary to save floating point minc files to dicom
-            if ((image.getFileInfo(0).getFileFormat() == FileBase.MINC) && (image.getType() == ModelImage.FLOAT)) {
+            if ((image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT)) {
                 ModelImage newImage = (ModelImage) image.clone();
 
                 // in-place conversion is required so that the minc file info is retained
@@ -9074,7 +8808,7 @@ public class FileIO {
                 // instance number it had
                 int baseInstanceNumber = -1;
 
-                if (image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
+                if (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) {
                     tag = myFileInfo.getTag("0020,0013");
 
                     if (tag != null) {
@@ -9614,7 +9348,7 @@ public class FileIO {
         FileInfoImageXML fileInfo;
 
         try { // Construct new file info and file objects
-            fileInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileBase.RAW);
+            fileInfo = new FileInfoImageXML(options.getFileName(), options.getFileDirectory(), FileUtility.RAW);
             rawFile = new FileRaw(options.getFileName(), options.getFileDirectory(), fileInfo, FileBase.READ_WRITE);
             createProgressBar(rawFile, options.getFileName(), FILE_WRITE);
             rawFile.writeImage(image, options);

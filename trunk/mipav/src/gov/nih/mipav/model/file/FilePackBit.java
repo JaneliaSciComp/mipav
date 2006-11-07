@@ -140,7 +140,7 @@ public class FilePackBit extends FileBase {
 
                     byte tmpByte;
 
-                    if (image.getFileInfo(0).getFileFormat() == FileBase.DICOM) {
+                    if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
                         invSlope = 1 / (image.getFileInfo(0).getRescaleSlope());
                         intercept = image.getFileInfo(0).getRescaleIntercept();
                         dicom = true;
@@ -290,7 +290,7 @@ public class FilePackBit extends FileBase {
 
                     short tmpShort;
 
-                    if (image.getFileInfo(0).getFileFormat() == FileBase.DICOM) {
+                    if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
                         invSlope = 1 / (image.getFileInfo(0).getRescaleSlope());
                         intercept = image.getFileInfo(0).getRescaleIntercept();
                         dicom = true;
@@ -511,7 +511,7 @@ public class FilePackBit extends FileBase {
 
                     byte tmpByte;
 
-                    if (image.getFileInfo(0).getFileFormat() == FileBase.DICOM) {
+                    if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
                         invSlope = 1 / (image.getFileInfo(0).getRescaleSlope());
                         intercept = image.getFileInfo(0).getRescaleIntercept();
                         dicom = true;
@@ -813,7 +813,7 @@ public class FilePackBit extends FileBase {
 
                     short tmpShort;
 
-                    if (image.getFileInfo(0).getFileFormat() == FileBase.DICOM) {
+                    if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
                         invSlope = 1 / (image.getFileInfo(0).getRescaleSlope());
                         intercept = image.getFileInfo(0).getRescaleIntercept();
                         dicom = true;

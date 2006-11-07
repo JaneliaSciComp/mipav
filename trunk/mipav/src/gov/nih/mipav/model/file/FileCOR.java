@@ -188,7 +188,7 @@ public class FileCOR extends FileBase {
 
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
-        fileInfo = new FileInfoCOR(fileName, fileDir, FileBase.COR); // dummy fileInfo
+        fileInfo = new FileInfoCOR(fileName, fileDir, FileUtility.COR); // dummy fileInfo
         lineString = readLine();
 
         while (lineString != null) {

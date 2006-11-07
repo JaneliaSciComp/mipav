@@ -24,52 +24,13 @@ public class JDialogUnknownIO extends JDialogBase {
     private static final long serialVersionUID = 960085709232971480L;
 
     /** DOCUMENT ME! */
-    private static String[] typeNames = new String[] {
-                                            "AFNI (.brik, .head)", "Analyze (.img)", "AVI (.avi)", "Biorad (.pic)",
-                                            "BMP (.bmp)", "Bruker (.brk)", "Cheshire (.imc)", "COR (.info)",
-                                            "DICOM (.dcm, .ima)", "DM3 (.dm3)", "FITS (.fits)", "GE Genesis (.sig)",
-                                            "GE Signa4x (.gedno)", "GIF (.gif)", "ICS (.ics, .ids)",
-                                            "Interfile (.hdr)", "JPEG (.jpg, .jpeg)", "LSM (.lsm)",
-                                            "Magnetom Vision (.ima)", "Map (.map)", "MGH (.mgh)", "MGH (.mgz)",
-
-                                            // "Medvision (.bin)",
-                                            "Micro Cat (.log)", "Micro Cat raw (.ct)", "Minc (.mnc)", "MRC (.mrc)",
-                                            "NIFTI(.img)", "NIFTI (.nii)", "NRRD (.nhdr)", "NRRD(.nrrd)",
-                                            "OSM (.wu)", "PCX (.pcx)", "PICT (.pict)",
-                                            "PNG (.png)", "PSD (.psd)", "Quicktime (.qt, .mov)", "Raw (.raw)",
-                                            "SPM (.spm)", "STK (.stk)", "TGA (.tga)", "TIFF (.tif)", "TIFF (.tiff)",
-                                            "VOI (.voi)", "XBM (.xbm)", "XML (.xml)", "XPM (.xpm)"
-                                        };
+    private static String[] typeNames = FileUtility.getUnknownDialogsTypeNames();
 
     /** DOCUMENT ME! */
-    private static String[] typeSuffices = new String[] {
-                                               ".brik", ".img", ".avi", ".pic", ".bmp", ".brk", ".imc", ".info", ".dcm",
-                                               ".dm3", ".fits", ".sig", ".gedno", ".gif", ".ics", ".hdr", ".jpg",
-                                               ".lsm", ".ima", ".map", ".mgh", ".mgz",
-
-                                               // ".bin",
-                                               ".log", ".ct", ".mnc", ".mrc", ".img", ".nii",
-                                               ".nhdr", ".nrrd", ".wu", ".pcx", ".pict",
-                                               ".png", ".psd", ".qt", ".raw", ".spm", ".stk", ".tga", ".tif", ".tiff",
-                                               ".voi", ".xbm", ".xml", ".xpm"
-                                           };
-
+    private static String[] typeSuffices = FileUtility.getUnknownDialogsTypeSuffices();
     /** DOCUMENT ME! */
-    private static int[] typeInts = new int[] {
-                                        FileBase.AFNI, FileBase.ANALYZE, FileBase.AVI, FileBase.BIORAD, FileBase.JIMI,
-                                        FileBase.BRUKER, FileBase.CHESHIRE, FileBase.COR, FileBase.DICOM, FileBase.DM3,
-                                        FileBase.FITS, FileBase.GE_GENESIS, FileBase.GE_SIGNA4X, FileBase.JIMI,
-
-                                        // FileBase.DICOM,
-                                        FileBase.ICS, FileBase.INTERFILE, FileBase.JIMI, FileBase.LSM,
-                                        FileBase.MAGNETOM_VISION, FileBase.MAP, FileBase.MGH, FileBase.MGH,
-                                        FileBase.MICRO_CAT, FileBase.MICRO_CAT,
-                                        FileBase.MINC, FileBase.MRC, FileBase.NIFTI, FileBase.NIFTI, 
-                                        FileBase.NRRD, FileBase.NRRD, FileBase.OSM,
-                                        FileBase.JIMI, FileBase.JIMI, FileBase.JIMI, FileBase.JIMI, FileBase.QT,
-                                        FileBase.RAW, FileBase.SPM, FileBase.STK, FileBase.JIMI, FileBase.TIFF,
-                                        FileBase.TIFF, FileBase.VOI_FILE, FileBase.JIMI, FileBase.XML, FileBase.JIMI
-                                    };
+    
+    private static int[] typeInts = FileUtility.getUnknownDialogsTypeInts();
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -115,6 +76,7 @@ public class JDialogUnknownIO extends JDialogBase {
         getContentPane().add(mainPanel);
         getContentPane().add(OKCancelPanel, BorderLayout.SOUTH);
         pack();
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

@@ -129,7 +129,7 @@ public class FileMinc extends FileBase {
      */
     public FileInfoMinc readHeader() throws IOException {
         String attrString;
-        FileInfoMinc fileInfo = new FileInfoMinc(fileName, fileDir, FileBase.MINC);
+        FileInfoMinc fileInfo = new FileInfoMinc(fileName, fileDir, FileUtility.MINC);
 
         location = 0;
         raFile.seek(0);
@@ -780,7 +780,7 @@ public class FileMinc extends FileBase {
 
             double vmin, vmax; // volume min and max
             
-            if (fileInfo.getFileFormat() == FileBase.MINC) {
+            if (fileInfo.getFileFormat() == FileUtility.MINC) {
                 // Valid_range see line  823 in FileInfoMinc!!!!!!!.
                 vmin = ((FileInfoMinc) (fileInfo)).vmin;
                 vmax = ((FileInfoMinc) (fileInfo)).vmax;
@@ -833,7 +833,7 @@ public class FileMinc extends FileBase {
                 }
             }
 
-            if (!options.isSaveAs() || (_image.getFileInfo(0).getFileFormat() == FileBase.MINC)) {
+            if (!options.isSaveAs() || (_image.getFileInfo(0).getFileFormat() == FileUtility.MINC)) {
                 FileInfoMinc fileInfoMinc = (FileInfoMinc) _image.getFileInfo(0);
 
                 writeHeader(fileInfoMinc);
@@ -1903,7 +1903,7 @@ public class FileMinc extends FileBase {
         writeInt(FileInfoMinc.NC_DOUBLE, endianess);
         writeInt(2, endianess);
 
-        if (fileInfo.getFileFormat() == FileBase.MINC) {
+        if (fileInfo.getFileFormat() == FileUtility.MINC) {
             writeDouble(((FileInfoMinc) (fileInfo)).vmin, endianess);
             writeDouble(((FileInfoMinc) (fileInfo)).vmax, endianess);
         } else {

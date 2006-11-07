@@ -2880,7 +2880,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
             fileInfo[0].setUnitsOfMeasure(measure1, 0);
             fileInfo[0].setUnitsOfMeasure(measure1, 1);
 
-            if (fileInfo[0].getFileFormat() == FileBase.DICOM) {
+            if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
                 String s = String.valueOf(resolutions[0]) + "\\" + String.valueOf(resolutions[1]);
                 ((FileInfoDicom) (fileInfo[0])).setValue("0028,0030", s, s.length());
             }
@@ -2899,7 +2899,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
                 fileInfo[i].setUnitsOfMeasure(measure3, 2);
                 fileInfo[i].setSliceSpacing(sliceSpacing);
 
-                if (fileInfo[i].getFileFormat() == FileBase.DICOM) {
+                if (fileInfo[i].getFileFormat() == FileUtility.DICOM) {
 
                     if (((FileInfoDicom) (fileInfo[i])).getValue("0018,0088") != null) {
                         ((FileInfoDicom) (fileInfo[i])).setValue("0018,0088", String.valueOf(resolutions[2]),

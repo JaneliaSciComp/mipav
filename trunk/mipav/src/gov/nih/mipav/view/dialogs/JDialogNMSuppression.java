@@ -286,7 +286,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     // resultImage = (ModelImage)image.clone();
                     resultImage.setImageName(name);
 
-                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                         ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0002,0002",
                                                                                 "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
                         ((FileInfoDicom) (resultImage.getFileInfo(0))).setValue("0008,0016",
@@ -396,7 +396,7 @@ public class JDialogNMSuppression extends JDialogScriptableBase implements Algor
                     // resultImage = (ModelImage)image.clone();
                     resultImage.setImageName(name);
 
-                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                         for (int i = 0; i < resultImage.getExtents()[2]; i++) {
                             ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",

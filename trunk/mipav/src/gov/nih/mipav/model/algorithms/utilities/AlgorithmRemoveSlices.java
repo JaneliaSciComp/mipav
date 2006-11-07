@@ -238,7 +238,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
 
                     // set file info for the slice.
                     // ... but do something special for DICOM images
-                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                         FileInfoDicom fileInfoBuffer = (FileInfoDicom) getSliceFileInfo(zSrc, zDest, t, newExtents);
                         resultImage.setFileInfo(fileInfoBuffer, zDest);
                     } else { // not a DICOM image
@@ -441,7 +441,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
 
                     // set file info for the slice.
                     // ... but do something special for DICOM images
-                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                         FileInfoDicom fileInfoBuffer = (FileInfoDicom) getSliceFileInfo(zSrc, zDest, t,
                                                                                         destImage.getExtents());
                         destImage.setFileInfo(fileInfoBuffer, zDest);
@@ -520,7 +520,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         // float[] imagePositionCoords = new float[3]; // image position along the XYZ-axis
 
         // If not DICOM return default axis of change
-        if ((srcImage.getFileInfo()[0]).getFileFormat() != FileBase.DICOM) {
+        if ((srcImage.getFileInfo()[0]).getFileFormat() != FileUtility.DICOM) {
             return axisOfChange;
         }
 
@@ -700,7 +700,7 @@ public class AlgorithmRemoveSlices extends AlgorithmBase {
         // float[] imagePositionCoords = new float[3]; // image position along the XYZ-axis
 
         // If src is a DICOM image, then need to do some special stuff
-        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
             FileInfoDicom fileInfoBuffer; // buffer of type DICOM
             fileInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(srcSlice).clone(); // copy into buffer
 

@@ -720,7 +720,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         srcImage.setFileInfo(fInfoBase[0], 0);
         srcImage.setMatrix(mat);
 
-        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
             ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
             ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0008,0016", "1.2.840.10008.5.1.4.1.1.7 ", 26);
             ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0002,0012", "1.2.840.34379.17", 16); // bogus Implementation UID made up by Matt
@@ -742,7 +742,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             value = String.valueOf(originImgOrd[2]);
             ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0020,1041", value, value.length());
-        } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileBase.DICOM )
+        } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileUtility.DICOM )
 
         try {
             srcImage.importData(0, destBuffer, true);
@@ -979,7 +979,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         srcImage.setMatrix(mat);
 
-        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             if (nDims == 2) {
                 ((FileInfoDicom) (srcImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
@@ -1038,7 +1038,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     dicomInfoBuffer.setValue("0020,1041", value, value.length());
                 } // for ( n = 0, slc = z[0]; slc <= z[1]; n++, slc++ )
             } // else nDims == 3
-        } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileBase.DICOM )
+        } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileUtility.DICOM )
 
 
         try {
@@ -1295,7 +1295,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         srcImage.setMatrix(mat);
 
-        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             if (nDims == 3) {
 
@@ -1331,7 +1331,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                     dicomInfoBuffer.setValue("0020,1041", value, value.length());
                 } // for ( n = 0, slc = z[0]; slc <= z[1]; n++, slc++ )
             } // if (nDims == 3)
-        } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileBase.DICOM )
+        } // if ( ( srcImage.getFileInfo()[0] ).getFileFormat() == FileUtility.DICOM )
 
 
         try {
@@ -1440,7 +1440,7 @@ public class AlgorithmCrop extends AlgorithmBase {
 
         resols = srcImage.getFileInfo(0).getResolutions();
 
-        if ((destImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+        if ((destImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             if ((destImage.getNDims() == 2) || (z[0] == z[1])) {
                 ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ", 26); // Secondary Capture SOP UID
@@ -1668,7 +1668,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             }
         }
 
-        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
             updateDICOM();
         }
 

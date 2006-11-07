@@ -135,7 +135,7 @@ public class FileMedVision extends FileBase {
         FileRawChunk reader;
         boolean endianess;
 
-        fileInfoCom = new FileInfoMedVision(fileName, fileDir, FileBase.MEDVISION);
+        fileInfoCom = new FileInfoMedVision(fileName, fileDir, FileUtility.MEDIVISION);
         file = new File(fileDir + fileName);
 
         try {
@@ -218,7 +218,7 @@ public class FileMedVision extends FileBase {
 
             fireProgressStateChanged(Math.round((float) i / (fileInfoCom.totalSlices - 1) * 100));
             progressBar.setTitle(ViewUserInterface.getReference().getProgressBarPrefix() + "image " + i);
-            fileInfo = new FileInfoMedVision(fileName, fileDir, FileBase.MEDVISION);
+            fileInfo = new FileInfoMedVision(fileName, fileDir, FileUtility.MEDIVISION);
             copyFileInfoCommon();
 
             // Read image header for each slice

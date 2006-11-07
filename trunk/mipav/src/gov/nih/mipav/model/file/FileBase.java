@@ -18,156 +18,162 @@ public abstract class FileBase {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+	
+	
+	
     /** Ill defined file type. */
-    public static final int ERROR = -1;
+    //public static final int ERROR = -1;
 
     /** Undefined file type. */
-    public static final int UNDEFINED = 0;
+    //public static final int UNDEFINED = 0;
 
     /** Not presently implemented. */
-    public static final int MIPAV = 1;
+    //public static final int MIPAV = 1;
 
     /** RAW image data, no header. */
-    public static final int RAW = 2;
+    //public static final int RAW = 2;
 
     /** RAW MULTIFLE image data, no header. */
-    public static final int RAW_MULTIFILE = 25;
+    //public static final int RAW_MULTIFILE = 25;
 
     /** TIFF file; tagged header. */
-    public static final int TIFF = 3;
+    //public static final int TIFF = 3;
 
     /** VOI file, used to read VOIs. */
-    public static final int VOI_FILE = 4;
+    //public static final int VOI_FILE = 4;
 
     /** Analyze format (Mayo). */
-    public static final int ANALYZE = 5;
+    //public static final int ANALYZE = 5;
 
     /** Digital Imaging and COmmunications in Medicine file type. Fully implemented versions 2 & 3. */
-    public static final int DICOM = 6;
+    //public static final int DICOM = 6;
 
     /** Medvision file type. */
-    public static final int MEDVISION = 7;
+    //public static final int MEDVISION = 7;
 
     /** Benes Trus special file type. */
-    public static final int MAP = 8;
+    //public static final int MAP = 8;
 
     /** Java Image Manangement Interface file type. */
-    public static final int JIMI = 9;
+    //public static final int JIMI = 9;
 
     /** Multiple files of TIFF images. */
-    public static final int TIFF_MULTIFILE = 10;
+    //public static final int TIFF_MULTIFILE = 10;
 
     /**
      * MINC file type. MINC is a medical imaging oriented extension of the NetCDF file format. NetCDF stands for
      * `Network Common Data Form'.
      */
-    public static final int MINC = 11;
+    //public static final int MINC = 11;
 
     /** AVI file type. Windows Media. */
-    public static final int AVI = 12;
+    //public static final int AVI = 12;
 
     /** Multiple files of type analyze. */
-    public static final int ANALYZE_MULTIFILE = 13;
+    //public static final int ANALYZE_MULTIFILE = 13;
 
     /** Quicktime file type. */
-    public static final int QT = 14;
+    //public static final int QT = 14;
 
     /** Cheshire file type (a kind of Analyze). */
-    public static final int CHESHIRE = 15;
+    //public static final int CHESHIRE = 15;
 
     /** Cheshire overlay file type. Contains VOIs. */
-    public static final int CHESHIRE_OVERLAY = 16;
+    //public static final int CHESHIRE_OVERLAY = 16;
 
     /** AFNI file type. */
-    public static final int AFNI = 17;
+    //public static final int AFNI = 17;
 
     /** FITS file type. */
-    public static final int FITS = 18;
+    //public static final int FITS = 18;
 
     /** MetaMorph Stack (STK) file type. */
-    public static final int STK = 19;
+    //public static final int STK = 19;
 
     /** Siemens MAGNETOM VISION. */
-    public static final int MAGNETOM_VISION = 20;
+    //public static final int MAGNETOM_VISION = 20;
 
     /** GE Genesis 5X and LX. */
-    public static final int GE_GENESIS = 21;
+    //public static final int GE_GENESIS = 21;
 
     /** MRC file format used by IMOD. */
-    public static final int MRC = 22;
+    //public static final int MRC = 22;
 
     /** Interfile file format used in Nuclear Medicine. */
-    public static final int INTERFILE = 23;
+    //public static final int INTERFILE = 23;
 
 
     /** Micro CT format for small animal imaging. */
-    public static final int MICRO_CAT = 24;
+    //public static final int MICRO_CAT = 24;
 
     /** Used by the Zeiss LSM 510 Dataserver. */
-    public static final int LSM = 26;
+    //public static final int LSM = 26;
 
     /** Used by the Zeiss LSM 510 Dataserver. */
-    public static final int LSM_MULTIFILE = 37;
+    //public static final int LSM_MULTIFILE = 37;
 
     /** Used by the Bio-Rad Pic format. */
-    public static final int BIORAD = 27;
+    //public static final int BIORAD = 27;
 
     /** Used by FreeSurfer software. */
-    public static final int COR = 28;
+    //public static final int COR = 28;
 
     /** Bruker file format. */
-    public static final int BRUKER = 29;
+    //public static final int BRUKER = 29;
 
     /** MIPAV XML file format. */
-    public static final int XML = 30;
+    //public static final int XML = 30;
 
     /** MIPAV XML file format. */
-    public static final int XML_MULTIFILE = 31;
+    //public static final int XML_MULTIFILE = 31;
 
     /** SPM file format. */
-    public static final int SPM = 32;
+    //public static final int SPM = 32;
 
     /** MIPAV project format. */
-    public static final int PROJECT = 33;
+    //public static final int PROJECT = 33;
 
     /** NIFTI format. */
-    public static final int NIFTI = 34;
+    //public static final int NIFTI = 34;
 
     /** NIFTI multi-file format. */
-    public static final int NIFTI_MULTIFILE = 35;
+    //public static final int NIFTI_MULTIFILE = 35;
 
     /** Image Cytometry Standard. */
-    public static final int ICS = 36;
+    //public static final int ICS = 36;
 
     /** Optical coherence tomography. */
-    public static final int TMG = 38;
+    //public static final int TMG = 38;
 
     /** Washington University OSM dataset structure. */
-    public static final int OSM = 39;
+    //public static final int OSM = 39;
 
     /** MIPAV Surface XML file format. */
-    public static final int SURFACE_XML = 40;
+    //public static final int SURFACE_XML = 40;
 
     /** Gatan's Digital Micrograph version 3 file format. */
-    public static final int DM3 = 41;
+    //public static final int DM3 = 41;
 
     /** Nearly raw raster data. */
-    public static final int NRRD = 42;
+    //public static final int NRRD = 42;
 
     /** GE Signa 4.x. */
-    public static final int GE_SIGNA4X = 43;
+    //public static final int GE_SIGNA4X = 43;
 
     /** MGH/MGZ volume format. */
-    public static final int MGH = 44;
+    //public static final int MGH = 44;
 
     /** Arrary of strings describing the file formats. */
-    private static String[] fileFormatStr = {
+    /**private static String[] fileFormatStr = {
         "Undefined", "MIPAV", "Raw", "Tiff", "VOI", "Analyze", "DICOM", "Medvision", "Map", "JIMI", "Tiff multifile",
         "MINC", "Avi", "Analyze multifile", "QT", "Chesire", "Chesire Overlay", "Afni", "FITS", "STK",
         "Magnetom Vision", "GE Genesis", "MRC", "Interfile", "Raw multifile", "Micro CAT", "LSM", "Bio-Rad", "COR",
         "BRUKER", "XML", "XML multifile", "SPM", "Project", "NIFTI", "NIFTI multifile", "ICS", "LSM multifile", "TMG",
         "OSM", "Surface XML", "DM3", "NRRD", "GE Signa4x", "MGH"
-    };
+    };*/
+    
+ 
+    
 
     /** Byte order. Rightmost byte is most significant. */
     public static boolean LITTLE_ENDIAN = false;
@@ -327,9 +333,9 @@ public abstract class FileBase {
      *
      * @return  string representing the file format
      */
-    public static String getFileFormatStr(int format) {
+    /**public static String getFileFormatStr(int format) {
 
-        if (format == FileBase.ERROR) {
+        if (format == FileUtility.ERROR) {
             return "Error";
         }
 
@@ -339,7 +345,8 @@ public abstract class FileBase {
 
         return "";
 
-    } // end getFileFormatStr()
+    } **/
+    
 
     /**
      * DOCUMENT ME!

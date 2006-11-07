@@ -953,7 +953,7 @@ public class FileGESigna5X extends FileBase {
 
             fileHeader = new File(fileDir + fileName);
             raFile = new RandomAccessFile(fileHeader, "r");
-            fileInfo = new FileInfoGESigna5X(fileName, fileDir, FileBase.GE_GENESIS);
+            fileInfo = new FileInfoGESigna5X(fileName, fileDir, FileUtility.GE_GENESIS);
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory in FileGEGenesis.setFileName.");
             throw new IOException();

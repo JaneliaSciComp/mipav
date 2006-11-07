@@ -297,7 +297,7 @@ public class AlgorithmRotate extends AlgorithmBase {
         // Set the file info for the new rotated image identical to the original image,
         // and then adjusts the appropriate info.
         // For all image formats other than DICOM...
-        if (srcImage.getFileInfo(0).getFileFormat() != FileBase.DICOM) {
+        if (srcImage.getFileInfo(0).getFileFormat() != FileUtility.DICOM) {
             FileInfoBase[] newFileInfo = new FileInfoBase[srcImage.getFileInfo().length];
 
             for ( int i = 0; i < newFileInfo.length; i++ ) {
@@ -314,7 +314,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                     newFileInfo[i].setOrigin(newStartLocations[2] + (newResolutions[2] * i), 2);
                     newFileInfo[i].setSliceSpacing(newResolutions[2]);
                 }
-                if (newFileInfo[i].getFileFormat() == FileBase.MINC) {
+                if (newFileInfo[i].getFileFormat() == FileUtility.MINC) {
                     newFileInfo[i].setRescaleSlope(((FileInfoMinc) newFileInfo[i]).calculateSlope(min, max));
                     newFileInfo[i].
                         setRescaleIntercept(((FileInfoMinc) newFileInfo[i]).

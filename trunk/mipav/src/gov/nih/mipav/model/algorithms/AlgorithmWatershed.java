@@ -206,7 +206,7 @@ public class AlgorithmWatershed extends AlgorithmBase {
                 	ScriptRecorder.getReference().pauseRecording();
                 }
                 energyImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_gm",
-                                      FileBase.XML, true);
+                                      FileUtility.XML, true);
                 if (wasRecording) {
                 	ScriptRecorder.getReference().startRecording();
                 }
@@ -757,7 +757,7 @@ Found:
                 	ScriptRecorder.getReference().pauseRecording();
                 }
                 energyImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_gm",
-                        FileBase.XML, true);
+                        FileUtility.XML, true);
                 if (wasRecording) {
                 	ScriptRecorder.getReference().startRecording();
                 }

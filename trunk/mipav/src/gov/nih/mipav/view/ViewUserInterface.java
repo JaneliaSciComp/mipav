@@ -955,7 +955,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                 return;
             }
 
-            fileInfo = new FileInfoImageXML("BlankImage", null, FileBase.RAW);
+            fileInfo = new FileInfoImageXML("BlankImage", null, FileUtility.RAW);
             fileInfo.setDataType(rawIODialog.getDataType());
             fileInfo.setExtents(rawIODialog.getExtents());
             fileInfo.setUnitsOfMeasure(rawIODialog.getUnitsOfMeasure());
