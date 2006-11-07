@@ -160,7 +160,7 @@ public class FileMRC extends FileBase {
             file = new File(fileDir + fileName);
 
             endianess = FileBase.LITTLE_ENDIAN; // false
-            fileInfo = new FileInfoMRC(fileName, fileDir, FileBase.MRC);
+            fileInfo = new FileInfoMRC(fileName, fileDir, FileUtility.MRC);
 
             raFile = new RandomAccessFile(file, "r");
 

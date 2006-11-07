@@ -433,7 +433,7 @@ public class FileSPM extends FileBase {
         }
 
         if (fileInfo == null) { // if the file info does not yet exist: make it
-            fileInfo = new FileInfoSPM(imageFileName, fileDir, FileBase.SPM);
+            fileInfo = new FileInfoSPM(imageFileName, fileDir, FileUtility.SPM);
 
             if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) { // Why 3/20/2001
                 throw (new IOException(" SPM header file error"));
@@ -646,7 +646,7 @@ public class FileSPM extends FileBase {
      * @see        FileRaw
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
-        fileInfo = new FileInfoSPM(fileName, fileDir, FileBase.SPM);
+        fileInfo = new FileInfoSPM(fileName, fileDir, FileUtility.SPM);
         readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory());
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
@@ -720,7 +720,7 @@ public class FileSPM extends FileBase {
     public void readImage(float[] buffer) throws IOException, OutOfMemoryError {
 
         if (fileInfo == null) { // if no file info yet, make it.
-            fileInfo = new FileInfoSPM(fileName, fileDir, FileBase.SPM);
+            fileInfo = new FileInfoSPM(fileName, fileDir, FileUtility.SPM);
 
             if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
                 throw (new IOException("Cannot read image because of SPM header file error"));
@@ -1155,7 +1155,7 @@ public class FileSPM extends FileBase {
         } catch (ClassCastException e) { // If it isn't, catch the exception
 
             // and make a new fileInfo
-            fileInfo = new FileInfoSPM(fileName, fileDir, FileBase.SPM);
+            fileInfo = new FileInfoSPM(fileName, fileDir, FileUtility.SPM);
             simple = true; // Write the header without all the SPM info
         }
 

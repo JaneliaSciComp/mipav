@@ -734,7 +734,7 @@ public class ViewImageDirectory extends JFrame
                 info[1] = "Big Endian";
             }
 
-            if (fileInfo.getFileFormat() == FileBase.DICOM) {
+            if (fileInfo.getFileFormat() == FileUtility.DICOM) {
                 otherLabel.setVisible(true);
                 JDialogFileInfoDICOM.showTags(secondaryModel, (FileInfoDicom) fileInfo, false);
             }

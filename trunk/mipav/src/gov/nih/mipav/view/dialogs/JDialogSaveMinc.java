@@ -651,7 +651,7 @@ public class JDialogSaveMinc extends JDialogBase {
             zSpace.setEnabled(false);
         }
 
-        if (fileInfo.getFileFormat() == FileBase.MINC) {
+        if (fileInfo.getFileFormat() == FileUtility.MINC) {
             Preferences.debug("Is MINC format\n");
         }
 

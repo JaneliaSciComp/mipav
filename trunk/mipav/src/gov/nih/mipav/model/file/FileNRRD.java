@@ -2074,7 +2074,7 @@ public class FileNRRD extends FileBase {
         int linesFound;
         int i;
         byte[] buf = new byte[1];
-        fileInfo = new FileInfoNRRD(fileName, fileDir, FileBase.NRRD);
+        fileInfo = new FileInfoNRRD(fileName, fileDir, FileUtility.NRRD);
 
         long dataSize;
         FileInputStream fis;
@@ -2196,7 +2196,7 @@ public class FileNRRD extends FileBase {
                 throw (error);
             }
 
-            fileInfoSub = new FileInfoNRRD(fileName, fileDir, FileBase.NRRD);
+            fileInfoSub = new FileInfoNRRD(fileName, fileDir, FileUtility.NRRD);
             fileInfoSub.setExtents(subExtents);
             fileInfoSub.setDataType(fileInfo.getDataType());
 

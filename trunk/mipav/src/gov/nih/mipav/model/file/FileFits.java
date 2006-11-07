@@ -126,7 +126,7 @@ public class FileFits extends FileBase {
             file = new File(fileDir + fileName);
 
             endianess = FileBase.BIG_ENDIAN; // true
-            fileInfo = new FileInfoFits(fileName, fileDir, FileBase.FITS);
+            fileInfo = new FileInfoFits(fileName, fileDir, FileUtility.FITS);
             fileInfo.setEndianess(endianess);
 
             raFile = new RandomAccessFile(file, "r");

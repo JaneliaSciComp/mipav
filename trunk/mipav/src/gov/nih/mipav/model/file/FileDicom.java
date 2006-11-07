@@ -176,7 +176,7 @@ public class FileDicom extends FileDicomBase {
                 // raFile      = new RandomAccessFile(fileHeader, "r");
             }
 
-            fileInfo = new FileInfoDicom(null, null, FileBase.DICOM);
+            fileInfo = new FileInfoDicom(null, null, FileUtility.DICOM);
             fileInfo.resetDictionary();
             fileInfo.setEndianess(LITTLE_ENDIAN);
 
@@ -218,7 +218,7 @@ public class FileDicom extends FileDicomBase {
                 raFile = new RandomAccessFile(fileHeader, "r");
             }
 
-            fileInfo = new FileInfoDicom(fileName, fileDir, FileBase.DICOM);
+            fileInfo = new FileInfoDicom(fileName, fileDir, FileUtility.DICOM);
             fileInfo.resetDictionary();
             fileInfo.setEndianess(LITTLE_ENDIAN);
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
@@ -263,7 +263,7 @@ public class FileDicom extends FileDicomBase {
                 raFile = new RandomAccessFile(fileHeader, "r");
             }
 
-            fileInfo = new FileInfoDicom(fileName, fileDir, FileBase.DICOM);
+            fileInfo = new FileInfoDicom(fileName, fileDir, FileUtility.DICOM);
             fileInfo.resetDictionary();
             fileInfo.setEndianess(LITTLE_ENDIAN);
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
@@ -1820,7 +1820,7 @@ public class FileDicom extends FileDicomBase {
             }
 
             raFile = new RandomAccessFile(fileHeader, "r");
-            fileInfo = new FileInfoDicom(fileName, fileDir, FileBase.DICOM);
+            fileInfo = new FileInfoDicom(fileName, fileDir, FileUtility.DICOM);
             fileInfo.resetDictionary();
         } catch (OutOfMemoryError e) {
 

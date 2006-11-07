@@ -1819,7 +1819,7 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
         controls.buildToolbar(menuBuilder.isMenuItemSelected("Image toolbar"), false, false, false,
                               componentImage.getVOIHandler().getVOI_ID());
 
-        if (getActiveImage().getFileInfo(0).getFileFormat() == FileBase.DICOM) {
+        if (getActiveImage().getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
 
             // menuBuilder.setMenuItemEnabled("Show image/DICOM overlay", true);
             menuBuilder.setMenuItemEnabled("DICOM overlay options", true);

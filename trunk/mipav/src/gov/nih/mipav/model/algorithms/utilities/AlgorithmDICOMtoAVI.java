@@ -204,7 +204,7 @@ public class AlgorithmDICOMtoAVI extends AlgorithmBase {
                 // if the new directory structure doesnt exist, create it, then transcode to AVI
                 if (dicomFile.exists() || dicomFile.mkdirs()) {
                     FileWriteOptions opts = new FileWriteOptions(true);
-                    opts.setFileType(FileBase.TIFF);
+                    opts.setFileType(FileUtility.TIFF);
                     opts.setFileDirectory(newDirectory);
                     opts.setFileName(name);
                     opts.setPackBitEnabled(false);

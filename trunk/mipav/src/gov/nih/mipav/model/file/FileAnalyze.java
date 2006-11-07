@@ -335,7 +335,7 @@ public class FileAnalyze extends FileBase {
      * @throws  OutOfMemoryError  DOCUMENT ME!
      */
     public ModelImage createImage() throws IOException, OutOfMemoryError {
-        fileInfo = new FileInfoAnalyze(fileName, fileDir, FileBase.ANALYZE);
+        fileInfo = new FileInfoAnalyze(fileName, fileDir, FileUtility.ANALYZE);
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" Analyze header file error"));
@@ -704,7 +704,7 @@ public class FileAnalyze extends FileBase {
         // The files should all have the same prefix. fooR_001.img, fooR_002.img etc.
         if (fileInfo == null) { // if the file info does not yet exist: make it
             Preferences.debug("fileInfo is null\n");
-            fileInfo = new FileInfoAnalyze(imageFileName, fileDir, FileBase.ANALYZE);
+            fileInfo = new FileInfoAnalyze(imageFileName, fileDir, FileUtility.ANALYZE);
 
             if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) { // Why 3/20/2001
                 throw (new IOException(" Analyze header file error"));
@@ -939,7 +939,7 @@ public class FileAnalyze extends FileBase {
      * @see        FileRaw
      */
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
-        fileInfo = new FileInfoAnalyze(fileName, fileDir, FileBase.ANALYZE);
+        fileInfo = new FileInfoAnalyze(fileName, fileDir, FileUtility.ANALYZE);
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" Analyze header file error"));
@@ -1022,7 +1022,7 @@ public class FileAnalyze extends FileBase {
         int i;
 
         if (fileInfo == null) { // if no file info yet, make it.
-            fileInfo = new FileInfoAnalyze(fileName, fileDir, FileBase.ANALYZE);
+            fileInfo = new FileInfoAnalyze(fileName, fileDir, FileUtility.ANALYZE);
 
             if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
                 throw (new IOException("Cannot read image because of analyze header file error"));
@@ -1386,7 +1386,7 @@ public class FileAnalyze extends FileBase {
         } catch (ClassCastException e) { // If it isn't, catch the exception
 
             // and make a new fileInfo
-            fileInfo = new FileInfoAnalyze(fileName, fileDir, FileBase.ANALYZE);
+            fileInfo = new FileInfoAnalyze(fileName, fileDir, FileUtility.ANALYZE);
             simple = true; // Write the header without all the Analyze info
         }
 

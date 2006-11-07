@@ -119,7 +119,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
      */
     public void getPatientOrientation(double[] xOrient, double[] yOrient, ModelImage image) {
 
-        if (image.getFileInfo(0).getFileFormat() == FileBase.DICOM) {
+        if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
             FileInfoDicom fileInfo = (FileInfoDicom) (image.getFileInfo(0));
             String orientation = (String) ((FileDicomTag) fileInfo.getEntry("0020,0037")).getValue(true);
 
@@ -207,7 +207,7 @@ public class AlgorithmRegPatientPos extends AlgorithmBase {
      */
     public void getPatientPosition(double[] coord, ModelImage image) {
 
-        if (image.getFileInfo(0).getFileFormat() == FileBase.DICOM) {
+        if (image.getFileInfo(0).getFileFormat() == FileUtility.DICOM) {
             FileInfoDicom fileInfo = (FileInfoDicom) (image.getFileInfo(0));
             String orientation = (String) ((FileDicomTag) fileInfo.getEntry("0020,0032")).getValue(true);
 

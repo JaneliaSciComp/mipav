@@ -526,7 +526,7 @@ public class FileInfoGESigna4X extends FileInfoBase {
         }
 
         String name = JDialogBase.makeImageName(fileName, ".dcm");
-        fileInfo = new FileInfoDicom(name, getFileDirectory(), FileBase.DICOM);
+        fileInfo = new FileInfoDicom(name, getFileDirectory(), FileUtility.DICOM);
         fileInfo.setExtents(extents);
         fileInfo.setResolutions(resols);
         fileInfo.setUnitsOfMeasure(units);

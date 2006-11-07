@@ -2482,7 +2482,7 @@ public class FileGESigna4X extends FileBase {
 
             fileHeader = new File(fileDir + fileName);
             raFile = new RandomAccessFile(fileHeader, "r");
-            fileInfo = new FileInfoGESigna4X(fileName, fileDir, FileBase.GE_SIGNA4X);
+            fileInfo = new FileInfoGESigna4X(fileName, fileDir, FileUtility.GE_SIGNA4X);
         } catch (OutOfMemoryError e) {
             MipavUtil.displayError("Out of memory in FileGEGenesis.setFileName.");
             throw new IOException();

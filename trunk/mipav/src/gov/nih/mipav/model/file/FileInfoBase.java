@@ -2329,7 +2329,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         s += "\nFile name: " + fileName + "\n";
         s += "File suffix: " + fileSuffix + "\n";
         s += "File format: ";
-        s += FileBase.getFileFormatStr(fileFormat) + "\n";
+        s += FileUtility.getFileFormatStr(fileFormat) + "\n";
         s += "Data type: ";
         s += ModelStorageBase.getBufferTypeStr(dataType) + "\n";
         s += "Offset: " + offset + "\n";

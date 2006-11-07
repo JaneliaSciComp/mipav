@@ -177,7 +177,7 @@ public class FileMicroCat extends FileBase {
         try {
             file = new File(fileDir + fileName);
             raFile = new RandomAccessFile(file, "r");
-            fileInfo = new FileInfoMicroCat(fileName, fileDir, FileBase.MICRO_CAT);
+            fileInfo = new FileInfoMicroCat(fileName, fileDir, FileUtility.MICRO_CAT);
         } catch (OutOfMemoryError error) {
             raFile.close();
             System.gc();

@@ -201,7 +201,7 @@ public class FileBioRad extends FileBase {
             // Position to the start of the image data
             raFile.seek(76);
 
-            fileInfo = new FileInfoBioRad(fileName, fileDir, FileBase.BIORAD); // dummy fileInfo
+            fileInfo = new FileInfoBioRad(fileName, fileDir, FileUtility.BIORAD); // dummy fileInfo
             fileInfo.setEndianess(endianess);
 
             if (zDim > 1) {

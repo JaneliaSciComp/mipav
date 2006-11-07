@@ -1501,7 +1501,7 @@ public class AlgorithmSkelGeom3D extends AlgorithmBase {
         }
 
         try {
-            cylImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), "cylinder", FileBase.XML, true);
+            cylImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), "cylinder", FileUtility.XML, true);
         } catch (OutOfMemoryError error) {
 
             if (cylImage != null) {

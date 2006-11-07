@@ -180,7 +180,7 @@ public class Skeleton3D {
             }
 
             // rendererProgressBar.setMessage("Saving outputBoundaryDist volume file ...");
-            saveVolume("outputBoundaryDist.img", FileBase.XML, asVolumeBoundaryDist);
+            saveVolume("outputBoundaryDist.img", FileUtility.XML, asVolumeBoundaryDist);
         }
 
 
@@ -380,7 +380,7 @@ public class Skeleton3D {
             }
 
             // rendererProgressBar.setMessage("Saving outputResults volume file ...");
-            saveVolume("outputResults.img", FileBase.XML, asVolumeOutput);
+            saveVolume("outputResults.img", FileUtility.XML, asVolumeOutput);
         }
 
         return kPathGraph;

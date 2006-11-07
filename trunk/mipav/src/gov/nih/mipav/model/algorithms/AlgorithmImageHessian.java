@@ -727,7 +727,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             } // end try{}-catch{}
 
             destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(),
-                                srcImage.getImageName() + "_vsVes" + (scaleIndex + 1), FileBase.XML, true);
+                                srcImage.getImageName() + "_vsVes" + (scaleIndex + 1), FileUtility.XML, true);
 
             try {
                 destImage.importData(0, e1, true);
@@ -740,7 +740,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             } // end try{}-catch{}
 
             destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(),
-                                srcImage.getImageName() + "_vsE1" + (scaleIndex + 1), FileBase.XML, true);
+                                srcImage.getImageName() + "_vsE1" + (scaleIndex + 1), FileUtility.XML, true);
 
             try {
                 destImage.importData(0, e2, true);
@@ -753,7 +753,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             } // end try{}-catch{}
 
             destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(),
-                                srcImage.getImageName() + "_vsE2" + (scaleIndex + 1), FileBase.XML, true);
+                                srcImage.getImageName() + "_vsE2" + (scaleIndex + 1), FileUtility.XML, true);
 
             try {
                 destImage.importData(0, evec1, true);
@@ -766,7 +766,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             } // end try{}-catch{}
 
             destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(),
-                                srcImage.getImageName() + "_vsEvec1" + (scaleIndex + 1), FileBase.XML, true);
+                                srcImage.getImageName() + "_vsEvec1" + (scaleIndex + 1), FileUtility.XML, true);
 
             try {
                 destImage.importData(0, evec2, true);
@@ -779,7 +779,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             } // end try{}-catch{}
 
             destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(),
-                                srcImage.getImageName() + "_vsEvec2" + (scaleIndex + 1), FileBase.XML, true);
+                                srcImage.getImageName() + "_vsEvec2" + (scaleIndex + 1), FileUtility.XML, true);
 
         } // end for (scaleIndex = 0; ...)
 
@@ -1038,7 +1038,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             } // end try{}-catch{}
 
             destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(),
-                                srcImage.getImageName() + "_vsGauss" + scaleIndex, FileBase.XML, true);
+                                srcImage.getImageName() + "_vsGauss" + scaleIndex, FileUtility.XML, true);
 
             try {
                 destImage.importData(0, e1, true);
@@ -1051,7 +1051,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             } // end try{}-catch{}
 
             destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(),
-                                srcImage.getImageName() + "_vsE1" + scaleIndex, FileBase.XML, true);
+                                srcImage.getImageName() + "_vsE1" + scaleIndex, FileUtility.XML, true);
 
             try {
                 destImage.importData(0, e2, true);
@@ -1065,7 +1065,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             } // end try{}-catch{}
 
             destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(),
-                                srcImage.getImageName() + "_vsE2" + scaleIndex, FileBase.XML, true);
+                                srcImage.getImageName() + "_vsE2" + scaleIndex, FileUtility.XML, true);
 
             try {
                 destImage.importData(0, e3, true);
@@ -1078,7 +1078,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
             } // end try{}-catch{}
 
             destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(),
-                                srcImage.getImageName() + "_vsE3" + scaleIndex, FileBase.XML, true);
+                                srcImage.getImageName() + "_vsE3" + scaleIndex, FileUtility.XML, true);
 
         } // end for (scaleIndex = 1; ...)
 
@@ -1320,7 +1320,7 @@ public class AlgorithmImageHessian extends AlgorithmBase {
              * resultBuffer to the image", true); return; } // end try{}-catch{}
              *
              * destImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_vsGauss" +
-             * scale,FileBase.XML);
+             * scale,FileUtility.XML);
              */
 
 

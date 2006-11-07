@@ -176,7 +176,7 @@ public class JDialogTalairach extends JDialogBase {
 
         Point3Df pt = new Point3Df(Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY, Float.POSITIVE_INFINITY);
 
-        if (image.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+        if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getAnteriorPt();
         }
 
@@ -186,7 +186,7 @@ public class JDialogTalairach extends JDialogBase {
             setAnteriorPt(pt);
         }
 
-        if (image.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+        if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getPosteriorPt();
         }
 
@@ -196,7 +196,7 @@ public class JDialogTalairach extends JDialogBase {
             setPosteriorPt(pt);
         }
 
-        if (image.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+        if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getSuperiorPt();
         }
 
@@ -206,7 +206,7 @@ public class JDialogTalairach extends JDialogBase {
             setSuperiorPt(pt);
         }
 
-        if (image.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+        if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getInferiorPt();
         }
 
@@ -216,7 +216,7 @@ public class JDialogTalairach extends JDialogBase {
             setInferiorPt(pt);
         }
 
-        if (image.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+        if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getLeftPt();
         }
 
@@ -226,7 +226,7 @@ public class JDialogTalairach extends JDialogBase {
             setLeftPt(pt);
         }
 
-        if (image.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+        if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
             pt = ((FileInfoAfni) image.getFileInfo(0)).getRightPt();
         }
 
@@ -539,7 +539,7 @@ public class JDialogTalairach extends JDialogBase {
             return;
         }
 
-        if (image.getFileInfo(0).getFileFormat() == FileBase.AFNI) {
+        if (image.getFileInfo(0).getFileFormat() == FileUtility.AFNI) {
             pcie = ((FileInfoAfni) image.getFileInfo(0)).getpcie();
         }
 
@@ -550,7 +550,7 @@ public class JDialogTalairach extends JDialogBase {
             return;
         }
 
-        if (image.getFileInfo(0).getFileFormat() == FileBase.AFNI) {
+        if (image.getFileInfo(0).getFileFormat() == FileUtility.AFNI) {
             TCenter = ((FileInfoAfni) image.getFileInfo(0)).getTalairachCenter();
         }
 
@@ -718,7 +718,7 @@ public class JDialogTalairach extends JDialogBase {
 
         for (int i = 0; i < oZdim; i++) {
             fileInfo[i] = new FileInfoAfni(image.getFileInfo()[0].getFileName(),
-                                           image.getFileInfo()[0].getFileDirectory(), FileBase.AFNI);
+                                           image.getFileInfo()[0].getFileDirectory(), FileUtility.AFNI);
             fileInfo[i].setModality(image.getFileInfo()[0].getModality());
             fileInfo[i].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
             fileInfo[i].setDataType(image.getFileInfo()[0].getDataType());
@@ -732,7 +732,7 @@ public class JDialogTalairach extends JDialogBase {
             fileInfo[i].setAxisOrientation(axisOrientation);
             fileInfo[i].setImageOrientation(FileInfoBase.AXIAL);
 
-            if (image.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+            if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
                 fileInfo[i].setLowXmm(((FileInfoAfni) image.getFileInfo()[0]).getLowXmm());
                 fileInfo[i].setLowYmm(((FileInfoAfni) image.getFileInfo()[0]).getLowYmm());
                 fileInfo[i].setLowZmm(((FileInfoAfni) image.getFileInfo()[0]).getLowZmm());
@@ -769,7 +769,7 @@ public class JDialogTalairach extends JDialogBase {
         oYres = vlength;
         oZres = vlength;
 
-        if (image.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+        if (image.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
             FileInfoAfni afniInfo = (FileInfoAfni) image.getFileInfo()[0];
 
             // In the Talairach image pcie.y = TCenter.y + ViewJFrameTriImage.ATLAS_AC_TO_PC

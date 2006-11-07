@@ -67,7 +67,7 @@ public class FileOME extends FileBase {
         fileName = fName;
         fileDir = fDir;
         showProgress = show;
-        fileInfo = new FileInfoOME(fName, fDir, FileBase.XML);
+        fileInfo = new FileInfoOME(fName, fDir, FileUtility.XML);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -155,7 +155,7 @@ public class FileOME extends FileBase {
      * @see        FileRaw
      */
     public ModelImage readImage() throws IOException, OutOfMemoryError {
-        fileInfo = new FileInfoOME(fileName, fileDir, FileBase.XML);
+        fileInfo = new FileInfoOME(fileName, fileDir, FileUtility.XML);
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException("XML file error"));

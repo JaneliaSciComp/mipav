@@ -655,7 +655,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
                 try {
                     gvfImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_xvf",
-                                       FileBase.XML, true);
+                                       FileUtility.XML, true);
                 } catch (OutOfMemoryError error) {
 
                     if (gvfImage != null) {
@@ -688,7 +688,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
                 try {
                     gvfImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_yvf",
-                                       FileBase.XML, true);
+                                       FileUtility.XML, true);
                 } catch (OutOfMemoryError error) {
 
                     if (gvfImage != null) {
@@ -721,7 +721,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
 
                 try {
                     gvfImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), srcImage.getImageName() + "_zvf",
-                                       FileBase.XML, true);
+                                       FileUtility.XML, true);
                 } catch (OutOfMemoryError error) {
 
                     if (gvfImage != null) {
@@ -2029,7 +2029,7 @@ public class AlgorithmSkeletonize3D extends AlgorithmBase {
         }
 
         try {
-            cylImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), "cylinder", FileBase.XML, true);
+            cylImage.saveImage(srcImage.getFileInfo(0).getFileDirectory(), "cylinder", FileUtility.XML, true);
         } catch (OutOfMemoryError error) {
 
             if (cylImage != null) {

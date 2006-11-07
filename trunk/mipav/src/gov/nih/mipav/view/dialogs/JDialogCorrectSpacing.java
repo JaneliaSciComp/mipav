@@ -92,7 +92,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
             return;
         }
 
-        if (fileFormat != FileBase.XML) {
+        if (fileFormat != FileUtility.XML) {
             MipavUtil.displayError("This utility only works with XML files.");
 
             return;
@@ -291,7 +291,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
             return;
         }
 
-        if (fileFormat != FileBase.XML) {
+        if (fileFormat != FileUtility.XML) {
             MipavUtil.displayError("This utility only works with XML files.");
 
             return;

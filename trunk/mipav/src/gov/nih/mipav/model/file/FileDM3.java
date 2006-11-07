@@ -238,7 +238,7 @@ public class FileDM3 extends FileBase {
             file = new File(fileDir + fileName);
 
             endianess = FileBase.BIG_ENDIAN; // true
-            fileInfo = new FileInfoDM3(fileName, fileDir, FileBase.DM3);
+            fileInfo = new FileInfoDM3(fileName, fileDir, FileUtility.DM3);
 
             raFile = new RandomAccessFile(file, "r");
             fileVersion = getInt(endianess);

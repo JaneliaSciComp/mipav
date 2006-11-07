@@ -389,7 +389,7 @@ public class FileSTK extends FileBase {
 
             long saveLoc = raFile.getFilePointer();
 
-            fileInfo = new FileInfoSTK(fileName, fileDir, FileBase.STK); // dummy fileInfo
+            fileInfo = new FileInfoSTK(fileName, fileDir, FileUtility.STK); // dummy fileInfo
             fileInfo.setEndianess(endianess);
 
             imageSlice = 0;
@@ -471,7 +471,7 @@ public class FileSTK extends FileBase {
             tileByteNumber = 0;
 
             while (moreIFDs) {
-                fileInfo = new FileInfoSTK(fileName, fileDir, FileBase.STK);
+                fileInfo = new FileInfoSTK(fileName, fileDir, FileUtility.STK);
                 fileInfo.setExtents(imgExtents);
                 raFile.seek(IFDoffsets[imageSlice]);
                 moreIFDs = openIFD(fileInfo);

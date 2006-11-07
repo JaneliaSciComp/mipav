@@ -921,7 +921,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
             // FILE INFO: add the file info    (if the original is a DICOM image, do a special file info...)
             fireProgressStateChanged("Updating File Info...");
 
-            if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+            if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                 fileInfoDicomBuffer = new FileInfoDicom[1];
                 fileInfoDicomBuffer[0] = (FileInfoDicom) srcImage.getFileInfo(0).clone(); // copy into buffer
                 fileInfoDicomBuffer[0].setExtents(newExtents);
@@ -1139,7 +1139,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                 newExtents[1] = srcImage.getExtents()[1] + topMargin + bottomMargin;
                 newExtents[2] = srcImage.getExtents()[2] + frontMargin + backMargin;
 
-                if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                     fileInfoDicomBuffer = new FileInfoDicom[destDepth * tDim];
                 } else {
                     fileInfoBuffer = new FileInfoBase[destDepth * tDim];
@@ -1183,7 +1183,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                         }
 
                         // DICOM
-                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                        if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                             fileInfoDicomBuffer[(t * destDepth) + Z] = (FileInfoDicom) srcImage.getFileInfo(z).clone();
 
                             fileInfoDicomBuffer[(t * destDepth) + Z].setExtents(newExtents); // modify extents to use
@@ -1496,7 +1496,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                     // FILE INFO: add the file info    (if the original is a DICOM image, do a special file info...)
                     fireProgressStateChanged("Updating File Info...");
 
-                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                    if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                         FileInfoDicom fileInfoBuffer; // buffer of type DICOM
                         fileInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(0).clone(); // copy into buffer
                         fileInfoBuffer.setExtents(destImage.getExtents());
@@ -1646,7 +1646,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
                             }
 
                             // DICOM
-                            if ((srcImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                            if ((srcImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
                                 FileInfoDicom fileInfoBuffer = (FileInfoDicom) srcImage.getFileInfo(z).clone();
 
                                 fileInfoBuffer.setExtents(destImage.getExtents()); // modify extents to use the extents
@@ -1803,7 +1803,7 @@ public class AlgorithmAddMargins extends AlgorithmBase {
         float[] newImgOriginLPS = new float[3];
         float[] originImgOrd = new float[3];
 
-        if (fileInfoBuffer.getFileFormat() == FileBase.DICOM) {
+        if (fileInfoBuffer.getFileFormat() == FileUtility.DICOM) {
             FileInfoDicom fileDicom = (FileInfoDicom) fileInfoBuffer;
             imgOriginLPS = convertIntoFloat(fileDicom.parseTagValue("0020,0032"));
         } else {

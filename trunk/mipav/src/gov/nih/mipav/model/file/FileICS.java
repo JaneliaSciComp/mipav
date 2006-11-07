@@ -2677,7 +2677,7 @@ public class FileICS extends FileBase {
             raFile = new RandomAccessFile(file, "r");
             fileLength = raFile.length();
 
-            fileInfo = new FileInfoICS(headerFileName, fileDir, FileBase.ICS);
+            fileInfo = new FileInfoICS(headerFileName, fileDir, FileUtility.ICS);
 
             // The first line must contains the field separator
             // character followed by the line separator character

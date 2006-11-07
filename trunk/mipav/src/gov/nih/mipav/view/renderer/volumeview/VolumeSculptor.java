@@ -420,7 +420,7 @@ public class VolumeSculptor extends Sculptor {
         String extension = null;
         String directory = null;
         String suffix = null;
-        int fileType = FileBase.UNDEFINED;
+        int fileType = FileUtility.UNDEFINED;
         ModelImage img = null;
         ViewImageFileFilter vFilter = null;
 
@@ -601,7 +601,7 @@ public class VolumeSculptor extends Sculptor {
                 filebase = new String(fName);
             }
 
-            if (options.getFileType() == FileBase.DICOM) {
+            if (options.getFileType() == FileUtility.DICOM) {
                 int newIndex = filebase.length();
 
                 for (i = filebase.length() - 1; i >= 0; i--) {
@@ -639,7 +639,7 @@ public class VolumeSculptor extends Sculptor {
         // part of the name
         String baseName = new String(fileName);
 
-        if (fileType == FileBase.DICOM) {
+        if (fileType == FileUtility.DICOM) {
             int index = fileName.lastIndexOf(".");
 
             if (index > 0) {
@@ -672,7 +672,7 @@ public class VolumeSculptor extends Sculptor {
         for (i = 0; i < fileInfo.length; i++) {
             fileInfo[i].setFileDirectory(directory);
 
-            if (fileType == FileBase.DICOM) {
+            if (fileType == FileUtility.DICOM) {
                 fileInfo[i].setFileName(baseName + (i + 1) + ".dcm");
             } else {
                 fileInfo[i].setFileName(fileName);

@@ -170,7 +170,7 @@ public class ModelImage extends ModelStorageBase {
             fileInfo = new FileInfoBase[1];
 
             // save the entire filename with the suffix -- helps later when saving file
-            fileInfo[0] = new FileInfoImageXML(name, null, FileBase.XML);
+            fileInfo[0] = new FileInfoImageXML(name, null, FileUtility.XML);
             fileInfo[0].setExtents(dimExtents);
             fileInfo[0].setResolutions(resolutions);
             fileInfo[0].setUnitsOfMeasure(units);
@@ -183,7 +183,7 @@ public class ModelImage extends ModelStorageBase {
             for (i = 0; i < dimExtents[2]; i++) {
 
                 // save the entire filename with the suffix -- helps later when saving file
-                fileInfo[i] = new FileInfoImageXML(name, null, FileBase.XML);
+                fileInfo[i] = new FileInfoImageXML(name, null, FileUtility.XML);
                 fileInfo[i].setExtents(dimExtents);
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
@@ -196,7 +196,7 @@ public class ModelImage extends ModelStorageBase {
             for (i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
 
                 // save the entire filename with the suffix -- helps later when saving file
-                fileInfo[i] = new FileInfoImageXML(name, null, FileBase.XML);
+                fileInfo[i] = new FileInfoImageXML(name, null, FileUtility.XML);
                 fileInfo[i].setExtents(dimExtents);
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
@@ -432,7 +432,7 @@ public class ModelImage extends ModelStorageBase {
 
         if (dimExtents.length == 2) {
             fileInfo = new FileInfoBase[1];
-            fileInfo[0] = new FileInfoImageXML(null, null, FileBase.XML);
+            fileInfo[0] = new FileInfoImageXML(null, null, FileUtility.XML);
             fileInfo[0].setExtents(dimExtents);
             fileInfo[0].setResolutions(resolutions);
             fileInfo[0].setUnitsOfMeasure(units);
@@ -441,7 +441,7 @@ public class ModelImage extends ModelStorageBase {
             fileInfo = new FileInfoBase[dimExtents[2]];
 
             for (i = 0; i < dimExtents[2]; i++) {
-                fileInfo[i] = new FileInfoImageXML(null, null, FileBase.XML);
+                fileInfo[i] = new FileInfoImageXML(null, null, FileUtility.XML);
                 fileInfo[i].setExtents(dimExtents);
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
@@ -451,7 +451,7 @@ public class ModelImage extends ModelStorageBase {
             fileInfo = new FileInfoBase[dimExtents[2] * dimExtents[3]];
 
             for (i = 0; i < (dimExtents[2] * dimExtents[3]); i++) {
-                fileInfo[i] = new FileInfoImageXML(null, null, FileBase.XML);
+                fileInfo[i] = new FileInfoImageXML(null, null, FileUtility.XML);
                 fileInfo[i].setExtents(dimExtents);
                 fileInfo[i].setResolutions(resolutions);
                 fileInfo[i].setUnitsOfMeasure(units);
@@ -1307,10 +1307,10 @@ public class ModelImage extends ModelStorageBase {
     public void getScannerCoordLPS(int x, int y, int z, float[] scannerCoord) {
 
         if ((getFileInfo()[0].getTransformID() != FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) &&
-                (getFileInfo()[0].getFileFormat() != FileBase.XML) &&
-                (getFileInfo()[0].getFileFormat() != FileBase.MINC) &&
-                (getFileInfo()[0].getFileFormat() != FileBase.NIFTI) &&
-                (getFileInfo()[0].getFileFormat() != FileBase.AFNI)) {
+                (getFileInfo()[0].getFileFormat() != FileUtility.XML) &&
+                (getFileInfo()[0].getFileFormat() != FileUtility.MINC) &&
+                (getFileInfo()[0].getFileFormat() != FileUtility.NIFTI) &&
+                (getFileInfo()[0].getFileFormat() != FileUtility.AFNI)) {
             return;
         }
 
@@ -1368,7 +1368,7 @@ public class ModelImage extends ModelStorageBase {
 
         // System.out.println("dicomMatrix = " + dicomMatrix.toString());
         if ((getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
-                (getFileInfo()[0].getFileFormat() == FileBase.DICOM)) {
+                (getFileInfo()[0].getFileFormat() == FileUtility.DICOM)) {
 
             // System.out.println("dicomMatrix = " + dicomMatrix.toString());
             TransMatrix dicomMatrix = (TransMatrix) (getMatrix().clone());
@@ -1988,7 +1988,7 @@ public class ModelImage extends ModelStorageBase {
      */
     public boolean isDicomImage() {
 
-        if (fileInfo[0].getFileFormat() == FileBase.DICOM) {
+        if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
             return true;
         } else {
             return false;
@@ -2002,7 +2002,7 @@ public class ModelImage extends ModelStorageBase {
      */
     public boolean isMincImage() {
 
-        if (fileInfo[0].getFileFormat() == FileBase.MINC) {
+        if (fileInfo[0].getFileFormat() == FileUtility.MINC) {
             return true;
         } else {
             return false;
@@ -3088,7 +3088,7 @@ public class ModelImage extends ModelStorageBase {
 
         if (getNDims() == 2) {
 
-            if (fileInfo[0].getFileFormat() == FileBase.DICOM) {
+            if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
                 ((FileInfoDicom) (fileInfo[0])).setValue("0010,0010", newImageName.trim(),
                                                          newImageName.trim().length());
             } else {
@@ -3103,7 +3103,7 @@ public class ModelImage extends ModelStorageBase {
             }
         } else if (getNDims() == 3) {
 
-            if (fileInfo[0].getFileFormat() == FileBase.DICOM) {
+            if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
 
                 for (int i = 0; i < getExtents()[2]; i++) {
                     ((FileInfoDicom) (fileInfo[i])).setValue("0010,0010", newImageName.trim(),
@@ -3127,7 +3127,7 @@ public class ModelImage extends ModelStorageBase {
             }
         } else if (getNDims() == 4) {
 
-            if (fileInfo[0].getFileFormat() == FileBase.DICOM) {
+            if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
 
                 for (int i = 0; i < (getExtents()[2] * getExtents()[3]); i++) {
                     ((FileInfoDicom) (fileInfo[i])).setValue("0010,0010", newImageName.trim(),
@@ -3151,7 +3151,7 @@ public class ModelImage extends ModelStorageBase {
             }
         } else if (getNDims() == 5) {
 
-            if (fileInfo[0].getFileFormat() == FileBase.DICOM) {
+            if (fileInfo[0].getFileFormat() == FileUtility.DICOM) {
 
                 for (int i = 0; i < (getExtents()[2] * getExtents()[3] * getExtents()[4]); i++) {
                     ((FileInfoDicom) (fileInfo[i])).setValue("0010,0010", newImageName.trim(),

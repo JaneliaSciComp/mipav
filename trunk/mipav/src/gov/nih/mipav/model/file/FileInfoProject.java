@@ -676,7 +676,7 @@ public class FileInfoProject extends FileInfoBase {
         String directory = null;
         String extension = null;
         String suffix = null;
-        int fileType = FileBase.PROJECT;
+        int fileType = FileUtility.PROJECT;
         int filterType = ViewImageFileFilter.PROJECT;
         ViewImageFileFilter vFilter = null;
         int i;

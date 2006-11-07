@@ -513,7 +513,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                     resultImage = (ModelImage) image.clone();
                     resultImage.setImageName(name);
 
-                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) {
+                    if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
                         for (int i = 0; i < end; i++) {
                             ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0002",

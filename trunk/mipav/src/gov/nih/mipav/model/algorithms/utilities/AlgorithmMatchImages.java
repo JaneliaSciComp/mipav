@@ -2261,7 +2261,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
 
         if (nDims == 2) {
             fileInfo = new FileInfoBase[1];
-            fileInfo[0] = new FileInfoImageXML(null, null, FileBase.XML);
+            fileInfo[0] = new FileInfoImageXML(null, null, FileUtility.XML);
             fileInfo[0].setExtents(dimB);
             fileInfo[0].setResolutions(res);
             fileInfo[0].setUnitsOfMeasure(units);
@@ -2270,7 +2270,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             fileInfo = new FileInfoBase[dimB[2]];
 
             for (i = 0; i < dimB[2]; i++) {
-                fileInfo[i] = new FileInfoImageXML(null, null, FileBase.XML);
+                fileInfo[i] = new FileInfoImageXML(null, null, FileUtility.XML);
                 fileInfo[i].setExtents(dimB);
                 fileInfo[i].setResolutions(res);
                 fileInfo[i].setUnitsOfMeasure(units);

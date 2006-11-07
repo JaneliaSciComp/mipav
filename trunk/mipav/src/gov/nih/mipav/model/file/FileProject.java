@@ -91,7 +91,7 @@ public class FileProject extends FileBase {
      * @param  fDir   File directory.
      */
     public FileProject(String fName, String fDir) {
-        projectInfo = new FileInfoProject(fName, fDir, FileBase.PROJECT);
+        projectInfo = new FileInfoProject(fName, fDir, FileUtility.PROJECT);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

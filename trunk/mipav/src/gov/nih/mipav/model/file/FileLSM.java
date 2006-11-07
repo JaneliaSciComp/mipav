@@ -1280,7 +1280,7 @@ public class FileLSM extends FileBase {
 
             long saveLoc = raFile.getFilePointer();
 
-            fileInfo = new FileInfoLSM(fileName, fileDir, FileBase.LSM); // dummy fileInfo
+            fileInfo = new FileInfoLSM(fileName, fileDir, FileUtility.LSM); // dummy fileInfo
             fileInfo.setEndianess(endianess);
 
             imageSlice = 0;
@@ -1461,7 +1461,7 @@ public class FileLSM extends FileBase {
             tileByteNumber = 0;
 
             while (moreIFDs) {
-                fileInfo = new FileInfoLSM(fileName, fileDir, FileBase.LSM);
+                fileInfo = new FileInfoLSM(fileName, fileDir, FileUtility.LSM);
                 fileInfo.setExtents(imgExtents);
                 fileInfo.setUnitsOfMeasure(unitsOfMeasure);
                 fileInfo.setDataType(fileDataType);

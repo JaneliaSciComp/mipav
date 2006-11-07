@@ -309,77 +309,77 @@ public abstract class ViewJFrameBase extends JFrame
 
         if (imageA.getFileInfo()[0] != null) {
 
-            if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) && (displayMode == IMAGE_A)) {
+            if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) && (displayMode == IMAGE_A)) {
                 dicom = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.XML) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.XML) && (displayMode == IMAGE_A)) {
                 xml = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.RAW) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.RAW) && (displayMode == IMAGE_A)) {
                 xml = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.JIMI) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.JIMI) && (displayMode == IMAGE_A)) {
                 xml = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.ANALYZE) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.ANALYZE) && (displayMode == IMAGE_A)) {
                 analyze = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.MGH) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MGH) && (displayMode == IMAGE_A)) {
                 mgh = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.NIFTI) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.NIFTI) && (displayMode == IMAGE_A)) {
                 nifti = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.NRRD) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.NRRD) && (displayMode == IMAGE_A)) {
                 nrrd = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.SPM) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.SPM) && (displayMode == IMAGE_A)) {
                 spm = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.GE_GENESIS) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_GENESIS) && (displayMode == IMAGE_A)) {
                 geSigna = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.GE_SIGNA4X) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_SIGNA4X) && (displayMode == IMAGE_A)) {
                 geSigna4x = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileBase.MINC) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MINC) && (displayMode == IMAGE_A)) {
                 minc = true;
             } else if ((imageB != null) && (imageB.getFileInfo()[0] != null)) {
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.DICOM) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) && (displayMode == IMAGE_B)) {
                     dicom = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.XML) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.XML) && (displayMode == IMAGE_B)) {
                     xml = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.RAW) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.RAW) && (displayMode == IMAGE_B)) {
                     xml = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.JIMI) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.JIMI) && (displayMode == IMAGE_B)) {
                     xml = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.ANALYZE) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.ANALYZE) && (displayMode == IMAGE_B)) {
                     analyze = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.MGH) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.MGH) && (displayMode == IMAGE_B)) {
                     mgh = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.NIFTI) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.NIFTI) && (displayMode == IMAGE_B)) {
                     nifti = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.NRRD) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.NRRD) && (displayMode == IMAGE_B)) {
                     nrrd = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.SPM) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.SPM) && (displayMode == IMAGE_B)) {
                     spm = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.GE_GENESIS) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.GE_GENESIS) && (displayMode == IMAGE_B)) {
                     geSigna = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.GE_SIGNA4X) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.GE_SIGNA4X) && (displayMode == IMAGE_B)) {
                     geSigna4x = true;
                 }
 
-                if (((imageB.getFileInfo()[0]).getFileFormat() == FileBase.MINC) && (displayMode == IMAGE_B)) {
+                if (((imageB.getFileInfo()[0]).getFileFormat() == FileUtility.MINC) && (displayMode == IMAGE_B)) {
                     minc = true;
                 }
             }
@@ -873,7 +873,7 @@ public abstract class ViewJFrameBase extends JFrame
             // If axis orientation information is available for each of the 3 axes of
             // image A and image B and the orientations are not identical, then reorder image B
             // to have the same orientation as image A
-            if ((imageB.getFileInfo(0).getFileFormat() == FileBase.AFNI) && (imageB.getNDims() > 2) &&
+            if ((imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI) && (imageB.getNDims() > 2) &&
                     (axisA[0] != FileInfoBase.ORI_UNKNOWN_TYPE) && (axisB[0] != FileInfoBase.ORI_UNKNOWN_TYPE) &&
                     ((axisA[0] != axisB[0]) || (axisA[1] != axisB[1]) || (axisA[2] != axisB[2]))) {
 
@@ -886,8 +886,8 @@ public abstract class ViewJFrameBase extends JFrame
                 resample = isResampleNeeded(imageB);
             }
 
-            if ((resample == true) && (imageA.getFileInfo(0).getFileFormat() == FileBase.AFNI) &&
-                    (imageB.getFileInfo(0).getFileFormat() == FileBase.AFNI)) {
+            if ((resample == true) && (imageA.getFileInfo(0).getFileFormat() == FileUtility.AFNI) &&
+                    (imageB.getFileInfo(0).getFileFormat() == FileUtility.AFNI)) {
                 int result = setImageBAfni(imageA, imageB);
 
                 if (result == -1) {
@@ -1386,7 +1386,7 @@ public abstract class ViewJFrameBase extends JFrame
         String extension = null;
         String directory = null;
         String suffix = null;
-        int fileType = FileBase.UNDEFINED;
+        int fileType = FileUtility.UNDEFINED;
         ModelImage img = null;
         ViewImageFileFilter vFilter = null;
         int i;
@@ -1606,7 +1606,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
                 suffix = new String(".avi");
-                fileType = FileBase.AVI;
+                fileType = FileUtility.AVI;
 
                 FileAvi aviFile;
 
@@ -1691,7 +1691,7 @@ public abstract class ViewJFrameBase extends JFrame
                 filebase = new String(fName);
             }
 
-            if (options.getFileType() == FileBase.DICOM) {
+            if (options.getFileType() == FileUtility.DICOM) {
                 int newIndex = filebase.length();
 
                 for (i = filebase.length() - 1; i >= 0; i--) {
@@ -1739,7 +1739,7 @@ public abstract class ViewJFrameBase extends JFrame
         // part of the name
         String baseName = new String(fileName);
 
-        if (fileType == FileBase.DICOM) {
+        if (fileType == FileUtility.DICOM) {
             int index = fileName.lastIndexOf(".");
 
             if (index > 0) {
@@ -1772,7 +1772,7 @@ public abstract class ViewJFrameBase extends JFrame
         for (i = 0; i < fileInfo.length; i++) {
             fileInfo[i].setFileDirectory(directory);
 
-            if (fileType == FileBase.DICOM) {
+            if (fileType == FileUtility.DICOM) {
                 fileInfo[i].setFileName(baseName + (i + 1) + ".dcm");
             } else {
                 fileInfo[i].setFileName(fileName);
@@ -1809,7 +1809,7 @@ public abstract class ViewJFrameBase extends JFrame
         String extension = null;
         String directory = null;
         String suffix = null;
-        int fileType = FileBase.UNDEFINED;
+        int fileType = FileUtility.UNDEFINED;
         ViewImageFileFilter vFilter = null;
         int i;
 
@@ -2001,7 +2001,7 @@ public abstract class ViewJFrameBase extends JFrame
                 filebase = new String(fName);
             }
 
-            if (options.getFileType() == FileBase.DICOM) {
+            if (options.getFileType() == FileUtility.DICOM) {
                 int newIndex = filebase.length();
 
                 for (i = filebase.length() - 1; i >= 0; i--) {
@@ -2050,7 +2050,7 @@ public abstract class ViewJFrameBase extends JFrame
         // part of the name
         String baseName = new String(fileName);
 
-        if (fileType == FileBase.DICOM) {
+        if (fileType == FileUtility.DICOM) {
             int index = fileName.lastIndexOf(".");
 
             if (index > 0) {
@@ -2083,7 +2083,7 @@ public abstract class ViewJFrameBase extends JFrame
         for (i = 0; i < fileInfo.length; i++) {
             fileInfo[i].setFileDirectory(directory);
 
-            if (fileType == FileBase.DICOM) {
+            if (fileType == FileUtility.DICOM) {
                 fileInfo[i].setFileName(baseName + (i + 1) + ".dcm");
             } else {
                 fileInfo[i].setFileName(fileName);
@@ -2473,7 +2473,7 @@ public abstract class ViewJFrameBase extends JFrame
         String extension = null;
         String directory = null;
         String suffix = null;
-        int fileType = FileBase.UNDEFINED;
+        int fileType = FileUtility.UNDEFINED;
         ModelImage img = null;
         ViewImageFileFilter vFilter = null;
         int i;
@@ -2695,7 +2695,7 @@ public abstract class ViewJFrameBase extends JFrame
 
             try {
                 suffix = new String(".avi");
-                fileType = FileBase.AVI;
+                fileType = FileUtility.AVI;
 
                 FileAvi aviFile;
 
@@ -2781,7 +2781,7 @@ public abstract class ViewJFrameBase extends JFrame
                 filebase = new String(fName);
             }
 
-            if (options.getFileType() == FileBase.DICOM) {
+            if (options.getFileType() == FileUtility.DICOM) {
                 int newIndex = filebase.length();
 
                 for (i = filebase.length() - 1; i >= 0; i--) {
@@ -2829,7 +2829,7 @@ public abstract class ViewJFrameBase extends JFrame
         // part of the name
         String baseName = new String(fileName);
 
-        if (fileType == FileBase.DICOM) {
+        if (fileType == FileUtility.DICOM) {
             int index = fileName.lastIndexOf(".");
 
             if (index > 0) {
@@ -2862,7 +2862,7 @@ public abstract class ViewJFrameBase extends JFrame
         for (i = 0; i < fileInfo.length; i++) {
             fileInfo[i].setFileDirectory(directory);
 
-            if (fileType == FileBase.DICOM) {
+            if (fileType == FileUtility.DICOM) {
                 fileInfo[i].setFileName(baseName + (i + 1) + ".dcm");
             } else {
                 fileInfo[i].setFileName(fileName);

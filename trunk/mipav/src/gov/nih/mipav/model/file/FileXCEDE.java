@@ -448,7 +448,7 @@ public class FileXCEDE implements DocumentFactory, XMLFactory {
      * @return     true if the speicified format is dicom format.
      */
     public static boolean isDicom(int format){
-        if(format == FileBase.DICOM){
+        if(format == FileUtility.DICOM){
             return true;
         }
         return false;

@@ -131,9 +131,9 @@ public class JDialogSaveSlices extends JDialogBase {
         maxValue = mxValue;
         timeEnabled = false;
         fourDimEnabled = false;
-        tiffEnabled = (options.getFileType() == FileBase.TIFF);
-        corEnabled = (options.getFileType() == FileBase.COR);
-        afniEnabled = (options.getFileType() == FileBase.AFNI);
+        tiffEnabled = (options.getFileType() == FileUtility.TIFF);
+        corEnabled = (options.getFileType() == FileUtility.COR);
+        afniEnabled = (options.getFileType() == FileUtility.AFNI);
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
         init();
@@ -158,12 +158,12 @@ public class JDialogSaveSlices extends JDialogBase {
         minTimeValue = mnTimeValue;
         maxTimeValue = mxTimeValue;
         timeEnabled = true;
-        tiffEnabled = (options.getFileType() == FileBase.TIFF);
-        fourDimEnabled = ((options.getFileType() == FileBase.ANALYZE) || (options.getFileType() == FileBase.NIFTI) ||
-                              (options.getFileType() == FileBase.RAW) || (options.getFileType() == FileBase.FITS) ||
-                              (options.getFileType() == FileBase.ICS) ||
-                              (options.getFileType() == FileBase.INTERFILE) ||
-                              (options.getFileType() == FileBase.AFNI) || (options.getFileType() == FileBase.XML));
+        tiffEnabled = (options.getFileType() == FileUtility.TIFF);
+        fourDimEnabled = ((options.getFileType() == FileUtility.ANALYZE) || (options.getFileType() == FileUtility.NIFTI) ||
+                              (options.getFileType() == FileUtility.RAW) || (options.getFileType() == FileUtility.FITS) ||
+                              (options.getFileType() == FileUtility.ICS) ||
+                              (options.getFileType() == FileUtility.INTERFILE) ||
+                              (options.getFileType() == FileUtility.AFNI) || (options.getFileType() == FileUtility.XML));
         enablePackBitWrite = options.isPackBitEnabled();
         this.options = options;
         init();
@@ -480,7 +480,7 @@ public class JDialogSaveSlices extends JDialogBase {
             multiFileCheckbox.setSelected(false);
         }
 
-        if (afniEnabled || (options.getFileType() == FileBase.DICOM)) {
+        if (afniEnabled || (options.getFileType() == FileUtility.DICOM)) {
             multiFileCheckbox.setEnabled(false);
         }
 
@@ -565,7 +565,7 @@ public class JDialogSaveSlices extends JDialogBase {
         pack();
         OKButton.requestFocus();
         setVisible(true);
-        // if(options.getFileType() == FileBase.DICOM) {
+        // if(options.getFileType() == FileUtility.DICOM) {
         // System.out.println("hhhhhadhhhahhhhahahh");
         // actionPerformed(new ActionEvent(this,1,"OK"));
         // }

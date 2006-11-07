@@ -642,7 +642,7 @@ public class FileNIFTI extends FileBase {
            
         // Tagged for removal - Matt 4/17/2003
         // if (fileInfo == null) { // if the file info does not yet exist: make it
-        // fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileBase.NIFTI);
+        // fileInfo = new FileInfoNIFTI(imageFileName, fileDir, FileUtility.NIFTI);
         // if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) { // Why 3/20/2001
         // throw (new IOException(" NIFTI header file error"));
         // }
@@ -1726,7 +1726,7 @@ public class FileNIFTI extends FileBase {
         int newType;
         boolean doChangeType;
         AlgorithmChangeType changeTypeAlgo;
-        fileInfo = new FileInfoNIFTI(fileName, fileDir, FileBase.NIFTI);
+        fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" NIFTI header file error"));
@@ -1889,7 +1889,7 @@ public class FileNIFTI extends FileBase {
         int offset;
 
         if (fileInfo == null) { // if no file info yet, make it.
-            fileInfo = new FileInfoNIFTI(fileName, fileDir, FileBase.NIFTI);
+            fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
 
             if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
                 throw (new IOException("Cannot read image because of NIFTI header file error"));
@@ -2876,7 +2876,7 @@ public class FileNIFTI extends FileBase {
         } catch (ClassCastException e) { // If it isn't, catch the exception
 
             // and make a new fileInfo
-            fileInfo = new FileInfoNIFTI(fileName, fileDir, FileBase.NIFTI);
+            fileInfo = new FileInfoNIFTI(fileName, fileDir, FileUtility.NIFTI);
             isNIFTI = false; // Write the header without all the NIFTI info
         }
 

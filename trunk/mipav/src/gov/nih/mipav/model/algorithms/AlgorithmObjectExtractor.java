@@ -2696,7 +2696,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             }
 
             try {
-                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_uvf", FileBase.XML,
+                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_uvf", FileUtility.XML,
                                    true);
             } catch (OutOfMemoryError error) {
 
@@ -2729,7 +2729,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             }
 
             try {
-                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_vvf", FileBase.XML,
+                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_vvf", FileUtility.XML,
                                    true);
             } catch (OutOfMemoryError error) {
 
@@ -2762,7 +2762,7 @@ public class AlgorithmObjectExtractor extends AlgorithmBase {
             }
 
             try {
-                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_wvf", FileBase.XML,
+                gvfImage.saveImage(image.getFileInfo(0).getFileDirectory(), image.getImageName() + "_wvf", FileUtility.XML,
                                    true);
             } catch (OutOfMemoryError error) {
 

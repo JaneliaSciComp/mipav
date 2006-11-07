@@ -631,7 +631,7 @@ public class FileMGH extends FileBase {
     public ModelImage readImage(boolean one) throws IOException, OutOfMemoryError {
         int offset;
                       
-        fileInfo = new FileInfoMGH(fileName, fileDir, FileBase.MGH);
+        fileInfo = new FileInfoMGH(fileName, fileDir, FileUtility.MGH);
 
         if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
             throw (new IOException(" MGH header file error"));
@@ -706,7 +706,7 @@ public class FileMGH extends FileBase {
         int offset;
 
         if (fileInfo == null) { // if no file info yet, make it.
-            fileInfo = new FileInfoMGH(fileName, fileDir, FileBase.MGH);
+            fileInfo = new FileInfoMGH(fileName, fileDir, FileUtility.MGH);
 
             if (!readHeader(fileInfo.getFileName(), fileInfo.getFileDirectory())) {
                 throw (new IOException("Cannot read image because of MGH header file error"));

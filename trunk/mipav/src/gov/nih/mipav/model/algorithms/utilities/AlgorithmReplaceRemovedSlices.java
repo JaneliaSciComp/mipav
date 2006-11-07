@@ -128,7 +128,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
             return;
         }
         
-        if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.DICOM) {
+        if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM) {
             isDicom = true;
         }
         else {
@@ -682,7 +682,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }
             }
-            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.MINC) {
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.MINC) {
                 FileInfoMinc fileInfoBuffer;
 //              fix the fileinfos to match
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
@@ -690,7 +690,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }   
             }
-            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.AFNI) {
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.AFNI) {
                 FileInfoAfni fileInfoBuffer;
 //              fix the fileinfos to match
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
@@ -698,7 +698,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }   
             }
-            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.NIFTI) {
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.NIFTI) {
                 FileInfoNIFTI fileInfoBuffer;
 //              fix the fileinfos to match
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
@@ -706,7 +706,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }   
             }
-            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.ANALYZE) {
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.ANALYZE) {
                 FileInfoAnalyze fileInfoBuffer;
 //              fix the fileinfos to match
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {
@@ -714,7 +714,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                     srcImage.setFileInfo(fileInfoBuffer, i);
                 }   
             }
-            else if (srcImage.getFileInfo()[0].getFileFormat() == FileBase.XML) {
+            else if (srcImage.getFileInfo()[0].getFileFormat() == FileUtility.XML) {
                 FileInfoXML fileInfoBuffer;
 //              fix the fileinfos to match
                 for (i = 0; i < resultImage.getExtents()[2]; i++) {

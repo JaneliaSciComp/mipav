@@ -290,7 +290,7 @@ public class JDialogSaveDicom extends JDialogBase {
         validate();
 
         // try to extract out dicom-converted tags which may be buried in the minc header
-        if (fileInfo.getFileFormat() == FileBase.MINC) {
+        if (fileInfo.getFileFormat() == FileUtility.MINC) {
             tagsImportedFromNonDicomImage = ((FileInfoMinc) fileInfo).convertTagsToTable();
             fillDataFromTable(tagsImportedFromNonDicomImage);
 

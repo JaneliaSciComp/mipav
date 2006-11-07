@@ -2642,7 +2642,7 @@ public class FileAvi extends FileBase {
         
         FileWriteOptions options = new FileWriteOptions(true);
         options.setAVICompression(newCompressionType);
-        options.setFileType(FileBase.AVI);
+        options.setFileType(FileUtility.AVI);
         options.setBeginSlice(0);
         options.setEndSlice(imageA.getExtents()[2] - 1);
         ScriptRecorder.getReference().addLine(new ActionSaveImageAs(imageA, options));
@@ -3581,7 +3581,7 @@ public class FileAvi extends FileBase {
             raFile = new RandomAccessFile(file, "r");
 
             endianess = FileBase.LITTLE_ENDIAN; // false
-            fileInfo = new FileInfoAvi(fileName, fileDir, FileBase.AVI);
+            fileInfo = new FileInfoAvi(fileName, fileDir, FileUtility.AVI);
             fileInfo.setEndianess(endianess);
 
             int signature = getInt(endianess);

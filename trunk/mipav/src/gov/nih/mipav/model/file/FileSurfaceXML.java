@@ -48,7 +48,7 @@ public class FileSurfaceXML extends FileXML {
      */
     public FileSurfaceXML(ViewUserInterface _UI, String fName, String fDir) {
         super(_UI, fName, fDir);
-        fileInfo = new FileInfoSurfaceXML(fName, fDir, FileBase.SURFACE_XML);
+        fileInfo = new FileInfoSurfaceXML(fName, fDir, FileUtility.SURFACE_XML);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------

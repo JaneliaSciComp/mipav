@@ -440,7 +440,7 @@ public class MipavCoordinateSystems
         float[] afSagittalOrigin = kImage.getOrigin( 0, FileInfoBase.SAGITTAL );
 
         if (( kImage.getFileInfo()[0].getTransformID() == FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL) ||
-            (kImage.getFileInfo()[0].getFileFormat() == FileBase.DICOM))
+            (kImage.getFileInfo()[0].getFileFormat() == FileUtility.DICOM))
         {
             float[] afResolutions = kImage.getResolutions( 0 );
 

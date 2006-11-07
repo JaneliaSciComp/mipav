@@ -215,7 +215,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         opts.setFileType(fileType);
 
         // tiff only parameter (and may be optional even for tiffs)
-        opts.setPackBitEnabled((fileType == FileBase.TIFF) &&
+        opts.setPackBitEnabled((fileType == FileUtility.TIFF) &&
                                    ((image.getFileInfo(0).getDataType() == ModelStorageBase.BYTE) ||
                                         (image.getFileInfo(0).getDataType() == ModelStorageBase.UBYTE)));
 
@@ -230,10 +230,10 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
             opts.setEndSlice(image.getExtents()[2] - 1);
             opts.setAxisOrientation(image.getAxisOrientation());
 
-            if (fileType == FileBase.TIFF) {
+            if (fileType == FileUtility.TIFF) {
                 opts.setWritePackBit(false);
                 opts.setMultiFile(false);
-            } else if (fileType == FileBase.MINC) {
+            } else if (fileType == FileUtility.MINC) {
                 JDialogSaveMinc minc = new JDialogSaveMinc(ViewUserInterface.getReference().getMainFrame(),
                                                            image.getFileInfo(0), opts);
                 opts = minc.setOptionsDefault();
@@ -245,10 +245,10 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
             opts.setEndTime(image.getExtents()[3] - 1);
             opts.setTimeSlice(0);
 
-            if (fileType == FileBase.TIFF) {
+            if (fileType == FileUtility.TIFF) {
                 opts.setWritePackBit(false);
                 opts.setMultiFile(false);
-            } else if (fileType == FileBase.MINC) {
+            } else if (fileType == FileUtility.MINC) {
                 JDialogSaveMinc minc = new JDialogSaveMinc(ViewUserInterface.getReference().getMainFrame(),
                                                            image.getFileInfo(0), opts);
                 opts = minc.setOptionsDefault();
@@ -256,7 +256,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
         }
 
         // allow parameters to override the option defaults
-        if (fileType == FileBase.TIFF) {
+        if (fileType == FileUtility.TIFF) {
 
             try {
                 int startNumber = parameters.getInt(TIFF_START_NUMBER);
@@ -269,7 +269,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                 Preferences.debug(pe + ".  It is an optional parameter.  Using defaults.\n",
                                   Preferences.DEBUG_SCRIPTING);
             }
-        } else if (fileType == FileBase.AVI) {
+        } else if (fileType == FileUtility.AVI) {
 
             try {
                 int aviCompression = parameters.getInt(AVI_COMPRESSION);
@@ -329,14 +329,14 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
 
         // if not a save as, always save the same type of file
         if (options.isSaveAs()) {
-            parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileIO.getSuffix(options.getFileType())));
+            parameters.put(ParameterFactory.newString(SAVE_FILE_TYPE, FileUtility.getDefaultSuffix(options.getFileType())));
         }
 
-        if ((options.getFileType() == FileBase.TIFF) && options.isPackBitEnabled()) {
+        if ((options.getFileType() == FileUtility.TIFF) && options.isPackBitEnabled()) {
             parameters.put(ParameterFactory.newBoolean(TIFF_SET_WRITE_PACK_BIT, options.isWritePackBit()));
         }
 
-        if ((options.getFileType() == FileBase.AVI)) {
+        if ((options.getFileType() == FileUtility.AVI)) {
             parameters.put(ParameterFactory.newInt(AVI_COMPRESSION, options.getAVICompression()));
         }
 
@@ -347,7 +347,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
                 parameters.put(ParameterFactory.newInt(END_SLICE, options.getEndSlice()));
             }
 
-            if ((options.getFileType() == FileBase.TIFF) && options.isMultiFile()) {
+            if ((options.getFileType() == FileUtility.TIFF) && options.isMultiFile()) {
                 parameters.put(ParameterFactory.newInt(TIFF_START_NUMBER, options.getStartNumber()));
                 parameters.put(ParameterFactory.newInt(TIFF_DIGIT_NUMBER, options.getDigitNumber()));
             }
@@ -359,7 +359,7 @@ public abstract class ActionSaveBase extends ActionImageProcessorBase {
             }
 
             // we can read 4d minc and tiff, but can't write out again as 4d (so just save a specific time point)
-            if ((options.getFileType() == FileBase.TIFF) || (options.getFileType() == FileBase.MINC)) {
+            if ((options.getFileType() == FileUtility.TIFF) || (options.getFileType() == FileUtility.MINC)) {
                 parameters.put(ParameterFactory.newInt(TIME_SLICE, options.getTimeSlice()));
 
                 if (options.isMultiFile()) {

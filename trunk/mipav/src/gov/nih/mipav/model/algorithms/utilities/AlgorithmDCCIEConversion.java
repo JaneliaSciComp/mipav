@@ -260,7 +260,7 @@ public class AlgorithmDCCIEConversion extends AlgorithmBase {
                 // if the new directory structure doesnt exist, create it, then transcode to AVI
                 if (inputFile.exists() || inputFile.mkdirs()) {
                     FileWriteOptions opts = new FileWriteOptions(true);
-                    opts.setFileType(FileBase.TIFF);
+                    opts.setFileType(FileUtility.TIFF);
                     opts.setFileDirectory(newDirectory);
                     opts.setFileName(name);
                     opts.setPackBitEnabled(false);

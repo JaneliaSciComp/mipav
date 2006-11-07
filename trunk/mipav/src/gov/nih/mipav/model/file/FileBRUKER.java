@@ -177,7 +177,7 @@ public class FileBRUKER extends FileBase {
 
         file = new File(fileDir + fileName);
         raFile = new RandomAccessFile(file, "r");
-        fileInfo = new FileInfoBRUKER(fileName, fileDir, FileBase.BRUKER); // dummy fileInfo
+        fileInfo = new FileInfoBRUKER(fileName, fileDir, FileUtility.BRUKER); // dummy fileInfo
         lineString = readLine();
 
         while (lineString != null) {

@@ -12,6 +12,7 @@ import edu.sdsc.grid.io.local.LocalFileSystem;
 import edu.sdsc.grid.io.srb.SRBFile;
 import gov.nih.mipav.model.file.FileBase;
 import gov.nih.mipav.model.file.FileInfoBase;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
@@ -417,34 +418,34 @@ public class SRBUtility {
         switch (fileFormat) {
 
             /** Ill defined file type.              */
-            case FileBase.ERROR:
+            case FileUtility.ERROR:
                 return null;
 
             /** Undefined file type.                */
-            case FileBase.UNDEFINED:
+            case FileUtility.UNDEFINED:
                 return null;
 
             /** Not presently implemented.          */
-            case FileBase.MIPAV:
+            case FileUtility.MIPAV:
                 return null;
 
             /** RAW image data, no header.          */
-            case FileBase.RAW:
+            case FileUtility.RAW:
                 return null;
 
             /** TIFF file; tagged header            */
-            case FileBase.TIFF:
+            case FileUtility.TIFF:
                 return null;
 
             /** VOI file, used to read VOIs.        */
-            case FileBase.VOI_FILE:
+            case FileUtility.VOI_FILE:
                 return null;
 
             /** Analyze format (Mayo).              */
-            case FileBase.ANALYZE:
+            case FileUtility.ANALYZE:
 
             /** NIFTI format */
-            case FileBase.NIFTI:
+            case FileUtility.NIFTI:
                 fileNameList = new Vector();
 
                 String imgFileName = fileInfo.getFileName();
@@ -456,7 +457,7 @@ public class SRBUtility {
 
             /** Digital Imaging and COmmunications in Medicine file type.
              * Fully implemented versions 2 & 3.   */
-            case FileBase.DICOM:
+            case FileUtility.DICOM:
                 fileNameList = new Vector();
                 for (int i = 0; i < fileInfoList.length; i++) {
                     fileNameList.add(fileInfoList[i].getFileName());
@@ -465,51 +466,51 @@ public class SRBUtility {
                 return fileNameList;
 
             /** Medvision file type.                */
-            case FileBase.MEDVISION:
+            case FileUtility.MEDIVISION:
                 return null;
 
             /** Benes Trus special file type.       */
-            case FileBase.MAP:
+            case FileUtility.MAP:
                 return null;
 
             /** Java Image Manangement Interface file type. */
-            case FileBase.JIMI:
+            case FileUtility.JIMI:
                 return null;
 
             /** Multiple files of TIFF images.      */
-            case FileBase.TIFF_MULTIFILE:
+            case FileUtility.TIFF_MULTIFILE:
                 return null;
 
             /** MINC file type.  MINC is a medical imaging oriented extension
              * of the NetCDF file format. NetCDF stands for `Network Common Data Form'.  */
-            case FileBase.MINC:
+            case FileUtility.MINC:
                 fileNameList = new Vector();
                 fileNameList.add(fileInfo.getFileName());
 
                 return fileNameList;
 
             /** AVI file type.  Windows Media.*/
-            case FileBase.AVI:
+            case FileUtility.AVI:
                 return null;
 
             /** Multiple files of type analyze.     */
-            case FileBase.ANALYZE_MULTIFILE:
+            case FileUtility.ANALYZE_MULTIFILE:
                 return null;
 
             /** Quicktime file type.            */
-            case FileBase.QT:
+            case FileUtility.QT:
                 return null;
 
             /** Cheshire file type (a kind of Analyze).*/
-            case FileBase.CHESHIRE:
+            case FileUtility.CHESHIRE:
                 return null;
 
             /** Cheshire overlay file type.  Contains VOIs. */
-            case FileBase.CHESHIRE_OVERLAY:
+            case FileUtility.CHESHIRE_OVERLAY:
                 return null;
 
             /** AFNI file type. */
-            case FileBase.AFNI:
+            case FileUtility.AFNI:
                 fileNameList = new Vector();
 
                 String headFileName = fileInfo.getFileName();
@@ -520,59 +521,59 @@ public class SRBUtility {
                 return fileNameList;
 
             /** FITS file type. */
-            case FileBase.FITS:
+            case FileUtility.FITS:
                 return null;
 
             /** MetaMorph Stack (STK) file type. */
-            case FileBase.STK:
+            case FileUtility.STK:
                 return null;
 
             /** Siemens MAGNETOM VISION */
-            case FileBase.MAGNETOM_VISION:
+            case FileUtility.MAGNETOM_VISION:
                 return null;
 
             /** GE Genesis 5X and LX */
-            case FileBase.GE_GENESIS:
+            case FileUtility.GE_GENESIS:
                 return null;
 
             /** MRC file format used by IMOD */
-            case FileBase.MRC:
+            case FileUtility.MRC:
                 return null;
 
             /** Interfile file format used in Nuclear Medicine */
-            case FileBase.INTERFILE:
+            case FileUtility.INTERFILE:
                 return null;
 
             /** Micro CT format for small animal imaging */
-            case FileBase.MICRO_CAT:
+            case FileUtility.MICRO_CAT:
                 return null;
 
             /** RAW MULTIFLE image data, no header. */
-            case FileBase.RAW_MULTIFILE:
+            case FileUtility.RAW_MULTIFILE:
                 return null;
 
             /** Used by the Zeiss LSM 510 Dataserver */
-            case FileBase.LSM:
+            case FileUtility.LSM:
                 return null;
 
             /** Used by the Zeiss LSM 510 Dataserver */
-            case FileBase.LSM_MULTIFILE:
+            case FileUtility.LSM_MULTIFILE:
                 return null;
 
             /** Used by the Bio-Rad Pic format */
-            case FileBase.BIORAD:
+            case FileUtility.BIORAD:
                 return null;
 
             /** Used by FreeSurfer software */
-            case FileBase.COR:
+            case FileUtility.COR:
                 return null;
 
             /** Bruker file format */
-            case FileBase.BRUKER:
+            case FileUtility.BRUKER:
                 return null;
 
             /** MIPAV XML file format */
-            case FileBase.XML:
+            case FileUtility.XML:
                 fileNameList = new Vector();
 
                 String rawFileName = fileInfo.getFileName();
@@ -583,39 +584,39 @@ public class SRBUtility {
                 return fileNameList;
 
             /** MIPAV XML file format */
-            case FileBase.XML_MULTIFILE:
+            case FileUtility.XML_MULTIFILE:
                 return null;
 
             /** SPM file format */
-            case FileBase.SPM:
+            case FileUtility.SPM:
                 return null;
 
             /** MIPAV project format */
-            case FileBase.PROJECT:
+            case FileUtility.PROJECT:
                 return null;
 
             /** NIFTI multi-file format */
-            case FileBase.NIFTI_MULTIFILE:
+            case FileUtility.NIFTI_MULTIFILE:
                 return null;
 
             /* Image Cytometry Standard */
-            case FileBase.ICS:
+            case FileUtility.ICS:
                 return null;
 
             /* Optical coherence tomography */
-            case FileBase.TMG:
+            case FileUtility.TMG:
                 return null;
 
             /* Washington University OSM dataset structure */
-            case FileBase.OSM:
+            case FileUtility.OSM:
                 return null;
 
             /** MIPAV Surface XML file format */
-            case FileBase.SURFACE_XML:
+            case FileUtility.SURFACE_XML:
                 return null;
 
             /** Gatan's Digital Micrograph version 3 file format */
-            case FileBase.DM3: /** Image modality unknown. */
+            case FileUtility.DM3: /** Image modality unknown. */
                 return null;
         }
 

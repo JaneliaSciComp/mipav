@@ -753,7 +753,7 @@ public abstract class ViewJFrameMultiple extends ViewJFrameImage {
         FileWriteOptions options = new FileWriteOptions(img.getImageName() + ".xml",
                                                         userInterface.getDefaultDirectory() + File.separator, true);
 
-        options.setFileType(FileBase.XML);
+        options.setFileType(FileUtility.XML);
 
         if (img.getNDims() == 3) {
             options.setBeginSlice(0);

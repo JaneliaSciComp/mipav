@@ -152,7 +152,7 @@ public class FileOSM extends FileBase {
             file = new File(fileDir + fileName);
 
             endianess = FileBase.LITTLE_ENDIAN; // false
-            fileInfo = new FileInfoOSM(fileName, fileDir, FileBase.OSM);
+            fileInfo = new FileInfoOSM(fileName, fileDir, FileUtility.OSM);
 
             raFile = new RandomAccessFile(file, "r");
 
