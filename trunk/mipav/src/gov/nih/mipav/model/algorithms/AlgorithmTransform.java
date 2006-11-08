@@ -3447,7 +3447,7 @@ public class AlgorithmTransform extends AlgorithmBase {
      * @param  resultImage  Resultant image.
      * @param  resolutions  DOCUMENT ME!
      */
-    public static void updateFileInfo(ModelImage image, ModelImage resultImage, float[] resolutions) {
+    private static void updateFileInfo(ModelImage image, ModelImage resultImage, float[] resolutions) {
         FileInfoBase[] fileInfo = resultImage.getFileInfo();
 
         if (resultImage.getNDims() == 2) {
@@ -3475,7 +3475,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setEndianess(image.getFileInfo()[0].getEndianess());
                 fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
                 fileInfo[i].setResolutions(resolutions);
-                fileInfo[i].setSliceSpacing(resolutions[2]);
+                fileInfo[i].setSliceThickness(resolutions[2]);
                 fileInfo[i].setExtents(resultImage.getExtents());
                 fileInfo[i].setMax(resultImage.getMax());
                 fileInfo[i].setMin(resultImage.getMin());
@@ -3496,7 +3496,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 fileInfo[i].setEndianess(image.getFileInfo()[0].getEndianess());
                 fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
                 fileInfo[i].setResolutions(resolutions);
-                fileInfo[i].setSliceSpacing(resolutions[2]);
+                fileInfo[i].setSliceThickness(resolutions[2]);
                 fileInfo[i].setExtents(resultImage.getExtents());
                 fileInfo[i].setMax(resultImage.getMax());
                 fileInfo[i].setMin(resultImage.getMin());

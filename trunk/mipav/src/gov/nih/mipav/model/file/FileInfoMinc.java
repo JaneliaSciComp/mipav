@@ -1133,7 +1133,7 @@ public class FileInfoMinc extends FileInfoBase {
         double xStep = 1.0;
         double yStep = 1.0;
         double zStep = 1.0;
-        double thickness = getSliceThickness();
+        double thickness = getMincSliceThickness();
 
         for (int i = 0; i < varArray.length; i++) {
 
@@ -1149,53 +1149,36 @@ public class FileInfoMinc extends FileInfoBase {
                 zStep = varArray[i].step;
             }
         }
-
-        float[] res = new float[getExtents().length];
-
-        if (res.length == 2) {
-            res[0] = Math.abs((float) xStep);
-            res[1] = Math.abs((float) yStep);
-        } else if (res.length == 3) {
+        
+        setSliceThickness(Math.abs((float) thickness));
+        
+        if (getExtents().length == 2) {
+            setResolutions(Math.abs((float) xStep), 0);
+            setResolutions(Math.abs((float) yStep), 1);
+        } else if (getExtents().length == 3) {
 
             switch (orientation) {
 
                 case SAGITTAL:
-                    if (thickness == 0) {
-                        res[2] = Math.abs((float) xStep);
-                    } else {
-                        res[2] = Math.abs((float) thickness);
-                        setSliceSpacing((float) xStep);
-                    }
-                    res[0] = Math.abs((float) yStep);
-                    res[1] = Math.abs((float) zStep);
+                    setResolutions(Math.abs((float) xStep), 2);
+                    setResolutions(Math.abs((float) yStep), 0);
+                    setResolutions(Math.abs((float) zStep), 1);
                     break;
 
                 case CORONAL:
-                    res[0] = Math.abs((float) xStep);
-                    if (thickness == 0) {
-                        res[2] = Math.abs((float) yStep);
-                    } else {
-                        res[2] = Math.abs((float) thickness);
-                        setSliceSpacing((float) yStep);
-                    }
-                    res[1] = Math.abs((float) zStep);
+                    setResolutions(Math.abs((float) xStep), 0);
+                    setResolutions(Math.abs((float) yStep), 2);
+                    setResolutions(Math.abs((float) zStep), 1);
                     break;
 
                 case AXIAL:
                 default:
-                    res[0] = Math.abs((float) xStep);
-                    res[1] = Math.abs((float) yStep);
-                    if (thickness == 0) {
-                        res[2] = Math.abs((float) zStep);
-                    } else {
-                        res[2] = Math.abs((float) thickness);
-                        setSliceSpacing((float) zStep);
-                    }
+                    setResolutions(Math.abs((float) xStep), 0);
+                    setResolutions(Math.abs((float) yStep), 1);
+                    setResolutions(Math.abs((float) zStep), 2);
                     break;
             }
         }
-
-        setResolutions(res);
     }
 
     /**
@@ -1880,7 +1863,7 @@ public class FileInfoMinc extends FileInfoBase {
      * 
      * @return  The slice thickness, if it is stored in the minc header (0 otherwise).
      */
-    private double getSliceThickness() {
+    private double getMincSliceThickness() {
         for (int i = 0; i < varArray.length; i++) {
             if (varArray[i].name.equals("acquisition")) {
                 for (int j = 0; j < varArray[i].vattArray.length; j++) {

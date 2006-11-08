@@ -263,9 +263,6 @@ public class FileInfoMagnetomVision extends FileInfoBase {
     private int SiemensStudyTimeSS;
 
     /** DOCUMENT ME! */
-    private double SliceThickness;
-
-    /** DOCUMENT ME! */
     private String Station = null;
 
     /** DOCUMENT ME! */
@@ -509,7 +506,7 @@ public class FileInfoMagnetomVision extends FileInfoBase {
         dialog.append("Registration Time Hour: " + RegistrationTimeHH + "\n");
         dialog.append("Registration Time Minute: " + RegistrationTimeMM + "\n");
         dialog.append("Registration Time Second: " + RegistrationTimeSS + "\n");
-        dialog.append("Slice Thickness: " + SliceThickness + "\n");
+        dialog.append("Slice Thickness: " + getSliceThickness() + "\n");
         dialog.append("Repetition Time: " + RepetitionTime + "\n");
         dialog.append("Echo Time: " + EchoTime + "\n");
         dialog.append("Frequency MHz: " + FrequencyMHz + "\n");
@@ -829,15 +826,6 @@ public class FileInfoMagnetomVision extends FileInfoBase {
      */
     public String getPatientName() {
         return PatientName;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public double getSliceThickness() {
-        return SliceThickness;
     }
 
     /**
@@ -1576,15 +1564,6 @@ public class FileInfoMagnetomVision extends FileInfoBase {
      */
     public void setSiemensStudyTimeSS(int SiemensStudyTimeSS) {
         this.SiemensStudyTimeSS = SiemensStudyTimeSS;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  SliceThickness  DOCUMENT ME!
-     */
-    public void setSliceThickness(double SliceThickness) {
-        this.SliceThickness = SliceThickness;
     }
 
     /**

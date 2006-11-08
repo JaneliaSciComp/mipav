@@ -637,7 +637,7 @@ public class FileInfoDicom extends FileInfoBase {
         if (!key.equals("")) {
 
             if (key.equals("0018,0050")) { // type 2
-                setResolutions(Float.parseFloat(((String) value).trim()), 2);
+                setSliceThickness(Float.parseFloat(((String) value).trim()));
             } else if (key.equals("0020,0032")) { // type 2c
                 orientation = ((String) value).trim();
 
@@ -715,7 +715,7 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f2 = new Float(secondHalf);
                     } catch (NumberFormatException e) {
-                        setResolutions(getResolutions()[0], 1);
+                        setResolutions(getResolution(0), 1);
                     }
                     if (f2 != null) {
                         setResolutions(f2.floatValue(), 1);
@@ -762,7 +762,7 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f2 = new Float(secondHalf);
                     } catch (NumberFormatException e) {
-                        setResolutions(getResolutions()[0], 1);
+                        setResolutions(getResolution(0), 1);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 
@@ -823,7 +823,7 @@ public class FileInfoDicom extends FileInfoBase {
         if (key.equals("0008,0060")) { // type 1
             setModality(value); // setModality() covers the possibility of value == ""
         } else if (key.equals("0018,0088")) { // type 1
-            super.setSliceSpacing(Float.parseFloat((String) value));
+            super.setResolutions(Float.parseFloat((String) value), 2);
         } else if (key.equals("0028,0100")) { // type 1
 
             if (!value.toString().equals("")) {
@@ -855,7 +855,7 @@ public class FileInfoDicom extends FileInfoBase {
         if (length != 0) {
 
             if (key.equals("0018,0050")) { // type 2
-                setResolutions(Float.parseFloat(((String) value).trim()), 2);
+                setSliceThickness(Float.parseFloat(((String) value).trim()));
             } else if (key.equals("0018,602C")) {
                 setResolutions(((Double) value).floatValue(), 0);
             } else if (key.equals("0018,602E")) {
@@ -937,7 +937,7 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f2 = new Float(secondHalf);
                     } catch (NumberFormatException e) {
-                        setResolutions(getResolutions()[0], 1);
+                        setResolutions(getResolution(0), 1);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 
@@ -987,7 +987,7 @@ public class FileInfoDicom extends FileInfoBase {
                     try {
                         f2 = new Float(secondHalf);
                     } catch (NumberFormatException e) {
-                        setResolutions(getResolutions()[0], 1);
+                        setResolutions(getResolution(0), 1);
                         // MipavUtil.displayError("Number format error: Pixel spacing = " + s);
                     }
 

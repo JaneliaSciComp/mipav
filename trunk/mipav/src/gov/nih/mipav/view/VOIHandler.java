@@ -34,13 +34,6 @@ import gov.nih.mipav.view.dialogs.JDialogOverlay;  //imports all static variable
  * VOIHandler class is used to handle all aspects of VOI movement from the
  * ViewJComponentEditImage.  It functions as a mouse listener and also handles
  * Popup-menus and VOI graph displays.
- * <p> </p>
- *
- * <p> </p>
- *
- * <p> </p>
- *
- * <p> </p>
  *
  * @author not attributable
  * @version 1.0
@@ -5374,36 +5367,36 @@ public class VOIHandler extends JComponent
         } else if (attribString.equals(atts[6])) {
             return resultStr + Double.toString(compImage.getActiveImage().getMax());
         } else if (attribString.equals(atts[7])) {
-            return resultStr + inf.getImageOrientationStr(inf.getImageOrientation());
+            return resultStr + FileInfoBase.getImageOrientationStr(inf.getImageOrientation());
         } else if (attribString.equals(atts[8])) {
-            return resultStr + inf.getAxisOrientationStr(inf.getAxisOrientation(0));
+            return resultStr + FileInfoBase.getAxisOrientationStr(inf.getAxisOrientation(0));
         } else if (attribString.equals(atts[9])) {
-            return resultStr + inf.getAxisOrientationStr(inf.getAxisOrientation(1));
+            return resultStr + FileInfoBase.getAxisOrientationStr(inf.getAxisOrientation(1));
         } else if (attribString.equals(atts[10])) {
 
             if (inf.getExtents().length > 2) {
-                return resultStr + inf.getAxisOrientationStr(inf.getAxisOrientation(2));
+                return resultStr + FileInfoBase.getAxisOrientationStr(inf.getAxisOrientation(2));
             }
         } else if (attribString.equals(atts[11])) {
             return new String(resultStr + inf.getResolutions()[0] + " " +
-                              inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[0]));
+                    FileInfoBase.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[0]));
         } else if (attribString.equals(atts[12])) {
             return new String(resultStr + inf.getResolutions()[1] + " " +
-                              inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[1]));
+                    FileInfoBase.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[1]));
         } else if (attribString.equals(atts[13])) {
 
             if (inf.getExtents().length > 2) {
                 return new String(resultStr + inf.getResolutions()[2] + " " +
-                                  inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[2]));
+                        FileInfoBase.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[2]));
             }
         } else if (attribString.equals(atts[14])) {
 
             if (inf.getExtents().length > 3) {
                 return new String(resultStr + inf.getResolutions()[3] + " " +
-                                  inf.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[3]));
+                        FileInfoBase.getUnitsOfMeasureAbbrevStr(inf.getUnitsOfMeasure()[3]));
             }
         } else if (attribString.equals(atts[15])) {
-            return resultStr + Float.toString(inf.getSliceSpacing());
+            return resultStr + Float.toString(inf.getSliceThickness());
         } else if (attribString.equals(atts[16])) {
             return resultStr + Float.toString(inf.getOrigin()[0]);
         } else if (attribString.equals(atts[17])) {
@@ -5426,7 +5419,7 @@ public class VOIHandler extends JComponent
                 return resultStr + "little endian";
             }
         } else if (attribString.equals(atts[21])) {
-            return resultStr + inf.getTransformIDStr(inf.getTransformID());
+            return resultStr + FileInfoBase.getTransformIDStr(inf.getTransformID());
         }
 
         return null;

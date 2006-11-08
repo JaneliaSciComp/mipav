@@ -897,11 +897,7 @@ public class FileImageXML extends FileXML {
         // if slice spacing is 0, set it to be the z resolution
         // otherwise keep the value (only applicable to XML and DICOM)
         if (nDims > 2) {
-            sliceSpacing = myFileInfo.getSliceSpacing();
-
-            if (sliceSpacing == 0) {
-                sliceSpacing = myFileInfo.getResolutions()[2];
-            }
+            sliceSpacing = myFileInfo.getResolution(2);
 
             closedTag(bw, datasetAttributesStr[8], String.valueOf(sliceSpacing));
         }
@@ -2643,8 +2639,8 @@ public class FileImageXML extends FileXML {
                     resolutions[resolutionsCount][resInfoCount] = Float.valueOf(elementBuffer).floatValue();
                 }
             } else if (currentKey.equals("Slice-spacing")) {
-                Preferences.debug("Slice spacing: " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
-                fileInfo.setSliceSpacing(Float.valueOf(elementBuffer).floatValue());
+                Preferences.debug("Slice spacing (res[2]): " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
+                fileInfo.setResolutions(Float.valueOf(elementBuffer).floatValue(), 2);
             } else if (currentKey.equals("Orientation")) {
                 Preferences.debug("Orientation: " + elementBuffer + "\n", Preferences.DEBUG_FILEIO);
                 fileInfo.setImageOrientation(FileInfoBase.getImageOrientationFromStr(elementBuffer));
@@ -2968,7 +2964,7 @@ public class FileImageXML extends FileXML {
                 Preferences.debug("FileXML: nDimensions = " + TAB + nDimensions + "\n", Preferences.DEBUG_FILEIO);
                 fileInfo.setExtents(new int[nDimensions]);
                 fileInfo.setResolutions(new float[nDimensions]);
-                fileInfo.setSliceSpacing((float) 0.0);
+                fileInfo.setSliceThickness((float) 0.0);
 
                 if (nDimensions == 2) {
                     matrix = new TransMatrix(3);

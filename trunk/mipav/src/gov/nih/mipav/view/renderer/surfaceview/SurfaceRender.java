@@ -349,14 +349,10 @@ public class SurfaceRender extends RenderViewBase {
         yDim = dimExtents[1];
         zDim = dimExtents[2];
         resols = imageA.getResolutions( 0 );
-        for ( int i = 0; i < 3; i++ )
-        {
+        for ( int i = 0; i < 3; i++ ) {
             resols[i] = Math.abs(resols[i]);
         }
-        if (resols[2] < imageA.getFileInfo(0).getSliceSpacing())
-        {
-            resols[2] = imageA.getFileInfo(0).getSliceSpacing();
-        }
+
         if ((resols[0] == 0.0f) || (resols[1] == 0.0f) || (resols[2] == 0.0f)) {
             resols[0] = 1.0f;
             resols[1] = 1.0f;

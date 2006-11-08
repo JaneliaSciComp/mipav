@@ -146,39 +146,38 @@ public class AlgorithmSubsample extends AlgorithmBase {
         if (srcImage.getNDims() == 4) {
 
             for (int i = 0; i < (resultImage.getExtents()[2] * resultImage.getExtents()[3]); i++) {
-                resultImage.getFileInfo()[i].getResolutions()[0] = srcImage.getFileInfo()[0].getResolutions()[0] *
-                                                                       denom;
-                resultImage.getFileInfo()[i].getResolutions()[1] = srcImage.getFileInfo()[0].getResolutions()[1] *
-                                                                       denom;
-                resultImage.getFileInfo()[i].getResolutions()[2] = srcImage.getFileInfo()[0].getResolutions()[2] *
-                                                                       denom;
-                resultImage.getFileInfo()[i].getResolutions()[3] = srcImage.getFileInfo()[0].getResolutions()[3];
+                resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(0) * denom, 0);
+                resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(1) * denom, 1);
+                resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(2) * denom, 2);
+
+                resultImage.getFileInfo()[i].setSliceThickness(srcImage.getFileInfo()[0].getSliceThickness() * denom);
+                
+                resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(3) * denom, 3);
 
                 resultImage.getFileInfo()[i].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
                 resultImage.getFileInfo()[i].setModality(srcImage.getFileInfo()[0].getModality());
                 resultImage.getFileInfo()[i].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());
                 resultImage.getFileInfo()[i].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
                 resultImage.getFileInfo()[i].setOrigin(srcImage.getFileInfo()[0].getOrigin());
-                resultImage.getFileInfo()[i].setSliceSpacing(srcImage.getFileInfo()[0].getSliceSpacing());
             }
         } else if (srcImage.getNDims() == 3) {
 
             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                resultImage.getFileInfo()[i].getResolutions()[0] = srcImage.getFileInfo()[0].getResolutions()[0] *
-                                                                       denom;
-                resultImage.getFileInfo()[i].getResolutions()[1] = srcImage.getFileInfo()[0].getResolutions()[1] *
-                                                                       denom;
+                resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(0) * denom, 0);
+                resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(1) * denom, 1);
 
                 if (srcImage.getExtents()[2] == resultImage.getExtents()[2]) {
 
                     // the z dimension shouldn't be changing
-                    resultImage.getFileInfo()[i].getResolutions()[2] = srcImage.getFileInfo()[0].getResolutions()[2];
+                    resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(2), 2);
+                    resultImage.getFileInfo()[i].setSliceThickness(srcImage.getFileInfo()[0].getSliceThickness());
                 } else {
 
                     // ratio of extents change for z dim might be different from that of the x and y dims
                     denom = (float) srcImage.getExtents()[2] / resultImage.getExtents()[2];
-                    resultImage.getFileInfo()[i].getResolutions()[2] = srcImage.getFileInfo()[0].getResolutions()[2] *
-                                                                           denom;
+                    
+                    resultImage.getFileInfo()[i].setResolutions(srcImage.getFileInfo()[0].getResolution(2) * denom, 2);
+                    resultImage.getFileInfo()[i].setSliceThickness(srcImage.getFileInfo()[0].getSliceThickness() * denom);
                 }
 
                 resultImage.getFileInfo()[i].setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
@@ -186,11 +185,10 @@ public class AlgorithmSubsample extends AlgorithmBase {
                 resultImage.getFileInfo()[i].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());
                 resultImage.getFileInfo()[i].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
                 resultImage.getFileInfo()[i].setOrigin(srcImage.getFileInfo()[0].getOrigin());
-                resultImage.getFileInfo()[i].setSliceSpacing(srcImage.getFileInfo()[0].getSliceSpacing());
             }
         } else if (srcImage.getNDims() == 2) {
-            resultImage.getFileInfo()[0].getResolutions()[0] = srcImage.getFileInfo()[0].getResolutions()[0] * denom;
-            resultImage.getFileInfo()[0].getResolutions()[1] = srcImage.getFileInfo()[0].getResolutions()[1] * denom;
+            resultImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolution(0) * denom, 0);
+            resultImage.getFileInfo()[0].setResolutions(srcImage.getFileInfo()[0].getResolution(1) * denom, 1);
 
             resultImage.getFileInfo()[0].setModality(srcImage.getFileInfo()[0].getModality());
             resultImage.getFileInfo()[0].setImageOrientation(srcImage.getFileInfo()[0].getImageOrientation());
@@ -1604,10 +1602,10 @@ public class AlgorithmSubsample extends AlgorithmBase {
         int roundX, roundY;
         int iXdim = srcImage.getExtents()[0];
         int iYdim = srcImage.getExtents()[1];
-        float iXres = srcImage.getFileInfo()[0].getResolutions()[0];
-        float iYres = srcImage.getFileInfo()[0].getResolutions()[1];
-        float oXres = resultImage.getFileInfo()[0].getResolutions()[0];
-        float oYres = resultImage.getFileInfo()[0].getResolutions()[1];
+        float iXres = srcImage.getFileInfo()[0].getResolution(0);
+        float iYres = srcImage.getFileInfo()[0].getResolution(1);
+        float oXres = resultImage.getFileInfo()[0].getResolution(0);
+        float oYres = resultImage.getFileInfo()[0].getResolution(1);
 
         float T00, T01, T02, T10, T11, T12;
         ModelImage tmpMask;
@@ -1701,12 +1699,12 @@ public class AlgorithmSubsample extends AlgorithmBase {
         int iXdim = srcImage.getExtents()[0];
         int iYdim = srcImage.getExtents()[1];
         int iZdim = srcImage.getExtents()[2];
-        float iXres = srcImage.getFileInfo()[0].getResolutions()[0];
-        float iYres = srcImage.getFileInfo()[0].getResolutions()[1];
-        float iZres = srcImage.getFileInfo()[0].getResolutions()[2];
-        float oXres = resultImage.getFileInfo()[0].getResolutions()[0];
-        float oYres = resultImage.getFileInfo()[0].getResolutions()[1];
-        float oZres = resultImage.getFileInfo()[0].getResolutions()[2];
+        float iXres = srcImage.getFileInfo()[0].getResolution(0);
+        float iYres = srcImage.getFileInfo()[0].getResolution(1);
+        float iZres = srcImage.getFileInfo()[0].getResolution(2);
+        float oXres = resultImage.getFileInfo()[0].getResolution(0);
+        float oYres = resultImage.getFileInfo()[0].getResolution(1);
+        float oZres = resultImage.getFileInfo()[0].getResolution(2);
 
 
         sliceSize = iXdim * iYdim;

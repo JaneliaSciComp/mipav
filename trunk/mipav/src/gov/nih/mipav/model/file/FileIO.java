@@ -2059,7 +2059,7 @@ public class FileIO {
                 if (sliceThickness > 0) {
 
                     for (int m = 0; m < nImages; m++) {
-                        ((FileInfoDicom) image.getFileInfo(m)).getResolutions()[2] = sliceThickness;
+                        image.getFileInfo(m).setSliceThickness(sliceThickness);
                     }
                 }
             }
@@ -2084,7 +2084,7 @@ public class FileIO {
 
                 // System.err.println("res3Dim Spacing: " + res3Dim);
                 if ((res3Dim != 0)) {
-                    ((FileInfoDicom) image.getFileInfo(0)).getResolutions()[2] = res3Dim;
+                    image.getFileInfo(0).setResolutions(res3Dim, 2);
 
                     // System.out.println (" res3Dim 1  = " + res3Dim);
                     for (int m = 1; m < (nImages - 1); m++) {
@@ -2101,10 +2101,10 @@ public class FileIO {
                                   ((zLoc0 - zLoc1) * (zLoc0 - zLoc1));
                         res3Dim = (float) Math.sqrt(res3Dim);
 
-                        ((FileInfoDicom) image.getFileInfo(m)).getResolutions()[2] = res3Dim;
+                        image.getFileInfo(m).setResolutions(res3Dim, 2);
                     }
 
-                    ((FileInfoDicom) image.getFileInfo(nImages - 1)).getResolutions()[2] = res3Dim;
+                    image.getFileInfo(nImages - 1).setResolutions(res3Dim, 2);
                 }
             }
 
@@ -2130,29 +2130,15 @@ public class FileIO {
                     // System.err.println("Slice difference: " + sliceDifference);
 
                     if ((Math.abs(sliceDifference) < sliceThickness) && (Math.abs(sliceDifference) > 0.001)) {
-                        ((FileInfoDicom) image.getFileInfo(0)).getResolutions()[2] = sliceDifference;
+                        image.getFileInfo(0).setResolutions(sliceDifference, 2);
 
                         for (int m = 0; m < (nImages - 1); m++) {
-                            ((FileInfoDicom) image.getFileInfo(m)).getResolutions()[2] = Float.parseFloat((String)
-                                                                                                          ((FileDicomTag)
-                                                                                                               ((FileInfoDicom)
-                                                                                                                    image.getFileInfo(m +
-                                                                                                                                      1))
-                                                                                                                   .getTagsList().get("0020,1041"))
-                                                                                                              .getValue(true)) -
-                                                                                         Float.parseFloat((String)
-                                                                                                          ((FileDicomTag)
-                                                                                                               ((FileInfoDicom)
-                                                                                                                    image.getFileInfo(m))
-                                                                                                                   .getTagsList().get("0020,1041"))
-                                                                                                              .getValue(true));
+                            image.getFileInfo(m).setResolutions(Float.parseFloat((String)((FileDicomTag)((FileInfoDicom)image.getFileInfo(m + 1)).getTagsList().get("0020,1041")).getValue(true)) - 
+                                                                Float.parseFloat((String)((FileDicomTag)((FileInfoDicom)image.getFileInfo(m)).getTagsList().get("0020,1041")).getValue(true)), 2);
                         }
 
                         if (nImages > 2) {
-                            ((FileInfoDicom) image.getFileInfo(nImages - 1)).getResolutions()[2] = ((FileInfoDicom)
-                                                                                                        image.getFileInfo(nImages -
-                                                                                                                          2))
-                                                                                                       .getResolutions()[2];
+                            image.getFileInfo(nImages - 1).setResolutions(image.getFileInfo(nImages - 2).getResolution(2), 2);
                         }
                     }
                 }
@@ -3608,8 +3594,8 @@ public class FileIO {
      */
     private static void copyResolutions(ModelImage modelImageSrc, ModelImage modelImageResult, int sliceNum) {
         float[] resolutions = new float[3];
-        resolutions[0] = modelImageSrc.getFileInfo(0).getResolutions()[0];
-        resolutions[1] = modelImageSrc.getFileInfo(0).getResolutions()[1];
+        resolutions[0] = modelImageSrc.getFileInfo(0).getResolution(0);
+        resolutions[1] = modelImageSrc.getFileInfo(0).getResolution(1);
         resolutions[2] = 1.0f;
 
         modelImageResult.getFileInfo(sliceNum).setResolutions(resolutions);
@@ -7390,9 +7376,9 @@ public class FileIO {
             fileInfo.setExtents(extents);
 
             float[] resols = new float[3];
-            resols[0] = fileInfo.getResolutions()[0];
-            resols[1] = fileInfo.getResolutions()[1];
-            resols[2] = fileInfo.getResolutions()[2];
+            resols[0] = fileInfo.getResolution(0);
+            resols[1] = fileInfo.getResolution(1);
+            resols[2] = fileInfo.getResolution(2);
             fileInfo.setResolutions(resols);
         }
 
@@ -8531,7 +8517,7 @@ public class FileIO {
                 return false;
             }
 
-            if ((image.getFileInfo(0).getResolutions()[0] != 1.0f) ||
+            if ((image.getFileInfo(0).getResolution(0) != 1.0f) ||
                     ((image.getFileInfo(0).getUnitsOfMeasure()[0] != FileInfoBase.MILLIMETERS) &&
                          (image.getFileInfo(0).getUnitsOfMeasure()[0] != FileInfoBase.UNKNOWN_MEASURE))) {
                 MipavUtil.displayError("Error! x resolution must be 1.0 millimeter");
@@ -8539,7 +8525,7 @@ public class FileIO {
                 return false;
             }
 
-            if ((image.getFileInfo(0).getResolutions()[1] != 1.0f) ||
+            if ((image.getFileInfo(0).getResolution(1) != 1.0f) ||
                     ((image.getFileInfo(0).getUnitsOfMeasure()[1] != FileInfoBase.MILLIMETERS) &&
                          (image.getFileInfo(0).getUnitsOfMeasure()[1] != FileInfoBase.UNKNOWN_MEASURE))) {
                 MipavUtil.displayError("Error! y resolution must be 1.0 millimeter");
@@ -8547,7 +8533,7 @@ public class FileIO {
                 return false;
             }
 
-            if ((image.getFileInfo(0).getResolutions()[2] != 1.0f) ||
+            if ((image.getFileInfo(0).getResolution(2) != 1.0f) ||
                     ((image.getFileInfo(0).getUnitsOfMeasure()[2] != FileInfoBase.MILLIMETERS) &&
                          (image.getFileInfo(0).getUnitsOfMeasure()[2] != FileInfoBase.UNKNOWN_MEASURE))) {
                 MipavUtil.displayError("Error! z resolution must be 1.0 millimeter");
@@ -8784,7 +8770,7 @@ public class FileIO {
             Object obj = null;
             float slLoc;
 
-            float sliceResolution = myFileInfo.getResolutions()[2];
+            float sliceResolution = myFileInfo.getResolution(2);
 
             if (image.getExtents().length > 2) { // This sets the fileinfo to the same for all slices !!
 

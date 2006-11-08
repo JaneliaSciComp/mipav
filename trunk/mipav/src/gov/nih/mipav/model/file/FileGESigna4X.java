@@ -1592,7 +1592,7 @@ public class FileGESigna4X extends FileBase {
         // spacing between slices
         imageSpacing = getFloat(endianess);
         if (imageSpacing != 0.0f) {
-            fileInfo.setSliceSpacing(imageSpacing);
+            fileInfo.setResolutions(imageSpacing, 2);
         }
         fileInfo.setImageSpacing(imageSpacing);
         

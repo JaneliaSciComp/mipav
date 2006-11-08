@@ -11,20 +11,12 @@ import java.text.*;
 
 
 /**
- * <p>Title: AlgorithmReplaceRemovedSlices</p>
- *
- * <p>Description: This algorithm is used to insert averaged slices where slices have been removed -If slices were
+ * This algorithm is used to insert averaged slices where slices have been removed -If slices were
  * removed at the beginning of the original movie, these slices will not be replaced. - Slices are only inserted between
- * the first and last kept slices</p>
- *
- * <p>Copyright: Copyright (c) 2003</p>
- *
- * <p>Company:</p>
- *
+ * the first and last kept slices
+ * 
  * @author   Ben Link
- * @version  1.0
  */
-
 public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -601,7 +593,7 @@ public class AlgorithmReplaceRemovedSlices extends AlgorithmBase {
                 resultImage.getFileInfo()[i].setAxisOrientation(srcImage.getFileInfo()[0].getAxisOrientation());
                 resultImage.getFileInfo()[i].setOrigin(srcImage.getFileInfo()[0].getOrigin());
                 resultImage.getFileInfo()[i].setOrigin(newOrg2[i], 2);
-                resultImage.getFileInfo()[i].setSliceSpacing(srcImage.getFileInfo()[0].getSliceSpacing());
+                resultImage.getFileInfo()[i].setSliceThickness(srcImage.getFileInfo()[0].getSliceThickness());
             }
         } // else not DICOM
 

@@ -6842,12 +6842,9 @@ public class ModelStorageBase extends ModelSerialCloneable {
         if(fileInfo == null){
             return null;
         }
-        float[] resTemp = fileInfo[index].getResolutions();
-
-        if ( resTemp[2] < fileInfo[index].getSliceSpacing())
-        {
-            resTemp[2] = fileInfo[index].getSliceSpacing();
-        }
+        
+        float[] resTemp = (float[]) fileInfo[index].getResolutions();
+        
         /* Do not reorder the resolutions if this is less than a 3D image: */
         if ( dimExtents.length < 3 )
         {

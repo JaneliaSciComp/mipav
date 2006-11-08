@@ -365,9 +365,6 @@ public class FileInfoInterfile extends FileInfoBase {
     private String sliceNumber = null;
 
     /** DOCUMENT ME! */
-    private String sliceThickness = null;
-
-    /** DOCUMENT ME! */
     private boolean spectStudyGeneral = false;
 
     /** DOCUMENT ME! */
@@ -1020,8 +1017,8 @@ public class FileInfoInterfile extends FileInfoBase {
             dialog.append("Reference frame number = " + referenceFrameNumber + "\n");
         }
 
-        if (sliceThickness != null) {
-            dialog.append("Slice thickness (pixels) = " + sliceThickness + "\n");
+        if (getSliceThickness() != 0) {
+            dialog.append("Slice thickness (pixels) = " + getSliceThickness() + "\n");
         }
 
         if (centerCenter != null) {
@@ -1843,15 +1840,6 @@ public class FileInfoInterfile extends FileInfoBase {
      */
     public String getSliceNumber() {
         return sliceNumber;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public String getSliceThickness() {
-        return sliceThickness;
     }
 
     /**
@@ -3030,15 +3018,6 @@ public class FileInfoInterfile extends FileInfoBase {
      */
     public void setSliceNumber(String sliceNumber) {
         this.sliceNumber = sliceNumber;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @param  sliceThickness  DOCUMENT ME!
-     */
-    public void setSliceThickness(String sliceThickness) {
-        this.sliceThickness = sliceThickness;
     }
 
     /**
