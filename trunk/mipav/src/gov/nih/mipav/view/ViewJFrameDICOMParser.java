@@ -224,7 +224,6 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             }
         } else if (command.equals("Open")) {
             FileInfoDicom fileInfoDICOM = null;
-
             int[] rows = imageTable.getSelectedRows();
             String[] fileNames = new String[rows.length];
 
@@ -245,7 +244,6 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             FileIO io = new FileIO();
             io.setQuiet(true);
             io.setFileDir(fileInfoDICOM.getFileDirectory() + File.separatorChar);
-System.err.println("HERE");
             ModelImage image = io.readDicom(fileNames[0], fileNames, false);
 
             if (image == null) {

@@ -3746,12 +3746,13 @@ public class FileIO {
      * @param  message  this message should FILE_READ, FILE_OPEN
      */
     private void createProgressBar(FileBase fBase, String fName, String message) {
-
-        // System.err.println("title is: " + fName + ", message is: " + message);
-        progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
-        progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
-
-        // System.err.println("quiet: " + quiet + " pbar vis: " + progressBar.isVisible());
+  
+    	//progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
+    	//progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
+    	
+    	
+    	//the quiet flag is needed to determine if progress bar is visible or not
+        progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true, null, null, !quiet);
         progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
 
         if (fBase != null) {

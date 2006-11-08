@@ -303,7 +303,7 @@ public class ViewImageDirectory extends JFrame
                 fileName = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getName();
                 directory = ((ViewFileTreeNode) selected[0].getLastPathComponent()).getDirectory();
                // io.setPBar(progressPanel);
-                //io.setQuiet(true);
+                io.setQuiet(true);
                 ModelImage image = io.readImage(fileName, directory + File.separatorChar);
 
                 if (image == null) {
