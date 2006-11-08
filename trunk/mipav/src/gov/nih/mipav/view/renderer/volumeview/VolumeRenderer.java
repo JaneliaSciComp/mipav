@@ -248,11 +248,6 @@ public abstract class VolumeRenderer extends RenderViewBase implements MouseMoti
         resols[1] = Math.abs(imageA.getFileInfo()[0].getResolutions()[1]);
         resols[2] = Math.abs(imageA.getFileInfo()[0].getResolutions()[2]);
 
-        // if the slice spacing value is greater than the z-res, use the slice spacing instead
-        if (resols[2] < imageA.getFileInfo(0).getSliceSpacing()) {
-            resols[2] = imageA.getFileInfo(0).getSliceSpacing();
-        }
-
         Preferences.debug("Using (raycast): " + resols[2]);
 
         if ((resols[0] == 0.0f) || (resols[1] == 0.0f) || (resols[2] == 0.0f)) {

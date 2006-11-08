@@ -852,7 +852,7 @@ public class FileInterfile extends FileBase {
                         fileInfo.setReferenceFrameNumber(valueString);
                         haveReferenceFrameNumber = true;
                     } else if (keyString.equalsIgnoreCase("SLICETHICKNESS(PIXELS)")) {
-                        fileInfo.setSliceThickness(valueString);
+                        fileInfo.setSliceThickness(Float.parseFloat(valueString));
                         haveSliceThickness = true;
                     } else if ((keyString.equalsIgnoreCase("CENTRE-CENTRESLICESEPARATION(PIXELS)")) ||
                                    (keyString.equalsIgnoreCase("CENTER-CENTERSLICESEPARATION(PIXELS)"))) {
@@ -1131,7 +1131,7 @@ public class FileInterfile extends FileBase {
             }
 
             if ((haveTomographic) && (haveReconstructed) && (!haveSliceThickness)) {
-                fileInfo.setSliceThickness("1");
+                fileInfo.setSliceThickness(1);
             }
 
             // slice thickness & centre-centre slice separation keys needs to be
@@ -2548,7 +2548,7 @@ public class FileInterfile extends FileBase {
                     raFile.write(lineBytes);
                 }
 
-                sliceThickness = fileInfo.getSliceThickness();
+                sliceThickness = String.valueOf(fileInfo.getSliceThickness());
 
                 if (sliceThickness != null) {
                     lineBytes = new String("slice thickness (pixels) := " + sliceThickness + "\r\n").getBytes();

@@ -18,9 +18,9 @@ import javax.swing.*;
 
 
 /**
- * Algorithm to adjust image volume for cases when the slice spacing is not equal to the slice thickness. When spacing >
+ * Algorithm to adjust image volume for cases when the slice spacing is not equal to the slice thickness. When spacing &gt;
  * thickness: repeat images from original image set insert blank images (so that in the final image volume, all images
- * will have the same slice thickness and the image volume will be to proper scale. When spacing < thickness: set
+ * will have the same slice thickness and the image volume will be to proper scale. When spacing &lt; thickness: set
  * thickness = spacing. Only works for DICOM or XML files, since they include the sliceSpacing field.
  */
 public class JDialogCorrectSpacing extends JDialogScriptableBase implements AlgorithmInterface {
@@ -79,8 +79,8 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
 
         fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
         fileFormat = fileInfoBuffer.getFileFormat();
-        space = fileInfoBuffer.getSliceSpacing();
-        thick = fileInfoBuffer.getResolutions()[2];
+        space = fileInfoBuffer.getResolution(2);
+        thick = fileInfoBuffer.getSliceThickness();
 
         if (image.getNDims() == 3) {
             extents = new int[4];
@@ -148,7 +148,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
                 resultImage.setExtents(extents);
                 fileInfoBuffer.setExtents(extents);
                 fileInfoBuffer.setResolutions(newThick, 2);
-                fileInfoBuffer.setSliceSpacing((float) newThick);
+                fileInfoBuffer.setSliceThickness(newThick);
                 fileInfoBuffer.setOrigin(newZStart, 2);
 
                 for (int i = 0; i < newNumIm; i++) {
@@ -278,8 +278,8 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
 
         fileInfoBuffer = (FileInfoBase) image.getFileInfo(0).clone();
         fileFormat = fileInfoBuffer.getFileFormat();
-        space = fileInfoBuffer.getSliceSpacing();
-        thick = fileInfoBuffer.getResolutions()[2];
+        space = fileInfoBuffer.getResolution(2);
+        thick = fileInfoBuffer.getSliceThickness();
 
         if (image.getNDims() == 3) {
             extents = new int[4];
@@ -321,8 +321,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
     }
 
     /**
-     * This method corrects spacing for cases where the space is less than the thickness, by assigning space value to
-     * the z direction resolution.
+     * This method corrects spacing for cases where the space is less than the thickness.
      *
      * @param  im           DOCUMENT ME!
      * @param  newThickVal  DOCUMENT ME!
@@ -334,7 +333,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
         int zExtent = im.getExtents()[2];
 
         for (int i = 0; i < zExtent; i++) {
-            arrayOfFileInfo[i].setResolutions(newThickVal, 2);
+            arrayOfFileInfo[i].setSliceThickness(newThickVal);
         }
 
         MipavUtil.displayInfo("Since spacing is less than thickness, setting thickness to spacing value (" +
@@ -358,7 +357,7 @@ public class JDialogCorrectSpacing extends JDialogScriptableBase implements Algo
             String newName = makeImageName(image.getImageName(), "CorrSpc");
 
             // makeImageName is defined in JDialogBase
-            resultImage = new ModelImage(image.getType(), extents, newName, image.getUserInterface());
+            resultImage = new ModelImage(image.getType(), extents, newName);
         } catch (OutOfMemoryError e) {
             resultImage = null;
             MipavUtil.displayError("JDialogCorrectSpacing reports: unable to allocate enough memory");

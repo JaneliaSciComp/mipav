@@ -403,7 +403,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     /** The data type of the data (i.e. byte, short, float ... */
     private int dataType;
 
-    /** Pixel or voxel resolutions for each dimension - default = 1.0. */
+    /**
+     * Pixel or voxel resolutions for each dimension - default = 1.0.  The z-dim resolution should be the spacing 
+     * between the centers of adjacent slices;  sometimes this will match the slice thickness, but not always.
+     */
     private float[] dimResolutions = { (float) 1.0, (float) 1.0, (float) 1.0, (float) 1.0, (float) 1.0 };
 
     /**
@@ -466,9 +469,12 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** DICOM images have a rescale slope value that we have also kept in the base. */
     private double rescaleSlope = 1.0;
-
-    /** The spacing between slices. Only appears in DICOM (TAG = 0018, 0088), GESigma4X, Minc and MIPAV (XML) file formats. */
-    private float sliceSpacing = 0;
+    
+    /**
+     * The thickness of individual slices in the image volume.  Stored in dicom tag 0018,0050 and various 
+     * other places in other file formats.
+     */
+    private float sliceThickness = 0;
 
     /** Transform ID associated with the matrix. */
     private int transformID = TRANSFORM_UNKNOWN;
@@ -1060,7 +1066,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         cloned.offset = offset;
         cloned.endianess = endianess;
-        cloned.sliceSpacing = sliceSpacing;
+        cloned.sliceThickness = sliceThickness;
         cloned.min = min;
         cloned.max = max;
         cloned.minR = minR;
@@ -1340,7 +1346,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         } // for (int i=0; i < 5; i++)
 
         if (extents.length >= 3) {
-            dialog.append("Slice spacing:       " + sliceSpacing + "\n");
+            dialog.append("Slice thickness:     " + sliceThickness + "\n");
         }
 
         if (endianess == FileBase.LITTLE_ENDIAN) {
@@ -1808,6 +1814,17 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public final float[] getResolutions() {
         return dimResolutions;
     }
+    
+    /**
+     * Returns the resolution of the requested dimension.
+     * 
+     * @param  dim  The dimension to return the resolution of.
+     * 
+     * @return  The resolution of one of the image dimensions.
+     */
+    public final float getResolution(int dim) {
+        return dimResolutions[dim];
+    }
 
     /**
      * Returns the size of the slice image in byte which represented by this object.
@@ -1825,15 +1842,14 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         return extents[0] * extents[1] * getNumOfBytesPerPixel(getDataType());
     }
-
-
+    
     /**
-     * Returns the space between neighboring slices.
+     * Returns the thickness of the image slices.
      *
-     * @return  float slice spacing
+     * @return  slice thickness
      */
-    public final float getSliceSpacing() {
-        return sliceSpacing;
+    public final float getSliceThickness() {
+        return sliceThickness;
     }
 
     /**
@@ -2271,17 +2287,17 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
      * @param  resolution  Resolution for the dimension
      * @param  dim         Dimension to set resolution in
      */
-    public void setResolutions(float resolution, int dim) {
+    public final void setResolutions(float resolution, int dim) {
         dimResolutions[dim] = resolution;
     }
-
+    
     /**
-     * Sets the slice spacing for the image.
+     * Sets the thickness of the image slices.
      *
-     * @param  spacing  Spacing between slices
+     * @param  thickness  The slice thickness.
      */
-    public void setSliceSpacing(float spacing) {
-        sliceSpacing = spacing;
+    public void setSliceThickness(float thickness) {
+        sliceThickness = thickness;
     }
 
     /**

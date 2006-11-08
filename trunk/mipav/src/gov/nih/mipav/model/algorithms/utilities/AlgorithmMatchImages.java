@@ -791,7 +791,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
      * @param  start  DOCUMENT ME!
      * @param  tID    DOCUMENT ME!
      */
-    void updateFileInfo(ModelImage image, int[] dim, double[] res, double[] start, int tID) {
+    private void updateFileInfo(ModelImage image, int[] dim, double[] res, double[] start, int tID) {
         int[] tempI3 = new int[nDims];
         float[] tempF3 = new float[nDims];
         float slicePos;
@@ -822,7 +822,7 @@ public class AlgorithmMatchImages extends AlgorithmBase {
             fileInfoB.setResolutions(tempF3);
 
             if (nDims == 3) {
-                fileInfoB.setSliceSpacing(tempF3[2]);
+                fileInfoB.setSliceThickness(tempF3[2]);
             }
 
             fileInfoB.setOrigin((float) start[0], 0);

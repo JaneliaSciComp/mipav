@@ -188,7 +188,7 @@ public class JDialogCaptureScreens extends JDialogBase {
         testImage.getFileInfo()[0].setUnitsOfMeasure(imageFrame.getImageA().getFileInfo()[0].getUnitsOfMeasure());
         testImage.getFileInfo()[0].setAxisOrientation(imageFrame.getImageA().getFileInfo()[0].getAxisOrientation());
         testImage.getFileInfo()[0].setImageOrientation(imageFrame.getImageA().getFileInfo()[0].getImageOrientation());
-        testImage.getFileInfo()[0].setSliceSpacing(imageFrame.getImageA().getFileInfo()[0].getSliceSpacing());
+        testImage.getFileInfo()[0].setSliceThickness(imageFrame.getImageA().getFileInfo()[0].getSliceThickness());
         testImage.getFileInfo()[0].setOrigin(imageFrame.getImageA().getFileInfo()[0].getOrigin());
 
         for (int m = 1; m < extents[2]; m++) {

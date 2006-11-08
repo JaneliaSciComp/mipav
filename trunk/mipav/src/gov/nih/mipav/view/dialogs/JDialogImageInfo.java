@@ -169,7 +169,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
     private JButton saveButton;
 
     /** DOCUMENT ME! */
-    private float sliceSpacing = 0;
+    private float sliceThickness = 0;
 
     /** DOCUMENT ME! */
     private JTabbedPane tabbedPane;
@@ -184,7 +184,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
     private JTextField textRes1, textRes2, textRes3, textRes4, textRes5;
 
     /** DOCUMENT ME! */
-    private JTextField textSt1, textSt2, textSt3, textSt4, textSliceSpacing;
+    private JTextField textSt1, textSt2, textSt3, textSt4, textSliceThickness;
 
     /** DOCUMENT ME! */
     private JTextField[] tlrcACFields;
@@ -616,8 +616,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
      * @param  fileName  name of the matrix file.
      */
     public void readTransformMatrixFile(String fileName) {
-        ViewUserInterface UI = ViewUserInterface.getReference();
-        JDialogOrientMatrix diaglogMatrix = null;
         TransMatrix matrix = new TransMatrix(DIM + 1);
         matrix.identity();
 
@@ -626,7 +624,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         }
 
         try {
-            File file = new File(UI.getDefaultDirectory() + fileName);
+            File file = new File(ViewUserInterface.getReference().getDefaultDirectory() + fileName);
             RandomAccessFile raFile = new RandomAccessFile(file, "r");
             matrix.readMatrix(raFile, false);
             raFile.close();
@@ -635,7 +633,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
             // We don't know the coordinate system that the transformation represents. Therefore
             // bring up a dialog where the user can ID the coordinate system changes (i.e.
             // world coordinate and/or the "left-hand" coordinate system!
-            diaglogMatrix = new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
+            new JDialogOrientMatrix(parentFrame, (JDialogBase) this);
         } catch (IOException error) {
             MipavUtil.displayError("Matrix read error");
             fileTransMatrix.identity();
@@ -1204,12 +1202,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
             dim5.setEnabled(false);
         }
 
-        JLabel sliceSpacingLabel = new JLabel("Slice spacing:");
-        sliceSpacingLabel.setFont(serif12);
-        sliceSpacingLabel.setForeground(Color.black);
+        JLabel sliceThicknessLabel = new JLabel("Slice thickness:");
+        sliceThicknessLabel.setFont(serif12);
+        sliceThicknessLabel.setForeground(Color.black);
 
         if (nDims < 3) {
-            sliceSpacingLabel.setEnabled(false);
+            sliceThicknessLabel.setEnabled(false);
         }
 
         textRes1 = new JTextField(5);
@@ -1255,15 +1253,15 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
             textRes5.setText(String.valueOf(image.getFileInfo()[resIndex].getResolutions()[4]));
         }
 
-        textSliceSpacing = new JTextField(5);
-        textSliceSpacing.setText("0");
-        textSliceSpacing.setFont(serif12);
+        textSliceThickness = new JTextField(5);
+        textSliceThickness.setText("0");
+        textSliceThickness.setFont(serif12);
 
         if (nDims < 3) {
-            textSliceSpacing.setEnabled(false);
+            textSliceThickness.setEnabled(false);
         } else {
-            sliceSpacing = image.getFileInfo()[resIndex].getSliceSpacing();
-            textSliceSpacing.setText(String.valueOf(sliceSpacing));
+            sliceThickness = image.getFileInfo()[resIndex].getSliceThickness();
+            textSliceThickness.setText(String.valueOf(sliceThickness));
         }
 
         resolutionBox = new JCheckBox("Apply resolution changes to all slices and/or times");
@@ -1289,7 +1287,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         gbc.gridy = 4;
         labelPanel.add(dim5, gbc);
         gbc.gridy = 5;
-        labelPanel.add(sliceSpacingLabel, gbc);
+        labelPanel.add(sliceThicknessLabel, gbc);
         gbc.gridy = 6;
         gbc.gridwidth = 2;
         gbc.insets = new Insets(5, 0, 5, 5);
@@ -1311,7 +1309,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
         gbc.gridy = 4;
         labelPanel.add(textRes5, gbc);
         gbc.gridy = 5;
-        labelPanel.add(textSliceSpacing, gbc);
+        labelPanel.add(textSliceThickness, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -2650,9 +2648,9 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
             if (nDims > 2) {
 
                 try {
-                    sliceSpacing = Float.parseFloat(textSliceSpacing.getText());
+                    sliceThickness = Float.parseFloat(textSliceThickness.getText());
                 } catch (Exception e) {
-                    Preferences.debug("Failed to save slice spacing information.");
+                    Preferences.debug("Failed to save slice thickness information.");
                 }
             }
         } catch (OutOfMemoryError error) {
@@ -2897,7 +2895,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
                 fileInfo[i].setUnitsOfMeasure(measure1, 0);
                 fileInfo[i].setUnitsOfMeasure(measure1, 1);
                 fileInfo[i].setUnitsOfMeasure(measure3, 2);
-                fileInfo[i].setSliceSpacing(sliceSpacing);
+                fileInfo[i].setSliceThickness(sliceThickness);
 
                 if (fileInfo[i].getFileFormat() == FileUtility.DICOM) {
 
@@ -2927,7 +2925,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
                 fileInfo[i].setUnitsOfMeasure(measure1, 1);
                 fileInfo[i].setUnitsOfMeasure(measure3, 2);
                 fileInfo[i].setUnitsOfMeasure(measure4, 3);
-                fileInfo[i].setSliceSpacing(sliceSpacing);
+                
+                fileInfo[i].setSliceThickness(sliceThickness);
 
                 if (resolutionBox.isSelected()) {
                     fileInfo[i].setResolutions(resolutions);
@@ -2946,7 +2945,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener {
                 fileInfo[i].setUnitsOfMeasure(measure3, 2);
                 fileInfo[i].setUnitsOfMeasure(measure4, 3);
                 fileInfo[i].setUnitsOfMeasure(measure5, 4);
-                fileInfo[i].setSliceSpacing(sliceSpacing);
+                
+                fileInfo[i].setSliceThickness(sliceThickness);
 
                 if (resolutionBox.isSelected()) {
                     fileInfo[i].setResolutions(resolutions);

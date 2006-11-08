@@ -5,7 +5,6 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.io.*;
@@ -102,7 +101,6 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         int[] axis;
         int imageOrientation;
         float[] startLocs;
-        float sliceSpacing;
         TransMatrix xfrm;
 
         int transformID;
@@ -195,7 +193,6 @@ public class AlgorithmSwap34 extends AlgorithmBase {
         photometric = fileInfo[0].getPhotometric();
         axis = fileInfo[0].getAxisOrientation();
         imageOrientation = fileInfo[0].getImageOrientation();
-        sliceSpacing = fileInfo[0].getSliceSpacing();
 
         transformID = fileInfo[0].getTransformID();
 
@@ -219,7 +216,7 @@ public class AlgorithmSwap34 extends AlgorithmBase {
             fileInfoR[i].setEndianess(endianess);
             fileInfoR[i].setUnitsOfMeasure(units);
             fileInfoR[i].setResolutions(resolutions);
-            fileInfoR[i].setSliceSpacing(sliceSpacing);
+            fileInfoR[i].setSliceThickness(resolutions[2]);
             fileInfoR[i].setExtents(extents);
             fileInfoR[i].setMax(max);
             fileInfoR[i].setMin(min);

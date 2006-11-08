@@ -312,7 +312,7 @@ public class AlgorithmRotate extends AlgorithmBase {
                 if ( srcImage.getNDims() >= 3 )
                 {
                     newFileInfo[i].setOrigin(newStartLocations[2] + (newResolutions[2] * i), 2);
-                    newFileInfo[i].setSliceSpacing(newResolutions[2]);
+                    newFileInfo[i].setSliceThickness(newResolutions[2]);
                 }
                 if (newFileInfo[i].getFileFormat() == FileUtility.MINC) {
                     newFileInfo[i].setRescaleSlope(((FileInfoMinc) newFileInfo[i]).calculateSlope(min, max));

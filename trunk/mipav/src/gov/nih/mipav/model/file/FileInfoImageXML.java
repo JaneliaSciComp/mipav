@@ -252,11 +252,8 @@ public class FileInfoImageXML extends FileInfoXML {
         } // for (i=0; i < 5; i++)
 
         if ((extents.length > 2) && (extents[2] > 0)) {
-            float sliceSpacing;
-
-            sliceSpacing = getSliceSpacing();
-            dialog.appendPrimaryData("Slice Spacing ",
-                                     Float.toString(sliceSpacing) + " " + getUnitsOfMeasureStr(measure[2]));
+            dialog.appendPrimaryData("Slice thickness ",
+                                     Float.toString(getSliceThickness()) + " " + getUnitsOfMeasureStr(measure[2]));
         }
 
         float[] origin; // = new float[4];

@@ -804,12 +804,12 @@ public class JDialogSaveDicom extends JDialogBase {
                 // Slice thickness and spacing
                 if (fileInfo.getResolutions().length >= 3) {
                     s = String.valueOf(fileInfo.getResolutions()[2]);
-                    dicomFileInfo.setValue("0018,0050", s, s.length()); // slice thickness
-                    
-                    if (fileInfo.getSliceSpacing() != 0) {
-                        s = String.valueOf(fileInfo.getSliceSpacing());
-                    }
                     dicomFileInfo.setValue("0018,0088", s, s.length()); // spacing between slices
+                    
+                    if (fileInfo.getSliceThickness() != 0) {
+                        s = String.valueOf(fileInfo.getSliceThickness());
+                    }
+                    dicomFileInfo.setValue("0018,0050", s, s.length()); // slice thickness
                 }
 
                 cancelFlag = false;

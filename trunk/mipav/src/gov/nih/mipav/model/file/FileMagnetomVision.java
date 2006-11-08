@@ -5,9 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-import java.awt.Dialog.*;
-
 import java.io.*;
 
 
@@ -163,7 +160,7 @@ public class FileMagnetomVision extends FileBase {
             fileInfo.setRegistrationTimeMM(raFile.readInt()); // location 1068
             fileInfo.setRegistrationTimeSS(raFile.readInt()); // location 1072
             raFile.seek(1544L);
-            fileInfo.setSliceThickness(raFile.readDouble());
+            fileInfo.setSliceThickness((float)raFile.readDouble());
             raFile.seek(1560L);
             fileInfo.setRepetitionTime(raFile.readDouble());
             fileInfo.setEchoTime(raFile.readDouble()); // location 1568

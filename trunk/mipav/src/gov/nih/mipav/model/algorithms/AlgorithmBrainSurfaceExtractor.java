@@ -659,7 +659,11 @@ public class AlgorithmBrainSurfaceExtractor extends AlgorithmBase implements Alg
         int[] axisOrient = image.getFileInfo(0).getAxisOrientation();
 
         for (int i = 0; i < zDim; i++) {
-            resultImage.getFileInfo(i).setResolutions(new float[] { xRes, yRes, zRes });
+            resultImage.getFileInfo(i).setResolutions(xRes, 0);
+            resultImage.getFileInfo(i).setResolutions(yRes, 1);
+            resultImage.getFileInfo(i).setResolutions(zRes, 2);
+            resultImage.getFileInfo(i).setSliceThickness(srcImage.getFileInfo(i).getSliceThickness());
+            
             resultImage.getFileInfo(i).setImageOrientation(orient);
             resultImage.getFileInfo(i).setAxisOrientation(axisOrient);
         }
