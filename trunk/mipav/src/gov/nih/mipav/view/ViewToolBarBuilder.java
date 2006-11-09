@@ -37,6 +37,9 @@ public class ViewToolBarBuilder implements ItemListener {
 
     /** The button used to select the color of the paint used. */
     protected JButton colorPaintButton;
+    
+    /** The button used to toggle borders around painted areas. */
+    protected JButton borderPaintButton;
 
     /** The button for presets used only for CT images. */
     protected JButton ctButton;
@@ -466,7 +469,10 @@ public class ViewToolBarBuilder implements ItemListener {
         opacityPaintButton.setMargin(new Insets(2, 7, 2, 7));
         opacityPaintButton.setActionCommand("OpacityPaint");
         paintToolBar.add(opacityPaintButton);
-
+        
+        borderPaintButton = buildButton("ShowPaintBorder", "Display border around painted areas.", "borderpaint");
+        paintToolBar.add(borderPaintButton);
+        
         paintToolBar.add(makeSeparator());
 
         JButton commitPaintButton = buildButton("CommitPaint", "Masks the inside of the painted area.", "paintinside");

@@ -704,7 +704,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
 
             triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
-        } else if (command.equals("CommitPaint")) {
+        } else if (command.equals("ShowPaintBorder")) {
+            //          swap the border painting
+            Preferences.setProperty("ShowPaintBorder",
+                                    String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
+            updateImages(true);
+            triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners();
+            
+        }
+        
+        
+            else if (command.equals("CommitPaint")) {
 
             if (getSelectedImage() == ViewJComponentBase.BOTH) {
 
@@ -2779,6 +2789,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         paintToolBar.add(colorPaintButton);
         paintToolBar.add(toolbarBuilder.buildTextButton("Opacity", "Change opacity of paint", "OpacityPaint"));
+        paintToolBar.add(toolbarBuilder.buildButton("ShowPaintBorder", "Show border around painted areas.", "borderpaint"));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
         paintToolBar.add(toolbarBuilder.buildButton("CommitPaint", "Changes image where painted inside",
                                                     "paintinside"));
