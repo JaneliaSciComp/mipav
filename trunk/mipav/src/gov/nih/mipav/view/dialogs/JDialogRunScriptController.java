@@ -46,7 +46,7 @@ public class JDialogRunScriptController implements ActionListener {
         model.setScriptFile(scriptFile);
         populateModel(scriptFile);
         this.view = new JDialogRunScriptView(this, model);
-        this.model.addObserver(view);
+       // this.model.addObserver(view);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -74,8 +74,8 @@ public class JDialogRunScriptController implements ActionListener {
             	for (int i = 0; i < files.length; i++) {
             		model.addToAvailableImageList(files[i].getName(), 
             				files[i].getPath(), isMultiFile);
-            		System.err.println(files[i]);
             	}
+            	view.update();
             }
         } else if (command.equalsIgnoreCase("Add VOI from file")) {
 
@@ -126,6 +126,7 @@ public class JDialogRunScriptController implements ActionListener {
             String xmlTree = parseTreeToXML(view.getTreeRoot());
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Save script to XML");
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             chooser.showSaveDialog(view.getFrame());
 
             File saveFile = new File(chooser.getCurrentDirectory(), chooser.getSelectedFile().getName());
@@ -145,9 +146,13 @@ public class JDialogRunScriptController implements ActionListener {
             chooser.showOpenDialog(view.getFrame());
 
             try {
+            	if (chooser.getSelectedFile() != null) {
+            		
+            	
                 File openFile = new File(chooser.getCurrentDirectory(), chooser.getSelectedFile().getName());
                 org.w3c.dom.Document savedScript = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(openFile);
                 view.createScriptTree(savedScript);
+            	}
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             } catch (IllegalArgumentException iae) {
@@ -255,9 +260,8 @@ public class JDialogRunScriptController implements ActionListener {
     	
     	ScriptTreeNode scriptNode = (ScriptTreeNode)root.getChildAt(0);
     	int numImagePlaceHolders = scriptNode.getChildCount();
-    	int [] numImages = new int[numImagePlaceHolders];
     	
-//    	find out how many "executers" we will have
+//    	find out how many times the script will run
     	int numExecuters = ((ScriptTreeNode)scriptNode.getChildAt(0)).getChildCount();
     	
     	ScriptTreeNode imagePHNode = null;
@@ -268,28 +272,27 @@ public class JDialogRunScriptController implements ActionListener {
     	
     	
         StringBuffer xmlDoc = new StringBuffer();
+        
         xmlDoc.append("<" + "root" + ">\n");
-
-        for (int i = 0; i < numExecuters; i++) {
-                        
-            for (int j = 0; j < numImagePlaceHolders; j++) {
-            	imagePHNode = (ScriptTreeNode) scriptNode.getChildAt(j);
-            	imageNode = (ScriptTreeNode)imagePHNode.getChildAt(i);
-                // System.out.println("file--: " +
-                // model.getScriptModelImage((String)node.getUserObject()).getFileLocation());
-                String imageName = ((String)imageNode.getUserObject()).trim();
+     
+        int numImages = 0;
+        
+        for (int i = 0; i < numImagePlaceHolders; i++) {
+        	xmlDoc.append("<Image_Placeholder>\n");
+        	imagePHNode = (ScriptTreeNode) scriptNode.getChildAt(i);
+        	numImages = imagePHNode.getChildCount();
+        	
+        	for (int j = 0; j < numImages; j++) {
+        		imageNode = (ScriptTreeNode)imagePHNode.getChildAt(j);
+        		String imageName = ((String)imageNode.getUserObject()).trim();
                 xmlDoc.append("<Image");
                 xmlDoc.append(" name=\"" + imageName + "\"");
                 xmlDoc.append(" filePath= \"" + model.getScriptImage(imageName).getFileLocation() +
-                              " \" " + ">\n"); // images
-
-                // xmlDoc.append("<filePath>" +
-                // model.getScriptModelImage((String)node.getUserObject()).getFileLocation() + "</filePath>\n");
-                // VOIs
+                              " \" ");
+                xmlDoc.append(" isMulti=\"" + model.getScriptImage(imageName).isMultiFile() + " \" " + ">\n"); // images
+                
                 numVOIs = imageNode.getChildCount();
-                
-                System.err.println("image name: " + imageName);
-                
+                                
                 for (int k = 0; k < numVOIs; k++) {
                 	voiNode = (ScriptTreeNode)imageNode.getChildAt(k);
                     String voiName = ((String)voiNode.getUserObject()).trim();
@@ -332,7 +335,7 @@ public class JDialogRunScriptController implements ActionListener {
                                 chooser.setDialogTitle("Set VOI file location");
                                 chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
                                 chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
-
+                                
                                 int returnValue = chooser.showOpenDialog(view.getFrame());
 
                                 if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -352,15 +355,16 @@ public class JDialogRunScriptController implements ActionListener {
                     xmlDoc.append(" filePath= \"" + filePath + " \"" + " />");
                     // xmlDoc.append("</VOI>\n");
                 }
-
-                // xmlDoc.append("</" + ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim() + ">\n");
                 xmlDoc.append("</Image>\n");
-            }
+        	}
 
-           // xmlDoc.append("</" + ((TreeNode) root.getChildAt(i)).toString().trim() + ">\n");
+        	// xmlDoc.append("</" + ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim() + ">\n");
+        	xmlDoc.append("</Image_Placeholder>\n");
         }
-
+            
+         
         xmlDoc.append("</" + "root" + ">\n");
+        
 
         // xmlDoc.toString().replace("Script Executer", "Script_Executer").replace("VOI Needed","VOI_Needed");
         // return xmlDoc.toString().replace(" ", "_").replace("$", "__").replace("'", "___");
@@ -378,7 +382,7 @@ public class JDialogRunScriptController implements ActionListener {
      */
     private void populateAvailableObjectsLists() {
         Enumeration images = ViewUserInterface.getReference().getRegisteredImages();
-
+System.err.println("doing this");
         while (images.hasMoreElements()) {
             model.addToAvailableImageList((ModelImage) images.nextElement());
         }

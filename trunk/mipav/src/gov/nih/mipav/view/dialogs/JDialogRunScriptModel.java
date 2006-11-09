@@ -51,9 +51,9 @@ public class JDialogRunScriptModel extends Observable {
      * @param  updateItem  DOCUMENT ME!
      */
     public void addToAvailableImageList(ModelImage updateItem) {
-    	availableImageList.add(new ScriptImage((ModelImage) updateItem));
-    	setChanged();
-    	notifyObservers();
+    	availableImageList.add(new ScriptImage(updateItem));
+    	//setChanged();
+    	//notifyObservers();
     }
 
     /**
@@ -66,8 +66,8 @@ public class JDialogRunScriptModel extends Observable {
      */
     public void addToAvailableImageList(String imageName, String imageLocation, boolean isMulti) {
         availableImageList.add(new ScriptImage(imageName, imageLocation, isMulti));
-        setChanged();
-        notifyObservers();
+       // setChanged();
+        //notifyObservers();
     }
 
     /**
