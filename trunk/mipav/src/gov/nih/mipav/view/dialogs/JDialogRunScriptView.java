@@ -24,23 +24,28 @@ import javax.swing.tree.*;
  * @see      JDialogRunScriptController
  * @see      JDialogRunScriptModel
  */
-public class JDialogRunScriptView implements ActionListener, Observer {
+public class JDialogRunScriptView implements ActionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+	private static final String PLACEHOLDER_STR = "Image_Placeholder";
+	private static final String IMAGE_STR = "Image";
+	
+    /** Script node type (Script)... only one and is only child of root */
     private static final int SCRIPTNODE = 0;
 
-    /** DOCUMENT ME! */
-    
+    /** Image placeholder node type never created nor deleted by user */
     private static final int IMAGEPLACEHOLDERNODE = 1;
     
+    /** Image node type, falls under an imageplaceholder node,
+     *  created and deleted by user */
     private static final int IMAGENODE = 2;
     
-    /** DOCUMENT ME! */
+    /** VOI node type, begins with VOI_EMPTY string and must be
+     * set if present before running of the script */
     private static final int VOINODE = 3;
 
-    /** DOCUMENT ME! */
+    /** Root node type */
     private static final int ROOTNODE = 4;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -66,8 +71,6 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     /** DOCUMENT ME! */
     private MouseListener listener;
 
-    /** DOCUMENT ME! */
-   // private DefaultListModel listModel;
 
     /** DOCUMENT ME! */
     private JDialogRunScriptModel model;
@@ -124,12 +127,15 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         createFrame();
         listener = new DragMouseAdapter();
         displayView();
-
-        update(null, null);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
+    public void update() {
+    	imageList.setListData(model.getAvailableImageList());
+    	imageList.setSelectedIndex(-1);
+    }
+    
     /**
      * DOCUMENT ME!
      *
@@ -142,41 +148,108 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     /**
      * DOCUMENT ME!
      *
-     * @param  imagePlaceHolders  DOCUMENT ME!
-     * @param  imageLabels        DOCUMENT ME!
-     * @param  imageActions       DOCUMENT ME!
-     * @param  numberofVOIs       DOCUMENT ME!
-     */
-    public void addExecuter(String[] imagePlaceHolders, String[] imageLabels, String[] imageActions,
-                            int[] numberofVOIs) {
-        int lastNodeIndex = ((DefaultTreeModel) tree.getModel()).getChildCount(this.getTreeRoot());
-        ScriptTreeNode newNode = createNewExecuter(imagePlaceHolders, imageLabels, imageActions, numberofVOIs);
-        ((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, this.getTreeRoot(), lastNodeIndex);
-        expandAll(tree, new TreePath(newNode.getPath()), true);
-        frame.getContentPane().repaint();
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
      * @param  savedScript  DOCUMENT ME!
      */
     public void createScriptTree(org.w3c.dom.Document savedScript) {
-        model.setScriptFile(savedScript.getDocumentElement().getTagName());
-        System.out.println("root tag: " + model.getScriptFile());
         this.numberOfExecuters = 0;
 
-        // clean up old tree
-        for (int n = root.getChildCount() - 1; n >= 0; n--) {
-            ((DefaultTreeModel) tree.getModel()).removeNodeFromParent((ScriptTreeNode) root.getChildAt(n));
-        }
+        ScriptTreeNode scriptNode = (ScriptTreeNode)root.getChildAt(0);
 
-        // for each executer restore the nodes under it
-        for (int i = 1, j = 0; i < savedScript.getDocumentElement().getChildNodes().getLength(); i += 2, j++) {
-            ((DefaultTreeModel) tree.getModel()).insertNodeInto(restoreSavedExecuter(savedScript.getDocumentElement().getChildNodes().item(i)),
-                                                                root, j);
-            this.numberOfExecuters++;
-        }
+    	
+    	int numImagePlaceHolders = scriptNode.getChildCount();
+    	
+    	ScriptTreeNode imagePHNode = null;
+    	int numImages;
+    	DefaultTreeModel tModel = (DefaultTreeModel)tree.getModel();
+		
+    	//clean up old tree
+    	for (int i = 0; i < numImagePlaceHolders; i++) {
+    		imagePHNode = (ScriptTreeNode)scriptNode.getChildAt(i);
+    		numImages = imagePHNode.getChildCount();
+    		for (int j = numImages - 1; j >= 0; j--) {
+    			tModel.removeNodeFromParent((ScriptTreeNode)imagePHNode.getChildAt(j));
+    		}
+    	}
+       
+    	int numDocPlaceHolders = savedScript.getDocumentElement().getChildNodes().getLength();
+    	Node elementPH;
+    	Node elementImage;
+    	int numDocImages;
+    	
+    	String imageName;
+    	String imageFilePath;
+    	int phIndex = 0;
+    	int voiCount = 0;
+    	ScriptTreeNode newNode;
+    	ScriptTreeNode targetNode;
+    	ScriptTreeNode voiNode;
+    	int childCount;
+    	boolean isMulti;
+    	NodeList children = savedScript.getDocumentElement().getChildNodes();
+    	
+    	//run through once and see if
+    	int phCount = 0;
+    	for (int i = 0; i < numDocPlaceHolders; i++) {
+    		elementPH = (Node)children.item(i);
+    		if (elementPH.getNodeType() == Node.ELEMENT_NODE &&
+    				elementPH.getNodeName().equals(PLACEHOLDER_STR)) {
+    			phCount++;
+    		}
+    	}
+    	    
+    	if (phCount != numImagePlaceHolders) {
+    		MipavUtil.displayError("Script's image placeholders do not match saved image placeholders");
+    		return;
+    	}
+    	
+    	
+    	
+    	
+    	for ( int i = 0; i < numDocPlaceHolders; i++) {
+    		    		
+    		elementPH = (Node)children.item(i);
+    		if (elementPH.getNodeType() == Node.ELEMENT_NODE &&
+    				elementPH.getNodeName().equals(PLACEHOLDER_STR)) {
+    			numDocImages = elementPH.getChildNodes().getLength();
+        		for (int j = 0; j < numDocImages; j++) {
+        			elementImage = (Node)elementPH.getChildNodes().item(j);
+        			if (elementImage.getNodeType() == Node.ELEMENT_NODE &&
+        					elementImage.getNodeName().equals(IMAGE_STR)) {
+        				imageName = elementImage.getAttributes().getNamedItem("name").getNodeValue();
+        				imageFilePath = elementImage.getAttributes().getNamedItem("filePath").getNodeValue();
+        				isMulti = Boolean.parseBoolean(elementImage.getAttributes().getNamedItem("isMulti").getNodeValue());
+        				
+        				targetNode = (ScriptTreeNode)scriptNode.getChildAt(phIndex);
+        				childCount = targetNode.getChildCount();
+        				newNode = new ScriptTreeNode(imageName, IMAGENODE);
+        				newNode.setFilePath(imageFilePath);
+                		//inserting into placeholder as new image node
+                		// look for last image child and append after that
+                		
+                		//first add all required VOIs
+                		voiCount = model.getNumberOfRequiredVOIsForScriptImages()[phIndex];
+                		for (int k = 0; j < voiCount; k++) {
+                			voiNode = new ScriptTreeNode(VOI_EMPTY, VOINODE);
+                			newNode.add(voiNode);
+                		}
+                		
+                		((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, targetNode, childCount);
+        				
+                		//check to see if the image is currently open, if not, add to list of Images on right
+                		if (model.getScriptImage(imageName) == null) {
+                			//not sure about the isMulti setting to true always...
+                			model.addToAvailableImageList(imageName, imageFilePath, isMulti);
+                		}
+                		
+        			}
+        			
+        			
+        			//System.err.println("\t" + elementImage.getNodeName() + ", value: " + elementImage.getNodeValue() + ", nodeType: " + elementImage.getNodeType());
+        		}
+        		phIndex++;
+    		}
+    	}
+    	update();
 
         expandAll(tree, new TreePath(root.getPath()), true);
         frame.getContentPane().repaint();
@@ -315,31 +388,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     }
    
 
-    /**
-     * ***************************************************************************************************** Called when
-     * there is a change to the Model.**********************************************************************************
-     * *******************
-     *
-     * @param  o    DOCUMENT ME!
-     * @param  arg  DOCUMENT ME!
-     */
-    public void update(Observable o, Object arg) {
-
-    	//imageList.setListData(model.getAvailableImageList().toArray());
-        imageList.setModel(populateModel(model.getAvailableImageList().toArray()));
-                
-        if (imageList.getSelectedIndex() == -1) {
-            imageList.setSelectedIndex(0);
-        }
-        imageList.validate();
-
-        if ((model.getAvailableImageList() != null) && (model.getAvailableImageList().size() > 0)) {
-            voiList.setListData((((ScriptImage) imageList.getSelectedValue()).getScriptVOIs()));
-        }
-
-        frame.toFront();
-        frame.repaint();
-    }
+   
 
     /**
      * Checks tree to see that all place holders have been replaced with actual images and VOIs if not, it prompts the
@@ -496,6 +545,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
         list.setTransferHandler(new ArrayListTransferHandler());
         list.setCellRenderer(new CustomCellRenderer());
         
+        
         if (name.equalsIgnoreCase("Images List")) {
             imageList = list;
         } else if (name.equalsIgnoreCase("VOIs from above image List")) {
@@ -634,15 +684,15 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             addButton(buttonNames[c]);
         }
 
-        String[] menuItems = {
-            "File", "View current script contents", "Close"
-        };
-        /*
+        //String[] menuItems = {
+        //    "File", "View current script contents", "Close"
+        //};
+        
         String[] menuItems = {
                 "File", "Open saved image and VOI selections", "Save current image and VOI selections",
                 "View current script contents", "Close"
             };
-        */
+        
         addMenu(menuItems);
 
         for (int i = 0; i < frame.getContentPane().getComponents().length; i++) {
@@ -1052,6 +1102,9 @@ public class JDialogRunScriptView implements ActionListener, Observer {
                 	voiList.setListData(new Vector());
                 } else {
                 	ScriptImage image = (ScriptImage) ((JList) e.getSource()).getSelectedValue();
+                	if (image == null) {
+                		return;
+                	}
                 	if (image.getScriptVOIs() != null) {
                 		voiList.setListData(image.getScriptVOIs());
                 	} else {
@@ -1122,15 +1175,16 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             int targetNodeType = targetNode.getNodeType();
             int newNodeType = IMAGENODE;
             
-            if (targetNodeType == SCRIPTNODE) {
-            	dtde.acceptDrop(action);
-                dtde.dropComplete(true);
-                return;
+            if (targetNodeType == SCRIPTNODE &&
+            		dropSource == VOI_DROP) {
+            	return;
             }
+            
             
             //set up what type of node the new node will be
             if (targetNodeType == IMAGEPLACEHOLDERNODE ||
-            		targetNodeType == IMAGENODE) {
+            		targetNodeType == IMAGENODE ||
+            		targetNodeType == SCRIPTNODE) {
             	newNodeType = IMAGENODE;
             } else if (targetNodeType == VOINODE ||
             		targetNodeType == VOINODE) {
@@ -1142,6 +1196,7 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             int voiCount = 0;
             int childCount = 0;
             int currentVOIIndex = 0;
+            int placeholderIndex = 0;
             
             childCount = targetNode.getChildCount();
             
@@ -1151,8 +1206,29 @@ public class JDialogRunScriptView implements ActionListener, Observer {
             //add or replace nodes one by one
             for (int i = 0; i < text.length; i++) {
             	
+            	if (targetNodeType == SCRIPTNODE &&
+            			dropSource == IMAGE_DROP) {
+            		//going to add to as many placeholders as possible (depends on number of images dropped)
+            		if (placeholderIndex < childCount) {
+            			newNode = new ScriptTreeNode(text[i], newNodeType);
+            			voiCount = model.getNumberOfRequiredVOIsForScriptImages()[placeholderIndex];
+                		for (int j = 0; j < voiCount; j++) {
+                			voiNode = new ScriptTreeNode(VOI_EMPTY, VOINODE);
+                			newNode.add(voiNode);
+                		}
+                		
+                		((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, 
+                				(ScriptTreeNode)targetNode.getChildAt(placeholderIndex), 
+                				((ScriptTreeNode)targetNode.getChildAt(placeholderIndex)).getChildCount());
+                		placeholderIndex++;
+                		
+            		} else {
+            			return;
+            		}
+            		
+            	}
             	
-            	if (targetNodeType == IMAGEPLACEHOLDERNODE &&
+            	else if (targetNodeType == IMAGEPLACEHOLDERNODE &&
             			dropSource == IMAGE_DROP) {
             	//	System.err.println("TARGET TYPE PLACEHOLDERNODE, SOURCE TYPE IMAGE");
             		newNode = new ScriptTreeNode(text[i], newNodeType);
@@ -1339,8 +1415,6 @@ public class JDialogRunScriptView implements ActionListener, Observer {
     	         boolean chf)  // cell has focus?
     	   {
     	   
-
-
     	        // Set the text and 
     	        //background color for rendering
     		   

@@ -23,6 +23,7 @@ public class ScriptImage {
         
         imageName = modelImage.getImageName();
         fileLocation = modelImage.getImageDirectory() + modelImage.getImageFileName();
+        isMultiFile = modelImage.getFileInfo()[0].getMultiFile();
         Object[] vois = modelImage.getVOIs().toArray();
         scriptVOIs = new ScriptVOI[vois.length];
 
