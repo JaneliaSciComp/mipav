@@ -452,13 +452,13 @@ System.err.println("doing this");
                     // their new image name
                     ScriptImage si = model.getScriptImage((String) scriptImages.elementAt(j));
                    
-                    if (si.isOpenedByScript()) {
-                    	
+                    try {
+                    	ViewUserInterface.getReference().getRegisteredImageByName(si.getImageName());
+                    } catch (IllegalArgumentException e) {
                     	String imageName = openImageWithFrame(si.getFileLocation(), si.isMultiFile());
-                        scriptImages.setElementAt(imageName, j);
                         imagesOpenedByDialog.addElement(ViewUserInterface.getReference().getRegisteredImageByName(imageName));
                     }
-                    
+                                        
                     Preferences.debug("run dialog:\tScript execution #" + i + "\t" + scriptVars[j] + " -> " +
                                       scriptImages.elementAt(j) + "\n", Preferences.DEBUG_SCRIPTING);
                 }
