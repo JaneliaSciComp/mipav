@@ -1872,46 +1872,57 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
 
             case SUPERIOR_EDGE:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("ACS");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("ACS");
                 break;
 
             case POSTERIOR_MARGIN:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("ACP");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("ACP");
                 break;
 
             case INFERIOR_EDGE:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("PC");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("PC");
                 break;
 
             case FIRST_PT:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("MS1");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("MS1");
                 break;
 
             case ANOTHER_PT:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("MS2");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("MS2");
                 break;
 
             case ANTERIOR_PT:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("A");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("A");
                 break;
 
             case POSTERIOR_PT:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("P");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("P");
                 break;
 
             case SUPERIOR_PT:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("S");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("S");
                 break;
 
             case INFERIOR_PT:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("I");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("I");
                 break;
 
             case LEFT_PT:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("L");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("L");
                 break;
 
             case RIGHT_PT:
                 ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setLabel("R");
+                ((VOIPoint) (newPointVOI.getCurves()[(int) z[0]].elementAt(0))).setName("R");
                 break;
         }
 
