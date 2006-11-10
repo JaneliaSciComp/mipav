@@ -810,6 +810,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (error == 1) {
             return null;
         }
+        
         pyrN = buildFullSFpyr2(noise, noisex, noisey, nScales, nOrientations-1, 1.0, pindN);
         if (error == 1) {
             return null;
@@ -842,7 +843,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             if (prnt) {
                 aux = pyrBand(pyr, pind, nband+nOrientations-1, nsxn, nsyn);
-                System.out.println("nsxn[0] = " + nsxn[0] + " nsyn[0] = " + nsyn[0] + " aux.length = " + aux.length);
                 auxn = pyrBand(pyrN, pindN, nband+nOrientations-1, nsxnn, nsynn);
                 // Resample 2x2 the parent if not in the high-pass oriented subbands.
                 //if (nband > nOrientations+1) {
@@ -855,8 +855,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     newy = (int)Math.round(2.0*nsyn[0]);
                     aux = new double[newx*newy];
                     imagArray = new double[newx*newy];
-                    expand(oldaux, 2.0, nsxn[0], nsyn[0], aux, imagArray);
-                    System.out.println("expand aux.length = " + aux.length); 
+                    expand(oldaux, 2.0, nsxn[0], nsyn[0], aux, imagArray); 
                     oldauxn = new double[auxn.length];
                     for (i = 0; i < auxn.length; i++) {
                         oldauxn[i] = auxn[i];
@@ -867,7 +866,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     imagArray = new double[newx*newy];
                     expand(oldauxn, 2.0, nsxnn[0], nsynn[0], auxn, imagArray);  
                 } // if (nband > nOrientations+1)
-                System.out.println("nsy[0] = " + nsy[0] + " nsx[0] = " + nsx[0] + " aux.length = " + aux.length);
                 for (j = 0; j < nsy[0]; j++) {
                     for (i = 0; i < nsx[0]; i++) {
                         index = i + j * nsx[0];
@@ -1071,6 +1069,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 intMat[1] = blx;
                 pind.setElementAt(intMat, nband-1);
             } // for (nband = 1; nband <= bandNum-1; nband++)
+            
             fh = reconWpyr(pyrh, pind, filter, CIRCULAR, null, null, fhx, fhy);
             if (error == 1) {
                 return null;
@@ -1646,7 +1645,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             ind = 0;
             for (b = 1; b <= nbands; b++) {
                 haveB = false;
-                for (i = 0; i < bands.length; b++) {
+                for (i = 0; i < bands.length; i++) {
                     if (bands[i] == b) {
                         haveB = true;
                     }
@@ -1797,9 +1796,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int x;
         int y;
         double temp[];
-        
-        System.out.println("xdim = " + xdim + " ydim = " + ydim + " xrdim = " + xrdim + " yrdim = " + yrdim);
-        System.out.println("xstart = " + xstart + " xstep = " + xstep + " ystart = " + ystart + " ystep = " + ystep);
         
         xstart--;
         ystart--;
@@ -2066,6 +2062,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         boolean anyB1;
         boolean anyB2;
         boolean anyB3;
+        int res_p[];
         
         if (levs == null) {
             allLevs = true;
@@ -2120,7 +2117,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         }
         
         // Compute size of result image: assumes critical sampling (boundaries correct)
-        res_sz = (int[])ind.get(0);
+        // Use res_p since if res_sz was set directly the value in the ind vector would
+        // change when res_sz was changed.
+        res_p = (int[])ind.get(0);
+        res_sz = new int[2];
+        res_sz[0] = res_p[0];
+        res_sz[1] = res_p[1];
         if (res_sz[0] == 1) {
             loind = 2;
             res_sz[1] = 0;
@@ -2174,6 +2176,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 for (i = 0; i < levs.length; i++) {
                     levsm1[i] = levs[i] - 1;
                 }
+                
                 nres = reconWpyr(pyr, ind, filt, edges, levsm1, bands, nresx, nresy);
                 for (i = loind-2; i >= 0; i--) {
                     pyr.insertElementAt(arr[i], 0);
@@ -2331,7 +2334,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             for (nor = 1; nor <= nOrientations; nor++) {
                 nband = nband + 1;
                 band = pyrBand(pyr, pind, nband-1, bandx, bandy);
-                System.out.println("nband-1 = " + (nband-1) + " bandx[0] = " + bandx[0] + " bandy[0] = " + bandy[0]);
                 // Approximate phase compensation
                 twoPow = 1;
                 for (i = 0; i < nsc; i++) {
@@ -2412,7 +2414,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         nband = nband + 1;
         band = pyrBand(pyr, pind, nband-1, bandx, bandy);
-        System.out.println("nband-1 = " + (nband-1) + " bandx[0] = " + bandx[0] + " bandy[0] = " + bandy[0]);
         twoPow = 1;
         for (i = 0; i < nScales; i++) {
             twoPow *= 2;
@@ -3060,7 +3061,12 @@ MATLAB description:
         int parr[][];
         int ind;
         
-        lo_ind = nbands + 1;
+        if (repres1 == STEERABLE_PYRAMID) {
+            lo_ind = nbands + 1;
+        }
+        else { // repres1 == FULL_STEERABLE_PYRAMID
+            lo_ind = nbands + 2;
+        }
         intMat = (int[])pind.get(0);
         dimX = intMat[0];
         dimY = intMat[1];
@@ -3093,8 +3099,6 @@ MATLAB description:
             loendY = lostartY + lodimY - 1;
             nlog_rad = new double[loendY-lostartY + 1][loendX-lostartX + 1];
             nangle = new double[loendY-lostartY + 1][loendX-lostartX + 1];
-            System.out.println("log_rad.length = " + log_rad.length + " log_rad[0].length = " + log_rad[0].length);
-            System.out.println("nlog_rad.length = " + nlog_rad.length + " nlog_rad[0].length = " + nlog_rad[0].length);
             for (j = 0; j < loendY-lostartY + 1; j++) {
                 for (i = 0; i < loendX-lostartX + 1; i++) {
                     nlog_rad[j][i] = log_rad[j + lostartY - 1][i + lostartX - 1];
@@ -3115,7 +3119,6 @@ MATLAB description:
                     levsm1[i] = levs[i] - 1;
                 }
                 intMat = (int[])pind.get(0);
-                System.out.println("intMat[0] = " + intMat[0] + " intMat[1] = " + intMat[1]);
                 nresdftr = new double[intMat[0]*intMat[1]];
                 nresdfti = new double[intMat[0]*intMat[1]];
                 reconSFpyrLevs(pyr, pind, nlog_rad, xrcos, yrcos, nangle, nbands,
@@ -3168,7 +3171,7 @@ MATLAB description:
                 haveOne = true;
             }
         }
-        
+       
         if (haveOne) {
             lutsize = 1024;
             xcosn = new double[3*(lutsize+1)];
@@ -6113,7 +6116,7 @@ MATLAB description:
             }
         }
         twoPow = 1;
-        for (i = 0; i < nsc; i++) {
+        for (i = 0; i < nScales; i++) {
             twoPow *= 2;
         }
         oldband = new double[band.length];
