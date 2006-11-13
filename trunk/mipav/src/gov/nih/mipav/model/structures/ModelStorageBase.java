@@ -6522,8 +6522,10 @@ public class ModelStorageBase extends ModelSerialCloneable {
             kIndex = (kBound - 1) - slice;
         }
 
-        int tFactor = (dimExtents.length > 2 ) ? dimExtents[0] * dimExtents[1] * dimExtents[2] :
-            (dimExtents.length > 1 ) ? dimExtents[0] * dimExtents[1] : (dimExtents.length > 1 ) ? dimExtents[0] : 1;
+        int tFactor =
+            (dimExtents.length > 2 ) ? dimExtents[0] * dimExtents[1] * dimExtents[2] :
+            (dimExtents.length > 1 ) ? dimExtents[0] * dimExtents[1] :
+            (dimExtents.length > 0 ) ? dimExtents[0] : 1;
 
         boolean exportComplex = ( values.length == (2 * iBound * jBound) ) ? true : false;
         double real, imaginary, mag;

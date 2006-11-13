@@ -1999,7 +1999,80 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
                 new JDialogWatershed(this, getActiveImage());
             }
-        } // Views
+        } 
+        else if (command.equals("DiffusionLevelsetITK2")) {
+            /* The below code is for demo purporses only: */
+            /* reallocate imageA to a ARGB_FLOAT with the extents for the demo
+             * file: */
+            int iXBound = 180;
+            int iYBound = 216;
+            int iQuantity = iXBound*iYBound;
+            int[] aiExtents = {iXBound, iYBound};
+            ModelImage kModelImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, aiExtents,
+                                                     "Mrislice_w180_h216.im" );
+
+            /* load the 2D demo file into imageA: */
+            try {
+                File kFile = new File("Mrislice_w180_h216.im");
+                RandomAccessFile kImage = new RandomAccessFile(kFile,"r");
+                float[] afImage = new float[iQuantity * 4];
+                float fValue;
+                for (int i = 0; i < iQuantity; i++)
+                {
+                    fValue = kImage.readFloat();
+                    afImage[i * 4 + 0] = 1f;
+                    afImage[i * 4 + 1] = fValue;
+                    afImage[i * 4 + 2] = fValue;
+                    afImage[i * 4 + 3] = fValue;
+                }
+                kImage.close();
+                kModelImage.importData( 0, afImage, true );
+            } catch ( IOException exception )
+            {
+                System.err.println( "DiffusionLevelsetITK 2D failed" );
+                return;
+            }
+            System.out.println("FastMarching2");
+            /* End demo portion of the code */
+            new ViewJFrameFastMarching2( kModelImage, null );
+        } else if (command.equals("DiffusionLevelsetITK3")) {
+            /* The below code is for demo purporses only: */
+            /* reallocate imageA to a ARGB_FLOAT with the extents for the demo
+             * file: */
+            int iXBound = 128;
+            int iYBound = 128;
+            int iZBound = 128;
+            int iQuantity = iXBound*iYBound*iZBound;
+            int[] aiExtents = {iXBound, iYBound, iZBound};
+            ModelImage kModelImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, aiExtents,
+                                                     "Helix_w128_h128_s128.im" );
+
+            /* load the 3D demo file into imageA: */
+            try {
+                File kFile = new File("Helix_w128_h128_s128.im");
+                RandomAccessFile kImage = new RandomAccessFile(kFile,"r");
+                float[] afImage = new float[iQuantity * 4];
+                float fValue;
+                for (int i = 0; i < iQuantity; i++)
+                {
+                    fValue = kImage.readFloat();
+                    afImage[i * 4 + 0] = 1f;
+                    afImage[i * 4 + 1] = fValue;
+                    afImage[i * 4 + 2] = fValue;
+                    afImage[i * 4 + 3] = fValue;
+                }
+                kImage.close();
+                kModelImage.importData( 0, afImage, true );
+            } catch ( IOException exception )
+            {
+                System.err.println( "DiffusionLevelsetITK 3D failed" );
+                return;
+            }
+            System.out.println("FastMarching3");
+            /* End demo portion of the code */
+            new ViewJFrameFastMarching3( kModelImage, null );
+        } 
+        // Views
         else if (command.equals("Animate")) {
             JDialogAnimate dialogAnimate;
 

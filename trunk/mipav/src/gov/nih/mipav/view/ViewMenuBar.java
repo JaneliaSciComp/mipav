@@ -426,7 +426,15 @@ public class ViewMenuBar {
                                                                                            false),
                                                                  menuBuilder.buildMenuItem("Watershed", null, 0, null,
                                                                                            false),
-                                                             }),
+                                                                 menuBuilder.makeMenu("ITK", false,
+                                                                                      new JMenuItem[] {
+                                                                                          menuBuilder.buildMenuItem("Diffusion Levelset 2D",
+                                                                                                                    "DiffusionLevelsetITK2", 0, null,
+                                                                                                                    false),
+                                                                                          menuBuilder.buildMenuItem("Diffusion Levelset 3D",
+                                                                                                                    "DiffusionLevelsetITK3", 0, null,
+                                                                                                                    false), } ),
+                                                                 }),
 
         // menuBuilder.buildMenuItem("Non-parametric", "nonparametric", 0, null,
         // false)}),
