@@ -910,6 +910,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 if (!dialog.isCancelled()) {
                     componentImage.getVOIHandler().setModeLivewire(dialog.getSelection());
+                    componentImage.setMode(ViewJComponentEditImage.LIVEWIRE);
                 }
             } else {
                 componentImage.setMode(ViewJComponentEditImage.LIVEWIRE);
