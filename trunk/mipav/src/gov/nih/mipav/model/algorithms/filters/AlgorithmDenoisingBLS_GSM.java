@@ -648,7 +648,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         aArray = new double[nx * ny];
         for (j = by, index = 0; j < by + ny; j++) {
             for (i = bx; i < bx + nx; i++) {
-                aArray[index++] = imD[j + imx*i];
+                aArray[index++] = imD[i + imx*j];
             }
         }
 
@@ -897,18 +897,17 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             BL = denoi_BLS_GSM_band(BL, BLn, prnt);
             bly = BL.length;
             blx = BL[0].length;
-            // Create BL transpose
-            BLT = new double[bly * blx];
+            BLT = new double[blx * bly];
             for (j = 0; j < bly; j++) {
                 for (i = 0; i < blx; i++) {
-                    index = j + i*bly;
-                    BLT[index] = BL[j][i][0];
+                    index = i + j * blx;
+                     BLT[index] = BL[j][i][0];
                 }
             }
             pyrh.setElementAt(BLT, nband-1);
             intMat = new int[2];
-            intMat[0] = bly;
-            intMat[1] = blx;
+            intMat[0] = blx;
+            intMat[1] = bly;
             pind.setElementAt(intMat, nband-1);
         } // for (nband = 2; nband <= bandNum; nband++)
         fh = reconFullSFpyr2(pyrh, pind, null, null, 1.0);
@@ -1055,18 +1054,17 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 BL = denoi_BLS_GSM_band(BL, BLn, prnt);
                 bly = BL.length;
                 blx = BL[0].length;
-                // Create BL transpose
-                BLT = new double[bly * blx];
+                BLT = new double[blx * bly];
                 for (j = 0; j < bly; j++) {
                     for (i = 0; i < blx; i++) {
-                        index = j + i*bly;
-                        BLT[index] = BL[j][i][0];
+                        index = i + j * blx;
+                         BLT[index] = BL[j][i][0];
                     }
                 }
                 pyrh.setElementAt(BLT, nband-1);
                 intMat = new int[2];
-                intMat[0] = bly;
-                intMat[1] = blx;
+                intMat[0] = blx;
+                intMat[1] = bly;
                 pind.setElementAt(intMat, nband-1);
             } // for (nband = 1; nband <= bandNum-1; nband++)
             
@@ -1184,8 +1182,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     for (i = 0; i < auxn.length; i++) {
                         oldauxn[i] = auxn[i];
                     }
-                    newx = (int)Math.round(2.0*nsxn[0]);
-                    newy = (int)Math.round(2.0*nsyn[0]);
+                    newx = (int)Math.round(2.0*nsxnn[0]);
+                    newy = (int)Math.round(2.0*nsynn[0]);
                     auxn = new double[newx*newy];
                     imagArray = new double[newx*newy];
                     expand(oldauxn, 2.0, nsxnn[0], nsynn[0], auxn, imagArray);  
@@ -1221,18 +1219,17 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             BL = denoi_BLS_GSM_band(BL, BLn, prnt);
             bly = BL.length;
             blx = BL[0].length;
-            // Create BL transpose
-            BLT = new double[bly * blx];
+            BLT = new double[blx * bly];
             for (j = 0; j < bly; j++) {
                 for (i = 0; i < blx; i++) {
-                    index = j + i*bly;
+                    index = i + j * blx;
                     BLT[index] = BL[j][i][0];
                 }
             }
             pyrh.setElementAt(BLT, nband-1);
             intMat = new int[2];
-            intMat[0] = bly;
-            intMat[1] = blx;
+            intMat[0] = blx;
+            intMat[1] = bly;
             pind.setElementAt(intMat, nband-1);
         } // for (nband = 2; nband <= bandNum; nband++)
         fh = reconWUpyr(pyrh, pind, daubOrder);
@@ -1374,18 +1371,17 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             BL = denoi_BLS_GSM_band(BL, BLn, prnt);
             bly = BL.length;
             blx = BL[0].length;
-            // Create BL transpose
-            BLT = new double[bly * blx];
+            BLT = new double[blx * bly];
             for (j = 0; j < bly; j++) {
                 for (i = 0; i < blx; i++) {
-                    index = j + i*bly;
-                    BLT[index] = BL[j][i][0];
+                    index = i + j * blx;
+                     BLT[index] = BL[j][i][0];
                 }
             }
             pyrh.setElementAt(BLT, nband-1);
             intMat = new int[2];
-            intMat[0] = bly;
-            intMat[1] = blx;
+            intMat[0] = blx;
+            intMat[1] = bly;
             pind.setElementAt(intMat, nband-1);
         } // for (nband = 1; nband <= bandNum-1; nband++)
         fh = reconSFpyr(pyrh, pind, null, null, 1.0);
@@ -3390,7 +3386,7 @@ MATLAB description:
         int j2;
         int nx, ny;
         double max;
-        boolean SNonZero;
+        int SNumNonZeros;
         
         nv = y.length;
         nh = y[0].length;
@@ -3556,15 +3552,16 @@ MATLAB description:
             }
         }
         
-        SNonZero = false;
+        SNumNonZeros = 0;
         for (j = 0; j < N; j++) {
             for (i = 0; i < N; i++) {
                 if (S[j][i] != 0.0) {
-                    SNonZero = true;
+                    SNumNonZeros++;
                 }
             }
         }
-        if (SNonZero) {
+        
+        if (SNumNonZeros >= 2) {
             iS = (new Matrix(S)).inverse().getArray();
         }
         else {
@@ -4178,6 +4175,10 @@ MATLAB description:
         int offsetx;
         int offsety;
         int i, j, i2, j2;
+        double mt[] = new double[mtxr.length];
+        for (i = 0; i < mtxr.length; i++) {
+            mt[i] = mtxr[i];
+        }
         
         n = (int)Math.floor(-offset[0]/(double)dimx);
         offsetx = -offset[0] - n*dimx;
@@ -4193,21 +4194,21 @@ MATLAB description:
         
         for (j = 0, j2 = offsety; j2 <= dimy-1; j++, j2++) {
             for (i = 0, i2 = offsetx; i2 <= dimx - 1; i++, i2++) {
-                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+                resr[i + dimx*j] = mt[i2 + dimx*j2];
             }
             
             for (i = dimx - offsetx, i2 = 0; i2 <= offsetx-1; i++, i2++) {
-                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+                resr[i + dimx*j] = mt[i2 + dimx*j2];
             }
         }
         
         for (j = dimy - offsety, j2 = 0; j2 <= offsety - 1; j++, j2++) {
             for (i = 0, i2 = offsetx; i2 <= dimx - 1; i++, i2++) {
-                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+                resr[i + dimx*j] = mt[i2 + dimx*j2];
             }
             
             for (i = dimx - offsetx, i2 = 0; i2 <= offsetx-1; i++, i2++) {
-                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
+                resr[i + dimx*j] = mt[i2 + dimx*j2];
             }
         }
         
@@ -4233,6 +4234,12 @@ MATLAB description:
         int offsetx;
         int offsety;
         int i, j, i2, j2;
+        double mtr[] = new double[mtxr.length];
+        double mti[] = new double[mtxi.length];
+        for (i = 0; i < mtxr.length; i++) {
+            mtr[i] = mtxr[i];
+            mti[i] = mtxi[i];
+        }
         
         n = (int)Math.floor(-offset[0]/(double)dimx);
         offsetx = -offset[0] - n*dimx;
@@ -4248,25 +4255,25 @@ MATLAB description:
         
         for (j = 0, j2 = offsety; j2 <= dimy-1; j++, j2++) {
             for (i = 0, i2 = offsetx; i2 <= dimx - 1; i++, i2++) {
-                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
-                resi[i + dimx*j] = mtxi[i2 + dimx*j2];
+                resr[i + dimx*j] = mtr[i2 + dimx*j2];
+                resi[i + dimx*j] = mti[i2 + dimx*j2];
             }
             
             for (i = dimx - offsetx, i2 = 0; i2 <= offsetx-1; i++, i2++) {
-                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
-                resi[i + dimx*j] = mtxi[i2 + dimx*j2];
+                resr[i + dimx*j] = mtr[i2 + dimx*j2];
+                resi[i + dimx*j] = mti[i2 + dimx*j2];
             }
         }
         
         for (j = dimy - offsety, j2 = 0; j2 <= offsety - 1; j++, j2++) {
             for (i = 0, i2 = offsetx; i2 <= dimx - 1; i++, i2++) {
-                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
-                resi[i + dimx*j] = mtxi[i2 + dimx*j2];
+                resr[i + dimx*j] = mtr[i2 + dimx*j2];
+                resi[i + dimx*j] = mti[i2 + dimx*j2];
             }
             
             for (i = dimx - offsetx, i2 = 0; i2 <= offsetx-1; i++, i2++) {
-                resr[i + dimx*j] = mtxr[i2 + dimx*j2];
-                resi[i + dimx*j] = mtxi[i2 + dimx*j2];
+                resr[i + dimx*j] = mtr[i2 + dimx*j2];
+                resi[i + dimx*j] = mti[i2 + dimx*j2];
             }
         }
         
@@ -5395,28 +5402,40 @@ MATLAB description:
         h_0[1] = 1.0;
         for (j = 1; j <= k-1; j++) {
             a = -a * 0.25 * (j + k - 1.0)/j;
-            temp = h_0;
+            temp = new double[h_0.length];
+            for (i = 0; i < h_0.length; i++) {
+                temp[i] = h_0[i];
+            }
             h_0 = new double[temp.length+1];
             h_0[0] = temp[0];
             for (i = 1; i < h_0.length-1; i++) {
                 h_0[i] = temp[i-1] + temp[i];
             }
             h_0[h_0.length-1] = temp[h_0.length-2];
-            temp = p;
+            temp = new double[p.length];
+            for (i = 0; i < p.length; i++) {
+                temp[i] = p[i];
+            }
             p = new double[temp.length+1];
             p[0] = temp[0];
             for (i = 1; i < p.length-1; i++) {
                 p[i] = temp[i] - temp[i-1];
             }
             p[p.length-1] = -temp[p.length-2];
-            temp = p;
+            temp = new double[p.length];
+            for (i = 0; i < p.length; i++) {
+                temp[i] = p[i];
+            }
             p = new double[temp.length+1];
             p[0] = temp[0];
             for (i = 1; i < p.length-1; i++) {
                 p[i] = temp[i] - temp[i-1];
             }
             p[p.length-1] = -temp[p.length-2];
-            temp = q;
+            temp = new double[q.length];
+            for (i = 0; i < q.length; i++) {
+                temp[i] = q[i];
+            }
             q = new double[temp.length+2];
             q[0] = a*p[0];
             for (i = 1; i < q.length-1; i++) {
@@ -5436,6 +5455,7 @@ MATLAB description:
         eig = new EigenvalueDecomposition(new Matrix(A));
         eigenvalue = eig.getRealEigenvalues();
         imagvalue = eig.getImagEigenvalues();
+        
         haveImag = false;
         for (i = 0; i < imagvalue.length; i++) {
             if (imagvalue[i] != 0.0) {
@@ -5448,12 +5468,14 @@ MATLAB description:
         else {
             sort(eigenvalue, imagvalue);
         }
+        
         qtr = new double[k-1];
         qti = new double[k-1];
         for (i = 0; i < k-1; i++) {
             qtr[i] = eigenvalue[i];
             qti[i] = imagvalue[i];
         }
+        
         if (type == MID_PHASE) {
             if ((k %2) == 1) {
                qtl = 0;
@@ -5518,8 +5540,8 @@ MATLAB description:
         ci = new double[qtr.length+1];
         cr[0] = 1.0;
         ci[0] = 0.0;
-        for (j = 0; j <= qtr.length-1; j++) {
-            for (i = 0; i <= j; i++) {
+        for (j = 0; j <= cr.length-2; j++) {
+            for (i = j; i >= 0; i--) {
                 cr[i+1] = cr[i+1] - qtr[j]*cr[i] + qti[j]*ci[i];
                 ci[i+1] = ci[i+1] - qtr[j]*ci[i] - qti[j]*cr[i];
             }
@@ -5560,8 +5582,7 @@ MATLAB description:
             h_1[i] = -h_1[i];
         }
         
-        return h_0;
-        
+        return h_0; 
     }
     
     /**
