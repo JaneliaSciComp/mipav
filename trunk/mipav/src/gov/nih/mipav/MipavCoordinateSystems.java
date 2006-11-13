@@ -6,20 +6,22 @@ import gov.nih.mipav.model.structures.*;
 
 
 /**
- * MipavCoordinateSystems class. This is a temporary class to define and
- * isolate the different Coordinate Systems in Mipav. The class functionality
- * will be move to a permanent class and/or this class will be fleshed out
- * further.
+ * MipavCoordinateSystems class. This class provides the interface layer
+ * between objects and classes that display information about the ModelImage
+ * class and the ModelImage class itself.
  *
- * Mipav Coordinate Systems:
+ * FileCoordinates -- how the ModelImage data is stored on disk and read into
+ * the ModelStorageBase 1D array.
  *
- * 1). File -- sample coordinates, represented by the FileInfoBase.ORI_L2R_TYPE, etc.
+ * ModelCoordinates -- mapping of the Axial, Coronal, and Sagittal
+ * FileCoordinates values into x, y, z (0, 1, 2) positions for array indexing
+ * (based on the FileInfoBase.AXIAL, CORONAL, and SAGITTIAL constant defines).
  *
- * 2). Model -- ModelStorageBase coordinates -- how the data is stored in memory
- *
- * 3). Patient -- data rearranged for either the AXIAL, SAGITTAL, or CORONAL views of the data.
- *
- * 4). Screen -- Mouse coordinates, so far.
+ * PatientCoordinates, the coordinate axes for displaying the Axial, Coronal,
+ * and Sagittal views of the ModelImage data. The mapping of Human-Anatomical
+ * axes (Left-Right, Anterior-Posterior, Superior-Inferior) onto
+ * PatientCoordinates: Axial = { R2L, A2P, I2S }; Coronal = { R2L, S2I, A2P };
+ * Sagittal = { A2P, S2I, R2L }
  *
  * This class provides static functions for transforming points from one
  * Coordinate Space into another.
@@ -28,23 +30,43 @@ import gov.nih.mipav.model.structures.*;
 public class MipavCoordinateSystems
 {
 
+    /**
+     * FileToModel transform. Transforms points in FileCoordinates into
+     * ModelCoordinates. ModelCoordinates map the Axial, Coronal, and Sagittal
+     * values from the FileCoordinates point into the x, y, and z positions of
+     * the output point.
+     * @param pIn, the point in FileCoordinates to be transformed
+     * @param pOut, return: the transformed point in ModelCoordinates
+     * @param image, the ModelImage for which the transform is done.
+     */
     public static final void FileToModel(Point3Df pIn, Point3Df pOut,
                                          ModelStorageBase image)
     {
+        /* get the axial, coronal and sagittal positions for this image: */        
         int[] axialOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.AXIAL );
         int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.CORONAL );
         int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.SAGITTAL );
 
         float[] filePoint = { pIn.x, pIn.y, pIn.z };
 
+        /* re-map the FileCoordinates point into x=axial, y=coronal and
+         * z=sagittal: */        
         pOut.x = filePoint[ axialOrder[2] ];
         pOut.y = filePoint[ coronalOrder[2] ];
         pOut.z = filePoint[ sagittalOrder[2] ];
     }
 
+    /**
+     * ModelToFile transform. Transforms points in ModelCoordinates (x =
+     * Axial, y = Coronal, z = Sagittal) into FileCoordinates.
+     * @param pIn, the point in ModelCoordinates to be transformed
+     * @param pOut, return: the transformed point in FileCoordinates
+     * @param image, the ModelImage for which the transform is done.
+     */
     public static final void ModelToFile(Point3Df pIn, Point3Df pOut,
                                          ModelStorageBase image )
     {
+        /* get the axial, coronal and sagittal positions for this image: */        
         int[] axialOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.AXIAL );
         int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.CORONAL );
         int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( image, FileInfoBase.SAGITTAL );
@@ -59,19 +81,27 @@ public class MipavCoordinateSystems
         pOut.z = modelPoint[ 2 ];
     }
 
-    /** Model to Patient transform. Transforms points that are in model space
-     * into patient space, based on the desired orientation -- either AXIAL,
-     * SAGITTAL, or CORONAL: */
+    /** FileToPatient transform. Transforms points that are in FileCoordinates
+     * into PatientCoordinates space, based on the ModelImage and the desired
+     * oriented view -- either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT:
+     * @param pIn, the FileCoordinates Point
+     * @param pOut, the Point in PatientCoordinates
+     * @param image, the ModelImage for which the point is being transformed.
+     * @param orientation, the desired PatientCoordinates orientation.
+     */
     public static final void FileToPatient( Point3Df pIn, Point3Df pOut,
                                             ModelStorageBase image, int orientation )
     {
-        /* axisOrder represents the mapping of model space volume axes to patient space axes: */
+        /* axisOrder represents the mapping of FileCoordinates volume axes to
+         * PatientCoordinates axes: */
         int[] axisOrder = MipavCoordinateSystems.getAxisOrder( image, orientation );
 
-        /* axisFlip represents whether to invert the axes after they are reordered: */
+        /* axisFlip represents whether to invert the axes after they are
+         * reordered: */
         boolean[] axisFlip = MipavCoordinateSystems.getAxisFlip( image, orientation );
 
-        /* extents gets the image extents re-mapped to patient coordinates */
+        /* extents gets the image extents re-mapped to PatientCoordinates */
         int[] extents = image.getExtents( orientation );
 
         /* The modelPoint: */
@@ -84,7 +114,7 @@ public class MipavCoordinateSystems
         float[] patientPoint = new float[3];
 
         /* First reorder the point indices based on the axisOrder re-mapping
-         * from Model to Patient space: */
+         * from FileCoordinates to PatientCoordinates space: */
         for ( int i = 0; i < 3; i++ )
         {
             patientPoint[i] = modelPoint[ axisOrder[i] ];
@@ -104,13 +134,22 @@ public class MipavCoordinateSystems
         pOut.z = Math.round( patientPoint[2] );
     }
 
-    /** Model to Patient transform. Transforms points that are in model space
-     * into patient space, based on the desired orientation -- either AXIAL,
-     * SAGITTAL, or CORONAL: */
+    /** FileToSlice transform. Transforms a point in FileCoordinates into
+     * PatientCoordinates space, based on the ModelImage and the desired view
+     * orientation -- either FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL, or FileInfoBase.UNKNOWN_ORIENT. Returns only the
+     * z-value of the transformed point.
+     * @param pIn, the FileCoordinates Point
+     * @param image, the ModelImage for which the point is being transformed.
+     * @param orientation, the desired PatientCoordinates view orientation.
+     * @param bFlip, when true use axisFlip to flip the PatientCoordinates axis
+     * @return the z-value of the pIn input point in PatientCoordinates
+     */
     public static final int FileToSlice( Point3Df pIn, ModelStorageBase image,
                                          int orientation, boolean bFlip )
     {
-        /* axisOrder represents the mapping of model space volume axes to patient space axes: */
+        /* axisOrder represents the mapping of FileCoordinates volume axes to
+         * PatientCoordinates space axes: */
         int[] axisOrder = MipavCoordinateSystems.getAxisOrder( image, orientation );
 
         /* axisFlip represents whether to invert the axes after they are reordered: */
@@ -129,7 +168,7 @@ public class MipavCoordinateSystems
         float[] patientPoint = new float[3];
 
         /* First reorder the point indices based on the axisOrder re-mapping
-         * from Model to Patient space: */
+         * from File to Patient space: */
         for ( int i = 0; i < 3; i++ )
         {
             patientPoint[i] = modelPoint[ axisOrder[i] ];
@@ -149,12 +188,21 @@ public class MipavCoordinateSystems
 
 
 
-    /** Patient to Model transform. Transforms points that are in patient space
-     * (either AXIAL, SAGITTAL, or CORONAL) into Model space: */
+    /** PatientToFile transform. Transforms points that are in
+     * PatientCoordinates into FileCoordinates space, based on the ModelImage
+     * and the given oriented view -- either FileInfoBase.AXIAL,
+     * FileInfoBase.CORONAL, FileInfoBase.SAGITTAL, or
+     * FileInfoBase.UNKNOWN_ORIENT:
+     * @param pIn, the PatientCoordinates Point
+     * @param pOut, the Point in FileCoordinates
+     * @param image, the ModelImage for which the point is being transformed.
+     * @param orientation, the given PatientCoordinates orientation.
+     */
     public static final void PatientToFile(Point3Df pIn, Point3Df pOut,
                                            ModelStorageBase image, int orientation)
     {
-        /* axisOrder represents the mapping of model space volume axes to patient space axes: */
+        /* axisOrder represents the mapping of FileCoordinates volume axes to
+         * PatientCoordinates space axes: */
         int[] axisOrder = MipavCoordinateSystems.getAxisOrder( image, orientation );
 
         /* axisFlip represents whether to invert the axes after they are reordered: */
@@ -163,19 +211,19 @@ public class MipavCoordinateSystems
         /* extents gets the image extents re-mapped to patient coordinates */
         int[] extents = image.getExtents( orientation );
 
-        /* axisOrderInverse is the inverse axis re-mapping from Patient
-         * Coordinates to Model Coordinates: */
+        /* axisOrderInverse is the inverse axis re-mapping from
+         * PatientCoordinates to FileCoordinates: */
         int[] axisOrderInverse = new int[3];
         /* get the inverse mapping: */
         getAxisOrderInverse( axisOrder, axisOrderInverse );
 
-        /* input point in patient coordinates: */
+        /* input point in PatientCoordinates: */
         float[] patientPoint = new float[3];
         patientPoint[0] = pIn.x;
         patientPoint[1] = pIn.y;
         patientPoint[2] = pIn.z;
 
-        /* output point in model coordinates: */
+        /* output point in FileCoordinates: */
         float[] modelPoint = new float[3];
 
         /* First invert: */
@@ -200,8 +248,13 @@ public class MipavCoordinateSystems
     }
 
     /* Inverts the input axisOrder so that points can be mapped back from
-     * Patient Coordinates to Model Coordinates. The Inverse map is based only
-     * on the input axisOrder map. */
+     * PatientCoordinates to FileCoordinates. The Inverse map is based only on
+     * the input axisOrder map.
+     * @param axisOrder, the axisOrder that is being inverted
+     * @param axisOrderInverse, return: the inverse of axisOrder parameter so
+     * that axisOrderInverse undoes the axisOrder re-mapping of coordinate
+     * axes.
+     */
     public static final void getAxisOrderInverse( int[] axisOrder, int[] axisOrderInverse )
     {
         for ( int i = 0; i < 3; i++ )
@@ -212,8 +265,13 @@ public class MipavCoordinateSystems
 
 
     /* Gets the axisOrientation variables stored in the image.FileInfoBase
-     * object. If the orientation is undefined, the axes are assigned values
-     * based on the image orientation: */
+     * object for the input ModelImage, image. If the orientation is
+     * undefined, the axes are assigned values based on the image
+     * orientation:
+     * @param image, the ModelImage for which the axisOrientation is returned
+     * @return, the axisOrientation of the ModelImage, null if the ModelImage
+     * is of FileInfoBase.UNKNOWN_ORIENT
+     */
     public static final int[] getAxisOrientation( ModelStorageBase image  )
     {
         int imageOrientation = image.getImageOrientation();
@@ -248,14 +306,15 @@ public class MipavCoordinateSystems
     }
 
 
-    /* Get the booean axisFlip array that describes how Model Coordinate axes
-     * are inverted in Patient Coordinates. The values are determined by the
-     * FileInfoBase.ORI_L2R_TYPE, etc. values stored in the input image and by the
-     * desired patient viewing orientation.
+    /* Get the booean axisFlip array that describes how FileCoordinate axes
+     * are inverted in PatientCoordinates. The values are determined by the
+     * FileInfoBase.ORI_L2R_TYPE, etc. values stored in the input
+     * image.FileInfoBase.axisOrientation and by the desired patient viewing
+     * orientation.
      *
      * @param image, the image storing the data
-     * @param iOrientation the desired Patient Coordinates view of the data (AXIAL, SAGITTAL, CORONAL)
-     * @return axisFlip, how to invert the Model axes for the given Patient Coordinate view
+     * @param iOrientation the desired PatientCoordinates view of the data (AXIAL, SAGITTAL, CORONAL)
+     * @return axisFlip, how to invert the FileCoordinates axes for the given PatientCoordinate view
      */
     public static final boolean[] getAxisFlip( ModelStorageBase image, int iOrientation )
     {
@@ -322,14 +381,14 @@ public class MipavCoordinateSystems
 
     }
 
-    /* Get the axisOrder array that describes how Model Coordinate axes are
-     * remapped for the Patient Coordinates. The axisOrder values are
+    /* Get the axisOrder array that describes how FileCoordinate axes are
+     * remapped for the PatientCoordinates. The axisOrder values are
      * determined by the FileInfoBase.ORI_L2R_TYPE, etc. values stored in the
      * input image and by the desired patient viewing orientation.
      *
      * @param image, the image storing the data
-     * @param iOrientation the desired Patient Coordinates view of the data (AXIAL, SAGITTAL, CORONAL)
-     * @return axisOrder, how to re-map the Model axes for the given Patient Coordinate view
+     * @param iOrientation the desired PatientCoordinates view of the data (AXIAL, SAGITTAL, CORONAL)
+     * @return axisOrder, how to re-map the FileCoordinates axes for the given PatientCoordinate view.
      */
     public static final int[] getAxisOrder( ModelStorageBase image, int iOrientation )
     {
@@ -406,6 +465,13 @@ public class MipavCoordinateSystems
         return aiAxisOrder;
     }
 
+    /**
+     * Returns the direction vectors for displaying the ModelTriangleMesh
+     * surface so that it aligns properly with the input ModelImage. The
+     * direction vectors are transformed into ModelCoordinates.
+     * @param kImage, the ModelImage for which the direction vectors are returned.
+     * @return the direction vectors for the ModelTriangleMesh object.
+     */
     public static final int[] getModelDirections(  ModelStorageBase kImage )
     {
         boolean[] axialFlip = getAxisFlip( kImage, FileInfoBase.AXIAL );
@@ -428,7 +494,8 @@ public class MipavCoordinateSystems
         return aiModelFlip;
     }
 
-    /** Translates the input point into model scanner coordinates, based on the input image, kImage.
+    /** Translates the input point into ScannerCoordinates, based on
+     * the input image, kImage.
      * @param kInput, the input point in FileCoordinates
      * @param kOutput, the transformed point in ScannerCoordinates
      * @param kImage, the image for which the point is being transformed.
