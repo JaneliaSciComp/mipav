@@ -62,7 +62,7 @@ public class ScriptableActionLoader {
         } catch (Exception err) {
 
             // can't load class
-            throw new ParserException("Cannot load script acition: " + packageString + action);
+            throw new ParserException("Cannot load script action: " + packageString + action);
         }
     }
 
