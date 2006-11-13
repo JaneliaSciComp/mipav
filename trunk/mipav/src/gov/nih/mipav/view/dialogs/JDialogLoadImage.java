@@ -65,6 +65,10 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
     /** image taken from the frame to be imported:. */
     private ModelImage importImage;
 
+    private ModelLUT importLUT = null;
+    
+    private ModelRGB importRGB = null;
+    
     /** are we loading from frame, file, or blank. */
     private int loadType;
 
@@ -439,6 +443,12 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
                 ViewJFrameImage imageFrame = (ViewJFrameImage) uiV.elementAt(elem);
                 importImage = imageFrame.getImageA();
 
+                if (importImage.isColorImage()) {
+                	importRGB = imageFrame.getRGBTA();
+                } else{ 
+                	importLUT = imageFrame.getLUTa();
+                }
+                
                 if (matchOrigins.isSelected()) {
                     doOrigins = true;
                 } else {
@@ -503,7 +513,18 @@ public class JDialogLoadImage extends JDialogScriptableBase implements Algorithm
                 setCompleted(true);
             } else {
                 resultImage = (ModelImage) importImage.clone();
-                setCompleted(((ViewJFrameImage) parentFrame).setAndLoad(resultImage, doOrigins, doOrients));
+                
+                boolean comp = ((ViewJFrameImage) parentFrame).setAndLoad(resultImage, doOrigins, doOrients);
+                if (comp) {
+                	if (importImage.isColorImage()) {
+                		((ViewJFrameImage) parentFrame).setRGBTB((ModelRGB)importRGB.clone());
+                	} else {
+                		((ViewJFrameImage) parentFrame).setLUTb((ModelLUT)importLUT.clone());
+                	}
+                	((ViewJFrameImage) parentFrame).updateImages(true);
+                }
+                
+                setCompleted(comp);
             }
 
         }
