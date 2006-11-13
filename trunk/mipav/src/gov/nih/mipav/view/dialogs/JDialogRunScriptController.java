@@ -457,6 +457,8 @@ System.err.println("doing this");
                     } catch (IllegalArgumentException e) {
                     	String imageName = openImageWithFrame(si.getFileLocation(), si.isMultiFile());
                         imagesOpenedByDialog.addElement(ViewUserInterface.getReference().getRegisteredImageByName(imageName));
+                        scriptImages.remove(j);
+                        scriptImages.insertElementAt(imageName, j);
                     }
                                         
                     Preferences.debug("run dialog:\tScript execution #" + i + "\t" + scriptVars[j] + " -> " +

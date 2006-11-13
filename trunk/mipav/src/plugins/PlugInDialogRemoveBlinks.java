@@ -17,8 +17,11 @@ public class PlugInDialogRemoveBlinks
     private PlugInAlgorithmRemoveBlinks icgAlgo;
     private ModelImage image = null; // source image
     private ModelImage resultImage = null;
-
-    private ViewUserInterface userInterface;
+    
+    /**
+     * Empty constructor required for dynamic instantiation during script execution.
+     */
+    public PlugInDialogRemoveBlinks() {}
 
     /**
      *  Sets variables needed to call algorithm.
@@ -29,7 +32,6 @@ public class PlugInDialogRemoveBlinks
         super(theParentFrame, true);
 
         image = imA;
-        userInterface = ( (ViewJFrameBase) (parentFrame)).getUserInterface();
         callAlgorithm();
     }
 
@@ -42,13 +44,9 @@ public class PlugInDialogRemoveBlinks
     public PlugInDialogRemoveBlinks(ViewUserInterface UI, ModelImage imA) {
         super();
 
-        userInterface = UI;
         image = imA;
         callAlgorithm();
     }
-
-    public PlugInDialogRemoveBlinks() { }
-
     
     /**
      * {@inheritDoc}
@@ -63,7 +61,6 @@ public class PlugInDialogRemoveBlinks
     protected void setGUIFromParams() {
     	image = scriptParameters.retrieveInputImage();
 
-        userInterface = image.getUserInterface();
         parentFrame = image.getParentFrame();
     }
 

@@ -44,6 +44,11 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
+     * Empty constructor required for dynamic instantiation during script execution.
+     */
+    public PlugInDialogNEISeg() {}
+    
+    /**
      * Sets variables needed to call algorithm.
      *
      * @param  theParentFrame  Parent frame
@@ -60,27 +65,6 @@ public class PlugInDialogNEISeg extends JDialogScriptableBase implements Algorit
 
         imageA = imA;
         userInterface = ViewUserInterface.getReference();
-        callAlgorithm();
-    }
-
-    /**
-     * Used primarily for the script to store variables and run the algorithm. No actual dialog will appear but the set
-     * up info and result image will be stored here.
-     *
-     * @param  UI   The user interface, needed to create the image frame.
-     * @param  imA  Source image.
-     */
-    public PlugInDialogNEISeg(ViewUserInterface UI, ModelImage imA) {
-        super();
-
-        if (imA.getVOIs().size() != 2) {
-            MipavUtil.displayError("Two separate VOIs required");
-
-            return;
-        }
-
-        userInterface = UI;
-        imageA = imA;
         callAlgorithm();
     }
 
