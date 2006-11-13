@@ -25,7 +25,7 @@ public class ParserEngine {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** This regular expression pattern breaks apart a line in a script into two groups: the script action and the string containing all the action's parameters. */
-    private static final Pattern scriptLineRegex = Pattern.compile("^([A-Za-z][\\w_]*)\\s*\\(\\s*(\".+\")*\\s*\\)\\s*$");
+    private static final Pattern scriptLineRegex = Pattern.compile("^([A-Za-z][\\w_.]*)\\s*\\(\\s*(\".+\")*\\s*\\)\\s*$");
 
     /** This regular expression pattern breaks apart an action parameter string into three parts: param label, param data type, and param data. */
     private static final Pattern paramInfoRegex = Pattern.compile("^([$\\w_.-]+)\\s+([\\w_]+)\\s+(.*)$");
