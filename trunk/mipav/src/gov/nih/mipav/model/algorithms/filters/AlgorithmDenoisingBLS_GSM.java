@@ -8,6 +8,7 @@ import gov.nih.mipav.model.structures.jama.*;
 import gov.nih.mipav.view.*;
 import java.util.*;
 
+import java.awt.Dimension;
 import java.io.*;
 
 
@@ -342,6 +343,57 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
             return;
         }
+        
+        // This simple test code was used to verify expand, shrink, and shiftReal.
+        boolean testme = false;
+        if (testme) {
+            double oldim[] = new double[im.length];
+            for (i = 0; i < im.length; i++) {
+                oldim[i] = im[i];
+            }
+            //int newx = (int)Math.round(2.0*nx);
+            //int newy = (int)Math.round(2.0*ny);
+            //im = new double[newx*newy];
+            //imagArray = new double[newx*newy];
+            //expand(oldim, 2.0, nx, ny, im, imagArray); 
+            //int newx = nx/2;
+            //int newy = ny/2;
+            //im = new double[newx*newy];
+            //imagArray = new double[newx*newy];
+            //shrink(oldim, nx, ny, 2, im, imagArray);
+            int offset[] = new int[2];
+            offset[0] = nx/2;
+            offset[1] = ny/2;
+            int newx = nx;
+            int newy = ny;
+            shiftReal(im, nx, ny, offset, im);
+            if (srcImage.getType() == ModelImage.UBYTE) {
+
+                for (i = 0; i < im.length; i++) {
+
+                    if (im[i] > 255.0) {
+                        im[i] = 255.0;
+                    } else if (im[i] < 0.0) {
+                        im[i] = 0.0f;
+                    }
+                }
+            } // if (dataType == ModelImage.UBYTE)
+            int newextents[] = new int[2];
+            newextents[0] = newx;
+            newextents[1] = newy;
+            ModelImage testImage = new ModelImage(srcImage.getType(), newextents, "testImage");
+            try {
+                testImage.importData(0, im, true);
+            }
+            catch(IOException e) {
+                displayError("AlgorithmDenoisingBLS_GSM: Error on testImage.importData");
+                setCompleted(false);
+                return;
+            }
+            new ViewJFrameImage(testImage, null, new Dimension(610, 200));
+            setCompleted(false);
+            return;
+        } // if (testme)
         
         if ((nx != npx) || (ny != npy)) {
             padArray = new double[npx*npy];
@@ -1057,8 +1109,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 BLT = new double[blx * bly];
                 for (j = 0; j < bly; j++) {
                     for (i = 0; i < blx; i++) {
-                        index = i + j * blx;
-                         BLT[index] = BL[j][i][0];
+                        index = i + j*blx;
+                        BLT[index] = BL[j][i][0];
                     }
                 }
                 pyrh.setElementAt(BLT, nband-1);
@@ -1093,9 +1145,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                                      double noise[], int noisex, int noisey) {
         double fh[] = null;
         Vector pind = new Vector();
+        Vector pindN = new Vector();
         Vector pyr = null;
         Vector pyrN = null;
-        Vector pyrh;
+        Vector pyrh = new Vector();
         int bandNum;
         int nband;
         double aux[] = null;
@@ -1133,18 +1186,18 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             return null;
         }
         
-        pyrN = buildWUpyr(noise, noisex, noisey, nScales, daubOrder, pind);
+        pyrN = buildWUpyr(noise, noisex, noisey, nScales, daubOrder, pindN);
         if (error == 1) {
             return null;
         }
-        pyrh = pyr;
+        pyrh.addAll(pyr);
         bandNum = pind.size() - 1;
         
         // Everything except the lowpass residual
         for (nband = 2; nband <= bandNum; nband++) {
             fireProgressStateChanged((100 * (nband-1))/ (bandNum-1));
             aux = pyrBand(pyr, pind, nband-1,nsx, nsy);
-            auxn = pyrBand(pyrN, pind, nband-1, nsxn, nsyn);
+            auxn = pyrBand(pyrN, pindN, nband-1, nsxn, nsyn);
             // Has the subband a parent?
             prnt = useParent && (nband < bandNum - nOrientations);
             if (prnt) {
@@ -1166,7 +1219,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             if (prnt) {
                 aux = pyrBand(pyr, pind, nband+nOrientations-1, nsxn, nsyn);
-                auxn = pyrBand(pyrN, pind, nband+nOrientations-1, nsxnn, nsynn);
+                auxn = pyrBand(pyrN, pindN, nband+nOrientations-1, nsxnn, nsynn);
                 // Resample 2x2 the parent if not in the high-pass oriented subbands
                 if (nband > nOrientations + 1) {
                     oldaux = new double[aux.length];
@@ -2316,7 +2369,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int yhy = 0;
         int lprx;
         int lpry;
-        double h_1[] = null;
+        double h_1[] = new double[daubOrder];
         
         nOrientations = 3;
         nScales = (pind.size() - 2)/nOrientations - 1;
@@ -2579,7 +2632,7 @@ MATLAB description:
 % function computes the inverse redundant discrete wavelet transform y for a
 % 1D or  2D input signal. redundant means here that the subsampling after
 % each stage of the forward transform has been omitted. yl contains the
-% lowpass and yl the highpass components as computed, e.g., by mrdwt. In
+% lowpass and yh the highpass components as computed, e.g., by mrdwt. In
 % case of a 2D signal the ordering in yh is [lh hl hh lh hl ... ] (first
 % letter refers to row, second to column filtering).  
 %
@@ -3738,7 +3791,7 @@ MATLAB description:
             aux = new double[N][nsamp_z];
             for (j = 0; j < nsamp_z; j++) {
                 for (i = 0; i < N; i++) {
-                    aux[i][j] = m[i]*laz2[i][j];
+                    aux[i][j] = m[i]*laz[i][j]*laz2[i][j];
                 }
             }
             for (i = 0; i < laz2.length; i++) {
@@ -3983,7 +4036,6 @@ MATLAB description:
                 aux[i][0] += mu_x[i][j];
             }
         }
-        
         for (j = Ly, j2 = 0; j < nblv + Ly; j++) {
            for (i = Lx; i < nblh + Lx; i++) {
                x_hat[j][i][0] = aux[j2++][0];
@@ -5574,7 +5626,6 @@ MATLAB description:
             error = 1;
             return null;
         }
-        h_1 = new double[h_0.length];
         for (i = 0; i < h_0.length; i++) {
             h_1[i] = h_0[h_0.length-1-i];
         }
@@ -6022,7 +6073,7 @@ MATLAB description:
         int intArr[] = new int[2];
         double bandi[] = null;
         int intMat[];
-        double h_1[] = null;
+        double h_1[] = new double[daubOrder];
         
         if (nScales < 1) {
             MipavUtil.displayError("Number of scales must be >= 1");
@@ -6033,6 +6084,7 @@ MATLAB description:
         // Fixed number of orientations
         nOrientations = 3;
         h = daubcqf(daubOrder, MINIMUM_PHASE, h_1);
+        
         if (error == 1) {
             return null;
         }
@@ -6120,11 +6172,10 @@ MATLAB description:
                     bandy = newy;
                 } // if (nsc > 2)
                 pyr.add(band);
-                pind.removeElementAt(nband-1);
                 intMat = new int[2];
                 intMat[0] = bandx;
                 intMat[1] = bandy;
-                pind.insertElementAt(intMat, nband-1);
+                pind.setElementAt(intMat, nband-1);
             } // for (nor = 1; nor <= nOrientations; nor++)
         } // for (nsc = 1; nsc <= nScales+1; nsc++)
         
@@ -6152,11 +6203,10 @@ MATLAB description:
         bandx = newx;
         bandy = newy;
         pyr.add(band);
-        pind.removeElementAt(nband);
         intMat = new int[2];
         intMat[0] = bandx;
         intMat[1] = bandy;
-        pind.insertElementAt(intMat, nband);
+        pind.setElementAt(intMat, nband);
         
         return pyr;
     }
