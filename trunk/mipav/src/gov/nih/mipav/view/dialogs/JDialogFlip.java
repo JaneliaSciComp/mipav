@@ -187,6 +187,8 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             scriptParameters.getParams().put(ParameterFactory.newParameter("flip_axis", "X"));
         } else if (flipAxis == AlgorithmFlip.Y_AXIS) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("flip_axis", "Y"));
+        } else if (flipAxis == AlgorithmFlip.Z_AXIS) {
+        	scriptParameters.getParams().put(ParameterFactory.newParameter("flip_axis", "Z"));
         }
     }
     
@@ -203,6 +205,8 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             flipAxis = AlgorithmFlip.X_AXIS;
         } else if (axisn.equals("Y")) {
             flipAxis = AlgorithmFlip.Y_AXIS;
+        } else if (axisn.equals("Z")) {
+        	flipAxis = AlgorithmFlip.Z_AXIS;
         } else {
             throw new ParameterException("flip_axis", "Illegal axis parameter: " + axisn);
         }
