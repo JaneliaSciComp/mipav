@@ -28,8 +28,13 @@ public class JDialogRunScriptView implements ActionListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
+	/** Used for XML tag for an image placeholder */
 	private static final String PLACEHOLDER_STR = "Image_Placeholder";
+	
+	/** Used for XML tag for an image */
 	private static final String IMAGE_STR = "Image";
+	
+	/** Used for XML tag for a VOI */
 	
     /** Script node type (Script)... only one and is only child of root */
     private static final int SCRIPTNODE = 0;
@@ -76,9 +81,6 @@ public class JDialogRunScriptView implements ActionListener {
     private JDialogRunScriptModel model;
 
     /** DOCUMENT ME! */
-    private int numberOfExecuters = 0;
-
-    /** DOCUMENT ME! */
     private ScriptTreeNode root;
 
     /** DOCUMENT ME! */
@@ -109,6 +111,8 @@ public class JDialogRunScriptView implements ActionListener {
     
     private static final String VOI_EMPTY = "[Insert VOI]";
     
+    private Vector emptyVector = new Vector();
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -132,8 +136,28 @@ public class JDialogRunScriptView implements ActionListener {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     public void update() {
+    	int selectedIndex = imageList.getSelectedIndex();
     	imageList.setListData(model.getAvailableImageList());
-    	imageList.setSelectedIndex(-1);
+    	
+    	if (model.getAvailableImageList().size() > 0 &&
+    			selectedIndex == -1) {
+    		selectedIndex = 0;
+    	}
+    	imageList.setSelectedIndex(selectedIndex);
+    	
+    	ScriptImage image = (ScriptImage) imageList.getSelectedValue();
+    	if (image == null) {
+    		voiList.setListData(emptyVector);
+    		return;
+    	}
+    	if (image.getScriptVOIs().length > 0) {
+    		voiList.setListData(image.getScriptVOIs());
+    		voiList.setSelectedIndex(0);
+    	} else {
+    		voiList.setListData(emptyVector);
+    		//voiList.setListData(new Vector());
+    	}
+    	
     }
     
     /**
@@ -151,7 +175,6 @@ public class JDialogRunScriptView implements ActionListener {
      * @param  savedScript  DOCUMENT ME!
      */
     public void createScriptTree(org.w3c.dom.Document savedScript) {
-        this.numberOfExecuters = 0;
 
         ScriptTreeNode scriptNode = (ScriptTreeNode)root.getChildAt(0);
 
@@ -267,7 +290,7 @@ public class JDialogRunScriptView implements ActionListener {
                                  int[] numberofVOIs) {
         root = new ScriptTreeNode("root", ROOTNODE);
         tree = new JTree(root);
-        root.add(createNewExecuter(imagePlaceHolders, imageLabels, imageActions, numberofVOIs));
+        root.add(populateScriptTree(imagePlaceHolders, imageLabels, imageActions, numberofVOIs));
         ((DefaultTreeModel) tree.getModel()).reload();
         expandAll(tree, true);
         tree.addMouseListener(listener);
@@ -318,16 +341,15 @@ public class JDialogRunScriptView implements ActionListener {
     public JFrame getFrame() {
         return this.frame;
     }
-   
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
-     */
-    public int getNumberOfExecuters() {
-        return this.numberOfExecuters;
+       
+    public JList getImageList() {
+    	return this.imageList;
     }
-
+    
+    public JList getVOIList() {
+    	return this.voiList;
+    }
+    
     /**
      * Method to return tree root.
      *
@@ -364,6 +386,8 @@ public class JDialogRunScriptView implements ActionListener {
     	ScriptTreeNode imagePHNode = null;
     	ScriptTreeNode imageNode = null;
     	int numVOIs;
+    	String voiName = null;
+    	ScriptVOI tempVOI = null;
     	
     	for (int i = 0; i < numImagePlaceHolders; i++) {
     		imagePHNode = (ScriptTreeNode)scriptNode.getChildAt(i);
@@ -375,7 +399,14 @@ public class JDialogRunScriptView implements ActionListener {
     			
     			numVOIs = imageNode.getChildCount();
     			for (int k = 0; k < numVOIs; k++) {
-    				voiNames[j].add(((String)((ScriptTreeNode)imageNode.getChildAt(k)).getUserObject()).trim());
+    				voiName = (String)((ScriptTreeNode)imageNode.getChildAt(k)).getUserObject();
+    				tempVOI = model.getScriptImage(((String)imageNode.getUserObject()).trim()).getScriptVOI(voiName);
+    				if (tempVOI.isOpenedByDialog()) {
+    					voiNames[j].add(tempVOI.getVoiFileLocation());
+    				} else {
+    					voiNames[j].add(voiName);
+    				}
+    				//voiNames[j].add(((String)((ScriptTreeNode)imageNode.getChildAt(k)).getUserObject()).trim());
     			}
     		}
     	}
@@ -564,37 +595,7 @@ public class JDialogRunScriptView implements ActionListener {
         scroll.setName(name + ": scroll");
         frame.getContentPane().add(scroll);
     }
-
-    /**
-     * TODO This no longer works, need to update how it determines which node it is.
-     *
-     * @param  selectedNode  DOCUMENT ME!
-     */
-    private void applyToAllNodes(ScriptTreeNode selectedNode) {
-        int[] index = new int[selectedNode.getPath().length];
-
-        for (int i = 0; i < (selectedNode.getPath().length - 1); i++) {
-            index[i] = ((DefaultTreeModel) tree.getModel()).getIndexOfChild(selectedNode.getPath()[i],
-                                                                            selectedNode.getPath()[i + 1]);
-        }
-
-        ScriptTreeNode[] copyNodes = new ScriptTreeNode[numberOfExecuters];
-
-        for (int j = 0; j < numberOfExecuters; j++) {
-            ScriptTreeNode node = ((ScriptTreeNode)
-                                       ((ScriptTreeNode) ((DefaultTreeModel) tree.getModel()).getRoot()).getChildAt(j).getChildAt(index[1]));
-            String selectNodeName = (String) selectedNode.getUserObject();
-
-            if (selectedNode.getNodeType() == IMAGENODE) {
-                copyNodes[j] = node;
-            } else if (selectedNode.getNodeType() == VOINODE) {
-                copyNodes[j] = (ScriptTreeNode) node.getChildAt(index[2]);
-            }
-
-            updateNode(copyNodes[j], selectNodeName);
-        }
-    }
-
+  
     /**
      * DOCUMENT ME!
      */
@@ -606,7 +607,8 @@ public class JDialogRunScriptView implements ActionListener {
     }
 
     /**
-     * DOCUMENT ME!
+     * Creates the JFrame
+     *
      */
     private void createFrame() {
 
@@ -636,10 +638,9 @@ public class JDialogRunScriptView implements ActionListener {
      *
      * @return  DOCUMENT ME!
      */
-    private ScriptTreeNode createNewExecuter(String[] imagePlaceHolders, String[] imageLabels, String[] imageActions,
+    private ScriptTreeNode populateScriptTree(String[] imagePlaceHolders, String[] imageLabels, String[] imageActions,
                                              int[] numberofVOIs) {
         ScriptTreeNode newNode = new ScriptTreeNode("Script Executer", this.SCRIPTNODE);
-        this.numberOfExecuters++;
 
         ScriptTreeNode[] imagePlaceHolderNodes;
         ScriptTreeNode voi = null;
@@ -649,11 +650,6 @@ public class JDialogRunScriptView implements ActionListener {
         	imagePlaceHolderNodes[i] = new ScriptTreeNode(imagePlaceHolders[i] + " (" + imageActions[i] + " -- " + imageLabels[i] +
                                                ")", this.IMAGEPLACEHOLDERNODE);
             newNode.add(imagePlaceHolderNodes[i]);
-
-      //      for (int j = 0; j < numberofVOIs[i]; j++) {
-       //         voi = new ScriptTreeNode("VOI", this.VOIPLACEHOLDERNODE);
-       //         imagePlaceHolderNodes[i].add(voi);
-         //   }
         }
 
         return newNode;
@@ -889,6 +885,9 @@ public class JDialogRunScriptView implements ActionListener {
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     
+    /**
+     * Transfer handler used for dragging the images and vois into the tree
+     */
     private class ArrayListTransferHandler extends TransferHandler {
     	DataFlavor localArrayListFlavor, serialArrayListFlavor;
         String localArrayListType = DataFlavor.javaJVMLocalObjectMimeType +
@@ -1028,7 +1027,6 @@ public class JDialogRunScriptView implements ActionListener {
          * @param  e  DOCUMENT ME!
          */
         public void mousePressed(MouseEvent e) {
-//System.err.println("MOUSE PRESSED");
             if (((Component) e.getSource()).getName().equalsIgnoreCase("Script Tree")) {
 
                 if (e.getModifiers() == InputEvent.BUTTON3_MASK) {
@@ -1098,17 +1096,17 @@ public class JDialogRunScriptView implements ActionListener {
                 
                 //turn off the VOI Drag option as long as more than 1 image is selected
                 if (selectedListIndicies.length > 1) {
-                	
-                	voiList.setListData(new Vector());
+                	voiList.setListData(emptyVector);
                 } else {
                 	ScriptImage image = (ScriptImage) ((JList) e.getSource()).getSelectedValue();
                 	if (image == null) {
                 		return;
                 	}
-                	if (image.getScriptVOIs() != null) {
+                	if (image.getScriptVOIs().length > 0) {
                 		voiList.setListData(image.getScriptVOIs());
+                		voiList.setSelectedIndex(0);
                 	} else {
-                		voiList.removeAll();
+                		voiList.setListData(emptyVector);
                 		//voiList.setListData(new Vector());
                 	}
                 }
@@ -1120,7 +1118,9 @@ public class JDialogRunScriptView implements ActionListener {
     }
 
     /**
-     * DOCUMENT ME!
+     * Class used to handle the dragging/dropping of images/vois into the script tree
+     * @author linkb
+     *
      */
     private class DropJTreeLister extends DropTarget {
 
@@ -1436,7 +1436,7 @@ public class JDialogRunScriptView implements ActionListener {
     			   
     			   
     		   } else if (value instanceof ScriptVOI) {
-    			   if (((ScriptVOI)value).getVoiFileLocation() == null) {
+    			   if (((ScriptVOI)value).isOpenedByDialog() == false) {
     				   setForeground(Color.BLACK);
     			   } else {
     				   setForeground(Color.BLUE);

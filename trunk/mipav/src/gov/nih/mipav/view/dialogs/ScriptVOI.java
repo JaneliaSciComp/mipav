@@ -12,12 +12,16 @@ public class ScriptVOI {
 
     private String voiFileLocation;
 
+    private boolean isOpenedByDialog;
+    
     public ScriptVOI(VOI voi, String imageName, String imageFileLocation) {
         this.voiName = voi.getName();
         // voi.setActive(true);
         String defaultFileLocation = FileUtility.getFileDirectory(imageFileLocation) + "defaultVOIs_" + imageName + File.separator;
         String fileName = defaultFileLocation + voiName + ".xml";
 
+        isOpenedByDialog = false;
+        
         if (new File(fileName).exists()) {
             // System.out.println(fileName);
         } else {
@@ -31,6 +35,7 @@ public class ScriptVOI {
     public ScriptVOI(String voiName, String voiFileLocation) {
         this.voiName = voiName;
         this.voiFileLocation = voiFileLocation;
+        isOpenedByDialog = true;
     }
 
     public String toString() {
@@ -38,6 +43,10 @@ public class ScriptVOI {
     	return this.getVoiName();      	
     }
 
+    public boolean isOpenedByDialog() {
+    	return this.isOpenedByDialog;
+    }
+    
     public String getVoiFileLocation() {
         return voiFileLocation;
     }
