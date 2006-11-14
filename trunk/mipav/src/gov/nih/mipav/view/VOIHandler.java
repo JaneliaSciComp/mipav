@@ -2137,8 +2137,9 @@ public class VOIHandler extends JComponent
             compImage.getActiveImage().notifyImageDisplayListeners();
         }
         else if (mode == ViewJComponentEditImage.QUICK_LUT) {
-
-            //should not be here
+        	 if (compImage.getActiveImage().getHistoLUTFrame() != null) {
+        		 compImage.getActiveImage().getHistoLUTFrame().update();
+             }
         }
 
         // reset mousePressIsShiftDown for next mouse click
