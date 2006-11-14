@@ -52,8 +52,6 @@ public class JDialogRunScriptModel extends Observable {
      */
     public void addToAvailableImageList(ModelImage updateItem) {
     	availableImageList.add(new ScriptImage(updateItem));
-    	//setChanged();
-    	//notifyObservers();
     }
 
     /**
@@ -66,8 +64,6 @@ public class JDialogRunScriptModel extends Observable {
      */
     public void addToAvailableImageList(String imageName, String imageLocation, boolean isMulti) {
         availableImageList.add(new ScriptImage(imageName, imageLocation, isMulti));
-       // setChanged();
-        //notifyObservers();
     }
 
     /**
@@ -80,8 +76,6 @@ public class JDialogRunScriptModel extends Observable {
     public void addVOI(String voiName, String voiLocation, int scriptModelImageVectorIndex) {
         ScriptImage scriptImage = (ScriptImage) this.getAvailableImageList().get(scriptModelImageVectorIndex);
         scriptImage.addScriptVOI(new ScriptVOI(voiName, voiLocation));
-        setChanged();
-        notifyObservers();
     }
 
     /**
@@ -220,10 +214,4 @@ public class JDialogRunScriptModel extends Observable {
     public void setScriptImageVars(String[] imagePlaceHolders) {
         this.scriptImageVars = imagePlaceHolders;
     }
-
-    /*
-     * public Vector getUnSavedVOIs() { return unSavedVOIs; }
-     *
-     * public void setUnSavedVOIs(Vector unSavedVOIs) { this.unSavedVOIs = unSavedVOIs; }
-     */
 }

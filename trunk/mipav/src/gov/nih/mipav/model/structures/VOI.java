@@ -2654,6 +2654,7 @@ public class VOI extends ModelSerialCloneable {
         if (displayMode == VOI.BOUNDARY)
             return;
         for (i = 0; i < curves[slice].size(); i++ ) {
+        	System.err.println("drawing blend self");
             if (visible) {
                 g.setColor(color);
                 if (curveType == CONTOUR) {

@@ -39,6 +39,7 @@ public class ScriptImage {
         this.imageName = imageName;
         this.fileLocation = fileLocation;
         this.isMultiFile = isMulti;
+        scriptVOIs = new ScriptVOI[0];
     }
 
     public String toString() {
@@ -84,9 +85,15 @@ public class ScriptImage {
     public void addScriptVOI(ScriptVOI scriptVOI) {
 
         ScriptVOI[] oldVOIs = getScriptVOIs();
-        ScriptVOI[] newScriptVOIs = new ScriptVOI[oldVOIs.length + 1];
-        for (int i = 0; i < oldVOIs.length; i++) {
-            newScriptVOIs[i] = oldVOIs[i];
+        int voiNum = 0;
+        if (oldVOIs != null) {
+        	voiNum = oldVOIs.length;
+        }
+        ScriptVOI[] newScriptVOIs = new ScriptVOI[voiNum + 1];
+        if (voiNum > 0) {
+	       for (int i = 0; i < oldVOIs.length; i++) {
+	    	   newScriptVOIs[i] = oldVOIs[i];
+	       }
         }
         newScriptVOIs[newScriptVOIs.length - 1] = scriptVOI;
         setScriptVOIs(newScriptVOIs);

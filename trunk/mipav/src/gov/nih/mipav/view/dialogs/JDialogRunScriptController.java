@@ -90,32 +90,24 @@ public class JDialogRunScriptController implements ActionListener {
             // ((JList) ((JScrollPane) view.getComponentByName("Images List:
             // scroll")).getViewport().getView()).getSelectedValue()); VOI[] vois =
             // ViewUserInterface.getReference().getActiveImageFrame().openVOI(imageScript.getModelImage(), false);
-            ScriptImage imageScript = ((ScriptImage)
-                                           ((JList)
-                                                ((JScrollPane) view.getComponentByName("Images List: scroll"))
-                                                    .getViewport().getView()).getSelectedValue());
-            int selectedIndex = ((JList)
-                                     ((JScrollPane) view.getComponentByName("Images List: scroll")).getViewport().getView())
-                                    .getSelectedIndex();
-            ScriptVOI[] vois = imageScript.getScriptVOIs();
-            String fileName;
-            String directory;
-
-            // this code is reused, might want to make a helper method
-            JFileChooser chooser = new JFileChooser();
+           
+            int indices[] = view.getImageList().getSelectedIndices();
+           
+            ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+        	JFileChooser chooser = fileChooser.getFileChooser();
             chooser.setDialogTitle("Open VOI");
             chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
 
-            int returnValue = chooser.showOpenDialog(view.getFrame());
-
-            if (returnValue == JFileChooser.APPROVE_OPTION) {
+            int returnVal = chooser.showOpenDialog(null);
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
             	File [] files = chooser.getSelectedFiles();
             	for (int i = 0; i < files.length; i++) {
-            		model.addVOI(files[i].getName(), files[i].getPath(), selectedIndex);
+            		for (int j = 0; j < indices.length; j++) {
+            			model.addVOI(files[i].getName(), files[i].getPath(), indices[j]);
+            		}
             	}
-                fileName = chooser.getSelectedFile().getName();
-                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+            	view.update();
             } else {
                 return;
             }
@@ -321,8 +313,7 @@ public class JDialogRunScriptController implements ActionListener {
                                                                              "Question", JOptionPane.DEFAULT_OPTION,
                                                                              JOptionPane.QUESTION_MESSAGE, null,
                                                                              options, options[0]);
-                            System.out.println("userSelection: " + userSelection);
-
+                           
                             if (userSelection == 0) {
                                 String savedFile = ((ViewJFrameImage)
                                                         ViewUserInterface.getReference().getImageFrameVector().firstElement())
@@ -382,7 +373,6 @@ public class JDialogRunScriptController implements ActionListener {
      */
     private void populateAvailableObjectsLists() {
         Enumeration images = ViewUserInterface.getReference().getRegisteredImages();
-System.err.println("doing this");
         while (images.hasMoreElements()) {
             model.addToAvailableImageList((ModelImage) images.nextElement());
         }

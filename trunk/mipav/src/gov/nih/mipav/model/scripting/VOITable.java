@@ -66,10 +66,14 @@ public class VOITable {
      */
     public void openAndRegisterNextVOI(String imageVar) throws IOException {
         String voiPath = getNextVOIPath(imageVar);
-        
         String voiDirectory = FileUtility.getFileDirectory(voiPath);
         String voiFileName = FileUtility.getFileName(voiPath);
         ModelImage image = ScriptRunner.getReference().getImage(imageVar);
+   		
+        //if the directory is null, this VOI is already loaded
+        if (voiDirectory == null) {
+        	return;
+        }
         
         FileVOI fileVOI = new FileVOI(voiFileName, voiDirectory, image);
         VOI[] voi = fileVOI.readVOI();
