@@ -129,7 +129,6 @@ public class JDialogRunScriptView implements ActionListener {
         centralBuffer = (int) (frame_size.getWidth() * 0.015);
 
         createFrame();
-        listener = new DragMouseAdapter();
         displayView();
     }
 
@@ -293,7 +292,7 @@ public class JDialogRunScriptView implements ActionListener {
         root.add(populateScriptTree(imagePlaceHolders, imageLabels, imageActions, numberofVOIs));
         ((DefaultTreeModel) tree.getModel()).reload();
         expandAll(tree, true);
-        tree.addMouseListener(listener);
+        //tree.addMouseListener(listener);
         tree.setDropTarget(new DropJTreeLister());
         tree.setName("Script Tree");
         tree.setCellRenderer(new TreeRenderer());
@@ -570,12 +569,12 @@ public class JDialogRunScriptView implements ActionListener {
         JList list = new JList(populateModel(contents));
         list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         list.setDragEnabled(true);
-        list.addMouseListener(listener);
         list.setName(name);
         list.setSelectedIndex(0);
         list.setTransferHandler(new ArrayListTransferHandler());
         list.setCellRenderer(new CustomCellRenderer());
-        
+        list.addMouseListener(new TreeMouseAdapter());
+        list.addMouseMotionListener(new TreeMouseDragAdapter());
         
         if (name.equalsIgnoreCase("Images List")) {
             imageList = list;
@@ -1001,13 +1000,23 @@ public class JDialogRunScriptView implements ActionListener {
     }
     
     
-
-    
+    private class TreeMouseDragAdapter extends MouseMotionAdapter {
+    	public void mouseDragged(MouseEvent e) {
+    		if (e.getSource().equals(imageList)) {
+        		TransferHandler th = imageList.getTransferHandler();
+    			th.exportAsDrag(imageList, e, TransferHandler.COPY);
+        	}
+        	else if (e.getSource().equals(voiList)) {
+        		TransferHandler th = voiList.getTransferHandler();
+        		th.exportAsDrag(voiList, e, TransferHandler.COPY);
+        	}
+    	}
+    }
     
     /**
      * DOCUMENT ME!
      */
-    private class DragMouseAdapter extends MouseAdapter {
+    private class TreeMouseAdapter extends MouseAdapter {
 
         /** DOCUMENT ME! */
         ScriptTreeNode parentNode;
@@ -1073,20 +1082,8 @@ public class JDialogRunScriptView implements ActionListener {
             
             if (e.getSource().equals(imageList)) {
             	dropSource = IMAGE_DROP;
-            	TransferHandler th = imageList.getTransferHandler();
-                th.exportAsDrag(imageList, e, TransferHandler.COPY);
-            //	System.err.println("SOURCE IS IMAGE_DROP");
-        	} else if (e.getSource().equals(voiList)) {
-         //   	System.err.println("SOURCE IS VOI_DROP");
-            	dropSource = VOI_DROP;
-            	TransferHandler th = imageList.getTransferHandler();
-                th.exportAsDrag(imageList, e, TransferHandler.COPY);
-            }
-        }
-        
-        public void mouseReleased(MouseEvent e) {
-        	if (e.getSource().equals(imageList)) {
-                selectedListIndicies = imageList.getSelectedIndices();
+            	
+        		selectedListIndicies = imageList.getSelectedIndices();
                 
                 //turn off the VOI Drag option as long as more than 1 image is selected
                 if (selectedListIndicies.length > 1) {
@@ -1104,12 +1101,14 @@ public class JDialogRunScriptView implements ActionListener {
                 		//voiList.setListData(new Vector());
                 	}
                 }
-                
-            }
+               
+        	}  else if (e.getSource().equals(voiList)) {
+        		dropSource = VOI_DROP;
+        	}
         }
-        
-        
     }
+                
+		
 
     /**
      * Class used to handle the dragging/dropping of images/vois into the script tree
@@ -1255,9 +1254,7 @@ public class JDialogRunScriptView implements ActionListener {
                 		}
                 		((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, parentNode, parentNode.getIndex(targetNode));
                         ((DefaultTreeModel) tree.getModel()).removeNodeFromParent(targetNode);
-                        expandAll(tree, true);
-                        dtde.acceptDrop(action);
-                        dtde.dropComplete(true);
+                        expandAll(tree, true);                        
                         return;
             			
             	} else if (targetNodeType == VOINODE &&
@@ -1274,9 +1271,7 @@ public class JDialogRunScriptView implements ActionListener {
                         return;
             		} else {
             			updateNode(targetNode, text[i]);
-            			dtde.acceptDrop(action);
-                        dtde.dropComplete(true);
-                        return;
+            			return;
             		}
             		
             	} else if (targetNodeType == IMAGENODE &&
@@ -1288,9 +1283,7 @@ public class JDialogRunScriptView implements ActionListener {
             		
             		if (!(targetImageName.equalsIgnoreCase(sourceImageName))) {
             			MipavUtil.displayWarning("Source image does not contain this VOI");
-            			dtde.acceptDrop(action);
-                        dtde.dropComplete(true);
-                        return;
+            			return;
             		}
             		
             		//populate as many VOI nodes as have been dropped...if conditions allow
