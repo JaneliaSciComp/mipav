@@ -1065,17 +1065,7 @@ public class JDialogRunScriptView implements ActionListener {
 
                         // popup.add(applyAllMenuItem);
                         popup.show(tree, pt.x + 10, pt.y + 10);
-                    }
-                    
-
-                    // TODO: Apply to all script executers does not work currently.  null pointer exception on first
-                    // line of updateNode()
-
-                    // JMenuItem applyAllMenuItem = new JMenuItem("Apply to all script executers");
-                    // applyAllMenuItem.addActionListener(new java.awt.event.ActionListener() {        public void
-                    // actionPerformed(java.awt.event.ActionEvent e) {            applyToAllNodes(selectedNode);
-                    // } // actionPerformed    } // new ActionListener                                  ); //
-                    // addActionListener
+                    }             
 
                 } // right mouse button clicked
 
@@ -1083,16 +1073,20 @@ public class JDialogRunScriptView implements ActionListener {
             
             if (e.getSource().equals(imageList)) {
             	dropSource = IMAGE_DROP;
+            	TransferHandler th = imageList.getTransferHandler();
+                th.exportAsDrag(imageList, e, TransferHandler.COPY);
             //	System.err.println("SOURCE IS IMAGE_DROP");
         	} else if (e.getSource().equals(voiList)) {
          //   	System.err.println("SOURCE IS VOI_DROP");
             	dropSource = VOI_DROP;
+            	TransferHandler th = imageList.getTransferHandler();
+                th.exportAsDrag(imageList, e, TransferHandler.COPY);
             }
         }
         
         public void mouseReleased(MouseEvent e) {
         	if (e.getSource().equals(imageList)) {
-                selectedListIndicies = ((JList) e.getSource()).getSelectedIndices();
+                selectedListIndicies = imageList.getSelectedIndices();
                 
                 //turn off the VOI Drag option as long as more than 1 image is selected
                 if (selectedListIndicies.length > 1) {
