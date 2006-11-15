@@ -5013,10 +5013,12 @@ public class VOIHandler extends JComponent
             }
 
             if (overlayOn) {
+            //	System.err.println("showing text overlay");
                 showOverlay(graphics);
             }
 
             if (gridOverlayOn) {
+            //	System.err.println("showing grid overlay");
                 showGridOverlay(graphics);
             }
 
@@ -5089,11 +5091,10 @@ public class VOIHandler extends JComponent
      * @param g Graphics the graphics used to draw
      */
     protected void showGridOverlay(Graphics g) {
-
         g.setColor(gridColor);
         Insets insets = compImage.getFrame().getInsets();
-        int rightOffset = getBounds().width - insets.left;
-        int bottomOffset = getBounds().height - insets.bottom;
+        int rightOffset = compImage.getBounds().width - insets.left;
+        int bottomOffset = compImage.getBounds().height - insets.bottom;
         float offset = 0;
 
         int xDim = compImage.getActiveImage().getExtents()[0];
@@ -5107,7 +5108,7 @@ public class VOIHandler extends JComponent
 
         float verticalSpacing = (xDim / numVertical) * compImage.getZoomX();
         float horizontalSpacing = (yDim / numHorizontal) * compImage.getZoomY();
-
+        
         for (int i = 0; i < numVertical; i++, offset += verticalSpacing) {
             g.drawLine(MipavMath.round(offset), 0, MipavMath.round(offset), bottomOffset);
         }
@@ -5159,7 +5160,6 @@ public class VOIHandler extends JComponent
      * @param  g  Graphics object used to paint and display the strings.
      */
     protected void showOverlay(Graphics g) {
-
         String[] overlays = new String[16];
         String[] overlayNames = new String[16];
 
