@@ -1627,7 +1627,7 @@ public class FileImageXML extends FileXML {
         }
 
         if (!fileName.endsWith(rawExtension)) {
-            fileName += rawExtension;
+            fileName = fhName + rawExtension;
         }
 
         // if the image is to be saved as multiple files, call the correct file and header-saving functions
