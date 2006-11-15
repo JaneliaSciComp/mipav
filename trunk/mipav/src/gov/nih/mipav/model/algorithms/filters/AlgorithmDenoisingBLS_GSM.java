@@ -1145,7 +1145,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                                      double noise[], int noisex, int noisey) {
         double fh[] = null;
         Vector pind = new Vector();
-        Vector pindN = new Vector();
         Vector pyr = null;
         Vector pyrN = null;
         Vector pyrh = new Vector();
@@ -1186,7 +1185,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             return null;
         }
         
-        pyrN = buildWUpyr(noise, noisex, noisey, nScales, daubOrder, pindN);
+        pyrN = buildWUpyr(noise, noisex, noisey, nScales, daubOrder, pind);
         if (error == 1) {
             return null;
         }
@@ -1196,8 +1195,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         // Everything except the lowpass residual
         for (nband = 2; nband <= bandNum; nband++) {
             fireProgressStateChanged((100 * (nband-1))/ (bandNum-1));
-            aux = pyrBand(pyr, pind, nband-1,nsx, nsy);
-            auxn = pyrBand(pyrN, pindN, nband-1, nsxn, nsyn);
+            aux = pyrBand(pyr, pind, nband-1, nsx, nsy);
+            auxn = pyrBand(pyrN, pind, nband-1, nsxn, nsyn);
             // Has the subband a parent?
             prnt = useParent && (nband < bandNum - nOrientations);
             if (prnt) {
@@ -1219,7 +1218,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             }
             if (prnt) {
                 aux = pyrBand(pyr, pind, nband+nOrientations-1, nsxn, nsyn);
-                auxn = pyrBand(pyrN, pindN, nband+nOrientations-1, nsxnn, nsynn);
+                auxn = pyrBand(pyrN, pind, nband+nOrientations-1, nsxnn, nsynn);
                 // Resample 2x2 the parent if not in the high-pass oriented subbands
                 if (nband > nOrientations + 1) {
                     oldaux = new double[aux.length];
@@ -1341,7 +1340,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         pyr = buildSFpyr(fn, fnx, fny, nScales, nOrientations-1, 1.0, pind);
         if (error == 1) {
             return null;
-        }
+        }  
         
         pyrN = buildSFpyr(noise, noisex, noisey, nScales, nOrientations-1, 1.0, pind);
         if (error == 1) {
@@ -1480,8 +1479,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double yrcos[] = null;
         double yircos[];
         boolean haveOne;
-        double resdftr[] = null;;
-        double resdfti[] = null;
+        double resdft[][] = new double[2][];
         FFTUtility fftUtil;
         double lo0mask[][];
         int index;
@@ -1617,23 +1615,23 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
             }
             if (haveOne) {
-                resdftr = pyrBand(pyr, pind, 1, x, y);
-                resdfti = new double[x[0]*y[0]];
+                resdft[0] = pyrBand(pyr, pind, 1, x, y);
+                resdft[1] = new double[x[0]*y[0]];
                 // forward FFT
-                fftUtil = new FFTUtility(resdftr, resdfti, y[0], x[0], 1, -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(resdft[0], resdft[1], y[0], x[0], 1, -1, FFTUtility.FFT);
                 fftUtil.run();
                 fftUtil.finalize();
-                fftUtil = new FFTUtility(resdftr, resdfti, 1, y[0], x[0], -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(resdft[0], resdft[1], 1, y[0], x[0], -1, FFTUtility.FFT);
                 fftUtil.run();
                 fftUtil.finalize();
-                center(resdftr, resdfti, x[0], y[0]);
+                center(resdft[0], resdft[1], x[0], y[0]);
             }
             else {
                 intMat = (int[])pind.get(1);
                 x[0] = intMat[0];
                 y[0] = intMat[1];
-                resdftr = new double[x[0]*y[0]];
-                resdfti = new double[x[0]*y[0]];
+                resdft[0] = new double[x[0]*y[0]];
+                resdft[1] = new double[x[0]*y[0]];
             }
         } // if (pind.size() == 2)
         else {
@@ -1646,10 +1644,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             intMat = (int [])pind.get(0);
             x[0] = intMat[0];
             y[0] = intMat[1];
-            resdftr = new double[x[0]*y[0]];
-            resdfti = new double[x[0]*y[0]];
-            reconSFpyrLevs(pyr, pind, log_rad, xrcos, yrcos, angle, nbands, 
-                           levs, bands, resdftr, resdfti);
+            resdft = reconSFpyrLevs(pyr, pind, log_rad, xrcos, yrcos, angle, nbands, 
+                           levs, bands);
             for (i = nbands; i >= 0; i--) {
                 pyr.insertElementAt(arr[i], 0);
                 pind.insertElementAt(intArr[i], 0);
@@ -1660,8 +1656,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         for (j = 0; j < dimY; j++) {
             for (i = 0; i < dimX; i++) {
                 index = i + j*dimX;
-                resdftr[index] = resdftr[index] * lo0mask[j][i];
-                resdfti[index] = resdfti[index] * lo0mask[j][i];
+                resdft[0][index] = resdft[0][index] * lo0mask[j][i];
+                resdft[1][index] = resdft[1][index] * lo0mask[j][i];
             }
         }
         
@@ -1756,8 +1752,8 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                     for (j = 0; j < dimY; j++) {
                         for (i = 0; i < dimX; i++) {
                             index = i + j * dimX;
-                            resdftr[index] = resdftr[index] + bandr[index] * maskr[j][i] - bandi[index] * maski[j][i];
-                            resdfti[index] = resdfti[index] + bandr[index] * maski[j][i] + bandi[index] * maskr[j][i];
+                            resdft[0][index] = resdft[0][index] + bandr[index] * maskr[j][i] - bandi[index] * maski[j][i];
+                            resdft[1][index] = resdft[1][index] + bandr[index] * maski[j][i] + bandi[index] * maskr[j][i];
                         }
                     }
                 } // if (haveB)
@@ -1765,15 +1761,15 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             } // for (b = 1; b <= nbands; b++)    
         } // if (haveZero)
         
-        center(resdftr, resdfti, x[0], y[0]);
+        center(resdft[0], resdft[1], x[0], y[0]);
         // Inverse FFT
-        fftUtil = new FFTUtility(resdftr, resdfti, y[0], x[0], 1, +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(resdft[0], resdft[1], y[0], x[0], 1, +1, FFTUtility.FFT);
         fftUtil.run();
         fftUtil.finalize();
-        fftUtil = new FFTUtility(resdftr, resdfti, 1, y[0], x[0], +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(resdft[0], resdft[1], 1, y[0], x[0], +1, FFTUtility.FFT);
         fftUtil.run();
         fftUtil.finalize();
-        return resdftr;
+        return resdft[0];
     }
     
     /**
@@ -1832,19 +1828,19 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * reversed) filt shifted by multiple copies of step.  See corrDn for
      * the operation corresponding to the transpose of this matrix.
      * @param result
-     * @param xrdim First dimension of result
-     * @param yrdim Second dimension of result
      */
     private void upConv(double image[], int xdim, int ydim, double filt[],
                             int xfdim, int yfdim, int edges, int xstep, int ystep,
                             int xstart, int ystart, int xstop, int ystop,
-                            double result[], int xrdim, int yrdim) {
+                            double result[]) {
         double origFilt[];
         int origx;
         int origy;
         int x;
         int y;
         double temp[];
+        int xrdim = xstop;
+        int yrdim = ystop;
         
         xstart--;
         ystart--;
@@ -1938,6 +1934,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         
         imval = new double[ydim][xdim];
         
+        for (ypos = 0; ypos < ydim; ypos++) {
+            for (xpos = 0; xpos < xdim; xpos++) {
+                imval[ypos][xpos] = result[xpos + ypos * xdim];
+            }
+        }
+        
         // Top rows
         for (impos = 0, ypos = ystart; ypos < yCtrStart; ypos += ystep) {
             for (xpos = xstart; xpos < xCtrStart; xpos += xstep, impos++) {
@@ -1955,15 +1957,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 for (yres = ypos + ydim, filtPos = 0, xFiltStop = xfdim;
                     xFiltStop <= filtSize; yres++, xFiltStop += xfdim) {
                     for (xres = xpos; filtPos < xFiltStop; filtPos++, xres++) {
-                        if (filtPos >= filt.length) {
-                            System.out.println("filtPos = " + filtPos);
-                        }
-                        if (yres%ydim >= imval.length) {
-                            System.out.println("yres = " + yres + " ydim = " + ydim);
-                        }
-                        if (xres >= imval[0].length) {
-                            System.out.println("xres = " + xres);
-                        }
                         imval[yres%ydim][xres] += val * filt[filtPos];
                     }
                 }    
@@ -2241,23 +2234,23 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 res = new double[res_sz[0]*res_sz[1]];
                 upConv(nres, nresx[0], nresy[0], kernel, 1, kernel.length,
                              edges, 1, 2, 1, stag, res_sz[0], res_sz[1],
-                             res, res_sz[0], res_sz[1]);    
+                             res);    
             }
             else if (res_sz[1] == 1) {
                 res = new double[res_sz[0]*res_sz[1]];
                 upConv(nres, nresx[0], nresy[0], kernel, kernel.length, 1,
                              edges, 2, 1, stag, 1, res_sz[0], res_sz[1],
-                             res, res_sz[0], res_sz[1]);    
+                             res);    
             }
             else {
                 ires = new double[lres_sz[0]*lres_sz[1]];
                 upConv(nres, nresx[0], nresy[0], kernel, 1, kernel.length,
                               edges, 1, 2, 1, stag, lres_sz[0], lres_sz[1],
-                              ires, lres_sz[0], lres_sz[1]); 
+                              ires); 
                 res = new double[res_sz[0]*res_sz[1]];
                 upConv(ires, lres_sz[0], lres_sz[1], kernel, kernel.length, 1,
                              edges, 2, 1, stag, 1, res_sz[0], res_sz[1],
-                             res, res_sz[0], res_sz[1]);
+                             res);
             }
         } // if (moreOne)
         else {
@@ -2287,47 +2280,42 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 }
             }
             if (res_sz[0] == 1) {
-                res = new double[res_sz[0]*res_sz[1]];
                 upConv(pyrBand(pyr, ind, 0, x, y), x[0], y[0], 
                        hkernel, 1, hkernel.length, edges, 1, 2, 1, 2, 
-                       res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);
+                       res_sz[0], res_sz[1], res);
             }
             else if (res_sz[1] == 1) {
-                res = new double[res_sz[0]*res_sz[1]];
                 upConv(pyrBand(pyr, ind, 0, x, y), x[0], y[0],
                        hkernel, hkernel.length, 1, edges, 2, 1, 2, 1,
-                       res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);    
+                       res_sz[0], res_sz[1], res);    
             }
             else {
                 if (anyB1) { // horizontal
                     ires = new double[hres_sz[0]*hres_sz[1]];
                     upConv(pyrBand(pyr, ind, 0, x, y), x[0], y[0],
                            kernel, 1, kernel.length, edges, 1, 2, 1, stag,
-                           hres_sz[0], hres_sz[1], ires, hres_sz[0], hres_sz[1]);
+                           hres_sz[0], hres_sz[1], ires);
                     // Destructively modify res
-                    res = new double[res_sz[0]*res_sz[1]];
                     upConv(ires, hres_sz[0], hres_sz[1], hkernel, hkernel.length, 1,
-                           edges, 2, 1, 2, 1, res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);
+                           edges, 2, 1, 2, 1, res_sz[0], res_sz[1], res);
                 } // 
                 if (anyB2) { // vertical
                     ires = new double[lres_sz[0]*lres_sz[1]];
                     upConv(pyrBand(pyr, ind, 1, x, y), x[0], y[0],
                            hkernel, 1, hkernel.length, edges, 1, 2, 1, 2,
-                           lres_sz[0], lres_sz[1], ires, lres_sz[0], lres_sz[1]);
+                           lres_sz[0], lres_sz[1], ires);
                     // Destructively modify res
-                    res = new double[res_sz[0]*res_sz[1]];
                     upConv(ires, lres_sz[0], lres_sz[1], kernel, kernel.length, 1,
-                           edges, 2, 1, stag, 1, res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);    
+                           edges, 2, 1, stag, 1, res_sz[0], res_sz[1], res);    
                 } // if (anyB2) 
                 if (anyB3) { // diagonal
                     ires = new double[hres_sz[0]*hres_sz[1]];
                     upConv(pyrBand(pyr, ind, 2, x, y), x[0], y[0],
                            hkernel, 1, hkernel.length, edges, 1, 2, 1, 2,
-                           hres_sz[0], hres_sz[1], ires, hres_sz[0], hres_sz[1]);
+                           hres_sz[0], hres_sz[1], ires);
                     // Destructively modify res
-                    res = new double[res_sz[0]*res_sz[1]];
                     upConv(ires, hres_sz[0], hres_sz[1], hkernel, hkernel.length, 1,
-                           edges, 2, 1, 2, 1, res_sz[0], res_sz[1], res, res_sz[0], res_sz[1]);    
+                           edges, 2, 1, 2, 1, res_sz[0], res_sz[1], res);    
                 } // if (anyB3) 
             } // else
         } // if (anyOne)
@@ -2831,8 +2819,7 @@ MATLAB description:
         boolean haveOne;
         int px[] = new int[1];
         int py[] = new int[1];
-        double resdftr[] = null;
-        double resdfti[] = null;
+        double resdft[][] = new double[2][];
         FFTUtility fftUtil;
         double lo0mask[][];
         int index;
@@ -2952,23 +2939,23 @@ MATLAB description:
                 }
             }
             if (haveOne) {
-                resdftr = pyrBand(pyr, pind, 1, px, py);
-                resdfti = new double[px[0]*py[0]];
+                resdft[0] = pyrBand(pyr, pind, 1, px, py);
+                resdft[1] = new double[px[0]*py[0]];
                 // forward FFT
-                fftUtil = new FFTUtility(resdftr, resdfti, py[0], px[0], 1, -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(resdft[0], resdft[1], py[0], px[0], 1, -1, FFTUtility.FFT);
                 fftUtil.run();
                 fftUtil.finalize();
-                fftUtil = new FFTUtility(resdftr, resdfti, 1, py[0], px[0], -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(resdft[0], resdft[1], 1, py[0], px[0], -1, FFTUtility.FFT);
                 fftUtil.run();
                 fftUtil.finalize();
-                center(resdftr, resdfti, px[0], py[0]);
+                center(resdft[0], resdft[1], px[0], py[0]);
             }
             else {
                 intMat = (int[])pind.get(1);
                 px[0] = intMat[0];
                 py[0] = intMat[1];
-                resdftr = new double[px[0]*py[0]];
-                resdfti = new double[px[0]*py[0]];
+                resdft[0] = new double[px[0]*py[0]];
+                resdft[1] = new double[px[0]*py[0]];
             }
         } // if (pind.size() == 2)
         else {
@@ -2977,10 +2964,8 @@ MATLAB description:
             intMat2 = (int[])pind.get(0);
             px[0] = intMat2[0];
             py[0] = intMat2[1];
-            resdftr = new double[px[0]*py[0]];
-            resdfti = new double[px[0]*py[0]];
-            reconSFpyrLevs(pyr, pind, log_rad, xrcos, yrcos, angle, nbands, 
-                           levs, bands, resdftr, resdfti);
+            resdft = reconSFpyrLevs(pyr, pind, log_rad, xrcos, yrcos, angle, nbands, 
+                           levs, bands);
             pyr.insertElementAt(arr, 0);
             pind.insertElementAt(intMat, 0);
         } // else
@@ -2989,8 +2974,8 @@ MATLAB description:
         for (j = 0; j < dimY; j++) {
             for (i = 0; i < dimX; i++) {
                 index = i + j*dimX;
-                resdftr[index] = resdftr[index] * lo0mask[j][i];
-                resdfti[index] = resdfti[index] * lo0mask[j][i];
+                resdft[0][index] = resdft[0][index] * lo0mask[j][i];
+                resdft[1][index] = resdft[1][index] * lo0mask[j][i];
             }
         }
         
@@ -3024,21 +3009,21 @@ MATLAB description:
                     index = i + j * hix;
                     arr[index] = arr[index] * hi0mask[j][i];
                     imag[index] = imag[index] * hi0mask[j][i];
-                    resdftr[index] = resdftr[index] + arr[index];
-                    resdfti[index] = resdfti[index] + imag[index];
+                    resdft[0][index] = resdft[0][index] + arr[index];
+                    resdft[1][index] = resdft[1][index] + imag[index];
                 }
             }
         } // if (haveZero)
         
-        center(resdftr, resdfti, px[0], py[0]);
+        center(resdft[0], resdft[1], px[0], py[0]);
         // Inverse FFT
-        fftUtil = new FFTUtility(resdftr, resdfti, py[0], px[0], 1, +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(resdft[0], resdft[1], py[0], px[0], 1, +1, FFTUtility.FFT);
         fftUtil.run();
         fftUtil.finalize();
-        fftUtil = new FFTUtility(resdftr, resdfti, 1, py[0], px[0], +1, FFTUtility.FFT);
+        fftUtil = new FFTUtility(resdft[0], resdft[1], 1, py[0], px[0], +1, FFTUtility.FFT);
         fftUtil.run();
         fftUtil.finalize();
-        return resdftr;
+        return resdft[0];
     }
     
     /**
@@ -3054,12 +3039,10 @@ MATLAB description:
      * @param nbands
      * @param levs
      * @param bands
-     * @param resdftr
-     * @param resdfti
      */
-    private void reconSFpyrLevs(Vector pyr, Vector pind, double log_rad[][], double xrcos[],
+    private double[][] reconSFpyrLevs(Vector pyr, Vector pind, double log_rad[][], double xrcos[],
                                     double yrcos[], double angle[][], int nbands, int levs[],
-                                    int bands[], double resdftr[], double resdfti[]) {
+                                    int bands[]) {
         int lo_ind;
         int dimX;
         int dimY;
@@ -3081,8 +3064,8 @@ MATLAB description:
         double nlog_rad[][];
         double nangle[][];
         double arr[][];
-        double nresdftr[] = null;
-        double nresdfti[] = null;
+        double resdft[][] = new double[2][];
+        double nresdft[][] = new double[2][];
         int levsm1[];
         int px[];
         int py[];
@@ -3154,6 +3137,7 @@ MATLAB description:
                     nangle[j][i] = angle[j + lostartY - 1][i + lostartX - 1];
                 }
             }
+         
             if (pind.size() > lo_ind) {
                 arr = new double[lo_ind-1][];
                 parr = new int[(lo_ind-1)][2];
@@ -3168,10 +3152,8 @@ MATLAB description:
                     levsm1[i] = levs[i] - 1;
                 }
                 intMat = (int[])pind.get(0);
-                nresdftr = new double[intMat[0]*intMat[1]];
-                nresdfti = new double[intMat[0]*intMat[1]];
-                reconSFpyrLevs(pyr, pind, nlog_rad, xrcos, yrcos, nangle, nbands,
-                               levsm1, bands, nresdftr, nresdfti);
+                nresdft = reconSFpyrLevs(pyr, pind, nlog_rad, xrcos, yrcos, nangle, nbands,
+                               levsm1, bands);
                 for (i = lo_ind-2; i >= 0; i--) {
                     pyr.insertElementAt(arr[i], 0);
                     pind.insertElementAt(parr[i], 0);
@@ -3180,16 +3162,16 @@ MATLAB description:
             else {
                 px = new int[1];
                 py = new int[1];
-                nresdftr = pyrBand(pyr, pind, lo_ind-1, px, py);
-                nresdfti = new double[px[0] * py[0]];
+                nresdft[0] = pyrBand(pyr, pind, lo_ind-1, px, py);
+                nresdft[1] = new double[px[0] * py[0]];
                 // forward FFT
-                fftUtil = new FFTUtility(nresdftr, nresdfti, py[0], px[0], 1, -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(nresdft[0], nresdft[1], py[0], px[0], 1, -1, FFTUtility.FFT);
                 fftUtil.run();
                 fftUtil.finalize();
-                fftUtil = new FFTUtility(nresdftr, nresdfti, 1, py[0], px[0], -1, FFTUtility.FFT);
+                fftUtil = new FFTUtility(nresdft[0], nresdft[1], 1, py[0], px[0], -1, FFTUtility.FFT);
                 fftUtil.run();
                 fftUtil.finalize();
-                center(nresdftr, nresdfti, px[0], py[0]);
+                center(nresdft[0], nresdft[1], px[0], py[0]);
             } // else
             
             yircos = new double[yrcos.length];
@@ -3198,20 +3180,20 @@ MATLAB description:
             }
             lomask = pointOp(nlog_rad, yircos, xrcos[0], (xrcos[1]-xrcos[0]), false);
             
-            resdftr = new double[dimX * dimY];
-            resdfti = new double[dimX * dimY];
+            resdft[0] = new double[dimX * dimY];
+            resdft[1] = new double[dimX * dimY];
             for (j = lostartY-1, j2 = 0; j < loendY; j++, j2++) {
                 for (i = lostartX-1, i2 = 0; i < loendX; i++, i2++) {
                     index = i + j * dimX;
                     index2 = i2 + j2 * (loendX-lostartX + 1);
-                    resdftr[index] = nresdftr[index2] * lomask[j2][i2];
-                    resdfti[index] = nresdfti[index2] * lomask[j2][i2];
+                    resdft[0][index] = nresdft[0][index2] * lomask[j2][i2];
+                    resdft[1][index] = nresdft[1][index2] * lomask[j2][i2];
                 }
             }
         } // if (moreOne)
         else {
-            resdftr = new double[dimX * dimY];
-            resdfti = new double[dimX * dimY];
+            resdft[0] = new double[dimX * dimY];
+            resdft[1] = new double[dimX * dimY];
         } // else
         
         haveOne = false;
@@ -3265,8 +3247,8 @@ MATLAB description:
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
                                 index = i + j * dimX;
-                                resdftr[index] = resdftr[index] + bandr[index]*anglemask[j][i]*himask[j][i];
-                                resdfti[index] = resdfti[index] + bandi[index]*anglemask[j][i]*himask[j][i];
+                                resdft[0][index] = resdft[0][index] + bandr[index]*anglemask[j][i]*himask[j][i];
+                                resdft[1][index] = resdft[1][index] + bandi[index]*anglemask[j][i]*himask[j][i];
                             }
                         }
                     } // if (((nbands -1) % 4) == 0)
@@ -3274,8 +3256,8 @@ MATLAB description:
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
                                 index = i + j * dimX;
-                                resdftr[index] = resdftr[index] - bandi[index]*anglemask[j][i]*himask[j][i];
-                                resdfti[index] = resdfti[index] + bandr[index]*anglemask[j][i]*himask[j][i];
+                                resdft[0][index] = resdft[0][index] - bandi[index]*anglemask[j][i]*himask[j][i];
+                                resdft[1][index] = resdft[1][index] + bandr[index]*anglemask[j][i]*himask[j][i];
                             }
                         }    
                     } // else if (((nbands-1) % 4) == 1)
@@ -3283,8 +3265,8 @@ MATLAB description:
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
                                 index = i + j * dimX;
-                                resdftr[index] = resdftr[index] - bandr[index]*anglemask[j][i]*himask[j][i];
-                                resdfti[index] = resdfti[index] - bandi[index]*anglemask[j][i]*himask[j][i];
+                                resdft[0][index] = resdft[0][index] - bandr[index]*anglemask[j][i]*himask[j][i];
+                                resdft[1][index] = resdft[1][index] - bandi[index]*anglemask[j][i]*himask[j][i];
                             }
                         }    
                     } // else if (((nbands-1) % 4) == 2)
@@ -3292,8 +3274,8 @@ MATLAB description:
                         for (j = 0; j < dimY; j++) {
                             for (i = 0; i < dimX; i++) {
                                 index = i + j * dimX;
-                                resdftr[index] = resdftr[index] + bandi[index]*anglemask[j][i]*himask[j][i];
-                                resdfti[index] = resdfti[index] - bandr[index]*anglemask[j][i]*himask[j][i];
+                                resdft[0][index] = resdft[0][index] + bandi[index]*anglemask[j][i]*himask[j][i];
+                                resdft[1][index] = resdft[1][index] - bandr[index]*anglemask[j][i]*himask[j][i];
                             }
                         }    
                     } // else if (((nbands-1) % 4) == 3)
@@ -3301,6 +3283,7 @@ MATLAB description:
                 ind++;
             } // for (b = 1; b <= nbands; b++)
         } // if (haveOne)
+        return resdft;
     }
     
     /**
@@ -4800,16 +4783,16 @@ MATLAB description:
         
         ind = new int[sz];
         for (i = 0; i < sz; i++) {
-            ind[i] = sz - i - 1;
+            ind[i] = sz - i;
         }
         
         hfilt = new double[sz];
         for (i = 0; i < sz; i++) {
             if (((ind[i] - sz2) % 2) == 0) {
-                hfilt[i] = lfilt[ind[i]];
+                hfilt[i] = lfilt[ind[i]-1];
             }
             else {
-                hfilt[i] = -lfilt[ind[i]];
+                hfilt[i] = -lfilt[ind[i]-1];
             }
         }
         return hfilt;
@@ -5172,12 +5155,6 @@ MATLAB description:
             else {
                 lo = corrDn(im, imx, imy, kernel, kernel.length, 1, edges, 2, 1, stag, 1, lox, loy);
                 hi = corrDn(im, imx, imy, hkernel, hkernel.length, 1, edges, 2, 1, 2, 1, hix, hiy);
-                if (lox == null) {
-                    MipavUtil.displayError("lox is null");
-                }
-                if (loy == null) {
-                    MipavUtil.displayError("loy is null");
-                }
                 lolo = corrDn(lo, lox[0], loy[0], kernel, 1, kernel.length, edges, 1, 2, 1, stag, lolox, loloy);
                 // horizontal
                 lohi = corrDn(hi, hix[0], hiy[0], kernel, 1, kernel.length, edges, 1, 2, 1, stag, lohix, lohiy); 
@@ -6096,7 +6073,7 @@ MATLAB description:
         else {
             yh = new double[imy][3*(nScales+1)*imx];
         }
-        mrdwt(im, imx, imy, h, h.length, 1, nScales+1, lpr, yh);
+        mrdwt(im, imx, imy, h, 1, h.length, nScales+1, lpr, yh);
         if (error == 1) {
             return null;
         }
@@ -6381,7 +6358,7 @@ MATLAB description:
         fftUtil = new FFTUtility(hi0dftr, hi0dfti, 1, imy, imx, +1, FFTUtility.FFT);
         fftUtil.run();
         fftUtil.finalize();
-        
+       
         pyr.insertElementAt(hi0dftr, 0);
         intMat = new int[2];
         intMat[0] = imx;
