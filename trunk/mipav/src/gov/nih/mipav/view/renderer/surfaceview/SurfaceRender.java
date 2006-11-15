@@ -2755,10 +2755,12 @@ public class SurfaceRender extends RenderViewBase {
         /* Read the axis strings from the FileInfo data structure: */
         String[] akAxisLabels = new String[3];
         String[][] aakAxisFiles = new String[3][2];
+        
+        int[] axisOrientation = MipavCoordinateSystems.getAxisOrientation(imageA); 
         for ( int i = 0; i < 3; i++ )
         {
-            akAxisLabels[i] = FileInfoBase.getAxisOrientationStr( imageA.getFileInfo(0).getAxisOrientation(i) ).toLowerCase();
-
+            akAxisLabels[i] = FileInfoBase.getAxisOrientationStr( axisOrientation[i] ).toLowerCase();
+            // System.out.println(akAxisLabels[i]);
             /* The file name correspond to the axis strings, read the file
              * names from the axis strings: */
             aakAxisFiles[i][0] = new String( String.valueOf( akAxisLabels[i].charAt(0) ) );
@@ -2780,8 +2782,8 @@ public class SurfaceRender extends RenderViewBase {
         shapeCubic[1][0] = cubic.getShape(Box.TOP);
         shapeCubic[1][1] = cubic.getShape(Box.BOTTOM);
         /* Box.BACK and Box.FRONT map to the z-axis orientation strings: */
-        shapeCubic[2][0] = cubic.getShape(Box.BACK);
-        shapeCubic[2][1] = cubic.getShape(Box.FRONT);
+        shapeCubic[2][1] = cubic.getShape(Box.BACK);
+        shapeCubic[2][0] = cubic.getShape(Box.FRONT);
 
         /* Loop over the sides of the cube, read the corresponding texture,
          * and apply the texture to the cube face: */

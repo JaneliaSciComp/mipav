@@ -1996,7 +1996,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         currentAbsolutePositionLabels = new Point3D(x, y, z);
 
         if (linkTriFrame != null) {
-            linkTriFrame.setPositionLabels(x, y, z);
+            linkTriFrame.setSlicesFromFrame(x, y, z);
         }
     }
 
@@ -3002,7 +3002,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbConstraints.gridy = 0;
         viewPanel.add( radiologicalView, gbConstraints );
         gbConstraints.gridx++;
-        viewPanel.add( new JLabel( "Radiological View" ), gbConstraints );
+        // viewPanel.add( new JLabel( "Radiological View" ), gbConstraints );
         displayGroup.add( radiologicalView );
 
         /* neurological radio button: */
