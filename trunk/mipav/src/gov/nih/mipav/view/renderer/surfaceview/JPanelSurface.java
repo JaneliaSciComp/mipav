@@ -2330,6 +2330,7 @@ public class JPanelSurface extends JPanelRendererBase
             activeLightBulbIndex = -1;
         }
 
+        
         if (findArbitraryClipping) {
             ((SurfaceRender) renderBase).enableObjBehavior(true);
             parentScene.getClipDialog().enableClipArbiBehavior(false);

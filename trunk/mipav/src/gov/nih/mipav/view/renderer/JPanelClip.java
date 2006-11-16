@@ -622,7 +622,6 @@ public class JPanelClip extends JPanelRendererBase
                 setASliderEnabled(true);
                 disableClipPlanes();
                 updateClipSliceA();
-                addClipSliceA();
                 colorButtonA.setEnabled( true );
                 enableClipArbiBehavior( false );
             }
@@ -924,7 +923,7 @@ public class JPanelClip extends JPanelRendererBase
         objClipSliceZInv_BG.setCapability(BranchGroup.ALLOW_DETACH);
         objClipSliceZInv_BG.setPickable(false);
 
-        clipSliceAIndicator = new ViewJComponentBoxSlice(1, yBox * radicalRatio, zBox * radicalRatio,
+        clipSliceAIndicator = new ViewJComponentBoxSlice(1, yBox, zBox * radicalRatio,
                                                          ViewJComponentBoxSlice.A_CLIPSLICE);
         clipSliceAIndicator.setColor(new Color(0.94f, 0.67f, 0.69f));
         shape = new Shape3D(clipSliceAIndicator, null);
@@ -3032,7 +3031,7 @@ public class JPanelClip extends JPanelRendererBase
 
         eqnA = new Vector4d(1.0, 0.0, 0.0, (maxBox - (2 * ((float) aSlice / (maxDim - 1)) * maxBox) - 0.001));
         updateClipPlanesEqn();
-        clipSliceA.setSlices(1, maxBox * radicalRatio, maxBox * radicalRatio, ViewJComponentBoxSlice.A_CLIPSLICE);
+        clipSliceA.setSlices(1, maxBox, maxBox, ViewJComponentBoxSlice.A_CLIPSLICE);
 
         mcArbi.setEnable(0, false);
 
@@ -4580,19 +4579,20 @@ public class JPanelClip extends JPanelRendererBase
             mcArbiTG.setTransform(mcArbiTrans3D);
             arbiTG.setTransform(arbiTrans3d);
 
+            
             eqnA = new Vector4d(1.0, 0.0, 0.0, (xBox - (2 * ((float) aSlice / (xDim - 1)) * xBox) - 0.001));
             updateClipPlanesEqn();
             mcArbi.setPlanes(eqnPlanesArbi);
             mcArbi.setEnable(0, true);
             mcArbi.setInfluencingBounds(renderBase.getBound());
 
-            clipSliceA.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * xBox), maxBox * radicalRatio,
-                                 maxBox * radicalRatio, ViewJComponentBoxSlice.A_CLIPSLICE);
+            clipSliceA.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox), maxBox,
+                                 maxBox, ViewJComponentBoxSlice.A_CLIPSLICE);
 
             clipSliceAIndicator.setSlices(-maxBox + (2 * ((float) aSlice / (maxDim - 1)) * maxBox),
-                                          maxBox * radicalRatio, maxBox * radicalRatio,
+                                          maxBox, maxBox,
                                           ViewJComponentBoxSlice.A_CLIPSLICE);
-
+           
            
             displayAClipPlanePts();
         }
