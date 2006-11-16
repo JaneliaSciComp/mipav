@@ -2397,19 +2397,19 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 if (nor == 1) { // horizontal
                     twoPow = 1;
                     for (i = 0; i < nsc-1; i++) {
-                        twoPow *= -2;
+                        twoPow *= 2;
                     }
-                    offset[0] = twoPow;
+                    offset[0] = -twoPow;
                     offset[1] = -sh;
                     shiftReal(band, bandx[0], bandy[0], offset, band);
                 } // if (nor = 1)
                 else if (nor == 2) { // vertical
                     twoPow = 1;
                     for (i = 0; i < nsc-1; i++) {
-                        twoPow *= -2;
+                        twoPow *= 2;
                     }
                     offset[0] = -sh;
-                    offset[1] = twoPow;
+                    offset[1] = -twoPow;
                     shiftReal(band, bandx[0], bandy[0], offset, band);    
                 } // else if (nor == 2)
                 else { // diagonal
@@ -2461,7 +2461,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         bandi = new double[lprx*lpry];
         expand(band, twoPow, bandx[0], bandy[0], lpr, bandi);
         res = mirdwt(lpr, lprx, lpry, yh, yhx, yhy, h,
-                     h.length, 1, nScales+1);
+                     1, h.length, nScales+1);
         return res;
     }
     
@@ -2559,7 +2559,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 return null;
             }    
         } // if (n > 1)
-        MIRDWT(res, m, n, h, lh, L, yl, yh);
+        MIRDWT(res, m, n, h, lh, L, yl, yh, nh);
         return res;
     }
     
@@ -2643,9 +2643,10 @@ MATLAB description:
      * @param L
      * @param yl
      * @param yh
+     * @param nh columns of yh
      */
     private void MIRDWT(double res[], int m, int n, double h[], int lh,
-                        int L, double yl[], double yh[]) {
+                        int L, double yl[], double yh[], int nh) {
         double xh[] = new double[m * n];
         double xdummyl[] = new double[Math.max(m, n)];
         double xdummyh[] = new double[Math.max(m, n)];
@@ -2706,9 +2707,9 @@ MATLAB description:
                         for (i = 0; i < actual_m; i++) {
                             ir = ir + sample_f;
                             ydummyll[i+lhm1] = res[ic + n*ir];
-                            ydummylh[i+lhm1] = yh[c_o_a + ic + n*ir];
-                            ydummyhl[i+lhm1] = yh[c_o_a+n+ic + n*ir];
-                            ydummyhh[i+lhm1] = yh[c_o_a_p2n+ic + n*ir];
+                            ydummylh[i+lhm1] = yh[c_o_a + ic + nh*ir];
+                            ydummyhl[i+lhm1] = yh[c_o_a+n+ic + nh*ir];
+                            ydummyhh[i+lhm1] = yh[c_o_a_p2n+ic + nh*ir];
                         } // for (i = 0; i < actual_m; i++)
                         /* Perform filtering and adding: first LL/LH, then HL/HH */
                         bpconv(xdummyl, actual_m, g0, g1, lh, ydummyll, ydummylh);
@@ -2737,7 +2738,7 @@ MATLAB description:
                             ydummyhh[i+lhm1] = xh[ic + n*ir];
                         }
                         else {
-                            ydummyhh[i+lhm1] = yh[c_o_a+ic + n*ir];
+                            ydummyhh[i+lhm1] = yh[c_o_a+ic + nh*ir];
                         }
                     } // for (i = 0; i < actual_n; i++)
                     /* Perform filtering lowpass/highpass */
