@@ -622,6 +622,9 @@ public class JPanelClip extends JPanelRendererBase
                 setASliderEnabled(true);
                 disableClipPlanes();
                 updateClipSliceA();
+                addClipSliceA();
+                colorButtonA.setEnabled( true );
+                enableClipArbiBehavior( false );
             }
         } else if (command.equals("EYE")) {
 
@@ -4590,21 +4593,7 @@ public class JPanelClip extends JPanelRendererBase
                                           maxBox * radicalRatio, maxBox * radicalRatio,
                                           ViewJComponentBoxSlice.A_CLIPSLICE);
 
-            Shape3D shape = new Shape3D(clipSliceA, null);
-
-            shape.setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-            shape.setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-            shape.setCapability(Shape3D.ENABLE_PICK_REPORTING);
-
-            try {
-                ((SurfaceRender) renderBase).getSurfaceDialog().getPickCanvas().setCapabilities(shape,
-                                                                                                PickTool.INTERSECT_FULL);
-            } catch (RestrictedAccessException error) { }
-
-            try {
-                clipSliceA_BG.addChild(shape);
-            } catch (RestrictedAccessException error) { }
-
+           
             displayAClipPlanePts();
         }
     }
