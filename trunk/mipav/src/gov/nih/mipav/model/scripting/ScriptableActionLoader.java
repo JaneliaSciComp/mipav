@@ -3,6 +3,8 @@ package gov.nih.mipav.model.scripting;
 
 import gov.nih.mipav.view.Preferences;
 
+import java.util.Vector;
+
 
 /**
  * Given the name of a script action, this class searches a number of locations for a class to load with that name and returns a new instance of that class.
@@ -12,8 +14,11 @@ public class ScriptableActionLoader {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** Try MIPAV dialogs, then special script actions, then plugins (which are in the default package). */
-    private static final String[] SCRIPT_ACTION_LOCATIONS = {
-        "gov.nih.mipav.view.dialogs.JDialog", "gov.nih.mipav.model.scripting.actions.Action", ""
+    private static Vector SCRIPT_ACTION_LOCATIONS = new Vector();
+    
+    static {
+        addScriptActionLocation("gov.nih.mipav.view.dialogs.JDialog");
+        addScriptActionLocation("gov.nih.mipav.model.scripting.actions.Action");
     };
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -76,24 +81,32 @@ public class ScriptableActionLoader {
      * @throws  ParserException  If the action's class could not be found or loaded from any of the script action locations.
      */
     protected static Class loadClass(String action) throws ParserException {
-
-        for (int i = 0; i < SCRIPT_ACTION_LOCATIONS.length; i++) {
+        
+        for (int i = 0; i < SCRIPT_ACTION_LOCATIONS.size(); i++) {
 
             try {
-                return attemptLoadFromPackage(SCRIPT_ACTION_LOCATIONS[i], action);
+                return attemptLoadFromPackage((String) SCRIPT_ACTION_LOCATIONS.get(i), action);
             } catch (ParserException pe) {
-                Preferences.debug("script action loader:\tAction not found in package:\t" + action + "\tin\t" + SCRIPT_ACTION_LOCATIONS[i] + "\n", Preferences.DEBUG_SCRIPTING);
-                
-                // TODO: not the best error handling -- should indicate the error for the location which probably holds
-                // the action, not always the last one.. if not at the end of the list of places to try, ignore the
-                // error and move on to the next location
-                if (i == (SCRIPT_ACTION_LOCATIONS.length - 1)) {
-                    throw pe;
-                }
+                Preferences.debug("script action loader:\tAction not found in package:\t" + action + "\tin\t" + SCRIPT_ACTION_LOCATIONS.get(i) + "\n", Preferences.DEBUG_SCRIPTING);
             }
         }
-
-        // should never reach here, i think..
-        throw new ParserException("Unable to find and load script action: " + action);
+        
+        // try the default package
+        try {
+            return attemptLoadFromPackage("", action);
+        } catch (ParserException pe) {
+            Preferences.debug("script action loader:\tAction not found in package:\t" + action + "\tin\t" + " <default package> " + "\n", Preferences.DEBUG_SCRIPTING);
+            
+            throw pe;
+        }
+    }
+    
+    /**
+     * Adds a new package where we should look for scriptable actions.  To be used to register the package paths used by more complex plugins (probably called from the plugin run() method).
+     * 
+     * @param  packageString  The java package in which to look for scriptable actions.
+     */
+    public static void addScriptActionLocation(String packageString) {
+        SCRIPT_ACTION_LOCATIONS.add(packageString);
     }
 }
