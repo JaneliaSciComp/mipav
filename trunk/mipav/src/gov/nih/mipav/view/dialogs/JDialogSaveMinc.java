@@ -622,7 +622,6 @@ public class JDialogSaveMinc extends JDialogBase {
             
         }
         
-        
         if (lr < 0 && xRes < 0){
             xRes = -xRes;
         }
@@ -630,7 +629,6 @@ public class JDialogSaveMinc extends JDialogBase {
             xRes = -xRes;
         }
         
-   
         if (pa < 0 && yRes < 0){
             yRes = -yRes;
         }
@@ -645,6 +643,10 @@ public class JDialogSaveMinc extends JDialogBase {
         else if (is > 0 && zRes > 0){
             zRes = -zRes;
         }
+        
+        // since we write the spaces with the alignement = centre attribute, adjust the x and y space values by half the x and y steps
+        lr += xRes / 2;
+        pa += yRes / 2;
 
         if (fileInfo.getExtents().length == 2) {
             zStart.setEnabled(false);
