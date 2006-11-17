@@ -458,7 +458,10 @@ public class JDialogRunScriptController implements ActionListener {
                 Vector scriptVOIs = (Vector) scriptExecutorsVOIs.elementAt(i);
                 Preferences.debug("run dialog:\tScript execution #" + i + " VOIs to be used:\n",
                                   Preferences.DEBUG_SCRIPTING);
-
+//do it here
+                
+                
+                
                 for (int j = 0; j < scriptVOIs.size(); j++) {
                     Preferences.debug("run dialog:\tScript execution #" + i + "\t" + scriptVars[j] + " VOI " + j +
                                       " -> " + scriptVOIs.elementAt(j) + "\n", Preferences.DEBUG_SCRIPTING);
