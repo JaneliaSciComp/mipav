@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.model.structures.*;
 
 import org.w3c.dom.*;
 
@@ -293,7 +294,7 @@ public class JDialogRunScriptView implements ActionListener {
         ((DefaultTreeModel) tree.getModel()).reload();
         expandAll(tree, true);
         //tree.addMouseListener(listener);
-        tree.setDropTarget(new DropJTreeLister());
+        tree.setDropTarget(new DropJTreeTarget());
         tree.setName("Script Tree");
         tree.setCellRenderer(new TreeRenderer());
         tree.setRootVisible(false);
@@ -366,6 +367,10 @@ public class JDialogRunScriptView implements ActionListener {
      */
     public void fillImagesVOIs(Vector imageHolder, Vector voiHolder) {
      
+    	boolean voiOnDisk = false;
+    	boolean imageOnDisk = false;
+    	boolean voiOnImage = false;
+    	
         ScriptTreeNode scriptNode = (ScriptTreeNode)root.getChildAt(0);
     	
     	int numImagePlaceHolders = scriptNode.getChildCount();
@@ -394,19 +399,41 @@ public class JDialogRunScriptView implements ActionListener {
     		for (int j = 0; j < numImages[i]; j++) {
     			imageNode = (ScriptTreeNode)imagePHNode.getChildAt(j);
     			imageNames[j].add(((String)imageNode.getUserObject()).trim());
-    			
+    			imageOnDisk = model.getScriptImage(((String)imageNode.getUserObject()).trim()).isOpenedByScript();
     			
     			numVOIs = imageNode.getChildCount();
     			for (int k = 0; k < numVOIs; k++) {
     				voiName = (String)((ScriptTreeNode)imageNode.getChildAt(k)).getUserObject();
     				tempVOI = model.getScriptImage(((String)imageNode.getUserObject()).trim()).getScriptVOI(voiName);
     				if (tempVOI.isOpenedByDialog()) {
+    					voiOnDisk = true;
     					voiNames[j].add(tempVOI.getVoiFileLocation());
     				} else {
+    					voiOnImage = true;
     					voiNames[j].add(voiName);
     				}
     				//voiNames[j].add(((String)((ScriptTreeNode)imageNode.getChildAt(k)).getUserObject()).trim());
     			}
+    			
+    			//check to see if the image is NOT on disk, if it requires VOIs,
+    			// and if those VOIs are only on Disk
+    			//  if it meets these requirements, check to see if there are currently
+    			//  VOIs on the image, meaning these could interfere with the script
+    			//  request to delete all (user can say yes/no)
+    			if (!imageOnDisk && numVOIs > 0) {
+    				if (voiOnDisk && !voiOnImage) {
+    					ModelImage tempImage = ViewUserInterface.getReference().getRegisteredImageByName(((String)imageNode.getUserObject()).trim());
+    					if (tempImage != null) {
+    						if (tempImage.getVOIs().size() > 0) {
+    							int response = JOptionPane.showConfirmDialog(null, "Possible conflict with VOIs already loaded into image:  Delete existing VOIs?", "Warning", JOptionPane.YES_NO_OPTION);
+    							if (response == JOptionPane.YES_OPTION) {
+    								tempImage.getVOIs().removeAllElements();
+    							}
+    						}
+    					}
+    				}
+    			}
+    			
     		}
     	}
     	
@@ -575,6 +602,7 @@ public class JDialogRunScriptView implements ActionListener {
         list.setCellRenderer(new CustomCellRenderer());
         list.addMouseListener(new TreeMouseAdapter());
         list.addMouseMotionListener(new TreeMouseDragAdapter());
+        list.setDropTarget(new DropJListTarget());
         
         if (name.equalsIgnoreCase("Images List")) {
             imageList = list;
@@ -905,11 +933,7 @@ public class JDialogRunScriptView implements ActionListener {
             }
             serialArrayListFlavor = new DataFlavor(ArrayList.class,
                                                   "ArrayList");
-        }
-
-       
-
-       
+        }      
 
         private boolean hasLocalArrayListFlavor(DataFlavor[] flavors) {
             if (localArrayListFlavor == null) {
@@ -1108,14 +1132,37 @@ public class JDialogRunScriptView implements ActionListener {
         }
     }
                 
-		
+    private class DropJListTarget extends DropTarget {
+    	public void drop(DropTargetDropEvent dtde) {
+    		
+    		Point pt = dtde.getLocation();
+    		if (voiList.contains(pt)) {
+    			System.err.println("VOI");
+    		} else if (imageList.contains(pt)) {
+    			System.err.println("IMAGE");
+    		}
+    		
+    			
+    		if ((dtde.getSource().equals(imageList) &&
+    				dropSource == VOI_DROP ) ||
+    				(dtde.getSource().equals(voiList) &&
+    						dropSource == IMAGE_DROP)) {
+    			System.err.println("different source and target");
+    		} else {
+    			System.err.println("GOT A DROP!");
+    		}
+    		
+    		
+    		
+    	}
+    }
 
     /**
      * Class used to handle the dragging/dropping of images/vois into the script tree
      * @author linkb
      *
      */
-    private class DropJTreeLister extends DropTarget {
+    private class DropJTreeTarget extends DropTarget {
 
         /** Use serialVersionUID for interoperability. */
         private static final long serialVersionUID = -3115134852321228978L;
@@ -1210,6 +1257,12 @@ public class JDialogRunScriptView implements ActionListener {
                 			newNode.add(voiNode);
                 		}
                 		
+                		int numVOI = model.getScriptImage(text[i]).getScriptVOIs().length;
+                		
+                		for (int j = 0; j < numVOI && j < voiCount; j++) {
+                			updateNode((ScriptTreeNode)newNode.getChildAt(j), model.getScriptImage(text[i]).getScriptVOIs()[j].getVoiName());
+                		}
+                		
                 		((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, 
                 				(ScriptTreeNode)targetNode.getChildAt(placeholderIndex), 
                 				((ScriptTreeNode)targetNode.getChildAt(placeholderIndex)).getChildCount());
@@ -1223,16 +1276,23 @@ public class JDialogRunScriptView implements ActionListener {
             	
             	else if (targetNodeType == IMAGEPLACEHOLDERNODE &&
             			dropSource == IMAGE_DROP) {
-            	//	System.err.println("TARGET TYPE PLACEHOLDERNODE, SOURCE TYPE IMAGE");
             		newNode = new ScriptTreeNode(text[i], newNodeType);
             		//inserting into placeholder as new image node
             		// look for last image child and append after that
             		
             		//first add all required VOIs
             		voiCount = model.getNumberOfRequiredVOIsForScriptImages()[targetIndex];
+            		
+            		
             		for (int j = 0; j < voiCount; j++) {
             			voiNode = new ScriptTreeNode(VOI_EMPTY, VOINODE);
             			newNode.add(voiNode);
+            		}
+            		
+            		int numVOI = model.getScriptImage(text[i]).getScriptVOIs().length;
+            		
+            		for (int j = 0; j < numVOI && j < voiCount; j++) {
+            			updateNode((ScriptTreeNode)newNode.getChildAt(j), model.getScriptImage(text[i]).getScriptVOIs()[j].getVoiName());
             		}
             		
             		((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, targetNode, childCount);
