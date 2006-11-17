@@ -122,10 +122,7 @@ public class ViewJComponentLUTTable extends ViewJComponentBase {
     public void paintComponent(Graphics g) {
 
         int nPts;
-        int yLog;
-        int height;
         int value, startValue, endValue;
-        String topRange, bottomRange;
         int x0, y0;
         float min, max;
 
@@ -148,7 +145,8 @@ public class ViewJComponentLUTTable extends ViewJComponentBase {
 
             if (img != null) {
                 g.setClip(getVisibleRect());
-
+               
+                              
                 if (getInterpMode() == SMOOTH) {
                     g.drawImage(img, 0, 0, null);
                 } else {
@@ -175,8 +173,8 @@ public class ViewJComponentLUTTable extends ViewJComponentBase {
                 endValue = 255 + offsetY - yN[nPts - 1]; // 255
                 startValue = 255 + offsetY - yN[0]; // 0
 
-                g.setColor(Color.white);
-                g.fillRect(offsetX, offsetY, 256, 256);
+                //g.setColor(Color.white);
+                //g.fillRect(offsetX, offsetY, 256, 256);
 
                 for (int i = 0; i < nPts; i++) { // draw tick marks and values
                     x0 = offsetX;
@@ -199,8 +197,7 @@ public class ViewJComponentLUTTable extends ViewJComponentBase {
 
                         if (value >= endValue) {
                             y0 = yN[i] + 15;
-                            topRange = MipavUtil.makeFloatString(x[i], 2) + " to " +
-                                       MipavUtil.makeFloatString(x[i + 1], 2);
+                           
                             drawString(g, MipavUtil.makeFloatString(x[i], 2), x0, y0);
                             drawString(g, " to ", x0, y0 + 14);
                             drawString(g, MipavUtil.makeFloatString(x[i + 1], 2), x0, y0 + 28);
