@@ -5,8 +5,6 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -520,6 +518,7 @@ public class FileMinc extends FileBase {
         fileInfo.setImportantImageInfo();
         fileInfo.setResolutions(fileInfo.getImageOrientation());
         fileInfo.setUnits();
+        fileInfo.setModality();
 
         // ModelImage image = new ModelImage(fileInfo.getDataType(), fileInfo.getExtents(), fileName);
         // for each variable, get its corresponding data - possibly after image

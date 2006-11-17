@@ -288,6 +288,8 @@ public class JDialogSaveDicom extends JDialogBase {
 
         pack();
         validate();
+        
+        setModalityChooser(fileInfo.getModality());
 
         // try to extract out dicom-converted tags which may be buried in the minc header
         if (fileInfo.getFileFormat() == FileUtility.MINC) {
@@ -1986,5 +1988,16 @@ public class JDialogSaveDicom extends JDialogBase {
         panel.add(field);
 
         return field;
+    }
+    
+    /**
+     * Sets the modality chooser box based on the file info modality (the modality indexes should match up with the ordering of the chooser).
+     * 
+     * @param  modality  The image modality.
+     */
+    private void setModalityChooser(int modality) {
+        if (modality - 1 < seriesMod.getItemCount()) {
+            seriesMod.setSelectedIndex(modality - 1);
+        }
     }
 }

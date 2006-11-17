@@ -8574,8 +8574,6 @@ public class FileIO {
     private boolean writeDicom(ModelImage image, FileWriteOptions options) {
         int i;
         int index;
-        int[] extents;
-        int imageSize;
         String prefix = "";
         String fileSuffix = "";
         FileInfoDicom myFileInfo = null;
@@ -8625,7 +8623,7 @@ public class FileIO {
         }
 
         originalFileInfos = (FileInfoBase[]) (image.getFileInfo().clone());
-        extents = image.getFileInfo(0).getExtents();
+        int sliceSize = image.getSliceSize();
 
         if (image.isDicomImage()) {
             myFileInfo = (FileInfoDicom) image.getFileInfo(0);
@@ -8661,11 +8659,8 @@ public class FileIO {
             myFileInfo.setValue("0002,0010", DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
             myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
 
-            // TODO: remove the below conversion after getting the dicom short-to-float rescaling working for all float
-            // datasets
-
-            // necessary to save floating point minc files to dicom
-            if ((image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT)) {
+            // necessary to save (non-pet) floating point minc files to dicom
+            if ((image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT) && (myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
                 ModelImage newImage = (ModelImage) image.clone();
 
                 // in-place conversion is required so that the minc file info is retained
@@ -8676,41 +8671,6 @@ public class FileIO {
 
                 image = newImage;
             }
-
-            // TODO: move this to when the minc file is read in
-
-            // set the dicom modality, if present in the original image's minc header
-            /*if (image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
-             *  FileMincVarElem[] varArray = ((FileInfoMinc) image.getFileInfo(0)).getVarArray();
-             *
-             * for (int j = 0; j < varArray.length; j++) {
-             *
-             * if (varArray[j].name.equals("study")) {
-             *
-             * for (int k = 0; k < varArray[j].vattArray.length; k++) {
-             *
-             * if (varArray[j].vattArray[k].name.equals("modality")) {                 String modality =
-             * varArray[j].vattArray[k].getValueString();
-             *
-             * if (modality.equals("PET__")) { myFileInfo.setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY);
-             * myFileInfo.setValue("0008,0060", "PT");                 } else if (modality.equals("MRI__")) {
-             * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE); myFileInfo.setValue("0008,0060", "MR");       }
-             * else if (modality.equals("SPECT")) {
-             * myFileInfo.setModality(FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY);
-             * myFileInfo.setValue("0008,0060", "ST");
-             *
-             *    //} else if (modality.equals("GAMMA")) {                     // myFileInfo.setModality(FileInfoBase.);
-             *   myFileInfo.setValue("0008,0060",                     // "");  } else if (modality.equals("MRS__")) {
-             * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY); myFileInfo.setValue("0008,0060",
-             * "MS");                 } else if (modality.equals("MRA__")) {
-             * myFileInfo.setModality(FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY); myFileInfo.setValue("0008,0060",
-             * "MA");                 } else if (modality.equals("CT___")) {
-             * myFileInfo.setModality(FileInfoBase.COMPUTED_TOMOGRAPHY); myFileInfo.setValue("0008,0060", "CT");
-             *
-             *    //} else if (modality.equals("DSA__")) {                     // myFileInfo.setModality(FileInfoBase.);
-             * myFileInfo.setValue("0008,0060", "");                 } else if (modality.equals("DR___")) {
-             * myFileInfo.setModality(FileInfoBase.DIGITAL_RADIOGRAPHY);
-             * myFileInfo.setValue("0008,0060", "DX");                 }             }         }     } }}*/
 
             if ((image.getType() == ModelImage.SHORT) || (image.getType() == ModelImage.USHORT) ||
                     (image.getFileInfo(0).getDataType() == ModelImage.SHORT) ||
@@ -8764,7 +8724,7 @@ public class FileIO {
                 return false;
             }
 
-            myFileInfo.setDataType(image.getType());
+            myFileInfo.setDataType(image.getFileInfo(0).getDataType());
 
             FileDicomTag tag = null;
             Object obj = null;
@@ -8807,6 +8767,25 @@ public class FileIO {
                         options.setRecalculateInstanceNumber(false);
                     }
                 }
+                
+                double vmin;
+                double vmax;
+                
+                if (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) {
+                    vmin = ((FileInfoMinc) image.getFileInfo(0)).vmin;
+                    vmax = ((FileInfoMinc) image.getFileInfo(0)).vmax;
+                } else {
+                    vmin = image.getMin();
+                    vmax = image.getMax();
+                }
+                
+                double slopeDivisor = vmax - vmin;
+
+                if (slopeDivisor == 0) {
+                    slopeDivisor = 1;
+                }
+
+                float[] sliceData = new float[sliceSize];
 
                 for (int k = 0; k < image.getExtents()[2]; k++) {
 
@@ -8833,49 +8812,45 @@ public class FileIO {
                         ((FileInfoDicom) (fBase[k])).setValue("0020,0013", instanceStr, instanceStr.length());
                     }
 
-                    // TODO: if the image.getType() or image.getFileInfo(0).getDataType() are FLOAT, then calculate the
-                    // rescaling intercepts and slopes for each slice.  if the dicom modality tag (0008,0060) is not set
-                    // already, it should be defaulted to PET ("PT")
-                    /*if (((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))
-                     * &&     ((image.getFileInfo(0).getDataType() == ModelImage.SHORT) ||
-                     * (image.getFileInfo(0).getDataType() == ModelImage.USHORT))) { int sliceSize =
-                     * image.getSliceSize(); int nImages = image.getExtents()[2];
-                     *
-                     * double vmin; double vmax;
-                     *
-                     * if (image.getFileInfo(0).getFileFormat() == FileBase.MINC) {
-                     *
-                     * // Valid_range see line  823 in FileInfoMinc!!!!!!!.     vmin = ((FileInfoMinc)
-                     * image.getFileInfo(0)).vmin;     vmax = ((FileInfoMinc) image.getFileInfo(0)).vmax; } else { vmin
-                     * = image.getMin();     vmax = image.getMax(); }
-                     *
-                     * double slopeDivisor = vmax - vmin;
-                     *
-                     * if (slopeDivisor == 0) {     slopeDivisor = 1; }
-                     *
-                     * float[] sliceData = new float[sliceSize]; double smin, smax; // slice min and max
-                     *
-                     * for (int curSlice = 0; curSlice <= nImages; curSlice++) {
-                     *
-                     * try {         image.exportData(curSlice * sliceSize, sliceSize, sliceData);     } catch
-                     * (IOException ioe) {         image.setFileInfo(originalFileInfos);
-                     *
-                     * ioe.printStackTrace();
-                     *
-                     * if (!quiet) {             MipavUtil.displayError("FileIO: " + ioe);         }
-                     *
-                     * return false;     }
-                     *
-                     * smin = Double.MAX_VALUE;     smax = -Double.MAX_VALUE;
-                     *
-                     * // calculate min max values per slice     for (int pixel = 0; pixel < sliceData.length; pixel++) {
-                     *
-                     * if (sliceData[pixel] < smin) {             smin = sliceData[pixel];         }
-                     *
-                     * if (sliceData[pixel] > smax) {             smax = sliceData[pixel];         }     }
-                     *
-                     * myFileInfo.setRescaleIntercept((smax - smin) / slopeDivisor);
-                     * myFileInfo.setRescaleSlope(smin - (myFileInfo.getRescaleSlope() * vmin)); }}*/
+                    // rescaling intercepts and slopes for each slice.
+                    if ((fBase[k].getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
+                            && ((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
+                        
+                        double smin, smax; // slice min and max
+
+                        try {
+                            image.exportData(k * sliceSize, sliceSize, sliceData);
+                        } catch (IOException ioe) {
+                            image.setFileInfo(originalFileInfos);
+                        
+                            ioe.printStackTrace();
+                        
+                            if (!quiet) {
+                                MipavUtil.displayError("FileIO: " + ioe);
+                            }
+                            
+                            return false;
+                        }
+                        
+                        smin = Double.MAX_VALUE;
+                        smax = -Double.MAX_VALUE;
+                            
+                        // calculate min max values per slice
+                        for (int pixel = 0; pixel < sliceData.length; pixel++) {
+                            if (sliceData[pixel] < smin) {
+                                smin = sliceData[pixel];
+                            }
+                            if (sliceData[pixel] > smax) {
+                                smax = sliceData[pixel];
+                            }
+                        }
+
+                        fBase[k].setRescaleSlope((smax - smin) / slopeDivisor);
+                        fBase[k].setRescaleIntercept(smin - (fBase[k].getRescaleSlope() * vmin));
+                        
+                        ((FileInfoDicom) fBase[k]).setValue("0028,1052", "" + fBase[k].getRescaleIntercept());
+                        ((FileInfoDicom) fBase[k]).setValue("0028,1053", "" + fBase[k].getRescaleSlope());
+                    }
                 }
 
                 image.setFileInfo(fBase);
@@ -8883,8 +8858,6 @@ public class FileIO {
                 image.setFileInfo(myFileInfo, 0);
             }
         }
-
-        imageSize = extents[0] * extents[1];
 
         createProgressBar(null, options.getFileName(), FILE_WRITE);
 
@@ -8928,7 +8901,7 @@ public class FileIO {
                     }
 
                     dicomFile = new FileDicom(name, fileDir);
-                    dicomFile.writeImage(image, i * imageSize, (i * imageSize) + imageSize, i);
+                    dicomFile.writeImage(image, i * sliceSize, (i * sliceSize) + sliceSize, i);
                 }
             } else { // its a multi frame image to be saved!!!
 

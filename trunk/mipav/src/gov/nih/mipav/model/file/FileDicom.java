@@ -1003,7 +1003,7 @@ public class FileDicom extends FileDicomBase {
             return false;
         }
 
-        if (fileInfo.getModality() == fileInfo.POSITRON_EMISSION_TOMOGRAPHY) {
+        if (fileInfo.getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
             fileInfo.displayType = ModelStorageBase.FLOAT;
             // a bit of a hack - indicates Model image should be reallocated to float for PET image the data is stored
             // as 2 bytes (short) but is "normalized" using the slope parameter required for PET images (intercept
@@ -1217,7 +1217,7 @@ public class FileDicom extends FileDicomBase {
         double slope = fileInfo.getRescaleSlope();
         double intercept = fileInfo.getRescaleIntercept();
         
-        if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE){
+        if (fileInfo.getModality() == FileInfoBase.MAGNETIC_RESONANCE) {
             slope = 1;
             intercept = 0;
         }
