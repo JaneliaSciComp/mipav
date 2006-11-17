@@ -1000,6 +1000,11 @@ public class FileMinc extends FileBase {
                     groupEnum.nextElement();
                     writeInt(0, FileBase.BIG_ENDIAN);
                 }
+                
+                // write out placeholder for the study variable (only written if a minc-supported modality)
+                if (getMincModality(fileInfo.getModality()) != null) {
+                    writeInt(0, FileBase.BIG_ENDIAN);
+                }
 
                 fireProgressStateChanged(100);
             }
@@ -1613,8 +1618,6 @@ public class FileMinc extends FileBase {
      *
      * @throws  IOException  If an error is encountered while writing to the file
      */
-    
-    
     private void writeHeader(FileInfoBase fileInfo, FileWriteOptions options) throws IOException {
         int currentNonHeaderStartLocation = DEFAULT_NON_HEADER_START_LOCATION;
 
@@ -1720,9 +1723,48 @@ public class FileMinc extends FileBase {
 
         // adding exported dicom tags moves the start of the non-header portion of the file downwards
         currentNonHeaderStartLocation += getSizeOfExportedDicomTags(dicomConvertedTagTable);
+        
+        // adding in the study var and modality attribute will also move the non-header portion of the file downwards
+        String mincModality = getMincModality(fileInfo.getModality());
+        if (mincModality != null) {
+            int studyVarSize = 0;
+            
+            studyVarSize += getSizeOfWrittenName("study", 0);
+            studyVarSize += 4;
+            studyVarSize += 4;
+            studyVarSize += 4;
+            studyVarSize += 4;
+            
+            studyVarSize += getSizeOfWrittenName("varid", 0);
+            studyVarSize += 4;
+            studyVarSize += getSizeOfWrittenName("MINC standard variable", 1);
+            studyVarSize += getSizeOfWrittenName("vartype", 0);
+            studyVarSize += 4;
+            studyVarSize += getSizeOfWrittenName("group________", 1);
+            studyVarSize += getSizeOfWrittenName("version", 0);
+            studyVarSize += 4;
+            studyVarSize += getSizeOfWrittenName("MINC Version    1.0", 1);
+            studyVarSize += getSizeOfWrittenName("parent", 0);
+            studyVarSize += 4;
+            studyVarSize += getSizeOfWrittenName("image", 1);
+            studyVarSize += getSizeOfWrittenName("modality", 0);
+            studyVarSize += 4;
+            studyVarSize += getSizeOfWrittenName(mincModality, 1);
+            
+            studyVarSize += 4;
+            studyVarSize += 4;
+            studyVarSize += 4;
+            
+            currentNonHeaderStartLocation += studyVarSize;
+        }
 
-        // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag groups)
-        writeInt(7 + dicomConvertedTagTable.size(), endianess);
+        if (mincModality == null) {
+            // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag groups)
+            writeInt(7 + dicomConvertedTagTable.size(), endianess);
+        } else {
+            // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag groups + the study tag)
+            writeInt(8 + dicomConvertedTagTable.size(), endianess);
+        }
 
         writeName("rootvariable", 0, endianess); // always in MINC files (not sure what it means)
         writeInt(0, endianess);
@@ -1745,7 +1787,12 @@ public class FileMinc extends FileBase {
         writePadding(); // pad to four byte boundary
         writeName("children", 0, endianess); // attribute 5
         writeInt(FileInfoMinc.NC_CHAR, endianess);
-        writeName("image", 1, endianess);
+        if (mincModality == null) {
+            writeName("image", 1, endianess);
+        } else {
+            writeName("image\nstudy", 1, endianess);
+            currentNonHeaderStartLocation += getSizeOfWrittenName("image\nstudy", 1) - getSizeOfWrittenName("image", 1);
+        }
 
         writeInt(FileInfoMinc.NC_INT, endianess); // type of variable
         writeInt(4, endianess); // size of variable
@@ -1961,7 +2008,6 @@ public class FileMinc extends FileBase {
             imgSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1] * nImages * size;
         }
 
-
         int pad = getPadding(imgBegin + imgSize);
 
         writeName("image-max", 0, endianess);
@@ -2015,8 +2061,40 @@ public class FileMinc extends FileBase {
 
         writeInt(8 * nImages, endianess);
         writeInt(imgBegin + imgSize + pad + (8 * nImages), endianess);
+        
+        int nextDataPortionLocation = imgBegin + imgSize + pad + (8 * nImages) + (8 * nImages);
+        // write the image modality to the minc header
+        if (mincModality != null) {
+            writeName("study", 0, endianess);
+            writeInt(1, endianess);
+            writeInt(0, endianess);
+            writeInt(FileInfoMinc.NC_ATTRIBUTE, endianess);
+            writeInt(5, endianess);
+            
+            writeName("varid", 0, endianess);
+            writeInt(FileInfoMinc.NC_CHAR, endianess);
+            writeName("MINC standard variable", 1, endianess);
+            writeName("vartype", 0, endianess);
+            writeInt(FileInfoMinc.NC_CHAR, endianess);
+            writeName("group________", 1, endianess);
+            writeName("version", 0, endianess);
+            writeInt(FileInfoMinc.NC_CHAR, endianess);
+            writeName("MINC Version    1.0", 1, endianess);
+            writeName("parent", 0, endianess);
+            writeInt(FileInfoMinc.NC_CHAR, endianess);
+            writeName("rootvariable", 1, endianess);
+            writeName("modality", 0, endianess);
+            writeInt(FileInfoMinc.NC_CHAR, endianess);
+            writeName(mincModality, 1, endianess);
+            
+            writeInt(FileInfoMinc.NC_INT, endianess);
+            writeInt(4, endianess);
+            writeInt(nextDataPortionLocation, endianess);
+            
+            nextDataPortionLocation += 4;
+        }
 
-        writeDicomTagsToHeader(dicomConvertedTagTable, imgBegin + imgSize + pad + (8 * nImages) + (8 * nImages));
+        writeDicomTagsToHeader(dicomConvertedTagTable, nextDataPortionLocation);
     }
 
     /**
@@ -2234,5 +2312,34 @@ public class FileMinc extends FileBase {
             default:
                 MipavUtil.displayError("Invalid type in FileMinc.writeValuesArray");
         }
+    }
+    
+    /**
+     * Get the minc modality string from the mipav modality type.
+     * 
+     * @param   modality  The mipav image modality.
+     * 
+     * @return  The appropriate minc modality string if there is one; null if there is not equivalent minc modality or if the mipav modality is unknown.
+     */
+    private static final String getMincModality(int modality) {
+        // note: not handling GAMMA or DSA__ minc modalities (don't know how they map to mipav modalities)
+        
+        if (modality == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
+            return "PET__";
+        } else if (modality == FileInfoBase.MAGNETIC_RESONANCE) {
+            return "MRI__";
+        } else if (modality == FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY) {
+            return "SPECT";
+        } else if (modality == FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY) {
+            return "MRS__";
+        } else if (modality == FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY) {
+            return "MRA__";
+        } else if (modality == FileInfoBase.COMPUTED_TOMOGRAPHY) {
+            return "CT___";
+        } else if (modality == FileInfoBase.DIGITAL_RADIOGRAPHY) {
+            return "DR___";
+        }
+        
+        return null;
     }
 }
