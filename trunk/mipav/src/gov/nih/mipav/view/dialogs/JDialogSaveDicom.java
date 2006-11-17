@@ -1996,7 +1996,8 @@ public class JDialogSaveDicom extends JDialogBase {
      * @param  modality  The image modality.
      */
     private void setModalityChooser(int modality) {
-        if (modality - 1 < seriesMod.getItemCount()) {
+        // avoid unknown modalities and modalities not supported by the chooser
+        if (modality > 0 && modality - 1 < seriesMod.getItemCount()) {
             seriesMod.setSelectedIndex(modality - 1);
         }
     }
