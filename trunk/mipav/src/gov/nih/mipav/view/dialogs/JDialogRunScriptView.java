@@ -197,10 +197,14 @@ public class JDialogRunScriptView implements ActionListener {
     	int numDocPlaceHolders = savedScript.getDocumentElement().getChildNodes().getLength();
     	Node elementPH;
     	Node elementImage;
+    	Node elementVOI;
     	int numDocImages;
     	
     	String imageName;
     	String imageFilePath;
+    	String voiName;
+    	String voiPath;
+    	
     	int phIndex = 0;
     	int voiCount = 0;
     	ScriptTreeNode newNode;
@@ -249,20 +253,34 @@ public class JDialogRunScriptView implements ActionListener {
                 		//inserting into placeholder as new image node
                 		// look for last image child and append after that
                 		
-                		//first add all required VOIs
-                		voiCount = model.getNumberOfRequiredVOIsForScriptImages()[phIndex];
-                		for (int k = 0; j < voiCount; k++) {
-                			voiNode = new ScriptTreeNode(VOI_EMPTY, VOINODE);
-                			newNode.add(voiNode);
-                		}
-                		
-                		((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, targetNode, childCount);
-        				
-                		//check to see if the image is currently open, if not, add to list of Images on right
+//        				check to see if the image is currently open, if not, add to list of Images on right
                 		if (model.getScriptImage(imageName) == null) {
                 			//not sure about the isMulti setting to true always...
                 			model.addToAvailableImageList(imageName, imageFilePath, isMulti);
                 		}
+        				
+                		int imageIndex = model.getImageIndex(imageName);
+                		
+                		//first add all required VOIs
+                		voiCount = model.getNumberOfRequiredVOIsForScriptImages()[phIndex];
+                		System.err.println("VOI COUNT IS: " + voiCount);
+                		for (int k = 0; k < elementImage.getChildNodes().getLength(); k++) {
+                			elementVOI = elementImage.getChildNodes().item(k);
+                			if (elementVOI.getNodeType() == Node.ELEMENT_NODE) {
+                				voiName = elementVOI.getAttributes().getNamedItem("name").getNodeValue();
+                				voiPath = elementVOI.getAttributes().getNamedItem("filePath").getNodeValue();
+                				
+                				if (model.getScriptImage(imageName).getScriptVOI(voiName) == null) {
+                					model.addVOI(voiName, voiPath, imageIndex);
+                				}
+                				voiNode = new ScriptTreeNode(elementVOI.getAttributes().getNamedItem("name").getNodeValue(), VOINODE);
+                				newNode.add(voiNode);
+                			}
+                		}
+                		
+                		((DefaultTreeModel) tree.getModel()).insertNodeInto(newNode, targetNode, childCount);
+        				
+                		
                 		
         			}
         			

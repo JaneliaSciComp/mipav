@@ -127,6 +127,21 @@ public class JDialogRunScriptModel extends Observable {
         return image;
     }
 
+    public int getImageIndex(String name) {
+    	ScriptImage image = null;
+        Object[] imageListArr = getAvailableImageList().toArray();
+
+        for (int i = 0; i < imageListArr.length; i++) {
+
+            if (((ScriptImage) imageListArr[i]).getImageName().equalsIgnoreCase(name) ||
+                    ((ScriptImage) imageListArr[i]).getFileLocation().equalsIgnoreCase(name)) {
+                return i;
+            }
+        }
+    	
+    	return 0;
+    }
+    
     /**
      * DOCUMENT ME!
      *

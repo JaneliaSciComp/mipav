@@ -79,8 +79,7 @@ public class JDialogRunScriptController implements ActionListener {
             }
         } else if (command.equalsIgnoreCase("Add VOI from file")) {
 
-            if ((((JList) ((JScrollPane) view.getComponentByName("Images List: scroll")).getViewport().getView())
-                     .getSelectedValue()) == null) {
+            if (view.getImageList().getSelectedValue() == null) {
                 MipavUtil.displayWarning("Please select an image to load VOIS from.");
 
                 return;
@@ -135,6 +134,7 @@ public class JDialogRunScriptController implements ActionListener {
         } else if (command.equalsIgnoreCase("Open saved image and VOI selections")) {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Open saved image and VOI selections");
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             chooser.showOpenDialog(view.getFrame());
 
             try {
@@ -268,16 +268,17 @@ public class JDialogRunScriptController implements ActionListener {
         xmlDoc.append("<" + "root" + ">\n");
      
         int numImages = 0;
+        ScriptVOI scriptVOI = null;
         
         for (int i = 0; i < numImagePlaceHolders; i++) {
-        	xmlDoc.append("<Image_Placeholder>\n");
+        	xmlDoc.append("\t<Image_Placeholder>\n");
         	imagePHNode = (ScriptTreeNode) scriptNode.getChildAt(i);
         	numImages = imagePHNode.getChildCount();
         	
         	for (int j = 0; j < numImages; j++) {
         		imageNode = (ScriptTreeNode)imagePHNode.getChildAt(j);
         		String imageName = ((String)imageNode.getUserObject()).trim();
-                xmlDoc.append("<Image");
+                xmlDoc.append("\t\t<Image");
                 xmlDoc.append(" name=\"" + imageName + "\"");
                 xmlDoc.append(" filePath= \"" + model.getScriptImage(imageName).getFileLocation() +
                               " \" ");
@@ -288,13 +289,12 @@ public class JDialogRunScriptController implements ActionListener {
                 for (int k = 0; k < numVOIs; k++) {
                 	voiNode = (ScriptTreeNode)imageNode.getChildAt(k);
                     String voiName = ((String)voiNode.getUserObject()).trim();
+                    
+                    scriptVOI = model.getScriptImage(imageName).getScriptVOI(voiName);
+                    
                     System.err.println("VOIName: " + voiName);
-                    if (model.getScriptImage(imageName) ==  null) {
-                    	System.err.println("scriptimage null");
-                    } else if (model.getScriptImage(imageName).getScriptVOI(voiName) == null) {
-                    	System.err.println("script image VOI is null...");
-                    }
-                    String filePath = model.getScriptImage(imageName).getScriptVOI(voiName).getVoiFileLocation();
+                   
+                    String filePath = scriptVOI.getVoiFileLocation();
 
                     if (filePath == null) {
                         String imageFilePath = model.getScriptImage(imageName).getFileLocation();
@@ -306,6 +306,8 @@ public class JDialogRunScriptController implements ActionListener {
                         if (new java.io.File(fileName).exists()) {
                             filePath = fileName;
                         } else {
+                        	
+                        	while(filePath == null) {
                             Object[] options = { "Save", "Set File Location" };
                             int userSelection = JOptionPane.showOptionDialog(null,
                                                                              "Unable to locate VOI: " + voiName +
@@ -315,6 +317,8 @@ public class JDialogRunScriptController implements ActionListener {
                                                                              options, options[0]);
                            
                             if (userSelection == 0) {
+                            	((ViewJFrameImage)
+                                        ViewUserInterface.getReference().getImageFrameVector().firstElement()).getActiveImage().getVOIs().VOIAt(0).setAllActive(true);
                                 String savedFile = ((ViewJFrameImage)
                                                         ViewUserInterface.getReference().getImageFrameVector().firstElement())
                                                        .saveVOIAs();
@@ -337,20 +341,19 @@ public class JDialogRunScriptController implements ActionListener {
                                 }
                             }
                         }
-                    } else {
-                        filePath += voiName;
+                        }
                     }
 
-                    xmlDoc.append("<VOI");
-                    xmlDoc.append(" name=\"" + voiName + "\""); // vois
-                    xmlDoc.append(" filePath= \"" + filePath + " \"" + " />");
+                    xmlDoc.append("\t\t\t<VOI");
+                    xmlDoc.append(" name=\"" + voiName + "\"" + 
+                    		" filePath= \"" + filePath + " \" " + " />\n");
                     // xmlDoc.append("</VOI>\n");
                 }
-                xmlDoc.append("</Image>\n");
+                xmlDoc.append("\t\t</Image>\n");
         	}
 
         	// xmlDoc.append("</" + ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim() + ">\n");
-        	xmlDoc.append("</Image_Placeholder>\n");
+        	xmlDoc.append("\t</Image_Placeholder>\n");
         }
             
          
