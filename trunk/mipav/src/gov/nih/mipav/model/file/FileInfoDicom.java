@@ -605,7 +605,7 @@ public class FileInfoDicom extends FileInfoBase {
 
         // ordering by type 1 tags first.  Then in numerical order.
         if (key.equals("0008,0060")) { // type 1
-            setModality(value); // setModality() covers the possibility of value == ""
+            setModalityFromDicomStr(value); // setModalityFromDicomStr() covers the possibility of value == ""
         } else if (key.equals("0028,0100")) { // type 1
 
             if (!value.toString().equals("")) {
@@ -821,7 +821,7 @@ public class FileInfoDicom extends FileInfoBase {
 
         // ordering by type 1 tags first.  Then in numerical order.
         if (key.equals("0008,0060")) { // type 1
-            setModality(value); // setModality() covers the possibility of value == ""
+            setModalityFromDicomStr(value); // setModalityFromDicomStr() covers the possibility of value == ""
         } else if (key.equals("0018,0088")) { // type 1
             super.setResolutions(Float.parseFloat((String) value), 2);
         } else if (key.equals("0028,0100")) { // type 1
@@ -1072,76 +1072,79 @@ public class FileInfoDicom extends FileInfoBase {
      *
      * @param  value  - Object used is the value of DICOM tag (0008,0060)
      */
-    protected final void setModality(Object value) {
-
+    protected final void setModalityFromDicomStr(Object value) {
+        super.setModality(getModalityFromDicomStr(value));
+    }
+    
+    protected static final int getModalityFromDicomStr(Object value) {
         if (value.equals("BI")) {
-            super.setModality(BIOMAGENETIC_IMAGING);
+            return BIOMAGENETIC_IMAGING;
         } else if (value.equals("CD")) {
-            super.setModality(COLOR_FLOW_DOPPLER);
+            return COLOR_FLOW_DOPPLER;
         } else if (value.equals("CR")) {
-            super.setModality(COMPUTED_RADIOGRAPHY);
+            return COMPUTED_RADIOGRAPHY;
         } else if (value.equals("CT")) {
-            super.setModality(COMPUTED_TOMOGRAPHY);
+            return COMPUTED_TOMOGRAPHY;
         } else if (value.equals("DD")) {
-            super.setModality(DUPLEX_DOPPLER);
+            return DUPLEX_DOPPLER;
         } else if (value.equals("DG")) {
-            super.setModality(DIAPHANOGRAPHY);
+            return DIAPHANOGRAPHY;
         } else if (value.equals("DX")) {
-            super.setModality(DIGITAL_RADIOGRAPHY);
+            return DIGITAL_RADIOGRAPHY;
         } else if (value.equals("ES")) {
-            super.setModality(ENDOSCOPY);
+            return ENDOSCOPY;
         } else if (value.equals("GM")) {
-            super.setModality(GENERAL_MICROSCOPY);
+            return GENERAL_MICROSCOPY;
         } else if (value.equals("HC")) {
-            super.setModality(HARDCODY);
+            return HARDCODY;
         } else if (value.equals("IO")) {
-            super.setModality(INTRAORAL_RADIOGRAPHY);
+            return INTRAORAL_RADIOGRAPHY;
         } else if (value.equals("LS")) {
-            super.setModality(LASER_SURFACE_SCAN);
+            return LASER_SURFACE_SCAN;
         } else if (value.equals("MA")) {
-            super.setModality(MAGNETIC_RESONANCE_ANGIOGRAPHY);
+            return MAGNETIC_RESONANCE_ANGIOGRAPHY;
         } else if (value.equals("MG")) {
-            super.setModality(MAMMOGRAPHY);
+            return MAMMOGRAPHY;
         } else if (value.equals("MR")) {
-            super.setModality(MAGNETIC_RESONANCE);
+            return MAGNETIC_RESONANCE;
         } else if (value.equals("MS")) {
-            super.setModality(MAGNETIC_RESONANCE_SPECTROSCOPY);
+            return MAGNETIC_RESONANCE_SPECTROSCOPY;
         } else if (value.equals("NM")) {
-            super.setModality(NUCLEAR_MEDICINE);
+            return NUCLEAR_MEDICINE;
         } else if (value.equals("OT")) {
-            super.setModality(OTHER);
+            return OTHER;
         } else if (value.equals("PT")) {
-            super.setModality(POSITRON_EMISSION_TOMOGRAPHY);
+            return POSITRON_EMISSION_TOMOGRAPHY;
         } else if (value.equals("PX")) {
-            super.setModality(PANORAMIC_XRAY);
+            return PANORAMIC_XRAY;
         } else if (value.equals("RF")) {
-            super.setModality(RADIO_FLUOROSCOPY);
+            return RADIO_FLUOROSCOPY;
         } else if (value.equals("RG")) {
-            super.setModality(RADIOGRAPHIC_IMAGING);
+            return RADIOGRAPHIC_IMAGING;
         } else if (value.equals("RTDOSE")) {
-            super.setModality(RADIOTHERAPY_DOSE);
+            return RADIOTHERAPY_DOSE;
         } else if (value.equals("RTIMAGE")) {
-            super.setModality(RADIOTHERAPY_IMAGE);
+            return RADIOTHERAPY_IMAGE;
         } else if (value.equals("RTPLAN")) {
-            super.setModality(RADIOTHERAPY_PLAN);
+            return RADIOTHERAPY_PLAN;
         } else if (value.equals("RTRECORD")) {
-            super.setModality(RADIOTHERAPY_RECORD);
+            return RADIOTHERAPY_RECORD;
         } else if (value.equals("RTSTRUCT")) {
-            super.setModality(RADIOTHERAPY_STRUCTURE_SET);
+            return RADIOTHERAPY_STRUCTURE_SET;
         } else if (value.equals("SM")) {
-            super.setModality(SLIDE_MICROSCOPY);
+            return SLIDE_MICROSCOPY;
         } else if (value.equals("ST")) {
-            super.setModality(SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY);
+            return SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY;
         } else if (value.equals("TG")) {
-            super.setModality(THERMOGRAPHY);
+            return THERMOGRAPHY;
         } else if (value.equals("US")) {
-            super.setModality(ULTRASOUND);
+            return ULTRASOUND;
         } else if (value.equals("XA")) {
-            super.setModality(XRAY_ANGIOGRAPHY);
+            return XRAY_ANGIOGRAPHY;
         } else if (value.equals("XC")) {
-            super.setModality(EXTERNAL_CAMERA_PHOTOGRAPHY);
+            return EXTERNAL_CAMERA_PHOTOGRAPHY;
         } else {
-            super.setModality(UNKNOWN_MODALITY);
+            return UNKNOWN_MODALITY;
         }
     }
 }

@@ -1121,6 +1121,45 @@ public class FileInfoMinc extends FileInfoBase {
             }
         }
     }
+    
+    /**
+     * Sets the image modality based on the 
+     *
+     */
+    public void setModality() {
+        for (int j = 0; j < varArray.length; j++) {
+
+            if (varArray[j].name.equals("study")) {
+
+                for (int k = 0; k < varArray[j].vattArray.length; k++) {
+
+                    if (varArray[j].vattArray[k].name.equals("modality")) {
+                        String modality = varArray[j].vattArray[k].getValueString();
+
+                        if (modality.equals("PET__")) {
+                            setModality(FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY);
+                        } else if (modality.equals("MRI__")) {
+                            setModality(FileInfoBase.MAGNETIC_RESONANCE);
+                        } else if (modality.equals("SPECT")) {
+                            setModality(FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY);
+                        } else if (modality.equals("GAMMA")) {
+                            // setModality(FileInfoBase.);
+                        } else if (modality.equals("MRS__")) {
+                            setModality(FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY);
+                        } else if (modality.equals("MRA__")) {
+                            setModality(FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY);
+                        } else if (modality.equals("CT___")) {
+                            setModality(FileInfoBase.COMPUTED_TOMOGRAPHY);
+                        } else if (modality.equals("DSA__")) {
+                            // setModality(FileInfoBase.);
+                        } else if (modality.equals("DR___")) {
+                            setModality(FileInfoBase.DIGITAL_RADIOGRAPHY);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * Sets the resolutions from the variable array based on the orientation of the image. The "zspace" in MINC refers
