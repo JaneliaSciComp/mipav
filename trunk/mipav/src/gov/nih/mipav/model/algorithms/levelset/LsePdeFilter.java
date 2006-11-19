@@ -104,6 +104,7 @@ public abstract class LsePdeFilter
             switch (m_eScaleType)
             {
             case NONE:
+            	m_fMin = 0.0f;
                 m_fOffset = 0.0f;
                 m_fScale = 1.0f;
                 break;
@@ -124,6 +125,10 @@ public abstract class LsePdeFilter
         }
         else
         {
+        	if (m_eScaleType == NONE)
+        	{
+        		m_fMin = 0.0f;
+        	}
             m_fOffset = 0.0f;
             m_fScale = 1.0f;
         }

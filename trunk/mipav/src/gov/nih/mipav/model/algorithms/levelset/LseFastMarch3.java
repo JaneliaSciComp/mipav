@@ -34,24 +34,6 @@ public class LseFastMarch3 extends LseFastMarch
     /** ZBm1 = ZBound - 1 */
     protected int m_iZBm1;
     
-    /** The x-spacing of the image, call it XSpacing. */
-    protected float m_fXSpacing;
-
-    /** The y-spacing of the image, call it YSpacing. */
-    protected float m_fYSpacing;
-
-    /** The z-spacing of the image, call it ZSpacing. */
-    protected float m_fZSpacing;
-
-    /** invXSpacing = 1/XSpacing */
-    protected float m_fInvXSpacing;
-
-    /** invYSpacing = 1/YSpacing */
-    protected float m_fInvYSpacing;
-
-    /** invZSpacing = 1/ZSpacing */
-    protected float m_fInvZSpacing;
-
     //~ Constructors ---------------------------------------------------------
 
     /**
@@ -60,18 +42,14 @@ public class LseFastMarch3 extends LseFastMarch
      * @param iXBound The x-bound of the image.
      * @param iYBound The y-bound of the image.
      * @param iZBound The z-bound of the image.
-     * @param fXSpacing The x-spacing of the image.
-     * @param fYSpacing The y-spacing of the image.
-     * @param fZSpacing The z-spacing of the image.
      * @param afSpeed The speeds of the image elements.
      * @param aiSeeds The initial region points.
      */
     public LseFastMarch3 (int iXBound, int iYBound, int iZBound,
-        float fXSpacing, float fYSpacing, float fZSpacing, float[] afSpeed,
-        int[] aiSeeds)
+        float[] afSpeed, int[] aiSeeds)
     {
         super(iXBound*iYBound*iZBound,afSpeed,aiSeeds);
-        initialize(iXBound,iYBound,iZBound,fXSpacing,fYSpacing,fZSpacing);
+        initialize(iXBound,iYBound,iZBound);
     }
 
     /**
@@ -80,18 +58,14 @@ public class LseFastMarch3 extends LseFastMarch
      * @param iXBound The x-bound of the image.
      * @param iYBound The y-bound of the image.
      * @param iZBound The z-bound of the image.
-     * @param fXSpacing The x-spacing of the image.
-     * @param fYSpacing The y-spacing of the image.
-     * @param fZSpacing The z-spacing of the image.
      * @param fSpeed The common speed of the image elements.
      * @param aiSeeds The initial region points.
      */
     public LseFastMarch3 (int iXBound, int iYBound, int iZBound,
-        float fXSpacing, float fYSpacing, float fZSpacing, float fSpeed,
-        int[] aiSeeds)
+        float fSpeed, int[] aiSeeds)
     {
         super(iXBound*iYBound*iZBound,fSpeed,aiSeeds);
-        initialize(iXBound,iYBound,iZBound,fXSpacing,fYSpacing,fZSpacing);
+        initialize(iXBound,iYBound,iZBound);
     }
 
     //~ Methods --------------------------------------------------------------
@@ -124,36 +98,6 @@ public class LseFastMarch3 extends LseFastMarch
     public final int getZBound ()
     {
         return m_iZBound;
-    }
-
-    /**
-     * Get the x-spacing for the image.
-     * 
-     * @return The x-spacing for the image.
-     */
-    public final float getXSpacing ()
-    {
-        return m_fXSpacing;
-    }
-
-    /**
-     * Get the y-spacing for the image.
-     * 
-     * @return The y-spacing for the image.
-     */
-    public final float getYSpacing ()
-    {
-        return m_fYSpacing;
-    }
-
-    /**
-     * Get the z-spacing for the image.
-     * 
-     * @return The z-spacing for the image.
-     */
-    public final float getZSpacing ()
-    {
-        return m_fZSpacing;
     }
 
     /**
@@ -333,8 +277,7 @@ public class LseFastMarch3 extends LseFastMarch
      * @param fYSpacing The y-spacing of the image.
      * @param fZSpacing The z-spacing of the image.
      */
-    protected void initialize (int iXBound, int iYBound, int iZBound,
-        float fXSpacing, float fYSpacing, float fZSpacing)
+    protected void initialize (int iXBound, int iYBound, int iZBound)
     {
 
         m_iXBound = iXBound;
@@ -344,12 +287,6 @@ public class LseFastMarch3 extends LseFastMarch
         m_iXBm1 = m_iXBound - 1;
         m_iYBm1 = m_iYBound - 1;
         m_iZBm1 = m_iZBound - 1;
-        m_fXSpacing = fXSpacing;
-        m_fYSpacing = fYSpacing;
-        m_fZSpacing = fZSpacing;
-        m_fInvXSpacing = 1.0f/fXSpacing;
-        m_fInvYSpacing = 1.0f/fYSpacing;
-        m_fInvZSpacing = 1.0f/fZSpacing;
 
         // Boundary pixels are marked as zero speed to allow us to avoid
         // having to process the boundary voxels separately during the
