@@ -25,18 +25,6 @@ public class LseFastMarch2 extends LseFastMarch
     /** YBm1 = YBound - 1 */
     protected int m_iYBm1;
     
-    /** The x-spacing of the image, call it XSpacing. */
-    protected float m_fXSpacing;
-    
-    /** The y-spacing of the image, call it YSpacing. */
-    protected float m_fYSpacing;
-    
-    /** invXSpacing = 1/XSpacing */
-    protected float m_fInvXSpacing;
-    
-    /** invYSpacing = 1/YSpacing */
-    protected float m_fInvYSpacing;
-
     //~ Constructors ---------------------------------------------------------
 
     /**
@@ -44,16 +32,14 @@ public class LseFastMarch2 extends LseFastMarch
      * 
      * @param iXBound The x-bound of the image.
      * @param iYBound The y-bound of the image.
-     * @param fXSpacing The x-spacing of the image.
-     * @param fYSpacing The y-spacing of the image.
      * @param afSpeed The speeds of the image elements.
      * @param aiSeeds The initial region points.
      */
-    public LseFastMarch2 (int iXBound, int iYBound, float fXSpacing,
-        float fYSpacing, float[] afSpeed, int[] aiSeeds)
+    public LseFastMarch2 (int iXBound, int iYBound, float[] afSpeed,
+    	int[] aiSeeds)
     {
         super(iXBound*iYBound,afSpeed,aiSeeds);
-        initialize(iXBound,iYBound,fXSpacing,fYSpacing);
+        initialize(iXBound,iYBound);
     }
 
     /**
@@ -61,16 +47,14 @@ public class LseFastMarch2 extends LseFastMarch
      * 
      * @param iXBound The x-bound of the image.
      * @param iYBound The y-bound of the image.
-     * @param fXSpacing The x-spacing of the image.
-     * @param fYSpacing The y-spacing of the image.
      * @param fSpeed The common speed of the image elements.
      * @param aiSeeds The initial region points.
      */
-    public LseFastMarch2 (int iXBound, int iYBound, float fXSpacing,
-        float fYSpacing, float fSpeed, int[] aiSeeds)
+    public LseFastMarch2 (int iXBound, int iYBound, float fSpeed,
+    	int[] aiSeeds)
     {
         super(iXBound*iYBound,fSpeed,aiSeeds);
-        initialize(iXBound,iYBound,fXSpacing,fYSpacing);
+        initialize(iXBound,iYBound);
     }
 
     //~ Methods --------------------------------------------------------------
@@ -93,26 +77,6 @@ public class LseFastMarch2 extends LseFastMarch
     public final int getYBound ()
     {
         return m_iYBound;
-    }
-
-    /**
-     * Get the x-spacing for the image.
-     * 
-     * @return The x-spacing for the image.
-     */
-    public final float getXSpacing ()
-    {
-        return m_fXSpacing;
-    }
-
-    /**
-     * Get the y-spacing for the image.
-     * 
-     * @return The y-spacing for the image.
-     */
-    public final float getYSpacing ()
-    {
-        return m_fYSpacing;
     }
 
     /**
@@ -256,17 +220,12 @@ public class LseFastMarch2 extends LseFastMarch
      * @param fXSpacing The x-spacing of the image.
      * @param fYSpacing The y-spacing of the image.
      */
-    protected void initialize (int iXBound, int iYBound, float fXSpacing,
-        float fYSpacing)
+    protected void initialize (int iXBound, int iYBound)
     {
         m_iXBound = iXBound;
         m_iYBound = iYBound;
         m_iXBm1 = m_iXBound - 1;
         m_iYBm1 = m_iYBound - 1;
-        m_fXSpacing = fXSpacing;
-        m_fYSpacing = fYSpacing;
-        m_fInvXSpacing = 1.0f/fXSpacing;
-        m_fInvYSpacing = 1.0f/fYSpacing;
 
         // Boundary pixels are marked as zero speed to allow us to avoid
         // having to process the boundary pixels separately during the

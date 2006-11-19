@@ -320,8 +320,8 @@ public class LseSegShapeDetection2 extends LseSegmenter
     {
         super.beginCoarse(aiSeeds);
         createFeatureImage();
-        m_kFastMarcher = new LseFastMarch2(m_iXBound,m_iYBound,m_fXSpacing,
-            m_fYSpacing,m_afFeature,aiSeeds);
+        m_kFastMarcher = new LseFastMarch2(m_iXBound,m_iYBound,m_afFeature,
+            aiSeeds);
     }
 
     /**
@@ -342,8 +342,8 @@ public class LseSegShapeDetection2 extends LseSegmenter
         }
 
         float fSpeed = 1.0f;
-        m_kFastMarcher = new LseFastMarch2(m_iXBound,m_iYBound,m_fXSpacing,
-            m_fYSpacing,fSpeed,m_aiBoundary);
+        m_kFastMarcher = new LseFastMarch2(m_iXBound,m_iYBound,fSpeed,
+            m_aiBoundary);
 
         return true;
     }

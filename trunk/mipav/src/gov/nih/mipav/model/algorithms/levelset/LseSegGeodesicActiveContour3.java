@@ -361,7 +361,7 @@ public class LseSegGeodesicActiveContour3 extends LseSegmenter
         super.beginCoarse(aiSeeds);
         createFeatureImage();
         m_kFastMarcher = new LseFastMarch3(m_iXBound,m_iYBound,m_iZBound,
-            m_fXSpacing,m_fYSpacing,m_fZSpacing,m_afFeature,aiSeeds);
+            m_afFeature,aiSeeds);
     }
 
     /**
@@ -383,7 +383,7 @@ public class LseSegGeodesicActiveContour3 extends LseSegmenter
 
         float fSpeed = 1.0f;
         m_kFastMarcher = new LseFastMarch3(m_iXBound,m_iYBound,m_iZBound,
-            m_fXSpacing,m_fYSpacing,m_fZSpacing,fSpeed,m_aiBoundary);
+            fSpeed,m_aiBoundary);
 
         return true;
     }
