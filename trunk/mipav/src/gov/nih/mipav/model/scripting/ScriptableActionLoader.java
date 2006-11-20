@@ -107,6 +107,8 @@ public class ScriptableActionLoader {
      * @param  packageString  The java package in which to look for scriptable actions.
      */
     public static void addScriptActionLocation(String packageString) {
-        SCRIPT_ACTION_LOCATIONS.add(packageString);
+        if (!SCRIPT_ACTION_LOCATIONS.contains(packageString)) {
+            SCRIPT_ACTION_LOCATIONS.add(packageString);
+        }
     }
 }
