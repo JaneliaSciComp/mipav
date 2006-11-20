@@ -26,6 +26,8 @@ public class JDialogThresholdLUT extends JDialogBase {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -3705234971745674752L;
 
+    private int outputType;
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -175,7 +177,7 @@ public class JDialogThresholdLUT extends JDialogBase {
 
                         // No need to make new image space because the user has choosen to replace the source image
                         // Make the algorithm class
-                        thresholdAlgo = new AlgorithmThresholdDual(image, thresholds, fillValue, binaryFlag, true,
+                        thresholdAlgo = new AlgorithmThresholdDual(image, thresholds, fillValue, outputType, true,
                                                                    false);
                         thresholdAlgo.run();
                     } catch (OutOfMemoryError x) {
@@ -191,7 +193,7 @@ public class JDialogThresholdLUT extends JDialogBase {
                     try {
 
                         // Make algorithm
-                        thresholdAlgo = new AlgorithmThresholdDual(image, thresholds, fillValue, binaryFlag, true,
+                        thresholdAlgo = new AlgorithmThresholdDual(image, thresholds, fillValue, outputType, true,
                                                                    true);
                         thresholdAlgo.run();
                     } catch (OutOfMemoryError x) {
@@ -213,7 +215,8 @@ public class JDialogThresholdLUT extends JDialogBase {
 
                     try {
                         resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, " Threshold", userInterface);
-                        thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, 0, true, true, true);
+                        thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, 0, AlgorithmThresholdDual.BINARY_TYPE, 
+                        		true, true);
                         thresholdAlgo.run();
 
                         AlgorithmMorphology2D morphAlgo2D = new AlgorithmMorphology2D(resultImage, 0, 0,
@@ -248,7 +251,7 @@ public class JDialogThresholdLUT extends JDialogBase {
                         resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, " Threshold", userInterface);
 
                         // Make algorithm
-                        thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, 0, true, true, true);
+                        thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, 0, AlgorithmThresholdDual.BINARY_TYPE, true, true);
                         thresholdAlgo.run();
 
                         AlgorithmMorphology3D morphAlgo3D = new AlgorithmMorphology3D(resultImage, 0, 0,
