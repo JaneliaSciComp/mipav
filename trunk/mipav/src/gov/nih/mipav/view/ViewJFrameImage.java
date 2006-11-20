@@ -295,12 +295,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      *
      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
      */
-    public static ModelRGB initRGB( ModelImage img ) throws OutOfMemoryError
-    {
+    public static ModelRGB initRGB(ModelImage img) throws OutOfMemoryError {
         ModelRGB newRGB = null;
 
-        if ( img.isColorImage() )
-        {
+        if (img.isColorImage()) {
             float[] x = new float[4];
             float[] y = new float[4];
             float[] z = new float[4];
@@ -328,9 +326,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             newRGB.getBlueFunction().importArrays(x, y, 4);
             newRGB.makeRGB(-1);
         }
+
         return newRGB;
     }
-
 
 
     /**
@@ -370,7 +368,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("PowerPaint")) {
             new JDialogPowerPaint(this, getImageA());
         } else if (command.equals("AdvancedPaint")) {
-        	menuBuilder.setMenuItemEnabled("Extract image(B)", true);
+            menuBuilder.setMenuItemEnabled("Extract image(B)", true);
             new JDialogMultiPaint(this, getImageA());
             getControls().getTools().setPaintBrushButtonSelected();
             componentImage.setMode(ViewJComponentEditImage.PAINT_VOI);
@@ -632,7 +630,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 linkTriFrame.setImageSelectorPanelVisible(true); // set the selector panel to visible in the
                                                                  // ViewJFrameTriImage, if it exists
             }
-            
+
             menuBuilder.setMenuItemEnabled("Extract image(B)", true);
             menuBuilder.setMenuItemEnabled("Close image(B)", true);
             menuBuilder.setMenuItemEnabled("Clone/extract image(B)", true);
@@ -2000,79 +1998,84 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } else {
                 new JDialogWatershed(this, getActiveImage());
             }
-        } 
-        else if (command.equals("DiffusionLevelsetITK2")) {
+        } else if (command.equals("DiffusionLevelsetITK2")) {
+
             /* The below code is for demo purporses only: */
             /* reallocate imageA to a ARGB_FLOAT with the extents for the demo
              * file: */
             int iXBound = 180;
             int iYBound = 216;
-            int iQuantity = iXBound*iYBound;
-            int[] aiExtents = {iXBound, iYBound};
-            ModelImage kModelImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, aiExtents,
-                                                     "Mrislice_w180_h216.im" );
+            int iQuantity = iXBound * iYBound;
+            int[] aiExtents = { iXBound, iYBound };
+            ModelImage kModelImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, aiExtents, "Mrislice_w180_h216.im");
 
             /* load the 2D demo file into imageA: */
             try {
-                File kFile = new File("Mrislice_w180_h216.im");
-                RandomAccessFile kImage = new RandomAccessFile(kFile,"r");
+                File kFile = new File("c:\\Mrislice_w180_h216.im");
+                RandomAccessFile kImage = new RandomAccessFile(kFile, "r");
                 float[] afImage = new float[iQuantity * 4];
                 float fValue;
-                for (int i = 0; i < iQuantity; i++)
-                {
+
+                for (int i = 0; i < iQuantity; i++) {
                     fValue = kImage.readFloat();
-                    afImage[i * 4 + 0] = 1f;
-                    afImage[i * 4 + 1] = fValue;
-                    afImage[i * 4 + 2] = fValue;
-                    afImage[i * 4 + 3] = fValue;
+                    afImage[(i * 4) + 0] = 1f;
+                    afImage[(i * 4) + 1] = fValue;
+                    afImage[(i * 4) + 2] = fValue;
+                    afImage[(i * 4) + 3] = fValue;
                 }
+
                 kImage.close();
-                kModelImage.importData( 0, afImage, true );
-            } catch ( IOException exception )
-            {
-                System.err.println( "DiffusionLevelsetITK 2D failed" );
+                kModelImage.importData(0, afImage, true);
+            } catch (IOException exception) {
+                System.err.println("DiffusionLevelsetITK 2D failed");
+
                 return;
             }
+
             System.out.println("FastMarching2");
+
             /* End demo portion of the code */
-            new ViewJFrameFastMarching2( kModelImage, null );
+            new ViewJFrameFastMarching2(kModelImage, null);
         } else if (command.equals("DiffusionLevelsetITK3")) {
+
             /* The below code is for demo purporses only: */
             /* reallocate imageA to a ARGB_FLOAT with the extents for the demo
              * file: */
             int iXBound = 128;
             int iYBound = 128;
             int iZBound = 128;
-            int iQuantity = iXBound*iYBound*iZBound;
-            int[] aiExtents = {iXBound, iYBound, iZBound};
-            ModelImage kModelImage = new ModelImage( ModelStorageBase.ARGB_FLOAT, aiExtents,
-                                                     "Helix_w128_h128_s128.im" );
+            int iQuantity = iXBound * iYBound * iZBound;
+            int[] aiExtents = { iXBound, iYBound, iZBound };
+            ModelImage kModelImage = new ModelImage(ModelStorageBase.ARGB_FLOAT, aiExtents, "Helix_w128_h128_s128.im");
 
             /* load the 3D demo file into imageA: */
             try {
-                File kFile = new File("Helix_w128_h128_s128.im");
-                RandomAccessFile kImage = new RandomAccessFile(kFile,"r");
+                File kFile = new File("c:\\Helix_w128_h128_s128.im");
+                RandomAccessFile kImage = new RandomAccessFile(kFile, "r");
                 float[] afImage = new float[iQuantity * 4];
                 float fValue;
-                for (int i = 0; i < iQuantity; i++)
-                {
+
+                for (int i = 0; i < iQuantity; i++) {
                     fValue = kImage.readFloat();
-                    afImage[i * 4 + 0] = 1f;
-                    afImage[i * 4 + 1] = fValue;
-                    afImage[i * 4 + 2] = fValue;
-                    afImage[i * 4 + 3] = fValue;
+                    afImage[(i * 4) + 0] = 1f;
+                    afImage[(i * 4) + 1] = fValue;
+                    afImage[(i * 4) + 2] = fValue;
+                    afImage[(i * 4) + 3] = fValue;
                 }
+
                 kImage.close();
-                kModelImage.importData( 0, afImage, true );
-            } catch ( IOException exception )
-            {
-                System.err.println( "DiffusionLevelsetITK 3D failed" );
+                kModelImage.importData(0, afImage, true);
+            } catch (IOException exception) {
+                System.err.println("DiffusionLevelsetITK 3D failed");
+
                 return;
             }
+
             System.out.println("FastMarching3");
+
             /* End demo portion of the code */
-            new ViewJFrameFastMarching3( kModelImage, null );
-        } 
+            new ViewJFrameFastMarching3(kModelImage, null);
+        }
         // Views
         else if (command.equals("Animate")) {
             JDialogAnimate dialogAnimate;
@@ -2659,9 +2662,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             screenCapture.dispose();
         } else if (command.equals("CorrectSpace")) {
             new JDialogCorrectSpacing(this, getActiveImage()).callAlgorithm();
-        }
-        else if (command.equals("ToggleImageIntensities")) {
-        	controls.toggleSlider();
+        } else if (command.equals("ToggleImageIntensities")) {
+            controls.toggleSlider();
         }
     }
 
@@ -2939,6 +2941,20 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
     }
 
+    /**
+     * Returns the alphaBlend value for blending between imageA and imageB.
+     *
+     * @return  the alphaBlend value for blending between imageA and imageB
+     */
+    public float getAlphaBlend() {
+
+        if (componentImage != null) {
+            return componentImage.getAlphaBlend();
+        }
+
+        return 0.5f;
+    }
+
 
     /**
      * Returns the reference to the component image.
@@ -3111,13 +3127,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
 
             if (imageB != null) {
-            	ViewJProgressBar progressBar = null;
-            	if(showProgressBar) {
-            		progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100,
-                                                                    true, this, this);
-            		MipavUtil.centerOnScreen(progressBar);
-            		progressBar.setVisible(showProgressBar);
-            	}
+                ViewJProgressBar progressBar = null;
+
+                if (showProgressBar) {
+                    progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true, this,
+                                                       this);
+                    MipavUtil.centerOnScreen(progressBar);
+                    progressBar.setVisible(showProgressBar);
+                }
+
                 try {
                     int numSlices = ((imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
 
@@ -3140,8 +3158,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         // put the modified slice back into image
                         imageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
-                        if(progressBar != null) {
-                        	progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
+
+                        if (progressBar != null) {
+                            progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
                         }
                     }
 
@@ -3151,9 +3170,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     // do nothing. the error will be displayed when this if block exits
                     MipavUtil.displayError("Cannot complete the operation due to an internal error.");
                 } finally {
-                	if(progressBar != null) {
-                		progressBar.dispose();
-                	}
+
+                    if (progressBar != null) {
+                        progressBar.dispose();
+                    }
                 }
             } else {
 
@@ -3295,7 +3315,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             case KeyEvent.VK_LEFT:
             case KeyEvent.VK_RIGHT:
                 getComponentImage().getVOIHandler().handleArrowKeysVOI(e);
-            	
+
                 return;
         }
 
@@ -3584,18 +3604,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (componentImage != null) {
             componentImage.setAlphaBlend(value);
         }
-    }
-
-    /**
-     * Returns the alphaBlend value for blending between imageA and imageB
-     * @return the alphaBlend value for blending between imageA and imageB
-     */
-    public float getAlphaBlend()
-    {
-        if (componentImage != null) {
-            return componentImage.getAlphaBlend();
-        }
-        return 0.5f;
     }
 
 
@@ -4657,6 +4665,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      * @throws  OutOfMemoryError  if enough memory cannot be allocated for this method
      */
     protected void initLUT() throws OutOfMemoryError {
+
         if (LUTa == null) {
             LUTa = initLUT(imageA);
         }
@@ -5089,8 +5098,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         // if this is a color image, then update the RGB info in the component
         if (imageA.isColorImage()) {
+
             if (getRGBTA() == null) {
-                setRGBTA( initRGB( imageA ) );
+                setRGBTA(initRGB(imageA));
             }
         } // end if image is an RGB type
 
