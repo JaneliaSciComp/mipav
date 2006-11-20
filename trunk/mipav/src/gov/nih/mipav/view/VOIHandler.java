@@ -5134,18 +5134,21 @@ public class VOIHandler extends JComponent
                 for (j = 0, yOffset = 0; j < numVertical; j++,
                                       yOffset += verticalSpacing) {
 
-                    if (gridLabelOrientation) {
-                        //x-axis is 1, 2, 3, 4... y-axis is a, b, c, d
-                        alphaLabel = (char) (97 + j);
+                	if (i == 0 || j == 0) {
+                		if (gridLabelOrientation) {
+                			//x-axis is 1, 2, 3, 4... y-axis is a, b, c, d
+                			alphaLabel = (char) (97 + j);
 
-                        gridLabel = Integer.toString((i + 1)) + alphaLabel;
+                			gridLabel = Integer.toString((i + 1)) + alphaLabel;
 
-                    } else {
-                        alphaLabel = (char) (97 + i);
-                        gridLabel = alphaLabel + Integer.toString((j + 1));
-                    }
-                    g.drawString(gridLabel, MipavMath.round(yOffset + xPadding),
-                                 MipavMath.round(xOffset + yPadding));
+                		} else {
+                			alphaLabel = (char) (97 + i);
+                			gridLabel = alphaLabel + Integer.toString((j + 1));
+                		}
+                		g.drawString(gridLabel, MipavMath.round(yOffset + xPadding),
+                				MipavMath.round(xOffset + yPadding));
+
+                	}
                 }
 
             }
