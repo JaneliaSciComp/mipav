@@ -40,15 +40,17 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private static final int MAX_ENT = 2;
-
+        
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
     private JCheckBox binaryCheckbox;
 
     /** false = apply algorithm only to VOI regions. */
-    private boolean binaryFlag;
+   // private boolean binaryFlag;
 
+    private int outputType = 0;
+    
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
 
@@ -389,7 +391,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      * @param  isBinary     DOCUMENT ME!
      * @param  inverseFlag  DOCUMENT ME!
      */
-    public void runFromLUTFrame(ModelImage im, float lowerThres, float upperThres, float fillV, boolean isBinary,
+    public void runFromLUTFrame(ModelImage im, float lowerThres, float upperThres, float fillV, int output_type,
                                 boolean inverseFlag) {
         this.image = im;
         this.userInterface = im.getUserInterface();
@@ -397,7 +399,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         this.thres2 = upperThres;
         this.fillValue = fillV;
         this.isInverse = inverseFlag;
-        binaryFlag = isBinary;
+        this.outputType = output_type;
         regionFlag = true;
         setDisplayLocNew();
         setSeparateThread(true);
@@ -409,8 +411,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      *
      * @param  flag  <code>true</code> indicates binary image, do not use fill value.
      */
-    public void setBinaryFlag(boolean flag) {
-        binaryFlag = flag;
+    public void setOutputType(int output_type) {
+        outputType = output_type;
     }
 
     /**
@@ -505,12 +507,18 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
             try {
 
-                if (binaryFlag == true) {
+                if (outputType == AlgorithmThresholdDual.BINARY_TYPE) {
                     resultImage = new ModelImage(ModelImage.BOOLEAN, destExtents, name, userInterface);
                 } else {
 
                     // resultImage      = new ModelImage(image.getType(), destExtents, " Threshold", userInterface);
                     resultImage = (ModelImage) image.clone();
+                    
+                    //reallocate to short type is doing a short mask
+                    if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE) {
+                    	resultImage.reallocate(ModelStorageBase.SHORT);
+                    }
+                    
                     resultImage.setImageName(name);
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
@@ -529,7 +537,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 }
 
                 // Make algorithm
-                thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, fillValue, binaryFlag,
+                thresholdAlgo = new AlgorithmThresholdDual(resultImage, image, thresholds, fillValue, outputType,
                                                            regionFlag, isInverse);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
@@ -567,7 +575,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
                 // No need to make new image space because the user has choosen to replace the source image
                 // Make the algorithm class
-                thresholdAlgo = new AlgorithmThresholdDual(image, thresholds, fillValue, binaryFlag, regionFlag,
+                thresholdAlgo = new AlgorithmThresholdDual(image, thresholds, fillValue, outputType, regionFlag,
                                                            isInverse);
 
                 // This is very important. Adding this object as a listener allows the algorithm to
@@ -642,7 +650,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         thresholdType = scriptParameters.getParams().getInt("threshold_type");
 
         setFillValue(scriptParameters.getParams().getFloat("fill_value"));
-        setBinaryFlag(scriptParameters.getParams().getBoolean("do_make_binary_image"));
+        setOutputType(scriptParameters.getParams().getInt("output_type"));
         isInverse = scriptParameters.getParams().getBoolean("is_inverse_threshold");
 
         if (thresholdType == DEFAULT) {
@@ -689,7 +697,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
             scriptParameters.getParams().put(ParameterFactory.newParameter("max_threshold", thres2));
         }
 
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_make_binary_image", binaryFlag));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("output_type", outputType));
         scriptParameters.getParams().put(ParameterFactory.newParameter("fill_value", fillValue));
         scriptParameters.getParams().put(ParameterFactory.newParameter("is_inverse_threshold", isInverse));
     }
@@ -974,9 +982,9 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         }
 
         if (binaryCheckbox.isSelected()) {
-            binaryFlag = true;
+            //binaryFlag = true;
         } else {
-            binaryFlag = false;
+            //binaryFlag = false;
             tmpStr = textFill.getText();
 
             if (testParameter(tmpStr, outMin, outMax)) {
