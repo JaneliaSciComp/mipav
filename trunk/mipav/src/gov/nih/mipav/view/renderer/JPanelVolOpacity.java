@@ -449,6 +449,9 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
         ModelImage gradMag_A, gradMag_B;
         float[] sigma = new float[3];
 
+        boolean loadImageA = false;
+        boolean loadImageB = false;
+        
         sigma[0] = 0.5f;
         sigma[1] = 0.5f;
         sigma[2] = 0.5f;
@@ -459,8 +462,16 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
             gradMagRescale_A = new ModelImage(ModelImage.USHORT, imageA.getExtents(),
                                               imageA.getImageName() + "_gm_rescale", imageA.getUserInterface());
 
-            if (!loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
-                                 imageA.getImageName() + "_gm_rescale" + ".xml", true)) {
+            loadImageA = loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
+                    imageA.getImageName() + "_gm_rescale" + ".xml", true);
+            
+            if ( gradMagRescale_A.getExtents()[2] != imageA.getExtents()[2] ) {
+            	gradMagRescale_A = new ModelImage(ModelImage.USHORT, imageA.getExtents(),
+                        imageA.getImageName() + "_gm_rescale", imageA.getUserInterface());
+            	loadImageA = false;
+            }
+            
+            if (! loadImageA ) {
                 rendererProgressBar.setValue(10);
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
@@ -545,9 +556,17 @@ public class JPanelVolOpacity extends JPanelVolOpacityBase {
                                        imageB.getUserInterface());
             gradMagRescale_B = new ModelImage(ModelImage.USHORT, imageB.getExtents(),
                                               imageB.getImageName() + "_gm_rescale", imageB.getUserInterface());
-
-            if (!loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
-                                 imageB.getImageName() + "_gm_rescale" + ".xml", false)) {
+            
+            loadImageB = loadGMImage(ViewUserInterface.getReference().getDefaultDirectory(),
+                    imageB.getImageName() + "_gm_rescale" + ".xml", true);
+            
+            if ( gradMagRescale_B.getExtents()[2] != imageB.getExtents()[2] ) {
+            	gradMagRescale_B = new ModelImage(ModelImage.USHORT, imageB.getExtents(),
+                        imageB.getImageName() + "_gm_rescale", imageB.getUserInterface());
+            	loadImageB = false;
+            }
+            
+            if (!loadImageB) {
                 rendererProgressBar.setValue(60);
                 rendererProgressBar.update(rendererProgressBar.getGraphics());
 
