@@ -480,6 +480,11 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
         int end;
 
+        //flip the inverse flag for short mask
+        if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE) {
+        	isInverse = !isInverse;
+        }
+        
         // System.err.println("Name is: " + name + " lower thresh: " + thresholds[0] + " upper thresh: " +
         // thresholds[1]);
 
