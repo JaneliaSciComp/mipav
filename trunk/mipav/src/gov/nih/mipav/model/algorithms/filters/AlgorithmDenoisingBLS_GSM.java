@@ -149,14 +149,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private int npy; // Integer multiple of 2**(nScales+1) for applying pyramidal representation
     
     private int error = 0; // 0 for no error, 1 for error
-    
-    private double ch1[][];
-    
-    private double ch2[][];
-    
-    private double ch3[];
-    
-    private double ch4[];
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1384,6 +1376,10 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         boolean test = false;
         if (test) {
             System.out.println("pyr.size() = " + pyr.size() + " pind.size() = " + pind.size());
+            for (i = 0; i < pyr.size(); i++) {
+                aux = pyrBand(pyr,pind,i, nsx, nsy);
+                System.out.println("i = " + i + " aux.length = " + aux.length + " nsx[0] = " + nsx[0] + " nsy[0] = " + nsy[0]);
+            }
             fh = reconSFpyr(pyr, pind, null, null, 1.0);
             if (srcImage.getType() == ModelImage.UBYTE) {
 
@@ -1401,7 +1397,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             newextents[1] = fny;
             ModelImage testImage = new ModelImage(srcImage.getType(), newextents, "testImage");
             try {
-                testImage.importData(0, fn, true);
+                testImage.importData(0, fh, true);
             }
             catch(IOException e) {
                 displayError("AlgorithmDenoisingBLS_GSM: Error on testImage.importData");
@@ -4466,7 +4462,6 @@ MATLAB description:
         double maski[][];
         double bandfftr[] = null;
         double bandffti[] = null;
-        int intMat[];
         
         // log2(x) = loge(x)/loge(2)
         logC = 1.0/Math.log(2.0);
@@ -4527,12 +4522,6 @@ MATLAB description:
         for (j = 0; j < imy; j++) {
             for (i = 0; i < imx; i++) {
                 log_rad[j][i] = logC*Math.log(log_rad[j][i]);
-            }
-        }
-        ch2 = new double[imy][imx];
-        for (j = 0; j < imy; j++) {
-            for (i = 0; i < imx; i++) {
-                ch2[j][i] = log_rad[j][i];
             }
         }
         
@@ -6469,9 +6458,9 @@ MATLAB description:
      * @param nbands
      * @return
      */
-    private Vector buildSFpyrLevs(double lodftr[], double lodfti[], int lodx, int lody, 
+    private Vector buildSFpyrLevs(double lodftr_orig[], double lodfti_orig[], int lodx, int lody, 
                                   double lograd_orig[][], double xrcos[], double yrcos[],
-                                  double angle[][], int ht, int nbands, Vector pind) {
+                                  double angle_orig[][], int ht, int nbands, Vector pind) {
         FFTUtility fftUtil;
         double bands[][];
         int bind[][];
@@ -6481,7 +6470,7 @@ MATLAB description:
         int lutsize;
         double xcosn[];
         int order;
-        double constant;
+        double consta;
         double ycosn[];
         double himask[][];
         int b;
@@ -6508,13 +6497,27 @@ MATLAB description:
         logy = lograd_orig.length;
         logx = lograd_orig[0].length;
         double lograd[][] = new double[logy][logx];
-        long p, q;
+        int angley = angle_orig.length;
+        int anglex = angle_orig[0].length;
+        double angle[][] = new double[angley][anglex];
+        double lodftr[] = new double[lodftr_orig.length];
+        double lodfti[] = new double[lodfti_orig.length];
+        double p, q;
         int intMat[];
         
         for (j = 0; j < logy; j++) {
             for (i = 0; i < logx; i++) {
                 lograd[j][i] = lograd_orig[j][i];
             }
+        }
+        for (j = 0; j < angley; j++) {
+            for (i = 0; i < anglex; i++) {
+                angle[j][i] = angle_orig[j][i];
+            }
+        }
+        for (i = 0; i  < lodftr.length; i++) {
+            lodftr[i] = lodftr_orig[i];
+            lodfti[i] = lodfti_orig[i];
         }
         if (ht <= 0) {
             center(lodftr,lodfti, lodx, lody);
@@ -6552,18 +6555,18 @@ MATLAB description:
             // Divide by sqrt(sum_(n=0)^(N-1) cos(pi*n/N)^(2(N-1)) )
             p = factorial(order);
             q = factorial(2*order);
-            constant = Math.pow(2.0,(2.0*order)) * (p*p) / (nbands * q);
+            consta = Math.pow(2.0,(2.0*order)) * (p*p) / (nbands * q);
             ycosn = new double[3*lutsize + 3];
-            constant = Math.sqrt(constant);
+            consta = Math.sqrt(consta);
             for (i = 0; i < ycosn.length; i++) {
-                ycosn[i] = constant * Math.pow(Math.cos(xcosn[i]), order);
+                ycosn[i] = consta * Math.pow(Math.cos(xcosn[i]), order);
             }
             himask = pointOp(lograd, yrcos, xrcos[0], (xrcos[1]-xrcos[0]), false);
             
             banddftr = new double[lodx*lody];
             banddfti = new double[lodx*lody];
             for (b = 1; b <= nbands; b++) {
-                anglemask = pointOp(angle, ycosn, xcosn[0] + Math.PI*(b-1)/nbands,
+                anglemask = pointOp(angle, ycosn, (xcosn[0] + Math.PI*(b-1)/(double)nbands),
                                     (xcosn[1] - xcosn[0]), true);
                 if (((nbands-1) % 4) == 0) {
                     for (j = 0; j < lody; j++) {
