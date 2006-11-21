@@ -784,8 +784,8 @@ public class FileMinc extends FileBase {
                 vmin = ((FileInfoMinc) (fileInfo)).vmin;
                 vmax = ((FileInfoMinc) (fileInfo)).vmax;
             } else {
-                vmin = _image.getMin();
-                vmax = _image.getMax();
+                vmin = getDefaultMin(fileInfo);
+                vmax = getDefaultMax(fileInfo);
             }
             
             double slopeDivisor = vmax - vmin;
@@ -800,13 +800,12 @@ public class FileMinc extends FileBase {
                 jp = j - options.getBeginSlice();
 
                 if (_image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT ||
-                    _image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE   ){
+                    _image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE){
                     slopes[jp] = 1.0;
                     intercepts[jp] = 0.0;
                     mins[jp] = vmin;
                     maxs[jp] = vmax;
-                }
-                else {
+                } else {
                     
                     _image.exportData(j * sliceSize, sliceSize, sliceData);
                     smin = Double.MAX_VALUE;
@@ -1746,7 +1745,7 @@ public class FileMinc extends FileBase {
             studyVarSize += getSizeOfWrittenName("MINC Version    1.0", 1);
             studyVarSize += getSizeOfWrittenName("parent", 0);
             studyVarSize += 4;
-            studyVarSize += getSizeOfWrittenName("image", 1);
+            studyVarSize += getSizeOfWrittenName("rootvariable", 1);
             studyVarSize += getSizeOfWrittenName("modality", 0);
             studyVarSize += 4;
             studyVarSize += getSizeOfWrittenName(mincModality, 1);
@@ -1953,8 +1952,10 @@ public class FileMinc extends FileBase {
             writeDouble(((FileInfoMinc) (fileInfo)).vmin, endianess);
             writeDouble(((FileInfoMinc) (fileInfo)).vmax, endianess);
         } else {
-            writeDouble(fileInfo.getMin(), endianess);
-            writeDouble(fileInfo.getMax(), endianess);
+            //writeDouble(fileInfo.getMin(), endianess);
+            //writeDouble(fileInfo.getMax(), endianess);
+            writeDouble(getDefaultMin(fileInfo), endianess);
+            writeDouble(getDefaultMax(fileInfo), endianess);
         }
 
         writeName("image-max", 0, endianess);
@@ -2341,5 +2342,73 @@ public class FileMinc extends FileBase {
         }
         
         return null;
+    }
+    
+    /**
+     * Return the default volume minimum for different file data types.  This is used to rescale the image data before storing 
+     * it on disk (the reader then uses the same values to scale the data back).
+     * 
+     * @param   fileInfo  The fileInfo containing information about the image being saved.
+     * 
+     * @return  The default volume minimum for a given fileInfo.
+     */
+    private static final double getDefaultMin(FileInfoBase fileInfo) {
+        switch (fileInfo.getDataType()) {
+            case ModelStorageBase.BYTE:
+                return Byte.MIN_VALUE + 1;
+
+            case ModelStorageBase.UBYTE:
+                return 0;
+
+            case ModelStorageBase.SHORT:
+                return Short.MIN_VALUE + 1;
+
+            case ModelStorageBase.USHORT:
+                return 0;
+
+            case ModelStorageBase.INTEGER:
+                return Integer.MIN_VALUE + 1;
+                
+            case ModelStorageBase.UINTEGER:
+                return 0;
+
+            case ModelStorageBase.FLOAT:
+            case ModelStorageBase.DOUBLE:
+                return fileInfo.getMin();
+                
+            default:
+                return fileInfo.getMin();
+        }
+    }
+    
+    /**
+     * Return the default volume maximum for different file data types.  This is used to rescale the image data before storing 
+     * it on disk (the reader then uses the same values to scale the data back).
+     * 
+     * @param   fileInfo  The fileInfo containing information about the image being saved.
+     * 
+     * @return  The default volume maximum for a given fileInfo.
+     */
+    private static final double getDefaultMax(FileInfoBase fileInfo) {
+        switch (fileInfo.getDataType()) {
+            case ModelStorageBase.BYTE:
+            case ModelStorageBase.UBYTE:
+                return Byte.MAX_VALUE;
+
+            case ModelStorageBase.SHORT:
+            case ModelStorageBase.USHORT:
+                return Short.MAX_VALUE;
+
+            case ModelStorageBase.INTEGER:
+            case ModelStorageBase.UINTEGER:
+                return Integer.MAX_VALUE;
+
+            case ModelStorageBase.FLOAT:
+            case ModelStorageBase.DOUBLE:
+                return fileInfo.getMax();
+                
+            default:
+                return fileInfo.getMax();
+        }
     }
 }
