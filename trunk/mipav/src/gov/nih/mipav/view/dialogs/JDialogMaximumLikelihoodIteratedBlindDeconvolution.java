@@ -214,7 +214,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
             // This is made possible by implementing AlgorithmedPerformed interface
             ibdAlgor.addListener(this);
 
-            createProgressBar(originalImage.getImageName(), ibdAlgor);
+            //createProgressBar(originalImage.getImageName(), ibdAlgor); Not necessary
             
             if (isRunInSeparateThread()) {
 
