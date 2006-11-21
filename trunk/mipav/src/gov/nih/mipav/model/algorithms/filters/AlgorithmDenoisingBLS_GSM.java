@@ -95,9 +95,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private int arrayLength;
-   
-    /** DOCUMENT ME! */
-    private int dataType;
     
     private float sig;  // noise standard deviation
     
@@ -284,6 +281,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         double corArray2[];
         double imagArray2[];
         int i2, j2;
+        double oldMin;
+        double oldMax;
+        double newMin;
+        double newMax;
+        double slope;
+        double offset;
 
         if (srcImage == null) {
             displayError("Source Image is null");
@@ -343,57 +346,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
 
             return;
         }
-        
-        // This simple test code was used to verify expand, shrink, and shiftReal.
-        boolean testme = false;
-        if (testme) {
-            double oldim[] = new double[im.length];
-            for (i = 0; i < im.length; i++) {
-                oldim[i] = im[i];
-            }
-            //int newx = (int)Math.round(2.0*nx);
-            //int newy = (int)Math.round(2.0*ny);
-            //im = new double[newx*newy];
-            //imagArray = new double[newx*newy];
-            //expand(oldim, 2.0, nx, ny, im, imagArray); 
-            //int newx = nx/2;
-            //int newy = ny/2;
-            //im = new double[newx*newy];
-            //imagArray = new double[newx*newy];
-            //shrink(oldim, nx, ny, 2, im, imagArray);
-            int offset[] = new int[2];
-            offset[0] = nx/2;
-            offset[1] = ny/2;
-            int newx = nx;
-            int newy = ny;
-            shiftReal(im, nx, ny, offset, im);
-            if (srcImage.getType() == ModelImage.UBYTE) {
-
-                for (i = 0; i < im.length; i++) {
-
-                    if (im[i] > 255.0) {
-                        im[i] = 255.0;
-                    } else if (im[i] < 0.0) {
-                        im[i] = 0.0f;
-                    }
-                }
-            } // if (dataType == ModelImage.UBYTE)
-            int newextents[] = new int[2];
-            newextents[0] = newx;
-            newextents[1] = newy;
-            ModelImage testImage = new ModelImage(srcImage.getType(), newextents, "testImage");
-            try {
-                testImage.importData(0, im, true);
-            }
-            catch(IOException e) {
-                displayError("AlgorithmDenoisingBLS_GSM: Error on testImage.importData");
-                setCompleted(false);
-                return;
-            }
-            new ViewJFrameImage(testImage, null, new Dimension(610, 200));
-            setCompleted(false);
-            return;
-        } // if (testme)
         
         if ((nx != npx) || (ny != npy)) {
             padArray = new double[npx*npy];
@@ -697,86 +649,30 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         elapsedTime = time2 - time;
         Preferences.debug("Elapsed time in seconds = " + Math.round(elapsedTime/1000.0));
         
+        newMin = Double.MAX_VALUE;
+        newMax = -Double.MAX_VALUE;
         aArray = new double[nx * ny];
         for (j = by, index = 0; j < by + ny; j++) {
-            for (i = bx; i < bx + nx; i++) {
-                aArray[index++] = imD[i + imx*j];
+            for (i = bx; i < bx + nx; i++, index++) {
+                aArray[index] = imD[i + imx*j];
+                if (newMin > aArray[index]) {
+                    newMin = aArray[index];
+                }
+                if (newMax < aArray[index]) {
+                    newMax = aArray[index];
+                }
             }
         }
 
-        // clamp to mins and maxs allowed by data type
-        if (destImage != null) {
-            dataType = destImage.getType();
-        } else {
-            dataType = srcImage.getType();
-        }
-
-        if (dataType == ModelImage.UBYTE) {
-
-            for (i = 0; i < aArray.length; i++) {
-
-                if (aArray[i] > 255.0) {
-                    aArray[i] = 255.0;
-                } else if (aArray[i] < 0.0) {
-                    aArray[i] = 0.0f;
-                }
-            }
-        } // if (dataType == ModelImage.UBYTE)
-        else if (dataType == ModelImage.BYTE) {
-
-            for (i = 0; i < aArray.length; i++) {
-
-                if (aArray[i] > 127.0) {
-                    aArray[i] = 127.0;
-                } else if (aArray[i] < -128.0) {
-                    aArray[i] = -128.0;
-                }
-            }
-        } // else if (dataType == ModelImage.BYTE)
-        else if (dataType == ModelImage.USHORT) {
-
-            for (i = 0; i < aArray.length; i++) {
-
-                if (aArray[i] > 65535.0) {
-                    aArray[i] = 65535.0;
-                } else if (aArray[i] < 0.0f) {
-                    aArray[i] = 0.0;
-                }
-            }
-        } // else if (dataType == ModelImage.USHORT)
-        else if (dataType == ModelImage.SHORT) {
-
-            for (i = 0; i < aArray.length; i++) {
-
-                if (aArray[i] > 32767.0) {
-                    aArray[i] = 32767.0;
-                } else if (aArray[i] < -32768.0) {
-                    aArray[i] = -32768.0;
-                }
-            }
-        } // else if (dataType == ModelImage.SHORT)
-        else if (dataType == ModelImage.UINTEGER) {
-
-            for (i = 0; i < aArray.length; i++) {
-
-                if (aArray[i] > 4294967295L) {
-                    aArray[i] = 4294967295L;
-                } else if (aArray[i] < 0) {
-                    aArray[i] = 0;
-                }
-            }
-        } else if (dataType == ModelImage.INTEGER) {
-
-            for (i = 0; i < aArray.length; i++) {
-
-                if (aArray[i] > Integer.MAX_VALUE) {
-                    aArray[i] = Integer.MAX_VALUE;
-                }
-
-                if (aArray[i] < Integer.MIN_VALUE) {
-                    aArray[i] = Integer.MIN_VALUE;
-                }
-            }
+        // Scale back to old image min and image max
+        // This is necessary since a large shift in range can occur
+        // for steerable pyramid and full steerable pyramid.
+        oldMin = srcImage.getMin();
+        oldMax = srcImage.getMax();
+        slope = (oldMax - oldMin)/(newMax - newMin);
+        offset = oldMax - slope * newMax;
+        for (i = 0; i < aArray.length; i++) {
+            aArray[i] = slope * aArray[i] + offset;
         }
 
         if (destImage != null) {
@@ -862,42 +758,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         if (error == 1) {
             return null;
         }
-        boolean test = false;
-        if (test) {
-            System.out.println("pyr.size() = " + pyr.size() + " pind.size() = " + pind.size());
-            for (i = 0; i < pyr.size(); i++) {
-                aux = pyrBand(pyr, pind, i, nsx, nsy);
-                System.out.println("i = " + i + " aux.length = " + aux.length + " nsx[0] = " + nsx[0] + " nsy[0] = " + nsy[0]);
-            }
-            fh = reconFullSFpyr2(pyr, pind, null, null, 1.0);
-            if (srcImage.getType() == ModelImage.UBYTE) {
-
-                for (i = 0; i < fh.length; i++) {
-
-                    if (fh[i] > 255.0) {
-                        fh[i] = 255.0;
-                    } else if (fh[i] < 0.0) {
-                        fh[i] = 0.0f;
-                    }
-                }
-            } // if (dataType == ModelImage.UBYTE)
-            int newextents[] = new int[2];
-            newextents[0] = imx;
-            newextents[1] = imy;
-            ModelImage testImage = new ModelImage(srcImage.getType(), newextents, "testImage");
-            try {
-                testImage.importData(0, fh, true);
-            }
-            catch(IOException e) {
-                displayError("AlgorithmDenoisingBLS_GSM: Error on testImage.importData");
-                error = 1;
-                return null;
-            }
-            new ViewJFrameImage(testImage, null, new Dimension(610, 200));
-            error = 1;
-            return null;
-        }
-        
+           
         pyrN = buildFullSFpyr2(noise, noisex, noisey, nScales, nOrientations-1, 1.0, pindN);
         if (error == 1) {
             return null;
@@ -1373,41 +1234,6 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
         int intMat[];
         
         pyr = buildSFpyr(fn, fnx, fny, nScales, nOrientations-1, 1.0, pind);
-        boolean test = false;
-        if (test) {
-            System.out.println("pyr.size() = " + pyr.size() + " pind.size() = " + pind.size());
-            for (i = 0; i < pyr.size(); i++) {
-                aux = pyrBand(pyr,pind,i, nsx, nsy);
-                System.out.println("i = " + i + " aux.length = " + aux.length + " nsx[0] = " + nsx[0] + " nsy[0] = " + nsy[0]);
-            }
-            fh = reconSFpyr(pyr, pind, null, null, 1.0);
-            if (srcImage.getType() == ModelImage.UBYTE) {
-
-                for (i = 0; i < fh.length; i++) {
-
-                    if (fh[i] > 255.0) {
-                        fh[i] = 255.0;
-                    } else if (fh[i] < 0.0) {
-                        fh[i] = 0.0f;
-                    }
-                }
-            } // if (dataType == ModelImage.UBYTE)
-            int newextents[] = new int[2];
-            newextents[0] = fnx;
-            newextents[1] = fny;
-            ModelImage testImage = new ModelImage(srcImage.getType(), newextents, "testImage");
-            try {
-                testImage.importData(0, fh, true);
-            }
-            catch(IOException e) {
-                displayError("AlgorithmDenoisingBLS_GSM: Error on testImage.importData");
-                error = 1;
-                return null;
-            }
-            new ViewJFrameImage(testImage, null, new Dimension(610, 200));
-            error = 1;
-            return null;
-        }
         if (error == 1) {
             return null;
         }  
