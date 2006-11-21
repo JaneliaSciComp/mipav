@@ -25,6 +25,8 @@ public class PlugInAlgorithmRemoveBlinks
 
     private boolean doRemove = true;
 
+    private double stripPercent = .1;
+    
     /**
      *   @param destImg   image model where result image is to stored
      *   @param srcImage  source image model
@@ -71,6 +73,10 @@ public class PlugInAlgorithmRemoveBlinks
         int length;
         int i, j;
 
+        int stripHeight = 0;
+        
+        int sliceSize = srcImage.getSliceSize();
+        
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
         numSlices = srcImage.getExtents()[2];
@@ -80,8 +86,9 @@ public class PlugInAlgorithmRemoveBlinks
         float totalAverage = 0;
 
         try {
-            length = xDim * yDim;
-            buffer = new double[length];
+        	stripHeight = (int)(yDim * stripPercent);
+            length = xDim * stripHeight;
+            buffer = new double[sliceSize];
             averages = new double[numSlices];
             sliceMax = new double[numSlices];
             removedSlices = new boolean[numSlices];
@@ -95,7 +102,7 @@ public class PlugInAlgorithmRemoveBlinks
             return;
         }
 
-        
+        System.err.println("new version");
 
 
         double mod = 100.0 / numSlices;
@@ -103,17 +110,29 @@ public class PlugInAlgorithmRemoveBlinks
 
 
         // export each slice into buffer and calculate the intensities
+        
         for (i = 0; i < numSlices; i++) {
             try {
                 srcImage.exportSliceXY(i, buffer);
                 sliceMax[i] = buffer[0];
+                
+                //calc the top strip (0 to 10percent)
                 for (j = 0; j < length; j++) {
                     averages[i] += buffer[j];
                     if (buffer[j] > sliceMax[i]) {
                         sliceMax[i] = buffer[j];
                     }
                 }
-                averages[i] /= length;
+                //calc the bottom strip (90 to 100 percent)
+                for (j = sliceSize - length; j < sliceSize; j++) {
+                	averages[i] += buffer[j];
+                    if (buffer[j] > sliceMax[i]) {
+                        sliceMax[i] = buffer[j];
+                    }
+                }
+                
+                //divide by length * 2 because we're doing 2 strips
+                averages[i] /= (length * 2);
                 fireProgressStateChanged((int)((i+1) * mod));
             }
             catch (IOException ex) {

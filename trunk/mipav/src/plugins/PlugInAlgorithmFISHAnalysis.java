@@ -541,7 +541,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         thresholds[1] = max;
         fillValue = 0.0f;
         binaryFlag = true;
-        thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue, binaryFlag, wholeImage,
+        thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
                                                    true);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
@@ -1284,7 +1284,7 @@ public class PlugInAlgorithmFISHAnalysis extends AlgorithmBase {
         // ViewJFrameImage testFrame = new ViewJFrameImage(blueSegImage[0], null,
         // new Dimension(600, 300), srcImage.getUserInterface());
 
-        thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue, binaryFlag, wholeImage,
+        thresholdAlgo = new AlgorithmThresholdDual(blueSegImage[0], thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
                                                    true);
         thresholdAlgo.run();
         thresholdAlgo.finalize();

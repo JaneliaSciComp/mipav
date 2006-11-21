@@ -108,7 +108,7 @@ public class PlugInAlgorithmProcessICG
 
 
         //run registration.....oar2.5d
-        AlgorithmRegOAR25D2 reg25 = new AlgorithmRegOAR25D2( srcImage, 4, 3, 1, 1, false, refImageNum,
+        AlgorithmRegOAR25D2 reg25 = new AlgorithmRegOAR25D2( srcImage, 2, 3, 1, 1, false, refImageNum,
                 -3, 3, 3, 2, false, true, false, 3, 2, 6 );
         reg25.runAlgorithm();
 

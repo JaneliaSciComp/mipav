@@ -508,7 +508,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         thresholds[1] = max;
         fillValue = 0.0f;
         binaryFlag = true;
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage, true);
+        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -852,7 +852,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[1] = max;
                 fillValue = 0.0f;
                 binaryFlag = true;
-                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage,
+                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
                                                            true);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
@@ -1140,7 +1140,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[1] = max;
                 fillValue = 0.0f;
                 binaryFlag = true;
-                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage,
+                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
                                                            true);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
@@ -2437,7 +2437,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
         // new Dimension(600, 300), srcImage.getUserInterface());
 
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage, true);
+        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -2872,7 +2872,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[1] = max;
                 fillValue = 0.0f;
                 binaryFlag = true;
-                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage,
+                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
                                                            true);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
@@ -3168,7 +3168,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[1] = max;
                 fillValue = 0.0f;
                 binaryFlag = true;
-                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, binaryFlag, wholeImage,
+                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
                                                            true);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();

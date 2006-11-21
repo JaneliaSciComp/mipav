@@ -1,12 +1,9 @@
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.algorithms.AlgorithmFuzzyCMeans;
-import gov.nih.mipav.model.algorithms.AlgorithmIHN3Correction;
 import gov.nih.mipav.model.algorithms.utilities.AlgorithmImageCalculator;
 import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
-import gov.nih.mipav.view.ViewUserInterface;
 
 import java.io.*;
 
@@ -1238,7 +1235,7 @@ public class PlugInAlgorithmOAISegThighs extends AlgorithmBase {
                                      threshSourceImg.getUserInterface());
 
         AlgorithmThresholdDual threshAlgo = null;
-        threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, 1, true, true, true);
+        threshAlgo = new AlgorithmThresholdDual(resultImage, threshSourceImg, thresh, 1, AlgorithmThresholdDual.BINARY_TYPE, true, true);
         threshAlgo.run();
 
         return resultImage;
