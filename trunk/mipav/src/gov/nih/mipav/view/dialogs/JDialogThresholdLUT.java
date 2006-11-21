@@ -46,9 +46,6 @@ public class JDialogThresholdLUT extends JDialogBase {
     private float lowerThreshold, upperThreshold;
 
     /** DOCUMENT ME! */
-    private float min, max;
-
-    /** DOCUMENT ME! */
     private JRadioButton radioBinary;
 
     /** DOCUMENT ME! */
@@ -91,8 +88,6 @@ public class JDialogThresholdLUT extends JDialogBase {
         userInterface = ViewUserInterface.getReference();
         lowerThreshold = lowThreshold;
         upperThreshold = upThreshold;
-        min = (float) im.getMin();
-        max = (float) im.getMax();
         init();
     }
 
@@ -106,7 +101,6 @@ public class JDialogThresholdLUT extends JDialogBase {
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
         String tmpStr;
-        boolean binaryFlag;
         float[] thresholds = new float[2];
         float max = 0, min = 0;
 
@@ -129,7 +123,6 @@ public class JDialogThresholdLUT extends JDialogBase {
             labelMin.setEnabled(true);
             labelMax.setEnabled(true);
         } else if (command.equals("OK")) {
-            binaryFlag = radioBinary.isSelected();
 
             if (radioThresh.isSelected() == true) {
                 tmpStr = textFill.getText();

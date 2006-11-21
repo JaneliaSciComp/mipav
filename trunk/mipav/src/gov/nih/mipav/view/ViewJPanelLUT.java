@@ -35,12 +35,9 @@ public class ViewJPanelLUT extends JPanel
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-   // private JCheckBox binaryThreshBox, binaryThreshBoxB;
-
-    private JRadioButton binaryButton, binaryButtonB;
-    private JRadioButton shortMaskButton, shortMaskButtonB;
-    private JRadioButton originalButton, originalButtonB;
+     
+    private JComboBox outputBox;
+    private JComboBox outputBoxB;
     
     /** DOCUMENT ME! */
     private JDialogCT ctDialogA, ctDialogB;
@@ -384,18 +381,14 @@ public class ViewJPanelLUT extends JPanel
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                	binaryButton.setEnabled(false);
-                	shortMaskButton.setEnabled(false);
-                	originalButton.setEnabled(false);
+                	outputBox.setEnabled(false);
                     getHistoLUTComponentA().setMode(getHistoLUTComponentA().LINEAR);
                     histoPanelA.updateLUTRecorder();
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                	binaryButtonB.setEnabled(false);
-                	shortMaskButtonB.setEnabled(false);
-                	originalButtonB.setEnabled(false);
+                	outputBoxB.setEnabled(false);
                     getHistoLUTComponentB().setMode(getHistoLUTComponentB().LINEAR);
                     histoPanelB.updateLUTRecorder();
                 }
@@ -438,9 +431,7 @@ public class ViewJPanelLUT extends JPanel
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                	binaryButton.setEnabled(true);
-                	shortMaskButton.setEnabled(true);
-                	originalButton.setEnabled(true);
+                	outputBox.setEnabled(true);
                     panelParent.enableThresholdingItems(true);
                     toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
                     toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
@@ -471,9 +462,7 @@ public class ViewJPanelLUT extends JPanel
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                	binaryButtonB.setEnabled(true);
-                	shortMaskButtonB.setEnabled(true);
-                	originalButtonB.setEnabled(true);
+                	outputBox.setEnabled(true);
                     panelParent.enableThresholdingItems(true);
                     toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
                     toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
@@ -511,9 +500,7 @@ public class ViewJPanelLUT extends JPanel
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                	binaryButton.setEnabled(true);
-                	shortMaskButton.setEnabled(true);
-                	originalButton.setEnabled(true);
+                	outputBox.setEnabled(true);
                     panelParent.enableThresholdingItems(true);
                     toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
                     toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
@@ -542,9 +529,7 @@ public class ViewJPanelLUT extends JPanel
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                	binaryButtonB.setEnabled(true);
-                	shortMaskButtonB.setEnabled(true);
-                	originalButtonB.setEnabled(true);
+                	outputBoxB.setEnabled(true);
                     panelParent.enableThresholdingItems(true);
                     toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
                     toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
@@ -590,15 +575,8 @@ public class ViewJPanelLUT extends JPanel
 
                     	
                     	
-                    	int outputType = 0;
-                    	if (originalButton.isSelected()) {
-                    		outputType = AlgorithmThresholdDual.ORIGINAL_TYPE;
-                    	} else if (binaryButton.isSelected()) {
-                    		outputType = AlgorithmThresholdDual.BINARY_TYPE;
-                    	} else if (shortMaskButton.isSelected()) {
-                    		outputType = AlgorithmThresholdDual.SHORT_MASK_TYPE;
-                    	}
-                    	
+                    	int outputType = outputBox.getSelectedIndex();
+                    	                    	
                         // run threshold algorithm
                         JDialogThreshold threshD = new JDialogThreshold();
 
@@ -625,14 +603,8 @@ public class ViewJPanelLUT extends JPanel
                                                     ((Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
                                                     panelParent.getImageB().getMax())) {
 
-                    	int outputType = 0;
-                    	if (originalButtonB.isSelected()) {
-                    		outputType = AlgorithmThresholdDual.ORIGINAL_TYPE;
-                    	} else if (binaryButtonB.isSelected()) {
-                    		outputType = AlgorithmThresholdDual.BINARY_TYPE;
-                    	} else if (shortMaskButtonB.isSelected()) {
-                    		outputType = AlgorithmThresholdDual.SHORT_MASK_TYPE;
-                    	}
+                    	int outputType = outputBoxB.getSelectedIndex();
+                    	
                     	
                         // run threshold algorithm
                         JDialogThreshold threshD = new JDialogThreshold();
@@ -1164,20 +1136,11 @@ public class ViewJPanelLUT extends JPanel
             }
 
             updateCheckBoxA.addItemListener(this);
-        } else if (source == binaryButton) {
-            threshFillF.setEnabled(!binaryButton.isSelected());
-        } else if (source == binaryButtonB) {
-            threshFillBF.setEnabled(!binaryButtonB.isSelected());
-        } else if (source == shortMaskButton) { 
-        	threshFillF.setEnabled(!shortMaskButton.isSelected());
-        } else if (source == shortMaskButtonB) {
-        	threshFillBF.setEnabled(!shortMaskButtonB.isSelected());
-        } else if (source == originalButton) {
-        	threshFillF.setEnabled(originalButton.isSelected());
-        } else if (source == originalButtonB) {
-        	threshFillBF.setEnabled(originalButtonB.isSelected());
-        }
-        
+        } else if (source == outputBox) {
+            threshFillF.setEnabled(outputBox.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE);
+        } else if (source == outputBoxB) {
+            threshFillBF.setEnabled(outputBoxB.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE);
+        } 
         else if (source == oneBasedLUTCheckBoxImageA) {
 
             // get the color of the LUT index 0
@@ -1751,33 +1714,15 @@ public class ViewJPanelLUT extends JPanel
         interpCheckBoxA = new JCheckBox("Interpolate image", false);
         interpCheckBoxA.setFont(MipavUtil.font12);
         interpCheckBoxA.addItemListener(this);
-
-        ButtonGroup thresholdGroup = new ButtonGroup();
         
-        binaryButton = new JRadioButton("Binary");
-        binaryButton.setFont(MipavUtil.font12);
-        binaryButton.setEnabled(false);
-        binaryButton.addItemListener(this);
+        String [] outputChoices = new String[]{ panelParent.getImageA().getTypeString(),
+        		"Binary", "Short mask"};
+      
         
-        shortMaskButton = new JRadioButton("Short mask");
-        shortMaskButton.setFont(MipavUtil.font12);
-        shortMaskButton.setEnabled(false);
-        shortMaskButton.addItemListener(this);
-        
-        originalButton = new JRadioButton(panelParent.getImageA().getTypeString());
-        originalButton.setFont(MipavUtil.font12);
-        originalButton.setEnabled(false);
-        originalButton.setSelected(true);
-        originalButton.addItemListener(this);
-        
-        thresholdGroup.add(originalButton);
-        thresholdGroup.add(binaryButton);
-        thresholdGroup.add(shortMaskButton);
-        
-        JPanel threshPanel = new JPanel(new GridLayout(3,1));
-        threshPanel.add(originalButton);
-        threshPanel.add(binaryButton);
-        threshPanel.add(shortMaskButton);
+        outputBox = new JComboBox(outputChoices);
+        outputBox.setFont(MipavUtil.font12);
+        outputBox.addItemListener(this);
+        outputBox.setEnabled(false);       	
         
         JLabel nColorsLabel = new JLabel("Number of colors: ");
 
@@ -1890,7 +1835,7 @@ public class ViewJPanelLUT extends JPanel
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 5, 0, -5);
-        controlPanel.add(threshPanel, gbc);
+        controlPanel.add(outputBox, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 3;
@@ -2049,32 +1994,12 @@ public class ViewJPanelLUT extends JPanel
         interpCheckBoxB.setFont(MipavUtil.font12);
         interpCheckBoxB.addItemListener(this);
 
-        ButtonGroup thresholdGroup = new ButtonGroup();
-        
-        binaryButtonB = new JRadioButton("Binary");
-        binaryButtonB.setFont(MipavUtil.font12);
-        binaryButtonB.setEnabled(false);
-        binaryButtonB.addItemListener(this);
-        
-        shortMaskButtonB = new JRadioButton("Short mask");
-        shortMaskButtonB.setFont(MipavUtil.font12);
-        shortMaskButtonB.setEnabled(false);
-        shortMaskButtonB.addItemListener(this);
-        
-        originalButtonB = new JRadioButton(panelParent.getImageA().getTypeString());
-        originalButtonB.setFont(MipavUtil.font12);
-        originalButtonB.setEnabled(false);
-        originalButtonB.addItemListener(this);
-        originalButtonB.setSelected(true);
-        
-        thresholdGroup.add(originalButton);
-        thresholdGroup.add(binaryButton);
-        thresholdGroup.add(shortMaskButton);
-        
-        JPanel threshPanel = new JPanel(new GridLayout(3,1));
-        threshPanel.add(originalButtonB);
-        threshPanel.add(binaryButtonB);
-        threshPanel.add(shortMaskButtonB);
+        String [] outputChoices = new String[]{ panelParent.getImageA().getTypeString(),
+        		"Binary", "Short mask"};
+        outputBoxB = new JComboBox(outputChoices);
+        outputBoxB.setFont(MipavUtil.font12);
+        outputBoxB.addItemListener(this);
+        outputBoxB.setEnabled(false);
         
 
         oneBasedLUTCheckBoxImageB = new JCheckBox("0 to 1 LUT adjustment", false);
@@ -2189,7 +2114,7 @@ public class ViewJPanelLUT extends JPanel
         gbc.gridx = 0;
         gbc.gridy = 4;
         gbc.insets = new Insets(0, 5, 0, -5);
-        controlPanelB.add(threshPanel, gbc);
+        controlPanelB.add(outputBoxB, gbc);
 
         gbc.gridx = 1;
         gbc.gridy = 3;
