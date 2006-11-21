@@ -21,7 +21,7 @@ import javax.swing.*;
  * Dialog to get user input, then call the algorithm. The user has the option to generate a new image or replace the
  * source image. It should be noted that the algorithms are executed in their own threads.
  *
- * @version  November 7, 2006
+ * @version  November 21, 2006
  * @see      AlgorithmDenoisingBLS_GSM
  */
 public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements AlgorithmInterface, ItemListener {
@@ -271,15 +271,16 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
 
             if (orthogonalButton.isSelected()) {
 
-                if (comboBoxFilter.getItemCount() != 9) {
-                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 5", 3);
-                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 8", 4);
-                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 9", 5);
-                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 12", 6);
-                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 13", 7);
-                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 16", 8);
-                    comboBoxFilter.setSelectedIndex(5);
-                } // if (comboBoxFilter.getItemCount() != 9)
+                if (comboBoxFilter.getItemCount() != 10) {
+                    comboBoxFilter.insertItemAt("Haar", 3);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 5", 4);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 8", 5);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 9", 6);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 12", 7);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 13", 8);
+                    comboBoxFilter.insertItemAt("Quadrature Mirror Filter 16", 9);
+                    comboBoxFilter.setSelectedIndex(6);
+                } // if (comboBoxFilter.getItemCount() != 10)
 
                 comboBoxFilter.setEnabled(true);
                 orientText.setText("3");
@@ -288,7 +289,7 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
             } // if (orthogonalButton.isSelected())
             else if (undecimatedButton.isSelected()) {
                 if (comboBoxFilter.getItemCount() != 3) {
-                    for (i = 8; i >= 3; i--) {
+                    for (i = 9; i >= 3; i--) {
                         comboBoxFilter.removeItemAt(i);
                     }
                 } // if (comboBoxFilter.getItemCount() != 3)
@@ -711,13 +712,14 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
         comboBoxFilter.insertItemAt("Daubechies 2", 0);
         comboBoxFilter.insertItemAt("Daubechies 3", 1);
         comboBoxFilter.insertItemAt("Daubechies 4", 2);
-        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 5", 3);
-        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 8", 4);
-        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 9", 5);
-        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 12", 6);
-        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 13", 7);
-        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 16", 8);
-        comboBoxFilter.setSelectedIndex(5);
+        comboBoxFilter.insertItemAt("Haar", 3);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 5", 4);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 8", 5);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 9", 6);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 12", 7);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 13", 8);
+        comboBoxFilter.insertItemAt("Quadrature Mirror Filter 16", 9);
+        comboBoxFilter.setSelectedIndex(6);
 
         orientLabel = new JLabel("Number of orientations");
         orientLabel.setForeground(Color.black);
@@ -926,6 +928,8 @@ public class JDialogDenoisingBLS_GSM extends JDialogScriptableBase implements Al
             filter = DAUB3;
         } else if (tmpStr.equals("Daubechies 4")) {
             filter = DAUB4;
+        } else if (tmpStr.equals("Haar")) {
+            filter = HAAR;
         } else if (tmpStr.equals("Quadrature Mirror Filter 5")) {
             filter = QMF5;
         } else if (tmpStr.equals("Quadrature Mirror Filter 8")) {
