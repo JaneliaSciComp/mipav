@@ -103,7 +103,7 @@ public class JDialogGridOptions extends JDialogBase {
                 comp.getVOIHandler().setGridColor(color);
 
                 comp.getVOIHandler().setGridLabelingOn(labelBox.isSelected());
-                comp.getVOIHandler().setGridLabelOrientation(labelXNumButton.isSelected());
+                comp.getVOIHandler().setGridLabelOrientation(labelXAlphaButton.isSelected());
 
 
                 if (comp.getVOIHandler().getGridOverlay()) {
@@ -177,7 +177,7 @@ public class JDialogGridOptions extends JDialogBase {
         bGroup.add(labelXNumButton);
         bGroup.add(labelXAlphaButton);
 
-        labelXNumButton.setSelected(true);
+        labelXAlphaButton.setSelected(true);
 
 
         gbc.insets = new Insets(0, 5, 0, 5);
