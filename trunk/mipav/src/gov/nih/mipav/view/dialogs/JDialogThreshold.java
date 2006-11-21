@@ -43,12 +43,11 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private JCheckBox binaryCheckbox;
+    /** Holds the choices for the outputType */
+    private JComboBox outputBox;
+  
 
-    /** false = apply algorithm only to VOI regions. */
-   // private boolean binaryFlag;
-
+    /** Same data-type, binary, or short mask */
     private int outputType = 0;
     
     /** DOCUMENT ME! */
@@ -286,13 +285,13 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     public void itemStateChanged(ItemEvent event) {
         Object source = event.getSource();
 
-        if (source == binaryCheckbox) {
+        if (source == outputBox) {
 
-            if (binaryCheckbox.isSelected()) {
-                textFill.setEnabled(false);
-            } else {
-                textFill.setEnabled(true);
-            }
+        	if (outputBox.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE) {
+        		textFill.setEnabled(true);
+        	} else {
+        		textFill.setEnabled(false);
+        	}
         } else if (source == otsuCheckbox) {
 
             if (otsuCheckbox.isSelected()) {
@@ -388,8 +387,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      * @param  lowerThres   float lower threshold
      * @param  upperThres   float upper threshold
      * @param  fillV        float fill value
-     * @param  isBinary     DOCUMENT ME!
-     * @param  inverseFlag  DOCUMENT ME!
+     * @param  output_type  output type: same, binary, short mask
+     * @param  inverseFlag  normal or inverse threshold
      */
     public void runFromLUTFrame(ModelImage im, float lowerThres, float upperThres, float fillV, int output_type,
                                 boolean inverseFlag) {
@@ -407,9 +406,9 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * Accessor that sets the "write binary image" flag.
+     * Accessor that sets the output type
      *
-     * @param  flag  <code>true</code> indicates binary image, do not use fill value.
+     * @param  output_type  0 is normal, 1 is binary, 2 is short mask
      */
     public void setOutputType(int output_type) {
         outputType = output_type;
@@ -481,7 +480,8 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         int end;
 
         //flip the inverse flag for short mask
-        if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE) {
+        if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE ||
+        		outputType == AlgorithmThresholdDual.BINARY_TYPE) {
         	isInverse = !isInverse;
         }
         
@@ -800,11 +800,18 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         textThres2.getInputMap(JComponent.WHEN_FOCUSED).put(KeyStroke.getKeyStroke("ENTER"), "checkValue");
         textThres2.getActionMap().put("checkValue", new CheckValueAction());
 
-        binaryCheckbox = new JCheckBox("Produce binary image");
-        binaryCheckbox.setFont(serif12);
-        scalePanel.add(binaryCheckbox);
-        binaryCheckbox.setSelected(true);
-        binaryCheckbox.addItemListener(this);
+        tempStr = new String("Output type:");
+        JLabel outputLabel = new JLabel(tempStr);
+        outputLabel.setForeground(Color.black);
+        outputLabel.setFont(serif12);
+        
+        String [] outputChoices = new String[]{ image.getTypeString(),
+        		"Binary", "Short mask"};
+        
+        outputBox = new JComboBox(outputChoices);
+        outputBox.setFont(MipavUtil.font12);
+        outputBox.addItemListener(this);	
+        
 
         inverseCheckbox = new JCheckBox("Inverse threshold");
         inverseCheckbox.setFont(serif12);
@@ -857,10 +864,16 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
         gbc.gridx = 0;
         gbc.gridy = 3;
-        gbc.gridwidth = 2;
+        gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
-        scalePanel.add(binaryCheckbox, gbc);
-
+        scalePanel.add(outputLabel, gbc);
+       
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        scalePanel.add(outputBox, gbc);
+        
+        gbc.gridx = 0;
+        gbc.fill = gbc.NONE;
         gbc.gridy = 4;
         scalePanel.add(otsuCheckbox, gbc);
         gbc.gridy = 5;
@@ -986,11 +999,10 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
             return false;
         }
 
-        if (binaryCheckbox.isSelected()) {
-            //binaryFlag = true;
-        } else {
-            //binaryFlag = false;
-            tmpStr = textFill.getText();
+        outputType = outputBox.getSelectedIndex();
+        
+        if (outputBox.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE) {
+        	tmpStr = textFill.getText();
 
             if (testParameter(tmpStr, outMin, outMax)) {
                 fillValue = Float.valueOf(tmpStr).floatValue();
