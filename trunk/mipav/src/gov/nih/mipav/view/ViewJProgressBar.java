@@ -61,6 +61,9 @@ public class ViewJProgressBar extends JFrame
     /** Title of the frame for the progress bar. */
     private String title;
 
+    /** For users wanting to override the automatic closing option when progress reaches 100*/
+    private boolean readyToDispose = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -297,7 +300,7 @@ public class ViewJProgressBar extends JFrame
         int value = e.getValue();
 
         if (value == PROGRESS_WINDOW_CLOSING ||
-        		value == 100) {
+        		(value == 100 && readyToDispose)) {
             dispose();
 
             return;
@@ -369,6 +372,14 @@ public class ViewJProgressBar extends JFrame
         title = _title;
     }
 
+    /**
+     * accessor to allow user to override the automatic closing (until they set this flag to true);
+     * @param ready
+     */
+    public void setReadyToDispose(boolean isReady) {
+    	this.readyToDispose = isReady;
+    }
+    
     /**
      * DOCUMENT ME!
      *
