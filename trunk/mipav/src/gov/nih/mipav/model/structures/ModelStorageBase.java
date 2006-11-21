@@ -4951,13 +4951,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
-     * Set long methods.
-     *
-     * @param  position  DOCUMENT ME!
-     * @param  value     DOCUMENT ME!
-     */
-
-    /**
      * version of set that does NOT perform bounds checking.
      *
      * @param  position  position in one dimensional array
@@ -4990,12 +4983,102 @@ public class ModelStorageBase extends ModelSerialCloneable {
      * version of set that does NOT perform bounds checking.
      *
      * @param  position  position in one dimensional array
-     * @param  value     DOCUMENT ME!
+     * @param  value     data that will be stored in the data array
      */
     public final void set(int position, float value) {
         data.setFloat(position, value);
     }
 
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value     float data that will be stored in the data array
+     */
+    public final void setAll(float value) {
+    	for(int i = 0; i < data.length(); i++) {
+    		data.setFloat(i, value);	
+    	}
+        
+    }
+    
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value     byte data that will be stored in the data array
+     */
+    
+    public final void setAll(byte value) {
+    	for(int i = 0; i < data.length(); i++) {
+    		data.setByte(i, value);	
+    	}
+        
+    }
+    
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value     short data that will be stored in the data array
+     */
+    
+    public final void setAll(short value) {
+    	for(int i = 0; i < data.length(); i++) {
+    		data.setShort(i, value);	
+    	}
+        
+    }
+    
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value     int data that will be stored in the data array
+     */
+    
+    public final void setAll(int value) {
+    	for(int i = 0; i < data.length(); i++) {
+    		data.setInt(i, value);	
+    	}
+        
+    }
+    
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value     double data that will be stored in the data array
+     */
+    
+    public final void setAll(double value) {
+    	for(int i = 0; i < data.length(); i++) {
+    		data.setDouble(i, value);	
+    	}
+        
+    }
+    
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value     UByte data that will be stored in the data array
+     */
+    
+    public final void setAllUByte(short value) {
+    	for(int i = 0; i < data.length(); i++) {
+    		data.setUByte(i, value);	
+    	}
+        
+    }
+    
+    /**
+     * version of set that does NOT perform bounds checking.
+     *
+     * @param  value     UShort data that will be stored in the data array
+     */
+    
+    public final void setAllUShort(int value) {
+    	for(int i = 0; i < data.length(); i++) {
+    		data.setUShort(i, value);	
+    	}
+        
+    }
+    
     /**
      * nD set data fuction where bounds checking is NOT performed.
      *
