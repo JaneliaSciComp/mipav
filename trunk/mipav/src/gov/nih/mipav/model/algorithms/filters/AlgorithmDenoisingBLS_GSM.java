@@ -120,12 +120,12 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     
     /**
      * repres1 = ORTHOGONAL_WAVELET
-     *           Here repres2 can be DAUB2, DAUB3, DAUB4, QMF5, QMF8, QMF9, QMF12, QMF13, QMF16
+     *           Here repres2 can be DAUB2, DAUB3, DAUB4, HAAR, QMF5, QMF8, QMF9, QMF12, QMF13, QMF16
      *           QMF9 is default.
      *           
      * repres1 = UNDECIMATED_ORTHOGONAL_WAVELET
-     *           Here repres2 can be DAUB1, DAUB2, DAUB3, DAUB4
-     *           DAUB1 is the default.
+     *           Here repres2 can be DAUB2, DAUB3, DAUB4
+     *           DAUB2 is the default.
      *           
      * repres1 = STEERABLE_PYRAMID
      *           Here repres2 = NONE
@@ -835,10 +835,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             sn2 = sn2/(nsx[0]*nsy[0]);
             if (sy2 > sn2) {
                 SNRin = 4.342944819*Math.log((sy2-sn2)/sn2);
+                Preferences.debug("SNRin = " + SNRin + "\n");
             }
             else {
                 Preferences.debug(
-                "decompReconstFull: Signal is not detectable in noisy subband");
+                "decompReconstFull: Signal is not detectable in noisy subband\n");
             }
             
             // main
@@ -992,10 +993,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
                 sn2 = sn2/(nsx[0]*nsy[0]);
                 if (sy2 > sn2) {
                     SNRin = 4.342944819*Math.log((sy2-sn2)/sn2);
+                    Preferences.debug("SNRin = " + SNRin + "\n");
                 }
                 else {
                     Preferences.debug(
-                    "decompReconst: Signal is not detectable in noisy subband");
+                    "decompReconst: Signal is not detectable in noisy subband\n");
                 }
                 
                 // main
@@ -1157,10 +1159,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             sn2 = sn2/(nsx[0]*nsy[0]);
             if (sy2 > sn2) {
                 SNRin = 4.342944819*Math.log((sy2-sn2)/sn2);
+                Preferences.debug("SNRin = " + SNRin + "\n");
             }
             else {
                 Preferences.debug(
-                "decompReconstWU: Signal is not detectable in noisy subband");
+                "decompReconstWU: Signal is not detectable in noisy subband\n");
             }
             
             // main
@@ -1309,10 +1312,11 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
             sn2 = sn2/(nsx[0]*nsy[0]);
             if (sy2 > sn2) {
                 SNRin = 4.342944819*Math.log((sy2-sn2)/sn2);
+                Preferences.debug("SNRin = " + SNRin + "\n");
             }
             else {
                 Preferences.debug(
-                "decompReconst: Signal is not detectable in noisy subband");
+                "decompReconst: Signal is not detectable in noisy subband\n");
             }
             
             // main
