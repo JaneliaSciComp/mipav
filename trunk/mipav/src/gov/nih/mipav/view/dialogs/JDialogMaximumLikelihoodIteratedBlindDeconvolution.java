@@ -165,7 +165,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
         
         scriptParameters.storeNumIterations(numberIterations);
         scriptParameters.getParams().put(ParameterFactory.newParameter("display_every_n_slices", showProgress));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("objective_numerical_aperature", objectiveNumericalAperature));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("objective_numerical_aperature",objectiveNumericalAperature  ));
         scriptParameters.getParams().put(ParameterFactory.newParameter("wavelength_nm", wavelength));
         scriptParameters.getParams().put(ParameterFactory.newParameter("refractive_index", refractiveIndex));
         scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_microscope_settings", useMicroscopeSettings));
@@ -271,7 +271,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
 
         // Objective numerical aperature
         JLabel labelObjectiveNumericalAperature =
-            new JLabel("Objective Numerical Aperature ");
+            new JLabel("Objective Numerical Aperture ");
         labelObjectiveNumericalAperature.setFont(serif12);
 
         textObjectiveNumericalAperature = new JTextField();
