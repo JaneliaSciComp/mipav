@@ -748,5 +748,12 @@ public abstract class AlgorithmBase extends Thread implements ActionListener, Wi
     	this.minProgressValue = minmax[0];
     	this.maxProgressValue = minmax[1];
     }
+
+
+	public ModelImage getDestImage() {
+		return destImage;
+	}
+    
+    
     
 }

@@ -159,6 +159,19 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** this is the array list of texts for the mask number buttons */
     private ArrayList buttonTextArrayList;
     
+    
+    /** The mask size in the x dimension. */
+    private int xDim;
+    
+    /** The mask size in the y dimension. */
+    private int yDim;
+    
+    /** The mask size in the z dimension. */
+    private int zDim;
+    
+    /** The size, in voxels, of the mask. */
+    private int imgBSize;
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -225,6 +238,14 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         String command = event.getActionCommand();
 
         if (command.equals("Close")) {
+        	//we need to commit the paint to mask
+        	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+        	ModelImage imgB = image.getParentFrame().getImageB();
+        	image.getParentFrame().getComponentImage().setIntensityDropper((float) selected);
+            image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+            image.getParentFrame().getComponentImage().setModifyFlag(true);
+            image.notifyImageDisplayListeners();
+            refreshImagePaint(image, obj);
             dispose();
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp("10027");
@@ -862,7 +883,53 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         getContentPane().add(bottomPanel, BorderLayout.SOUTH);
 
         initBlankPaint(1);
-
+        
+        //getting image b size
+        ModelImage imgB = image.getParentFrame().getImageB();
+        int numDims = imgB.getNDims();
+        
+        xDim = imgB.getExtents()[0];
+        yDim = imgB.getExtents()[1];
+        if(numDims == 2) {
+        	imgBSize = xDim * yDim;
+        }
+        else {
+        	zDim = imgB.getExtents()[2];
+        	imgBSize = xDim * yDim * zDim;
+        }
+        
+        //this boolean is to test whether image b is blank or not...initally set to true
+        boolean blankImage = true;
+        
+        //loops through the image b and gets ubytes
+        for (int i = 0;i < imgBSize; i++) {
+        	if(imgB.getUByte(i) != 0) {
+        		//there is at least some mask...so set blank image to flase
+        		blankImage = false;
+        		int val = imgB.getUByte(i);
+        		color[val] = image.getParentFrame().getLUTb().getColor(val);
+        		multiButton[val].setBackground(color[val]);
+        		
+        	}
+        }
+        //since there image b is not blank, we need to figure out what buttons should 
+        //have their background set and which button should be selected
+        if(!blankImage) {
+	        for (int n = 1; n < ((nbx * nby) + 1); n++) {
+	        	if(color[n] == null) {
+	        		selected = n;
+	        		color[n] = image.getParentFrame().getLUTb().getColor(n);
+	        		multiButton[n].setBackground(color[n]);
+	        		multiButton[n].setSelected(true);
+	        		multiButton[1].setSelected(false);
+	        		image.getParentFrame().getComponentImage().setIntensityDropper((float) n);
+	                image.getParentFrame().getControls().getTools().setPaintColor(color[n]);
+	        		break;
+	        	}
+	        	
+	        }
+        }
+        
         pack();
         setVisible(true);
         setResizable(false);
@@ -1345,6 +1412,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 
         refreshImagePaint(image, obj);
     }
+    
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -1387,10 +1455,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         ModelImage active = image.getParentFrame().getActiveImage();
         image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
 
-        // create new color
-        color[from] = image.getParentFrame().getLUTb().getColor(from);
-        multiButton[from].setBackground(color[from]);
-        listButton[from].setBackground(color[from]);
+        //set the color of the button being switched to
+        
+        color[to] = image.getParentFrame().getLUTb().getColor(to);
+
+        
+        multiButton[to].setBackground(color[to]);
+        listButton[to].setBackground(color[to]);
 
         if (indeterminateProgressBar != null) {
             indeterminateProgressBar.setIndeterminate(true);
