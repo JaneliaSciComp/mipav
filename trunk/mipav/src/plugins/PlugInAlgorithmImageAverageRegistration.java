@@ -98,7 +98,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 	                rotateBeginZ, rotateEndZ, coarseRateZ, fineRateZ, maxOfMinResol,
 	                doSubsample, fastMode, bracketBound, maxIterations, numMinima);
 			
-			progressBar = new ViewJProgressBar(sourceImage.getImageName(), "...", 0, 100, true);
+			progressBar = new ViewJProgressBar(sourceImage.getImageName(), "", 0, 100, true);
 	        progressBar.setSeparateThread(true);
 	        algReg3D.addProgressChangeListener(progressBar);
 	        algReg3D.setProgressValues(0, 100);
