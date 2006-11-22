@@ -148,7 +148,6 @@ public class ModelLUT extends ModelStorageBase {
 
             case STRIPED:
                 makeStripedLUT();
-                makeLUT(nColors);
                 break;
 
             case RED:

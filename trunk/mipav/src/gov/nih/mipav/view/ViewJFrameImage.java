@@ -745,7 +745,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 ModelLUT lutClone = null;
 
-                lutClone = (ModelLUT) LUTb.clone();
+                if(LUTb != null) {
+                	lutClone = (ModelLUT) LUTb.clone();
+                }
 
                 new ViewJFrameImage(clonedImage, lutClone, new Dimension(610, 200), getImageB().getLogMagDisplay());
                 System.gc();
