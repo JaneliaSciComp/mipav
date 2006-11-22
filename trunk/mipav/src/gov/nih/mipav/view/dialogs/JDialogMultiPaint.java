@@ -172,6 +172,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** The size, in voxels, of the mask. */
     private int imgBSize;
     
+    /** */
+    private static ModelLUT lutB;
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -585,7 +588,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
 
         // create new color
-        color[num] = image.getParentFrame().getLUTb().getColor(num);
+        color[num] = lutB.getColor(num);
         multiButton[num].setBackground(color[num]);
         listButton[num].setBackground(color[num]);
 
@@ -614,6 +617,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     private void init() {
         setForeground(Color.black);
         setTitle("Multiple Paint Tools");
+        
+        
 
         // multiple masks/paint
         label = new String[(nbx * nby) + 1];
@@ -900,25 +905,49 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         
         //this boolean is to test whether image b is blank or not...initally set to true
         boolean blankImage = true;
-        
         //loops through the image b and gets ubytes
-        for (int i = 0;i < imgBSize; i++) {
-        	if(imgB.getUByte(i) != 0) {
-        		//there is at least some mask...so set blank image to flase
-        		blankImage = false;
-        		int val = imgB.getUByte(i);
-        		color[val] = image.getParentFrame().getLUTb().getColor(val);
-        		multiButton[val].setBackground(color[val]);
-        		
-        	}
+        if(!image.isColorImage()) {
+	        for (int i = 0;i < imgBSize; i++) {
+	        	if(imgB.getUByte(i) != 0) {
+	        		//there is at least some mask...so set blank image to flase
+	        		blankImage = false;
+	        		int val = imgB.getUByte(i);
+	        		color[val] = lutB.getColor(val);
+	        		multiButton[val].setBackground(color[val]);
+	        		
+	        	}
+	        }
         }
-        //since there image b is not blank, we need to figure out what buttons should 
-        //have their background set and which button should be selected
+        else {
+        	for (int i = 1;i < imgBSize*4; i= i+4) {
+        		short r,g,b;
+        		int k;
+        		r = imgB.getUByte(i);
+        		g = imgB.getUByte(i+1);
+        		b = imgB.getUByte(i+2) ;
+      
+	        	if(r != 0 || g != 0 || b != 0) {
+	        		//there is at least some mask...so set blank image to flase
+	        		blankImage = false;
+	        		
+	        		for(k=1;k<lutB.getExtents()[1]*4;k=k+4) {
+	        			if(lutB.getUByte(k) == r && lutB.getUByte(k+1) == g && lutB.getUByte(k+2) == b) {
+	        				break;
+	        			}
+	        		}
+	        		int val = k/4;
+	        		color[val] = lutB.getColor(val);
+	        		multiButton[val].setBackground(color[val]);
+	        		
+	        	}
+	        }
+        }
+        //since the image b is not blank, we need to figure out which button should be selected
         if(!blankImage) {
-	        for (int n = 1; n < ((nbx * nby) + 1); n++) {
+	        for (int n = 1; n <= (nbx * nby); n++) {
 	        	if(color[n] == null) {
 	        		selected = n;
-	        		color[n] = image.getParentFrame().getLUTb().getColor(n);
+	        		color[n] = lutB.getColor(n);
 	        		multiButton[n].setBackground(color[n]);
 	        		multiButton[n].setSelected(true);
 	        		multiButton[1].setSelected(false);
@@ -970,9 +999,18 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         // record selected image; set to image B
         ModelImage active = image.getParentFrame().getActiveImage();
         image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
+        
+        //set up LUTb
+        if(image.isColorImage()) {
+        	//need to instantiate a LUTb
+        	lutB = new ModelLUT(ModelLUT.STRIPED, 256, new int[] { 4, 256 });
+        }
+        else {
+        	lutB = image.getParentFrame().getLUTb();
+        }
 
         // create new color
-        color[num] = image.getParentFrame().getLUTb().getColor(num);
+        color[num] = lutB.getColor(num);
         multiButton[num].setBackground(color[num]);
         listButton[num].setBackground(color[num]);
         	
@@ -1392,7 +1430,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
 
         // create new color
-        color[num] = image.getParentFrame().getLUTb().getColor(num);
+        color[num] = lutB.getColor(num);
         multiButton[num].setBackground(color[num]);
         listButton[num].setBackground(color[num]);
 
@@ -1457,7 +1495,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 
         //set the color of the button being switched to
         
-        color[to] = image.getParentFrame().getLUTb().getColor(to);
+        color[to] = lutB.getColor(to);
 
         
         multiButton[to].setBackground(color[to]);
@@ -1482,7 +1520,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
                 image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false);
 
                 // call the mask to paint program for starting mask
-                color[_to] = image.getParentFrame().getLUTb().getColor(_to);
+                color[_to] = lutB.getColor(_to);
                 image.getParentFrame().getComponentImage().setIntensityDropper((float) _to);
                 image.getParentFrame().getControls().getTools().setPaintColor(color[_to]);
                 ((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
