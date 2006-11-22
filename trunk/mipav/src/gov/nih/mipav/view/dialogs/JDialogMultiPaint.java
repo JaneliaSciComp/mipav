@@ -914,6 +914,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 	        		int val = imgB.getUByte(i);
 	        		color[val] = lutB.getColor(val);
 	        		multiButton[val].setBackground(color[val]);
+	        		listButton[val].setBackground(color[val]);
 	        		
 	        	}
 	        }
@@ -938,6 +939,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 	        		int val = k/4;
 	        		color[val] = lutB.getColor(val);
 	        		multiButton[val].setBackground(color[val]);
+	        		listButton[val].setBackground(color[val]);
 	        		
 	        	}
 	        }
@@ -951,6 +953,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 	        		multiButton[n].setBackground(color[n]);
 	        		multiButton[n].setSelected(true);
 	        		multiButton[1].setSelected(false);
+	        		listButton[n].setBackground(color[n]);
+	        		listButton[n].setSelected(true);
+	        		listButton[1].setSelected(false);
 	        		image.getParentFrame().getComponentImage().setIntensityDropper((float) n);
 	                image.getParentFrame().getControls().getTools().setPaintColor(color[n]);
 	        		break;
