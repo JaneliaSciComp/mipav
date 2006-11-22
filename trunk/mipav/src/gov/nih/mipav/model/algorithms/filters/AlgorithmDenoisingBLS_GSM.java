@@ -27,6 +27,35 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * 2.) "The Steerable Pyramid: A Flexible Architecture for Multi-Scale Derivative Computation", Eero P.
      * Simoncelli and William T. Freeman, 2nd IEEE International Conference on Image Processing, Washington,
      * D.C., vol. III, pp. 444-447, October, 1995.
+     * 
+     * This program only applies to 2D black and white images.
+     * Notes from Javier Portilla's readme.txt:
+     * This program uses 1 of the 4 selected repres1 methods to clean a noisy image with image padding
+     * with mirror reflection to avoid boundary artifacts, conversion from the image domain to the wavelet
+     * domain and back from the wavelet domain to the image domain.  In the wavelet domain there is a
+     * decomposition into subbands, which are processed sequentially (in couples corresponding to subbands
+     * of the same orientation adjacent in the scale when useParent is true, or individually when useParent
+     * is false).  Then the processed subbands are recomposed back into a single image.
+     * 
+     * The 4 methods are:
+     * 1.) Orthogonal wavelet.  Very fast, but of relatively poor denoising performance, because of not being
+     * translation invariant.
+     * 2.) Undecimated version of orthogonal wavelet.  In fact, this is a highly redundant version of the 
+     * orthogonal wavelet that avoids intra-subband aliasing, but still keeps a multiscale structure.  (The
+     * lowest level of the pyramid are extended 2 times in each dimension, whereas the rest of the scales are
+     * extended 4 times in each dimension.)  It provides a good trade-off between computational cost and 
+     * denoising performance (which is very high).
+     * 3.) Steerable pyramid.  It allows the user to choose an arbitrary number of orientations.  The splitting
+     * in oriented subbands is not applied to the very high frequencies, which are represented in a single subband
+     * (high-pass residual).  With a moderate computational cost, for a modest number of orientations (4 or less),
+     * its results depend on the type of image, being comparable (or slightly worse) on average than those
+     * obtained with the option undecimated orthogonal wavelet.
+     * 4.) Full steerable pyramid.  Same as steerable pyramid, but now also the very high frequencies are splitted
+     * into orientations.  It provides very high denoising performance (for some images slightly better than 
+     * undecimated orthogonal wavelet), especially with a high number of orientations (8, for example), but it
+     * is very demanding computationally.
+     * 
+     * Note that the shrink and expand functions shrink and expand an image in the Fourier domain.
      */
     //~ Static fields/initializers -------------------------------------------------------------------------------------
     
@@ -103,20 +132,39 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
     private int blockSizeY = 3; // Local neighborhood y
     
     private boolean usePSD = false; // If true, use power spectral density = fft(autocorrelation)
-                                   // If false, use white noise
-                                   // Default is use white noise
+                                    // If false, use white noise
+                                    // Default is use white noise
     
-    private boolean useParent = true;
+    private boolean useParent = true;  // If true, process subbands in couples of the same orientation
+                                       // adjacent in scale.  That is, include the coarse scale parent
+                                       // in the neighborhood.  If false, process subbands individually.
+                                       // Eliminating the coarse-scale parent from the neighborhood decreases
+                                       // performance significantly only at high noise levels.  This should
+                                       // not be taken to mean that the parent coefficient does not provide
+                                       // information about the reference coefficient, but rather that the
+                                       // information is somewhat redundant with that provided by the other
+                                       // neighbors.
     
-    private boolean useBoundary = true;
+    private boolean useBoundary = true; // If true, use mirror reflected boundary padding.
     
     private int nScales = 4; // Number of scales
     
     private int nOrientations = 8; // Number of orientations.  For separable wavelets this must be 3.
     
-    private boolean includeCovar = true; // Include covariance in the GSM model
+    private boolean includeCovar = true; // If true, include covariance in the GSM model
+                                         // If false, assume uncorrelated Gaussian vectors 
+                                         // describe both noise and signal.  The coefficients in this
+                                         // representation are strongly correlated, both because of 
+                                         // inherent spectral features of the image and because of the
+                                         // redundancy induced by this overcomplete representation, and
+                                         // ignoring this correlation in the model leads to a signficant
+                                         // loss in performance.
     
-    private boolean optimize = true; // BLS / MAP-Wiener (2-step)
+    private boolean optimize = true; // If true, use the full Bayesian least squares estimator
+                                     // If false, use a two-step estimator (MAP estimator of the local
+                                     // multiplier, followed by linear estimation of the coefficient)
+                                     // Using the two-step estimator results in a substantial 
+                                     // reduction in performance
     
     /**
      * repres1 = ORTHOGONAL_WAVELET
@@ -135,6 +183,7 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      */
     private int repres1 = FULL_STEERABLE_PYRAMID;
     
+    /** Particular wavelet used for repres1 = ORTHOGONAL_WAVELET or UNDECIMATED_ORTHOGONAL_WAVELET */
     private int repres2 = NONE;
     
     private int nx;
@@ -157,14 +206,19 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * @param  usePSD          If true, use power spectral density.  If false, use white noise
      * @param  blockSizeX      Local neighborhood x
      * @param  blockSizeY      Local neighborhood y
-     * @param  useParent
-     * @param  useBoundary
+     * @param  useParent       If true, process subbands in couples of the same orientation 
+     *                         adjacent in scale.  That is, include the coarse scale parent
+     *                         in the neighborhood.  If false, process subbands individually
+     * @param  useBoundary     If true, use mirror reflected boundary padding.
      * @param  nScales         Number of scales
      * @param  nOrientations   Number of orientations.  For separable wavelets this must be 3.
      * @param  includeCovar    Include covariance in the GSM model
-     * @param  optimize        BLS / MAP-Wiener (2-step)
-     * @param  repres1         
-     * @param  repres2
+     * @param  optimize        If true, use the full Bayesian least squares estimator
+     *                         If false, use a two-step estimator.
+     * @param  repres1         ORTHOGONAL_WAVELET, UNDECIMATED_ORTHOGONAL_WAVELET, 
+     *                         STEERABLE_PYRAMID, or FULL_STEERABLE_PYRAMID
+     * @param  repres2         Particular wavelet used for repres1 = ORTHOGONAL_WAVELET or
+     *                         UNDECIMATED_ORTHOGONAL_WAVELET
      */
     public AlgorithmDenoisingBLS_GSM(ModelImage srcImg, float sig, boolean usePSD, 
                                      int blockSizeX, int blockSizeY, boolean useParent, boolean useBoundary,
@@ -196,14 +250,19 @@ public class AlgorithmDenoisingBLS_GSM extends AlgorithmBase {
      * @param  usePSD          If true, use power spectral density.  If false, use white noise.
      * @param  blockSizeX      Local neighborhood x
      * @param  blockSizeY      Local neighborhood y
-     * @param  useParent
-     * @param  useBoundary
+     * @param  useParent       If true, process subbands in couples of the same orientation 
+     *                         adjacent in scale.  That is, include the coarse scale parent
+     *                         in the neighborhood.  If false, process subbands individually
+     * @param  useBoundary     If true, use mirror reflected boundary padding.
      * @param  nScales         Number of scales
      * @param  nOrientations   Number of orientations.  For separable wavelets this must be 3.
      * @param  includeCovar    Include covariance in the GSM model
-     * @param  optimize        BLS / MAP-Wiener (2-step)
-     * @param  repres1
-     * @param  repres2
+     * @param  optimize        If true, use the full Bayesian least squares estimator
+     *                         If false, use a two-step estimator.
+     * @param  repres1         ORTHOGONAL_WAVELET, UNDECIMATED_ORTHOGONAL_WAVELET, 
+     *                         STEERABLE_PYRAMID, or FULL_STEERABLE_PYRAMID
+     * @param  repres2         Particular wavelet used for repres1 = ORTHOGONAL_WAVELET or
+     *                         UNDECIMATED_ORTHOGONAL_WAVELET
      */
     public AlgorithmDenoisingBLS_GSM(ModelImage destImg, ModelImage srcImg, float sig, boolean usePSD,
                                      int blockSizeX, int blockSizeY, boolean useParent, boolean useBoundary,
