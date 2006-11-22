@@ -87,7 +87,10 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
     private JButton registrationOptionsButton;
     /**   input box for populating resultImageName*/
     private JTextField saveAsTextField;
-
+    /** DOCUMENT ME! */
+    private ViewUserInterface userInterface;
+    /** DOCUMENT ME! */
+    private String directory;
     
 	
 	/**
@@ -96,6 +99,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	 */
 	public PlugInDialogImageAverageRegistration(boolean modal) {
 		super(modal);
+		userInterface = ViewUserInterface.getReference();
 		init();
 	}
 	
@@ -215,16 +219,23 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		String filename = "";
-		String directory = "";
+		
 		FileIO fileIO = null;
+		String userDir = "";
 		if(command.equalsIgnoreCase("srcBrowse")) {
 			JFileChooser srcFileChooser = new JFileChooser();
+			if (userInterface.getDefaultDirectory() != null) {
+				srcFileChooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
+            } else {
+            	srcFileChooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
 			srcFileChooser.setMultiSelectionEnabled(true);
 			int srcReturnVal = srcFileChooser.showOpenDialog(this);
 			if (srcReturnVal == JFileChooser.APPROVE_OPTION) {
 				
 				srcFiles = srcFileChooser.getSelectedFiles();
 				directory = String.valueOf(srcFileChooser.getCurrentDirectory()) + File.separatorChar;
+				userInterface.setDefaultDirectory(directory);
 				for (int k = 0; k < srcFiles.length; k++) {
 					try {
 						fileIO = new FileIO();
@@ -239,6 +250,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 						rowData.add(filename);
 						srcTableModel.addRow(rowData);
 						srcImages.add(srcImage);
+						srcImage = null;
 					}
 					catch(OutOfMemoryError err) {
 		                MipavUtil.displayError("Out of memory!");
@@ -251,6 +263,11 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		}
 		else if(command.equalsIgnoreCase("targetBrowse")) {
 			JFileChooser targetFileChooser = new JFileChooser();
+			if (userInterface.getDefaultDirectory() != null) {
+				targetFileChooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
+            } else {
+            	targetFileChooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
+            }
 			targetFileChooser.setMultiSelectionEnabled(false);
 			int targetReturnVal = targetFileChooser.showOpenDialog(this);
 			if(targetReturnVal == JFileChooser.APPROVE_OPTION) {
@@ -259,6 +276,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 					fileIO = new FileIO();
 					filename = targetFile.getName();
 					directory = String.valueOf(targetFileChooser.getCurrentDirectory()) + File.separatorChar;
+					userInterface.setDefaultDirectory(directory);
 					targetImage = fileIO.readImage(filename, directory, false, null); 
 					if (targetImage == null) {
 	                    System.err.println("Error loading file");
@@ -300,6 +318,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 			if(regOptions != null) {
 				regOptions.dispose();
 			}
+			finalize();
 			dispose();
 		}
 		else if(command.equalsIgnoreCase("ok")) {
@@ -340,6 +359,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 				}
 
 			}
+			
 		}
 		else if(command.equalsIgnoreCase("options")) {
 			regOptions.setVisible(true);
@@ -395,32 +415,40 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		//grab the result image
 		resultImage = alg.getResultImage();
+		if(resultImage == null) {
+			MipavUtil.displayError("Result Image is null");
+			finalize();
+			dispose();
+			return;
+		}
 		
-		if (resultImage != null) {
-			//display result image
-            try {
-            	if(saveAsCheckBox.isSelected()) {
-        			if(!resultImageName.equals("")) {
-        				resultImage.setImageName(resultImageName);
-        			}
-            	}
-                new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
-            } catch (OutOfMemoryError error) {
-                MipavUtil.displayError("Out of memory: unable to open new frame");
-            }
-        } else {
-            MipavUtil.displayError("Result Image is null");
-        }
+		//display result image if they did not select save
+	
+		if(!saveAsCheckBox.isSelected()) {
+			try {
+				new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
+	        } 
+			catch (OutOfMemoryError error) {
+	        	MipavUtil.displayError("Out of memory: unable to open new frame");
+	        }
+		}
+        
 		
 		//need to save image here if they selected the checkbox
 		if(saveAsCheckBox.isSelected()) {
 			if(!resultImageName.equals("")) {
-				FileWriteOptions options = new FileWriteOptions(resultImageName,"",true);
-				resultImage.getParentFrame().save(options, -1);
+				FileWriteOptions options = new FileWriteOptions(resultImageName,directory,true);
+				//resultImage.getParentFrame().save(options, -1);
+				FileIO io = new FileIO();
+				io.writeImage(resultImage, options);
 				
 			}
-			
+			resultImage.disposeLocal();
+			resultImage = null;	
 		}
+		
+		finalize();
+		dispose();
 		
 
 		
@@ -432,7 +460,20 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		if(regOptions != null) {
 			regOptions.dispose();
 		}
+		finalize();
 	}
+	
+	
+	
+	public void finalize() {
+		for(int i=0;i<srcImages.size();i++) {
+			((ModelImage)srcImages.get(i)).disposeLocal();
+			srcImages.set(i,null);
+		}
+		targetImage.disposeLocal();
+		targetImage = null;
+		System.gc();
+    }
 	
 	
 	/**
@@ -486,11 +527,14 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
         		if(columnName.equals("Source Images")) {
         			//need to remove from the table and the ArrayList
         			PlugInDialogImageAverageRegistration.this.srcTableModel.removeRow(rowIndex);
+        			((ModelImage)PlugInDialogImageAverageRegistration.this.srcImages.get(rowIndex)).disposeLocal();
+        			PlugInDialogImageAverageRegistration.this.srcImages.set(rowIndex, null);
         			PlugInDialogImageAverageRegistration.this.srcImages.remove(rowIndex);
         		}
         		else if(columnName.equals("Target Image")) {
         			//need to remove from table, make targetImage to null, set the regOptions instance to null, and disable regOptions button
         			PlugInDialogImageAverageRegistration.this.targetTableModel.removeRow(rowIndex);
+        			PlugInDialogImageAverageRegistration.this.targetImage.disposeLocal();
         			PlugInDialogImageAverageRegistration.this.targetImage = null;
         			PlugInDialogImageAverageRegistration.this.registrationOptionsButton.setEnabled(false);
         			PlugInDialogImageAverageRegistration.this.regOptions = null;
@@ -499,6 +543,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
         	}
         		
         }
+
     	
     }
 	
