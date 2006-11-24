@@ -125,12 +125,17 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
              
              //add registered imgae to the array
              registeredImages.add(registeredImage);
+             
+             //sourceImage.disposeLocal();
+             //sourceImage = null;
 		}
 		
 		
 		//if user only supplied 1 source image and doesnt want to average the target image...just return the registered image
 		if(srcImages.size() == 1 && !includeTargetImageinCalc) {
 			resultImage = registeredImage;
+			//registeredImage.disposeLocal();
+			//registeredImage = null;
 			return;
 		}
 		
@@ -157,11 +162,29 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 					AlgorithmImageCalculator.PROMOTE,true,"");
 			algCalc.run();
 			bufferImage = algCalc.getDestImage();
+			//((ModelImage)registeredImages.get(k)).disposeLocal();
+			
 		}
 		resultImage = new ModelImage(srcType,extents,"Final Registered Image");
 		algMath = new AlgorithmImageMath(resultImage,bufferImage,AlgorithmImageMath.DIVIDE,size,imag,AlgorithmImageCalculator.PROMOTE,true);
 		algMath.run();
 		resultImage = algMath.getDestImage();
+		
+		for(int k=0;k<registeredImages.size();k++) {
+			if ((ModelImage)registeredImages.get(k) != null) {
+				((ModelImage)registeredImages.get(k)).disposeLocal();
+				registeredImages.set(k,null);
+			}
+		}
+		if(targetImage != null) {
+			targetImage.disposeLocal();
+			targetImage = null;
+		}
+		
+		if(bufferImage != null) {
+			bufferImage.disposeLocal();
+			bufferImage = null;
+		}
 		
 
 	}

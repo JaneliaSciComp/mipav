@@ -415,6 +415,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	public void algorithmPerformed(AlgorithmBase algorithm) {
 		//grab the result image
 		resultImage = alg.getResultImage();
+		
 		if(resultImage == null) {
 			MipavUtil.displayError("Result Image is null");
 			finalize();
@@ -441,10 +442,10 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 				//resultImage.getParentFrame().save(options, -1);
 				FileIO io = new FileIO();
 				io.writeImage(resultImage, options);
-				
+				resultImage.disposeLocal();
+				resultImage = null;
 			}
-			resultImage.disposeLocal();
-			resultImage = null;	
+				
 		}
 		
 		finalize();
@@ -461,17 +462,22 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 			regOptions.dispose();
 		}
 		finalize();
+		dispose();
 	}
 	
 	
 	
 	public void finalize() {
 		for(int i=0;i<srcImages.size();i++) {
-			((ModelImage)srcImages.get(i)).disposeLocal();
-			srcImages.set(i,null);
+			if ((ModelImage)srcImages.get(i) != null) {
+				((ModelImage)srcImages.get(i)).disposeLocal();
+				srcImages.set(i,null);
+			}
 		}
-		targetImage.disposeLocal();
-		targetImage = null;
+		if(targetImage != null) {
+			targetImage.disposeLocal();
+			targetImage = null;
+		}
 		System.gc();
     }
 	
