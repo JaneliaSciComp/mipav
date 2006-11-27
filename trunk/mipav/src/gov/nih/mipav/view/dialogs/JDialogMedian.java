@@ -55,6 +55,12 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private JComboBox comboBoxKernelSize;
+    
+    private JCheckBox adaptiveSizeBox;
+    
+    private JComboBox comboBoxMaximumSize;
+    
+    private JLabel labelMaximumSize;
 
     /** DOCUMENT ME! */
     private boolean green;
@@ -76,6 +82,10 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
     /** DOCUMENT ME! */
     private int kernelSize;
+    
+    private boolean adaptiveSize = false;
+    
+    private int maximumSize = 5;
 
     /** DOCUMENT ME! */
     private AlgorithmMedian medianAlgo = null;
@@ -185,6 +195,27 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 labelSTDDeviation.setEnabled(true);
                 textSTDDeviation.setEnabled(true);
             }
+        } else if (source == adaptiveSizeBox) {
+            if (adaptiveSizeBox.isSelected()) {
+                labelMaximumSize.setEnabled(true);
+                comboBoxMaximumSize.setEnabled(true);
+                labelSTDDeviation.setEnabled(false);
+                textSTDDeviation.setEnabled(false);
+                textSTDDeviation.setText("0.0");
+                vectorMagnitudeButton.setEnabled(false);
+                vectorMagnitudeButton.setSelected(false);
+                vectorDirectionButton.setEnabled(false);
+                vectorDirectionButton.setSelected(false);
+                componentButton.setSelected(true);
+            }
+            else {
+                labelMaximumSize.setEnabled(false);
+                comboBoxMaximumSize.setEnabled(false);
+                labelSTDDeviation.setEnabled(true);
+                textSTDDeviation.setEnabled(true); 
+                vectorMagnitudeButton.setEnabled(true);
+                vectorDirectionButton.setEnabled(true);
+            }
         } else if (command.equals("Volume")) {
 
             // kernel Size
@@ -192,6 +223,11 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             comboBoxKernelSize.removeAllItems();
             buildKernelSizeComboBox(false);
             comboBoxKernelSize.setSelectedIndex(indx); // set the new combo-box to the old selection
+            
+            indx = comboBoxMaximumSize.getSelectedIndex(); // get the current combo-box selection
+            comboBoxMaximumSize.removeAllItems();
+            buildMaximumSizeComboBox(false);
+            comboBoxMaximumSize.setSelectedIndex(indx); // set the new combo-box to the old selection
 
             // kernel Shape
             indx = comboBoxKernelShape.getSelectedIndex();
@@ -202,14 +238,18 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         } else if (command.equals("Slice")) {
 
             // kernel size
-            int indx = comboBoxKernelSize.getSelectedIndex(); // get the current combo-box selection
+            int indx = comboBoxKernelSize.getSelectedIndex();
             comboBoxKernelSize.removeAllItems();
             buildKernelSizeComboBox(true);
             comboBoxKernelSize.setSelectedIndex(indx); // set the new combo-box to the old selection
+            
+            indx = comboBoxMaximumSize.getSelectedIndex();
+            comboBoxMaximumSize.removeAllItems();
+            buildMaximumSizeComboBox(true);
+            comboBoxMaximumSize.setSelectedIndex(indx); // set the new combo-box to the old selection
 
             // kernel shape
-            // indx = comboBoxKernelShape.getSelectedIndex();
-            indx = 0;
+            indx = comboBoxKernelShape.getSelectedIndex();
             comboBoxKernelShape.removeAllItems();
             buildKernelShapeComboBox(true);
             comboBoxKernelShape.setSelectedIndex(indx); // set the new combo-box to the old selection
@@ -310,6 +350,8 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         scriptParameters.getParams().put(ParameterFactory.newParameter("std_dev", stdDev));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_size", kernelSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("kernel_shape", kernelShape));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("adpative_size", adaptiveSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("maximum_size", maximumSize));
         scriptParameters.getParams().put(ParameterFactory.newParameter("rgb_filter_type", filterType));
         scriptParameters.storeColorOptions(red, green, blue);
     }
@@ -337,6 +379,8 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         setStdDev(scriptParameters.getParams().getFloat("std_dev"));
         setKernelSize(scriptParameters.getParams().getInt("kernel_size"));
         setKernelShape(scriptParameters.getParams().getInt("kernel_shape"));
+        setAdaptiveSize(scriptParameters.getParams().getBoolean("adaptive_size"));
+        setMaximumSize(scriptParameters.getParams().getInt("maximum_size"));
         setFilterType(scriptParameters.getParams().getInt("rgb_filter_type"));
         
         boolean[] rgb = scriptParameters.doProcessRGB();
@@ -435,6 +479,23 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
     public void setStdDev(float dev) {
         stdDev = dev;
     }
+    
+    /**
+     * Accessor that sets if adaptive median filtering is being performed
+     * @param adaptiveSize
+     */
+    public void setAdaptiveSize(boolean adaptiveSize) {
+        this.adaptiveSize = adaptiveSize;
+    }
+    
+    /**
+     * Accessor that sets the maximum size the kernel mask can be increased to
+     * when adaptive median filtering is used.
+     * @param maximumSize
+     */
+    public void setMaximumSize(int maximumSize) {
+        this.maximumSize = maximumSize;
+    }
 
     /**
      * Creates the combo-box that allows user to select the shape of the kernel (mask).
@@ -477,6 +538,30 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             comboBoxKernelSize.addItem("11x11x11");
         }
     }
+    
+    /**
+     * Creates the combo-box that allows user to select the maximum size of the kernel (mask)
+     * when adaptive median filtering is selected.
+     *
+     * @param  singleSlices  DOCUMENT ME!
+     */
+    private void buildMaximumSizeComboBox(boolean singleSlices) {
+
+        if (singleSlices) {
+            comboBoxMaximumSize.addItem("5x5");
+            comboBoxMaximumSize.addItem("7x7");
+            comboBoxMaximumSize.addItem("9x9");
+            comboBoxMaximumSize.addItem("11x11");
+            comboBoxMaximumSize.addItem("13x13");
+            
+        } else {
+            comboBoxMaximumSize.addItem("5x5x5");
+            comboBoxMaximumSize.addItem("7x7x7");
+            comboBoxMaximumSize.addItem("9x9x9");
+            comboBoxMaximumSize.addItem("11x11x11");
+            comboBoxMaximumSize.addItem("13x13x13");
+        }
+    }
 
     /**
      * Once all the necessary variables are set, call the median algorithm based on what type of image this is and
@@ -508,6 +593,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
+                                                     adaptiveSize, maximumSize,
                                                      outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
@@ -548,7 +634,8 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, outputPanel.isProcessWholeImageSet());
+                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, 
+                                                     adaptiveSize, maximumSize, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
                     medianAlgo.setRGBChannelFilter(filterType, red, green, blue);
@@ -619,6 +706,7 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
                     // Make algorithm
                     medianAlgo = new AlgorithmMedian(resultImage, image, iters, kernelSize, kernelShape, stdDev,
+                                                     adaptiveSize, maximumSize,
                                                      image25D, outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
@@ -658,7 +746,8 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
                 try {
 
                     // Make algorithm
-                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, image25D,
+                    medianAlgo = new AlgorithmMedian(image, iters, kernelSize, kernelShape, stdDev, 
+                                                     adaptiveSize, maximumSize, image25D,
                                                      outputPanel.isProcessWholeImageSet());
 
                     // only if the src image is colour will any channel checkboxes be enabled
@@ -721,6 +810,25 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
             kernelSize = 9;
         } else if (comboBoxKernelSize.getSelectedIndex() == 4) {
             kernelSize = 11;
+        }
+    }
+    
+    /**
+     * Associate one side of the maximum kernel size with selectBox choice
+     * when adaptive median filtering is selected
+     */
+    private void determineMaximumSize() {
+
+        if (comboBoxMaximumSize.getSelectedIndex() == 0) {
+            maximumSize = 5;
+        } else if (comboBoxMaximumSize.getSelectedIndex() == 1) {
+            maximumSize = 7;
+        } else if (comboBoxMaximumSize.getSelectedIndex() == 2) {
+            maximumSize = 9;
+        } else if (comboBoxMaximumSize.getSelectedIndex() == 3) {
+            maximumSize = 11;
+        } else if (comboBoxMaximumSize.getSelectedIndex() == 4) {
+            maximumSize = 13;
         }
     }
 
@@ -832,6 +940,37 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
         }
 
         maskPanel.add(comboBoxKernelShape); // add the combo box to the panel
+        
+        adaptiveSizeBox = new JCheckBox("Kernel size adaptively changes", false);
+        adaptiveSizeBox.setEnabled(true);
+        adaptiveSizeBox.setFont(serif12);
+        adaptiveSizeBox.addActionListener(this);
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(adaptiveSizeBox, gbc);
+        maskPanel.add(adaptiveSizeBox);
+        
+        labelMaximumSize = createLabel("Maximum kernel size:"); // make & set a label
+        gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(labelMaximumSize, gbc);
+        labelMaximumSize.setEnabled(false);
+        maskPanel.add(labelMaximumSize); // add kernel label
+
+        comboBoxMaximumSize = new JComboBox();
+        comboBoxMaximumSize.setFont(serif12);
+        comboBoxMaximumSize.setBackground(Color.white);
+        comboBoxMaximumSize.setEnabled(false);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.EAST;
+        gbl.setConstraints(comboBoxMaximumSize, gbc);
+
+        if (image.getNDims() == 2) {
+            this.buildMaximumSizeComboBox(true); // 2D images MUST be slice filtered
+        } else {
+            this.buildMaximumSizeComboBox(true); // default setting for 3D+ images is slice filtering
+        }
+
+        maskPanel.add(comboBoxMaximumSize); // add the comboboxt to the panel
         setupBox.add(maskPanel); // the parameters-panel is at the top of the box
 
         JPanel colourPanel = new JPanel();
@@ -979,6 +1118,16 @@ public class JDialogMedian extends JDialogScriptableBase implements AlgorithmInt
 
             return false;
         }
+        
+        adaptiveSize = adaptiveSizeBox.isSelected();
+        
+        if (adaptiveSize) {
+            this.determineMaximumSize();
+            if (maximumSize <= kernelSize) {
+               MipavUtil.displayError("Need maximum kernel size > kernel size");
+               return false;
+            }
+        } // if (adaptiveSize)
 
         if (componentButton.isSelected()) {
             filterType = COMPONENT_FILTER;
