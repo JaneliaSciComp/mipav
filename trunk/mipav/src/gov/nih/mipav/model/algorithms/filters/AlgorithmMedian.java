@@ -26,6 +26,10 @@ import java.util.*;
  *
  * <p>If any element in the kernel which does not have a corresponding element in the image, then the pixel is
  * unfiltered. This results in a border of unfiltered pixels in the image 1/2 of the kernel-size large.</p>
+ * 
+ * When adaptiveSize is true, the Adaptive median filter discussed in Digital Image Processing Second Edition
+ * by Rafael C. Gonzalez and Richard E. Woods in Chapter 5.3 pages 241-243 is implemented.  Depending on 
+ * certain conditions, the kernel size can incresase during the filtering operation.
  *
  * @version  1.0; 17 February 2000
  * @author   David Parsons (parsonsd)
@@ -96,7 +100,7 @@ public class AlgorithmMedian extends AlgorithmBase {
     private boolean gChannel = true;
 
     /** The kernel radius. */
-    private int halfK;
+    private int halfK[];
 
     /** indicates the image is a color image. */
     private boolean isColorImage = false;
@@ -105,26 +109,38 @@ public class AlgorithmMedian extends AlgorithmBase {
     private int iterations;
 
     /** mask to determine the region of pixels used in a median filter. */
-    private byte[] kernel;
+    private byte[][] kernel; // kernelNumber is first index
 
     /** The index of the kernel center. */
-    private int kernelCenter;
+    private int kernelCenter[];
 
     /** The kernel. */
-    private float[] kernelMask;
-    private float[] kernelVectorMask;
+    private float[][] kernelMask;
+    private float[][] kernelVectorMask;
 
     /** user-selectable shape of the region for neighbor-selection. */
     private int kernelShape;
+    
+    /** Smallest kernel size used in adaptive filtering */
+    private int minimumSize;
 
     /** dimension of the kernel (ie., 5 = 5x5, 7 = 7x7, 9 = 9x9, etc.). */
-    private int kernelSize;
+    private int kernelSize[];
+    
+    /** If true adaptively changes the size of the kernel mask */
+    private boolean adaptiveSize = false;
+    
+   /** When adaptiveSize is true, the maximum size the kernel mask can be increased to. */
+    private int maximumSize;
+    
+    /** Number of kernels used, more than 1 if adaptive filtering is used */
+    private int kernelNumber = 1;
 
     /** contains VOI. */
     private BitSet mask = null;
 
     /** The kernel. */
-    private int maskCenter;
+    private int maskCenter[];
 
     /** Used for 3D loop control. */
     private int numberOfSlices;
@@ -156,10 +172,13 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  kShape    Kernel shape: element neighbors to include when finding the median.
      * @param  stdDev    Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                   filtered).
+     * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
+     * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
      *                   true.
      */
-    public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, boolean maskFlag) {
+    public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, 
+                           boolean adaptiveSize, int maximumSize, boolean maskFlag) {
         super(null, srcImg);
 
         if (srcImg.isColorImage()) {
@@ -170,9 +189,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         // else, already false
         entireImage = maskFlag;
         iterations = iters;
-        kernelSize = kSize; // dimension of the kernel
+        minimumSize = kSize; // dimension of the kernel
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value to adjust
+        this.adaptiveSize = adaptiveSize;
+        this.maximumSize = maximumSize;
         sliceFiltering = true; // as a default--though a different value doesn't make much sense in a 2D application.
         numberOfSlices = 1; // 2D images may only have 1 slice.
         makeKernel();
@@ -184,8 +205,8 @@ public class AlgorithmMedian extends AlgorithmBase {
         srcBufferDepth = 1;
 
         // allow for a border of halfK around the source image
-        bdrBufferWidth = srcBufferWidth + (2 * halfK);
-        bdrBufferHeight = srcBufferHeight + (2 * halfK);
+        bdrBufferWidth = srcBufferWidth + (2 * halfK[kernelNumber-1]);
+        bdrBufferHeight = srcBufferHeight + (2 * halfK[kernelNumber-1]);
         bdrBufferDepth = 1;
         // PFH end section 6/28/2004
 
@@ -204,11 +225,13 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  kShape    Kernel shape: element neighbors to include when finding the median.
      * @param  stdDev    Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                   filtered).
+     * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
+     * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  maskFlag  Flag that indicates that the median filtering will be performed for the whole image if equal to
      *                   true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean maskFlag) {
+                           boolean adaptiveSize, int maximumSize, boolean maskFlag) {
 
         super(destImg, srcImg);
 
@@ -220,9 +243,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         // else, already false
         entireImage = maskFlag;
         iterations = iters;
-        kernelSize = kSize; // dimension of the kernel
+        minimumSize = kSize; // dimension of the kernel
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value
+        this.adaptiveSize = adaptiveSize;
+        this.maximumSize = maximumSize;
         sliceFiltering = true; // as a default--this doesn't make much sense in a 2D application.
         numberOfSlices = 1; // 2D images may only have 1 slice.
         makeKernel();
@@ -233,8 +258,8 @@ public class AlgorithmMedian extends AlgorithmBase {
         srcBufferDepth = 1;
 
         // allow for a border of halfK around the source image
-        bdrBufferWidth = srcBufferWidth + (2 * halfK);
-        bdrBufferHeight = srcBufferHeight + (2 * halfK);
+        bdrBufferWidth = srcBufferWidth + (2 * halfK[kernelNumber-1]);
+        bdrBufferHeight = srcBufferHeight + (2 * halfK[kernelNumber-1]);
         bdrBufferDepth = 1;
 
         if (entireImage == false) {
@@ -251,12 +276,15 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  kShape        Kernel shape: element neighbors to include when finding the median.
      * @param  stdDev        Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                       filtered).
+     * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
+     * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  sliceBySlice  Each slice in a volume image is to be filtered separately (when true), else the volume will
      *                       use a kernel with 3 dimensions.
      * @param  maskFlag      Flag that indicates that the median filtering will be performed for the whole image if
      *                       equal to true.
      */
-    public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, boolean sliceBySlice,
+    public AlgorithmMedian(ModelImage srcImg, int iters, int kSize, int kShape, float stdDev, 
+                           boolean adaptiveSize, int maximumSize, boolean sliceBySlice,
                            boolean maskFlag) {
         super(null, srcImg);
 
@@ -268,9 +296,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         // else, already false
         entireImage = maskFlag;
         iterations = iters;
-        kernelSize = kSize; // dimension of the kernel
+        minimumSize = kSize; // dimension of the kernel
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value
+        this.adaptiveSize = adaptiveSize;
+        this.maximumSize = maximumSize;
         sliceFiltering = sliceBySlice;
         numberOfSlices = srcImage.getExtents()[2];
         makeKernel();
@@ -281,8 +311,8 @@ public class AlgorithmMedian extends AlgorithmBase {
         srcBufferHeight = srcImage.getExtents()[1];
         srcBufferDepth = srcImage.getExtents()[2];
 
-        bdrBufferWidth = srcBufferWidth + (2 * halfK);
-        bdrBufferHeight = srcBufferHeight + (2 * halfK);
+        bdrBufferWidth = srcBufferWidth + (2 * halfK[kernelNumber-1]);
+        bdrBufferHeight = srcBufferHeight + (2 * halfK[kernelNumber-1]);
 
         if (sliceFiltering == true) {
 
@@ -291,7 +321,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         } else {
 
             // add extra slices for 3D filtering
-            bdrBufferDepth = srcBufferDepth + (2 * halfK);
+            bdrBufferDepth = srcBufferDepth + (2 * halfK[kernelNumber-1]);
         }
 
         if (entireImage == false) {
@@ -309,13 +339,15 @@ public class AlgorithmMedian extends AlgorithmBase {
      * @param  kShape        Kernel shape: element neighbors to include when finding the median.
      * @param  stdDev        Inner-bounds by which to process pixels (pixel values outside this bound will be median
      *                       filtered).
+     * @param  adaptiveSize If true, adaptively changes the size of the kernel mask
+     * @param  maximumSize If adaptiveSize is true, the maximum size the kernel mask can be increased to.
      * @param  sliceBySlice  Each slice in a volume image is filtered separately (when true), else the volume will use a
      *                       kernel with 3 dimensions.
      * @param  maskFlag      Flag that indicates that the median filtering will be performed for the whole image if
      *                       equal to true.
      */
     public AlgorithmMedian(ModelImage destImg, ModelImage srcImg, int iters, int kSize, int kShape, float stdDev,
-                           boolean sliceBySlice, boolean maskFlag) {
+                           boolean  adaptiveSize, int maximumSize, boolean sliceBySlice, boolean maskFlag) {
 
         super(destImg, srcImg);
 
@@ -327,9 +359,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         // else, already false
         entireImage = maskFlag;
         iterations = iters;
-        kernelSize = kSize; // dimension of the kernel
+        minimumSize = kSize; // dimension of the kernel
         kernelShape = kShape; // set up the mask (kernel) used to filter
         stdDevLimit = stdDev; // inside magnitude bounds of pixel value
+        this.adaptiveSize = adaptiveSize;
+        this.maximumSize = maximumSize;
         sliceFiltering = sliceBySlice;
         numberOfSlices = srcImage.getExtents()[2];
         makeKernel();
@@ -340,8 +374,8 @@ public class AlgorithmMedian extends AlgorithmBase {
         srcBufferHeight = srcImage.getExtents()[1];
         srcBufferDepth = srcImage.getExtents()[2];
 
-        bdrBufferWidth = srcBufferWidth + (2 * halfK);
-        bdrBufferHeight = srcBufferHeight + (2 * halfK);
+        bdrBufferWidth = srcBufferWidth + (2 * halfK[kernelNumber-1]);
+        bdrBufferHeight = srcBufferHeight + (2 * halfK[kernelNumber-1]);
 
         if (sliceFiltering == true) {
 
@@ -350,7 +384,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         } else {
 
             // add extra slices for 3D filtering
-            bdrBufferDepth = srcBufferDepth + (2 * halfK);
+            bdrBufferDepth = srcBufferDepth + (2 * halfK[kernelNumber-1]);
         }
 
         if (entireImage == false) {
@@ -1167,8 +1201,9 @@ public class AlgorithmMedian extends AlgorithmBase {
      */
     private void constructLog() {
 
-        historyString = new String("Median(" + String.valueOf(kernelShape) + ", " + String.valueOf(kernelSize) + ", " +
+        historyString = new String("Median(" + String.valueOf(kernelShape) + ", " + String.valueOf(minimumSize) + ", " +
                                    String.valueOf(iterations) + ", " + String.valueOf(stdDevLimit) + ", " +
+                                   String.valueOf(adaptiveSize) + ", " + String.valueOf(maximumSize) + ", " +
                                    String.valueOf(entireImage) + ")");
 
         historyString += "\n"; // append a newline onto the string
@@ -1194,7 +1229,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         // on the current row
         // brdBufferKernelOffset is the offset (index) into the borderBuffer of
         // where the first pixel in the sourceBuffer should be copied
-        int brdBufferKernelOffset = (halfK * bdrBufferWidth) + halfK;
+        int brdBufferKernelOffset = (halfK[kernelNumber-1] * bdrBufferWidth) + halfK[kernelNumber-1];
 
         int brdBufferOffset = brdBufferKernelOffset + bdrBufferOffsetIndex;
 
@@ -1217,11 +1252,11 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         // copy image data to the borders
         // first source image row to lower bdrBuffer rows
-        for (row = 0; row < halfK; ++row) {
+        for (row = 0; row < halfK[kernelNumber-1]; ++row) {
             srcBufferIdx = srcBufferOffsetIndex;
 
             // bdrBufferIdx = row * bdrBufferWidth + halfK;
-            bdrBufferIdx = (row * bdrBufferWidth) + halfK + bdrBufferOffsetIndex;
+            bdrBufferIdx = (row * bdrBufferWidth) + halfK[kernelNumber-1] + bdrBufferOffsetIndex;
 
             for (col = 0; col < srcBufferWidth; ++col) {
                 bdrBuffer[bdrBufferIdx++] = srcBuffer[srcBufferIdx++];
@@ -1230,7 +1265,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             // copy data to columns in bdrBuffer that are NOT in srcBuffer
             bdrBufferIdx = (row * bdrBufferWidth) + bdrBufferOffsetIndex;
 
-            for (col = 0; col < halfK; ++col) {
+            for (col = 0; col < halfK[kernelNumber-1]; ++col) {
                 bdrBuffer[bdrBufferIdx++] = srcBuffer[srcBufferOffsetIndex];
                 bdrBuffer[(row * bdrBufferWidth) + bdrBufferWidth - 1 - col + bdrBufferOffsetIndex] = srcBuffer[srcBufferWidth -
                                                                                                                 1];
@@ -1241,9 +1276,9 @@ public class AlgorithmMedian extends AlgorithmBase {
         int srcBufferFirstColIdx = (srcBufferWidth * (srcBufferHeight - 1)) + srcBufferOffsetIndex;
         int srcBufferLastColIdx = (srcBufferWidth * srcBufferHeight) - 1 + srcBufferOffsetIndex;
 
-        for (row = srcBufferHeight + halfK; row < bdrBufferHeight; ++row) {
+        for (row = srcBufferHeight + halfK[kernelNumber-1]; row < bdrBufferHeight; ++row) {
             srcBufferIdx = srcBufferFirstColIdx;
-            bdrBufferIdx = (row * bdrBufferWidth) + halfK + bdrBufferOffsetIndex;
+            bdrBufferIdx = (row * bdrBufferWidth) + halfK[kernelNumber-1] + bdrBufferOffsetIndex;
 
             for (col = 0; col < srcBufferWidth; ++col) {
                 bdrBuffer[bdrBufferIdx++] = srcBuffer[srcBufferIdx++];
@@ -1252,7 +1287,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             // copy data to columns in bdrBuffer that are NOT in srcBuffer
             bdrBufferIdx = (row * bdrBufferWidth) + bdrBufferOffsetIndex;
 
-            for (col = 0; col < halfK; ++col) {
+            for (col = 0; col < halfK[kernelNumber-1]; ++col) {
                 bdrBuffer[bdrBufferIdx] = srcBuffer[srcBufferFirstColIdx];
                 bdrBuffer[(row * bdrBufferWidth) + bdrBufferWidth - 1 - col + bdrBufferOffsetIndex] = srcBuffer[srcBufferLastColIdx];
                 bdrBufferIdx++;
@@ -1261,17 +1296,17 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         // remaining image columns
         for (srcRow = 0; srcRow < srcBufferHeight; ++srcRow) {
-            bdrBufferIdx = ((srcRow + halfK) * bdrBufferWidth) + bdrBufferOffsetIndex;
+            bdrBufferIdx = ((srcRow + halfK[kernelNumber-1]) * bdrBufferWidth) + bdrBufferOffsetIndex;
             srcBufferIdx = (srcRow * srcBufferWidth) + srcBufferOffsetIndex;
 
-            for (srcCol = 0; srcCol < halfK; ++srcCol) {
+            for (srcCol = 0; srcCol < halfK[kernelNumber-1]; ++srcCol) {
                 bdrBuffer[bdrBufferIdx++] = srcBuffer[srcBufferIdx];
             }
 
             srcBufferIdx = (srcRow * srcBufferWidth) + srcBufferWidth - 1 + srcBufferOffsetIndex; // 6/28;
-            bdrBufferIdx = ((srcRow + halfK) * bdrBufferWidth) + halfK + srcBufferWidth + bdrBufferOffsetIndex; // 6/28;
+            bdrBufferIdx = ((srcRow + halfK[kernelNumber-1]) * bdrBufferWidth) + halfK[kernelNumber-1] + srcBufferWidth + bdrBufferOffsetIndex; // 6/28;
 
-            for (srcCol = 0; srcCol < halfK; ++srcCol) {
+            for (srcCol = 0; srcCol < halfK[kernelNumber-1]; ++srcCol) {
                 bdrBuffer[bdrBufferIdx++] = srcBuffer[srcBufferIdx];
             }
         }
@@ -1298,7 +1333,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             // slice filtering does not have extra border slice
             bdrBufferSliceOffset = 0;
         } else {
-            bdrBufferSliceOffset = halfK * bdrBufferSliceLength;
+            bdrBufferSliceOffset = halfK[kernelNumber-1] * bdrBufferSliceLength;
         }
 
         int sliceIndex;
@@ -1321,7 +1356,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             int copyFromIndex, copyToIndex, dataIndex;
 
             // for the lower border slice(s)
-            for (sliceIndex = 0; sliceIndex < halfK; sliceIndex++) {
+            for (sliceIndex = 0; sliceIndex < halfK[kernelNumber-1]; sliceIndex++) {
                 copyFromIndex = bdrBufferSliceOffset;
                 copyToIndex = sliceIndex * bdrBufferSliceLength;
 
@@ -1330,7 +1365,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                 }
             }
 
-            for (sliceIndex = bdrBufferDepth - halfK; sliceIndex < bdrBufferDepth; sliceIndex++) {
+            for (sliceIndex = bdrBufferDepth - halfK[kernelNumber-1]; sliceIndex < bdrBufferDepth; sliceIndex++) {
                 copyFromIndex = bdrBufferSliceOffset + ((srcBufferDepth - 1) * bdrBufferSliceLength);
                 copyToIndex = sliceIndex * bdrBufferSliceLength;
 
@@ -1344,7 +1379,7 @@ public class AlgorithmMedian extends AlgorithmBase {
 
     /**
      * Compiles a list of the values neighboring the desired pixel, that are defined in the kernel.
-     *
+     * @param   kn    The kernel number; always 0 if adaptiveSize is false
      * @param   i     The central pixel to find neighbors for.
      * @param   data  float [] Image data
      * @param   is2D  True indicates that the neighbors are found along a 2D slice (or 2D image) instead of neighbors in
@@ -1352,9 +1387,9 @@ public class AlgorithmMedian extends AlgorithmBase {
      *
      * @return  The neighboring pixel list corresponds to the kernel chosen.
      */
-    private float[] getBorderBufferNeighborList(int i, float[] data, boolean is2D) {
+    private float[] getBorderBufferNeighborList(int kn, int i, float[] data, boolean is2D) {
         int row, col;
-        int kCenter = kernelCenter; // index to the central element of the kernel
+        int kCenter = kernelCenter[kn]; // index to the central element of the kernel
 
         // (this is the mask for which elements in data are used.)
         int width = 0; // width of slice in number of pixels
@@ -1370,14 +1405,14 @@ public class AlgorithmMedian extends AlgorithmBase {
 
         if (is2D) {
 
-            for (row = -halfK; row <= halfK; row++) { // go through all rows
+            for (row = -halfK[kn]; row <= halfK[kn]; row++) { // go through all rows
 
-                for (col = -halfK; col <= halfK; col++) { // go through all columns
+                for (col = -halfK[kn]; col <= halfK[kn]; col++) { // go through all columns
 
-                    if (kernel[kCenter + col + (row * kernelSize)] != 0) { // but don't bother copying into the list if
+                    if (kernel[kn][kCenter + col + (row * kernelSize[kn])] != 0) { // but don't bother copying into the list if
 
                         // we don't want that element (the kernel's pixl is zero)
-                        kernelMask[count++] = data[i + col + (row * width)];
+                        kernelMask[kn][count++] = data[i + col + (row * width)];
                     }
                 }
             }
@@ -1387,21 +1422,21 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             // System.out.println("********** getBorderBufferNeighborList ( " + i +" ) **********");
             // halfK-number of kernelSize slices (to get to the center slice)
-            for (slice = -halfK; slice <= halfK; slice++) {
+            for (slice = -halfK[kn]; slice <= halfK[kn]; slice++) {
 
-                for (row = -halfK; row <= halfK; row++) {
+                for (row = -halfK[kn]; row <= halfK[kn]; row++) {
 
-                    for (col = -halfK; col <= halfK; col++) {
+                    for (col = -halfK[kn]; col <= halfK[kn]; col++) {
 
-                        if (kernel[kCenter + col + (row * kernelSize) + (slice * kernelSize * kernelSize)] != 0) {
-                            kernelMask[count++] = data[i + col + (row * width) + (slice * width * height)];
+                        if (kernel[kn][kCenter + col + (row * kernelSize[kn]) + (slice * kernelSize[kn] * kernelSize[kn])] != 0) {
+                            kernelMask[kn][count++] = data[i + col + (row * width) + (slice * width * height)];
                         }
                     }
                 }
             }
         }
 
-        return (kernelMask);
+        return (kernelMask[kn]);
     }
 
     /**
@@ -1411,7 +1446,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      * size kernel as mono images, it fills the kernel with brightness levels that are spread out in the data set. The
      * Neighbor list still reports the monochromatic brightness values. That is, for a color image: the neighbors of the
      * central pixel with the same color are returned in the neighbor list's kernel.</p>
-     *
+     * @param   kn    The kernel number; always 0 if adaptiveSize is false.
      * @param   i     The central pixel to find neighbors for.
      * @param   data  float [] Image data
      * @param   is2D  True indicates that the neighbors are found along a 2D slice (or 2D image) instead of neighbors in
@@ -1419,9 +1454,9 @@ public class AlgorithmMedian extends AlgorithmBase {
      *
      * @return  The neighboring pixel list corresponds to the kernel chosen.
      */
-    private float[] getNeighborList(int i, float[] data, boolean is2D) {
+    private float[] getNeighborList(int kn, int i, float[] data, boolean is2D) {
         int row, col;
-        int kCenter = kernelCenter; // index to the central element of the kernel
+        int kCenter = kernelCenter[kn]; // index to the central element of the kernel
 
         // (this is the mask for which elements in data are used.)
         int width = 0; // width of slice in number of pixels
@@ -1440,21 +1475,21 @@ public class AlgorithmMedian extends AlgorithmBase {
         if (isColorImage) { // 2D filtering of color images is a little different than of mono images
 
             int kcol;
-            int leftBound = -halfK * 4;
-            int rightBound = halfK * 4;
+            int leftBound = -halfK[kn] * 4;
+            int rightBound = halfK[kn] * 4;
 
             if (is2D) {
 
-                for (row = -halfK; row <= halfK; row++) { // go through all rows
+                for (row = -halfK[kn]; row <= halfK[kn]; row++) { // go through all rows
 
-                    for (col = leftBound, kcol = -halfK; col <= rightBound; col += 4, kcol++) { // go through every 4th
+                    for (col = leftBound, kcol = -halfK[kn]; col <= rightBound; col += 4, kcol++) { // go through every 4th
                                                                                                 // column
 
-                        if (kernel[kCenter + kcol + (row * kernelSize)] != 0) { // but don't bother copying into the
+                        if (kernel[kn][kCenter + kcol + (row * kernelSize[kn])] != 0) { // but don't bother copying into the
                                                                                 // list if
 
                             // we don't want that element (the kernel's pixl is zero)
-                            kernelMask[count++] = data[i + col + (row * sliceWidth)];
+                            kernelMask[kn][count++] = data[i + col + (row * sliceWidth)];
                         }
                     }
                 }
@@ -1464,14 +1499,14 @@ public class AlgorithmMedian extends AlgorithmBase {
                 //System.out.println("********** getBorderBufferNeighborList ( " + i + " ) **********");
 
                 // halfK-number of kernelSize slices (to get to the center slice)
-                for (slice = -halfK; slice <= halfK; slice++) {
+                for (slice = -halfK[kn]; slice <= halfK[kn]; slice++) {
 
-                    for (row = -halfK; row <= halfK; row++) {
+                    for (row = -halfK[kn]; row <= halfK[kn]; row++) {
 
-                        for (col = leftBound, kcol = -halfK; col <= rightBound; col += 4, kcol++) {
+                        for (col = leftBound, kcol = -halfK[kn]; col <= rightBound; col += 4, kcol++) {
 
-                            if (kernel[kCenter + kcol + (row * kernelSize) + (slice * kernelSize * kernelSize)] != 0) {
-                                kernelMask[count++] = data[i + col + (row * sliceWidth) + (slice * sliceWidth * height)];
+                            if (kernel[kn][kCenter + kcol + (row * kernelSize[kn]) + (slice * kernelSize[kn] * kernelSize[kn])] != 0) {
+                                kernelMask[kn][count++] = data[i + col + (row * sliceWidth) + (slice * sliceWidth * height)];
                             }
                         }
                     }
@@ -1481,15 +1516,15 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             if (is2D) {
 
-                for (row = -halfK; row <= halfK; row++) { // go through all rows
+                for (row = -halfK[kn]; row <= halfK[kn]; row++) { // go through all rows
 
-                    for (col = -halfK; col <= halfK; col++) { // go through all columns
+                    for (col = -halfK[kn]; col <= halfK[kn]; col++) { // go through all columns
 
-                        if (kernel[kCenter + col + (row * kernelSize)] != 0) { // but don't bother copying into the
+                        if (kernel[kn][kCenter + col + (row * kernelSize[kn])] != 0) { // but don't bother copying into the
                                                                                // list if
 
                             // we don't want that element (the kernel's pixl is zero)
-                            kernelMask[count++] = data[i + col + (row * width)];
+                            kernelMask[kn][count++] = data[i + col + (row * width)];
                         }
                     }
                 }
@@ -1498,14 +1533,14 @@ public class AlgorithmMedian extends AlgorithmBase {
                 int slice;
 
                 // halfK-number of kernelSize slices (to get to the center slice)
-                for (slice = -halfK; slice <= halfK; slice++) {
+                for (slice = -halfK[kn]; slice <= halfK[kn]; slice++) {
 
-                    for (row = -halfK; row <= halfK; row++) {
+                    for (row = -halfK[kn]; row <= halfK[kn]; row++) {
 
-                        for (col = -halfK; col <= halfK; col++) {
+                        for (col = -halfK[kn]; col <= halfK[kn]; col++) {
 
-                            if (kernel[kCenter + col + (row * kernelSize) + (slice * kernelSize * kernelSize)] != 0) {
-                                kernelMask[count++] = data[i + col + (row * width) + (slice * width * height)];
+                            if (kernel[kn][kCenter + col + (row * kernelSize[kn]) + (slice * kernelSize[kn] * kernelSize[kn])] != 0) {
+                                kernelMask[kn][count++] = data[i + col + (row * width) + (slice * width * height)];
                             }
                         }
                     }
@@ -1513,7 +1548,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             }
         }
 
-        return (kernelMask);
+        return (kernelMask[kn]);
     }
     
     /**
@@ -1521,7 +1556,7 @@ public class AlgorithmMedian extends AlgorithmBase {
      *
      * <p>Only used with color images in vector filtering.
      * Returned float array has red, green, blue, red, green, blue, etc.
-     *
+     * @param   kn    The kernel number; always zero if adaptiveSize is false.
      * @param   i     The central pixel to find neighbors for.
      * @param   data  float [] Image data
      * @param   is2D  True indicates that the neighbors are found along a 2D slice (or 2D image) instead of neighbors in
@@ -1529,9 +1564,9 @@ public class AlgorithmMedian extends AlgorithmBase {
      *
      * @return  The neighboring pixel list corresponds to the kernel chosen.
      */
-    private float[] getVectorNeighborList(int i, float[] data, boolean is2D) {
+    private float[] getVectorNeighborList(int kn, int i, float[] data, boolean is2D) {
         int row, col;
-        int kCenter = kernelCenter; // index to the central element of the kernel
+        int kCenter = kernelCenter[kn]; // index to the central element of the kernel
 
         // (this is the mask for which elements in data are used.)
         int width = 0; // width of slice in number of pixels
@@ -1549,23 +1584,23 @@ public class AlgorithmMedian extends AlgorithmBase {
         // kernel as mono images, but fill it with brightness levels that are spread out in the data set.
 
             int kcol;
-            int leftBound = -halfK * 4;
-            int rightBound = halfK * 4;
+            int leftBound = -halfK[kn] * 4;
+            int rightBound = halfK[kn] * 4;
 
             if (is2D) {
 
-                for (row = -halfK; row <= halfK; row++) { // go through all rows
+                for (row = -halfK[kn]; row <= halfK[kn]; row++) { // go through all rows
 
-                    for (col = leftBound, kcol = -halfK; col <= rightBound; col += 4, kcol++) { // go through every 4th
+                    for (col = leftBound, kcol = -halfK[kn]; col <= rightBound; col += 4, kcol++) { // go through every 4th
                                                                                                 // column
 
-                        if (kernel[kCenter + kcol + (row * kernelSize)] != 0) { // but don't bother copying into the
+                        if (kernel[kn][kCenter + kcol + (row * kernelSize[kn])] != 0) { // but don't bother copying into the
                                                                                 // list if
 
                             // we don't want that element (the kernel's pixl is zero)
-                            kernelVectorMask[count++] = data[i + 1 + col + (row * sliceWidth)];
-                            kernelVectorMask[count++] = data[i + 2 + col + (row * sliceWidth)];
-                            kernelVectorMask[count++] = data[i + 3 + col + (row * sliceWidth)];
+                            kernelVectorMask[kn][count++] = data[i + 1 + col + (row * sliceWidth)];
+                            kernelVectorMask[kn][count++] = data[i + 2 + col + (row * sliceWidth)];
+                            kernelVectorMask[kn][count++] = data[i + 3 + col + (row * sliceWidth)];
                         }
                     }
                 }
@@ -1575,36 +1610,54 @@ public class AlgorithmMedian extends AlgorithmBase {
                 //System.out.println("********** getBorderBufferNeighborList ( " + i + " ) **********");
 
                 // halfK-number of kernelSize slices (to get to the center slice)
-                for (slice = -halfK; slice <= halfK; slice++) {
+                for (slice = -halfK[kn]; slice <= halfK[kn]; slice++) {
 
-                    for (row = -halfK; row <= halfK; row++) {
+                    for (row = -halfK[kn]; row <= halfK[kn]; row++) {
 
-                        for (col = leftBound, kcol = -halfK; col <= rightBound; col += 4, kcol++) {
+                        for (col = leftBound, kcol = -halfK[kn]; col <= rightBound; col += 4, kcol++) {
 
-                            if (kernel[kCenter + kcol + (row * kernelSize) + (slice * kernelSize * kernelSize)] != 0) {
-                                kernelVectorMask[count++] = data[i + 1 + col + (row * sliceWidth) + (slice * sliceWidth * height)];
-                                kernelVectorMask[count++] = data[i + 2 + col + (row * sliceWidth) + (slice * sliceWidth * height)];
-                                kernelVectorMask[count++] = data[i + 3 + col + (row * sliceWidth) + (slice * sliceWidth * height)];
+                            if (kernel[kn][kCenter + kcol + (row * kernelSize[kn]) + (slice * kernelSize[kn] * kernelSize[kn])] != 0) {
+                                kernelVectorMask[kn][count++] = data[i + 1 + col + (row * sliceWidth) + (slice * sliceWidth * height)];
+                                kernelVectorMask[kn][count++] = data[i + 2 + col + (row * sliceWidth) + (slice * sliceWidth * height)];
+                                kernelVectorMask[kn][count++] = data[i + 3 + col + (row * sliceWidth) + (slice * sliceWidth * height)];
                             }
                         }
                     }
                 }
             }
        
-        return (kernelVectorMask);
+        return (kernelVectorMask[kn]);
     }
 
     /**
      * Forms kernel.
      */
     private void makeKernel() {
+        int i;
 
         try {
+            if (adaptiveSize) {
+                kernelNumber = (maximumSize - minimumSize)/2 + 1;
+                kernelSize = new int[kernelNumber];
+                for (i = 0; i < kernelNumber; i++) {
+                    kernelSize[i] = minimumSize + 2*i;
+                }
+            }
+            else {
+                kernelNumber = 1;
+                kernelSize = new int[1];
+                kernelSize[0] = minimumSize;
+            }
 
+            kernel = new byte[kernelNumber][];
             if (sliceFiltering) {
-                kernel = new byte[kernelSize * kernelSize];
+                for (i = 0; i < kernelNumber; i++) {
+                    kernel[i] = new byte[kernelSize[i]*kernelSize[i]];
+                }
             } else if (!sliceFiltering) {
-                kernel = new byte[kernelSize * kernelSize * kernelSize];
+                for (i = 0; i < kernelNumber; i++) {
+                    kernel[i] = new byte[kernelSize[i]*kernelSize[i]*kernelSize[i]];
+                }
             }
         } catch (OutOfMemoryError e) {
             displayError("Algorithm Median reports: not enough memory to form a kernel mask.");
@@ -1628,52 +1681,57 @@ public class AlgorithmMedian extends AlgorithmBase {
      * <p>Note that for symmetric masks always have kernelCenter = count/2 and maskCenter = count/2.</p>
      */
     private void makeKernelMask() {
-        halfK = kernelSize / 2;
-
-        // figure how many kernel elements are actually in the kernel-mask
-        int count = 0; // start counting from one, since sort starts with element 1 (even empty mask must have 1
-                       // element!)
-
-        for (int m = 0; m < kernel.length; m++) {
-
-            if (kernel[m] != 0) { // if this element is marked 'on'
-                count++;
+        int n;
+        kernelMask = new float[kernelNumber][];
+        kernelVectorMask = new float[kernelNumber][];
+        kernelCenter = new int[kernelNumber];
+        maskCenter = new int[kernelNumber];
+        for (n = 0; n < kernelNumber; n++) {
+            // figure how many kernel elements are actually in the kernel-mask
+            int count = 0; // start counting from one, since sort starts with element 1 (even empty mask must have 1
+                           // element!)
+    
+            for (int m = 0; m < kernel[n].length; m++) {
+    
+                if (kernel[n][m] != 0) { // if this element is marked 'on'
+                    count++;
+                }
             }
-        }
-
-        kernelMask = new float[count];
-        kernelVectorMask = new float[3*count];
-
-        if (sliceFiltering) { // 2D
-
-            if (kernelShape == SQUARE_KERNEL) {
-                kernelCenter = count / 2; // whole square
-                maskCenter = halfK * (kernelSize + 1); // count/2 : I feel dumb
-            } else if (kernelShape == CROSS_KERNEL) {
-                kernelCenter = halfK * (kernelSize + 1);
-                maskCenter = kernelSize - 1;
-            } else if ((kernelShape == VERT_KERNEL) || (kernelShape == HORZ_KERNEL)) {
-                kernelCenter = halfK * (kernelSize + 1);
-                maskCenter = (kernelSize / 2);
-            } else if (kernelShape == X_KERNEL) { // sizeof kernel is same as CROSS_KERNEL
-                kernelCenter = halfK * (kernelSize + 1);
-                maskCenter = kernelSize - 1;
+    
+            kernelMask[n] = new float[count];
+            kernelVectorMask[n] = new float[3*count];
+    
+            if (sliceFiltering) { // 2D
+    
+                if (kernelShape == SQUARE_KERNEL) {
+                    kernelCenter[n] = count / 2; // whole square
+                    maskCenter[n] = halfK[n] * (kernelSize[n] + 1); // count/2 : I feel dumb
+                } else if (kernelShape == CROSS_KERNEL) {
+                    kernelCenter[n] = halfK[n] * (kernelSize[n] + 1);
+                    maskCenter[n] = kernelSize[n] - 1;
+                } else if ((kernelShape == VERT_KERNEL) || (kernelShape == HORZ_KERNEL)) {
+                    kernelCenter[n] = halfK[n] * (kernelSize[n] + 1);
+                    maskCenter[n] = (kernelSize[n] / 2);
+                } else if (kernelShape == X_KERNEL) { // sizeof kernel is same as CROSS_KERNEL
+                    kernelCenter[n] = halfK[n] * (kernelSize[n] + 1);
+                    maskCenter[n] = kernelSize[n] - 1;
+                }
+            } else { // 3D
+    
+                if (kernelShape == CUBE_KERNEL) {
+                    kernelCenter[n] = count / 2;
+                    maskCenter[n] = halfK[n] * ((kernelSize[n] * kernelSize[n]) + kernelSize[n] + 1);
+                } else if (kernelShape == AXIAL_KERNEL) {
+                    kernelCenter[n] = (kernelSize[n] * kernelSize[n] * kernelSize[n]) / 2; // whole cube
+                    maskCenter[n] = count / 2; // i feel dumb...
+                } else if (kernelShape == X_KERNEL) { // sizeof kernel is same as AXIAL_KERNEL
+                    kernelCenter[n] = (kernelSize[n] * kernelSize[n] * kernelSize[n]) / 2; // whole cube
+                    maskCenter[n] = count / 2; // i feel dumb...
+                }
             }
-        } else { // 3D
-
-            if (kernelShape == CUBE_KERNEL) {
-                kernelCenter = count / 2;
-                maskCenter = halfK * ((kernelSize * kernelSize) + kernelSize + 1);
-            } else if (kernelShape == AXIAL_KERNEL) {
-                kernelCenter = (kernelSize * kernelSize * kernelSize) / 2; // whole cube
-                maskCenter = count / 2; // i feel dumb...
-            } else if (kernelShape == X_KERNEL) { // sizeof kernel is same as AXIAL_KERNEL
-                kernelCenter = (kernelSize * kernelSize * kernelSize) / 2; // whole cube
-                maskCenter = count / 2; // i feel dumb...
-            }
-        }
-        // not entirely dumb.  mc = count/2 because of the symmetry of the mask.  custom masks may be diff.
-        // & i'd like to include custom masks someday....
+            // not entirely dumb.  mc = count/2 because of the symmetry of the mask.  custom masks may be diff.
+            // & i'd like to include custom masks someday....
+        } // for (n = 0; n < kernelNumber; n++)
     }
 
     /**
@@ -1798,14 +1856,19 @@ public class AlgorithmMedian extends AlgorithmBase {
      * Fill in the mask for which pixels are used in filtering.
      */
     private void setKernel() {
+        int n;
         int i;
-        int halfK = kernelSize / 2;
+        halfK = new int[kernelNumber];
+        for (n = 0; n < kernelNumber; n++) {
+            halfK[n] = kernelSize[n] / 2;
+        }
 
         // square/box
         if ((kernelShape == SQUARE_KERNEL) || (kernelShape == CUBE_KERNEL)) {
-
-            for (i = 0; i < kernel.length; i++) {
-                kernel[i] = 1;
+            for (n = 0 ; n < kernelNumber; n++) {
+                for (i = 0; i < kernel[n].length; i++) {
+                    kernel[n][i] = 1;
+                }
             }
         } // end square/cube kernel
 
@@ -1816,40 +1879,44 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             if (sliceFiltering) {
 
-                for (i = 0; i < kernel.length; i++) {
-                    row = i / kernelSize;
-                    col = i % kernelSize;
-
-                    if (col == halfK) {
-                        kernel[i] = 1;
-                    } else if (row == halfK) {
-                        kernel[i] = 1;
-                    } else {
-                        kernel[i] = 0;
+                for (n = 0; n < kernelNumber; n++) {
+                    for (i = 0; i < kernel[n].length; i++) {
+                        row = i / kernelSize[n];
+                        col = i % kernelSize[n];
+    
+                        if (col == halfK[n]) {
+                            kernel[n][i] = 1;
+                        } else if (row == halfK[n]) {
+                            kernel[n][i] = 1;
+                        } else {
+                            kernel[n][i] = 0;
+                        }
                     }
                 }
             } else { // volume filtering
 
                 int slice;
 
-                for (i = 0; i < kernel.length; i++) {
-                    slice = i / (kernelSize * kernelSize);
-                    row = (i % (kernelSize * kernelSize)) / kernelSize;
-                    col = i % kernelSize;
-
-                    if (slice == halfK) {
-
-                        if (col == halfK) {
-                            kernel[i] = 1;
-                        } else if (row == halfK) {
-                            kernel[i] = 1;
+                for (n = 0; n < kernelNumber; n++) {
+                    for (i = 0; i < kernel[n].length; i++) {
+                        slice = i / (kernelSize[n] * kernelSize[n]);
+                        row = (i % (kernelSize[n] * kernelSize[n])) / kernelSize[n];
+                        col = i % kernelSize[n];
+    
+                        if (slice == halfK[n]) {
+    
+                            if (col == halfK[n]) {
+                                kernel[n][i] = 1;
+                            } else if (row == halfK[n]) {
+                                kernel[n][i] = 1;
+                            } else {
+                                kernel[n][i] = 0;
+                            }
+                        } else if ((row == halfK[n]) && (col == halfK[n])) {
+                            kernel[n][i] = 1;
                         } else {
-                            kernel[i] = 0;
+                            kernel[n][i] = 0;
                         }
-                    } else if ((row == halfK) && (col == halfK)) {
-                        kernel[i] = 1;
-                    } else {
-                        kernel[i] = 0;
                     }
                 }
             }
@@ -1859,13 +1926,15 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             if (sliceFiltering) {
 
-                for (i = 0; i < kernel.length; i++) {
-                    col = i % kernelSize;
-
-                    if (col == halfK) {
-                        kernel[i] = 1;
-                    } else {
-                        kernel[i] = 0;
+                for (n = 0; n < kernelNumber; n++) {
+                    for (i = 0; i < kernel[n].length; i++) {
+                        col = i % kernelSize[n];
+    
+                        if (col == halfK[n]) {
+                            kernel[n][i] = 1;
+                        } else {
+                            kernel[n][i] = 0;
+                        }
                     }
                 }
             } else { // volume filtering
@@ -1876,13 +1945,15 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             if (sliceFiltering) {
 
-                for (i = 0; i < kernel.length; i++) {
-                    row = i / kernelSize;
-
-                    if (row == halfK) {
-                        kernel[i] = 1;
-                    } else {
-                        kernel[i] = 0;
+                for (n = 0; n < kernelNumber; n++) {
+                    for (i = 0; i < kernel[n].length; i++) {
+                        row = i / kernelSize[n];
+    
+                        if (row == halfK[n]) {
+                            kernel[n][i] = 1;
+                        } else {
+                            kernel[n][i] = 0;
+                        }
                     }
                 }
             } else { // volume filtering
@@ -1897,40 +1968,44 @@ public class AlgorithmMedian extends AlgorithmBase {
 
             if (sliceFiltering) {
 
-                for (i = 0; i < kernel.length; i++) {
-                    row = i / kernelSize;
-                    col = i % kernelSize;
-                    revcol = kernelSize - 1 - col;
-
-                    if (row == col) {
-                        kernel[i] = 1;
-                    } else if (row == revcol) {
-                        kernel[i] = 1;
-                    } else {
-                        kernel[i] = 0;
+                for (n = 0; n < kernelNumber; n++) {
+                    for (i = 0; i < kernel[n].length; i++) {
+                        row = i / kernelSize[n];
+                        col = i % kernelSize[n];
+                        revcol = kernelSize[n] - 1 - col;
+    
+                        if (row == col) {
+                            kernel[n][i] = 1;
+                        } else if (row == revcol) {
+                            kernel[n][i] = 1;
+                        } else {
+                            kernel[n][i] = 0;
+                        }
                     }
                 }
             } else { // volume filtering
 
                 int slice;
 
-                for (i = 0; i < kernel.length; i++) {
-                    slice = i / (kernelSize * kernelSize);
-                    row = (i % (kernelSize * kernelSize)) / kernelSize;
-                    col = i % kernelSize;
-                    revcol = kernelSize - 1 - col;
-
-                    if ((slice == col) || (slice == revcol)) {
-
-                        if (row == col) {
-                            kernel[i] = 1;
-                        } else if (row == revcol) {
-                            kernel[i] = 1;
+                for (n = 0; n < kernelNumber; n++) {
+                    for (i = 0; i < kernel[n].length; i++) {
+                        slice = i / (kernelSize[n] * kernelSize[n]);
+                        row = (i % (kernelSize[n] * kernelSize[n])) / kernelSize[n];
+                        col = i % kernelSize[n];
+                        revcol = kernelSize[n] - 1 - col;
+    
+                        if ((slice == col) || (slice == revcol)) {
+    
+                            if (row == col) {
+                                kernel[n][i] = 1;
+                            } else if (row == revcol) {
+                                kernel[n][i] = 1;
+                            } else {
+                                kernel[n][i] = 0;
+                            }
                         } else {
-                            kernel[i] = 0;
+                            kernel[n][i] = 0;
                         }
-                    } else {
-                        kernel[i] = 0;
                     }
                 }
             }
@@ -1994,7 +2069,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         int buffStart = bufferStartingPoint; // data element at the buffer. a = bufferStartingPoint+i
         int sliceLength = srcImage.getSliceSize();
         int imageSliceLength = sliceLength * valuesPerPixel; // since there are 4 values for every color pixel
-        int kCenter = maskCenter; // to find the middle pixel of the kernel-mask
+        int kCenter = maskCenter[0]; // to find the middle pixel of the kernel-mask
         int width = srcImage.getExtents()[0]; // width of slice in number of pixels (
         int height = srcImage.getExtents()[1]; // height of slice in number of pixels
         int sliceWidth = width * valuesPerPixel; // width of slice, which, in color images is (4*width)
@@ -2015,12 +2090,17 @@ public class AlgorithmMedian extends AlgorithmBase {
         // image outside the frame may not
         int upperBound, lowerBound, // bounds on the row
             leftBound, rightBound; // bounds on the column
+        
+        float a1, a2, b1, b2;
+        int kn;
+        float zmin, zmed, zmax;
+        boolean loop;
 
         if (isColorImage) {
-            upperBound = halfK;
-            leftBound = halfK * 4;
-            lowerBound = sliceHeight - halfK - 1;
-            rightBound = sliceWidth - (halfK * 4) - 1;
+            upperBound = halfK[kernelNumber-1];
+            leftBound = halfK[kernelNumber-1] * 4;
+            lowerBound = sliceHeight - halfK[kernelNumber-1] - 1;
+            rightBound = sliceWidth - (halfK[kernelNumber-1] * 4) - 1;
 
             // data element at the buffer (a = i+bufferStartingPoint) must start on an alpha value
             buffStart = bufferStartingPoint - (bufferStartingPoint % 4); // & no effect if bufferStartingPoint%4 == 0
@@ -2034,9 +2114,9 @@ public class AlgorithmMedian extends AlgorithmBase {
             }
 
         } else { // monochrome image
-            upperBound = leftBound = halfK;
-            rightBound = sliceWidth - halfK - 1;
-            lowerBound = sliceHeight - halfK - 1;
+            upperBound = leftBound = halfK[kernelNumber-1];
+            rightBound = sliceWidth - halfK[kernelNumber-1] - 1;
+            lowerBound = sliceHeight - halfK[kernelNumber-1] - 1;
         }
 
         mod = (imageSliceLength * numberOfSlices) / 100; // mod is 1 percent of length of slice * the number of slices.
@@ -2115,25 +2195,55 @@ public class AlgorithmMedian extends AlgorithmBase {
                                 } else if ((col < leftBound) || (col > rightBound)) {
                                     destBuffer[a] = srcBuffer[a]; // column too far left or right--out of bounds
                                 } else { // in bounds
-                                    maskedList = getNeighborList(a, srcBuffer, true);
-
-                                    // verify that this element is an outlier
-                                    if (stdDevLimit == 0.0) { // anything is an outlier
-                                        shellSort(maskedList);
-                                        destBuffer[a] = median(maskedList);
-                                    } else { // look for outlierness
-                                        average = mean(maskedList);
-                                        sigma = standardDeviation(maskedList, average);
-
-                                        if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
-                                                (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+                                    if (adaptiveSize) {
+                                        kn = 0;
+                                        loop = true;
+                                        while (loop) {
+                                             maskedList = getNeighborList(kn++, a, srcBuffer, true);
+                                             shellSort(maskedList);
+                                             zmed = median(maskedList);
+                                             zmin = maskedList[0];
+                                             zmax = maskedList[maskedList.length-1];
+                                             a1 = zmed - zmin;
+                                             a2 = zmed - zmax;
+                                             if ((a1 > 0.0f) && (a2 < 0.0f)) {
+                                                 loop = false;
+                                                 b1 = srcBuffer[a] - zmin;
+                                                 b2 = srcBuffer[a] - zmax;
+                                                 if ((b1 > 0.0f) && (b2 < 0.0f)) {
+                                                     destBuffer[a] = srcBuffer[a];
+                                                 }
+                                                 else {
+                                                     destBuffer[a] = zmed;
+                                                 }
+                                             } // if (a1 > 0.0f_ && (a2 < 0.0f))
+                                             else if (kn == kernelNumber) {
+                                                 loop = false;
+                                                 destBuffer[a] = zmed;
+                                             }
+                                        } // while (loop) 
+                                    } // if (adaptiveSize)
+                                    else { // not adaptiveSize
+                                        maskedList = getNeighborList(0, a, srcBuffer, true);
+    
+                                        // verify that this element is an outlier
+                                        if (stdDevLimit == 0.0) { // anything is an outlier
                                             shellSort(maskedList);
                                             destBuffer[a] = median(maskedList);
-                                        } else { // if element was not an outlier, pixel is fine.
-                                            destBuffer[a] = srcBuffer[a];
+                                        } else { // look for outlierness
+                                            average = mean(maskedList);
+                                            sigma = standardDeviation(maskedList, average);
+    
+                                            if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
+                                                    (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+                                                shellSort(maskedList);
+                                                destBuffer[a] = median(maskedList);
+                                            } else { // if element was not an outlier, pixel is fine.
+                                                destBuffer[a] = srcBuffer[a];
+                                            }
                                         }
                                     }
-                                }
+                                } // not adaptiveSize
                             } else { // not part of the VOI so just copy this into the destination buffer.
                                 destBuffer[a] = srcBuffer[a];
                             }
@@ -2175,22 +2285,52 @@ public class AlgorithmMedian extends AlgorithmBase {
                         } else if ((col < leftBound) || (col > rightBound)) {
                             destBuffer[a] = srcBuffer[a]; // column too far left or right--out of bounds
                         } else { // in bounds
-                            maskedList = getNeighborList(a, srcBuffer, true);
-
-                            // verify that this element is an outlier
-                            if (stdDevLimit == 0.0) { // anything is an outlier
-                                shellSort(maskedList);
-                                destBuffer[a] = median(maskedList);
-                            } else { // look for outlierness
-                                average = mean(maskedList);
-                                sigma = standardDeviation(maskedList, average);
-
-                                if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
-                                        (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+                            if (adaptiveSize) {
+                                kn = 0;
+                                loop = true;
+                                while (loop) {
+                                     maskedList = getNeighborList(kn++, a, srcBuffer, true);
+                                     shellSort(maskedList);
+                                     zmed = median(maskedList);
+                                     zmin = maskedList[0];
+                                     zmax = maskedList[maskedList.length-1];
+                                     a1 = zmed - zmin;
+                                     a2 = zmed - zmax;
+                                     if ((a1 > 0.0f) && (a2 < 0.0f)) {
+                                         loop = false;
+                                         b1 = srcBuffer[a] - zmin;
+                                         b2 = srcBuffer[a] - zmax;
+                                         if ((b1 > 0.0f) && (b2 < 0.0f)) {
+                                             destBuffer[a] = srcBuffer[a];
+                                         }
+                                         else {
+                                             destBuffer[a] = zmed;
+                                         }
+                                     } // if (a1 > 0.0f_ && (a2 < 0.0f))
+                                     else if (kn == kernelNumber) {
+                                         loop = false;
+                                         destBuffer[a] = zmed;
+                                     }
+                                } // while (loop)     
+                            } // if (adaptiveSize)
+                            else { // not adaptiveSize
+                                maskedList = getNeighborList(0, a, srcBuffer, true);
+    
+                                // verify that this element is an outlier
+                                if (stdDevLimit == 0.0) { // anything is an outlier
                                     shellSort(maskedList);
                                     destBuffer[a] = median(maskedList);
-                                } else { // if element was not an outlier, pixel is fine.
-                                    destBuffer[a] = srcBuffer[a];
+                                } else { // look for outlierness
+                                    average = mean(maskedList);
+                                    sigma = standardDeviation(maskedList, average);
+    
+                                    if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
+                                            (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+                                        shellSort(maskedList);
+                                        destBuffer[a] = median(maskedList);
+                                    } else { // if element was not an outlier, pixel is fine.
+                                        destBuffer[a] = srcBuffer[a];
+                                    }
                                 }
                             }
                         }
@@ -2249,10 +2389,10 @@ public class AlgorithmMedian extends AlgorithmBase {
         int upperBound, lowerBound, // bounds on the row
             leftBound, rightBound; // bounds on the column
         
-        upperBound = halfK;
-        leftBound = halfK * 4;
-        lowerBound = sliceHeight - halfK - 1;
-        rightBound = sliceWidth - (halfK * 4) - 1;
+        upperBound = halfK[0];
+        leftBound = halfK[0] * 4;
+        lowerBound = sliceHeight - halfK[0] - 1;
+        rightBound = sliceWidth - (halfK[0] * 4) - 1;
 
         // data element at the buffer (a = i+bufferStartingPoint) must start on an alpha value
         buffStart = bufferStartingPoint - (bufferStartingPoint % 4); // & no effect if bufferStartingPoint%4 == 0
@@ -2309,7 +2449,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                     destBuffer[a+2] = srcBuffer[a+2];
                                     destBuffer[a+3] = srcBuffer[a+3];
                                 } else { // in bounds
-                                    maskedList = getVectorNeighborList(a, srcBuffer, true);
+                                    maskedList = getVectorNeighborList(0, a, srcBuffer, true);
 
                                     index = vectorMagnitudeMedian(maskedList);
                                     destBuffer[a+1] = maskedList[index];
@@ -2372,10 +2512,10 @@ public class AlgorithmMedian extends AlgorithmBase {
         int upperBound, lowerBound, // bounds on the row
             leftBound, rightBound; // bounds on the column
         
-        upperBound = halfK;
-        leftBound = halfK * 4;
-        lowerBound = sliceHeight - halfK - 1;
-        rightBound = sliceWidth - (halfK * 4) - 1;
+        upperBound = halfK[0];
+        leftBound = halfK[0] * 4;
+        lowerBound = sliceHeight - halfK[0] - 1;
+        rightBound = sliceWidth - (halfK[0] * 4) - 1;
 
         // data element at the buffer (a = i+bufferStartingPoint) must start on an alpha value
         buffStart = bufferStartingPoint - (bufferStartingPoint % 4); // & no effect if bufferStartingPoint%4 == 0
@@ -2429,7 +2569,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                     destBuffer[a+2] = srcBuffer[a+2];
                                     destBuffer[a+3] = srcBuffer[a+3];
                                 } else { // in bounds
-                                    maskedList = getVectorNeighborList(a, srcBuffer, true);
+                                    maskedList = getVectorNeighborList(0, a, srcBuffer, true);
 
                                     index = vectorDirectionMedian(maskedList);
                                     destBuffer[a+1] = maskedList[index];
@@ -2466,9 +2606,13 @@ public class AlgorithmMedian extends AlgorithmBase {
      */
     private void sliceFilterBorder(float[] srcBdrBuffer, float[] destBuffer, int srcBufferStartingPoint,
                                    int destBufferStartingPoint) {
+        int kn;
+        boolean loop;
+        float a1, a2, b1, b2;
+        float zmin, zmed, zmax;
 
         // space allocated for extra rows used by the kernel
-        int srcBrdBufferKernelOffset = (halfK * bdrBufferWidth) + halfK;
+        int srcBrdBufferKernelOffset = (halfK[kernelNumber-1] * bdrBufferWidth) + halfK[kernelNumber-1];
 
         // space for previous slices when slice filtering a 3D volume
         int srcBdrBufferOffset = srcBufferStartingPoint + srcBrdBufferKernelOffset;
@@ -2483,9 +2627,39 @@ public class AlgorithmMedian extends AlgorithmBase {
             for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
 
                 if (entireImage || mask.get(destBufferIdx)) {
-                    maskedList = getBorderBufferNeighborList(srcBdrBufferIdx, srcBdrBuffer, true);
-                    shellSort(maskedList);
-                    destBuffer[destBufferIdx] = median(maskedList);
+                    if (adaptiveSize) {
+                        kn = 0;
+                        loop = true;
+                        while (loop) {
+                             maskedList = getBorderBufferNeighborList(kn++, srcBdrBufferIdx, srcBdrBuffer, true);
+                             shellSort(maskedList);
+                             zmed = median(maskedList);
+                             zmin = maskedList[0];
+                             zmax = maskedList[maskedList.length-1];
+                             a1 = zmed - zmin;
+                             a2 = zmed - zmax;
+                             if ((a1 > 0.0f) && (a2 < 0.0f)) {
+                                 loop = false;
+                                 b1 = srcBdrBuffer[srcBdrBufferIdx] - zmin;
+                                 b2 = srcBdrBuffer[srcBdrBufferIdx] - zmax;
+                                 if ((b1 > 0.0f) && (b2 < 0.0f)) {
+                                     destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
+                                 }
+                                 else {
+                                     destBuffer[destBufferIdx] = zmed;
+                                 }
+                             } // if (a1 > 0.0f_ && (a2 < 0.0f))
+                             else if (kn == kernelNumber) {
+                                 loop = false;
+                                 destBuffer[destBufferIdx] = zmed;
+                             }
+                        } // while (loop)         
+                    } // if (adaptiveSize)
+                    else { // not adaptiveSize
+                        maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, true);
+                        shellSort(maskedList);
+                        destBuffer[destBufferIdx] = median(maskedList);
+                    } // else not adaptiveSize
                 } else {
                     destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
                 }
@@ -2534,7 +2708,7 @@ public class AlgorithmMedian extends AlgorithmBase {
         int row, // ease of reading to find the row, column and slice
             column, // (all starting at 0) associated with the current element
             slice; // [(0,0,0) starts at the closest upper-left corner]
-        int kCenter = maskCenter;
+        int kCenter = maskCenter[0];
         int width = srcImage.getExtents()[0]; // width of slice in number of pixels
         int height = srcImage.getExtents()[1]; // height of slice in number of pixels
         int sliceWidth = width * valuesPerPixel; // width of slice in number of intensity values
@@ -2550,6 +2724,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         float sigma; // standard deviation
 
         float[] maskedList; // list of buffer-values that were showing inside the mask
+        
+        int kn;
+        boolean loop;
+        float a1, a2, b1, b2;
+        float zmin, zmed, zmax;
 
         // these bounds "frame" the interior of the slice which may be filtered (&adjusted);
         // image outside the frame may not
@@ -2560,15 +2739,15 @@ public class AlgorithmMedian extends AlgorithmBase {
         // (a note on orientation: object front is facing in the same direction as
         // viewer, thus ahead of viewer is into monitor, behind is out of monitor and
         // a more positive number of slices is farther forward.)
-        upperBound = halfK;
-        lowerBound = height - halfK - 1;
-        behindBound = halfK;
-        aheadBound = numberOfSlices - halfK - 1;
+        upperBound = halfK[kernelNumber-1];
+        lowerBound = height - halfK[kernelNumber-1] - 1;
+        behindBound = halfK[kernelNumber-1];
+        aheadBound = numberOfSlices - halfK[kernelNumber-1] - 1;
 
         // we may say that each column is a pixel intensity: mono images have 1 per pixel, 4 in color;
         // these calculations are done seperately for color & mono images in sliceFilter().
-        leftBound = halfK * valuesPerPixel;
-        rightBound = sliceWidth - (valuesPerPixel * halfK) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
+        leftBound = halfK[kernelNumber-1] * valuesPerPixel;
+        rightBound = sliceWidth - (valuesPerPixel * halfK[kernelNumber-1]) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
                                                                 // halfK - 1)
 
         int mod = (imageSize) / 100; // mod is 1 percent of length of slice * the number of slices.
@@ -2656,25 +2835,55 @@ public class AlgorithmMedian extends AlgorithmBase {
                             } else if ((slice < behindBound) || (slice > aheadBound)) {
                                 destBuffer[i] = srcBuffer[i]; // slice too far ahead or behind--out of bounds
                             } else { // in bounds
-                                maskedList = getNeighborList(i, srcBuffer, false);
-
-                                // verify that this element is an outlier
-                                if (stdDevLimit == 0.0) { // anything is an outlier
-                                    shellSort(maskedList);
-                                    destBuffer[i] = median(maskedList);
-                                } else { // look for outlierness
-                                    average = mean(maskedList);
-                                    sigma = standardDeviation(maskedList, average);
-
-                                    if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
-                                            (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+                                if (adaptiveSize) {
+                                    kn = 0;
+                                    loop = true;
+                                    while (loop) {
+                                         maskedList = getNeighborList(kn++, i, srcBuffer, false);
+                                         shellSort(maskedList);
+                                         zmed = median(maskedList);
+                                         zmin = maskedList[0];
+                                         zmax = maskedList[maskedList.length-1];
+                                         a1 = zmed - zmin;
+                                         a2 = zmed - zmax;
+                                         if ((a1 > 0.0f) && (a2 < 0.0f)) {
+                                             loop = false;
+                                             b1 = srcBuffer[i] - zmin;
+                                             b2 = srcBuffer[i] - zmax;
+                                             if ((b1 > 0.0f) && (b2 < 0.0f)) {
+                                                 destBuffer[i] = srcBuffer[i];
+                                             }
+                                             else {
+                                                 destBuffer[i] = zmed;
+                                             }
+                                         } // if (a1 > 0.0f_ && (a2 < 0.0f))
+                                         else if (kn == kernelNumber) {
+                                             loop = false;
+                                             destBuffer[i] = zmed;
+                                         }
+                                    } // while (loop)             
+                                } // if (adaptiveSize)
+                                else { // not adaptiveSize
+                                    maskedList = getNeighborList(0, i, srcBuffer, false);
+    
+                                    // verify that this element is an outlier
+                                    if (stdDevLimit == 0.0) { // anything is an outlier
                                         shellSort(maskedList);
                                         destBuffer[i] = median(maskedList);
-                                    } else { // if element was not an outlier, pixel is fine.
-                                        destBuffer[i] = srcBuffer[i];
+                                    } else { // look for outlierness
+                                        average = mean(maskedList);
+                                        sigma = standardDeviation(maskedList, average);
+    
+                                        if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
+                                                (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+                                            shellSort(maskedList);
+                                            destBuffer[i] = median(maskedList);
+                                        } else { // if element was not an outlier, pixel is fine.
+                                            destBuffer[i] = srcBuffer[i];
+                                        }
                                     }
                                 }
-                            }
+                            } // else not adaptiveSize
                         } else { // not part of the VOI so just copy this into the destination buffer.
                             destBuffer[i] = srcBuffer[i];
                         }
@@ -2740,15 +2949,15 @@ public class AlgorithmMedian extends AlgorithmBase {
         // (a note on orientation: object front is facing in the same direction as
         // viewer, thus ahead of viewer is into monitor, behind is out of monitor and
         // a more positive number of slices is farther forward.)
-        upperBound = halfK;
-        lowerBound = height - halfK - 1;
-        behindBound = halfK;
-        aheadBound = numberOfSlices - halfK - 1;
+        upperBound = halfK[0];
+        lowerBound = height - halfK[0] - 1;
+        behindBound = halfK[0];
+        aheadBound = numberOfSlices - halfK[0] - 1;
 
         // we may say that each column is a pixel intensity: mono images have 1 per pixel, 4 in color;
         // these calculations are done seperately for color & mono images in sliceFilter().
-        leftBound = halfK * valuesPerPixel;
-        rightBound = sliceWidth - (valuesPerPixel * halfK) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
+        leftBound = halfK[0] * valuesPerPixel;
+        rightBound = sliceWidth - (valuesPerPixel * halfK[0]) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
                                                                 // halfK - 1)
 
         int mod = (imageSize) / 100; // mod is 1 percent of length of slice * the number of slices.
@@ -2798,7 +3007,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                 destBuffer[i+2] = srcBuffer[i+2];
                                 destBuffer[i+3] = srcBuffer[i+3];
                             } else { // in bounds
-                                maskedList = getVectorNeighborList(i, srcBuffer, false);
+                                maskedList = getVectorNeighborList(0, i, srcBuffer, false);
 
                                 index = vectorMagnitudeMedian(maskedList);
                                 destBuffer[i+1] = maskedList[index];
@@ -2870,15 +3079,15 @@ public class AlgorithmMedian extends AlgorithmBase {
         // (a note on orientation: object front is facing in the same direction as
         // viewer, thus ahead of viewer is into monitor, behind is out of monitor and
         // a more positive number of slices is farther forward.)
-        upperBound = halfK;
-        lowerBound = height - halfK - 1;
-        behindBound = halfK;
-        aheadBound = numberOfSlices - halfK - 1;
+        upperBound = halfK[0];
+        lowerBound = height - halfK[0] - 1;
+        behindBound = halfK[0];
+        aheadBound = numberOfSlices - halfK[0] - 1;
 
         // we may say that each column is a pixel intensity: mono images have 1 per pixel, 4 in color;
         // these calculations are done seperately for color & mono images in sliceFilter().
-        leftBound = halfK * valuesPerPixel;
-        rightBound = sliceWidth - (valuesPerPixel * halfK) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
+        leftBound = halfK[0] * valuesPerPixel;
+        rightBound = sliceWidth - (valuesPerPixel * halfK[0]) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
                                                                 // halfK - 1)
 
         int mod = (imageSize) / 100; // mod is 1 percent of length of slice * the number of slices.
@@ -2928,7 +3137,7 @@ public class AlgorithmMedian extends AlgorithmBase {
                                 destBuffer[i+2] = srcBuffer[i+2];
                                 destBuffer[i+3] = srcBuffer[i+3];
                             } else { // in bounds
-                                maskedList = getVectorNeighborList(i, srcBuffer, false);
+                                maskedList = getVectorNeighborList(0, i, srcBuffer, false);
 
                                 index = vectorDirectionMedian(maskedList);
                                 destBuffer[i+1] = maskedList[index];
@@ -2980,7 +3189,7 @@ public class AlgorithmMedian extends AlgorithmBase {
             slice; // [(0,0,0) starts at the closest upper-left corner]
         int imageSliceLength = srcImage.getSliceSize() * valuesPerPixel;
         int imageLength = imageSliceLength * numberOfSlices;
-        int kCenter = maskCenter;
+        int kCenter = maskCenter[0];
         int width = srcImage.getExtents()[0]; // width of slice in number of pixels
         int height = srcImage.getExtents()[1]; // height of slice in number of pixels
         int sliceWidth = width * valuesPerPixel; // width of slice in number of intensity values
@@ -2992,6 +3201,11 @@ public class AlgorithmMedian extends AlgorithmBase {
         float sigma; // standard deviation
 
         float[] maskedList; // list of buffer-values that were showing inside the mask
+        
+        int kn;
+        boolean loop;
+        float a1, a2, b1, b2;
+        float zmin, zmed, zmax;
 
         // these bounds "frame" the interior of the slice which may be filtered (&adjusted);
         // image outside the frame may not
@@ -3002,15 +3216,15 @@ public class AlgorithmMedian extends AlgorithmBase {
         // (a note on orientation: object front is facing in the same direction as
         // viewer, thus ahead of viewer is into monitor, behind is out of monitor and
         // a more positive number of slices is farther forward.)
-        upperBound = halfK;
-        lowerBound = height - halfK - 1;
-        behindBound = halfK;
-        aheadBound = numberOfSlices - halfK - 1;
+        upperBound = halfK[kernelNumber-1];
+        lowerBound = height - halfK[kernelNumber-1] - 1;
+        behindBound = halfK[kernelNumber-1];
+        aheadBound = numberOfSlices - halfK[kernelNumber-1] - 1;
 
         // we may say that each column is a pixel intensity: mono images have 1 per pixel, 4 in color;
         // these calculations are done seperately for color & mono images in sliceFilter().
-        leftBound = halfK * valuesPerPixel;
-        rightBound = sliceWidth - (valuesPerPixel * halfK) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
+        leftBound = halfK[kernelNumber-1] * valuesPerPixel;
+        rightBound = sliceWidth - (valuesPerPixel * halfK[kernelNumber-1]) - 1; // in color: (4*width - 4*halfK - 1); mono: (width -
                                                                 // halfK - 1)
 
         int mod = (imageLength) / 100; // mod is 1 percent of length of slice * the number of slices.
@@ -3041,25 +3255,55 @@ public class AlgorithmMedian extends AlgorithmBase {
                     } else if ((slice < behindBound) || (slice > aheadBound)) {
                         destBuffer[i] = srcBuffer[i]; // slice too far ahead or behind--out of bounds
                     } else { // in bounds
-                        maskedList = getNeighborList(i, srcBuffer, false);
-
-                        // verify that this element is an outlier
-                        if (stdDevLimit == 0.0) { // anything is an outlier
-                            shellSort(maskedList);
-                            destBuffer[i] = median(maskedList);
-                        } else { // look for outlierness
-                            average = mean(maskedList);
-                            sigma = standardDeviation(maskedList, average);
-
-                            if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
-                                    (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+                        if (adaptiveSize) {
+                            kn = 0;
+                            loop = true;
+                            while (loop) {
+                                 maskedList = getNeighborList(kn++, i, srcBuffer, false);
+                                 shellSort(maskedList);
+                                 zmed = median(maskedList);
+                                 zmin = maskedList[0];
+                                 zmax = maskedList[maskedList.length-1];
+                                 a1 = zmed - zmin;
+                                 a2 = zmed - zmax;
+                                 if ((a1 > 0.0f) && (a2 < 0.0f)) {
+                                     loop = false;
+                                     b1 = srcBuffer[i] - zmin;
+                                     b2 = srcBuffer[i] - zmax;
+                                     if ((b1 > 0.0f) && (b2 < 0.0f)) {
+                                         destBuffer[i] = srcBuffer[i];
+                                     }
+                                     else {
+                                         destBuffer[i] = zmed;
+                                     }
+                                 } // if (a1 > 0.0f_ && (a2 < 0.0f))
+                                 else if (kn == kernelNumber) {
+                                     loop = false;
+                                     destBuffer[i] = zmed;
+                                 }
+                            } // while (loop)                 
+                        } // if (adaptiveSize)
+                        else { // not adaptiveSize
+                            maskedList = getNeighborList(0, i, srcBuffer, false);
+    
+                            // verify that this element is an outlier
+                            if (stdDevLimit == 0.0) { // anything is an outlier
                                 shellSort(maskedList);
                                 destBuffer[i] = median(maskedList);
-                            } else { // if element was not an outlier, pixel is fine.
-                                destBuffer[i] = srcBuffer[i];
+                            } else { // look for outlierness
+                                average = mean(maskedList);
+                                sigma = standardDeviation(maskedList, average);
+    
+                                if ((maskedList[kCenter] > (average + (stdDevLimit * sigma))) ||
+                                        (maskedList[kCenter] < (average - (stdDevLimit * sigma)))) {
+                                    shellSort(maskedList);
+                                    destBuffer[i] = median(maskedList);
+                                } else { // if element was not an outlier, pixel is fine.
+                                    destBuffer[i] = srcBuffer[i];
+                                }
                             }
                         }
-                    }
+                    } // else not adaptiveSize
                 } else { // not part of the VOI so just copy this into the destination buffer.
                     destBuffer[i] = srcBuffer[i];
                 }
@@ -3086,9 +3330,15 @@ public class AlgorithmMedian extends AlgorithmBase {
     private void volumeFilterBorder(float[] srcBdrBuffer, float[] destBuffer) {
 
         // space allocated for extra slices, rows, and cols used by the kernel
-        int srcBrdBufferKernelOffset = (halfK * bdrBufferWidth * bdrBufferHeight) + (halfK * bdrBufferWidth) + halfK;
+        int srcBrdBufferKernelOffset = (halfK[kernelNumber-1] * bdrBufferWidth * bdrBufferHeight) + 
+                                       (halfK[kernelNumber-1] * bdrBufferWidth) + halfK[kernelNumber-1];
 
         float[] maskedList;
+        
+        int kn;
+        boolean loop;
+        float a1, a2, b1, b2;
+        float zmin, zmed, zmax;
 
         int srcBdrBufferSliceLength = bdrBufferWidth * bdrBufferHeight;
         int srcBdrBufferIdx, srcBdrBufferSliceOffset;
@@ -3105,12 +3355,40 @@ public class AlgorithmMedian extends AlgorithmBase {
                 srcBdrBufferIdx = (destRow * bdrBufferWidth) + srcBdrBufferSliceOffset;
 
                 for (destCol = 0; destCol < srcBufferWidth; destCol++, srcBdrBufferIdx++, destBufferIdx++) {
-
-                    maskedList = getBorderBufferNeighborList(srcBdrBufferIdx, srcBdrBuffer, false);
-                    shellSort(maskedList);
-
                     if (entireImage || mask.get(destBufferIdx)) {
-                        destBuffer[destBufferIdx] = median(maskedList);
+                        if (adaptiveSize) {
+                            kn = 0;
+                            loop = true;
+                            while (loop) {
+                                 maskedList = getBorderBufferNeighborList(kn++, srcBdrBufferIdx, srcBdrBuffer, false);
+                                 shellSort(maskedList);
+                                 zmed = median(maskedList);
+                                 zmin = maskedList[0];
+                                 zmax = maskedList[maskedList.length-1];
+                                 a1 = zmed - zmin;
+                                 a2 = zmed - zmax;
+                                 if ((a1 > 0.0f) && (a2 < 0.0f)) {
+                                     loop = false;
+                                     b1 = srcBdrBuffer[srcBdrBufferIdx] - zmin;
+                                     b2 = srcBdrBuffer[srcBdrBufferIdx] - zmax;
+                                     if ((b1 > 0.0f) && (b2 < 0.0f)) {
+                                         destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
+                                     }
+                                     else {
+                                         destBuffer[destBufferIdx] = zmed;
+                                     }
+                                 } // if (a1 > 0.0f_ && (a2 < 0.0f))
+                                 else if (kn == kernelNumber) {
+                                     loop = false;
+                                     destBuffer[destBufferIdx] = zmed;
+                                 }
+                            } // while (loop)             
+                        } // if (adaptiveSize)
+                        else { // not adaptiveSize
+                            maskedList = getBorderBufferNeighborList(0, srcBdrBufferIdx, srcBdrBuffer, false);
+                            shellSort(maskedList);
+                            destBuffer[destBufferIdx] = median(maskedList);
+                        } // else not adaptiveSize
                     } else {
                         destBuffer[destBufferIdx] = srcBdrBuffer[srcBdrBufferIdx];
                     }
