@@ -1398,8 +1398,6 @@ public class AlgorithmMedian extends AlgorithmBase {
         width = bdrBufferWidth;
         height = bdrBufferHeight;
 
-        int sliceWidth = width * valuesPerPixel; // width of slice in number of elements
-
         // place all the masked 'on' elements into the data-list
         int count = 0;
 
