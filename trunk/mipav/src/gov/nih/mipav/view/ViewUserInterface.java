@@ -690,8 +690,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
         openingMenuBar = new JMenuBar();
         openingMenuBar.add(menuBar.makeFileMenu(false));
-
-        if (getRegisteredImagesNum() > 0) {
+        if (getRegisteredFramedImagesNum() > 0) {
             this.pluginsMenu = buildPlugInsMenu(getActiveImageFrame());
         } else {
             this.pluginsMenu = buildPlugInsMenu(this);
@@ -1329,6 +1328,29 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return imageHashtable.size();
 
     } // end getRegisteredImagesNum()
+    
+    /**
+     * Return an num of images with frames(elements) from the image hashtable.
+     *
+     * @return  images number
+     *
+     * @see     CustomHashtable
+     */
+    public int getRegisteredFramedImagesNum() {
+        int size = 0;
+    	Enumeration e = imageHashtable.keys();
+    	while(e.hasMoreElements()) {
+    		Object key = e.nextElement();
+    		ModelImage image = (ModelImage)imageHashtable.get(key);
+    		if(image.getParentFrame() != null) {
+    			size++;
+    		}
+    	}
+
+    	return size;
+
+    }
+    
 
     /**
      * DOCUMENT ME!
