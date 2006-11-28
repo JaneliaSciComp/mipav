@@ -83,6 +83,8 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
     private JCheckBox saveIntermRegCheckBox;
     /**   checkbox for saving result image*/
     private JCheckBox saveAsCheckBox;
+    /** Target Browse Button */
+    private JButton targetBrowseButton;
     /**   button that brings up registration options dialog*/
     private JButton registrationOptionsButton;
     /**   input box for populating resultImageName*/
@@ -140,7 +142,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		targetImageTable.setPreferredScrollableViewportSize(new Dimension(300, 30));
 		JScrollPane targetImageScrollPane = new JScrollPane(targetImageTable);
 		targetPanel.add(targetImageScrollPane);
-		JButton targetBrowseButton = new JButton("Browse");
+		targetBrowseButton = new JButton("Browse");
 		targetBrowseButton.addActionListener(this);
 		targetBrowseButton.setActionCommand("targetBrowse");
 		targetPanel.add(targetBrowseButton);
@@ -323,7 +325,8 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 					//enable the Registration Options Button
 					registrationOptionsButton.setEnabled(true);
 					
-					
+					//disable the target Browse Button
+					targetBrowseButton.setEnabled(false);
 					
 				}
 				catch(OutOfMemoryError err) {
@@ -549,6 +552,10 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
         			}
         			PlugInDialogImageAverageRegistration.this.registrationOptionsButton.setEnabled(false);
         			PlugInDialogImageAverageRegistration.this.regOptions = null;
+        			
+        			PlugInDialogImageAverageRegistration.this.targetBrowseButton.setEnabled(true);
+        			
+        		
         		}
         		
         	}
