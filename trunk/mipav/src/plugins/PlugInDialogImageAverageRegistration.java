@@ -1,10 +1,8 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -26,8 +24,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
-import javax.swing.table.TableColumn;
+
 
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
@@ -35,6 +32,7 @@ import gov.nih.mipav.model.file.FileIO;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
@@ -63,8 +61,6 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	private File[] srcFiles;
 	/**   array to store the target image file*/
 	private File targetFile;
-	/**   arraylist to store the src images*/
-	private ArrayList srcImages = new ArrayList();
 	/**   model image for target and result images*/
 	private ModelImage targetImage, resultImage;
     /**   handle to the registration options dialog*/
@@ -75,22 +71,28 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
     private boolean includeTargetImageinCalc;
     /**   boolean to determine if the result image should be saved*/
     private boolean saveResultImage;
+    /**   boolean to determine if intermediate images should be saved*/
+    private boolean saveIntermediateRegImages;
     /**   result image name*/
     private String resultImageName = "";
     /**   boolean that determines if image is colr or not*/
     private boolean doColor;
     /**   checkbox for including target image in final average calc*/
     private JCheckBox includeTargetCheckBox;
+    /**   checkbox for saving intermediate registered images*/
+    private JCheckBox saveIntermRegCheckBox;
     /**   checkbox for saving result image*/
     private JCheckBox saveAsCheckBox;
     /**   button that brings up registration options dialog*/
     private JButton registrationOptionsButton;
     /**   input box for populating resultImageName*/
     private JTextField saveAsTextField;
-    /** DOCUMENT ME! */
-    private ViewUserInterface userInterface;
-    /** DOCUMENT ME! */
+    /** handle to ViewUserInterface */
+    private ViewUserInterface UI;
+    /** directory path to image file */
     private String directory;
+    /** List of Source filenames */
+    private ArrayList srcFilenamesArrList = new ArrayList();
     
 	
 	/**
@@ -99,7 +101,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	 */
 	public PlugInDialogImageAverageRegistration(boolean modal) {
 		super(modal);
-		userInterface = ViewUserInterface.getReference();
+		UI = ViewUserInterface.getReference();
 		init();
 	}
 	
@@ -146,7 +148,6 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		GridBagLayout prefsPanelGridBagLayout = new GridBagLayout();
         GridBagConstraints prefsPanelConstraints = new GridBagConstraints();
 		JPanel prefsPanel = new JPanel(prefsPanelGridBagLayout);
-		includeTargetCheckBox = new JCheckBox("Include target image in averaging calculation");
 		registrationOptionsButton = new JButton("Registration Options");
 		registrationOptionsButton.addActionListener(this);
 		registrationOptionsButton.setActionCommand("options");
@@ -157,17 +158,25 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		prefsPanelConstraints.anchor = GridBagConstraints.CENTER;
 		prefsPanelConstraints.insets = new Insets(15,0,15,0);
 		prefsPanelGridBagLayout.setConstraints(registrationOptionsButton, prefsPanelConstraints);
+		includeTargetCheckBox = new JCheckBox("Include target image in averaging calculation");
 		prefsPanelConstraints.gridx = 0;
 		prefsPanelConstraints.gridy = 1;
 		prefsPanelConstraints.gridwidth = 2;
 		prefsPanelConstraints.anchor = GridBagConstraints.WEST;
 		prefsPanelConstraints.insets = new Insets(0,0,0,0);
 		prefsPanelGridBagLayout.setConstraints(includeTargetCheckBox, prefsPanelConstraints);
+		saveIntermRegCheckBox = new JCheckBox("Save intermediate registered images");
+		prefsPanelConstraints.gridx = 0;
+		prefsPanelConstraints.gridy = 2;
+		prefsPanelConstraints.gridwidth = 2;
+		prefsPanelConstraints.anchor = GridBagConstraints.WEST;
+		prefsPanelConstraints.insets = new Insets(0,0,0,0);
+		prefsPanelGridBagLayout.setConstraints(saveIntermRegCheckBox, prefsPanelConstraints);
 		saveAsCheckBox = new JCheckBox("Save result image as  ");
 		saveAsCheckBox.addActionListener(this);
 		saveAsCheckBox.setActionCommand("saveAs");
 		prefsPanelConstraints.gridx = 0;
-		prefsPanelConstraints.gridy = 2;
+		prefsPanelConstraints.gridy = 3;
 		prefsPanelConstraints.gridwidth = 1;
 		prefsPanelConstraints.anchor = GridBagConstraints.WEST;
 		prefsPanelConstraints.insets = new Insets(0,0,10,0);
@@ -175,12 +184,13 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		saveAsTextField = new JTextField(15);
 		saveAsTextField.setEnabled(false);
 		prefsPanelConstraints.gridx = 1;
-		prefsPanelConstraints.gridy = 2;
+		prefsPanelConstraints.gridy = 3;
 		prefsPanelConstraints.gridwidth = 1;
 		prefsPanelConstraints.insets = new Insets(0,0,10,0);
 		prefsPanelGridBagLayout.setConstraints(saveAsTextField, prefsPanelConstraints);
 		prefsPanel.add(registrationOptionsButton);
 		prefsPanel.add(includeTargetCheckBox);
+		prefsPanel.add(saveIntermRegCheckBox);
 		prefsPanel.add(saveAsCheckBox);
 		prefsPanel.add(saveAsTextField);
 		
@@ -219,13 +229,14 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	public void actionPerformed(ActionEvent e) {
 		String command = e.getActionCommand();
 		String filename = "";
+		String fullPath = "";
 		
 		FileIO fileIO = null;
 		String userDir = "";
 		if(command.equalsIgnoreCase("srcBrowse")) {
 			JFileChooser srcFileChooser = new JFileChooser();
-			if (userInterface.getDefaultDirectory() != null) {
-				srcFileChooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
+			if (UI.getDefaultDirectory() != null) {
+				srcFileChooser.setCurrentDirectory(new File(UI.getDefaultDirectory()));
             } else {
             	srcFileChooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
@@ -235,22 +246,29 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 				
 				srcFiles = srcFileChooser.getSelectedFiles();
 				directory = String.valueOf(srcFileChooser.getCurrentDirectory()) + File.separatorChar;
-				userInterface.setDefaultDirectory(directory);
+				UI.setDefaultDirectory(directory);
 				for (int k = 0; k < srcFiles.length; k++) {
 					try {
 						fileIO = new FileIO();
 						filename = srcFiles[k].getName();
+						/*
 						ModelImage srcImage = fileIO.readImage(filename, directory, false, null); 
 						if (srcImage == null) {
 		                    System.err.println("Error loading file");
 
 		                    return;
-		                }
+		                }*/
+						//we want to only display the file name not the whole path
 						Vector rowData = new Vector();
 						rowData.add(filename);
 						srcTableModel.addRow(rowData);
+						fullPath = directory + filename;
+						//we will put the whole path and filename in this list that will then go to the alg
+						srcFilenamesArrList.add(fullPath);
+						/*
 						srcImages.add(srcImage);
 						srcImage = null;
+						*/
 					}
 					catch(OutOfMemoryError err) {
 		                MipavUtil.displayError("Out of memory!");
@@ -263,8 +281,8 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		}
 		else if(command.equalsIgnoreCase("targetBrowse")) {
 			JFileChooser targetFileChooser = new JFileChooser();
-			if (userInterface.getDefaultDirectory() != null) {
-				targetFileChooser.setCurrentDirectory(new File(userInterface.getDefaultDirectory()));
+			if (UI.getDefaultDirectory() != null) {
+				targetFileChooser.setCurrentDirectory(new File(UI.getDefaultDirectory()));
             } else {
             	targetFileChooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
             }
@@ -276,7 +294,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 					fileIO = new FileIO();
 					filename = targetFile.getName();
 					directory = String.valueOf(targetFileChooser.getCurrentDirectory()) + File.separatorChar;
-					userInterface.setDefaultDirectory(directory);
+					UI.setDefaultDirectory(directory);
 					targetImage = fileIO.readImage(filename, directory, false, null); 
 					if (targetImage == null) {
 	                    System.err.println("Error loading file");
@@ -322,28 +340,13 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 			dispose();
 		}
 		else if(command.equalsIgnoreCase("ok")) {
-			if(srcImages.size()==0 || targetImage==null) {
+			if(srcFilenamesArrList.size()==0 || targetImage==null) {
 				MipavUtil.displayError("Both Source Image(s) and Target Image are required");
 				return;
 			}
-			//loop through src images and make sure they are same as target image in terms of color
-			for(int i=0;i<srcImages.size();i++) {
-				if(((ModelImage)srcImages.get(i)).isColorImage() != doColor) {
-					MipavUtil.displayError("Source Image(s) and Target Image must either both be color images or grey scale images");
-					return;
-				}
-			}
-			int targetNumDims = targetImage.getNDims();
-			for(int i=0;i<srcImages.size();i++) {
-				int srcNumDims = ((ModelImage)srcImages.get(i)).getNDims();
-				if(srcNumDims != targetNumDims) {
-					MipavUtil.displayError("Source Image(s) and Target Image must have the same dimensions");
-					return;
-				}	
-			}
-			
 			if(regOptions.setVariables()) {
 				includeTargetImageinCalc = includeTargetCheckBox.isSelected();
+				saveIntermediateRegImages = saveIntermRegCheckBox.isSelected();
 				saveResultImage = saveAsCheckBox.isSelected();
 				if(saveResultImage) {
 					resultImageName = saveAsTextField.getText();
@@ -354,6 +357,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 				}
 
 				callAlgorithm();
+				
 				if(regOptions != null) {
 					regOptions.dispose();
 				}
@@ -384,12 +388,12 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	protected void callAlgorithm() {
 		
 		//call the algorithm
-		alg = new PlugInAlgorithmImageAverageRegistration(srcImages,targetImage,regOptions.getCost(),regOptions.getDOF(),regOptions.getInterp(),regOptions.getInterp2(),
+		alg = new PlugInAlgorithmImageAverageRegistration(srcFilenamesArrList,targetImage,regOptions.getCost(),regOptions.getDOF(),regOptions.getInterp(),regOptions.getInterp2(),
 																								  regOptions.getRotateBeginX(),regOptions.getRotateEndX(),regOptions.getCoarseRateX(),
 																								  regOptions.getFineRateX(),regOptions.getRotateBeginY(),regOptions.getRotateEndY(),
 																								  regOptions.getCoarseRateY(),regOptions.getFineRateY(),regOptions.getRotateBeginZ(),
 																								  regOptions.getRotateEndZ(),regOptions.getCoarseRateZ(),regOptions.getFineRateZ(),
-																								  regOptions.isMaxOfMinResol(),includeTargetImageinCalc);
+																								  regOptions.isMaxOfMinResol(),includeTargetImageinCalc,saveIntermediateRegImages,doColor);
 		
 		alg.addListener(this);
 		
@@ -439,15 +443,21 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		if(saveAsCheckBox.isSelected()) {
 			if(!resultImageName.equals("")) {
 				FileWriteOptions options = new FileWriteOptions(resultImageName,directory,true);
-				//resultImage.getParentFrame().save(options, -1);
 				FileIO io = new FileIO();
 				io.writeImage(resultImage, options);
-				resultImage.disposeLocal();
-				resultImage = null;
+				Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+				Preferences.debug("*** Final Registered Image saved to " + directory + resultImageName + "\n",Preferences.DEBUG_ALGORITHM);
+				if(resultImage != null) {
+					resultImage.disposeLocal();
+					resultImage = null;
+				}
 			}
 				
 		}
 		
+		Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+		Preferences.debug("*** Completed Image Average Registration ***",Preferences.DEBUG_ALGORITHM);
+		Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
 		finalize();
 		dispose();
 		
@@ -468,17 +478,11 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	
 	
 	public void finalize() {
-		for(int i=0;i<srcImages.size();i++) {
-			if ((ModelImage)srcImages.get(i) != null) {
-				((ModelImage)srcImages.get(i)).disposeLocal();
-				srcImages.set(i,null);
-			}
-		}
 		if(targetImage != null) {
 			targetImage.disposeLocal();
 			targetImage = null;
 		}
-		System.gc();
+		
     }
 	
 	
@@ -533,15 +537,16 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
         		if(columnName.equals("Source Images")) {
         			//need to remove from the table and the ArrayList
         			PlugInDialogImageAverageRegistration.this.srcTableModel.removeRow(rowIndex);
-        			((ModelImage)PlugInDialogImageAverageRegistration.this.srcImages.get(rowIndex)).disposeLocal();
-        			PlugInDialogImageAverageRegistration.this.srcImages.set(rowIndex, null);
-        			PlugInDialogImageAverageRegistration.this.srcImages.remove(rowIndex);
+        			//need to remove that entry from the ArrList
+        			PlugInDialogImageAverageRegistration.this.srcFilenamesArrList.remove(rowIndex);
         		}
         		else if(columnName.equals("Target Image")) {
         			//need to remove from table, make targetImage to null, set the regOptions instance to null, and disable regOptions button
         			PlugInDialogImageAverageRegistration.this.targetTableModel.removeRow(rowIndex);
-        			PlugInDialogImageAverageRegistration.this.targetImage.disposeLocal();
-        			PlugInDialogImageAverageRegistration.this.targetImage = null;
+        			if(PlugInDialogImageAverageRegistration.this.targetImage != null) {
+        				PlugInDialogImageAverageRegistration.this.targetImage.disposeLocal();
+        				PlugInDialogImageAverageRegistration.this.targetImage = null;
+        			}
         			PlugInDialogImageAverageRegistration.this.registrationOptionsButton.setEnabled(false);
         			PlugInDialogImageAverageRegistration.this.regOptions = null;
         		}

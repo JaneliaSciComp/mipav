@@ -84,7 +84,7 @@ public class FileIO {
     private JDialogUnknownIO unknownIODialog;
 
 
-    /** Document Me. */
+    /** user defined file type associations...that were obtained from the prefs */
     private String[] userDefinedFileTypeAssociations = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -781,8 +781,23 @@ public class FileIO {
      * @see     FileBase
      */
     public int getFileType(String fileName, String fileDir, boolean doWrite) {
-        int fileType;
+    	int fileType;
         int i;
+    	
+        
+    	String beginString;
+        if (fileName.lastIndexOf('.') > -1) {
+            beginString = fileName.substring(0, fileName.lastIndexOf('.'));
+        } else {
+            beginString = fileName;
+        }
+
+        if ((beginString.equalsIgnoreCase("d3proc")) || (beginString.equalsIgnoreCase("reco")) ||
+                (beginString.equalsIgnoreCase("2dseq"))) {
+            fileType = FileUtility.BRUKER;
+            return fileType;
+        }
+    	
 
         fileName.trim();
 
@@ -909,6 +924,57 @@ public class FileIO {
                 }
             }
         }
+        
+        try {
+        	if (fileType == FileUtility.UNDEFINED) {
+                fileType = isDicom(fileName, fileDir);
+            }
+
+            if (fileType == FileUtility.UNDEFINED) {
+                fileType = isGESigna4X(fileName, fileDir);
+            }
+
+            if (fileType == FileUtility.UNDEFINED) {
+                fileType = isGESigna5X(fileName, fileDir);
+            }
+
+            if (fileType == FileUtility.UNDEFINED) {
+                fileType = isMagnetomVision(fileName, fileDir);
+            }
+
+            if (fileType == FileUtility.UNDEFINED) {
+                fileType = isMinc(fileName, fileDir);
+            }
+            
+
+
+   			if (fileType == FileUtility.UNDEFINED) {
+
+                fileType = isAnalyze(fileName, fileDir);
+            }
+
+            if (fileType == FileUtility.UNDEFINED) {
+                fileType = isNIFTI(fileName, fileDir);
+            }
+        }
+        catch (IOException ioe) {
+
+            if (ioe instanceof FileNotFoundException) {
+                MipavUtil.displayError("File does not exist '" + fileDir + fileName + "'.");
+
+                return FileUtility.ERROR;
+            }
+
+            if (!quiet) {
+                MipavUtil.displayError("FileIO: " + ioe);
+                Preferences.debug("FileIO: " + ioe + "\n");
+            } else {
+                Preferences.debug("FileIO: " + ioe + "\n");
+            }
+
+            fileType = FileUtility.UNDEFINED;
+        }
+        
 
         return fileType;
     }
@@ -2288,83 +2354,22 @@ public class FileIO {
         this.fileName = fileName;
         this.fileDir = fileDir;
         fileName.trim();
+        
 
-        String beginString;
+         fileType = getFileType(fileName, fileDir, false); // set the fileType
+         
+         if(fileType == FileUtility.ERROR) {
+        	 return null;
+         }
 
-        if (fileName.lastIndexOf('.') > -1) {
-            beginString = fileName.substring(0, fileName.lastIndexOf('.'));
-        } else {
-            beginString = fileName;
-        }
+         if (fileType == FileUtility.UNDEFINED) { // if image type not defined by extension, popup
+        	 fileType = getFileType(); // dialog to get user to define image type
+             userDefinedFileType = fileType;
+             userDefinedSuffix = "." + fileName.split("\\.")[1];
+         }
 
-        if ((beginString.equalsIgnoreCase("d3proc")) || (beginString.equalsIgnoreCase("reco")) ||
-                (beginString.equalsIgnoreCase("2dseq"))) {
-            fileType = FileUtility.BRUKER;
-        }
+        fileType = chkMultiFile(fileType, multiFile); // for multifile support...
 
-        try {
-
-            if (fileType != FileUtility.BRUKER) {
-                fileType = getFileType(fileName, fileDir, false); // set the fileType based on the filename extension
-
-                if (fileType == FileUtility.UNDEFINED) {
-                    fileType = isDicom(fileName, fileDir);
-                }
-
-                if (fileType == FileUtility.UNDEFINED) {
-                    fileType = isGESigna4X(fileName, fileDir);
-                }
-
-                if (fileType == FileUtility.UNDEFINED) {
-                    fileType = isGESigna5X(fileName, fileDir);
-                }
-
-                if (fileType == FileUtility.UNDEFINED) {
-                    fileType = isMagnetomVision(fileName, fileDir);
-                }
-
-                if (fileType == FileUtility.UNDEFINED) {
-                    fileType = isMinc(fileName, fileDir);
-                }
-                
-
-
-       			if (fileType == FileUtility.UNDEFINED) {
-
-                    fileType = isAnalyze(fileName, fileDir);
-                }
-
-                if (fileType == FileUtility.UNDEFINED) {
-                    fileType = isNIFTI(fileName, fileDir);
-                }
-
-                if (fileType == FileUtility.UNDEFINED) { // if image type not defined by extension, popup
-                    fileType = getFileType(); // dialog to get user to define image type
-                    userDefinedFileType = fileType;
-                    userDefinedSuffix = "." + fileName.split("\\.")[1];
-                }
-
-                fileType = chkMultiFile(fileType, multiFile); // for multifile support...
-
-
-            }
-        } catch (IOException ioe) {
-
-            if (ioe instanceof FileNotFoundException) {
-                MipavUtil.displayError("File does not exist '" + fileDir + fileName + "'.");
-
-                return null;
-            }
-
-            if (!quiet) {
-                MipavUtil.displayError("FileIO: " + ioe);
-                Preferences.debug("FileIO: " + ioe + "\n");
-            } else {
-                Preferences.debug("FileIO: " + ioe + "\n");
-            }
-
-            fileType = FileUtility.UNDEFINED;
-        }
 
 
         try {
@@ -3273,6 +3278,7 @@ public class FileIO {
 
             // updates menubar for each image
             Vector imageFrames = UI.getImageFrameVector();
+            
 
             if (imageFrames.size() < 1) {
                 UI.buildMenu();
