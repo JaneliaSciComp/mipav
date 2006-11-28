@@ -7,6 +7,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
+import java.awt.event.ItemEvent;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -801,7 +802,6 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
             fineRateY = fineRateX;
             fineRateZ = fineRateX;
         } else { // universalCheckbox not selected
-
             if (!testParameter(rotateBeginTextY.getText(), -360, 360)) {
                 showY();
                 rotateBeginTextY.requestFocus();
@@ -1109,7 +1109,163 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
 	
 	
 	
-	
+    public void itemStateChanged(ItemEvent event) {
+    	if (event.getSource() == universalCheckbox) {
+
+            if (universalCheckbox.isSelected()) {
+                xRadio.setEnabled(false);
+                yRadio.setEnabled(false);
+                zRadio.setEnabled(false);
+                xRadio.setSelected(true);
+                yRadio.setSelected(false);
+                zRadio.setSelected(false);
+
+                if (xSelected) {
+                    return;
+                } else if (ySelected) {
+                    rotatePanel.remove(rotateRangePanelY);
+                    rotatePanel.remove(coarsePanelY);
+                    rotatePanel.remove(finePanelY);
+                    ySelected = false;
+                } else { // if (zSelected)
+                    rotatePanel.remove(rotateRangePanelZ);
+                    rotatePanel.remove(coarsePanelZ);
+                    rotatePanel.remove(finePanelZ);
+                    zSelected = false;
+                } // else if zSelected
+
+                xSelected = true;
+                gbc.gridx = 0;
+                gbc.gridy = 2;
+                gbc.gridwidth = 1;
+                gbc.anchor = GridBagConstraints.WEST;
+                rotatePanel.add(rotateRangePanelX, gbc);
+
+                gbc.gridx = 0;
+                gbc.gridy = 3;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(coarsePanelX, gbc);
+
+                gbc.gridx = 0;
+                gbc.gridy = 4;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(finePanelX, gbc);
+            } else {
+                xRadio.setEnabled(true);
+                yRadio.setEnabled(true);
+                zRadio.setEnabled(true);
+            }
+        } // else if (event.getSource() == universalCheckbox)
+        else if ((event.getSource() == xRadio) || (event.getSource() == yRadio) || (event.getSource() == zRadio)) {
+
+            if (xRadio.isSelected()) {
+
+                if (xSelected) {
+                    return;
+                } else if (ySelected) {
+                    rotatePanel.remove(rotateRangePanelY);
+                    rotatePanel.remove(coarsePanelY);
+                    rotatePanel.remove(finePanelY);
+                    ySelected = false;
+                } else { // if (zSelected)
+                    rotatePanel.remove(rotateRangePanelZ);
+                    rotatePanel.remove(coarsePanelZ);
+                    rotatePanel.remove(finePanelZ);
+                    zSelected = false;
+                } // else if zSelected
+
+                xSelected = true;
+                gbc.gridx = 0;
+                gbc.gridy = 2;
+                gbc.gridwidth = 1;
+                gbc.anchor = GridBagConstraints.WEST;
+                rotatePanel.add(rotateRangePanelX, gbc);
+
+                gbc.gridx = 0;
+                gbc.gridy = 3;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(coarsePanelX, gbc);
+
+                gbc.gridx = 0;
+                gbc.gridy = 4;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(finePanelX, gbc);
+            } // if (xRadio.isSelected)
+            else if (yRadio.isSelected()) {
+
+                if (xSelected) {
+                    rotatePanel.remove(rotateRangePanelX);
+                    rotatePanel.remove(coarsePanelX);
+                    rotatePanel.remove(finePanelX);
+                    xSelected = false;
+                } // if (xSelected)
+                else if (ySelected) {
+                    return;
+                } else { // zSelected
+                    rotatePanel.remove(rotateRangePanelZ);
+                    rotatePanel.remove(coarsePanelZ);
+                    rotatePanel.remove(finePanelZ);
+                    zSelected = false;
+                } // else zSelected
+
+                ySelected = true;
+                gbc.gridx = 0;
+                gbc.gridy = 2;
+                gbc.gridwidth = 1;
+                gbc.anchor = GridBagConstraints.WEST;
+                rotatePanel.add(rotateRangePanelY, gbc);
+
+                gbc.gridx = 0;
+                gbc.gridy = 3;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(coarsePanelY, gbc);
+
+                gbc.gridx = 0;
+                gbc.gridy = 4;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(finePanelY, gbc);
+            } // else if (yRadio.isSelected())
+            else if (zRadio.isSelected()) {
+
+                if (xSelected) {
+                    rotatePanel.remove(rotateRangePanelX);
+                    rotatePanel.remove(coarsePanelX);
+                    rotatePanel.remove(finePanelX);
+                    xSelected = false;
+                } // if (xSelcted)
+                else if (ySelected) {
+                    rotatePanel.remove(rotateRangePanelY);
+                    rotatePanel.remove(coarsePanelY);
+                    rotatePanel.remove(finePanelY);
+                    ySelected = false;
+                } // else if (ySelected)
+                else { // zSelected
+                    return;
+                } // else zSelected
+
+                zSelected = true;
+                gbc.gridx = 0;
+                gbc.gridy = 2;
+                gbc.gridwidth = 1;
+                gbc.anchor = GridBagConstraints.WEST;
+                rotatePanel.add(rotateRangePanelZ, gbc);
+
+                gbc.gridx = 0;
+                gbc.gridy = 3;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(coarsePanelZ, gbc);
+
+                gbc.gridx = 0;
+                gbc.gridy = 4;
+                gbc.gridwidth = GridBagConstraints.REMAINDER;
+                rotatePanel.add(finePanelZ, gbc);
+            } // else if (zRadio.isSelected())
+
+            rotatePanel.validate();
+            repaint();
+        } // else if xRadio, yRadio, or zRadio
+    	
+    }
 	
 	
 	
