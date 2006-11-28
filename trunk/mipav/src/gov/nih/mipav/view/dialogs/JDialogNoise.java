@@ -98,6 +98,8 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    private double maximumNoise;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -238,10 +240,10 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
     /**
      * Accessor that sets the noise level.
      *
-     * @param  n  noise type
+     * @param  n  maximum noise excursion above and below zero
      */
     public void setNoiseLevel(double n) {
-        min = n;
+        maximumNoise = n;
     }
 
     /**
@@ -286,7 +288,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     }
 
                     // Make algorithm
-                    randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, min);
+                    randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -324,7 +326,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    randomAlgo = new AlgorithmNoise(image, noiseType, min);
+                    randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -395,7 +397,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                     }
 
                     // Make algorithm
-                    randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, min);
+                    randomAlgo = new AlgorithmNoise(resultImage, image, noiseType, maximumNoise);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -432,7 +434,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
                 try {
 
                     // Make algorithm
-                    randomAlgo = new AlgorithmNoise(image, noiseType, min);
+                    randomAlgo = new AlgorithmNoise(image, noiseType, maximumNoise);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -543,12 +545,17 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         textStart.setFont(serif12);
         textStart.addFocusListener(this);
         optPanel.add(textStart);
+        
+        JLabel gaussLabel = new JLabel("Maximum noise for Gaussian is at 4 standard deviations");
+        gaussLabel.setFont(serif12);
+        gaussLabel.setForeground(Color.black);
 
         imageRangeLabel = new JLabel("Image: ( min = " + image.getMin() + "  max = " + image.getMax() + " )");
         imageRangeLabel.setFont(serif12);
         imageRangeLabel.setForeground(Color.black);
 
-        panelRange.add(optPanel, BorderLayout.CENTER);
+        panelRange.add(optPanel, BorderLayout.NORTH);
+        panelRange.add(gaussLabel, BorderLayout.CENTER);
         panelRange.add(imageRangeLabel, BorderLayout.SOUTH);
 
         JPanel outputOptPanel = new JPanel(new GridLayout(1, 2));
@@ -623,12 +630,12 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         double noiseStart = imageRange / 20.0;
 
         if ((image.getType() != ModelStorageBase.FLOAT) && (image.getType() != ModelStorageBase.DOUBLE)) {
-            start.setText("Noise level (0 - " + Math.round(noiseMax) + "):  ");
+            start.setText("Maximum noise (0 - " + Math.round(noiseMax) + "):  ");
             textStart.setText(String.valueOf(Math.round(noiseStart)));
             min = 0;
             max = Math.round(noiseMax);
         } else {
-            start.setText("Noise level (0 - " + noiseMax + "):  ");
+            start.setText("Maximum noise (0 - " + noiseMax + "):  ");
             textStart.setText(String.valueOf(noiseStart));
             min = 0;
             max = noiseMax;
@@ -658,7 +665,7 @@ public class JDialogNoise extends JDialogScriptableBase implements AlgorithmInte
         tmpStr = textStart.getText();
 
         if (testParameter(tmpStr, min, max)) {
-            min = Float.valueOf(tmpStr).floatValue();
+            maximumNoise = Float.valueOf(tmpStr).floatValue();
         } else {
             textStart.requestFocus();
             textStart.selectAll();
