@@ -163,7 +163,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 				if(sourceImage.getNDims() != targetNumDims) {
 					//log issue that this source image and the target image are not the same dimensions
 					Preferences.debug("  * Dimensions of " + filename + " do not match target image \n",Preferences.DEBUG_ALGORITHM);
-					Preferences.debug("  * " + filename + " will be ignored in registration calculation \n",Preferences.DEBUG_ALGORITHM);
+					Preferences.debug("  * " + filename + " will be ignored \n",Preferences.DEBUG_ALGORITHM);
 					if(sourceImage != null) {
 		            	 sourceImage.disposeLocal();
 		            	 sourceImage = null;
