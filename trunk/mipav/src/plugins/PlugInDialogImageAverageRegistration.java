@@ -34,6 +34,7 @@ import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
 import gov.nih.mipav.view.Preferences;
 import gov.nih.mipav.view.ViewJFrameImage;
+import gov.nih.mipav.view.ViewTableModel;
 import gov.nih.mipav.view.ViewUserInterface;
 import gov.nih.mipav.view.dialogs.JDialogBase;
 
@@ -54,9 +55,9 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 	/**  table to store the target image name*/
 	private JTable targetImageTable;
 	/**   table model for the srcimages*/
-	private DefaultTableModel srcTableModel;
+	private ViewTableModel srcTableModel;
 	/**   table model for the targetImage*/
-	private DefaultTableModel targetTableModel;
+	private ViewTableModel targetTableModel;
 	/**   array to store the srcImage files*/
 	private File[] srcFiles;
 	/**   array to store the target image file*/
@@ -122,7 +123,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
         
 		
 		JPanel srcPanel = new JPanel();
-		srcTableModel = new DefaultTableModel();
+		srcTableModel = new ViewTableModel();
 		srcTableModel.addColumn("Source Images");
 		srcImagesTable = new JTable(srcTableModel);
 		srcImagesTable.setPreferredScrollableViewportSize(new Dimension(300, 200));
@@ -135,7 +136,7 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		srcPanel.add(srcBrowseButton);
 		
         JPanel targetPanel = new JPanel();
-		targetTableModel = new DefaultTableModel();
+		targetTableModel = new ViewTableModel();
 		targetTableModel.addColumn("Target Image");
 		targetImageTable = new JTable(targetTableModel);
 		targetImageTable.addMouseListener(new MouseHandler());
