@@ -170,7 +170,7 @@ public class PlugInImageAverageRegistration_RegOptionsDialog extends JDialogBase
         comboBoxDOF.addItem("Global rescale - 7");
         comboBoxDOF.addItem("Specific rescale - 9");
         comboBoxDOF.addItem("Affine - 12");
-        comboBoxDOF.setSelectedIndex(3);
+        comboBoxDOF.setSelectedIndex(2);
         comboBoxDOF.addItemListener(this);
 
         JLabel labelCost = new JLabel("Cost function:");
