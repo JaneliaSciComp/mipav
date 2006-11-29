@@ -67,13 +67,15 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 	private String directory;
 	/** handle to ViewUserInterface */
 	private ViewUserInterface UI;
+	/** Document me */
+	private boolean isTargetDICOM;
 	
 	public PlugInAlgorithmImageAverageRegistration(ArrayList srcFilenamesArrList, ModelImage targetImage, int cost, int DOF, 
 												   int interp, int interp2, float rotateBeginX, float rotateEndX, float coarseRateX,
 												   float fineRateX, float rotateBeginY, float rotateEndY,float coarseRateY,
 												   float fineRateY, float rotateBeginZ, float rotateEndZ,float coarseRateZ,
 												   float fineRateZ, boolean maxOfMinResol, boolean includeTargetImageinCalc,
-												   boolean saveIntermediateRegImages, boolean doColor) {
+												   boolean saveIntermediateRegImages, boolean doColor, boolean isTargetDICOM) {
 												   
 		this.srcFilenamesArrList = srcFilenamesArrList;
 		this.targetImage = targetImage;
@@ -97,6 +99,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 		this.includeTargetImageinCalc = includeTargetImageinCalc;
 		this.saveIntermediateRegImages = saveIntermediateRegImages;
 		this.doColor = doColor;
+		this.isTargetDICOM = isTargetDICOM;
 		
 		UI = ViewUserInterface.getReference();
 		directory = UI.getDefaultDirectory();
@@ -111,24 +114,32 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 		//read in each src image and then run algorithm
 		int targetNumDims = targetImage.getNDims();
 		Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
-		Preferences.debug("*** Beginning Image Average Registration ***\n",Preferences.DEBUG_ALGORITHM);
-		Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
-		Preferences.debug("*** Target image name is " + targetImage.getImageFileName() + "\n",Preferences.DEBUG_ALGORITHM);
-		Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
-		Preferences.debug("*** Number of source images is " + srcFilenamesArrList.size() + "\n",Preferences.DEBUG_ALGORITHM);
+		Preferences.debug("*** Beginning Image Average Registration \n",Preferences.DEBUG_ALGORITHM);
+		//Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+		if(isTargetDICOM) {
+			Preferences.debug("*** Target file is DICOM...the DICOM name for " + targetImage.getImageFileName() + " is " + targetImage.getImageName() + " \n",Preferences.DEBUG_ALGORITHM);
+		}else {
+			Preferences.debug("*** Target image name is " + targetImage.getImageFileName() + "\n",Preferences.DEBUG_ALGORITHM);
+		}
+		//Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+		Preferences.debug("*** Number of source files is " + srcFilenamesArrList.size() + "\n",Preferences.DEBUG_ALGORITHM);
 		for(int i=0;i<srcFilenamesArrList.size();i++) {
+			boolean isMultifile = false;
 			//get the directory and the filename
 			String fullPath = (String)srcFilenamesArrList.get(i);
 			int sepIndex = fullPath.lastIndexOf(File.separatorChar);
 			String directory = fullPath.substring(0, sepIndex + 1);
 			String filename = fullPath.substring(sepIndex + 1, fullPath.length());
-			Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
-			Preferences.debug("*** Source image name(" + (i+1) + ") is " + filename + "\n",Preferences.DEBUG_ALGORITHM);
+			//Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+			//Preferences.debug("*** Source image name(" + (i+1) + ") is " + filename + "\n",Preferences.DEBUG_ALGORITHM);
 			//first check to see if this image is an undefined type because
 			//if it is, we do not want the undefined dialog to pop up 
 			//We will just ignore this image in the average algorithm...but we will log it
 			FileIO fileIO = new FileIO();
 			int fileType = fileIO.getFileType(filename, directory, false); 
+			if(fileType == FileUtility.DICOM) {
+				isMultifile = true;
+			}
 			if(fileType == FileUtility.ERROR) {
 				//log error in obtaining file type
 				Preferences.debug("  * Error in obtaining file type of " + filename + "\n",Preferences.DEBUG_ALGORITHM);
@@ -143,7 +154,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 			}
 			else {
 				//read in the image
-				sourceImage = fileIO.readImage(filename, directory, false, null); 
+				sourceImage = fileIO.readImage(filename, directory, isMultifile, null); 
 				if (sourceImage == null) {
                     //log problem that there was an error reading in the file
 					Preferences.debug("  * Error reading in file for " + filename + "\n",Preferences.DEBUG_ALGORITHM);
@@ -171,8 +182,23 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 					continue;
 				}
 				
-				Preferences.debug("  * " + filename + " read in successfully \n",Preferences.DEBUG_ALGORITHM);
-				Preferences.debug("  * Beginning registration of "  + filename + " to " + targetImage.getImageFileName() + "\n",Preferences.DEBUG_ALGORITHM);
+				Preferences.debug("*** Source file (" + (i+1) + ") :  " + filename + " read in successfully \n",Preferences.DEBUG_ALGORITHM);
+				if(fileType == FileUtility.DICOM) {
+					Preferences.debug("  * Source file is DICOM..the DICOM name for " + filename + " is " + sourceImage.getImageName() + " \n",Preferences.DEBUG_ALGORITHM);
+				}
+				if(fileType == FileUtility.DICOM && isTargetDICOM) {
+					Preferences.debug("  * Beginning registration of "  + sourceImage.getImageName() + " to " + targetImage.getImageName() + "\n",Preferences.DEBUG_ALGORITHM);
+				}
+				else if(fileType == FileUtility.DICOM && !isTargetDICOM) {
+					Preferences.debug("  * Beginning registration of "  + sourceImage.getImageName() + " to " + targetImage.getImageFileName() + "\n",Preferences.DEBUG_ALGORITHM);
+				}
+				else if(fileType != FileUtility.DICOM && isTargetDICOM) {
+					Preferences.debug("  * Beginning registration of "  + filename + " to " + targetImage.getImageName() + "\n",Preferences.DEBUG_ALGORITHM);
+				}
+				else {
+					Preferences.debug("  * Beginning registration of "  + filename + " to " + targetImage.getImageFileName() + "\n",Preferences.DEBUG_ALGORITHM);
+				}
+
 				
 				AlgorithmTransform transform = null;
 				algReg3D = new AlgorithmRegOAR3D(targetImage, sourceImage, cost, DOF, interp, rotateBeginX, rotateEndX,
@@ -207,10 +233,21 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 	             
 	             //add registered imgage to the array
 	             registeredImages.add(registeredImage);
-	             
-	             Preferences.debug("*** " + filename + " registered successfully \n",Preferences.DEBUG_ALGORITHM);
+	             if(fileType == FileUtility.DICOM) { 
+	            	 Preferences.debug("*** " + sourceImage.getImageName()  + " registered successfully \n",Preferences.DEBUG_ALGORITHM);
+	             }
+	             else {
+	            	 Preferences.debug("*** " + filename + " registered successfully \n",Preferences.DEBUG_ALGORITHM);
+	             }
 	             
 	             //this is where we will save the intermediate registered image if user checked the checkbox
+	             //If the source is a DICOM image, then we should save the interm image 1 level up...not in its DICOM folder
+	             if(fileType == FileUtility.DICOM) {
+	            	int sep = directory.lastIndexOf(File.separatorChar);
+	     			String directory2 = directory.substring(0, sep);
+	     			sep = directory2.lastIndexOf(File.separatorChar);
+	     			directory = directory2.substring(0, sep + 1);
+	             }
 	             if(saveIntermediateRegImages) {
 	            	String imageName = registeredImage.getImageFileName() + ".xml";
 	            	FileWriteOptions options = new FileWriteOptions(imageName,directory,true);

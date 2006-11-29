@@ -29,6 +29,7 @@ import javax.swing.table.DefaultTableModel;
 import gov.nih.mipav.model.algorithms.AlgorithmBase;
 import gov.nih.mipav.model.algorithms.AlgorithmInterface;
 import gov.nih.mipav.model.file.FileIO;
+import gov.nih.mipav.model.file.FileUtility;
 import gov.nih.mipav.model.file.FileWriteOptions;
 import gov.nih.mipav.model.structures.ModelImage;
 import gov.nih.mipav.view.MipavUtil;
@@ -96,6 +97,11 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
     private String directory;
     /** List of Source filenames */
     private ArrayList srcFilenamesArrList = new ArrayList();
+    /** Document Me */
+    private boolean isTargetDICOM;
+    /** Document me */
+    private String targetDirectory;
+   
     
 	
 	/**
@@ -254,24 +260,15 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 					try {
 						fileIO = new FileIO();
 						filename = srcFiles[k].getName();
-						/*
-						ModelImage srcImage = fileIO.readImage(filename, directory, false, null); 
-						if (srcImage == null) {
-		                    System.err.println("Error loading file");
-
-		                    return;
-		                }*/
-						//we want to only display the file name not the whole path
-						Vector rowData = new Vector();
-						rowData.add(filename);
-						srcTableModel.addRow(rowData);
+						int fileType = fileIO.getFileType(filename, directory, false); 
 						fullPath = directory + filename;
+						//we will display the full path
+						Vector rowData = new Vector();
+						rowData.add(fullPath);
+						srcTableModel.addRow(rowData);
+						
 						//we will put the whole path and filename in this list that will then go to the alg
 						srcFilenamesArrList.add(fullPath);
-						/*
-						srcImages.add(srcImage);
-						srcImage = null;
-						*/
 					}
 					catch(OutOfMemoryError err) {
 		                MipavUtil.displayError("Out of memory!");
@@ -293,24 +290,32 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 			int targetReturnVal = targetFileChooser.showOpenDialog(this);
 			if(targetReturnVal == JFileChooser.APPROVE_OPTION) {
 				try {
+					isTargetDICOM = false;
+					boolean isMultifile = false;
 					targetFile = targetFileChooser.getSelectedFile();
 					fileIO = new FileIO();
 					filename = targetFile.getName();
 					directory = String.valueOf(targetFileChooser.getCurrentDirectory()) + File.separatorChar;
 					UI.setDefaultDirectory(directory);
-					targetImage = fileIO.readImage(filename, directory, false, null); 
+					int fileType = fileIO.getFileType(filename, directory, false); 
+					if(fileType == FileUtility.DICOM) {
+						isMultifile = true;
+						isTargetDICOM = true;
+						targetDirectory = directory;
+					}
+					fullPath = directory + filename;
+					targetImage = fileIO.readImage(filename, directory, isMultifile, null); 
 					if (targetImage == null) {
 	                    System.err.println("Error loading file");
-
 	                    return;
 	                }
 					Vector rowData = new Vector();
-					rowData.add(filename);
+					rowData.add(fullPath);
 					if(targetTableModel.getRowCount() == 0) {
 						targetTableModel.addRow(rowData);
 					}
 					else {
-						targetTableModel.setValueAt(filename, 0, 0);
+						targetTableModel.setValueAt(fullPath, 0, 0);
 					}
 					
 					//need to test if target image is color or not
@@ -397,7 +402,8 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 																								  regOptions.getFineRateX(),regOptions.getRotateBeginY(),regOptions.getRotateEndY(),
 																								  regOptions.getCoarseRateY(),regOptions.getFineRateY(),regOptions.getRotateBeginZ(),
 																								  regOptions.getRotateEndZ(),regOptions.getCoarseRateZ(),regOptions.getFineRateZ(),
-																								  regOptions.isMaxOfMinResol(),includeTargetImageinCalc,saveIntermediateRegImages,doColor);
+																								  regOptions.isMaxOfMinResol(),includeTargetImageinCalc,saveIntermediateRegImages,
+																								  doColor,isTargetDICOM);
 		
 		alg.addListener(this);
 		
@@ -446,11 +452,19 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 		//need to save image here if they selected the checkbox
 		if(saveAsCheckBox.isSelected()) {
 			if(!resultImageName.equals("")) {
-				FileWriteOptions options = new FileWriteOptions(resultImageName,directory,true);
+				String dir = directory;
+				//if the target was a dicom, we want to save the result image 1 level up
+				if(isTargetDICOM) {
+					int sep = targetDirectory.lastIndexOf(File.separatorChar);
+	     			String directory2 = targetDirectory.substring(0, sep);
+	     			sep = directory2.lastIndexOf(File.separatorChar);
+	     			dir = directory2.substring(0, sep + 1);
+				}
+				FileWriteOptions options = new FileWriteOptions(resultImageName,dir,true);
 				FileIO io = new FileIO();
 				io.writeImage(resultImage, options);
 				Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
-				Preferences.debug("*** Final Registered Image saved to " + directory + resultImageName + "\n",Preferences.DEBUG_ALGORITHM);
+				Preferences.debug("*** Final Registered Image saved to " + dir + resultImageName + "\n",Preferences.DEBUG_ALGORITHM);
 				if(resultImage != null) {
 					resultImage.disposeLocal();
 					resultImage = null;
