@@ -430,6 +430,10 @@ public class JDialogTriImageTransformation extends JDialogBase {
             } // else if (image.getNDims == 4)
 
             new ViewJFrameImage(image);
+            
+            if (progressBar != null) {
+                progressBar.dispose();
+            }
         } catch (Throwable t) {
             MipavUtil.displayError("Error: unable to complete transform algorithm");
             t.printStackTrace();
