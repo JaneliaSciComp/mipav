@@ -101,7 +101,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /** source image to be reconstructed! */
     private ModelImage m_kSourceImage;
     
-    /** Image to store FFT and Calc results */
+    /** Images to store FFT and Calc results */
     private ModelImage m_kImageSpectrum1;
     private ModelImage m_kImageSpectrum2;
     private ModelImage m_kImageSpectrum3;
@@ -117,6 +117,8 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     private ModelImage m_kSourceRed = null;
     private ModelImage m_kSourceBlue = null;
     private ModelImage m_kSourceGreen = null;
+    
+    /** Used for color image */
     private ModelImage m_kPSFImageCopy;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
