@@ -336,17 +336,6 @@ public class FileAvi extends FileBase {
                 }
             }
 
-            if (progressBar == null) {
-                progressBar = new ViewJProgressBar(ViewUserInterface.getReference().getProgressBarPrefix() + fileName,
-                                                   ViewUserInterface.getReference().getProgressBarPrefix() +
-                                                   "AVI Image ...", 0, 100, false, null, null);
-
-                // progressBar.setLocation( (int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2,
-                // 50);
-                
-                
-            }
-
             startPosition = raFile.getFilePointer();
             // Do first read thru the data to find the actual number of frames used by MIPAV. This must be done before
             // the MIPAV image can be created.
