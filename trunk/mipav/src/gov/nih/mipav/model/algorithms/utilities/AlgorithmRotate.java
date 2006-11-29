@@ -135,7 +135,7 @@ public class AlgorithmRotate extends AlgorithmBase {
         {
             axisFlip[1] = true;
             axisFlip[2] = true;
-            rotMatrix.setRotate(180, 0, 0, TransMatrix.DEGREES);    
+            rotMatrix.setRotate(180, 0, 0, TransMatrix.DEGREES); 
         }
         else if ( rotateAxis == X_AXIS_PLUS )
         {
@@ -143,6 +143,7 @@ public class AlgorithmRotate extends AlgorithmBase {
             axisOrder[2] = 1;
             axisFlip[1] = true;
             rotMatrix.setRotate(90, 0, 0, TransMatrix.DEGREES);
+            // rotMatrix gives y' = -z, z' = y;
         }
         else if ( rotateAxis == X_AXIS_MINUS )
         {
@@ -150,6 +151,7 @@ public class AlgorithmRotate extends AlgorithmBase {
             axisOrder[2] = 1;
             axisFlip[2] = true;
             rotMatrix.setRotate(-90, 0, 0, TransMatrix.DEGREES);
+            // rotMatrix gives y' = z, z' = -y;
         }
         else if ( rotateAxis == Y_AXIS_180 )
         {
@@ -163,6 +165,7 @@ public class AlgorithmRotate extends AlgorithmBase {
             axisOrder[2] = 0;
             axisFlip[2] = true;
             rotMatrix.setRotate(0, 90, 0, TransMatrix.DEGREES);
+            // rotMatrix gives x' = z, z' = -x
         }
         else if ( rotateAxis == Y_AXIS_MINUS )
         {
@@ -170,6 +173,7 @@ public class AlgorithmRotate extends AlgorithmBase {
             axisOrder[2] = 0;
             axisFlip[0] = true;
             rotMatrix.setRotate(0, -90, 0, TransMatrix.DEGREES);
+            // rotMatrix gives x' = -z, z' = x
         }
         else if ( rotateAxis == Z_AXIS_180 )
         {
@@ -213,6 +217,16 @@ public class AlgorithmRotate extends AlgorithmBase {
         else if (srcImage.getNDims() == 3) {
             zDim = srcImage.getExtents()[2];
         }
+        int yDim = srcImage.getExtents()[1];
+        int xDim = srcImage.getExtents()[0];
+        int x, y, c;
+        float oldVol[];
+        float newVol[];
+        int oldSlice = buffFactor*xDim*yDim;
+        int newSlice;
+        int oldXDim = buffFactor*xDim;
+        int newXDim;
+        int vol = buffFactor * xDim * yDim * zDim;
 
         int[] newDimExtents;
         int[] newAxisOrients;
@@ -248,19 +262,161 @@ public class AlgorithmRotate extends AlgorithmBase {
                                    srcImage.getUserInterface());
 
         /* Export the ModelImage data, remapping the axes: */
-        for (int t = 0; (t < tDim) && !threadStopped; t++) {
-            for (int z = 0; (z < zDim) && !threadStopped; z++) {
-                fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+        if (rotateAxis == X_AXIS_PLUS) {
+            oldVol = new float[vol];
+            newVol = new float[vol];
+            newSlice = buffFactor*xDim*zDim;
+            newXDim = buffFactor*xDim;
+            for (int t = 0; (t < tDim) && !threadStopped; t++) {
                 try {
-                    srcImage.export( axisOrder, axisFlip, t, z, sliceBuffer);
-                    destImage.importData(t * volume + z * slice, sliceBuffer, false);
-                } catch (IOException error) {
+                    srcImage.exportData(t*vol, vol, oldVol);
+                }
+                catch (IOException error) {
+                    displayError("AlgorithmSubset reports: Destination image already locked.");
+                    setCompleted(false);
+                    return;
+                }
+                for (int z = 0; (z < zDim) && !threadStopped; z++) {
+                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    for (y = 0; y < yDim; y++) {
+                        for (x = 0; x < xDim; x++) {
+                            for (c = 0; c < buffFactor; c++) {
+                                newVol[y*newSlice + (zDim-1-z)*newXDim + x*buffFactor + c] =
+                                oldVol[z*oldSlice + y*oldXDim + x*buffFactor + c];
+                            }
+                        }
+                    }
+                }
+                try {
+                    destImage.importData(t* vol, newVol, false);
+                }
+                catch (IOException error) {
                     displayError("AlgorithmSubset reports: Destination image already locked.");
                     setCompleted(false);
                     return;
                 }
             }
-        }
+        } // if (rotateAxis == X_AXIS_PLUS)
+        else if (rotateAxis == X_AXIS_MINUS) {
+            oldVol = new float[vol];
+            newVol = new float[vol];
+            newSlice = buffFactor*xDim*zDim;
+            newXDim = buffFactor*xDim;
+            for (int t = 0; (t < tDim) && !threadStopped; t++) {
+                try {
+                    srcImage.exportData(t*vol, vol, oldVol);
+                }
+                catch (IOException error) {
+                    displayError("AlgorithmSubset reports: Destination image already locked.");
+                    setCompleted(false);
+                    return;
+                }
+                for (int z = 0; (z < zDim) && !threadStopped; z++) {
+                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    for (y = 0; y < yDim; y++) {
+                        for (x = 0; x < xDim; x++) {
+                            for (c = 0; c < buffFactor; c++) {
+                                newVol[(yDim-1-y)*newSlice + z*newXDim + x*buffFactor + c] =
+                                oldVol[z*oldSlice + y*oldXDim + x*buffFactor + c];
+                            }
+                        }
+                    }
+                }
+                try {
+                    destImage.importData(t* vol, newVol, false);
+                }
+                catch (IOException error) {
+                    displayError("AlgorithmSubset reports: Destination image already locked.");
+                    setCompleted(false);
+                    return;
+                }
+            }    
+        } // else if (rotateAxis == X_AXIS_MINUS)
+        else if (rotateAxis == Y_AXIS_PLUS) {
+            oldVol = new float[vol];
+            newVol = new float[vol];
+            newSlice = buffFactor*yDim*zDim;
+            newXDim = buffFactor*zDim;
+            for (int t = 0; (t < tDim) && !threadStopped; t++) {
+                try {
+                    srcImage.exportData(t*vol, vol, oldVol);
+                }
+                catch (IOException error) {
+                    displayError("AlgorithmSubset reports: Destination image already locked.");
+                    setCompleted(false);
+                    return;
+                }
+                for (int z = 0; (z < zDim) && !threadStopped; z++) {
+                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    for (y = 0; y < yDim; y++) {
+                        for (x = 0; x < xDim; x++) {
+                            for (c = 0; c < buffFactor; c++) {
+                                newVol[(xDim-1-x)*newSlice + y*newXDim + z*buffFactor + c] =
+                                oldVol[z*oldSlice + y*oldXDim + x*buffFactor + c];
+                            }
+                        }
+                    }
+                }
+                try {
+                    destImage.importData(t* vol, newVol, false);
+                }
+                catch (IOException error) {
+                    displayError("AlgorithmSubset reports: Destination image already locked.");
+                    setCompleted(false);
+                    return;
+                }
+            }    
+        } // else if (rotateAxis == Y_AXIS_PLUS)
+        else if (rotateAxis == Y_AXIS_MINUS) {
+            oldVol = new float[vol];
+            newVol = new float[vol];
+            newSlice = buffFactor*yDim*zDim;
+            newXDim = buffFactor*zDim;
+            for (int t = 0; (t < tDim) && !threadStopped; t++) {
+                try {
+                    srcImage.exportData(t*vol, vol, oldVol);
+                }
+                catch (IOException error) {
+                    displayError("AlgorithmSubset reports: Destination image already locked.");
+                    setCompleted(false);
+                    return;
+                }
+                for (int z = 0; (z < zDim) && !threadStopped; z++) {
+                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    for (y = 0; y < yDim; y++) {
+                        for (x = 0; x < xDim; x++) {
+                            for (c = 0; c < buffFactor; c++) {
+                                newVol[x*newSlice + y*newXDim + (zDim-1-z)*buffFactor + c] =
+                                oldVol[z*oldSlice + y*oldXDim + x*buffFactor + c];
+                            }
+                        }
+                    }
+                }
+                try {
+                    destImage.importData(t* vol, newVol, false);
+                }
+                catch (IOException error) {
+                    displayError("AlgorithmSubset reports: Destination image already locked.");
+                    setCompleted(false);
+                    return;
+                }
+            }    
+        } // else if (rotateAxis == Y_AXIS_MINUS)
+        else {
+            for (int t = 0; (t < tDim) && !threadStopped; t++) {
+                for (int z = 0; (z < zDim) && !threadStopped; z++) {
+                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / ((tDim * zDim) - 1) * 100));
+                    try {
+                        srcImage.export( axisOrder, axisFlip, t, z, sliceBuffer);
+                        destImage.importData(t * volume + z * slice, sliceBuffer, false);
+                    } catch (IOException error) {
+                        displayError("AlgorithmSubset reports: Destination image already locked.");
+                        setCompleted(false);
+                        return;
+                    }
+                }
+            }
+        } // else
         if (threadStopped) {
             sliceBuffer = null;
             finalize();
@@ -298,7 +454,7 @@ public class AlgorithmRotate extends AlgorithmBase {
         // and then adjusts the appropriate info.
         // For all image formats other than DICOM...
         if (srcImage.getFileInfo(0).getFileFormat() != FileUtility.DICOM) {
-            FileInfoBase[] newFileInfo = new FileInfoBase[srcImage.getFileInfo().length];
+            FileInfoBase[] newFileInfo = new FileInfoBase[newDimExtents[2]];
 
             for ( int i = 0; i < newFileInfo.length; i++ ) {
                 newFileInfo[i] = (FileInfoBase) srcImage.getFileInfo(0).clone();
