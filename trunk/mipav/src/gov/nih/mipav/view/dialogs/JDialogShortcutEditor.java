@@ -182,26 +182,24 @@ public class JDialogShortcutEditor extends JDialogBase implements ActionListener
 
         String key;
         KeyStroke ks = null;
-        Enumeration e = Preferences.getShortcutTable().keys();
+        Enumeration e = Preferences.getUserShortcutTable().keys();
         String trimmed;
 
         Vector defaultVector = new Vector();
 
         Vector userDefinedVector = new Vector();
 
-        String currentStr = null;
-
         while (e.hasMoreElements()) {
-            currentStr = (String) e.nextElement();
-
-            if (Preferences.isDefaultKeyStroke(Preferences.getShortcut(currentStr))) {
-                defaultVector.addElement(currentStr);
-            } else {
-                userDefinedVector.addElement(currentStr);
-            }
-
-
+            userDefinedVector.addElement(e.nextElement());
         }
+        
+        e = Preferences.getDefaultShortcutTable().keys();
+        while (e.hasMoreElements()) {
+            defaultVector.addElement(e.nextElement());
+        }
+        
+        
+        
 
         Collections.sort(defaultVector, new StringVecComparator());
         Collections.sort(userDefinedVector, new StringVecComparator());
