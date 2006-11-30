@@ -776,32 +776,20 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     	}
 
         if (kImage.getNDims() == 3) {
-            JDialogFlip flipz = new JDialogFlip(m_kOriginalSourceImage.getParentFrame(), m_kMirrorImage, AlgorithmFlip.Z_AXIS);
-
-            /* Must not run in separate thread, since we need the results
-             * before proceeding to the next step: */
-            flipz.setSeparateThread(false);
-            flipz.callAlgorithm();
-            flipz.dispose();
+            AlgorithmFlip flipz = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.Z_AXIS);
+            flipz.run();
+            flipz.finalize();
             flipz = null;
         }
 
-        JDialogFlip flipy = new JDialogFlip(m_kOriginalSourceImage.getParentFrame(), m_kMirrorImage, AlgorithmFlip.Y_AXIS);
-
-        /* Must not run in separate thread, since we need the results
-         * before proceeding to the next step: */
-        flipy.setSeparateThread(false);
-        flipy.callAlgorithm();
-        flipy.dispose();
+        AlgorithmFlip flipy = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.Y_AXIS);
+        flipy.run();
+        flipy.finalize();
         flipy = null;
 
-        JDialogFlip flipx = new JDialogFlip(m_kOriginalSourceImage.getParentFrame(), m_kMirrorImage, AlgorithmFlip.X_AXIS);
-
-        /* Must not run in separate thread, since we need the results
-         * before proceeding to the next step: */
-        flipx.setSeparateThread(false);
-        flipx.callAlgorithm();
-        flipx.dispose();
+        AlgorithmFlip flipx = new AlgorithmFlip(m_kMirrorImage, AlgorithmFlip.X_AXIS);
+        flipx.run();
+        flipx.finalize();
         flipx = null;
         System.gc();
 
