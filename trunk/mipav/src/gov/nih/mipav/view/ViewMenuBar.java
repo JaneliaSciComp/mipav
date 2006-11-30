@@ -1237,6 +1237,7 @@ public class ViewMenuBar {
             menuBuilder.setMenuItemEnabled("Replace blanks with averages", false);
             menuBuilder.setMenuItemEnabled("Insert missing slices", false);
             menuBuilder.setMenuItemEnabled("4D tools", false);
+            menuBuilder.setMenuItemEnabled("Depth", false);
         }
 
         if (ModelImage.isColorImage(type)) {
