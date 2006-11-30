@@ -113,10 +113,7 @@ public class Preferences {
 
     /** DOCUMENT ME! */
     public static final String PREF_SHOW_OUTPUT = "ShowOutput";
-
-    /** DOCUMENT ME! */
-    public static final String PREF_DEFAULT_SHORTCUTS = buildDefaultShortcuts();
-
+   
     /** DOCUMENT ME! */
     public static final String PREF_LAST_STACK_FLAG = "LastStackFlag";
 
@@ -199,8 +196,10 @@ public class Preferences {
     private static String preferencesFile = preferencesDir + File.separator + preferencesFileName;
 
     /** DOCUMENT ME! */
-    private static Hashtable shortcutTable;
+    private static Hashtable userShortcutTable;
 
+    private static Hashtable defaultShortcutTable = buildDefaultShortcuts();
+    
     /** DOCUMENT ME! */
     private static KeyStroke currentShortcut;
 
@@ -263,7 +262,6 @@ public class Preferences {
 
         defaultProps.setProperty("MenuFontColor", "BLACK");
         defaultProps.setProperty("ShowOutput", "true");
-        defaultProps.setProperty("Shortcuts", PREF_DEFAULT_SHORTCUTS);
         // defaultProps.setProperty("MenuAcceleratorFontColor", "");
 
         // username and srb server properties
@@ -296,23 +294,23 @@ public class Preferences {
             }
 
 
-            if (shortcutTable.containsKey(command)) {
-                shortcutTable.remove(command);
+            if (userShortcutTable.containsKey(command)) {
+                userShortcutTable.remove(command);
             }
 
-            if (shortcutTable.containsValue(currentShortcut)) {
-                Enumeration e = shortcutTable.keys();
+            if (userShortcutTable.containsValue(currentShortcut)) {
+                Enumeration e = userShortcutTable.keys();
 
                 while (e.hasMoreElements()) {
                     String key = (String) e.nextElement();
 
-                    if (currentShortcut.equals(shortcutTable.get(key))) {
-                        shortcutTable.remove(key);
+                    if (currentShortcut.equals(userShortcutTable.get(key))) {
+                        userShortcutTable.remove(key);
                     }
                 }
             }
 
-            shortcutTable.put(command, currentShortcut);
+            userShortcutTable.put(command, currentShortcut);
 
             MipavUtil.displayInfo("Shortcut captured: " + currentShortcut.toString().replaceAll("pressed", "").trim() +
                                   " : " + command);
@@ -330,7 +328,7 @@ public class Preferences {
      * Builds a hashtable of actioncommands (keys) with associated keystrokes from the Preferences file.
      */
     public static final void buildShortcutTable() {
-        shortcutTable = new Hashtable();
+        userShortcutTable = new Hashtable();
 
         String str = getProperty("Shortcuts");
 
@@ -343,20 +341,6 @@ public class Preferences {
 
         boolean success = true;
 
-        shortcutTable.put("OpenNewImage", KeyStroke.getKeyStroke('F', Event.CTRL_MASK, false));
-        shortcutTable.put("SaveImage", KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
-        shortcutTable.put("SaveImageAs", KeyStroke.getKeyStroke('S', Event.SHIFT_MASK + Event.CTRL_MASK, false));
-        shortcutTable.put("undoVOI", KeyStroke.getKeyStroke('Z', Event.CTRL_MASK, false));
-        shortcutTable.put("cutVOI", KeyStroke.getKeyStroke('X', Event.CTRL_MASK, false));
-        shortcutTable.put("copyVOI", KeyStroke.getKeyStroke('C', Event.CTRL_MASK, false));
-        shortcutTable.put("pasteVOI", KeyStroke.getKeyStroke('V', Event.CTRL_MASK, false));
-        shortcutTable.put("selectAllVOIs", KeyStroke.getKeyStroke('A', Event.CTRL_MASK, false));
-        shortcutTable.put("Tri-planar", KeyStroke.getKeyStroke('T', Event.CTRL_MASK, false));
-        shortcutTable.put("AboutImage", KeyStroke.getKeyStroke('H', Event.CTRL_MASK, false));
-        shortcutTable.put("EditImageInfo", KeyStroke.getKeyStroke('E', Event.CTRL_MASK, false));
-        shortcutTable.put("MemoryUsage", KeyStroke.getKeyStroke('M', Event.CTRL_MASK, false));
-        shortcutTable.put("ToggleImageIntensities", KeyStroke.getKeyStroke('T', 0, false));
-        
         try {
 
             if (str != null) {
@@ -369,6 +353,9 @@ public class Preferences {
 
                     // System.err.println("token is: " + token);
                     shortcutStr = token.substring(0, token.indexOf(","));
+                    
+                    if (!defaultShortcutTable.containsKey(shortcutStr)) {
+                    
                     keyStr = token.substring(token.indexOf(",") + 1, token.length()).trim();
                     modifiers = 0;
 
@@ -391,18 +378,21 @@ public class Preferences {
 
                     if ((keyStr.length() == 2) || (keyStr.length() == 3)) {
                         fIndex = Integer.parseInt(keyStr.substring(1));
-                        shortcutTable.put(shortcutStr,
+                        
+                        
+                        userShortcutTable.put(shortcutStr,
                                           KeyStroke.getKeyStroke(MipavUtil.functionKeys[fIndex], 0, false));
                     } else {
 
                         if (modifiers != 0) {
 
-                            shortcutTable.put(shortcutStr,
+                            userShortcutTable.put(shortcutStr,
                                               KeyStroke.getKeyStroke(keyStr.charAt(keyStr.length() - 1), modifiers,
                                                                      false));
                         } else {
-                            shortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(keyStr.charAt(0), modifiers, false));
+                            userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(keyStr.charAt(0), modifiers, false));
                         }
+                    }
                     }
                 }
                 
@@ -417,13 +407,6 @@ public class Preferences {
             e.printStackTrace();
             MipavUtil.displayWarning("Error reading shortcut preferences:  default shortcuts restored");
             success = false;
-        }
-
-        if (!success) {
-                    
-            str = PREF_DEFAULT_SHORTCUTS;
-
-            setProperty("Shortcuts", str);
         }
 
         // return table;
@@ -1528,12 +1511,16 @@ public class Preferences {
      * @return  KeyStroke the shortcut's keystroke
      */
     public static KeyStroke getShortcut(String command) {
-
+    	KeyStroke ks = null;
+    	
         if (command != null) {
-            return (KeyStroke) shortcutTable.get(command);
-        } else {
-            return null;
-        }
+        	ks = (KeyStroke) defaultShortcutTable.get(command);
+        	if (ks == null) {
+        		ks = (KeyStroke) userShortcutTable.get(command);
+        	}
+        } 
+
+        return ks;
     }
 
     /**
@@ -1547,11 +1534,23 @@ public class Preferences {
         KeyStroke shortcut = null;
         String command = null;
 
-        Enumeration en = shortcutTable.keys();
-
+        //first check defaults
+        Enumeration en = defaultShortcutTable.keys();
         while (en.hasMoreElements()) {
             command = (String) en.nextElement();
-            shortcut = (KeyStroke) shortcutTable.get(command);
+            shortcut = (KeyStroke) defaultShortcutTable.get(command);
+
+            if (shortcut.equals(ks)) {
+                return command;
+            }
+        }
+        
+        
+        //next check user shortcuts
+        en = userShortcutTable.keys();
+        while (en.hasMoreElements()) {
+            command = (String) en.nextElement();
+            shortcut = (KeyStroke) userShortcutTable.get(command);
 
             if (shortcut.equals(ks)) {
                 return command;
@@ -1562,14 +1561,23 @@ public class Preferences {
     }
 
     /**
-     * Gets the Hashtable used to store the shortcut keystrokes and commands.
+     * Gets the User defined Hashtable used to store the shortcut keystrokes and commands.
      *
      * @return  Hashtable the shortcut hashtable
      */
-    public static Hashtable getShortcutTable() {
-        return shortcutTable;
+    public static Hashtable getUserShortcutTable() {
+        return userShortcutTable;
     }
 
+    /**
+     * Gets the Default Hashtable used to store the shortcut keystrokes and commands.
+     *
+     * @return  Hashtable the shortcut hashtable
+     */
+    public static Hashtable getDefaultShortcutTable() {
+        return defaultShortcutTable;
+    }
+    
     /**
      * Retrieves the default storage resource for the user.
      *
@@ -1771,25 +1779,7 @@ public class Preferences {
      * @return  DOCUMENT ME!
      */
     public static boolean isDefaultCommand(String command) {
-
-        String str = buildDefaultShortcuts();
-        StringTokenizer tok = null;
-        String shortcutStr;
-
-        tok = new StringTokenizer(str, ";");
-
-        String token;
-
-        while (tok.hasMoreTokens()) {
-            token = tok.nextToken();
-            shortcutStr = token.substring(0, token.indexOf(","));
-
-            if (command.equals(shortcutStr)) {
-                return true;
-            }
-        }
-
-        return false;
+    	return defaultShortcutTable.contains(command);
     }
 
     /**
@@ -1805,61 +1795,16 @@ public class Preferences {
             return false;
         }
 
-        String str = PREF_DEFAULT_SHORTCUTS;
-        StringTokenizer tok = null;
-        int modifiers;
-
-        // String shortcutStr;
-        String keyStr;
-
-
-        tok = new StringTokenizer(str, ";");
-
-        String token;
-
-        while (tok.hasMoreTokens()) {
-            token = tok.nextToken();
-
-            // shortcutStr = token.substring(0, token.indexOf(","));
-            keyStr = token.substring(token.indexOf(",") + 1, token.length()).trim();
-            modifiers = 0;
-
-            if (keyStr.indexOf("CTRL") != -1) {
-                modifiers += Event.CTRL_MASK;
-            }
-
-            if (keyStr.indexOf("ALT") != -1) {
-                modifiers += Event.ALT_MASK;
-            }
-
-            if (keyStr.indexOf("SHIFT") != -1) {
-                modifiers += Event.SHIFT_MASK;
-            }
-
-            int fIndex = 0;
-
-            if ((keyStr.length() == 2) || (keyStr.length() == 3)) {
-                fIndex = Integer.parseInt(keyStr.substring(1));
-
-                if (ks.equals(KeyStroke.getKeyStroke(MipavUtil.functionKeys[fIndex], 0, false))) {
-                    return true;
-                }
-            } else {
-
-                if (modifiers != 0) {
-
-                    if (ks.equals(KeyStroke.getKeyStroke(keyStr.charAt(keyStr.length() - 1), modifiers, false))) {
-                        return true;
-                    }
-                } else {
-
-                    if (ks.equals(KeyStroke.getKeyStroke(keyStr.charAt(0), modifiers, false))) {
-                        return true;
-                    }
-                }
-            }
+        Enumeration keys = defaultShortcutTable.keys();
+        
+        KeyStroke defaultKey = null;
+        while(keys.hasMoreElements()) {
+        	defaultKey = (KeyStroke)defaultShortcutTable.get(keys.nextElement());
+        	if (defaultKey.equals(ks)) {
+        		return true;
+        	}
         }
-
+        
         return false;
     }
 
@@ -1989,7 +1934,7 @@ public class Preferences {
      * @param  commandToRemove  String
      */
     public static void removeShortcut(String commandToRemove) {
-        shortcutTable.remove(commandToRemove);
+        userShortcutTable.remove(commandToRemove);
         saveShortcuts();
     }
 
@@ -2044,10 +1989,10 @@ public class Preferences {
      */
     public static final void saveShortcuts() {
 
-        // Hashtable shortcutTable = ViewUserInterface.getReference().getShortcutTable();
+        // Hashtable userShortcutTable = ViewUserInterface.getReference().getShortcutTable();
         String command = null;
         KeyStroke ks = null;
-        Enumeration e = shortcutTable.keys();
+        Enumeration e = userShortcutTable.keys();
 
         String longStr = new String();
 
@@ -2060,7 +2005,7 @@ public class Preferences {
 
             while (e.hasMoreElements()) {
                 command = (String) e.nextElement();
-                ks = (KeyStroke) shortcutTable.get(command);
+                ks = (KeyStroke) userShortcutTable.get(command);
                 m = ks.getModifiers();
 
                 singleChar = ks.toString().trim();
@@ -2645,33 +2590,31 @@ public class Preferences {
     }
 
     /**
-     * DOCUMENT ME!
-     *
-     * @return  DOCUMENT ME!
+     * Builds the default shortcut hashtable (not user modifiable)
+     * @return default shortcut hashtable
      */
-    private static String buildDefaultShortcuts() {
-        String str = new String("OpenNewImage,CTRLF;");
-        str += "SaveImage,CTRLS;";
-        str += "SaveImageAs,CTRLSHIFTS;";
-        str += "undoVOI,CTRLZ;";
-        str += "cutVOI,CTRLX;";
-        str += "copyVOI,CTRLC;";
-        str += "pasteVOI,CTRLZ;";
-        str += "selectAllVOIs,CTRLA;";
-        str += "Tri-planar,CTRLT;";
-        str += "AboutImage,CTRLH;";
-        str += "MemoryUsage,CTRLM;";
-        str += "quickLUT,Q;";
-        str += "ShowPaintBorder,B;";
-        str += "ToggleImageIntensities,T;";
-
-
-        // build quicklist shortcuts
-        for (int i = 0; i < 9; i++) {
-            str += "LastImage " + i + ",CTRL" + (i + 1) + ";";
+    private static Hashtable buildDefaultShortcuts() {
+    	
+    	defaultShortcutTable = new Hashtable();
+    	defaultShortcutTable.put("OpenNewImage", KeyStroke.getKeyStroke('F', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("SaveImage", KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("SaveImageAs", KeyStroke.getKeyStroke('S', Event.SHIFT_MASK + Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("undoVOI", KeyStroke.getKeyStroke('Z', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("cutVOI", KeyStroke.getKeyStroke('X', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("copyVOI", KeyStroke.getKeyStroke('C', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("pasteVOI", KeyStroke.getKeyStroke('V', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("selectAllVOIs", KeyStroke.getKeyStroke('A', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("Tri-planar", KeyStroke.getKeyStroke('T', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("AboutImage", KeyStroke.getKeyStroke('H', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("EditImageInfo", KeyStroke.getKeyStroke('E', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("MemoryUsage", KeyStroke.getKeyStroke('M', Event.CTRL_MASK, false));
+    	defaultShortcutTable.put("ToggleImageIntensities", KeyStroke.getKeyStroke('T', 0, false));
+    	
+    	for (int i = 0; i < 9; i++) {
+    		defaultShortcutTable.put("LastImage " + i, KeyStroke.getKeyStroke(Integer.toString(i).charAt(0), Event.CTRL_MASK, false));
         }
-
-        return str;
+    	
+    	return defaultShortcutTable;
     }
     
 }
