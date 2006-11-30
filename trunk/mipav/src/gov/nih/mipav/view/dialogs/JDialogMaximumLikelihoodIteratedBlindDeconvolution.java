@@ -16,13 +16,16 @@ import javax.swing.*;
 
 /**
  * Dialog that launches the Maximum likelihood iterated blind deconvolution
- * algorithm. The dialog allows the user to set four parameters to the
+ * algorithm. The dialog allows the user to set six parameters to the
  * algorithm:
  *
  * numberIterations: the number of times to iterate in the blind deconvolution algorithm
- * objectiveNumericalAperature: a property of the lense used to image the sample
+ * showProgress:  Display the deconvolved image every showProgress images
+ * objectiveNumericalAperature: a property of the lens used to image the sample
  * wavelength: the wavelength of the reflected (for brightfield) or fluorescence light
  * refractiveIndex: the index of refraction of the sample.
+ * useMicroscopeSettings: When true, the lens NA, wavelength, and refractive index are
+ *                        used in the deconvolution process
  *
  * See AlgorithmMaximumLikelihoodIteratedBlindDeconvolution.java for algorithm details. 
  */
@@ -43,17 +46,17 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
     /** Display the deconvolved image every X images to show progress: */
     private int showProgress = 5;
 
-    /** The following are physical properties of the imaging lense and
+    /** The following are physical properties of the imaging lens and
      * sample: */
-    /** The object numerical aperature, a property of the lense used to image
+    /** The object numerical aperature, a property of the lens used to image
      * the sample: */
     private float objectiveNumericalAperature = 1.4f;
-    /** The reflected or fluroescence wavelength of the sample: */
+    /** The reflected or fluorescence wavelength of the sample: */
     private float wavelength = 520f;
     /** The index of refraction of the sample: */
     private float refractiveIndex = 1.518f;
 
-    /** When true the lense NA, wavelength, and refractive index are used in
+    /** When true the lens NA, wavelength, and refractive index are used in
      * the deconvolution process*/
     private boolean useMicroscopeSettings = true;
 
@@ -119,8 +122,8 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
             textObjectiveNumericalAperature.setEnabled( useMicroscopeSettings );
             textWavelength.setEnabled( useMicroscopeSettings );
             textRefractiveIndex.setEnabled( useMicroscopeSettings );
-        }// end if()-else
-    } // end actionPerformed(...)
+        } // else if (command.equals("MicroscopeOptions") )
+    } // actionPerformed(...)
 
 
     /**
@@ -193,7 +196,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
     }
 
     /**
-     * Once all the necessary variables are set, call the mean algorithm based
+     * Once all the necessary variables are set, call the algorithm based
      * on what type of image this is and whether or not there is a separate
      * destination image.
      */
