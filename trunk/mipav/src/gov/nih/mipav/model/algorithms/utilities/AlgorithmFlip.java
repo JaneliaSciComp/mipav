@@ -131,6 +131,10 @@ public class AlgorithmFlip extends AlgorithmBase {
         }
 
         int mod = nImages / 10; // mod is 10 percent of length
+        if (mod == 0) {
+            // since % mod gives a divide by zero error for mod = 0
+            mod = 1;
+        }
 
         /* axisOrder is always the default: (no coordinate axis remapping) */
         int[] axisOrder = { 0, 1, 2 };
@@ -166,7 +170,7 @@ public class AlgorithmFlip extends AlgorithmBase {
         /* For each slice: */
         for (int t = 0; (t < tDim) && !threadStopped; t++) {
             for (int z = 0; (z < zDim) && !threadStopped; z++) {
-                if ((((t * zDim + z) % mod) == 0)) {
+                if ((nImages > 1) && (((t * zDim + z) % mod) == 0)) {
                     fireProgressStateChanged(Math.round((float) (t * zDim + z) / (nImages - 1) * 100));
                 }
 
