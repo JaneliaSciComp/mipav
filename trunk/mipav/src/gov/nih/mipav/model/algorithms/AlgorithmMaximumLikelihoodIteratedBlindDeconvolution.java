@@ -50,7 +50,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     private float m_fAxialBandLimit;
 
     /** Physically-based parameters:. */
-    /** numerical aperature of the imaging lense:. */
+    /** numerical aperature of the imaging lens:. */
     private float m_fObjectiveNumericalAperature;
 
     /** 3). Bandlimit and missing cone constraint: */
@@ -65,7 +65,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     /** DOCUMENT ME! */
     private float m_fTanTheta;
 
-    /** wavelength of the reflected or fluorescencing light:. */
+    /** wavelength of the reflected or fluorescing light:. */
     private float m_fWavelength;
 
     /** Original data size:. */
@@ -128,11 +128,12 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      *
      * @param  kSrcImg                       the input image to be reconstructed
      * @param  iIterations                   the number of times to iterate in the deconvolution
-     * @param  iProgress                     DOCUMENT ME!
+     * @param  iProgress                     Display deconvolved image every iProgress images
      * @param  fObjectiveNumericalAperature  the numerical aperature of the imaging lense
-     * @param  fWavelength                   the reflected or fluorescening light
+     * @param  fWavelength                   the reflected or fluorescing light
      * @param  fRefractiveIndex              the index of refraction for the sample
-     * @param  bUseConstraints               DOCUMENT ME!
+     * @param  bUseConstraints               When true, the lens NA, wavelength, and refractive index are
+     *                                       used in the deconvolution process
      */
     public AlgorithmMaximumLikelihoodIteratedBlindDeconvolution(ModelImage kSrcImg, int iIterations, int iProgress,
                                                                 float fObjectiveNumericalAperature, float fWavelength,
@@ -189,18 +190,30 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
      * Dispose of local variables that may be taking up lots of room.
      */
     public void disposeLocal() {
-        m_kImageSpectrum1.disposeLocal();
-        m_kImageSpectrum1 = null;
-        m_kImageSpectrum2.disposeLocal();
-        m_kImageSpectrum2 = null;
-        m_kImageSpectrum3.disposeLocal();
-        m_kImageSpectrum3 = null;
-        m_kMirrorImage.disposeLocal();
-        m_kMirrorImage = null;
-        m_kCalcResult1.disposeLocal();
-        m_kCalcResult1 = null;
-        m_kCalcResult3.disposeLocal();
-        m_kCalcResult3 = null;
+        if (m_kImageSpectrum1 != null) {
+            m_kImageSpectrum1.disposeLocal();
+            m_kImageSpectrum1 = null;
+        }
+        if (m_kImageSpectrum2 != null) {
+            m_kImageSpectrum2.disposeLocal();
+            m_kImageSpectrum2 = null;
+        }
+        if (m_kImageSpectrum3 != null) {
+            m_kImageSpectrum3.disposeLocal();
+            m_kImageSpectrum3 = null;
+        }
+        if (m_kMirrorImage != null) {
+            m_kMirrorImage.disposeLocal();
+            m_kMirrorImage = null;
+        }
+        if (m_kCalcResult1 != null) {
+            m_kCalcResult1.disposeLocal();
+            m_kCalcResult1 = null;
+        }
+        if (m_kCalcResult3 != null) {
+            m_kCalcResult3.disposeLocal();
+            m_kCalcResult3 = null;
+        }
         
         System.gc();
     }
@@ -222,6 +235,14 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
     public ModelImage getReconstructedImage() {
         return m_kEstimatedImage;
     }
+    
+    /**
+     * Returns the point spread function image
+     * @return m_kPSFImage
+     */
+    public ModelImage getPSFImage() {
+        return m_kPSFImageCopy;
+    }
 
 
     /**
@@ -236,8 +257,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         if (m_iNumberIterations != 0) {
+            
             runDeconvolution(m_kSourceImage, m_kEstimatedImage, m_kPSFImage, true);
-
+            
             if (threadStopped) {
                 finalize();
 
@@ -309,9 +331,11 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         m_kSourceImage = null;
 
         m_kOriginalSourceImage = null;
-
-        m_kPSFImage.disposeLocal();
-        m_kPSFImage = null;
+        
+        if (m_kPSFImage != null) {
+            m_kPSFImage.disposeLocal();
+            m_kPSFImage = null;
+        }
 
         if (m_kSourceRed != null) {
             m_kSourceRed.disposeLocal();
@@ -760,7 +784,6 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
                 
         /* Apply constraints to the image and return: */
         constraints(m_kPSFImage);
-        
     }
 
     /**
@@ -877,11 +900,13 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         	if (!m_kOriginalSourceImage.isColorImage()) {
             	m_kEstimatedImage.disposeLocal();
             	m_kEstimatedImage = kEstimate;
-            	m_kPSFImage.disposeLocal();
-            	kPSF.disposeLocal();
+                m_kPSFImageCopy = (ModelImage) kPSF.clone();
+                m_kPSFImage.disposeLocal();
+                kPSF.disposeLocal();
             } else {
             	m_kEstimatedImage = (ModelImage) kEstimate.clone();
             	m_kPSFImageCopy = (ModelImage) kPSF.clone();
+                
             }
             	
         } else {
