@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.FileInfoBase;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
@@ -150,7 +151,21 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
                 new ViewJFrameImage(resultImage, null, new Dimension(610, 200));
             } catch (OutOfMemoryError error) {
                 System.gc();
-                MipavUtil.displayError("Out of memory: unable to open new frame");
+                MipavUtil.displayError("Out of memory: unable to open new frame for result image");
+            }
+            
+            ModelImage psfImage =
+                ((AlgorithmMaximumLikelihoodIteratedBlindDeconvolution)algorithm).getPSFImage();
+            
+            updateFileInfo(originalImage, psfImage);
+            psfImage.clearMask();
+
+            /* Display the result: */
+            try {
+                new ViewJFrameImage(psfImage, null, new Dimension(610, 220));
+            } catch (OutOfMemoryError error) {
+                System.gc();
+                MipavUtil.displayError("Out of memory: unable to open new frame for psfImage");
             }
 
             insertScriptLine();
