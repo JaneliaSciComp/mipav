@@ -43,8 +43,6 @@
         =========
     -->
     <!-- directory aliases -->
-    <property name="dir.jdk" value="${user.home}/java/j2sdk1.4.2_01"/>
-    <property name="dir.j3d" value="${user.home}/java/j2sdk1.4.2_01/jre/lib/ext"/>
     <property name="dir.jmf" value="${user.home}/java/JMF_2.1.1/lib"/>
 
     <!--
@@ -104,9 +102,6 @@
             <fileset dir="${dir.jmf}">
                 <filename description="The JMF JAR files." name="*.jar"/>
             </fileset>
-            <fileset dir="${dir.j3d}">
-                <filename description="The Java3D JAR files." name="*.jar"/>
-            </fileset>
             <pathelement location="${dir.source}/InsightToolkit/lib/InsightToolkit/InsightToolkit.jar"/>
             <!-- include all jar files under the lib directory -->
             <fileset dir="${dir.lib}">
@@ -133,9 +128,13 @@
         <echo>project main class: ${project.main}</echo>
         <echo></echo>
 
+        <echo>os name: ${os.name}</echo>
+        <echo>java.home: ${java.home}</echo>
+        <echo>java.version: ${java.version}</echo>
+        <echo></echo>
+
         <echo>source: ${dir.source}</echo>
         <echo>destination: ${dir.dest}</echo>
-        <echo>j3d: ${dir.j3d}</echo>
         <echo>classpath: ${build.cp}</echo>
 
         <javac  debug="${debug}"
@@ -262,8 +261,6 @@
         <echo>project version: ${project.version}</echo>
         <echo>project main class: ${project.main}</echo>
         <echo></echo>
-
-        <echo message="${build.compiler}" />
         <echo>source: ${dir.source}</echo>
         <echo>destination: ${dir.dest}</echo>
         <echo>${build.cp}</echo>
@@ -304,10 +301,10 @@
                 author="true"
                 windowtitle="${project.name.upper} API Documentation"
                 linksource="${doc.linksource}"
-		link="${doc.link}"
-		breakiterator="${doc.breakiterator}"
-		source="1.4"
-		classpathref="build.classpath">
+                link="${doc.link}"
+                breakiterator="${doc.breakiterator}"
+                source="1.4"
+                classpathref="build.classpath">
             <sourcepath>
                 <pathelement location="${dir.source}"/>
             </sourcepath>
