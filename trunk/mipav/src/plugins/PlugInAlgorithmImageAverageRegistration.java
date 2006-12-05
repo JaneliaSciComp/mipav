@@ -67,8 +67,14 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 	private String directory;
 	/** handle to ViewUserInterface */
 	private ViewUserInterface UI;
-	/** Document me */
+	/** boolean determining if target image is a dicom image */
 	private boolean isTargetDICOM;
+	/** target dimentsions */
+	int xdimA,ydimA, zdimA;
+	/** target resolutions */
+	float xresA,yresA,zresA;
+	/** number of dimensions for target */
+	int targetNumDims;
 	
 	public PlugInAlgorithmImageAverageRegistration(ArrayList srcFilenamesArrList, ModelImage targetImage, int cost, int DOF, 
 												   int interp, int interp2, float rotateBeginX, float rotateEndX, float coarseRateX,
@@ -111,15 +117,24 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 	 * runAlgorithm
 	 */
 	public void runAlgorithm() {
-		//read in each src image and then run algorithm
-		int targetNumDims = targetImage.getNDims();
 		Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
 		Preferences.debug("*** Beginning Image Average Registration \n",Preferences.DEBUG_ALGORITHM);
-		//Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+
+		
+		
+		targetNumDims = targetImage.getNDims();
+		xdimA = targetImage.getExtents()[0];
+        ydimA = targetImage.getExtents()[1];
+        zdimA = targetImage.getExtents()[2];
+        xresA = targetImage.getFileInfo(0).getResolutions()[0];
+        yresA = targetImage.getFileInfo(0).getResolutions()[1];
+        zresA = targetImage.getFileInfo(0).getResolutions()[2];
+
+		
 		if(isTargetDICOM) {
-			Preferences.debug("*** Target file is DICOM...the DICOM name for " + targetImage.getImageFileName() + " is " + targetImage.getImageName() + " \n",Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("*** Target file is DICOM...the DICOM file name for " + targetImage.getImageFileName() + " is " + targetImage.getImageName() + " \n",Preferences.DEBUG_ALGORITHM);
 		}else {
-			Preferences.debug("*** Target image name is " + targetImage.getImageFileName() + "\n",Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("*** Target file is " + targetImage.getImageFileName() + "\n",Preferences.DEBUG_ALGORITHM);
 		}
 		//Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
 		Preferences.debug("*** Number of source files is " + srcFilenamesArrList.size() + "\n",Preferences.DEBUG_ALGORITHM);
@@ -130,8 +145,8 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 			int sepIndex = fullPath.lastIndexOf(File.separatorChar);
 			String directory = fullPath.substring(0, sepIndex + 1);
 			String filename = fullPath.substring(sepIndex + 1, fullPath.length());
-			//Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
-			//Preferences.debug("*** Source image name(" + (i+1) + ") is " + filename + "\n",Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
+			Preferences.debug("*** Source file(" + (i+1) + ") is " + filename + "\n",Preferences.DEBUG_ALGORITHM);
 			//first check to see if this image is an undefined type because
 			//if it is, we do not want the undefined dialog to pop up 
 			//We will just ignore this image in the average algorithm...but we will log it
@@ -182,9 +197,9 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 					continue;
 				}
 				
-				Preferences.debug("*** Source file (" + (i+1) + ") :  " + filename + " read in successfully \n",Preferences.DEBUG_ALGORITHM);
+				Preferences.debug("  * Source file (" + (i+1) + ") :  " + filename + " read in successfully \n",Preferences.DEBUG_ALGORITHM);
 				if(fileType == FileUtility.DICOM) {
-					Preferences.debug("  * Source file is DICOM..the DICOM name for " + filename + " is " + sourceImage.getImageName() + " \n",Preferences.DEBUG_ALGORITHM);
+					Preferences.debug("  * Source file is DICOM..the DICOM file name for " + filename + " is " + sourceImage.getImageName() + " \n",Preferences.DEBUG_ALGORITHM);
 				}
 				if(fileType == FileUtility.DICOM && isTargetDICOM) {
 					Preferences.debug("  * Beginning registration of "  + sourceImage.getImageName() + " to " + targetImage.getImageName() + "\n",Preferences.DEBUG_ALGORITHM);
@@ -215,12 +230,8 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 				
 				TransMatrix finalMatrix = algReg3D.getTransform();
 				 
-				 int xdimA = targetImage.getExtents()[0];
-	             int ydimA = targetImage.getExtents()[1];
-	             int zdimA = targetImage.getExtents()[2];
-	             float xresA = targetImage.getFileInfo(0).getResolutions()[0];
-	             float yresA = targetImage.getFileInfo(0).getResolutions()[1];
-	             float zresA = targetImage.getFileInfo(0).getResolutions()[2];
+				 
+
 				
 	             transform = new AlgorithmTransform(sourceImage, finalMatrix, interp2, xresA, yresA, zresA, xdimA,
 	                     ydimA, zdimA, false, false, false);
@@ -233,6 +244,7 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 	             
 	             //add registered imgage to the array
 	             registeredImages.add(registeredImage);
+
 	             if(fileType == FileUtility.DICOM) { 
 	            	 Preferences.debug("*** " + sourceImage.getImageName()  + " registered successfully \n",Preferences.DEBUG_ALGORITHM);
 	             }
@@ -321,9 +333,14 @@ public class PlugInAlgorithmImageAverageRegistration extends AlgorithmBase{
 			bufferImage = algCalc.getDestImage();		
 		}
 		resultImage = new ModelImage(srcType,extents,"Final Registered Image");
+		float[] targetRes = new float[] {
+                xresA,yresA,zresA
+            };
+		resultImage.getFileInfo(0).setResolutions(targetRes);
 		algMath = new AlgorithmImageMath(resultImage,bufferImage,AlgorithmImageMath.DIVIDE,size,imag,AlgorithmImageCalculator.PROMOTE,true);
 		algMath.run();
 		resultImage = algMath.getDestImage();
+
 		
 		Preferences.debug("\n",Preferences.DEBUG_ALGORITHM);
 		Preferences.debug("*** Image averaging complete \n",Preferences.DEBUG_ALGORITHM);
