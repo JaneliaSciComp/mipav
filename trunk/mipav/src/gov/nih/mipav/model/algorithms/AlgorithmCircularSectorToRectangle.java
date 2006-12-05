@@ -9,13 +9,17 @@ import java.io.*;
 
 
 /**
- * This software performs a 2D conformal mapping of a circular sector defined by 4 user points at the sector corners to
+ * This software uses 2D conformal mapping in converting a circular sector defined by 4 user points at the sector corners to
  * a rectangle of user specified size. The circular sector has an inner radius rmin, an outer radius rmax, and extends
  * over an angle theta = alpha * PI radians, with 0 < alpha <= 1. In a conformal mapping in any small neighborhood the
- * relative angle and shape are preserved. z1 is the upper right point on rmax z2 is the upper left point on rmax z3 is
- * the lower left point on rmin z4 is the lower right point on rmin The mapping to the user specified retangle is
- * performed in 2 steps. First, a conformal mapping to a rectangle of width 1 and height log(rmax/rmin)/theta occurs.
- * Then, this rectangle is linearly scaled to a rectangle of user specified xDim and yDim.
+ * relative angle and shape are preserved. z1 is the upper right point on rmax, z2 is the upper left point on rmax, z3 is
+ * the lower left point on rmin, and z4 is the lower right point on rmin. The mapping to the user specified rectangle is
+ * performed in 3 steps. First, all distances from the circular center are divided by sqrt(rmax * rmin).  Second,
+ * a conformal mapping to a rectangle of width 1 and height log(rmax/rmin)/theta occurs.  Then, this rectangle is linearly
+ * scaled to a rectangle of user specified xDim and yDim.  Note that the linear scaling of one rectangle to another is not
+ * a conformal mapping unless the width and height are scaled by the same factor.  From "Lectures on Quasiconformal Mappings"
+ * second edition by Lars V. Ahlfors: "If Q is a square and R is a rectangle, not a square, there is no conformal mapping
+ * of Q on R which maps vertices on vertices."
  *
  * <p>Let z4z1 be on the real axis, let the straight line z2z3 be inclined at an angle alpha*PI, 0 < alpha <= 1, z3 and
  * z4 are both on the radius rmin, and z1 and z2 are both on the radius rmax. For the conformal mapping we require that
