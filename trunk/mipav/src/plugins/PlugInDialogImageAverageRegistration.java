@@ -353,6 +353,10 @@ public class PlugInDialogImageAverageRegistration extends JDialogBase implements
 				MipavUtil.displayError("Both Source Image(s) and Target Image are required");
 				return;
 			}
+			if(targetImage.getNDims() < 3) {
+				MipavUtil.displayError("2D registration not supported");
+				return;
+			}
 			if(regOptions.setVariables()) {
 				includeTargetImageinCalc = includeTargetCheckBox.isSelected();
 				saveIntermediateRegImages = saveIntermRegCheckBox.isSelected();
