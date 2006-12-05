@@ -368,27 +368,42 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
             selectedMaskToPaint(1);
         } else if (command.equals("ImportVOI")) {
             deselectMask();
-            image.getParentFrame().setImageB(image.generateUnsignedByteImage(1, true, true));
+            /** I changed this to onlyActive is false... you can switch*/
+            image.getParentFrame().setImageB(image.generateUnsignedByteImage(1, true, false));
 			// import the VOI labels as well
 			VOIVector voi = image.getVOIs();
 			int Nlabel = voi.size();
 			for (int n=0;n<Nlabel ;n++) {
 				label[n+1] = voi.VOIAt(n).getName();
 			}
-            selectedMaskToPaint(1);
+			/** not sure if you are doing multiple*/
+			for (int i = 0; i < voi.size(); i++) {
+				selectedMaskToPaint(i+1);
+			}
         } else if (command.equals("ExportVOI")) {
             int num = selected;
             commitPaintToMask(num);
-            image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "MaskToVOI"));
+            
+            AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(image.getParentFrame().getImageB());
+
+            String [] correctedLabels = new String[label.length - 1];
+            for (int i = 0; i < correctedLabels.length; i++) {
+            	correctedLabels[i] = new String(label[i+1]);
+            }
+            
+            VOIExtractionAlgo.setNameTable(correctedLabels);
+            VOIExtractionAlgo.run();
+          //  VOIVector voi = image.getVOIs();
+           // image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "MaskToVOI"));
 			deselectMask();
             // export the VOI labels as well
-            VOIVector voi = image.getVOIs();
-			int Nlabel = voi.size();
-			for (int n=0;n<Nlabel ;n++) {
-				voi.VOIAt(n).setName(label[n+1]);
-			}
-			image.resetVOIs();
-			image.setVOIs(voi);
+        //    VOIVector voi = image.getVOIs();
+		//	int Nlabel = voi.size();
+	//		for (int n=0;n<Nlabel ;n++) {
+		//		voi.VOIAt(n).setName(label[n+1]);
+		//	}
+		//	image.resetVOIs();
+		//	image.setVOIs(voi);
 			selectedMaskToPaint(num);
         }
     }

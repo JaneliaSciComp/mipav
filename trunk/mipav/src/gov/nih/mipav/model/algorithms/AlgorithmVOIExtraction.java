@@ -344,9 +344,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                     addedVOI.setColor(colorTable[expImgBuffer[scanPos] - 1]);
                                 }
 
-                                if (nameTable != null) {
-                                    addedVOI.setName(nameTable[expImgBuffer[scanPos] - 1]);
-                                }
+                               
 
                                 VOIs.add(addedVOI);
                                 VOIIndexArray[grayScaleNumber] = VOIs.size() - 1;
@@ -355,6 +353,10 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
                                     .trimPoints(Preferences.getTrim(), Preferences.getTrimAdjacient());
                                 grayScaleNumber++;
 
+                                if (nameTable != null) {
+                                    addedVOI.setName(nameTable[expImgBuffer[scanPos] - 1]);
+                                }
+                                
                                 if (grayScaleNumber >= 10000) {
                                     displayError("Algorithm VOI Extraction: Impossibly high >= 10000 gray scales detected");
                                     setCompleted(false);
