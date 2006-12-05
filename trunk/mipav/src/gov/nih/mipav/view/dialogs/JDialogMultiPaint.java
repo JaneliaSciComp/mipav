@@ -66,6 +66,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** DOCUMENT ME! */
     private JPanel filePanel;
 
+    /** DOCUMENT ME! */
+    private JPanel voiPanel;
+
     /** source image */
     private ModelImage image;
 
@@ -175,6 +178,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** */
     private static ModelLUT lutB;
     
+	/** button VOI import */
+    private JButton importVoiButton;
+
+    /** button VOI export */
+    private JButton exportVoiButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -358,6 +366,30 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
             deselectMask();
             image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "OpenMask"));
             selectedMaskToPaint(1);
+        } else if (command.equals("ImportVOI")) {
+            deselectMask();
+            image.getParentFrame().setImageB(image.generateUnsignedByteImage(1, true, true));
+			// import the VOI labels as well
+			VOIVector voi = image.getVOIs();
+			int Nlabel = voi.size();
+			for (int n=0;n<Nlabel ;n++) {
+				label[n+1] = voi.VOIAt(n).getName();
+			}
+            selectedMaskToPaint(1);
+        } else if (command.equals("ExportVOI")) {
+            int num = selected;
+            commitPaintToMask(num);
+            image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "MaskToVOI"));
+			deselectMask();
+            // export the VOI labels as well
+            VOIVector voi = image.getVOIs();
+			int Nlabel = voi.size();
+			for (int n=0;n<Nlabel ;n++) {
+				voi.VOIAt(n).setName(label[n+1]);
+			}
+			image.resetVOIs();
+			image.setVOIs(voi);
+			selectedMaskToPaint(num);
         }
     }
 
@@ -605,8 +637,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
      * Sets buttons to deselected, then calls refreshImagePaint to reset paint as mask.
      */
     private void deselectMask() {
-        multiButton[selected].setSelected(false);
-        listButton[selected].setSelected(false);
+        if (selected>0) {
+			multiButton[selected].setSelected(false);
+			listButton[selected].setSelected(false);
+		}
         selected = 0;
         refreshImagePaint(image, new BitSet());
     }
@@ -705,6 +739,18 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         saveMaskButton.setActionCommand("SaveMask");
         saveMaskButton.setFont(serif12);
         saveMaskButton.setToolTipText("Save current mask");
+
+        importVoiButton = new JButton("Import from VOIs");
+        importVoiButton.addActionListener(this);
+        importVoiButton.setActionCommand("ImportVOI");
+        importVoiButton.setFont(serif12);
+        importVoiButton.setToolTipText("Create a mask from the image's VOIs");
+
+        exportVoiButton = new JButton("Export to VOIs");
+        exportVoiButton.addActionListener(this);
+        exportVoiButton.setActionCommand("ExportVOI");
+        exportVoiButton.setFont(serif12);
+        exportVoiButton.setToolTipText("Convert the masks into VOIs");
 
         // customize the mask palette
         numberLabel = new JLabel("Number of masks: ");
@@ -835,6 +881,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         gbc.fill = GridBagConstraints.HORIZONTAL;
         maskPanel.add(saveMaskButton, gbc);
 
+        voiPanel = new JPanel(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.weightx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        voiPanel.add(importVoiButton, gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        voiPanel.add(exportVoiButton, gbc);
+
         displayPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -852,6 +907,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         gbc.gridy = 2;
         optionPanel.add(maskPanel, gbc);
         gbc.gridy = 3;
+        optionPanel.add(voiPanel, gbc);
+        gbc.gridy = 4;
         optionPanel.add(displayPanel, gbc);
 
         mainPanel = new JPanel(new GridBagLayout());
