@@ -369,21 +369,21 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         } else if (command.equals("ImportVOI")) {
             deselectMask();
             /** I changed this to onlyActive is false... you can switch*/
-            image.getParentFrame().setImageB(image.generateUnsignedByteImage(1, true, false));
+            image.getParentFrame().setImageB(image.generateUnsignedByteImage(1, false, false));
+			image.getParentFrame().getLUTb().makeStripedLUT();
 			// import the VOI labels as well
 			VOIVector voi = image.getVOIs();
 			int Nlabel = voi.size();
 			for (int n=0;n<Nlabel ;n++) {
 				label[n+1] = voi.VOIAt(n).getName();
 			}
-			/** not sure if you are doing multiple*/
-			for (int i = 0; i < voi.size(); i++) {
-				selectedMaskToPaint(i+1);
-			}
+			selectedMaskToPaint(1);
         } else if (command.equals("ExportVOI")) {
             int num = selected;
             commitPaintToMask(num);
-            
+            // empty VOI set to start
+			image.getParentFrame().getImageB().resetVOIs();
+			
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(image.getParentFrame().getImageB());
 
             String [] correctedLabels = new String[label.length - 1];
@@ -393,18 +393,12 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
             
             VOIExtractionAlgo.setNameTable(correctedLabels);
             VOIExtractionAlgo.run();
-          //  VOIVector voi = image.getVOIs();
-           // image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "MaskToVOI"));
+			// transfer the VOIs to the original image (and keep in the mask)
+			VOIVector voi = image.getParentFrame().getImageB().getVOIs();
+			image.resetVOIs();
+			image.setVOIs(voi);
 			deselectMask();
-            // export the VOI labels as well
-        //    VOIVector voi = image.getVOIs();
-		//	int Nlabel = voi.size();
-	//		for (int n=0;n<Nlabel ;n++) {
-		//		voi.VOIAt(n).setName(label[n+1]);
-		//	}
-		//	image.resetVOIs();
-		//	image.setVOIs(voi);
-			selectedMaskToPaint(num);
+            selectedMaskToPaint(num);
         }
     }
 
