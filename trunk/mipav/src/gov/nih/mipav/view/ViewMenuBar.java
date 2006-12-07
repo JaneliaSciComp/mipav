@@ -878,7 +878,7 @@ public class ViewMenuBar {
                                         menuBuilder.buildMenuItem("Image math", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Invert", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Match images", "matchImages", 0, null, false),
-                                        menuBuilder.buildMenuItem("Maximum Intensity Projection", "maximumIntensityProjection", 0, null, false),
+                                        menuBuilder.buildMenuItem("Maximum intensity projection (MIP)", "maximumIntensityProjection", 0, null, false),
                                         menuBuilder.buildMenuItem("Noise", null, 0, null, false),
                                         menuBuilder.buildMenuItem("Quantify using mask", "Quantify", 0, null, false),
                                         menuBuilder.buildMenuItem("Replace pixel/voxel value", "ReplaceValue", 0, null,
