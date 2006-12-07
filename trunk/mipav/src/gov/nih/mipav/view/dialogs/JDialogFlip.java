@@ -55,7 +55,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     public JDialogFlip() { }
 
     /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
+     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is not
      * necessary at present.
      *
      * @param  theParentFrame  Parent frame.
@@ -86,7 +86,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
 
     /**
      * This method is required if the AlgorithmPerformed interface is implemented. It is called by the algorithms when
-     * it has completed or failed to to complete, so that the dialog can display the result image and/or clean up.
+     * it has completed or failed to complete, so that the dialog can display the result image and/or clean up.
      *
      * @param  algorithm  Algorithm that caused the event.
      */
@@ -96,7 +96,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
 
             // These next lines set the titles in all frames where the source image is displayed to
             // image name so as to indicate that the image is now unlocked!
-            // The image frames are enabled and then registed to the userinterface.
+            // The image frames are enabled and then registered to the userinterface.
             Vector imageFrames = image.getImageFrameVector();
 
             for (int i = 0; i < imageFrames.size(); i++) {
