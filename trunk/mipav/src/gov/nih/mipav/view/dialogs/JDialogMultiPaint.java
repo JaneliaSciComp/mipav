@@ -386,9 +386,14 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 			
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(image.getParentFrame().getImageB());
 
-            String [] correctedLabels = new String[label.length - 1];
-            for (int i = 0; i < correctedLabels.length; i++) {
-            	correctedLabels[i] = new String(label[i+1]);
+			// in case there are labels not accounted for
+			int Nlabel = countMaskLabels();
+            String [] correctedLabels = new String[Nlabel];
+            for (int i = 0; i < Nlabel; i++) {
+				if (i<label.length-1)
+					correctedLabels[i] = new String(label[i+1]);
+				else
+					correctedLabels[i] = ("VOI"+i);
             }
             
             VOIExtractionAlgo.setNameTable(correctedLabels);
@@ -435,6 +440,51 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         intensityLockVector.add(intensityLockInteger);
     }
 
+	/**
+	 *	Procedure that counts the number of labels in the mask image
+	 */
+	public int countMaskLabels() {
+		float [] buffer;
+		int Nlabel = 0;
+		int MAX_LABEL = 256;
+		try {
+			int length = 1;
+			for (int n=0;n<image.getExtents().length;n++) {
+				length *= image.getExtents()[n];
+			}
+            buffer = new float[length];
+            image.exportData(0,length, buffer); // locks and releases lock
+		} catch (IOException error) {
+			buffer = null;
+			MipavUtil.displayError("source image locked");
+			return 0;
+		} catch (OutOfMemoryError e){
+			buffer = null;
+			MipavUtil.displayError("out of memory");
+			return 0;
+		}
+		float[] labelList = new float[MAX_LABEL];
+		Nlabel=0;
+		for (int n=0;n<buffer.length && Nlabel<MAX_LABEL;n++) if (buffer[n] != 0) {
+			boolean isNew = true;
+			for (int l=0;l<Nlabel;l++)
+				if (labelList[l]==buffer[n]) isNew = false;
+			
+			if (isNew) {
+				labelList[Nlabel] = buffer[n];
+				Nlabel++;
+			}
+		}
+        //userInterface.setMessageText("labels: "+Nlabel);
+		if (Nlabel > MAX_LABEL) {
+			buffer = null;
+			labelList = null;
+			MipavUtil.displayError("too many labels");
+			return 0;
+		}		
+		return Nlabel;
+	}
+	
     /**
      * Reads the 'labels' file from disk.
      *
