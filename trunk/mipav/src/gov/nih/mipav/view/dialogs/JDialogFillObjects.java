@@ -4,6 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.scripting.*;
+import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -39,6 +40,9 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
 
     /** Morphology2D algorithm reference. */
     private AlgorithmMorphology2D idObjectsAlgo2D = null;
+    
+    /** Morphology25D algorithm reference. */
+    private AlgorithmMorphology25D idObjectsAlgo25D = null;
 
     /** Morphology3D algorithm reference. */
     private AlgorithmMorphology3D idObjectsAlgo3D = null;
@@ -48,6 +52,9 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
 
     /** DOCUMENT ME! */
     private JCheckBox image25D;
+    
+    /** DOCUMENT ME! */
+    private boolean do25D = false; // do a 2.5D erode on a 3D image
 
     /** DOCUMENT ME! */
     private ButtonGroup imageVOIGroup;
@@ -127,6 +134,15 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
             dispose();
         }
     }
+    
+    /**
+     * Process the image in 2.5D.
+     *
+     * @param  b  whether to do 2.5D morphology
+     */
+    public void setImage25D(boolean b) {
+        do25D = b;
+    }
 
 
     /**
@@ -159,6 +175,47 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                 for (int i = 0; i < imageFrames.size(); i++) {
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setTitle(titles[i]);
                     ((ViewJFrameBase) (imageFrames.elementAt(i))).setEnabled(true);
+
+                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+                }
+
+                if (parentFrame != null) {
+                    userInterface.registerFrame(parentFrame);
+                }
+
+                image.notifyImageDisplayListeners(null, true);
+            } else if (ubyteImage != null) {
+
+                // algorithm failed but result image still has garbage
+                ubyteImage.disposeLocal(); // clean up memory
+                ubyteImage = null;
+            }
+        } else if (algorithm instanceof AlgorithmMorphology25D) {
+            image.clearMask();
+
+            if ((idObjectsAlgo25D.isCompleted() == true) && (ubyteImage != null)) {
+                updateFileInfo(image, ubyteImage);
+                ubyteImage.clearMask();
+
+                // The algorithm has completed and produced a new image to be displayed.
+                try {
+
+                    new ViewJFrameImage(ubyteImage, null, new Dimension(610, 200));
+                } catch (OutOfMemoryError error) {
+                    MipavUtil.displayError("Out of memory: unable to open new frame");
+                }
+            } else if (ubyteImage == null) {
+
+                // These next lines set the titles in all frames where the source image is displayed to
+                // image name so as to indicate that the image is now unlocked!
+                // The image frames are enabled and then registed to the userinterface.
+                Vector imageFrames = image.getImageFrameVector();
+
+                for (int i = 0; i < imageFrames.size(); i++) {
+                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
 
                     if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
                         userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
@@ -338,7 +395,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                  * x ) { MipavUtil.displayError( "Dialog dilate: unable to allocate enough memory" ); return; }
                  */
             }
-        } else if (image.getNDims() == 3) {
+        } else if (image.getNDims() == 3 && !do25D) {
             int[] destExtents = new int[3];
 
             destExtents[0] = image.getExtents()[0];
@@ -383,7 +440,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                         idObjectsAlgo3D.run();
                     }
                 } catch (OutOfMemoryError x) {
-                    MipavUtil.displayError("Dialog ID objects: unable to allocate enough memory");
+                    MipavUtil.displayError("Dialog Fill objects: unable to allocate enough memory");
 
                     if (ubyteImage != null) {
                         ubyteImage.disposeLocal(); // Clean up image memory
@@ -418,6 +475,109 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
                  * idObjectsAlgo3D.setProgressBarVisible(false); } idObjectsAlgo3D.run(); } } catch (OutOfMemoryError x)
                  * { MipavUtil.displayError( "Dialog ID objects: unable to allocate enough memory"); return; } */
             }
+        } else if (do25D) {
+
+            
+
+            if (displayLoc == NEW) {
+
+                try {
+                    ubyteImage = new ModelImage(ModelImage.UBYTE, image.getExtents(), name);
+
+                    AlgorithmChangeType changeTypeAlgo = new AlgorithmChangeType(ubyteImage, image, 0, 1, 0, 1, true);
+
+                    changeTypeAlgo.run();
+
+                    // Make algorithm
+                    idObjectsAlgo25D = new AlgorithmMorphology25D(ubyteImage, kernel, 0,
+                                                              AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0, regionFlag);
+
+                    if (regionFlag == false) {
+                        idObjectsAlgo25D.setMask(image.generateVOIMask());
+                    }
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed or failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    idObjectsAlgo25D.addListener(this);
+
+                    createProgressBar(image.getImageName(), idObjectsAlgo25D);
+                    
+                    // Hide dialog
+                    setVisible(false);
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface work fast.
+                        if (idObjectsAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+                        idObjectsAlgo25D.run();
+                    }
+                } catch (OutOfMemoryError x) {
+                    MipavUtil.displayError("Dialog erode: unable to allocate enough memory");
+
+                    if (ubyteImage != null) {
+                        ubyteImage.disposeLocal(); // Clean up memory of result image
+                        ubyteImage = null;
+                    }
+
+                    return;
+                }
+            } else {
+
+                try {
+
+                    // No need to make new image space because the user has choosen to replace the source image
+                    // Make the algorithm class
+                    idObjectsAlgo25D = new AlgorithmMorphology25D(image, kernel, 0,
+                                                              AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0, regionFlag);
+
+                    if (regionFlag == false) {
+                        idObjectsAlgo25D.setMask(image.generateVOIMask());
+                    }
+
+                    // This is very important. Adding this object as a listener allows the algorithm to
+                    // notify this object when it has completed or failed. See algorithm performed event.
+                    // This is made possible by implementing AlgorithmedPerformed interface
+                    idObjectsAlgo25D.addListener(this);
+
+                    createProgressBar(image.getImageName(), idObjectsAlgo25D);
+                    
+                    // Hide the dialog since the algorithm is about to run.
+                    setVisible(false);
+
+                    // These next lines set the titles in all frames where the source image is displayed to
+                    // "locked - " image name so as to indicate that the image is now read/write locked!
+                    // The image frames are disabled and then unregisted from the userinterface until the
+                    // algorithm has completed.
+                    Vector imageFrames = image.getImageFrameVector();
+
+                    titles = new String[imageFrames.size()];
+
+                    for (int i = 0; i < imageFrames.size(); i++) {
+                        titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
+                        ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
+                        ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
+                        userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
+                    }
+
+                    if (isRunInSeparateThread()) {
+
+                        // Start the thread as a low priority because we wish to still have user interface.
+                        if (idObjectsAlgo25D.startMethod(Thread.MIN_PRIORITY) == false) {
+                            MipavUtil.displayError("A thread is already running on this object");
+                        }
+                    } else {
+                        idObjectsAlgo25D.run();
+                    }
+                } catch (OutOfMemoryError x) {
+                    MipavUtil.displayError("Dialog Fill objects: unable to allocate enough memory");
+
+                    return;
+                }
+            }
         }
 
     }
@@ -446,6 +606,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
         }
 
         displayLoc = NEW;
+        setImage25D(scriptParameters.getParams().getBoolean("do_25D"));
     }
 
     /**
@@ -454,6 +615,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
         AlgorithmParameters.storeImageInRecorder(getResultImage());
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_25D", do25D));
     }
 
 
@@ -508,9 +670,9 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.fill = GridBagConstraints.BOTH;
-        imageVOIPanel.add(wholeImage, gbc);
-        gbc.gridy = 1;
-        imageVOIPanel.add(VOIRegions, gbc);
+        //imageVOIPanel.add(wholeImage, gbc);
+        //gbc.gridy = 1;
+        //imageVOIPanel.add(VOIRegions, gbc);
 
         // Only if the image is unlocked can it be replaced.
         if (image.getLockStatus() == ModelStorageBase.UNLOCKED) {
@@ -519,7 +681,7 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
             replaceImage.setEnabled(false);
         }
 
-        gbc.gridy = 2;
+        gbc.gridy = 0;
         imageVOIPanel.add(image25D, gbc);
 
         if (image.getNDims() == 3) {
@@ -538,9 +700,9 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
         JPanel controlPanel = new JPanel();
 
         controlPanel.setLayout(new BoxLayout(controlPanel, BoxLayout.Y_AXIS));
+        controlPanel.add(imageVOIPanel);
         controlPanel.add(destinationPanel);
 
-        // controlPanel.add(imageVOIPanel);
         controlPanel.add(buttonPanel);
         getContentPane().add(controlPanel);
         pack();
@@ -568,6 +730,8 @@ public class JDialogFillObjects extends JDialogScriptableBase implements Algorit
         } else if (VOIRegions.isSelected()) {
             regionFlag = false;
         }
+        
+        do25D = image25D.isSelected();
 
         return true;
     }
