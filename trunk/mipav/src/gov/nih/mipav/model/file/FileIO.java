@@ -2134,23 +2134,23 @@ public class FileIO {
             // check for image position
             if (((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,0032") != null) {
 
-                float xLoc0 = ((FileInfoDicom) image.getFileInfo(0)).xLocation;
-                float yLoc0 = ((FileInfoDicom) image.getFileInfo(0)).yLocation;
-                float zLoc0 = ((FileInfoDicom) image.getFileInfo(0)).zLocation;
+            	double xLoc0 = ((FileInfoDicom) image.getFileInfo(0)).xLocation;
+            	double yLoc0 = ((FileInfoDicom) image.getFileInfo(0)).yLocation;
+            	double zLoc0 = ((FileInfoDicom) image.getFileInfo(0)).zLocation;
 
-                float xLoc1 = ((FileInfoDicom) image.getFileInfo(1)).xLocation;
-                float yLoc1 = ((FileInfoDicom) image.getFileInfo(1)).yLocation;
-                float zLoc1 = ((FileInfoDicom) image.getFileInfo(1)).zLocation;
+            	double xLoc1 = ((FileInfoDicom) image.getFileInfo(1)).xLocation;
+            	double yLoc1 = ((FileInfoDicom) image.getFileInfo(1)).yLocation;
+            	double zLoc1 = ((FileInfoDicom) image.getFileInfo(1)).zLocation;
 
-                float res3Dim = 1;
+                double res3Dim = 1;
 
                 res3Dim = ((xLoc0 - xLoc1) * (xLoc0 - xLoc1)) + ((yLoc0 - yLoc1) * (yLoc0 - yLoc1)) +
                           ((zLoc0 - zLoc1) * (zLoc0 - zLoc1));
-                res3Dim = (float) Math.sqrt(res3Dim);
+                res3Dim =  Math.sqrt(res3Dim);
 
                 // System.err.println("res3Dim Spacing: " + res3Dim);
                 if ((res3Dim != 0)) {
-                    image.getFileInfo(0).setResolutions(res3Dim, 2);
+                    image.getFileInfo(0).setResolutions((float)res3Dim, 2);
 
                     // System.out.println (" res3Dim 1  = " + res3Dim);
                     for (int m = 1; m < (nImages - 1); m++) {
@@ -2165,12 +2165,12 @@ public class FileIO {
 
                         res3Dim = ((xLoc0 - xLoc1) * (xLoc0 - xLoc1)) + ((yLoc0 - yLoc1) * (yLoc0 - yLoc1)) +
                                   ((zLoc0 - zLoc1) * (zLoc0 - zLoc1));
-                        res3Dim = (float) Math.sqrt(res3Dim);
+                        res3Dim = Math.sqrt(res3Dim);
 
-                        image.getFileInfo(m).setResolutions(res3Dim, 2);
+                        image.getFileInfo(m).setResolutions((float)res3Dim, 2);
                     }
 
-                    image.getFileInfo(nImages - 1).setResolutions(res3Dim, 2);
+                    image.getFileInfo(nImages - 1).setResolutions((float)res3Dim, 2);
                 }
             }
 
@@ -8734,16 +8734,17 @@ public class FileIO {
 
             FileDicomTag tag = null;
             Object obj = null;
-            float slLoc;
+            double slLoc;
 
-            float sliceResolution = myFileInfo.getResolution(2);
+            double sliceResolution = myFileInfo.getResolution(2);
+
 
             if (image.getExtents().length > 2) { // This sets the fileinfo to the same for all slices !!
 
                 FileInfoBase[] fBase = new FileInfoBase[image.getExtents()[2]];
 
-                float[] axialOrigin = new float[3];
-                float[] dicomOrigin = new float[3];
+                double[] axialOrigin = new double[3];
+                double[] dicomOrigin = new double[3];
                 TransMatrix matrix = myFileInfo.getPatientOrientation();
 
                 if (matrix == null) {
@@ -8752,8 +8753,14 @@ public class FileIO {
 
                 TransMatrix invMatrix = (TransMatrix) matrix.clone();
                 invMatrix.invert();
+                
+                float[] imageOrg = image.getFileInfo(0).getOrigin();
+                double[] imageOrgDbl = new double[imageOrg.length];
+                for(int k=0;k<imageOrg.length;k++){
+                	imageOrgDbl[k] = (double)imageOrg[k];
+                }
 
-                matrix.transform(image.getFileInfo(0).getOrigin(), axialOrigin);
+                matrix.transform(imageOrgDbl, axialOrigin);
 
                 slLoc = axialOrigin[2];
 
@@ -8799,15 +8806,15 @@ public class FileIO {
                     fBase[k] = (FileInfoBase) myFileInfo.clone();
 
                     // Add code to modify the slice location attribute (0020, 1041) VR = DS = decimal string
-                    ((FileInfoDicom) (fBase[k])).setValue("0020,1041", Float.toString(slLoc),
-                                                          Float.toString(slLoc).length());
+                    ((FileInfoDicom) (fBase[k])).setValue("0020,1041", Double.toString(slLoc),
+                                                          Double.toString(slLoc).length());
                     slLoc += sliceResolution;
 
                     // transform the slice position back into dicom space and store it in the file info
                     invMatrix.transform(axialOrigin, dicomOrigin);
 
-                    String tmpStr = new String(Float.toString(dicomOrigin[0]) + "\\" + Float.toString(dicomOrigin[1]) +
-                                               "\\" + Float.toString(dicomOrigin[2]));
+                    String tmpStr = new String(Float.toString((float)dicomOrigin[0]) + "\\" + Float.toString((float)dicomOrigin[1]) +
+                                               "\\" + Float.toString((float)dicomOrigin[2]));
                     ((FileInfoDicom) (fBase[k])).setValue("0020,0032", tmpStr, tmpStr.length());
 
                     // move the slice position to the next slice in the image
