@@ -5,6 +5,7 @@ import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
+import java.awt.Point;
 import java.io.*;
 
 import java.util.*;
@@ -67,6 +68,12 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     public static final int FIND_EDGES = 11;
+    
+    /** DOCUMENT ME! */
+    public static final int PARTICLE_ANALYSIS_NEW = 12;
+
+    /** DOCUMENT ME! */
+    public static final int FILL_HOLES = 13;
 
     /** DOCUMENT ME! */
     public static final int SIZED_CIRCLE = 0;
@@ -94,7 +101,7 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
     /** DOCUMENT ME! */
     private String[] algorithmName = {
         "ERODE", "DILATE", "CLOSE", "OPEN", "ID_OBJECTS", "DELETE_OBJECTS", "DISTANCE_MAP", "BACKGROUND_DISTANCE_MAP",
-        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES"
+        "ULTIMATE_ERODE", "PARTICLE ANALYSIS", "SKELETONIZE", "FIND_EDGES", "PARTICLE_ANALYSIS_NEW", "FILL_HOLES"
     };
 
     /** DOCUMENT ME! */
@@ -569,6 +576,9 @@ public class AlgorithmMorphology25D extends AlgorithmBase {
                 MipavUtil.displayError("2.5D find edges not supported.");
 
                 // findEdges( edgingType, false );
+                break;
+            case FILL_HOLES:
+                fillHoles(false);
                 break;
 
             default:
@@ -1067,6 +1077,186 @@ kernelLoop:
        
         setCompleted(true);
     }
+    
+    /**
+     * Fill the holes inside the cell region blocks.
+     *
+     * @param  returnFlag  if true then this operation is a step in the morph process (i.e. close)
+     */
+    private void fillHoles(boolean returnFlag) {
+
+        if (threadStopped) {
+            finalize();
+
+            return;
+        }
+
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int zDim = srcImage.getExtents()[2];
+        int sliceSize = xDim * yDim;
+        int offset;
+        short floodValue = 2;
+        int z;
+        
+        fireProgressStateChanged("Filling holes in image ...");
+        
+        for (z = 0; z < zDim; z++) {
+            fireProgressStateChanged(z * 100/zDim);
+            offset = z * sliceSize;
+            // Fill the boundary of the image with value 0, which represent the seed value
+            int i = 0;
+    
+            // top boundary
+            for (i = 0; i < xDim; i++) {
+                imgBuffer[offset + i] = 0;
+            }
+    
+            // bottom boundary
+            for (i = (yDim - 1) * xDim; i < (yDim * xDim); i++) {
+                imgBuffer[offset + i] = 0;
+            }
+    
+            // left boundary
+            for (i = 0; i < sliceSize; i = i + xDim) {
+                imgBuffer[offset + i] = 0;
+            }
+    
+            // right boundary
+            for (i = xDim; i < sliceSize; i = i + xDim) {
+                imgBuffer[offset + i - 1] = 0;
+            }
+    
+            // region grow to fill the holes inside the cell region block.
+            fillHolesRegion(offset, floodValue, imgBuffer[offset]);
+    
+            // System.arraycopy(imgBuffer,0, processBuffer, 0, imgBuffer.length);
+            // if THREAD stopped already, then dump out!
+            if (threadStopped) {
+                finalize();
+    
+                return;
+            }
+        } // for (z = 0; z < zDim; z++)
+
+        try {
+
+            if ((srcImage.getType() == ModelStorageBase.BOOLEAN) || (srcImage.getType() == ModelStorageBase.UBYTE)) {
+                srcImage.reallocate(ModelImage.USHORT);
+            }
+
+            srcImage.importData(0, imgBuffer, true);
+        } catch (IOException error) {
+            displayError("Algorithm Morphology25D: Image(s) locked");
+            setCompleted(false);
+            
+
+            return;
+        } catch (OutOfMemoryError e) {
+            displayError("Algorithm Morphology25D: Out of memory");
+            setCompleted(false);
+            
+
+            return;
+        }
+
+        if (returnFlag == true) {
+            return;
+        }
+
+        
+        setCompleted(true);
+
+    }
+    
+    /**
+     * 2D flood fill that fill the holes insize the cell region block.
+     *
+     * @param  stIndex     the starting index of the seed point
+     * @param  floodValue  the value to flood the region with
+     * @param  objValue    object ID value that idenditifies the flood region.
+     */
+    private void fillHolesRegion(int stIndex, short floodValue, short objValue) {
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int sliceSize = xDim * yDim;
+        int x, y, z;
+        int indexZ, indexY;
+        int pixCount = 0;
+
+        Point pt;
+        Point tempPt;
+        z = stIndex/sliceSize;
+        indexZ = z * sliceSize;
+        Point seedPt = new Point((stIndex % sliceSize) % xDim, (stIndex % sliceSize) / xDim);
+        Stack stack = new Stack();
+
+        if (imgBuffer[indexZ + (seedPt.y * xDim) + seedPt.x] == objValue) {
+            stack.push(seedPt);
+            imgBuffer[indexZ + (seedPt.y * xDim) + seedPt.x] = floodValue;
+
+            // While loop mark the back ground region with value 2.
+            while (!stack.empty()) {
+                pt = (Point) stack.pop();
+                x = pt.x;
+                y = pt.y;
+
+                indexY = y * xDim;
+
+                // voxel itself
+                if (imgBuffer[indexZ + indexY + x] == objValue) {
+                    imgBuffer[indexZ + indexY + x] = floodValue;
+                }
+
+                pixCount++;
+
+                // checking on the voxel's six neighbors
+                if ((x + 1) < xDim) {
+
+                    if (imgBuffer[indexZ + indexY + x + 1] == objValue) {
+                        tempPt = new Point(x + 1, y);
+                        stack.push(tempPt);
+                    }
+                }
+
+                if ((x - 1) >= 0) {
+
+                    if (imgBuffer[indexZ + indexY + x - 1] == objValue) {
+                        tempPt = new Point(x - 1, y);
+                        stack.push(tempPt);
+                    }
+                }
+
+                if ((y + 1) < yDim) {
+
+                    if (imgBuffer[indexZ + ((y + 1) * xDim) + x] == objValue) {
+                        tempPt = new Point(x, y + 1);
+                        stack.push(tempPt);
+                    }
+                }
+
+                if ((y - 1) >= 0) {
+
+                    if (imgBuffer[indexZ + ((y - 1) * xDim) + x] == objValue) {
+                        tempPt = new Point(x, y - 1);
+                        stack.push(tempPt);
+                    }
+                }
+            }
+        }
+
+        // Fill the pixels with value 2 to 0, else to 1. Fill holes.
+        for (int i = indexZ; i < indexZ + sliceSize; i++) {
+
+            if (imgBuffer[i] == 2) {
+                imgBuffer[i] = 0;
+            } else {
+                imgBuffer[i] = 1;
+            }
+        }
+    }
+
+
 
     /**
      * This method returns whether or not pix is the index of an endpoint in tmpBuffer (it is assumed that location pix
