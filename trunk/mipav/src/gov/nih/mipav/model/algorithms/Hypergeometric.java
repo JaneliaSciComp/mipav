@@ -2,7 +2,13 @@ package gov.nih.mipav.model.algorithms;
 
 import gov.nih.mipav.view.*;
 
-/**  
+/** 
+ * The function 2F1(a,b,c,x) is the hypergeometric function or Gauss's hypergeometric function.
+ * The Pochhammer(a,b) = Gamma(a+b)/Gamma(a)
+ * 2F1(a,b,c,x) = sum from k = 0 to infinity of
+ * Poch(a,k)*Poch(b,k)*z**k/(k! * Poch(c,k))
+ * It is the solution of the hypergeometric differential equation:
+ * z(1-z)y" + [c-(a+b+1)z]y' - aby = 0 
 */
 
 public class Hypergeometric {
@@ -397,6 +403,11 @@ public class Hypergeometric {
         return;
     } // realArgument
     
+    /**
+     * This is a port of subroutine HYGFZ from Computation of Special Functions
+     * by Shanjie Zhang and Jianming Jin, pp. 380-385.
+     *
+     */
     private void complexArgument() {
         boolean L0, L1, L2, L3, L4, L5, L6;
         double x;
@@ -418,7 +429,7 @@ public class Hypergeometric {
         int nm = 0;
         double realZR[] = new double[1];
         double imagZR[] = new double[1];
-        int k;
+        int k = 0;
         double realZ1[] = new double[1];
         double imagZ1[] = new double[1];
         double realZC0[] = new double[1];
@@ -427,7 +438,7 @@ public class Hypergeometric {
         double imagZR0[] = new double[1];
         double realZW = 0.0;
         double imagZW = 0.0;
-        double gm;
+        double gm[] = new double[1];
         int mcab;
         int m;
         double gam[] = new double[1];
@@ -443,17 +454,17 @@ public class Hypergeometric {
         double imagZR1[] = new double[1];
         double sp0;
         double sp;
-        double realZC1;
-        double imagZC1;
-        double realZF1;
-        double imagZF1;
+        double realZC1[] = new double[1];
+        double imagZC1[] = new double[1];
+        double realZF1[] = new double[1];
+        double imagZF1[] = new double[1];
         double realZP;
         double imagZP;
         double ga[] = new double[1];
         double gb[] = new double[1];
         double gabc[] = new double[1];
-        double realZ00;
-        double imagZ00;
+        double realZ00[] = new double[1];
+        double imagZ00[] = new double[1];
         int mab;
         double gab[] = new double[1];
         double gba[] = new double[1];
@@ -478,6 +489,8 @@ public class Hypergeometric {
         double realTemp2[] = new double[1];
         double imagTemp2[] = new double[1];
         double sm;
+        double realZP0;
+        double imagZP0;
         
         x = realZ;
         y = imagZ;
@@ -523,6 +536,7 @@ public class Hypergeometric {
             gamm = new Gamma(0.5 + 0.5*a, g3);
             gamm.run();
             realResult[0] = g0[0]*g1[0]/(g2[0]*g3[0]);
+            imagResult[0] = 0.0;
         } // else if (L2)
         else if (L3 || L4) {
             if (L3) {
@@ -596,7 +610,7 @@ public class Hypergeometric {
                zmlt(realZC0[0],imagZC0[0],realResult[0],imagResult[0],realResult,imagResult);
             } // if (x < 0.0)
             else if (a0 >= 0.9) {
-                gm = 0.0;
+                gm[0] = 0.0;
                 if ((c-a-b) >= 0) {
                     mcab = (int)(c-a-b+eps);
                 }
@@ -620,10 +634,10 @@ public class Hypergeometric {
                     psi = new Psi(b, pb);
                     psi.run();
                     if (m != 0) {
-                        gm = 1.0;
+                        gm[0] = 1.0;
                     }
                     for (j = 1; j <= Math.abs(m) - 1; j++) {
-                        gm = gm * j;
+                        gm[0] = gm[0] * j;
                     } // for (j = 1; j <= Math.abs(m) - 1; j++)
                     rm = 1.0;
                     for (j = 1; j <= Math.abs(m); j++) {
@@ -638,14 +652,14 @@ public class Hypergeometric {
                     sp0 = 0.0;
                     sp = 0.0;
                     if (m >= 0) {
-                        realZC0[0] = gm*gc[0]/(gam[0]*gbm[0]);
+                        realZC0[0] = gm[0]*gc[0]/(gam[0]*gbm[0]);
                         imagZC0[0] = 0.0;
                         zpow(realZ-1.0,imagZ,m,realTemp,imagTemp,ierr);
                         if (ierr[0] == 1) {
                             return;
                         }
-                        realZC1 = -gc[0]*realTemp[0]/(ga[0]*gb[0]*rm);
-                        imagZC1 = -gc[0]*imagTemp[0]/(ga[0]*gb[0]*rm);
+                        realZC1[0] = -gc[0]*realTemp[0]/(ga[0]*gb[0]*rm);
+                        imagZC1[0] = -gc[0]*imagTemp[0]/(ga[0]*gb[0]*rm);
                         for (k = 1; k <= m-1; k++) {
                             zmlt(realZR0[0],imagZR0[0],(a+k-1)*(b+k-1)/(k*(k-m)),0,realZR0,imagZR0);
                             zmlt(realZR0[0],imagZR0[0],1.0-realZ,-imagZ,realZR0,imagZR0);
@@ -660,8 +674,8 @@ public class Hypergeometric {
                             MipavUtil.displayError("Hypergeometric has error in zlog");
                             return;
                         }
-                        realZF1 = pa[0] + pb[0] + sp0 + 2.0*el + realTemp[0];
-                        imagZF1 = imagTemp[0];
+                        realZF1[0] = pa[0] + pb[0] + sp0 + 2.0*el + realTemp[0];
+                        imagZF1[0] = imagTemp[0];
                         for (k = 1; k <= 500; k++) {
                             sp = sp + (1-a)/(k*(a+k-1)) + (1-b)/(k*(b+k-1));
                             sm = 0.0;
@@ -677,16 +691,16 @@ public class Hypergeometric {
                             zmlt(realZR1[0],imagZR1[0],(a+m+k-1)*(b+m+k-1)/(k*(m+k)),0,realZR1,imagZR1);
                             zmlt(realZR1[0],imagZR1[0],1.0-realZ,-imagZ,realZR1,imagZR1);
                             zmlt(realZR1[0],imagZR1[0],realZP,imagZP,realTemp,imagTemp);
-                            realZF1 = realZF1 + realTemp[0];
-                            imagZF1 = imagZF1 + imagTemp[0];
-                            if (zabs(realZF1-realZW,imagZF1-imagZW) < zabs(realZF1,imagZF1)*eps) {
+                            realZF1[0] = realZF1[0] + realTemp[0];
+                            imagZF1[0] = imagZF1[0] + imagTemp[0];
+                            if (zabs(realZF1[0]-realZW,imagZF1[0]-imagZW) < zabs(realZF1[0],imagZF1[0])*eps) {
                                 break;
                             }
-                            realZW = realZF1;
-                            imagZW = imagZF1;
+                            realZW = realZF1[0];
+                            imagZW = imagZF1[0];
                         } // for (k = 1; k <= 500; k++)
                         zmlt(realZF0,imagZF0,realZC0[0],imagZC0[0],realTemp,imagTemp);
-                        zmlt(realZF1,imagZF1,realZC1,imagZC1,realTemp2,imagTemp2);
+                        zmlt(realZF1[0],imagZF1[0],realZC1[0],imagZC1[0],realTemp2,imagTemp2);
                         realResult[0] = realTemp[0] + realTemp2[0];
                         imagResult[0] = imagTemp[0] + imagTemp2[0];
                     } // if (m >= 0)
@@ -696,9 +710,9 @@ public class Hypergeometric {
                         if (ierr[0] == 1) {
                             return;
                         }
-                        zdiv(gm*gc[0],0.0,ga[0]*gb[0]*realTemp[0],ga[0]*gb[0]*imagTemp[0],realZC0,imagZC0);
-                        realZC1 = -Math.pow(-1,m)*gc[0]/(gam[0]*gbm[0]*rm);
-                        imagZC1 = 0.0;
+                        zdiv(gm[0]*gc[0],0.0,ga[0]*gb[0]*realTemp[0],ga[0]*gb[0]*imagTemp[0],realZC0,imagZC0);
+                        realZC1[0] = -Math.pow(-1,m)*gc[0]/(gam[0]*gbm[0]*rm);
+                        imagZC1[0] = 0.0;
                         for (k = 1; k <= m-1; k++) {
                             zmlt(realZR0[0],imagZR0[0],(a-m+k-1)*(b-m+k-1)/(k*(k-m)),0.0,realZR0,imagZR0);
                             zmlt(realZR0[0],imagZR0[0],1.0-realZ,-imagZ,realZR0,imagZR0);
@@ -713,8 +727,8 @@ public class Hypergeometric {
                             MipavUtil.displayError("zlog error in Hypergeometric");
                             return;
                         }
-                        realZF1 = pa[0] + pb[0] + 2.0*el + realTemp[0];
-                        imagZF1 = imagTemp[0];
+                        realZF1[0] = pa[0] + pb[0] - sp0 + 2.0*el + realTemp[0];
+                        imagZF1[0] = imagTemp[0];
                         for (k = 1; k <= 500; k++) {
                             sp = sp + (1-a)/(k*(a+k-1)) + (1-b)/(k*(b+k-1));
                             sm = 0.0;
@@ -731,16 +745,16 @@ public class Hypergeometric {
                             zmlt(realZR1[0],imagZR1[0],(a+k-1)*(b+k-1)/(k*(m+k)),0.0,realZR1,imagZR1);
                             zmlt(realZR1[0],imagZR1[0],1.0-realZ,-imagZ,realZR1,imagZR1);
                             zmlt(realZR1[0],imagZR1[0],realZP,imagZP,realTemp,imagTemp);
-                            realZF1 = realZF1 + realTemp[0];
-                            imagZF1 = imagZF1 + imagTemp[0];
-                            if (zabs(realZF1-realZW,imagZF1-imagZW) < zabs(realZF1,imagZF1)*eps) {
+                            realZF1[0] = realZF1[0] + realTemp[0];
+                            imagZF1[0] = imagZF1[0] + imagTemp[0];
+                            if (zabs(realZF1[0]-realZW,imagZF1[0]-imagZW) < zabs(realZF1[0],imagZF1[0])*eps) {
                                 break;
                             }
-                            realZW = realZF1;
-                            imagZW = imagZF1;
+                            realZW = realZF1[0];
+                            imagZW = imagZF1[0];
                         } // for (k = 1; k <= 500; k++)
                         zmlt(realZF0,imagZF0,realZC0[0],imagZC0[0],realTemp,imagTemp);
-                        zmlt(realZF1,imagZF1,realZC1,imagZC1,realTemp2,imagTemp2);
+                        zmlt(realZF1[0],imagZF1[0],realZC1[0],imagZC1[0],realTemp2,imagTemp2);
                         realResult[0] = realTemp[0] + realTemp2[0];
                         imagResult[0] = imagTemp[0] + imagTemp2[0];
                     } // else m < 0
@@ -766,14 +780,14 @@ public class Hypergeometric {
                     if (ierr[0] == 1) {
                         return;
                     }
-                    realZC1 = gc[0]*gabc[0]/(ga[0]*gb[0])*realTemp[0];
-                    imagZC1 = gc[0]*gabc[0]/(ga[0]*gb[0])*imagTemp[0];
+                    realZC1[0] = gc[0]*gabc[0]/(ga[0]*gb[0])*realTemp[0];
+                    imagZC1[0] = gc[0]*gabc[0]/(ga[0]*gb[0])*imagTemp[0];
                     realResult[0] = 0.0;
                     imagResult[0] = 0.0;
                     realZR0[0] = realZC0[0];
                     imagZR0[0] = imagZC0[0];
-                    realZR1[0] = realZC1;
-                    imagZR1[0] = imagZC1;
+                    realZR1[0] = realZC1[0];
+                    imagZR1[0] = imagZC1[0];
                     for (k = 1; k <= 500; k++) {
                         zmlt(realZR0[0],imagZR0[0],(a+k-1)*(b+k-1)/(k*(a+b-c+k)),0.0,realZR0,imagZR0);
                         zmlt(realZR0[0],imagZR0[0],1.0-realZ,-imagZ,realZR0,imagZR0);
@@ -787,16 +801,221 @@ public class Hypergeometric {
                         realZW = realResult[0];
                         imagZW = imagResult[0];
                     } // for (k = 1; k <= 500; k++)
-                    realResult[0] = realResult[0] + realZC0[0] + realZC1;
-                    imagResult[0] = imagResult[0] + imagZC0[0] + imagZC1;
+                    realResult[0] = realResult[0] + realZC0[0] + realZC1[0];
+                    imagResult[0] = imagResult[0] + imagZC0[0] + imagZC1[0];
                 } // else c - a - b is not an integer
             } // else if (a0 >= 0.9)
             else { // a0 < 0.9
-                
+                realZ00[0] = 1.0;
+                imagZ00[0] = 0.0;
+                if (((c-a) < a) && ((c-b) < b)) {
+                    zpow(1.0-realZ,-imagZ,c-a-b,realZ00,imagZ00,ierr);
+                    if (ierr[0] == 1) {
+                        return;
+                    }
+                    a = c-a;
+                    b = c-b;
+                } // if (((c-a) < a) && ((c-b) < b))
+                realResult[0] = 1.0;
+                imagResult[0] = 0.0;
+                realZR[0] = 1.0;
+                imagZR[0] = 0.0;
+                for (k = 1; k <= 1500; k++) {
+                    realZR[0] = realZR[0]*(a+k-1.0)*(b+k-1.0)/(k*(c+k-1.0));
+                    imagZR[0] = imagZR[0]*(a+k-1.0)*(b+k-1.0)/(k*(c+k-1.0));
+                    zmlt(realZR[0],imagZR[0],realZ,imagZ,realZR,imagZR);
+                    realResult[0] = realResult[0] + realZR[0];
+                    imagResult[0] = imagResult[0] + imagZR[0];
+                    if (zabs(realResult[0]-realZW,imagResult[0]-imagZW) <= zabs(realResult[0],imagResult[0])*eps) {
+                        break;
+                    }
+                    realZW = realResult[0];
+                    imagZW = imagResult[0];
+                } // for (k = 1; k <= 1500; k++)
+                zmlt(realZ00[0],imagZ00[0],realResult[0],imagResult[0],realResult,imagResult);
             } // else a0 < 0.9
         } // else if (a0 <= 1.0)
-        
-        
+        else { // a0 > 1.0
+            if ((a-b) >= 0.0) {
+                mab = (int)(a-b+eps);
+            }
+            else {
+                mab = (int)(a-b-eps);
+            }
+            if ((Math.abs(a-b-mab) < eps) && (a0 <= 1.1)) {
+                b = b + eps;
+            }
+            if (Math.abs(a-b-mab) > eps) {
+                gamm = new Gamma(a, ga);
+                gamm.run();
+                gamm = new Gamma(b, gb);
+                gamm.run();
+                gamm = new Gamma(c, gc);
+                gamm.run();
+                gamm = new Gamma(a-b, gab);
+                gamm.run();
+                gamm = new Gamma(b-a, gba);
+                gamm.run();
+                gamm = new Gamma(c-a, gca);
+                gamm.run();
+                gamm = new Gamma(c-b, gcb);
+                gamm.run();
+                zpow(-realZ,-imagZ,a,realTemp,imagTemp,ierr);
+                if (ierr[0] == 1) {
+                    return;
+                }
+                zdiv(gc[0]*gba[0],0.0,gca[0]*gb[0]*realTemp[0],gca[0]*gb[0]*imagTemp[0],realZC0,imagZC0);
+                zpow(-realZ,-imagZ,b,realTemp,imagTemp,ierr);
+                if (ierr[0] == 1) {
+                    return;
+                }
+                zdiv(gc[0]*gab[0],0.0,gcb[0]*ga[0]*realTemp[0],gcb[0]*ga[0]*imagTemp[0],realZC1,imagZC1);
+                realZR0[0] = realZC0[0];
+                imagZR0[0] = imagZC0[0];
+                realZR1[0] = realZC1[0];
+                imagZR1[0] = imagZC1[0];
+                realResult[0] = 0.0;
+                imagResult[0] = 0.0;
+                for (k = 1; k <= 500; k++) {
+                    zdiv(realZR0[0]*(a+k-1.0)*(a-c+k),imagZR0[0]*(a+k-1.0)*(a-c+k),
+                         (a-b+k)*k*realZ,(a-b+k)*k*imagZ,realZR0,imagZR0);
+                    zdiv(realZR1[0]*(b+k-1.0)*(b-c+k),imagZR1[0]*(b+k-1.0)*(b-c+k),
+                         (b-a+k)*k*realZ,(b-a+k)*k*imagZ,realZR1,imagZR1);
+                    realResult[0] = realResult[0] + realZR0[0] + realZR1[0];
+                    imagResult[0] = imagResult[0] + imagZR0[0] + imagZR1[0];
+                    zdiv(realResult[0]-realZW,imagResult[0]-imagZW,realResult[0],imagResult[0],realTemp,imagTemp);
+                    if (zabs(realTemp[0],imagTemp[0]) <= eps) {
+                        break;
+                    }
+                    realZW = realResult[0];
+                    imagZW = imagResult[0];
+                } // for (k = 1; k <= 500; k++)
+                realResult[0] = realResult[0] + realZC0[0] + realZC1[0];
+                imagResult[0] = imagResult[0] + imagZC0[0] + imagZC1[0];
+            } // if (Math.abs(a-b-mab) > eps)
+            else { // a - b = 0, +-1, +-2,...
+                if ((a-b) < 0.0) {
+                    a = bb;
+                    b = aa;
+                } // if ((a-b) < 0.0)
+                ca = c-a;
+                cb = c-b;
+                if (ca >= 0.0) {
+                    nca = (int)(ca+eps);
+                }
+                else {
+                    nca = (int)(ca-eps);
+                }
+                if (cb >= 0.0) {
+                    ncb = (int)(cb+eps);
+                }
+                else {
+                    ncb = (int)(cb-eps);
+                }
+                if ((Math.abs(ca-nca) < eps) || (Math.abs(cb-ncb) < eps)) {
+                    c = c + eps;
+                }
+                gamm = new Gamma(a, ga);
+                gamm.run();
+                gamm = new Gamma(c, gc);
+                gamm.run();
+                gamm = new Gamma(cb, gcb);
+                gamm.run();
+                psi = new Psi(a, pa);
+                psi.run();
+                psi = new Psi(ca, pca);
+                psi.run();
+                psi = new Psi(a-c,pac);
+                psi.run();
+                mab = (int)(a-b+eps);
+                zpow(-realZ,-imagZ,b,realTemp,imagTemp,ierr);
+                if (ierr[0] == 1) {
+                    return;
+                }
+                zdiv(gc[0],0,ga[0]*realTemp[0],ga[0]*imagTemp[0],realZC0,imagZC0);
+                gamm = new Gamma(a-b, gm);
+                gamm.run();
+                realZF0 = gm[0]/gcb[0]*realZC0[0];
+                imagZF0 = gm[0]/gcb[0]*imagZC0[0];
+                realZR[0] = realZC0[0];
+                imagZR[0] = imagZC0[0];
+                for (k = 1; k <= mab-1; k++) {
+                    zdiv(realZR[0]*(b+k-1.0),imagZR[0]*(b+k-1.0),k*realZ,k*imagZ,realZR,imagZR);
+                    t0 = a-b-k;
+                    gamm = new Gamma(t0, g0);
+                    gamm.run();
+                    gamm = new Gamma(c-b-k, gcbk);
+                    gamm.run();
+                    realZF0 = realZF0 + realZR[0]*g0[0]/gcbk[0];
+                    imagZF0 = imagZF0 + imagZR[0]*g0[0]/gcbk[0];
+                } // for (k = 1; k <= mab-1; k++)
+                if (mab == 0) {
+                    realZF0 = 0.0;
+                    imagZF0 = 0.0;
+                } // if (mab == 0.0)
+                zpow(-realZ,-imagZ,a,realTemp,imagTemp,ierr);
+                if (ierr[0] == 1) {
+                    return;
+                }
+                zdiv(gc[0],0.0,ga[0]*gcb[0]*realTemp[0],ga[0]*gcb[0]*imagTemp[0],realZC1,imagZC1);
+                sp = -2.0*el - pa[0] - pca[0];
+                for (j = 1; j <= mab; j++) {
+                    sp = sp + 1.0/j;
+                }
+                zlog(-realZ,-imagZ,realTemp,imagTemp,ierr);
+                if (ierr[0] == 1) {
+                    MipavUtil.displayError("Hypergeometric has error in zlog");
+                    return;
+                }
+                realZP0 = sp + realTemp[0];
+                imagZP0 = imagTemp[0];
+                sq = 1.0;
+                for (j = 1; j <= mab; j++) {
+                    sq = sq*(b+j-1.0)*(b-c+j)/j;
+                }
+                zmlt(sq*realZP0,sq*imagZP0,realZC1[0],imagZC1[0],realZF1,imagZF1);
+                realZR[0] = realZC1[0];
+                imagZR[0] = imagZC1[0];
+                rk1 = 1.0;
+                sj1 = 0.0;
+                for (k = 1; k <= 10000; k++) {
+                    zdiv(realZR[0],imagZR[0],realZ,imagZ,realZR,imagZR);
+                    rk1 = rk1 * (b+k-1.0) * (b-c+k)/(k*k);
+                    rk2 = rk1;
+                    for (j = k+1; j <= k+mab; j++) {
+                        rk2 = rk2 * (b+j-1.0)*(b-c+j)/j;
+                    }
+                    sj1 = sj1 + (a-1)/(k*(a+k-1)) + (a-c-1)/(k*(a-c+k-1));
+                    sj2 = sj1;
+                    for (j = k+1; j <= k+mab; j++) {
+                        sj2 = sj2 + 1.0/j;
+                    }
+                    zlog(-realZ,-imagZ,realTemp,imagTemp,ierr);
+                    if (ierr[0] == 1) {
+                        MipavUtil.displayError("Hypergeometric has error in zlog");
+                        return;
+                    }
+                    realZP = -2.0*el-pa[0]-pac[0]+sj2 -1.0/(k+a-c) -Math.PI/Math.tan(Math.PI*(k+a-c)) + realTemp[0];
+                    imagZP = imagTemp[0];
+                    zmlt(rk2*realZR[0],rk2*imagZR[0],realZP,imagZP,realTemp,imagTemp);
+                    realZF1[0] = realZF1[0] + realTemp[0];
+                    imagZF1[0] = imagZF1[0] + imagTemp[0];
+                    ws = zabs(realZF1[0],imagZF1[0]);
+                    if (Math.abs((ws-w0)/ws) < eps) {
+                        break;
+                    }
+                    w0 = ws;
+                } // for (k = 1; k <= 10000; k++)
+                realResult[0] = realZF0 + realZF1[0];
+                imagResult[0] = imagZF0 + imagZF1[0];
+            } // else a - b = 0, +-1, +-2,...
+        } // else a0 > 1.0
+        a = aa;
+        b = bb;
+        if (k > 150) {
+            MipavUtil.displayWarning("Hypergeometric warning! Check the accuracy!");
+        }
+        return;
     } // complexArgument
     
     /**
