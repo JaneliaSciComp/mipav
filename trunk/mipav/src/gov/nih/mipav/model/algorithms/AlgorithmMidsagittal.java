@@ -129,18 +129,19 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
     }
 
     /**
-     * Find the midsagittal line and transform the source image to align it along that line vertially.
+     * Find the midsagittal line and transform the source image to align it along that line vertically.
      */
     private void calc() {
         ModelImage flipImage = (ModelImage) srcImage.clone(srcImage.getImageName() + "_flip");
 
         fireProgressStateChanged("Flipping image ...");
+
         // flip
         AlgorithmFlip flipAlgo = new AlgorithmFlip(flipImage, AlgorithmFlip.Y_AXIS);
         flipAlgo.setRunningInSeparateThread(false);
         fireProgressStateChanged(10);
-   
-        
+
+
         flipAlgo.run();
 
         // register
@@ -149,10 +150,10 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
                                                           searchAngle, coarseAngle, fineAngle, -searchAngle,
                                                           searchAngle, coarseAngle, fineAngle, maxOfMin, doSubsample,
                                                           fastMode, bracketBound, baseNumIter, numMinima);
-        
+
         linkProgressToAlgorithm(regAlgo);
         regAlgo.setProgressValues(generateProgressValues(10, 90));
-        
+
         regAlgo.setRunningInSeparateThread(false);
         regAlgo.run();
 
@@ -169,7 +170,7 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
                                                                   false);
         transformAlgo.setRunningInSeparateThread(false);
         linkProgressToAlgorithm(transformAlgo);
-        transformAlgo.setProgressValues(generateProgressValues(90,100));
+        transformAlgo.setProgressValues(generateProgressValues(90, 100));
 
         // transformAlgo.setUpdateOriginFlag(true);
         transformAlgo.run();

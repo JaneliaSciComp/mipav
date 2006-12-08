@@ -243,7 +243,7 @@ public class AlgorithmEdgeNMSuppression extends AlgorithmBase {
                         edgeImage.set(i0);
                     } else if ((x0 < level) && (x1 >= level) && (x2 < level) && (x3 >= level)) {
 
-                        // case 9 - edge going vertially along the left
+                        // case 9 - edge going vertically along the left
                         edgeImage.set(i0);
                         edgeImage.set(i2);
                     } else if ((x0 < level) && (x1 >= level) && (x2 >= level) && (x3 < level)) {
