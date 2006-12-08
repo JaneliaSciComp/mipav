@@ -106,7 +106,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             mask = srcImage.generateVOIMask();
         }
     }
-    
+
     /**
      * Creates a new AlgorithmEdgeLaplacianSep object.
      *
@@ -118,8 +118,6 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
      *                   images disregard this flag.
      * @param  loThres   used to define the lower threshold to reduce noise (edges) in the laplacian image
      * @param  hiThres   used to define the upper threshold to reduce noise (edges) in the laplacian image
-     * @param  minProgressValue the minimum value of progress range.
-     * @param  maxProgressValue the maximum value of progress range.
      */
     public AlgorithmEdgeLaplacianSep(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
                                      boolean img25D, float loThres, float hiThres) {
@@ -219,7 +217,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                         edgeImage.set(i0);
                     } else if ((x0 < level) && (x1 >= level) && (x2 < level) && (x3 >= level)) {
 
-                        // case 9 - edge going vertially along the left
+                        // case 9 - edge going vertically along the left
                         edgeImage.set(i0);
                         edgeImage.set(i2);
                     } else if ((x0 < level) && (x1 >= level) && (x2 >= level) && (x3 < level)) {
@@ -408,7 +406,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
                         zXMask.set(offset + i0, 255);
                     } else if ((x0 < level) && (x1 >= level) && (x2 < level) && (x3 >= level)) {
 
-                        // case 9 - edge going vertially along the left
+                        // case 9 - edge going vertically along the left
                         zXMask.set(offset + i0, 255);
                         zXMask.set(offset + i2, 255);
                     } else if ((x0 < level) && (x1 >= level) && (x2 >= level) && (x3 < level)) {
@@ -566,6 +564,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
      * @param  detectionType  the type of zero crossing detection to perform
      */
     private void calcStoreInDest2D(int nImages, int detectionType) {
+
         // int i, s, idx;
         int length;
         int start;
@@ -593,12 +592,14 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         }
 
         fireProgressStateChanged(0, srcImage.getImageName(), "Calculating the Edge ...");
+
         float stepPerImage = 100f / nImages;
 
         // initProgressBar();
 
         for (int s = 0; (s < nImages) && !threadStopped; s++) {
-            fireProgressStateChanged(Math.round(stepPerImage*s), srcImage.getImageName(), "Calculating the edges of slice " + (s + 1) + "...");
+            fireProgressStateChanged(Math.round(stepPerImage * s), srcImage.getImageName(),
+                                     "Calculating the edges of slice " + (s + 1) + "...");
             start = s * length;
 
             try {
@@ -610,22 +611,25 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             }
 
             int min = Math.round(stepPerImage * s);
-            int max = Math.round(((float)(Math.round(stepPerImage * (s+1)) - min))/2.0f);
+            int max = Math.round(((float) (Math.round(stepPerImage * (s + 1)) - min)) / 2.0f);
             AlgorithmSeparableConvolver xConvolver = null;
-            if((max-min) > 1){
-                xConvolver = new AlgorithmSeparableConvolver(xResultBuffer,
-                        buffer, new int[] { srcImage.getExtents()[0],
-                                srcImage.getExtents()[1] }, GxxData, kExtents, false);
-                
+
+            if ((max - min) > 1) {
+                xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer,
+                                                             new int[] {
+                                                                 srcImage.getExtents()[0], srcImage.getExtents()[1]
+                                                             }, GxxData, kExtents, false);
+
                 xConvolver.setProgressValues(generateProgressValues(min, max));
                 linkProgressToAlgorithm(xConvolver);
-                
+
             } else {
-                xConvolver = new AlgorithmSeparableConvolver(xResultBuffer,
-                        buffer, new int[] { srcImage.getExtents()[0],
-                                srcImage.getExtents()[1] }, GxxData, kExtents,
-                        false); // assume not color
+                xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer,
+                                                             new int[] {
+                                                                 srcImage.getExtents()[0], srcImage.getExtents()[1]
+                                                             }, GxxData, kExtents, false); // assume not color
             }
+
             if (!entireImage) {
                 xConvolver.setMask(mask);
             }
@@ -635,23 +639,24 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             xConvolver = null;
 
             min = max;
-            max = Math.round(stepPerImage * (s+1));
+            max = Math.round(stepPerImage * (s + 1));
+
             AlgorithmSeparableConvolver yConvolver = null;
-            if((max-min) > 1){
-                yConvolver = new AlgorithmSeparableConvolver(yResultBuffer,
-                        buffer, new int[] { srcImage.getExtents()[0],
-                                srcImage.getExtents()[1] }, GyyData, kExtents,
-                        false);
-                
+
+            if ((max - min) > 1) {
+                yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer,
+                                                             new int[] {
+                                                                 srcImage.getExtents()[0], srcImage.getExtents()[1]
+                                                             }, GyyData, kExtents, false);
+
                 yConvolver.setProgressValues(generateProgressValues(min, max));
                 linkProgressToAlgorithm(yConvolver);
-            
-            }else{
+
+            } else {
                 yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer,
-                        new int[] {
-                            srcImage.getExtents()[0],
-                            srcImage.getExtents()[1]
-                        }, GyyData, kExtents, false); // assume not color
+                                                             new int[] {
+                                                                 srcImage.getExtents()[0], srcImage.getExtents()[1]
+                                                             }, GyyData, kExtents, false); // assume not color
             }
 
             if (!entireImage) {
@@ -725,6 +730,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
             zResultBuffer = new float[totalLength];
             sliceBuffer = new float[length];
             srcImage.exportData(0, totalLength, buffer); // locks and releases lock
+
             // fireProgressStateChanged(srcImage.getImageName(), "Calculating Zero X-ings ...");
         } catch (IOException error) {
             buffer = null;
@@ -748,24 +754,24 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         // initProgressBar();
         fireProgressStateChanged(0, srcImage.getImageName(), "Convolving X dimension ...");
-        
+
         /** Minimum and maximum progress value for the convolving part */
         int min = 0;
-        int max = min + Math.round(100/2.0f);
-        float stepPerDimension = ((float)(max- min))/3.0f;
+        int max = min + Math.round(100 / 2.0f);
+        float stepPerDimension = ((float) (max - min)) / 3.0f;
         AlgorithmSeparableConvolver xConvolver = null;
-        if(Math.round(stepPerDimension) > 1){
-            xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer,
-                    srcImage.getExtents(), GxxData,
-                    kExtents, false); // assume not color
-            
+
+        if (Math.round(stepPerDimension) > 1) {
+            xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer, srcImage.getExtents(), GxxData,
+                                                         kExtents, false); // assume not color
+
             xConvolver.setProgressValues(generateProgressValues(min, min + Math.round(stepPerDimension)));
             linkProgressToAlgorithm(xConvolver);
-        }else{
-            xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer,
-                    srcImage.getExtents(), GxxData,
-                    kExtents, false); // assume not color
+        } else {
+            xConvolver = new AlgorithmSeparableConvolver(xResultBuffer, buffer, srcImage.getExtents(), GxxData,
+                                                         kExtents, false); // assume not color
         }
+
         if (!entireImage) {
             xConvolver.setMask(mask);
         }
@@ -774,20 +780,22 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         xConvolver.finalize();
         xConvolver = null;
 
-        fireProgressStateChanged(min + Math.round(stepPerDimension), srcImage.getImageName(), "Convolving Y dimension...");
+        fireProgressStateChanged(min + Math.round(stepPerDimension), srcImage.getImageName(),
+                                 "Convolving Y dimension...");
+
         AlgorithmSeparableConvolver yConvolver = null;
-        if((Math.round(stepPerDimension*2) - Math.round(stepPerDimension)) > 1){
-            yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer,
-                    srcImage.getExtents(), GyyData,
-                    kExtents, false); // assume not color
-            
-            yConvolver.setProgressValues(generateProgressValues(min + Math.round(stepPerDimension), min + Math.round(stepPerDimension*2)));
-            
+
+        if ((Math.round(stepPerDimension * 2) - Math.round(stepPerDimension)) > 1) {
+            yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer, srcImage.getExtents(), GyyData,
+                                                         kExtents, false); // assume not color
+
+            yConvolver.setProgressValues(generateProgressValues(min + Math.round(stepPerDimension),
+                                                                min + Math.round(stepPerDimension * 2)));
+
             linkProgressToAlgorithm(yConvolver);
-        }else{
-            yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer,
-                    srcImage.getExtents(), GyyData,
-                    kExtents, false); // assume not color
+        } else {
+            yConvolver = new AlgorithmSeparableConvolver(yResultBuffer, buffer, srcImage.getExtents(), GyyData,
+                                                         kExtents, false); // assume not color
         }
 
         if (!entireImage) {
@@ -798,22 +806,21 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         yConvolver.finalize();
         yConvolver = null;
 
-        fireProgressStateChanged(min + Math.round(stepPerDimension*2), srcImage.getImageName(), "Convolving Z dimension...");
+        fireProgressStateChanged(min + Math.round(stepPerDimension * 2), srcImage.getImageName(),
+                                 "Convolving Z dimension...");
 
         AlgorithmSeparableConvolver zConvolver = null;
 
-        if((Math.round(stepPerDimension*3) - Math.round(stepPerDimension*2)) > 1){
-            zConvolver = new AlgorithmSeparableConvolver(zResultBuffer, buffer,
-                    srcImage.getExtents(), GzzData,
-                    kExtents, false); // assume not color
-            
-            zConvolver.setProgressValues(generateProgressValues(min + Math.round(stepPerDimension*2), max));
-            
+        if ((Math.round(stepPerDimension * 3) - Math.round(stepPerDimension * 2)) > 1) {
+            zConvolver = new AlgorithmSeparableConvolver(zResultBuffer, buffer, srcImage.getExtents(), GzzData,
+                                                         kExtents, false); // assume not color
+
+            zConvolver.setProgressValues(generateProgressValues(min + Math.round(stepPerDimension * 2), max));
+
             linkProgressToAlgorithm(zConvolver);
-        }else{
-            zConvolver = new AlgorithmSeparableConvolver(zResultBuffer, buffer,
-                    srcImage.getExtents(), GzzData,
-                    kExtents, false); // assume not color
+        } else {
+            zConvolver = new AlgorithmSeparableConvolver(zResultBuffer, buffer, srcImage.getExtents(), GzzData,
+                                                         kExtents, false); // assume not color
         }
 
         if (!entireImage) {
@@ -826,10 +833,12 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
 
         min = max;
         max = 100;
-        float stepPerImage = ((float)(max-min))/nImages;
+
+        float stepPerImage = ((float) (max - min)) / nImages;
 
         for (int s = 0; (s < nImages) && !threadStopped; s++) {
-            fireProgressStateChanged(min + Math.round(stepPerImage*s), srcImage.getImageName(), "Calculating the edges of slice " + (s + 1) + "...");
+            fireProgressStateChanged(min + Math.round(stepPerImage * s), srcImage.getImageName(),
+                                     "Calculating the edges of slice " + (s + 1) + "...");
 
             start = s * length;
 
@@ -865,7 +874,7 @@ public class AlgorithmEdgeLaplacianSep extends AlgorithmBase {
         destImage.calcMinMax();
         destImage.releaseLock();
 
-       
+
         setCompleted(true);
     }
 

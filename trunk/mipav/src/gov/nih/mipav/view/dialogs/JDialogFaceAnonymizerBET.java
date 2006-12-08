@@ -22,7 +22,8 @@ import javax.swing.*;
  *
  * @author  mccreedy
  */
-public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements AlgorithmInterface, DialogDefaultsInterface {
+public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
+        implements AlgorithmInterface, DialogDefaultsInterface {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -49,13 +50,24 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements A
 
     /** DOCUMENT ME! */
     private static final int FACING_OUT_OF_SCREEN = 6;
-    
+
+    /** DOCUMENT ME! */
     private static final String PARAM_FACE_ORIENTATION = "face_orientation";
+
+    /** DOCUMENT ME! */
     private static final String PARAM_EXTRA_MMS_TO_DELETE = "mms_to_delete_from_face";
+
+    /** DOCUMENT ME! */
     private static final String PARAM_VERT_DELETION_LIMIT = "vertical_deletion_limit_ratio";
+
+    /** DOCUMENT ME! */
     private static final String PARAM_BET_DO_SPHERE_ESTIMATION = "bet_do_estimate_with_sphere";
+
+    /** DOCUMENT ME! */
     private static final String PARAM_BET_IMG_INFLUENCE = "bet_image_influence";
-    private static final String PARAM_BET_STIFFNESS = "bet_stiffness"; 
+
+    /** DOCUMENT ME! */
+    private static final String PARAM_BET_STIFFNESS = "bet_stiffness";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -197,40 +209,6 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements A
     }
 
     /**
-     * Calls the algorithm.
-     */
-    protected void callAlgorithm() {
-
-        try {
-            System.gc();
-            defaceAlgo = new AlgorithmFaceAnonymizerBET(srcImage, faceOrientation, extraMMsToDelete,
-                                                        verticalDeletionLimit);
-            defaceAlgo.setBETParameters(estimateWithSphereBET, imageInfluenceBET, stiffnessBET);
-            defaceAlgo.addListener(this);
-
-            createProgressBar(srcImage.getImageName(), defaceAlgo);
-            
-            // Hide dialog
-            setVisible(false);
-
-            if (isRunInSeparateThread()) {
-
-                // Start the thread as a low priority because we wish to still have user interface work fast.
-                if (defaceAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                    MipavUtil.displayError("A thread is already running on this object");
-                }
-            } else {
-                defaceAlgo.run();
-            }
-        } catch (OutOfMemoryError x) {
-            System.gc();
-            MipavUtil.displayError("Dialog Extract Brain : unable to allocate enough memory");
-
-            return;
-        }
-    }
-
-    /**
      * Construct a delimited string that contains the parameters to this algorithm.
      *
      * @param   delim  the parameter delimiter (defaults to " " if empty)
@@ -286,6 +264,77 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements A
     public void saveDefaults() {
         String defaultsString = new String(getParameterString(","));
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void setGUIFromParams() {
+        srcImage = scriptParameters.retrieveInputImage();
+        parentFrame = srcImage.getParentFrame();
+
+        faceOrientation = getFaceOrientation(srcImage);
+
+        int scriptFaceOrientation = scriptParameters.getParams().getInt(PARAM_FACE_ORIENTATION);
+
+        if (faceOrientation == FACING_UNKNOWN) {
+            faceOrientation = scriptFaceOrientation;
+        }
+
+        extraMMsToDelete = scriptParameters.getParams().getInt(PARAM_EXTRA_MMS_TO_DELETE);
+        verticalDeletionLimit = scriptParameters.getParams().getFloat(PARAM_VERT_DELETION_LIMIT);
+        estimateWithSphereBET = scriptParameters.getParams().getBoolean(PARAM_BET_DO_SPHERE_ESTIMATION);
+        imageInfluenceBET = scriptParameters.getParams().getFloat(PARAM_BET_IMG_INFLUENCE);
+        stiffnessBET = scriptParameters.getParams().getFloat(PARAM_BET_STIFFNESS);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(srcImage);
+
+        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_FACE_ORIENTATION, faceOrientation));
+        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_EXTRA_MMS_TO_DELETE, extraMMsToDelete));
+        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_VERT_DELETION_LIMIT, verticalDeletionLimit));
+        scriptParameters.getParams().put(ParameterFactory.newBoolean(PARAM_BET_DO_SPHERE_ESTIMATION,
+                                                                     estimateWithSphereBET));
+        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_BET_IMG_INFLUENCE, imageInfluenceBET));
+        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_BET_STIFFNESS, stiffnessBET));
+    }
+
+    /**
+     * Calls the algorithm.
+     */
+    protected void callAlgorithm() {
+
+        try {
+            System.gc();
+            defaceAlgo = new AlgorithmFaceAnonymizerBET(srcImage, faceOrientation, extraMMsToDelete,
+                                                        verticalDeletionLimit);
+            defaceAlgo.setBETParameters(estimateWithSphereBET, imageInfluenceBET, stiffnessBET);
+            defaceAlgo.addListener(this);
+
+            createProgressBar(srcImage.getImageName(), defaceAlgo);
+
+            // Hide dialog
+            setVisible(false);
+
+            if (isRunInSeparateThread()) {
+
+                // Start the thread as a low priority because we wish to still have user interface work fast.
+                if (defaceAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
+                    MipavUtil.displayError("A thread is already running on this object");
+                }
+            } else {
+                defaceAlgo.run();
+            }
+        } catch (OutOfMemoryError x) {
+            System.gc();
+            MipavUtil.displayError("Dialog Extract Brain : unable to allocate enough memory");
+
+            return;
+        }
     }
 
     /**
@@ -399,7 +448,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements A
         verticalLimitField.setText("" + verticalDeletionLimit);
         verticalLimitField.setColumns(2);
 
-        JLabel verticalLimitLabel = new JLabel("Vertial limit on the face deletion (0 = no removal, 1 = no limit)");
+        JLabel verticalLimitLabel = new JLabel("Vertical limit on the face deletion (0 = no removal, 1 = no limit)");
         verticalLimitLabel.setFont(MipavUtil.font12);
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -528,39 +577,5 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase implements A
         }
 
         return true;
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    public void setGUIFromParams() {
-        srcImage = scriptParameters.retrieveInputImage();
-        parentFrame = srcImage.getParentFrame();
-        
-        faceOrientation = getFaceOrientation(srcImage);
-        int scriptFaceOrientation = scriptParameters.getParams().getInt(PARAM_FACE_ORIENTATION);
-        if (faceOrientation == FACING_UNKNOWN) {
-            faceOrientation = scriptFaceOrientation;
-        }
-        
-        extraMMsToDelete = scriptParameters.getParams().getInt(PARAM_EXTRA_MMS_TO_DELETE);
-        verticalDeletionLimit = scriptParameters.getParams().getFloat(PARAM_VERT_DELETION_LIMIT);
-        estimateWithSphereBET = scriptParameters.getParams().getBoolean(PARAM_BET_DO_SPHERE_ESTIMATION);
-        imageInfluenceBET = scriptParameters.getParams().getFloat(PARAM_BET_IMG_INFLUENCE);
-        stiffnessBET = scriptParameters.getParams().getFloat(PARAM_BET_STIFFNESS);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(srcImage);
-
-        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_FACE_ORIENTATION, faceOrientation));
-        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_EXTRA_MMS_TO_DELETE, extraMMsToDelete));
-        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_VERT_DELETION_LIMIT, verticalDeletionLimit));
-        scriptParameters.getParams().put(ParameterFactory.newBoolean(PARAM_BET_DO_SPHERE_ESTIMATION, estimateWithSphereBET));
-        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_BET_IMG_INFLUENCE, imageInfluenceBET));
-        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_BET_STIFFNESS, stiffnessBET));
     }
 }

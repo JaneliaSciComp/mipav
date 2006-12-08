@@ -77,10 +77,6 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
      * @param  maskFlag  Flag that indicates that the EdgeLap will be calculated for the whole image if equal to true
      * @param  img25D    Flag, if true, indicates that each slice of the 3D volume should be processed independently. 2D
      *                   images disregard this flag.
-     * @param  loThres   used to define the lower threshold to reduce noise (edges) in the laplacian image
-     * @param  hiThres   used to define the upper threshold to reduce noise (edges) in the laplacian image
-     * @param  minProgressValue minimum progress value.
-     * @param  maxProgressValue maximum progess value.
      */
     public AlgorithmEdgeLaplacian(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
                                   boolean img25D) {
@@ -95,7 +91,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             mask = srcImage.generateVOIMask();
         }
     }
-    
+
     /**
      * Creates a new AlgorithmEdgeLaplacian object.
      *
@@ -107,8 +103,6 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
      *                   images disregard this flag.
      * @param  loThres   used to define the lower threshold to reduce noise (edges) in the laplacian image
      * @param  hiThres   used to define the upper threshold to reduce noise (edges) in the laplacian image
-     * @param  minProgressValue minimum progress value.
-     * @param  maxProgressValue maximum progess value.
      */
     public AlgorithmEdgeLaplacian(ModelImage destImg, ModelImage srcImg, float[] sigmas, boolean maskFlag,
                                   boolean img25D, float loThres, float hiThres) {
@@ -208,7 +202,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
                         edgeImage.set(i0);
                     } else if ((x0 < level) && (x1 >= level) && (x2 < level) && (x3 >= level)) {
 
-                        // case 9 - edge going vertially along the left
+                        // case 9 - edge going vertically along the left
                         edgeImage.set(i0);
                         edgeImage.set(i2);
                     } else if ((x0 < level) && (x1 >= level) && (x2 >= level) && (x3 < level)) {
@@ -570,7 +564,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             for (i = 0, idx = start; (i < length) && !threadStopped; i++, idx++) {
 
                 if (((start + i) % mod) == 0) {
-                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1)* 100));
+                    fireProgressStateChanged(Math.round((float) (start + i) / (totalLength - 1) * 100));
                 }
 
                 if ((entireImage == true) || mask.get(i)) {
@@ -593,7 +587,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
         }
 
         fireProgressStateChanged(100);
-        
+
         if (threadStopped) {
             return;
         }
@@ -633,6 +627,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
             buffer = new float[totalLength];
             sliceBuffer = new float[length];
             srcImage.exportData(0, totalLength, buffer); // locks and releases lock
+
             // fireProgressStateChanged(srcImage.getImageName(), "Calculating Zero X-ings ...");
         } catch (IOException error) {
             buffer = null;
@@ -684,6 +679,7 @@ public class AlgorithmEdgeLaplacian extends AlgorithmBase {
         }
 
         fireProgressStateChanged(100);
+
         if (threadStopped) {
             return;
         }
