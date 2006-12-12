@@ -187,6 +187,8 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      */
     public JDialogVOIStatistics(ViewUserInterface ui, VOIVector voiList) {
         super(ui.getMainFrame(), false);
+        
+        
         setTitle("Calculate Statistics on VOI groups");
         setJMenuBar(buildMenuEntries());
         buildToolBar();
@@ -343,6 +345,30 @@ public class JDialogVOIStatistics extends JDialogScriptableBase
      */
     public void vectorSelected(VOIVectorEvent voiEvent) { }
 
+    
+    /**
+     * Refreshes the list of available and selected VOIs
+     * @param VOIlist imageActive's current VOIVector
+     */
+    public void refreshVOIList(VOIVector VOIlist) {
+    	selectedList.setListData(new Vector());
+    	
+    	 Vector volumesVector = new Vector();
+         highlighter = new VOIHighlighter();
+
+         for (int i = 0; i < VOIlist.size(); i++) {
+
+             if (VOIlist.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                 volumesVector.add(VOIlist.elementAt(i));
+
+                 // add a listener to each VOI so we know about selection.
+                 VOIlist.VOIAt(i).addVOIListener(highlighter);
+             }
+         }
+
+         volumesList.setListData(volumesVector);
+    	
+    }
     /**
      * Once all the necessary variables are set, call the VOI Props algorithm to run the statistic calculation.
      */
