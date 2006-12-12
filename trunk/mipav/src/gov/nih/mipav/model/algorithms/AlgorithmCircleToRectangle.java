@@ -11,27 +11,12 @@ import java.io.*;
 /**
  
  *
- * <p>For conformal mapping we require that f(z) be analytic - the Cauchy-Riemann equations must be satisfied and f'(z)
- * must not equal zero. The Cauchy-Riemann equations in polar form are: du/dr = (1/r)(dv/dtheta); (1/r)du/dtheta =
- * -dv/dr The first equation gives zero on both sides and the second equation gives (alpha*PI)/r on both sides, so the
- * Cauchy Riemann equations hold. f'(z) = 1/(i*alpha*PI*z) does not equal zero.</p>
- *
- * <p>In the first mapping: rmin -> sqrt(rmin/rmax) -> log(sqrt(rmin/rmax))/(i*alpha*PI) =
- * i*log(sqrt(rmax/rmin))/(alpha*PI) rmin*exp(i*alpha*PI) -> sqrt(rmin/rmax)*exp(i*alpha*PI) -> 1 +
- * i*log(sqrt(rmax/rmin))/(alpha*PI) rmax -> sqrt(rmax/rmin) -> log(sqrt(rmax/rmin))/(i*alpha*PI) =
- * -i*log(sqrt(rmax/rmin))/(alpha*PI) rmax*exp(i*alpha*PI) -> sqrt(rmax/rmin)*exp(i*alpha*PI) -> 1 -
- * i*log(sqrt(rmax/rmin))/(alpha*PI)</p>
- *
- * <p>Now do a simple linear transformation where both the x axis is inverted and both axes are scaled to obtain: z1" =
- * xDim-1, 0 z2" = 0, 0 z3" = 0, yDim-1 z4" = xDim - 1, yDim-1</p>
- *
- * <p>x" = (1 - x')*(xDim - 1) Let var = log(sqrt(rmax/rmin))/(alpha*PI) y" = (y' + var)* (yDim - 1)/(2 * var)</p>
- *
+ 
  * <p>References: 1.) Advanced Calculus For Applications Second Edition by F. B. Hildebrand, Section 10.4 Analytic
  * Functions of a Complex Variable pages 550-554 and Section 11.4 Conformal Mapping pages 628-632, Prentice-Hall, Inc.,
- * 1976. 2.) "A Domain Decomposition Method for Conformal Mapping onto a Rectangle", N. Papamichael and N. S.
- * Stylianopoulos, Constructive Approximation, Vol. 7, 1991, pp. 349-379. Relevant result is given in Remark 4.7 on
- * pages 374-375.</p>
+ * 1976. 2.) Applied and Computational Complex Analysis Volume I by Peter Henrici, Chapter on Schwarz-Christoffel
+ * Mapping Function, pp. 411-412. 3.) 2D-Shape Analysis using COnformal Mapping by E. Sharon and D. Mumford
+ * 4.) http://mathworld.wolfram.com/LemniscateFunction.html
  */
 public class AlgorithmCircleToRectangle extends AlgorithmBase {
 
@@ -79,7 +64,7 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
      * Starts the program.
      */
     public void runAlgorithm() {
-        double x1, x2, x3, x4, y1, y2, y3, y4;
+        double x2, y2;
         
         double radius;
         
@@ -88,7 +73,6 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         double g2[] = new double[2];
         double g3[] = new double[3];
         double d;
-        double sqd;
 
         double xc, yc;
         double sq2;
@@ -96,15 +80,9 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         JacobianElliptic je;
         double xr[] = new double[1];
         double yr[] = new double[1];
-
-        double rmin, rmax;
-
-        double theta1, theta2;
-
-        // Angle of sector
-        double theta;
-
-        double alpha;
+        double xmid;
+        double ymid;
+        double prod;
 
         int xDimSource;
 
@@ -114,18 +92,14 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
 
         int i, j;
         int index, index1;
-        double r;
-        double ang;
 
         int xDimDest;
         int yDimDest;
         int destSlice;
         float[] srcBuffer;
         float[] destBuffer;
-        double var;
         double yp;
         double xp;
-        double rscale;
         double ySrc;
         double xSrc;
         float imageMin;
@@ -163,10 +137,18 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         radius = Math.sqrt((x2-xc)*(x2-xc) + (y2-yc)*(y2-yc));
         Preferences.debug("radius = " + radius + "\n");
         
-        // z = c*integral from 0 to w of dw/sqrt(1-w**4) maps from the unit circle to
-        // zk = dk*exp(2*PI*i*k/n), where n equal the number of sides of the polygon = 4
+        // Let n = the number of sides in a polygon
+        // Let wk be evenly spaced points on a unit circle and zk be the corner points of a polygon
+        // zk = d*exp(2*PI*i*k/n)
+        // z = c*integral from 0 to w of product from k = 1 to n of (w - wk)**(-2/n) dw maps from the inside of 
+        // the unit circle to the inside of a polygon with wk corresponding to zk
         // c = gamma(1 - 1/n)*d/(gamma(1 + 1/n)*gamma(1 - 2/n))
-        // Letting d = Gamma(5/4)*Gamma(1/2)/Gamma(3/4) will make c equal to 1.
+        // For the case of a square :
+        // z = c*integral from to w of dw/sqrt(1-w**4)
+        // Letting d = Gamma(5/4)*Gamma(1/2)/Gamma(3/4) will make c equal to 1 for ease of computation.
+        // The inverse lemniscate function phi(x) = sinlemn-1(x) = integral from 0 to w of dw/sqrt(1-w**4)
+        // The inverse function maps from the circle to the square, but a reverse mapping from the square
+        // to the circle is needed, so use sinelmn(phi) = (1/sqrt(2))*sd(phi*sqrt(2),1/sqrt(2))
         gamm = new Gamma(1.25, g1);
         gamm.run();
         gamm = new Gamma(0.5, g2);
@@ -175,11 +157,8 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         gamm.run();
         d = g1[0]*g2[0]/g3[0];
         // Corners of the square are at distance d from center of square
-        // With center of unit square at origin, square segments are a
-        // distance of sqd = d/sqrt(2) from the origin.
         sq2 = Math.sqrt(2.0);
         invSq2 = 1.0/sq2;
-        sqd = d/sq2;
 
         xDimSource = srcImage.getExtents()[0];
         yDimSource = srcImage.getExtents()[1];
@@ -213,98 +192,105 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
         // 2 mappings
         // Mapping 1 is simply a mapping from 1 rectangle to another in which the
         // y axis is inverted and the x and y axes are scaled.
-        // Map from z0" = (xDimDest-1, 0) to z0' = (sqd,sqd)
-        // Map from z1" = (0, 0) to z2' = (-sqd,sqd)
-        // Map from z2" = (0, yDimDest-1) to z3' = (-sqd,-sqd )
-        // Map from z3" = (xDimDest-1, yDimDest-1) to z4' = (sqd, -sqd)
+        // Map from z0" = (xDimDest-1, (yDimDest-1)/2.0) to z0' = (d, 0);
+        // Map from z1" = ((xDimDest-1)/2, 0) to z2' = (0, d)
+        // Map from z2" = (0, (yDimDest-1)/2.0) to z3' = (-d, 0)
+        // Map from z3" = ((xDimDest-1)/2.0, yDimDest-1) to z4' = (0, -d)
 
-        // a*(xDimDest - 1) + b = sqd
-        // a*0 + b = -sqd
-        // a*(xDimDest - 1) = 2*sqd
-        // a = 2*sqd/(xDimDest - 1)
-        // b = -sqd
-        // x' = 2*sqd*x"/(xDimDest - 1) - sqd
+        // a*(xDimDest - 1) + b = d
+        // a*0 + b = -d
+        // a*(xDimDest - 1) = 2*d
+        // a = 2*d/(xDimDest - 1)
+        // b = -d
+        // x' = 2*d*x"/(xDimDest - 1) - d
         
-        // a*(yDimDest - 1) + b = -sqd
-        // a*0 + b = sqd
-        // a*(yDimDest - 1) = -2*sqd
-        // a = -2*sqd/(yDimDest - 1)
-        // b = sqd
-        // y' = -2*sqd*y'/(yDimDest - 1) + sqd
+        // a*(yDimDest - 1) + b = -d
+        // a*0 + b = d
+        // a*(yDimDest - 1) = -2*d
+        // a = -2*d/(yDimDest - 1)
+        // b = d
+        // y' = -2*d*y'/(yDimDest - 1) + d
         
-        // Mapping 2 occurs from a square with sides at +-sqd to the circle
-        // (1/sqrt(2)) * sd(z'*sqrt(2),1/sqrt(2)) goes to a unit disc with the angle theta 
-        // starting at PI/4 radians.  
-        // Then radius * exp(-i*PI/4) * sd(z'*sqrt(2), 1/sqrt(2)) goes to a disc with the original radius
-        // with the angle theta starting at zero radians
-        // The original x is at xc + real part of [radius * exp(-i*PI/4) * sd(z'*sqrt(2), 1/sqrt(2))
-        // The original y is at yc - imag part of [radius * exp(-i*PI/4) * sd(z'*sqrt(2), 1/sqrt(2))
-        
+        // Mapping 2 occurs from a square with corners at +-d to the circle
+        // (1/sqrt(2)) * sd(z'*sqrt(2),1/sqrt(2)) goes to a unit disc
+        // Then radius * sd(z'*sqrt(2), 1/sqrt(2)) goes to a disc with the original radius
+        // The original x is at xc + real part of [radius * sd(z'*sqrt(2), 1/sqrt(2))
+        // The original y is at yc - imag part of [radius * sd(z'*sqrt(2), 1/sqrt(2))
+        xmid = (xDimDest - 1.0)/2.0;
+        ymid = (yDimDest - 1.0)/2.0;
+        prod = xmid*ymid;
         for (j = 0; j < yDimDest; j++) {
             fireProgressStateChanged(100 * j / yDimDest);
             index1 = j * xDimDest;
-            yp = ((-2.0 * sqd * j) / (yDimDest - 1)) + sqd;
+            yp = ((-2.0 * d * j) / (yDimDest - 1)) + d;
 
             for (i = 0; i < xDimDest; i++) {
-                xp = ((2.0 * sqd * i)/ (xDimDest - 1)) - sqd;
-
-                je = new JacobianElliptic(xp*sq2,yp*sq2,invSq2,JacobianElliptic.SD,xr,yr);
-                je.run();
-                zmlt(radius*invSq2*xr[0], radius*invSq2*yr[0], invSq2, -invSq2, xr, yr);
-                xSrc = xc + xr[0];
-                ySrc = yc - yr[0];
-
-                // Use bilinear interpolation to find the contributions from the
-                // 4 nearest neighbors in the original circular sector space
-                if ((xSrc >= 0.0) && ((xSrc) <= (xDimSource - 1)) && (ySrc >= 0.0) && (ySrc <= (yDimSource - 1))) {
-                    xBase = (int) Math.floor(xSrc);
-                    delX = (float) (xSrc - xBase);
-                    yBase = (int) Math.floor(ySrc);
-                    delY = (float) (ySrc - yBase);
-                    index = index1 + i;
-                    sIndex = (yBase * xDimSource) + xBase;
-
-                    if (srcImage.isColorImage()) {
-                        destBuffer[(4 * index) + 1] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
-                        destBuffer[(4 * index) + 2] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
-                        destBuffer[(4 * index) + 3] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
-
-                        if (xSrc < (xDimSource - 1)) {
-                            destBuffer[(4 * index) + 1] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
-                            destBuffer[(4 * index) + 2] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
-                            destBuffer[(4 * index) + 3] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
-                        }
-
-                        if (ySrc < (yDimSource - 1)) {
-                            destBuffer[(4 * index) + 1] += (1 - delX) * delY *
-                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 1];
-                            destBuffer[(4 * index) + 2] += (1 - delX) * delY *
-                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 2];
-                            destBuffer[(4 * index) + 3] += (1 - delX) * delY *
-                                                               srcBuffer[(4 * (sIndex + xDimSource)) + 3];
-                        }
-
-                        if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
-                            destBuffer[(4 * index) + 1] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 1];
-                            destBuffer[(4 * index) + 2] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 2];
-                            destBuffer[(4 * index) + 3] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 3];
-                        }
-                    } // if (srcImage.isColorImage())
-                    else { // black and white image
-                        destBuffer[index] = (1 - delX) * (1 - delY) * srcBuffer[sIndex];
-
-                        if (xSrc < (xDimSource - 1)) {
-                            destBuffer[index] += delX * (1 - delY) * srcBuffer[sIndex + 1];
-                        }
-
-                        if (ySrc < (yDimSource - 1)) {
-                            destBuffer[index] += (1 - delX) * delY * srcBuffer[sIndex + xDimSource];
-                        }
-
-                        if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
-                            destBuffer[index] += delX * delY * srcBuffer[sIndex + xDimSource + 1];
-                        }
-                    } // else black and white image
+                // The destination rectangle is tilted at 45 degrees so it fills a
+                // diamond in the destination image.  Points outside the diamond
+                // must be excluded.
+                if ((i*ymid + j*xmid >= prod) &&
+                    (i*ymid - j*xmid <= prod) &&
+                    (i*ymid + j*xmid <= 3*prod) &&
+                    (i*ymid - j*xmid >= -prod)) {
+                    xp = ((2.0 * d * i)/ (xDimDest - 1)) - d;
+    
+                    je = new JacobianElliptic(xp*sq2,yp*sq2,invSq2,JacobianElliptic.SD,xr,yr);
+                    je.run();
+                    xSrc = xc + xr[0]*radius*invSq2;
+                    ySrc = yc - yr[0]*radius*invSq2;
+    
+                    // Use bilinear interpolation to find the contributions from the
+                    // 4 nearest neighbors in the original circle space
+                    if ((xSrc >= 0.0) && ((xSrc) <= (xDimSource - 1)) && (ySrc >= 0.0) && (ySrc <= (yDimSource - 1))) {
+                        xBase = (int) Math.floor(xSrc);
+                        delX = (float) (xSrc - xBase);
+                        yBase = (int) Math.floor(ySrc);
+                        delY = (float) (ySrc - yBase);
+                        index = index1 + i;
+                        sIndex = (yBase * xDimSource) + xBase;
+    
+                        if (srcImage.isColorImage()) {
+                            destBuffer[(4 * index) + 1] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
+                            destBuffer[(4 * index) + 2] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
+                            destBuffer[(4 * index) + 3] = (1 - delX) * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
+    
+                            if (xSrc < (xDimSource - 1)) {
+                                destBuffer[(4 * index) + 1] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 1];
+                                destBuffer[(4 * index) + 2] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 2];
+                                destBuffer[(4 * index) + 3] += delX * (1 - delY) * srcBuffer[(4 * sIndex) + 3];
+                            }
+    
+                            if (ySrc < (yDimSource - 1)) {
+                                destBuffer[(4 * index) + 1] += (1 - delX) * delY *
+                                                                   srcBuffer[(4 * (sIndex + xDimSource)) + 1];
+                                destBuffer[(4 * index) + 2] += (1 - delX) * delY *
+                                                                   srcBuffer[(4 * (sIndex + xDimSource)) + 2];
+                                destBuffer[(4 * index) + 3] += (1 - delX) * delY *
+                                                                   srcBuffer[(4 * (sIndex + xDimSource)) + 3];
+                            }
+    
+                            if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
+                                destBuffer[(4 * index) + 1] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 1];
+                                destBuffer[(4 * index) + 2] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 2];
+                                destBuffer[(4 * index) + 3] += delX * delY * srcBuffer[(4 * (sIndex + xDimSource + 1)) + 3];
+                            }
+                        } // if (srcImage.isColorImage())
+                        else { // black and white image
+                            destBuffer[index] = (1 - delX) * (1 - delY) * srcBuffer[sIndex];
+    
+                            if (xSrc < (xDimSource - 1)) {
+                                destBuffer[index] += delX * (1 - delY) * srcBuffer[sIndex + 1];
+                            }
+    
+                            if (ySrc < (yDimSource - 1)) {
+                                destBuffer[index] += (1 - delX) * delY * srcBuffer[sIndex + xDimSource];
+                            }
+    
+                            if ((xSrc < (xDimSource - 1)) && (ySrc < (yDimSource - 1))) {
+                                destBuffer[index] += delX * delY * srcBuffer[sIndex + xDimSource + 1];
+                            }
+                        } // else black and white image
+                    }
                 }
             }
         } // for (j = 0; j < yDimDest; j++)
@@ -323,27 +309,6 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
 
         return;
     }
-    
-    /**
-     * complex multiply c = a * b.
-     *
-     * @param  ar  double
-     * @param  ai  double
-     * @param  br  double
-     * @param  bi  double
-     * @param  cr  double[]
-     * @param  ci  double[]
-     */
-    private void zmlt(double ar, double ai, double br, double bi, double[] cr, double[] ci) {
-        double ca, cb;
-
-        ca = (ar * br) - (ai * bi);
-        cb = (ar * bi) + (ai * br);
-        cr[0] = ca;
-        ci[0] = cb;
-
-        return;
-    }
 
     /**
      * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the history
@@ -352,7 +317,7 @@ public class AlgorithmCircleToRectangle extends AlgorithmBase {
     private void constructLog() {
 
 
-        historyString = new String("CircularSectorToRectangle(" + String.valueOf(destImage.getExtents()[0]) + ", " +
+        historyString = new String("CircleToRectangle(" + String.valueOf(destImage.getExtents()[0]) + ", " +
                                    String.valueOf(destImage.getExtents()[1]) + ")\n");
     }
 }
