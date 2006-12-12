@@ -342,6 +342,14 @@ public class JDialogCircleToRectangle extends JDialogBase
             yDim = Integer.valueOf(yText.getText()).intValue();
         }
 
+        if (image.getVOIs() == null) {
+            MipavUtil.displayError("No VOIs found.  2 points needed");
+            return false;
+        }
+        if (image.getVOIs().size() == 0) {
+            MipavUtil.displayError("No VOIs found.  2 points needed");
+            return false;
+        }
         curves = image.getVOIs().VOIAt(0).getCurves();
         nPts = curves[0].size();
 
