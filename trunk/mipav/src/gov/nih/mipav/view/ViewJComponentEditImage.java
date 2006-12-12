@@ -3660,6 +3660,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 MipavUtil.displayError("A VOI must be present to use the statistics calculator");
             }
         } else {
+        	imageStatList.refreshVOIList(imageActive.getVOIs());
             imageStatList.setVisible(true);
         }
     }
