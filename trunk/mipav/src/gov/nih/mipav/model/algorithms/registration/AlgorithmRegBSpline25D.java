@@ -133,7 +133,9 @@ iteration:
             }
 
             // Pass 1
+            
             fireProgressStateChanged(kStringSlice + (bMultiPass ? "Pass 1" : ""));
+            
             akReg[iSlice] = runPass(kSimpleImageSource, kSimpleImageTarget, m_kOptionsPass1, null);
 
             // Optional Pass 2
@@ -146,10 +148,6 @@ iteration:
             if (isThreadStopped()) {
                 break iteration;
             }
-
-            // If we get here, we successfully completed registration given
-            // the input specifications, but only if we were not terminated.
-            setCompleted(true);
 
             // Make sure registration is to original target without subsampling.
             akReg[iSlice] = akReg[iSlice].createSameMapping(kSimpleImageTarget);
@@ -181,6 +179,10 @@ iteration:
             kSimpleImageSource = null;
             kSimpleImageTarget = null;
         }
+        
+        // If we get here, we successfully completed registration given
+        // the input specifications, but only if we were not terminated.
+        setCompleted(true);
 
         if (!isThreadStopped()) {
             writeResults(akReg);
