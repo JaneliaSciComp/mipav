@@ -722,15 +722,40 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         short bufferShort[];
         byte red, green, blue;
         int i;
+        int end;
 
         ViewJProgressBar progressBar = new ViewJProgressBar(imageActive.getImageName(), "Masking ...", 0, 100, true);
         progressBar.setSeparateThread(false);
 
 
         imageACopy = (ModelImage) imageA.clone();
+        if (imageA.getNDims() == 2) {
+            end = 1;
+        }
+        else if (imageA.getNDims() == 3) {
+            end = imageA.getExtents()[2];
+        }
+        else {
+            end = imageA.getExtents()[2]*imageA.getExtents()[3];
+        }
+        for (i = 0; i < end; i++) {
+            (imageACopy.getFileInfo(i)).setModality(FileInfoBase.OTHER);
+        }
 
         if (imageB != null) {
             imageBCopy = (ModelImage) imageB.clone();
+            if (imageB.getNDims() == 2) {
+                end = 1;
+            }
+            else if (imageB.getNDims() == 3) {
+                end = imageB.getExtents()[2];
+            }
+            else {
+                end = imageB.getExtents()[2]*imageB.getExtents()[3];
+            }
+            for (i = 0; i < end; i++) {
+                (imageBCopy.getFileInfo(i)).setModality(FileInfoBase.OTHER);
+            }
         }
 
         if (imageA.isColorImage() == true) {
