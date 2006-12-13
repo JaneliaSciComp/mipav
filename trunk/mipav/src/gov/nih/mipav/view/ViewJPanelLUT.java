@@ -576,6 +576,15 @@ public class ViewJPanelLUT extends JPanel
                     	
                     	
                     	int outputType = outputBox.getSelectedIndex();
+                        if (outputType == 0) {
+                            outputType = AlgorithmThresholdDual.ORIGINAL_TYPE;
+                        }
+                        else if (outputType == 1) {
+                            outputType = AlgorithmThresholdDual.BINARY_TYPE;
+                        }
+                        else { // outputType == 2
+                            outputType = AlgorithmThresholdDual.SHORT_MASK_TYPE;
+                        }
                     	                    	
                         // run threshold algorithm
                         JDialogThreshold threshD = new JDialogThreshold();
@@ -604,6 +613,15 @@ public class ViewJPanelLUT extends JPanel
                                                     panelParent.getImageB().getMax())) {
 
                     	int outputType = outputBoxB.getSelectedIndex();
+                        if (outputType == 0) {
+                            outputType = AlgorithmThresholdDual.ORIGINAL_TYPE;
+                        }
+                        else if (outputType == 1) {
+                            outputType = AlgorithmThresholdDual.BINARY_TYPE;
+                        }
+                        else { // outputType == 2
+                            outputType = AlgorithmThresholdDual.SHORT_MASK_TYPE;
+                        }
                     	
                     	
                         // run threshold algorithm
