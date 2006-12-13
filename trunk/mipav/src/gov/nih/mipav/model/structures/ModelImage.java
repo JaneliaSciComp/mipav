@@ -667,7 +667,7 @@ public class ModelImage extends ModelStorageBase {
         try {
             maskImage = new ModelImage(ModelImage.BOOLEAN, this.getExtents(), "Binary Image");
 
-            JDialogBase.updateFileInfo(this, maskImage);
+            JDialogBase.updateFileInfoOtherModality(this, maskImage);
 
             fixFileTypeInfo(maskImage);
         } catch (OutOfMemoryError error) {
@@ -714,7 +714,7 @@ public class ModelImage extends ModelStorageBase {
         try {
             maskImage = new ModelImage(ModelImage.SHORT, this.getExtents(), "Short Image", UI);
 
-            JDialogBase.updateFileInfo(this, maskImage);
+            JDialogBase.updateFileInfoOtherModality(this, maskImage);
 
             fixFileTypeInfo(maskImage);
         } catch (OutOfMemoryError error) {
@@ -763,7 +763,7 @@ public class ModelImage extends ModelStorageBase {
         try {
             maskImage = new ModelImage(ModelImage.UBYTE, this.getExtents(), "UBYTE Image", UI);
 
-            JDialogBase.updateFileInfo(this, maskImage);
+            JDialogBase.updateFileInfoOtherModality(this, maskImage);
 
             fixFileTypeInfo(maskImage);
         } catch (OutOfMemoryError error) {
