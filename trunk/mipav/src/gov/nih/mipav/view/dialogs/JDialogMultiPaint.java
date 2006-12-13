@@ -385,7 +385,12 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 			image.getParentFrame().getImageB().resetVOIs();
 			
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(image.getParentFrame().getImageB());
-
+            progressBar = new ViewJProgressBar(image.getParentFrame().getImageB().getImageName(), "Extracting VOI ...", 0, 100, true);
+            progressBar.setSeparateThread(false);
+            VOIExtractionAlgo.addProgressChangeListener(progressBar);
+            VOIExtractionAlgo.setProgressValues(0, 100);
+            
+            
 			// in case there are labels not accounted for
 			int Nlabel = countMaskLabels();
             String [] correctedLabels = new String[Nlabel];
