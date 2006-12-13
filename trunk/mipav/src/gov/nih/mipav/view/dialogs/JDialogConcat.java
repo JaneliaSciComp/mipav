@@ -110,7 +110,7 @@ public class JDialogConcat extends JDialogScriptableBase implements AlgorithmInt
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10076");
+            MipavUtil.showHelp("100580");
         }
     }
 

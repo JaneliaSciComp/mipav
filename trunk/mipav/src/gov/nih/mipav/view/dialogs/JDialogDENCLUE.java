@@ -120,7 +120,7 @@ public class JDialogDENCLUE extends JDialogScriptableBase implements AlgorithmIn
                 callAlgorithm();
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("");
+            //MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             dispose();
         } else if ((source == gaussianButton) || (source == squareButton)) {

@@ -86,7 +86,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
      * @param  im              The source image to be reconstructed
      */
     public JDialogMaximumLikelihoodIteratedBlindDeconvolution(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         originalImage = im;
         init();
@@ -115,7 +115,7 @@ public class JDialogMaximumLikelihoodIteratedBlindDeconvolution extends JDialogS
         }
         else if (command.equals("Help"))
         {
-            MipavUtil.showHelp("10086");
+            MipavUtil.showHelp("19003");
         } 
         else if (command.equals("MicroscopeOptions") )
         {

@@ -280,7 +280,7 @@ public class JDialogCropParam extends JDialogScriptableBase implements Algorithm
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("");
+            //MipavUtil.showHelp("");
         }
     }
 

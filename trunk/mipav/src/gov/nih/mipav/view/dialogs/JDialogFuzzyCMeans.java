@@ -241,7 +241,7 @@ public class JDialogFuzzyCMeans extends JDialogScriptableBase implements Algorit
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10027");
+            MipavUtil.showHelp("10026");
         }
     }
 

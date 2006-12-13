@@ -219,7 +219,7 @@ public class JDialogHaralickTexture extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("");
+            //MipavUtil.showHelp("");
         }
     }
 

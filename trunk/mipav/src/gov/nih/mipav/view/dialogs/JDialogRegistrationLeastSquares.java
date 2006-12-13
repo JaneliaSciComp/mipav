@@ -126,7 +126,7 @@ public class JDialogRegistrationLeastSquares extends JDialogScriptableBase imple
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("filtersspatialgaussianblur_filters_(spatial)_gaussian_blur_htm_toc_applying_the_gaussian");
+            MipavUtil.showHelp("10040");
         }
     }
 

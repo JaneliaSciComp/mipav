@@ -151,7 +151,7 @@ public class JDialogTwoMRIImagesSNR extends JDialogBase implements AlgorithmInte
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("");
+            //MipavUtil.showHelp("");
         } else if (command.equals("Cancel")) {
             componentImage2.getVOIHandler().setPresetHue(-1.0f);
             componentImage.getVOIHandler().setPresetHue(-1.0f);

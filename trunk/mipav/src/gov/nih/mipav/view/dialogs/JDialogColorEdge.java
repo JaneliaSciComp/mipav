@@ -160,7 +160,7 @@ public class JDialogColorEdge extends JDialogScriptableBase implements Algorithm
                 Preferences.debug("JDialogColorEdge: " + "error setting variables.");
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("");
+            //MipavUtil.showHelp("");
         }
     }
 

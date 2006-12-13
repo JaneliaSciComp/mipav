@@ -157,7 +157,7 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
      * @param  im              Source image.
      */
     public JDialogIHN3Correction(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
 
         if ((image.getNDims() == 3) && (image.getExtents()[2] <= 3)) {
@@ -204,7 +204,7 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
                 VOIRegions.setEnabled(true);
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10101");
+            //MipavUtil.showHelp("");
         }
     }
 

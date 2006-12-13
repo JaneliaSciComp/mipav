@@ -85,7 +85,7 @@ public class JDialogReslice extends JDialogScriptableBase implements AlgorithmIn
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("10035");
+            MipavUtil.showHelp("10034");
         }
     }
 
