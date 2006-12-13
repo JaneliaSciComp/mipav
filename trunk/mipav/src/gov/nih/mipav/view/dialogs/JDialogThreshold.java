@@ -551,7 +551,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE ||
                         outputType == AlgorithmThresholdDual.BINARY_TYPE) {
                     for (int i = 0; i < end; i++) {
-                        (resultImage.getFileInfo(i)).setModality(FileInfoBase.UNKNOWN_MODALITY);
+                        (resultImage.getFileInfo(i)).setModality(FileInfoBase.OTHER);
                     }
                 }
 
