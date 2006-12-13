@@ -191,7 +191,13 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
             if ((thresholdAlgo.isCompleted() == true) && (resultImage != null)) {
 
                 // The algorithm has completed and produced a new image to be displayed.
-                updateFileInfo(image, resultImage);
+                if ((outputType == AlgorithmThresholdDual.BINARY_TYPE) ||
+                    (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE)) {
+                    updateFileInfoNoModality(image, resultImage);
+                }
+                else {
+                    updateFileInfo(image, resultImage);
+                }
                 resultImage.clearMask();
 
                 try {
@@ -476,6 +482,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         int[] destExtents = null;
         thresholds[0] = thres1;
         thresholds[1] = thres2;
+        FileInfoBase fileInfo[];
 
         int end;
 
@@ -538,6 +545,13 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                                                                                          // made up by Matt
                             ((FileInfoDicom) (resultImage.getFileInfo(i))).setValue("0002,0013", "MIPAV--NIH", 10); //
                         }
+                    }
+                }
+                
+                if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE ||
+                        outputType == AlgorithmThresholdDual.BINARY_TYPE) {
+                    for (int i = 0; i < end; i++) {
+                        (resultImage.getFileInfo(i)).setModality(FileInfoBase.UNKNOWN_MODALITY);
                     }
                 }
 
