@@ -1157,6 +1157,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("MaskToVOI")) {
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(getActiveImage());
 
+            progressBar = new ViewJProgressBar(getActiveImage().getImageName(), "Extracting VOI ...", 0, 100, true);
+            progressBar.setSeparateThread(false);
+            VOIExtractionAlgo.addProgressChangeListener(progressBar);
+            VOIExtractionAlgo.setProgressValues(0, 100);
+            
             // VOIExtractionAlgo.setActiveImage(false);
             VOIExtractionAlgo.run();
 
