@@ -296,7 +296,7 @@ public class JDialogFRAP extends JDialogBase implements AlgorithmInterface, Item
         } else if (command.equals("Script")) {
             callAlgorithm();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp("");
+            MipavUtil.showHelp("10083");
         } else if (command.equals("Cancel")) {
             componentImage.getVOIHandler().setPresetHue(-1.0f);
             dispose();

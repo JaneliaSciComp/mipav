@@ -127,7 +127,7 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
      * @param  im              Source image.
      */
     public JDialogExtractSurfaceCubes(JFrame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         image = im;
         userInterface = ViewUserInterface.getReference();
         init();
@@ -192,7 +192,9 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
             }
         } else if (command.equals("Cancel")) {
             dispose();
-        } else if (command.equals("chooseType")) {
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("19001");
+        }else if (command.equals("chooseType")) {
             int pos = fileTypeList.getSelectedIndex();
 
             if (pos == 0) {
@@ -609,15 +611,16 @@ public class JDialogExtractSurfaceCubes extends JDialogScriptableBase implements
         mainPanel.add(filePanel, gbc);
         mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        JPanel buttonPanel = new JPanel();
+        //JPanel buttonPanel = new JPanel();
 
-        buildOKButton();
-        buttonPanel.add(OKButton);
-        buildCancelButton();
-        buttonPanel.add(cancelButton);
+        //buildOKButton();
+        //buttonPanel.add(OKButton);
+        //buildCancelButton();
+        //buttonPanel.add(cancelButton);
 
         getContentPane().add(mainPanel);
-        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        //getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
         setVisible(true);
     }

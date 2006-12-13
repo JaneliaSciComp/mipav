@@ -258,7 +258,7 @@ public class JDialogFrequencyFilter extends JDialogScriptableBase implements Alg
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (source == helpButton) {
-            MipavUtil.showHelp("fft_fast_fourier_transformation_(fft)_htm_toc_applying_the_fft");
+            //MipavUtil.showHelp("");
         }
     }
 

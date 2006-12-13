@@ -165,7 +165,7 @@ public class JDialogAdaptivePathSmooth extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("filtersspatialAdaptivePathSmooth_filters_(spatial)_AdaptivePathSmooth_htm_toc_applying_the_AdaptivePathSmooth");
+            MipavUtil.showHelp("10042");
         }
     }
 

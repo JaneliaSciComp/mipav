@@ -194,7 +194,7 @@ public class JDialogLocalNormalization extends JDialogScriptableBase implements 
                 Preferences.debug("JDialogLocalNormalization: " + "error setting variables.");
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("filtersspatialgaussianblur_filters_(spatial)_gaussian_blur_htm_toc_applying_the_gaussian");
+            //MipavUtil.showHelp("");
         }
     }
 

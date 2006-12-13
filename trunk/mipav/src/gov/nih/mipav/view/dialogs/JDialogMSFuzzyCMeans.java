@@ -227,7 +227,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
      * @param  im              source image
      */
     public JDialogMSFuzzyCMeans(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         srcImage = new ModelImage[1];
         srcImage[0] = im;
         userInterface = ViewUserInterface.getReference();
@@ -342,7 +342,7 @@ public class JDialogMSFuzzyCMeans extends JDialogScriptableBase implements Algor
                 VOIRegions.setEnabled(true);
             }
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp("fuzzyc-means_fuzzy_c-means_multispectral_and_single_channel_algorithms_htm_toc_applying_the_fuzzy_c");
+            MipavUtil.showHelp("10026");
         }
     }
 
