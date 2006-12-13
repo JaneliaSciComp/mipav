@@ -126,6 +126,12 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     /** Button to crop the clip volume. */
     private JButton clipMaskButton;
 
+    /** Button for RFA */
+    private JButton rfaButton;
+
+    /** RFA separator */
+    private JButton rfaSeparator;
+
     /** Button to undo crop the clip volume. */
     private JButton clipMaskUndoButton;
 
@@ -3431,8 +3437,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
             viewToolBar.add(ViewToolBarBuilder.makeSeparator());
         }
 
-        viewToolBar.add(toolbarBuilder.buildButton("RFA", "Add probe to viewer", "rfa"));
-        viewToolBar.add(ViewToolBarBuilder.makeSeparator());
+        rfaButton = toolbarBuilder.buildButton("RFA", "Add probe to viewer", "rfa");
+        viewToolBar.add(rfaButton);
+
+        rfaSeparator = ViewToolBarBuilder.makeSeparator();
+        viewToolBar.add(rfaSeparator);
         viewToolBar.add(toolbarBuilder.buildButton("Extract", "Extract rotated image", "imageextract"));
 
         GridBagConstraints gbc = new GridBagConstraints();
@@ -3879,13 +3888,15 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
     }
 
     /**
-     * Set the RFA toolbar visible or not.
+     * Set the RFA button visible or not.
      *
-     * @param  flag  Set the RFA toolbar visible or not
+     * @param  flag  Set the RFA button visible or not
      */
     private void setRFAToolbarVisible(boolean flag) {
-        viewToolBar.validate();
-        viewToolBar.repaint();
+          rfaButton.setVisible(flag);
+          rfaSeparator.setVisible(flag);
+          viewToolBar.validate();
+          viewToolBar.repaint();
     }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
