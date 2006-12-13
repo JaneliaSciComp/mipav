@@ -193,7 +193,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 // The algorithm has completed and produced a new image to be displayed.
                 if ((outputType == AlgorithmThresholdDual.BINARY_TYPE) ||
                     (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE)) {
-                    updateFileInfoNoModality(image, resultImage);
+                    updateFileInfoOtherModality(image, resultImage);
                 }
                 else {
                     updateFileInfo(image, resultImage);
