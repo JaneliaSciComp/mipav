@@ -577,12 +577,12 @@ public abstract class JDialogBase extends JDialog
      * @param  image        Source image.
      * @param  resultImage  Resultant image.
      */
-    public static final void updateFileInfoNoModality(ModelImage image, ModelImage resultImage) {
+    public static final void updateFileInfoOtherModality(ModelImage image, ModelImage resultImage) {
         FileInfoBase[] fileInfo;
 
         if (resultImage.getNDims() == 2) {
             fileInfo = resultImage.getFileInfo();
-            fileInfo[0].setModality(FileInfoBase.UNKNOWN_MODALITY);
+            fileInfo[0].setModality(FileInfoBase.OTHER);
             fileInfo[0].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
 
             // fileInfo[0].setDataType(image.getFileInfo()[0].getDataType());
@@ -604,7 +604,7 @@ public abstract class JDialogBase extends JDialog
             for (int i = 0; i < resultImage.getExtents()[2]; i++) {
                 int j = Math.min(i, image.getExtents()[2] - 1);
 
-                fileInfo[i].setModality(FileInfoBase.UNKNOWN_MODALITY);
+                fileInfo[i].setModality(FileInfoBase.OTHER);
                 fileInfo[i].setFileDirectory(image.getFileInfo()[j].getFileDirectory());
 
                 // fileInfo[i].setDataType(image.getFileInfo()[j].getDataType());
@@ -625,7 +625,7 @@ public abstract class JDialogBase extends JDialog
             fileInfo = resultImage.getFileInfo();
 
             for (int i = 0; i < (resultImage.getExtents()[2] * resultImage.getExtents()[3]); i++) {
-                fileInfo[i].setModality(FileInfoBase.UNKNOWN_MODALITY);
+                fileInfo[i].setModality(FileInfoBase.OTHER);
                 fileInfo[i].setFileDirectory(image.getFileInfo()[i].getFileDirectory());
                 fileInfo[i].setEndianess(image.getFileInfo()[i].getEndianess());
                 fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[i].getUnitsOfMeasure());
