@@ -169,7 +169,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
         }
 
         /* The initial guess at the estimated image is the original image: */
-        m_kEstimatedImage = (ModelImage) (m_kSourceImage.clone());
+           m_kEstimatedImage = (ModelImage) (m_kSourceImage.clone());
         m_kEstimatedImage.setImageName("estimate" + 0);
 
         /* The initial psf is a gaussian of size 3x3: */
@@ -408,7 +408,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             	m_kImageSpectrum1 = (ModelImage) kWorking.clone(); 
             }
             ModelImage kImageFFT = fft(m_kImageSpectrum1, kWorking, 1);
-            kWorking.disposeLocal();
+            //kWorking.disposeLocal();
 
             for (int z = 0; z < m_iDimZ; z++) {
 
@@ -438,8 +438,9 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             }
 
             if (m_kImageSpectrum2 == null) {
-            	m_kImageSpectrum2 = (ModelImage) kImagePSF.clone(); 
+            	m_kImageSpectrum2 = (ModelImage) kWorking.clone(); 
             }
+            kWorking.disposeLocal();
             kImageInvFFT = fft(m_kImageSpectrum2, m_kImageSpectrum1, -1);
         } else {
             kImageInvFFT = kImagePSF;
@@ -880,7 +881,7 @@ public class AlgorithmMaximumLikelihoodIteratedBlindDeconvolution extends Algori
             
             /* multiply the result by the current psf image: */
             /* Apply constraints to new PSF: */
-            tempImageCalc = calc(m_kCalcResult3, tempImageConvolve, kPSF, AlgorithmImageCalculator.MULTIPLY);
+            tempImageCalc = calc(m_kPSFImage, tempImageConvolve, kPSF, AlgorithmImageCalculator.MULTIPLY);
             kPSF = constraints(tempImageCalc);
             kPSF.setImageName("psf" + i);
             
