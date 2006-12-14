@@ -523,12 +523,11 @@ public class VOIContour extends VOIBase {
      */
     public void drawBlendSelf(float zoomX, float zoomY, float resolutionX, float resolutionY, Graphics g, int xDim,
                               int yDim, int[] pixBuffer, float opacity, Color color) {
-        int pix, oldPix;
-        float alphaPrime = 1 - opacity;
-        int red, green, blue;
+
         int index;
         int x, y;
         int zoomXDim = MipavMath.round(xDim * zoomX * resolutionX);
+        int colorInt;
 
         if (g == null) {
             MipavUtil.displayError("VOIContour.drawBlendSelf: graphics = null");
@@ -546,14 +545,12 @@ public class VOIContour extends VOIBase {
 
                 if (contains((int) (x / (zoomX * resolutionX)), (int) (y / (zoomY * resolutionY)), false)) {
                     index = (y * zoomXDim) + x;
-                    oldPix = pixBuffer[index];
-                    red = (oldPix & 0x00FF0000) >> 16;
-                    green = (oldPix & 0x0000FF00) >> 8;
-                    blue = (oldPix & 0x000000FF);
-                    pix = (255 << 24) | (((int) ((red * alphaPrime) + (color.getRed() * opacity))) << 16) |
-                              (((int) ((green * alphaPrime) + (color.getGreen() * opacity))) << 8) |
-                              ((int) ((blue * alphaPrime) + (color.getBlue() * opacity)));
-                    pixBuffer[index] = pix;
+
+                    int opacityInt = (int) (opacity * 255);
+                    opacityInt = opacityInt << 24;
+
+                    colorInt = color.getRGB() & 0x00ffffff;
+                    pixBuffer[index] = colorInt | opacityInt;
                 }
             }
         }
