@@ -846,35 +846,6 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         extents2D = new int[2];
         extents2D[0] = imageExtents[0];
         extents2D[1] = imageExtents[1];
-
-        maxGrad = 0.0f;
-        minGrad = Float.MAX_VALUE;
-
-        for (i = 0; i < length; i++) { // calculate gradient magnitude
-            ix = AlgorithmConvolver.convolve2DPt(i, extents2D, gBuffer, kExtents, GxData);
-            iy = AlgorithmConvolver.convolve2DPt(i, extents2D, gBuffer, kExtents, GyData);
-            pBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
-
-            if (pBuffer[i] > maxGrad) {
-                maxGrad = pBuffer[i];
-            }
-
-            if (pBuffer[i] < minGrad) {
-                minGrad = pBuffer[i];
-            }
-
-            // Normalize the gradient magnitude to go from 0 to 100
-        }
-
-        if (maxGrad > minGrad) {
-            divisor = maxGrad - minGrad;
-        } else {
-            divisor = 1.0f;
-        }
-
-        for (i = 0; i < length; i++) {
-            pBuffer[i] = (pBuffer[i] - minGrad) * 100.0f / divisor;
-        }
         
         mask = new BitSet(totalLength);
         
@@ -895,6 +866,35 @@ public class AlgorithmLevelSet extends AlgorithmBase {
                 setCompleted(false);
 
                 return;
+            }
+            
+            maxGrad = 0.0f;
+            minGrad = Float.MAX_VALUE;
+
+            for (i = 0; i < length; i++) { // calculate gradient magnitude
+                ix = AlgorithmConvolver.convolve2DPt(i, extents2D, gBuffer, kExtents, GxData);
+                iy = AlgorithmConvolver.convolve2DPt(i, extents2D, gBuffer, kExtents, GyData);
+                pBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+
+                if (pBuffer[i] > maxGrad) {
+                    maxGrad = pBuffer[i];
+                }
+
+                if (pBuffer[i] < minGrad) {
+                    minGrad = pBuffer[i];
+                }
+
+                // Normalize the gradient magnitude to go from 0 to 100
+            }
+
+            if (maxGrad > minGrad) {
+                divisor = maxGrad - minGrad;
+            } else {
+                divisor = 1.0f;
+            }
+
+            for (i = 0; i < length; i++) {
+                pBuffer[i] = (pBuffer[i] - minGrad) * 100.0f / divisor;
             }
 
             for (i = 0; i < length; i++) {
