@@ -131,6 +131,9 @@ public class AlgorithmLevelSet extends AlgorithmBase {
 
     /** If testIters > 0, check if the boundary is unchanged every testIters iterations. */
     private int testIters = 100;
+    
+    /** If image25D is true in 3D images, process each slice separately */
+    private boolean image25D = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -147,9 +150,10 @@ public class AlgorithmLevelSet extends AlgorithmBase {
      * @param  edgeAttract  the ratio of the maximum value of the absolute value of the edge attractive force to the
      *                      maximum value of the absolute value of the sum of the propagation and curvature forces
      * @param  testIters    If testIters > 0, check if the boundary is unchanged every testIters iterations
+     * @param  image25D     If truein 3D images, process each slice separately
      */
     public AlgorithmLevelSet(ModelImage srcImg, float[] sigmas, int movement, int iter, float deltaT, float epsilon,
-                             float edgeAttract, int testIters) {
+                             float edgeAttract, int testIters, boolean image25D) {
         super(null, srcImg);
 
         this.sigmas = sigmas;
@@ -159,8 +163,9 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         this.epsilon = epsilon;
         this.edgeAttract = edgeAttract;
         this.testIters = testIters;
+        this.image25D = image25D;
 
-        if (srcImg.getNDims() == 2) {
+        if ((srcImg.getNDims() == 2) || ((srcImage.getNDims() > 2) && image25D)) {
             makeKernels2D();
         } else if (srcImg.getNDims() > 2) {
             makeKernels3D();
@@ -203,7 +208,12 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         if (srcImage.getNDims() == 2) {
             calc2D();
         } else if (srcImage.getNDims() > 2) {
-            calc3D();
+            if (image25D) {
+                calc25D();
+            }
+            else {
+                calc3D();
+            }
         }
     }
 
@@ -742,6 +752,554 @@ public class AlgorithmLevelSet extends AlgorithmBase {
         
         setCompleted(true);
     }
+    
+    /**
+     * calc25D - Calculates level set from contours, propagates level set, and obtains new contour voi from level set.
+     * Calculates one slice at a time in a multislice image
+     */
+    private void calc25D() {
+
+        float beta; // controls attraction of contours to boundaries
+        int i, j, n;
+        int length;
+        float[] gBuffer;
+        float[] pBuffer;
+        float[] uComp;
+        float[] vComp;
+        double[] phiImage;
+        double[] phiNext;
+        double[] originalPhi;
+        double[] tempBuffer;
+        float ix, iy;
+        int nVOI;
+        ViewVOIVector VOIs;
+        VOI contourVOI;
+        short voiID;
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int zDim = srcImage.getExtents()[2];
+        int xPos, yPos;
+        double dMinusX, dPlusX, dMinusY, dPlusY;
+        double gradMinus, gradPlus;
+        double c1, c1a, c1b, c1c, c1d;
+        double c2;
+        double phix, phiy, phixx, phiyy, phixy, denom;
+        double possiblePhi;
+        double c3;
+        double c13max, c2max;
+        double distance, minDistance;
+        boolean[] active;
+        boolean reinitializePhi = false;
+        int[] boundaryX;
+        int[] boundaryY;
+        int boundaryLength;
+        int checkIters = testIters;
+        int checkIters2 = testIters;
+        boolean haveChanged = true;
+        float minGrad;
+        float maxGrad;
+        float divisor;
+        int z;
+        Vector[] curves;
+        int extents2D[];
+        int totalLength;
+
+        try {
+            length = srcImage.getSliceSize();
+            gBuffer = new float[length];
+            pBuffer = new float[length];
+            uComp = new float[length];
+            vComp = new float[length];
+            phiImage = new double[length];
+            phiNext = new double[length];
+            originalPhi = new double[length];
+            active = new boolean[length];
+            boundaryX = new int[length];
+            boundaryY = new int[length];
+            fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
+        } catch (OutOfMemoryError e) {
+            cleanUp();
+            System.gc();
+            displayError("Level set: Out of Memory");
+            setCompleted(false);
+
+            return;
+        }
+        
+        totalLength = length * zDim;
+
+        VOIs = srcImage.getVOIs();
+        nVOI = VOIs.size();
+
+        for (i = 0; i < nVOI; i++) {
+
+            if (VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) {
+                break;
+            }
+        }
+
+        contourVOI = VOIs.VOIAt(i);
+        curves = contourVOI.getCurves();
+        
+
+        int[] imageExtents = srcImage.getExtents();
+        extents2D = new int[2];
+        extents2D[0] = imageExtents[0];
+        extents2D[1] = imageExtents[1];
+
+        maxGrad = 0.0f;
+        minGrad = Float.MAX_VALUE;
+
+        for (i = 0; i < length; i++) { // calculate gradient magnitude
+            ix = AlgorithmConvolver.convolve2DPt(i, extents2D, gBuffer, kExtents, GxData);
+            iy = AlgorithmConvolver.convolve2DPt(i, extents2D, gBuffer, kExtents, GyData);
+            pBuffer[i] = (float) Math.sqrt((ix * ix) + (iy * iy));
+
+            if (pBuffer[i] > maxGrad) {
+                maxGrad = pBuffer[i];
+            }
+
+            if (pBuffer[i] < minGrad) {
+                minGrad = pBuffer[i];
+            }
+
+            // Normalize the gradient magnitude to go from 0 to 100
+        }
+
+        if (maxGrad > minGrad) {
+            divisor = maxGrad - minGrad;
+        } else {
+            divisor = 1.0f;
+        }
+
+        for (i = 0; i < length; i++) {
+            pBuffer[i] = (pBuffer[i] - minGrad) * 100.0f / divisor;
+        }
+        
+        mask = new BitSet(totalLength);
+        
+        long startTime = System.currentTimeMillis();
+        
+        for (z = 0; z < zDim; z++) {
+            fireProgressStateChanged(z * 100/ zDim);
+            if (curves[z].size() == 0) {
+                // If  no curves are present in this slice, don't process this slice
+                break;
+            }
+            try {
+                srcImage.exportData(z*length, length, gBuffer); // locks and releases lock
+            } catch (IOException error) {
+                cleanUp();
+                System.gc();
+                displayError("Level set: Image(s) locked");
+                setCompleted(false);
+
+                return;
+            }
+
+            for (i = 0; i < length; i++) {
+                gBuffer[i] = 1 / (1 + pBuffer[i]);
+            }
+    
+            
+    
+            // Adjust beta after the first trial run thru.
+            beta = 1.0f;
+    
+            for (i = xDim + 1; i < (length - xDim - 1); i++) {
+                xPos = i % xDim;
+    
+                if ((xPos >= 1) && (xPos < (xDim - 1))) {
+                    uComp[i] = beta * (pBuffer[i + 1] - pBuffer[i - 1]) / 2.0f;
+                    vComp[i] = beta * (pBuffer[i + xDim] - pBuffer[i - xDim]) / 2.0f;
+                }
+            }
+    
+    
+            for (i = 0; (i < length) && !threadStopped; i++) {
+                yPos = i / xDim;
+                xPos = i % xDim;
+                phiImage[i] = contourVOI.slicePointToContour(z, xPos, yPos);
+                phiNext[i] = phiImage[i];
+                originalPhi[i] = phiImage[i];
+            }
+    
+            // For contraction runs simply only process on those pixels for which
+            // phi is initially 6 or less
+            // For expansion runs initially only process on those pixels for which
+            // -6 <= phi <= 6.  When the contour expands to where the phi was
+            // originally >= 4.0, then find the boundary and use this to create a
+            // new contour.
+            // Note that page 85 of Level Set Methods and Fast Marching Methods
+            // states: "Our experience indicates that a narrow band width of about
+            // six grid points on either side of the zero level set is a reasonable
+            // balance between re-initialization costs and update costs."
+            for (i = 0; i < length; i++) {
+                active[i] = true;
+            }
+    
+            if (movement == CONTRACT) {
+    
+                for (i = 0; i < length; i++) {
+    
+                    if (phiImage[i] > 6.0) {
+                        active[i] = false;
+                    }
+                }
+            } else { // EXPAND or EXPAND_CONTRACT
+    
+                for (i = 0; i < length; i++) {
+    
+                    if ((phiImage[i] > 6.0) || (phiImage[i] < -6.0)) {
+                        active[i] = false;
+                    }
+                }
+            }
+    
+            c13max = -Double.MAX_VALUE;
+            c2max = -Double.MAX_VALUE;
+    
+            // On every iteration adjust beta to make |c2|max = edgeAttract*|c1+c3|max
+            // so the attractive force predominates over the other 2 forces
+            // Let beta = 1.0 for the first run of this equation.
+            for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
+    
+                if (active[i]) {
+                    xPos = i % xDim;
+    
+                    if ((xPos >= 1) && (xPos < (xDim - 1))) {
+                        dMinusX = phiImage[i] - phiImage[i - 1];
+                        dPlusX = phiImage[i + 1] - phiImage[i];
+                        dMinusY = phiImage[i] - phiImage[i - xDim];
+                        dPlusY = phiImage[i + xDim] - phiImage[i];
+    
+                        if ((movement == EXPAND) || (movement == EXPAND_CONTRACT)) {
+                            c1a = Math.max(dMinusX, 0);
+                            c1b = Math.min(dPlusX, 0);
+                            c1c = Math.max(dMinusY, 0);
+                            c1d = Math.min(dPlusY, 0);
+                            gradPlus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
+                            c1 = -gBuffer[i] * gradPlus;
+                        } else { // CONTRACT
+                            c1a = Math.max(dPlusX, 0);
+                            c1b = Math.min(dMinusX, 0);
+                            c1c = Math.max(dPlusY, 0);
+                            c1d = Math.min(dMinusY, 0);
+                            gradMinus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
+                            c1 = gBuffer[i] * gradMinus;
+                        }
+    
+                        c2 = -((Math.max(uComp[i], 0) * dMinusX) + (Math.min(uComp[i], 0) * dPlusX) +
+                               (Math.max(vComp[i], 0) * dMinusY) + (Math.min(vComp[i], 0) * dPlusY));
+    
+                        phix = (phiImage[i + 1] - phiImage[i - 1]) * 0.5;
+                        phiy = (phiImage[i + xDim] - phiImage[i - xDim]) * 0.5;
+                        phixx = phiImage[i + 1] - (2 * phiImage[i]) + phiImage[i - 1];
+                        phiyy = phiImage[i + xDim] - (2 * phiImage[i]) + phiImage[i - xDim];
+                        phixy = (phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1] +
+                                 phiImage[i - xDim - 1]) * 0.25;
+    
+                        double phix2 = phix * phix;
+                        double phiy2 = phiy * phiy;
+    
+                        denom = phix2 + phiy2;
+    
+                        if (denom > 0) {
+                            c3 = ((phixx * phiy2) - (2 * phiy * phix * phixy) + (phiyy * phix2)) / denom;
+                            c3 *= epsilon * gBuffer[i];
+                        } else {
+                            c3 = 0.0;
+                        }
+    
+                        if (Math.abs(c1 + c3) > c13max) {
+                            c13max = Math.abs(c1 + c3);
+                        }
+    
+                        if (Math.abs(c2) > c2max) {
+                            c2max = Math.abs(c2);
+                        }
+                    }
+    
+                }
+            }
+    
+            beta = (float) (edgeAttract * c13max / c2max);
+    
+            for (n = 0; (n < iterations) && !threadStopped && haveChanged; n++) {
+    
+                c13max = -Double.MAX_VALUE;
+                c2max = -Double.MAX_VALUE;
+                boundaryLength = 0;
+    
+                if (checkIters == n) {
+                    haveChanged = false;
+                    checkIters2 = n;
+                }
+    
+                for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
+    
+                    if (active[i]) {
+                        xPos = i % xDim;
+    
+                        if ((xPos >= 1) && (xPos < (xDim - 1))) {
+                            dMinusX = phiImage[i] - phiImage[i - 1];
+                            dPlusX = phiImage[i + 1] - phiImage[i];
+                            dMinusY = phiImage[i] - phiImage[i - xDim];
+                            dPlusY = phiImage[i + xDim] - phiImage[i];
+    
+                            if ((movement == EXPAND) || (movement == EXPAND_CONTRACT)) {
+                                c1a = Math.max(dMinusX, 0);
+                                c1b = Math.min(dPlusX, 0);
+                                c1c = Math.max(dMinusY, 0);
+                                c1d = Math.min(dPlusY, 0);
+                                gradPlus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
+                                c1 = -gBuffer[i] * gradPlus;
+                            } else { // CONTRACT
+                                c1a = Math.max(dPlusX, 0);
+                                c1b = Math.min(dMinusX, 0);
+                                c1c = Math.max(dPlusY, 0);
+                                c1d = Math.min(dMinusY, 0);
+                                gradMinus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
+                                c1 = gBuffer[i] * gradMinus;
+                            }
+    
+                            c2 = -((Math.max(beta * uComp[i], 0) * dMinusX) + (Math.min(beta * uComp[i], 0) * dPlusX) +
+                                   (Math.max(beta * vComp[i], 0) * dMinusY) + (Math.min(beta * vComp[i], 0) * dPlusY));
+    
+                            phix = (phiImage[i + 1] - phiImage[i - 1]) * 0.5;
+                            phiy = (phiImage[i + xDim] - phiImage[i - xDim]) * 0.5;
+                            phixx = phiImage[i + 1] - (2 * phiImage[i]) + phiImage[i - 1];
+                            phiyy = phiImage[i + xDim] - (2 * phiImage[i]) + phiImage[i - xDim];
+                            phixy = (phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1] +
+                                     phiImage[i - xDim - 1]) * 0.25;
+    
+                            double phix2 = phix * phix;
+                            double phiy2 = phiy * phiy;
+    
+                            denom = phix2 + phiy2;
+    
+                            if (denom > 0) {
+                                c3 = ((phixx * phiy2) - (2 * phiy * phix * phixy) + (phiyy * phix2)) / denom;
+                                c3 *= epsilon * gBuffer[i];
+                            } else {
+                                c3 = 0.0;
+                            }
+    
+                            if (Math.abs(c1 + c3) > c13max) {
+                                c13max = Math.abs(c1 + c3);
+                            }
+    
+                            if (Math.abs(c2) > c2max) {
+                                c2max = Math.abs(c2);
+                            }
+    
+                            possiblePhi = phiImage[i] + (deltaT * (c1 + c2 + c3));
+    
+                            if ((movement == EXPAND) && (possiblePhi >= 0.0) && (phiImage[i] < 0.0)) {
+                                phiNext[i] = phiImage[i];
+                            } else if ((movement == CONTRACT) && (possiblePhi < 0.0) && (phiImage[i] >= 0.0)) {
+                                phiNext[i] = phiImage[i];
+                            } else {
+                                phiNext[i] = possiblePhi;
+                            }
+    
+                            if (((movement == EXPAND) || (movement == EXPAND_CONTRACT)) && (phiNext[i] < 0.0) &&
+                                    (originalPhi[i] >= 4.0)) {
+                                reinitializePhi = true;
+                            } else if (checkIters2 == n) {
+    
+                                if ((phiImage[i] < 0.0) &&
+                                        ((phiImage[i - 1] >= 0.0) || (phiImage[i + 1] >= 0.0) ||
+                                             (phiImage[i - xDim] >= 0.0) || (phiImage[i + xDim] >= 0.0))) {
+                                    yPos = i / xDim;
+    
+                                    if ((xPos != boundaryX[boundaryLength]) || (yPos != boundaryY[boundaryLength])) {
+                                        haveChanged = true;
+                                        checkIters = n + testIters;
+                                    }
+    
+                                    boundaryX[boundaryLength] = xPos;
+                                    boundaryY[boundaryLength++] = yPos;
+                                }
+                            } // else if (checkIters2 == n)
+                        } // if ((xPos >= 1) && (xPos < xDim - 1))
+                    } // if (active[i])
+                } // for (i = xDim + 1; i < length-xDim-1 && !threadStopped; i++)
+    
+                beta = (float) (edgeAttract * c13max / c2max);
+                tempBuffer = phiImage;
+                phiImage = phiNext;
+                phiNext = tempBuffer;
+    
+                if (reinitializePhi) {
+                    reinitializePhi = false;
+    
+                    if (checkIters > 0) {
+                        checkIters = n + testIters;
+                    }
+    
+                    boundaryLength = 0;
+    
+                    for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
+    
+                        if (active[i]) {
+                            xPos = i % xDim;
+    
+                            if ((xPos >= 1) && (xPos < (xDim - 1))) {
+    
+                                if ((phiImage[i] < 0.0) &&
+                                        ((phiImage[i - 1] >= 0.0) || (phiImage[i + 1] >= 0.0) ||
+                                             (phiImage[i - xDim] >= 0.0) || (phiImage[i + xDim] >= 0.0))) {
+                                    boundaryX[boundaryLength] = xPos;
+                                    boundaryY[boundaryLength++] = i / xDim;
+                                }
+                            }
+                        }
+                    }
+    
+                    for (i = 0; (i < length) && !threadStopped; i++) {
+                        yPos = i / xDim;
+                        xPos = i % xDim;
+                        minDistance = Double.MAX_VALUE;
+    
+                        for (j = 0; j < boundaryLength; j++) {
+                            distance = (((boundaryY[j] - yPos) * (boundaryY[j] - yPos)) +
+                                        ((boundaryX[j] - xPos) * (boundaryX[j] - xPos)));
+    
+                            if (distance < minDistance) {
+                                minDistance = distance;
+                            }
+                        }
+    
+                        if (phiImage[i] < 0) {
+                            phiImage[i] = -Math.sqrt(minDistance);
+                        } else {
+                            phiImage[i] = Math.sqrt(minDistance);
+                        }
+    
+                        phiNext[i] = phiImage[i];
+                        originalPhi[i] = phiImage[i];
+    
+                        if ((phiImage[i] > 6.0) || (phiImage[i] < -6.0)) {
+                            active[i] = false;
+                        } else {
+                            active[i] = true;
+                        }
+                    }
+    
+                    c13max = -Double.MAX_VALUE;
+                    c2max = -Double.MAX_VALUE;
+    
+                    // On every iteration adjust beta to make |c2|max = edgeAttract*|c1+c3|max
+                    // so the attractive force predominates over the other 2 forces
+                    for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
+    
+                        if (active[i]) {
+                            xPos = i % xDim;
+    
+                            if ((xPos >= 1) && (xPos < (xDim - 1))) {
+                                dMinusX = phiImage[i] - phiImage[i - 1];
+                                dPlusX = phiImage[i + 1] - phiImage[i];
+                                dMinusY = phiImage[i] - phiImage[i - xDim];
+                                dPlusY = phiImage[i + xDim] - phiImage[i];
+    
+                                c1a = Math.max(dMinusX, 0);
+                                c1b = Math.min(dPlusX, 0);
+                                c1c = Math.max(dMinusY, 0);
+                                c1d = Math.min(dPlusY, 0);
+                                gradPlus = Math.sqrt((c1a * c1a) + (c1b * c1b) + (c1c * c1c) + (c1d * c1d));
+                                c1 = -gBuffer[i] * gradPlus;
+                                c2 = -((Math.max(uComp[i], 0) * dMinusX) + (Math.min(uComp[i], 0) * dPlusX) +
+                                       (Math.max(vComp[i], 0) * dMinusY) + (Math.min(vComp[i], 0) * dPlusY));
+    
+                                phix = (phiImage[i + 1] - phiImage[i - 1]) * 0.5;
+                                phiy = (phiImage[i + xDim] - phiImage[i - xDim]) * 0.5;
+                                phixx = phiImage[i + 1] - (2 * phiImage[i]) + phiImage[i - 1];
+                                phiyy = phiImage[i + xDim] - (2 * phiImage[i]) + phiImage[i - xDim];
+                                phixy = (phiImage[i + xDim + 1] - phiImage[i + xDim - 1] - phiImage[i - xDim + 1] +
+                                         phiImage[i - xDim - 1]) * 0.25;
+    
+                                double phix2 = phix * phix;
+                                double phiy2 = phiy * phiy;
+    
+                                denom = phix2 + phiy2;
+                                denom = (phix * phix) + (phiy * phiy);
+    
+                                if (denom > 0) {
+                                    c3 = ((phixx * phiy2) - (2 * phiy * phix * phixy) + (phiyy * phix2)) / denom;
+                                    c3 *= epsilon * gBuffer[i];
+                                } else {
+                                    c3 = 0.0;
+                                }
+    
+                                if (Math.abs(c1 + c3) > c13max) {
+                                    c13max = Math.abs(c1 + c3);
+                                }
+    
+                                if (Math.abs(c2) > c2max) {
+                                    c2max = Math.abs(c2);
+                                }
+                            }
+    
+                        }
+                    }
+    
+                    beta = (float) (edgeAttract * c13max / c2max);
+    
+                } // if (reinitializePhi)
+            } // for(n = 0; n < iterations && !threadStopped && haveChanged; n++)
+            
+            // Note that must use phiImage[i] < 0.0 and not phiImage[i] <= 0.0
+            // or the contour will expand even if phi does not change
+            for (i = 0; i < length; i++) {
+
+                if (phiImage[i] < 0.0) {
+                    mask.set(z*length+i);
+                } else {
+                    mask.clear(z*length+i);
+                }
+            }
+    
+            if (threadStopped) {
+                
+                setCompleted(false);
+                finalize();
+    
+                return;
+            }
+        
+        } // for (z = 0; z < zDim; z++)
+        
+        // delete the VOIs
+        VOIs = srcImage.getVOIs();
+
+        nVOI = VOIs.size();
+
+        if (nVOI == 0) {
+            return;
+        }
+
+        for (i = (nVOI - 1); i >= 0; i--) {
+            VOIs.removeElementAt(i);
+        }
+
+        voiID = 0;
+
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage, mask, xDim, yDim, zDim,
+                                                                                     voiID);
+
+        algoPaintToVOI.run();
+        algoPaintToVOI = null;
+        
+        long now = System.currentTimeMillis();
+        double elapsedTime = (double) (now - startTime);
+
+        System.out.println("Algo levelset time = " + elapsedTime);
+
+        
+        setCompleted(true);
+    }
+
 
     /**
      * calc3D - Calculates level set from contours, propagates level set, and obtains new contour voi from level set.
