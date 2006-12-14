@@ -32,7 +32,12 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
     private static final long serialVersionUID = -6530047904436344937L;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
+    /** Flag indicating if slices should be blurred independently. */
+    private boolean image25D = false;
 
+    /** DOCUMENT ME! */
+    private JCheckBox image25DCheckbox;
+    
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
@@ -186,6 +191,8 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
 
                 return;
             }
+            
+            image25D = image25DCheckbox.isSelected();
 
             tmpStr = textIters.getText();
 
@@ -228,7 +235,7 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
 
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
-                    levelSetAlgo = new AlgorithmLevelSetDiffusion(image, sigmas, iters, kValue);
+                    levelSetAlgo = new AlgorithmLevelSetDiffusion(image, sigmas, iters, kValue, image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -278,7 +285,7 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
                 try {
 
                     // Make algorithm
-                    levelSetAlgo = new AlgorithmLevelSetDiffusion(image, sigmas, iters, kValue);
+                    levelSetAlgo = new AlgorithmLevelSetDiffusion(image, sigmas, iters, kValue, image25D);
 
                     // This is very important. Adding this object as a listener allows the algorithm to
                     // notify this object when it has completed of failed. See algorithm performed event.
@@ -415,6 +422,18 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
             } else {
                 labelCorrected.setText(" ");
             }
+        } else if (source == image25DCheckbox) {
+            if (image25DCheckbox.isSelected()) {
+                resolutionCheckbox.setEnabled(false); 
+                labelCorrected.setEnabled(false);
+                labelGaussZ.setEnabled(false);
+                textGaussZ.setEnabled(false);
+            } else {
+                resolutionCheckbox.setEnabled(true);
+                labelCorrected.setEnabled(true);
+                labelGaussZ.setEnabled(true);
+                textGaussZ.setEnabled(true);
+            }
         }
     }
 
@@ -466,19 +485,27 @@ public class JDialogLevelSetDiffusion extends JDialogBase implements AlgorithmIn
         gbc.gridy = 1;
 
         JPanel resPanel = new JPanel(new BorderLayout());
-        resPanel.setBorder(buildTitledBorder("Resolution options"));
+        resPanel.setBorder(buildTitledBorder("Options"));
         resolutionCheckbox = new JCheckBox("Use image resolutions to normalize Z scale.");
         resolutionCheckbox.setFont(serif12);
         resPanel.add(resolutionCheckbox, BorderLayout.NORTH);
         resolutionCheckbox.setSelected(true);
+        
+        image25DCheckbox = new JCheckBox("Process each slice independently (2.5D)");
+        image25DCheckbox.setFont(serif12);
+        resPanel.add(image25DCheckbox, BorderLayout.SOUTH);
+        image25DCheckbox.setSelected(false);
 
         if (image.getNDims() >= 3) { // if the source image is 3D then allow
             resolutionCheckbox.setEnabled(true); // the user to indicate if it wishes to
             resolutionCheckbox.addItemListener(this); // use the correction factor
+            image25DCheckbox.setEnabled(true);
+            image25DCheckbox.addItemListener(this);
             textGaussZ.addFocusListener(this);
             textGaussZ.setEnabled(true);
         } else {
             resolutionCheckbox.setEnabled(false); // Image is only 2D, thus this checkbox
+            image25DCheckbox.setEnabled(false);
             labelGaussZ.setEnabled(false); // is not relevent
             textGaussZ.setEnabled(false);
         }
