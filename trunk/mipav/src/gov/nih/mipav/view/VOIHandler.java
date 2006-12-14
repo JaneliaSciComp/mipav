@@ -4127,7 +4127,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                         VOIs.VOIAt(i).setLevel(rubber.getLevel());
                         ((VOIContour) (VOIs.VOIAt(i).getCurves()[compImage.getSlice() + 1].lastElement())).setActive(true);
-
+                        
                         return true;
                     }
                 }
@@ -4137,6 +4137,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 VOIs.VOIAt(i).setActive(true);
                 updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                 ((VOIContour) (VOIs.VOIAt(i).getCurves()[compImage.getSlice() + 1].lastElement())).setActive(true);
+                fireVOISelectionChange(VOIs.VOIAt(i), null);
             } // end of if (!doPoint)
             else { // VOI.POINT
 
@@ -4164,6 +4165,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 VOIs.VOIAt(i).setActive(true);
                 updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                 ((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice() + 1].lastElement())).setActive(true);
+                fireVOISelectionChange(VOIs.VOIAt(i), null);
             } // end of else for VOI.POINT
         } // end of Propagate up
         else if ((compImage.getSlice() > 0) && (direction < 0)) { // propagate down
@@ -4254,6 +4256,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 VOIs.VOIAt(i).setActive(true);
                 updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                 ((VOIContour) (VOIs.VOIAt(i).getCurves()[compImage.getSlice() - 1].lastElement())).setActive(true);
+                fireVOISelectionChange(VOIs.VOIAt(i), null);
             } // end of if (!doPoint)
             else { // VOI.POINT
 
@@ -4281,6 +4284,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 VOIs.VOIAt(i).setActive(true);
                 updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
                 ((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice() - 1].lastElement())).setActive(true);
+                fireVOISelectionChange(VOIs.VOIAt(i), null);
             } // end of else for VOI.POINT
         } // end of propagate down
 
@@ -4359,6 +4363,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             // compImage.getActiveImage().notifyImageDisplayListeners();
             VOIs.VOIAt(i).setAllActive(true);
             updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+            fireVOISelectionChange(VOIs.VOIAt(i), null);
         } // end of if (!doPoint)
         else { // VOI.POINT
 
@@ -4386,6 +4391,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             VOIs.VOIAt(i).setAllActive(true);
             updateVOIColor(VOIs.VOIAt(i).getColor(), VOIs.VOIAt(i).getUID());
+            fireVOISelectionChange(VOIs.VOIAt(i), null);
         } // end of else for VOI.POINT
 
         compImage.getActiveImage().notifyImageDisplayListeners();
