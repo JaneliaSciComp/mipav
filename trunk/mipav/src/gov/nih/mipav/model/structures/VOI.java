@@ -2751,9 +2751,9 @@ public class VOI extends ModelSerialCloneable {
         if (curveType == LINE) {
             curve = new VOILine(name);
         } else if (curveType == CONTOUR) {
-            curve = new VOIContour(true);
+            curve = new VOIContour(name, true);
         } else if (curveType == POLYLINE) {
-            curve = new VOIContour(false);
+            curve = new VOIContour(name, false);
         } else if (curveType == POINT) {
             curve = new VOIPoint(name);
         } else if (curveType == PROTRACTOR) {
@@ -2986,9 +2986,9 @@ public class VOI extends ModelSerialCloneable {
         VOIContour contour = null;
 
         if (curveType == CONTOUR) {
-            contour = new VOIContour(true);
+            contour = new VOIContour(name, true);
         } else if (curveType == POLYLINE) {
-            contour = new VOIContour(false);
+            contour = new VOIContour(name, false);
         } else {
             return;
         }
