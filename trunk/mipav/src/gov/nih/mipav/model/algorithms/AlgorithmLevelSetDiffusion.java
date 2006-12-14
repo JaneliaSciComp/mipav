@@ -72,6 +72,9 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
 
     /** Standard deviations of the gaussian used to calculate the kernels. */
     private float[] sigmas;
+    
+    /** If true in 3D images, process each slice separately */
+    private boolean image25D = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -84,15 +87,17 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
      * @param  kValue  K is a factor that controls the diffusion rate. A large value causes this algorithms to act like
      *                 gaussian smoothing and therefore diffuses across edges. K = small reduces blur across edges.
      *                 Typical K = 10;
+     * @param  image25D If true in 3D images, process each slice separately
      */
-    public AlgorithmLevelSetDiffusion(ModelImage srcImg, float[] sigmas, int iter, float kValue) {
+    public AlgorithmLevelSetDiffusion(ModelImage srcImg, float[] sigmas, int iter, float kValue, boolean image25D) {
         super(null, srcImg);
 
         this.sigmas = sigmas;
         iterations = iter;
         this.kValue = kValue;
+        this.image25D = image25D;
 
-        if (srcImg.getNDims() == 2) {
+        if ((srcImg.getNDims() == 2) || ((srcImage.getNDims() > 2) && image25D)) {
             makeKernels2D();
         } else if (srcImg.getNDims() > 2) {
             makeKernels3D();
@@ -137,7 +142,12 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         if (srcImage.getNDims() == 2) {
             calc2D();
         } else if (srcImage.getNDims() > 2) {
-            calc3D();
+            if (image25D) {
+                calc25D();
+            }
+            else {
+                calc3D();
+            }
         }
     }
 
@@ -323,6 +333,213 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
         }
 
         AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage, mask, xDim, yDim, zDim,
+                                                                                     voiID);
+
+        algoPaintToVOI.run();
+
+        
+        setCompleted(true);
+    }
+    
+    /**
+     * calc25D - calculates the diffused image and creates the new VOI for the original image.
+     * In a 3D image processes each slice separately
+     */
+    private void calc25D() {
+
+        int i, n;
+        int length;
+        float[] imgBuffer;
+        float[] tempBuffer;
+        float[] resultBuffer;
+        float ix, iy, mag;
+        double grad;
+        int nVOI;
+        ViewVOIVector VOIs;
+        short voiID;
+        int z;
+        int xDim = srcImage.getExtents()[0];
+        int yDim = srcImage.getExtents()[1];
+        int zDim = srcImage.getExtents()[2];
+        int totalLength;
+        int extents2D[];
+        BitSet mask2;
+        boolean haveCurve;
+
+        try {
+            length = srcImage.getSliceSize();
+            imgBuffer = new float[length];
+            resultBuffer = new float[length];
+            edgeImage = new float[length];
+            levelImage = new float[length];
+            
+            fireProgressStateChanged(srcImage.getImageName(), "Evolving the level set ...");
+        } catch (OutOfMemoryError e) {
+            cleanUp();
+            System.gc();
+            displayError("Level set: Out of Memory");
+            setCompleted(false);
+
+            return;
+        }
+        totalLength = length * zDim;
+        
+
+        int[] imageExtents = srcImage.getExtents();
+        extents2D = new int[2];
+        extents2D[0] = imageExtents[0];
+        extents2D[1] = imageExtents[1];
+        mask2 = new BitSet(totalLength);
+        
+        for (z = 0; z < zDim; z++) {
+            fireProgressStateChanged(z * 100/ zDim);
+            haveCurve = false;
+            for (i = 0; i < length; i++) {
+
+                if (mask.get(z*length + i)) {
+                    levelImage[i] = 100;
+                    haveCurve = true;
+                } else {
+                    levelImage[i] = 0;
+                }
+            }
+            if (!haveCurve) {
+                // If no curve is present in this slice, don't process this slice
+                break;
+            }
+            try {
+                srcImage.exportData(z*length, length, imgBuffer); // locks and releases lock
+            } catch (IOException error) {
+                cleanUp();
+                System.gc();
+                displayError("Level set: Image(s) locked");
+                setCompleted(false);
+
+                return;
+            }
+            
+            float min = Float.MAX_VALUE;
+            float max = 0.0f;
+    
+            for (i = 0; i < length; i++) { // calculate gradient magnitude
+                ix = AlgorithmConvolver.convolve2DPt(i, extents2D, imgBuffer, kExtents, GxData);
+                iy = AlgorithmConvolver.convolve2DPt(i, extents2D, imgBuffer, kExtents, GyData);
+    
+                mag = (float) Math.sqrt((ix * ix) + (iy * iy));
+                edgeImage[i] = mag;
+    
+                if (mag > max) {
+                    max = mag;
+                }
+    
+                if (mag < min) {
+                    min = mag;
+                }
+            }
+    
+            float divisor = max - min;
+    
+            if (divisor == 0) {
+                divisor = 1;
+            }
+    
+            for (i = 0; i < length; i++) { // normalize the data between 0 and 100
+                mag = ((edgeImage[i] - min) / divisor) * 100;
+    
+                // edgeImage[i] = (float)( 1/(1 + mag/k * mag/k)); // Use k = 5 and iterations = 20
+                if (Math.abs(mag) <= kValue) {
+                    edgeImage[i] = 1 - (mag / kValue * mag / kValue);
+                    edgeImage[i] = 0.5f * edgeImage[i] * edgeImage[i];
+                } else {
+                    edgeImage[i] = 0.0f;
+                }
+            }
+    
+            double gradX, gradY;
+            float temp;
+            float x, y;
+            int xPos;
+    
+            for (n = 0; (n < iterations) && !threadStopped; n++) {
+    
+                for (i = xDim + 1; (i < (length - xDim - 1)) && !threadStopped; i++) {
+                    resultBuffer[i] = 0;
+                    xPos = i % xDim;
+    
+                    if (((xPos >= 1) && (xPos < (xDim - 1))) &&
+                            ((levelImage[i - xDim] > 3) || (levelImage[i - 1] > 3) || (levelImage[i + 1] > 3) ||
+                                 (levelImage[i + xDim] > 3))) {
+    
+                        if ((levelImage[i] == 0) || (levelImage[i] > 3)) {
+    
+                            gradX = levelImage[i + 1] - levelImage[i - 1];
+                            gradY = levelImage[i + xDim] - levelImage[i - xDim];
+                            grad = Math.sqrt((gradX * gradX) + (gradY * gradY));
+    
+                            if (grad > 0) { // normalize gradient measurements
+                                gradX = gradX / grad;
+                                gradY = gradY / grad;
+                            } else {
+                                gradX = gradY = 0;
+                            }
+    
+                            x = (float) (xPos + gradX);
+                            y = (float) ((i / xDim) + gradY);
+    
+                            // possible speedup remove function
+                            temp = getBiLinear(levelImage, xDim, x, y);
+                            temp = (temp - levelImage[i]) * 0.25f * edgeImage[i];
+    
+                            if ((temp + levelImage[i]) <= 100) {
+                                resultBuffer[i] = temp + levelImage[i];
+                            } else {
+                                resultBuffer[i] = 100;
+                            }
+                        }
+                    }
+                }
+    
+                tempBuffer = levelImage;
+                levelImage = resultBuffer;
+                resultBuffer = tempBuffer;
+                // System.arraycopy(resultBuffer, 0, imgBuffer, 0, length);
+            }
+    
+            if (threadStopped) {
+                finalize();
+    
+                return;
+            }
+    
+            
+            
+    
+            for (i = 0; i < length; i++) {
+    
+                if (levelImage[i] >= 90.0f) {
+                    mask2.set(z*length + i);
+                } else {
+                    mask2.clear(z*length + i);
+                }
+            }
+        } // for (z = 0; z < zDim; z++)
+        
+        // delete the VOIs
+        VOIs = srcImage.getVOIs();
+
+        nVOI = VOIs.size();
+
+        if (nVOI == 0) {
+            return;
+        }
+
+        for (i = (nVOI - 1); i >= 0; i--) {
+            VOIs.removeElementAt(i);
+        }
+
+        voiID = 0;
+
+        AlgorithmVOIExtractionPaint algoPaintToVOI = new AlgorithmVOIExtractionPaint(srcImage, mask2, xDim, yDim, zDim,
                                                                                      voiID);
 
         algoPaintToVOI.run();
