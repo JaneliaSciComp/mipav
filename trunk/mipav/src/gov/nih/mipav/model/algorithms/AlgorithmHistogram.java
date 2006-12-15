@@ -339,12 +339,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         } else {
             zStop = 1;
         }
-
-        if (entireImage == false) {
-            mask = image.generateVOIMask();
-        }
-
-        
+             
 
         try {
             image.setLock(ModelStorageBase.W_LOCKED);
@@ -456,7 +451,7 @@ public class AlgorithmHistogram extends AlgorithmBase {
         histogram.setMaxEntropyThreshold(entropySplit(histoBuffer));
 
         // attempt an otsu threshold
-        histogram.setOtsuThreshold(otsuThreshold(image, histoBuffer));
+       // histogram.setOtsuThreshold(otsuThreshold(image, histoBuffer));
 
         
         setCompleted(true);
