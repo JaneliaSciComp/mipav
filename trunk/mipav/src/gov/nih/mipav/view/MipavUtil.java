@@ -858,7 +858,7 @@ public class MipavUtil extends JComponent {
      *                             permit entering floating point numbers.
      */
     public static void makeNumericsOnly(JTextField txt, boolean allowFloatingPoint) {
-        makeNumericsOnly(txt, allowFloatingPoint, false);
+        makeNumericsOnly(txt, allowFloatingPoint, true);
     }
 
     /**
