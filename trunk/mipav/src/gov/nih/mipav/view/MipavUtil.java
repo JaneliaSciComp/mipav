@@ -1067,9 +1067,10 @@ public class MipavUtil extends JComponent {
      *
      * @param  ID  the index ID indicating what section the Java Help dialop should display.
      */
+    static HelpSet hs;
+    static HelpBroker helpBroker;
     public static void showHelp(String ID) {
-        HelpSet hs;
-        HelpBroker helpBroker;
+       
 
         try {
             ClassLoader cloader = help.PlaceHolderHelp.class.getClassLoader();
@@ -1079,8 +1080,10 @@ public class MipavUtil extends JComponent {
 
             // System.out.println(" URL = " + hsURL.toString());
             if (hsURL != null) {
-                hs = new HelpSet(cloader, hsURL);
-                helpBroker = hs.createHelpBroker();
+            	if(hs == null || helpBroker == null) {
+            		hs = new HelpSet(cloader, hsURL);
+            		helpBroker = hs.createHelpBroker();
+            	}
 
                 if (ID != null) {
                     helpBroker.setCurrentID(ID);
@@ -1091,6 +1094,8 @@ public class MipavUtil extends JComponent {
 
                 // helpBroker.getFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                 helpBroker.setDisplayed(true);
+                //hs = null;
+                //helpBroker = null;
             } else {
                 Preferences.debug("Help file URL is " + hsURL + "\n");
                 MipavUtil.displayError("Unable to find helpset.");
@@ -1116,7 +1121,7 @@ public class MipavUtil extends JComponent {
     public static void showHelp(int ID) {
         HelpSet hs;
         HelpBroker helpBroker;
-
+        
         try {
             ClassLoader cloader = help.PlaceHolderHelp.class.getClassLoader();
 
@@ -1132,7 +1137,7 @@ public class MipavUtil extends JComponent {
                 // helpBroker.setCurrentID(Map.ID.create();
                 helpBroker.setSize(new java.awt.Dimension(1000, 600));
                 helpBroker.setLocation(new java.awt.Point(200, 300));
-
+                
                 // helpBroker.getFrame().setIconImage(MipavUtil.getIconImage(Preferences.getIconName()));
                 helpBroker.setDisplayed(true);
             } else {
