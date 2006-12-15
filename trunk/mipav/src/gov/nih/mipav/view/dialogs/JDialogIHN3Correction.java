@@ -204,7 +204,7 @@ public class JDialogIHN3Correction extends JDialogScriptableBase implements Algo
                 VOIRegions.setEnabled(true);
             }
         } else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            MipavUtil.showHelp("19006");
         }
     }
 
