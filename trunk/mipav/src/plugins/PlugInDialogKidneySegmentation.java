@@ -298,9 +298,9 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         itersText = new JTextField(5);
 
         if (image.getNDims() > 2) {
-            itersText.setText("6");
+            itersText.setText("5");
         } else {
-            itersText.setText("6");
+            itersText.setText("5");
         }
 
         itersText.setFont(serif12);
