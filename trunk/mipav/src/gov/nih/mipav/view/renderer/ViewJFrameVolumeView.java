@@ -22,7 +22,6 @@ import java.awt.event.*;
 
 import java.io.*;
 
-import java.text.*;
 
 import java.util.*;
 
@@ -754,11 +753,11 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
 
         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
 
-            try {
+            //try {
                 surRender.getSurfaceDialog().addSurfaces(dir, file);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            //} catch (IOException e) {
+            //    e.printStackTrace();
+            //}
         }
     }
 

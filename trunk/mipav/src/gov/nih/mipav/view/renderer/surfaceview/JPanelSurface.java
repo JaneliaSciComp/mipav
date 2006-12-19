@@ -1,9 +1,6 @@
 package gov.nih.mipav.view.renderer.surfaceview;
 
 
-import gov.nih.mipav.*;
-
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -22,10 +19,8 @@ import java.io.*;
 import java.util.*;
 
 import javax.media.j3d.*;
-import javax.media.j3d.*;
 
 import javax.swing.*;
-import javax.swing.border.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 
@@ -43,8 +38,11 @@ import javax.vecmath.*;
  * @author  Neva Cherniavsky
  */
 public class JPanelSurface extends JPanelRendererBase
-        implements ListSelectionListener, MouseListener, MouseMotionListener, ChangeListener { // for slider changes
-                                                                                               // (LOD change)
+    implements ListSelectionListener,
+               MouseListener,
+               MouseMotionListener,
+               ChangeListener
+{
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -63,21 +61,6 @@ public class JPanelSurface extends JPanelRendererBase
     };
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** Surface vertext conectin array. */
-    protected int[] m_aiConnect;
-
-    /** Bitset mask to recording the surface boundary. */
-    protected BitSet m_aiMask;
-
-    /** Surface vertex array. */
-    protected Point3f[] m_akVertex;
-
-    /** Product of the image dimensions. */
-    protected int m_iQuantity;
-
-    /** DOCUMENT ME! */
-    protected int m_iTQuantity;
 
     /** Record the current active index of light bulb, which is being picked. */
     private int activeLightBulbIndex;
@@ -148,9 +131,6 @@ public class JPanelSurface extends JPanelRendererBase
     /** Surface list panel. */
     private JPanel listPanel;
 
-    /** Surface load button for the ascii surface file format. */
-    private JButton loadASCButton;
-
     /**
      * The index of the lights in JPanelLights is different from the order maintained here. This array maps from our
      * index to JPanelLights' index.
@@ -166,11 +146,8 @@ public class JPanelSurface extends JPanelRendererBase
     /** The description of the lights so they can be duplicated in the "Advanced Material Properties" dialog: */
     private GeneralLight[] m_akLights;
 
-    /** per-vertex color for the m_aiMask:. */
-    private Color4f[] m_akMaskColor = null;
-
-    /** Dimensions of image A. */
-    private int m_iXBound, m_iYBound, m_iZBound;
+    /** Check Box for turing on the surface image texture: */
+    private JCheckBox mImageAsTextureCheck;
 
     /** The material options button, which launches the material editor window. */
     private JButton m_kAdvancedMaterialOptionsButton;
@@ -250,12 +227,6 @@ public class JPanelSurface extends JPanelRendererBase
     /** The combo box for the polygon mode to display. */
     private JComboBox polygonModeCB;
 
-    /**
-     * The colors for the first six surfaces are fixed. For the seventh and later surface, the colors are randomly
-     * generated. This member provides the random number generator.
-     */
-    private Random randomGen;
-
     /** Control panel on the right. */
     private JPanel rightPanel;
 
@@ -314,7 +285,7 @@ public class JPanelSurface extends JPanelRendererBase
     private JList surfaceList;
 
     /** Surface mask. */
-    private BitSet surfaceMask;
+    private SurfaceMask mSurfaceMask = new SurfaceMask();
 
     /** Surface opacity changes event queue. */
     private MouseEventVector surfaceOpacityEvents;
@@ -355,6 +326,9 @@ public class JPanelSurface extends JPanelRendererBase
     /** Parent frame box value. */
     private float xBox, yBox, zBox;
 
+    private Texture3D mTexture = null;
+
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -375,8 +349,9 @@ public class JPanelSurface extends JPanelRendererBase
      * @param  yBox         red box y dimension
      * @param  zBox         red box z dimension
      */
-    public JPanelSurface(SurfaceRender parent, Canvas3D canvas, TransformGroup surfaceRoot, float xBox, float yBox,
-                         float zBox) {
+    public JPanelSurface(SurfaceRender parent, Canvas3D canvas, TransformGroup surfaceRoot,
+                         float xBox, float yBox, float zBox)
+    {
 
         super(parent);
         parentScene = parent;
@@ -544,19 +519,7 @@ public class JPanelSurface extends JPanelRendererBase
      * @param  event  The action event.
      */
     public void actionPerformed(ActionEvent event) {
-        int iterations;
-        boolean volumeLimit;
-        float volumePercent;
         String command = event.getActionCommand();
-        float[] resolution = parentScene.getImageA().getFileInfo(0).getResolutions();
-        int[] extents = parentScene.getImageA().getExtents();
-        float[] box = new float[3];
-
-        box[0] = extents[0] * resolution[0];
-        box[1] = extents[1] * resolution[1];
-        box[2] = extents[2] * resolution[2];
-
-        float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
         System.out.println("command = " + command);
         if (command.equals("Add")) {
             addSurface();
@@ -568,701 +531,348 @@ public class JPanelSurface extends JPanelRendererBase
             colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(),
                                                  new CancelListener());
         } else if (command.equals("Stereo")) {
-
-            /* For each file in the selected list, launch the stereo viewer: */
-            int[] aiSelected = surfaceList.getSelectedIndices();
-
-            for (int i = 0; i < aiSelected.length; i++) {
-                int iIndex = aiSelected[i];
-
-                if (!((SurfaceAttributes) surfaceVector.get(iIndex)).isVOIPt) {
-
-                    /* Use the current view transform: */
-                    Transform3D kTransform = new Transform3D();
-                    parentScene.getSceneRootTG().getTransform(kTransform);
-
-                    /* Pass in a new copy of the triangle mesh: */
-                    new JStereoWindow(new ModelTriangleMesh(m_kSurface[0].getVertexCopy(), m_kSurface[0].getNormalCopy(),
-                                                            m_kSurface[0].getIndexCopy()), kTransform);
-                }
-            }
+            displayStereo( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
+        } else if (command.equals("ImageAsTexture")) {
+            displayImageAsTexture( getSelectedSurfaces( surfaceList.getSelectedIndices() ), mImageAsTextureCheck.isSelected() );
         } else if (command.equals("AdvancedMaterialOptions")) {
-
-            /* For each file in the selected list, launch the material editor window */
-            int[] aiSelected = surfaceList.getSelectedIndices();
-
-            for (int i = 0; i < aiSelected.length; i++) {
-                int iIndex = aiSelected[i];
-
-                if (!((SurfaceAttributes) surfaceVector.get(iIndex)).isVOIPt) {
-                    BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
-                    Shape3D shape = (Shape3D) root.getChild(0);
-
-                    /* Pass in the current surface material and transparency values */
-                    Appearance appearance = shape.getAppearance();
-                    Material material = appearance.getMaterial();
-                    TransparencyAttributes tap = appearance.getTransparencyAttributes();
-                    float fOpacity = tap.getTransparency();
-
-                    /* Launch the material editor: */
-                    new JFrameSurfaceMaterialProperties(this, iIndex, m_akLights, fOpacity, material);
-                }
-            }
+            displayAdvancedMaterialOptions( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("ChangeLight")) {
-
+            
             if (m_kLightsControl == null) {
                 m_kLightsControl = new JPanelLights(this, parentScene);
             }
 
             m_kLightsControl.setVisible(true);
         } else if (command.equals("SurfacePickable")) {
-            int selected = surfaceList.getSelectedIndex();
-
-            if (selected == -1) {
-                return;
-            }
-
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
-
-            root.setPickable(surfacePickableCB.isSelected());
+            setPickable( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("backface")) {
-            int selected = surfaceList.getSelectedIndex();
-
-            if (selected == -1) {
-                return;
-            }
-
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
-
-            if (root != null) {
-                root.setCollidable(surfaceBackFaceCB.isSelected());
-
-                Shape3D shape = (Shape3D) root.getChild(0);
-
-                if (surfaceBackFaceCB.isSelected()) {
-                    shape.getAppearance().getPolygonAttributes().setCullFace(PolygonAttributes.CULL_BACK);
-                } else {
-                    shape.getAppearance().getPolygonAttributes().setCullFace(PolygonAttributes.CULL_NONE);
-                }
-            }
+            setBackface( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("Clipping") && ((SurfaceRender) parentScene).getDisplayMode3D()) {
-            int selected = surfaceList.getSelectedIndex();
-
-            if (selected == -1) {
-                return;
-            }
-
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
-
-            if (root != null) {
-                root.setAlternateCollisionTarget(surfaceClipCB.isSelected());
-
-                if (surfaceClipCB.isSelected()) {
-                    parentScene.getClipDialog().addToModelClip(root);
-                } else {
-                    parentScene.getClipDialog().removeFromModelClip(root);
-                }
-            }
+            setClipping( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("ChangePolyMode")) {
-            int mode;
-
-            switch (polygonModeCB.getSelectedIndex()) {
-
-                case 1:
-                    mode = PolygonAttributes.POLYGON_LINE;
-                    break;
-
-                case 2:
-                    mode = PolygonAttributes.POLYGON_POINT;
-                    break;
-
-                case 0:
-                default:
-                    mode = PolygonAttributes.POLYGON_FILL;
-                    break;
-            }
-
-            changePolyMode(mode);
-        } else if (command.equals("ImportA")) {
-            importA();
-        } else if (command.equals("LevelS") || command.equals("LevelV")) {
-            int selected = surfaceList.getSelectedIndex();
-
-            if (selected == -1) {
-                MipavUtil.displayError("Select a surface to save.");
-
-                return;
-            }
-
-            BranchGroup surfaceBG = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
-
-            ModelTriangleMesh[] meshes = new ModelTriangleMesh[surfaceBG.numChildren()];
-
-            for (int j = 0; j < surfaceBG.numChildren(); j++) {
-                Shape3D shape = (Shape3D) surfaceBG.getChild(j);
-
-                meshes[j] = (ModelTriangleMesh) shape.getGeometry(0);
-            }
-
-            Color3f color = new Color3f();
-
-            ((Shape3D) (surfaceBG.getChild(0))).getAppearance().getMaterial().getDiffuseColor(color);
-            saveSingleMesh(meshes, command.equals("LevelS"), color);
-        } else if (command.equals("LevelW")) {
-            int selected, i, j;
-            String extension;
-            int[] selectedList = surfaceList.getSelectedIndices();
-            String name = getFileName(false);
-
-            if (name == null) {
-                return;
-            }
-
-            i = name.lastIndexOf('.');
-
-            if ((i > 0) && (i < (name.length() - 1))) {
-                extension = name.substring(i + 1).toLowerCase();
-
-                if (!extension.equals("wrl")) {
-                    MipavUtil.displayError("Extension must be .wrl");
-
-                    return;
-                }
-            } else {
-                name = name + ".wrl";
-            }
-
-            try {
-                PrintWriter kOut = new PrintWriter(new FileWriter(name));
-
-                kOut.println("#VRML V2.0 utf8");
-                kOut.println("#MIPAV");
-                kOut.println("#Number of shapes = " + selectedList.length);
-
-                kOut.print("#flip { ");
-
-                if (true) {
-                    kOut.print(1);
-                } else {
-                    kOut.print(0);
-                }
-
-                kOut.print(" }\n");
-
-                float[] startLocation = parentScene.getImageA().getFileInfo(0).getOrigin();
-
-                resolution = parentScene.getImageA().getFileInfo(0).getResolutions();
-                extents = parentScene.getImageA().getExtents();
-                box = new float[3];
-                box[0] = extents[0] * resolution[0];
-                box[1] = extents[1] * resolution[1];
-                box[2] = extents[2] * resolution[2];
-                maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-
-                int[] direction = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
-
-                kOut.print("#direction { ");
-                kOut.print(direction[0]);
-                kOut.print(' ');
-                kOut.print(direction[1]);
-                kOut.print(' ');
-                kOut.print(direction[2]);
-                kOut.print(" }\n");
-
-                kOut.print("#startLocation { ");
-                kOut.print(startLocation[0]);
-                kOut.print(' ');
-                kOut.print(startLocation[1]);
-                kOut.print(' ');
-                kOut.print(startLocation[2]);
-                kOut.print(" }\n");
-
-                kOut.print("#box { ");
-                kOut.print(box[0]);
-                kOut.print(' ');
-                kOut.print(box[1]);
-                kOut.print(' ');
-                kOut.print(box[2]);
-                kOut.print(" }\n");
-
-                for (i = 0; i < selectedList.length; i++) {
-                    selected = selectedList[i];
-
-                    if (selected == -1) {
-                        MipavUtil.displayError("Select a surface to save.");
-
-                        return;
-                    }
-
-                    BranchGroup surfaceBG = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
-                    ModelTriangleMesh[] meshes = new ModelTriangleMesh[surfaceBG.numChildren()];
-
-                    for (j = 0; j < surfaceBG.numChildren(); j++) {
-                        Shape3D shape = (Shape3D) surfaceBG.getChild(j);
-
-                        meshes[j] = (ModelTriangleMesh) shape.getGeometry(0);
-                    }
-
-                    Color3f color = new Color3f();
-
-                    ((Shape3D) (surfaceBG.getChild(0))).getAppearance().getMaterial().getDiffuseColor(color);
-                    savePortableMesh(meshes, kOut, color);
-                }
-
-                kOut.close();
-            } catch (IOException error) {
-                MipavUtil.displayError("Error while trying to save single mesh");
-            }
-        } else if (command.equals("LevelXML")) {
-            int iIndex = surfaceList.getSelectedIndex();
-
-            if (iIndex == -1) {
-                MipavUtil.displayError("Select a surface to save.");
-
-                return;
-            }
-
-            if (!((SurfaceAttributes) surfaceVector.get(iIndex)).isVOIPt) {
-                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
-                System.out.println("c = " + root.numChildren() );
-                ModelTriangleMesh[] kMesh = new ModelTriangleMesh[root.numChildren()];
-                for ( int i = 0; i < root.numChildren(); i++ ) {
-                   Shape3D shape = new Shape3D();
-                   shape = (Shape3D) root.getChild(i);
-                   kMesh[i] = (ModelTriangleMesh) shape.getGeometry(0);
-                }
-                writeTriangleMeshXML(kMesh, getMaterial(iIndex));
-            }
-        } else if (command.equals("saveSurface")) {
+            changePolyMode( polygonIndexToMode( polygonModeCB.getSelectedIndex() ) );
+        } else if (command.equals("LevelXML") ||
+                   command.equals("LevelW") ||
+                   command.equals("LevelS") ||
+                   command.equals("LevelV") )
+        {
+            FileSurface fileSurface = new FileSurface();
+            fileSurface.saveSurfaces( parentScene.getImageA(),
+                                      getSelectedSurfaces( surfaceList.getSelectedIndices() ),
+                                      command );
+        }
+        else if (command.equals("saveSurface")) {
 
             // save surface
             int selected = surfaceList.getSelectedIndex();
-            BranchGroup surfaceBG = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
+            ModelTriangleMesh[] meshes = ((SurfaceAttributes)surfaceVector.get(selected)).getMesh();
+            Color4f color = ((SurfaceAttributes)surfaceVector.get(selected)).getColor();
+            String fName = ((SurfaceAttributes) surfaceVector.get(selected)).getName();
 
-            ModelTriangleMesh[] meshes = new ModelTriangleMesh[surfaceBG.numChildren()];
-
-            for (int j = 0; j < surfaceBG.numChildren(); j++) {
-                Shape3D shape = (Shape3D) surfaceBG.getChild(j);
-
-                meshes[j] = (ModelTriangleMesh) shape.getGeometry(0);
-            }
-
-            Color3f color = new Color3f();
-
-            ((Shape3D) (surfaceBG.getChild(0))).getAppearance().getMaterial().getDiffuseColor(color);
-
-            String fName = ((SurfaceAttributes) surfaceVector.get(selected)).name;
-
-            saveSingleMesh(fName, meshes, command.equals("LevelS"), color);
-
-            // Load surface
-            File file = new File(getCurrentFileName(fName));
-            Color4f surfaceColor = new Color4f();
-            int index = surfaceVector.size();
-
-            surfaceColor.w = 1.0f;
-
-            if ((index < fixedColor.length) && (selected < fixedColor.length)) {
-
-                // Use the fixed colors for the first six surfaces.
-                surfaceColor.x = fixedColor[selected].x;
-                surfaceColor.y = fixedColor[selected].y;
-                surfaceColor.z = fixedColor[selected].z;
-            } else {
-
-                // Use randomly generated colors for the seventh and
-                // later surfaces.
-                surfaceColor.x = 0.5f * (1.0f + randomGen.nextFloat());
-                surfaceColor.y = 0.5f * (1.0f + randomGen.nextFloat());
-                surfaceColor.z = 0.5f * (1.0f + randomGen.nextFloat());
-            }
-
-            addSurface(file, surfaceColor, fName, 0.5f, selected, false);
-
-            surfaceList.setSelectedIndex(selected);
+            FileSurface fileSurface = new FileSurface();
+            fileSurface.saveSingleMesh(fName, parentScene.getImageA(), meshes, command.equals("LevelS"), color);
 
             // smooth surface
-            actionPerformed(new ActionEvent(this, 1, "Smoothies"));
-        } else if (command.equals("Smoothies")) {
-
-            int selected = surfaceList.getSelectedIndex();
-
-            if (selected == -1) {
-                MipavUtil.displayError("Select a surface to smooth.");
-
-                return;
-            }
-
-            // Popup smooth dialog 3
-            JDialogSurfaceSmooth3 dialog = new JDialogSurfaceSmooth3(((SurfaceRender) renderBase).getParentFrame());
-            float lambda, mu;
-
-            if (dialog.isCancelled()) {
-                return;
-            } else {
-                iterations = dialog.getIterations();
-                lambda = dialog.getLambda();
-                mu = dialog.getMu();
-            }
-
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
-            ModelTriangleMesh[] meshes = new ModelTriangleMesh[root.numChildren()];
-
-            for (int j = 0; j < root.numChildren(); j++) {
-                Shape3D shape = (Shape3D) root.getChild(j);
-
-                meshes[j] = (ModelTriangleMesh) shape.getGeometry(0);
-            }
-
-            root.detach();
-
-            ModelClodMesh clod = null;
-            int numTriangles = 0;
-            float volume = 0;
-            float area = 0;
-
-            for (int j = 0; j < meshes.length; j++) {
-
-                if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                    clod = (ModelClodMesh) meshes[j].getGenerator();
-                    clod.setLOD(clod.getMaximumLOD());
-                    meshes[j] = clod.getMesh();
-                }
-
-                meshes[j].smoothThree(iterations, lambda, mu, true);
-                meshes[j].computeNormals();
-
-                if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                    clod.setVerticies(meshes[j].getVertexCopy());
-                }
-
-                numTriangles += meshes[j].getIndexCount();
-                volume += meshes[j].volume();
-                area += meshes[j].area();
-            }
-
-            root = createSurface(meshes, ((SurfaceAttributes) surfaceVector.get(selected)).color,
-                                 ((SurfaceAttributes) surfaceVector.get(selected)).polygonMode);
-            root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-            root.setCapability(Group.ALLOW_CHILDREN_READ);
-            root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-            root.setCapability(BranchGroup.ALLOW_DETACH);
-            root.setCapability(Node.ALLOW_PICKABLE_READ);
-            root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-            root.setPickable(false);
-            surfacePickableCB.setSelected(false);
-
-            if (((SurfaceRender) parentScene).getDisplayMode3D()) {
-                surfaceClipCB.setSelected(false);
-            }
-
-            root.compile();
-            surfaceRootBG.addChild(root);
-            ((SurfaceAttributes) surfaceVector.get(selected)).surface = root;
-            ((SurfaceAttributes) surfaceVector.get(selected)).volume = volume;
-            ((SurfaceAttributes) surfaceVector.get(selected)).area = area;
-            ((SurfaceAttributes) surfaceVector.get(selected)).triangles = numTriangles / 3;
-
-            if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                detailSlider.setValue(((SurfaceAttributes) surfaceVector.get(selected)).detailLevel);
-                stateChanged(new ChangeEvent(detailSlider));
-            }
-
-            triangleText.setText(String.valueOf(numTriangles / 3));
-
-            // One length across the extracted surface changes from -1 to 1
-            // while one length across the actual volume changes by ((dim-1)*res)max
-            volumeText.setText(String.valueOf(volume * maxBox * maxBox * maxBox / 8.0f));
-            areaText.setText(String.valueOf(area * maxBox * maxBox));
+            actionPerformed(new ActionEvent(this, 1, "Smooth3"));
         } else if (command.equals("Smooth")) {
-            int selected = surfaceList.getSelectedIndex();
-
-            if (selected == -1) {
-                MipavUtil.displayError("Select a surface to smooth.");
-
-                return;
-            }
-
-            JDialogSurfaceSmooth dialog = new JDialogSurfaceSmooth(((SurfaceRender) renderBase).getParentFrame());
-            float alpha;
-
-            if (dialog.isCancelled()) {
-                return;
-            } else {
-                alpha = dialog.getAlpha();
-                iterations = dialog.getIterations();
-                volumeLimit = dialog.getVolumeLimit();
-                volumePercent = dialog.getVolumePercent();
-            }
-
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
-            ModelTriangleMesh[] meshes = new ModelTriangleMesh[root.numChildren()];
-
-            for (int j = 0; j < root.numChildren(); j++) {
-                Shape3D shape = (Shape3D) root.getChild(j);
-
-                meshes[j] = (ModelTriangleMesh) shape.getGeometry(0);
-            }
-
-            root.detach();
-
-            ModelClodMesh clod = null;
-
-            ((SurfaceAttributes) surfaceVector.get(selected)).surface = root;
-
-            int numTriangles = 0;
-            float volume = 0;
-            float area = 0;
-
-            for (int j = 0; j < meshes.length; j++) {
-
-                if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                    clod = (ModelClodMesh) meshes[j].getGenerator();
-                    clod.setLOD(clod.getMaximumLOD());
-                    meshes[j] = clod.getMesh();
-                }
-
-                meshes[j].smoothMesh(iterations, alpha, volumeLimit, volumePercent, true);
-                meshes[j].computeNormals();
-
-                if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                    clod.setVerticies(meshes[j].getVertexCopy());
-                }
-
-                numTriangles += meshes[j].getIndexCount();
-                volume += meshes[j].volume();
-                area += meshes[j].area();
-            }
-
-            root = createSurface(meshes, ((SurfaceAttributes) surfaceVector.get(selected)).color,
-                                 ((SurfaceAttributes) surfaceVector.get(selected)).polygonMode);
-            root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-            root.setCapability(Group.ALLOW_CHILDREN_READ);
-            root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-            root.setCapability(BranchGroup.ALLOW_DETACH);
-            root.setCapability(Node.ALLOW_PICKABLE_READ);
-            root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-            root.setPickable(false);
-            surfacePickableCB.setSelected(false);
-
-            if (((SurfaceRender) parentScene).getDisplayMode3D()) {
-                surfaceClipCB.setSelected(false);
-            }
-
-            root.compile();
-            surfaceRootBG.addChild(root);
-            ((SurfaceAttributes) surfaceVector.get(selected)).surface = root;
-            ((SurfaceAttributes) surfaceVector.get(selected)).volume = volume;
-            ((SurfaceAttributes) surfaceVector.get(selected)).area = area;
-            ((SurfaceAttributes) surfaceVector.get(selected)).triangles = numTriangles / 3;
-
-            if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                detailSlider.setValue(((SurfaceAttributes) surfaceVector.get(selected)).detailLevel);
-                stateChanged(new ChangeEvent(detailSlider));
-            }
-
-            triangleText.setText(String.valueOf(numTriangles / 3));
-
-            // One length across the extracted surface changes from -1 to 1
-            // while one length across the actual volume changes by ((dim-1)*res)max
-            volumeText.setText(String.valueOf(volume * maxBox * maxBox * maxBox / 8.0f));
-            areaText.setText(String.valueOf(area * maxBox * maxBox));
+            smoothSurface( getSelectedSurfaces( surfaceList.getSelectedIndices() ), JDialogSmoothMesh.SMOOTH1 );
         } else if (command.equals("Smooth2")) {
-            int selected = surfaceList.getSelectedIndex();
-
-            if (selected == -1) {
-                MipavUtil.displayError("Select a surface to smooth.");
-
-                return;
-            }
-
-            // Smooth dialog 2
-            JDialogSurfaceSmooth2 dialog = new JDialogSurfaceSmooth2(((SurfaceRender) renderBase).getParentFrame());
-            float stiffness;
-
-            if (dialog.isCancelled()) {
-                return;
-            } else {
-                iterations = dialog.getIterations();
-                stiffness = dialog.getStiffness();
-                volumeLimit = dialog.getVolumeLimit();
-                volumePercent = dialog.getVolumePercent();
-            }
-
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
-            ModelTriangleMesh[] meshes = new ModelTriangleMesh[root.numChildren()];
-
-            for (int j = 0; j < root.numChildren(); j++) {
-                Shape3D shape = (Shape3D) root.getChild(j);
-
-                meshes[j] = (ModelTriangleMesh) shape.getGeometry(0);
-            }
-
-            root.detach();
-
-            ModelClodMesh clod = null;
-            int numTriangles = 0;
-            float volume = 0;
-            float area = 0;
-
-            for (int j = 0; j < meshes.length; j++) {
-
-                if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                    clod = (ModelClodMesh) meshes[j].getGenerator();
-                    clod.setLOD(clod.getMaximumLOD());
-                    meshes[j] = clod.getMesh();
-                }
-
-                meshes[j].smoothTwo(iterations, stiffness, volumeLimit, volumePercent, true);
-                meshes[j].computeNormals();
-
-                if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                    clod.setVerticies(meshes[j].getVertexCopy());
-                }
-
-                numTriangles += meshes[j].getIndexCount();
-                volume += meshes[j].volume();
-                area += meshes[j].area();
-            }
-
-            root = createSurface(meshes, ((SurfaceAttributes) surfaceVector.get(selected)).color,
-                                 ((SurfaceAttributes) surfaceVector.get(selected)).polygonMode);
-            root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-            root.setCapability(Group.ALLOW_CHILDREN_READ);
-            root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-            root.setCapability(BranchGroup.ALLOW_DETACH);
-            root.setCapability(Node.ALLOW_PICKABLE_READ);
-            root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-            root.setPickable(false);
-            surfacePickableCB.setSelected(false);
-
-            if (((SurfaceRender) parentScene).getDisplayMode3D()) {
-                surfaceClipCB.setSelected(false);
-            }
-
-            root.compile();
-            surfaceRootBG.addChild(root);
-            ((SurfaceAttributes) surfaceVector.get(selected)).surface = root;
-            ((SurfaceAttributes) surfaceVector.get(selected)).volume = volume;
-            ((SurfaceAttributes) surfaceVector.get(selected)).area = area;
-            ((SurfaceAttributes) surfaceVector.get(selected)).triangles = numTriangles / 3;
-
-            if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                detailSlider.setValue(((SurfaceAttributes) surfaceVector.get(selected)).detailLevel);
-                stateChanged(new ChangeEvent(detailSlider));
-            }
-
-            triangleText.setText(String.valueOf(numTriangles / 3));
-
-            // One length across the extracted surface changes from -1 to 1
-            // while one length across the actual volume changes by ((dim-1)*res)max
-            volumeText.setText(String.valueOf(volume * maxBox * maxBox * maxBox / 8.0f));
-            areaText.setText(String.valueOf(area * maxBox * maxBox));
+            smoothSurface( getSelectedSurfaces( surfaceList.getSelectedIndices() ), JDialogSmoothMesh.SMOOTH2 );
         } else if (command.equals("Smooth3")) {
-            int selected = surfaceList.getSelectedIndex();
-
-            if (selected == -1) {
-                MipavUtil.displayError("Select a surface to smooth.");
-
-                return;
-            }
-
-            JDialogSurfaceSmooth3 dialog = new JDialogSurfaceSmooth3(((SurfaceRender) renderBase).getParentFrame());
-            float lambda, mu;
-
-            if (dialog.isCancelled()) {
-                return;
-            } else {
-                iterations = dialog.getIterations();
-                lambda = dialog.getLambda();
-                mu = dialog.getMu();
-            }
-
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
-            ModelTriangleMesh[] meshes = new ModelTriangleMesh[root.numChildren()];
-
-            for (int j = 0; j < root.numChildren(); j++) {
-                Shape3D shape = (Shape3D) root.getChild(j);
-
-                meshes[j] = (ModelTriangleMesh) shape.getGeometry(0);
-            }
-
-            root.detach();
-
-            ModelClodMesh clod = null;
-            int numTriangles = 0;
-            float volume = 0;
-            float area = 0;
-
-            for (int j = 0; j < meshes.length; j++) {
-
-                if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                    clod = (ModelClodMesh) meshes[j].getGenerator();
-                    clod.setLOD(clod.getMaximumLOD());
-                    meshes[j] = clod.getMesh();
-                }
-
-                meshes[j].smoothThree(iterations, lambda, mu, true);
-                meshes[j].computeNormals();
-
-                if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                    clod.setVerticies(meshes[j].getVertexCopy());
-                }
-
-                numTriangles += meshes[j].getIndexCount();
-                volume += meshes[j].volume();
-                area += meshes[j].area();
-            }
-
-            root = createSurface(meshes, ((SurfaceAttributes) surfaceVector.get(selected)).color,
-                                 ((SurfaceAttributes) surfaceVector.get(selected)).polygonMode);
-            root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-            root.setCapability(Group.ALLOW_CHILDREN_READ);
-            root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-            root.setCapability(BranchGroup.ALLOW_DETACH);
-            root.setCapability(Node.ALLOW_PICKABLE_READ);
-            root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-            root.setPickable(false);
-            surfacePickableCB.setSelected(false);
-
-            if (((SurfaceRender) parentScene).getDisplayMode3D()) {
-                surfaceClipCB.setSelected(false);
-            }
-
-            root.compile();
-            surfaceRootBG.addChild(root);
-            ((SurfaceAttributes) surfaceVector.get(selected)).surface = root;
-            ((SurfaceAttributes) surfaceVector.get(selected)).volume = volume;
-            ((SurfaceAttributes) surfaceVector.get(selected)).area = area;
-            ((SurfaceAttributes) surfaceVector.get(selected)).triangles = numTriangles / 3;
-
-            if (((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh == true) {
-                detailSlider.setValue(((SurfaceAttributes) surfaceVector.get(selected)).detailLevel);
-                stateChanged(new ChangeEvent(detailSlider));
-            }
-
-            triangleText.setText(String.valueOf(numTriangles / 3));
-
-            // One length across the extracted surface changes from -1 to 1
-            // while one length across the actual volume changes by ((dim-1)*res)max
-            volumeText.setText(String.valueOf(volume * maxBox * maxBox * maxBox / 8.0f));
-            areaText.setText(String.valueOf(area * maxBox * maxBox));
+            smoothSurface( getSelectedSurfaces( surfaceList.getSelectedIndices() ), JDialogSmoothMesh.SMOOTH3 );
         } else if (command.equals("Decimate")) {
             decimate();
         }
 
     }
 
+    /** Returns an array of SurfaceAttributes based on which surfaces are
+     * selected by the user in the surfaceList combo-box. Only surfaces are
+     * selected, VOI points are ignored.
+     * @param aiSelected, the list of selected indices in the surfaceList
+     * @return an array of SurfaceAttributes that contains the corresponding
+     * list of surfaces from the surfaceVector.
+     */
+    private SurfaceAttributes[] getSelectedSurfaces( int[] aiSelected )
+    {
+        int surfaceCount = 0;
+        for (int i = 0; i < aiSelected.length; i++) {
+            int iIndex = aiSelected[i];
+            if (!((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt())
+            {
+                surfaceCount++;
+            }
+        }
+        if ( surfaceCount == 0 )
+        {
+            return null;
+        }
+
+        SurfaceAttributes[] selectedSurfaces = new SurfaceAttributes[ surfaceCount ];
+        surfaceCount = 0;
+        for (int i = 0; i < aiSelected.length; i++) {
+            int iIndex = aiSelected[i];
+            if (!((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
+                selectedSurfaces[ surfaceCount++ ] = (SurfaceAttributes) surfaceVector.get(iIndex);
+            }
+        }
+        return selectedSurfaces;
+    }
+
     /**
-     * Add any attached surfaces the current image has in its file info (if the file info is in the xml format).
+     * Displays the selected surfaces with the ModelImage as a 3D texture map
+     * on the surface triangle mesh.
+     * @param surfaces, the list of selected surfaces (SurfaceAttributes)
+     * @param asImage, when true displays the ModelImage as a texture, when false, disables the 3D texture.
+     */
+    private void displayImageAsTexture(  SurfaceAttributes[] surfaces, boolean asImage )
+    {
+        if ( surfaces != null )
+        {
+            for ( int i = 0; i < surfaces.length; i++ )
+            {
+                Shape3D[] shapes = surfaces[i].getShape();
+                for ( int j = 0; j < shapes.length; j++ )
+                {
+                    TextureUnitState[] textureUnitState = shapes[j].getAppearance().getTextureUnitState();
+                    if ( (textureUnitState != null) && (textureUnitState.length > 0) )
+                    {
+                        textureUnitState[0].getTexture().setEnable( asImage );
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Turns picking on/off for the selected surfaces.
+     * @param surfaces, the list of selected surfaces (SurfaceAttributes)
+     */
+    private void setPickable( SurfaceAttributes[] surfaces )
+    {
+        if ( surfaces != null )
+        {
+            for ( int i = 0; i < surfaces.length; i++ )
+            {
+                BranchGroup root = surfaces[i].getBranch();
+                root.setPickable(surfacePickableCB.isSelected());
+            }
+        }
+    }
+
+    /**
+     * Turns BackFace Culling on/off for the selected surfaces.
+     * @param surfaces, the list of selected surfaces (SurfaceAttributes)
+     */
+    private void setBackface( SurfaceAttributes[] surfaces )
+    {
+        if ( surfaces != null )
+        {
+            for ( int i = 0; i < surfaces.length; i++ )
+            {
+                Shape3D[] shapes = surfaces[i].getShape();
+                for ( int j = 0; j < shapes.length; j++ )
+                {
+                    if (surfaceBackFaceCB.isSelected()) {
+                        shapes[j].getAppearance().getPolygonAttributes().setCullFace(PolygonAttributes.CULL_BACK);
+                    } else {
+                        shapes[j].getAppearance().getPolygonAttributes().setCullFace(PolygonAttributes.CULL_NONE);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Turns Clipping on/off for the selected surfaces.
+     * @param surfaces, the list of selected surfaces (SurfaceAttributes)
+     */
+    private void setClipping( SurfaceAttributes[] surfaces )
+    {
+        if ( surfaces != null )
+        {
+            for ( int i = 0; i < surfaces.length; i++ )
+            {
+                BranchGroup root = surfaces[i].getBranch();
+                
+                if (root != null) {
+                    root.setAlternateCollisionTarget(surfaceClipCB.isSelected());
+                    if (surfaceClipCB.isSelected()) {
+                        parentScene.getClipDialog().addToModelClip(root);
+                    } else {
+                        parentScene.getClipDialog().removeFromModelClip(root);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * For each file in the selected list, launch the stereo viewer: 
+     * @param surfaces, the list of selected surfaces (SurfaceAttributes)
+     */
+    private void displayStereo( SurfaceAttributes[] surfaces )
+    {
+        if ( surfaces != null )
+        {
+            for (int i = 0; i < surfaces.length; i++) {
+                /* Use the current view transform: */
+                Transform3D kTransform = new Transform3D();
+                parentScene.getSceneRootTG().getTransform(kTransform);
+                
+                /* Pass in a new copy of the triangle mesh: */
+                ModelTriangleMesh[] kMesh = surfaces[i].getMesh();
+                for ( int j = 0; j < kMesh.length; j++ )
+                {
+                    new JStereoWindow( surfaces[i], kTransform );
+                }
+            }
+        }
+    }
+
+    /**
+     * For each file in the selected list, launch the AdvancedMaterialOptions dialog: 
+     * @param surfaces, the list of selected surfaces (SurfaceAttributes)
+     */
+    private void displayAdvancedMaterialOptions( SurfaceAttributes[] surfaces )
+    {
+        if ( surfaces != null )
+        {
+            for (int i = 0; i < surfaces.length; i++) {
+                Material material = surfaces[i].getMaterial();
+                float fOpacity = surfaces[i].getOpacity();
+                
+                /* Launch the material editor: */
+                new JFrameSurfaceMaterialProperties(this, i, m_akLights, fOpacity, material);
+            }
+        }
+    }
+
+    /**
+     * Smoothes the selected surfaces. One dialog per group of selected
+     * surfaces is displayed (not a different dialog per-serface).
+     *
+     * @param surfaces, the list of selected surfaces (SurfaceAttributes)
+     * @param smoothType, the level of smoothing JDialogSmoothMesh.SMOOTH1,
+     * JDialogSmoothMesh.SMOOTH2, or JDialogSmoothMesh.SMOOTH3
+     */
+    private void smoothSurface( SurfaceAttributes[] surfaces, int smoothType )
+    {
+        if ( surfaces == null )
+        {
+            MipavUtil.displayError("Select a surface to smooth.");
+            return;
+        }
+
+        JDialogSmoothMesh dialog = new JDialogSmoothMesh(((SurfaceRender) renderBase).getParentFrame(), true, smoothType);
+        if (dialog.isCancelled()) {
+            return;
+        }
+        for ( int i = 0; i < surfaces.length; i++ )
+        {
+            ModelTriangleMesh[] meshes = surfaces[i].getMesh();
+            BranchGroup root = surfaces[i].getBranch();
+            root.detach();
+
+            ModelClodMesh clod = null;
+            int numTriangles = 0;
+            float volume = 0;
+            float area = 0;
+            
+            for (int j = 0; j < meshes.length; j++) {
+                if ( surfaces[i].getIsClodMesh() == true )
+                {
+                    clod = (ModelClodMesh) meshes[j].getGenerator();
+                    clod.setLOD(clod.getMaximumLOD());
+                    meshes[j] = clod.getMesh();
+                }
+            
+                if ( smoothType == JDialogSmoothMesh.SMOOTH1 )
+                {
+                    meshes[j].smoothMesh( dialog.getIterations(), dialog.getAlpha(), dialog.getVolumeLimit(), dialog.getVolumePercent(), true);
+                }
+                else if ( smoothType == JDialogSmoothMesh.SMOOTH2 )
+                {
+                    meshes[j].smoothTwo(dialog.getIterations(), dialog.getStiffness(),
+                                        dialog.getVolumeLimit(), dialog.getVolumePercent(), true);
+                }
+                else
+                {
+                    meshes[j].smoothThree(dialog.getIterations(), dialog.getLambda(), dialog.getMu(), true);
+                }
+                
+                meshes[j].computeNormals();
+            
+                if ( surfaces[i].getIsClodMesh() == true )
+                {
+                    clod.setVerticies(meshes[j].getVertexCopy());
+                }
+            
+                numTriangles += meshes[j].getIndexCount();
+                volume += meshes[j].volume();
+                area += meshes[j].area();
+            }
+        
+            surfaces[i].setMesh( meshes );
+            surfaces[i].setVolume( volume );
+            surfaces[i].setArea( area );
+            surfaces[i].setNumberTriangles( numTriangles / 3 );
+            createSurface( surfaces[i], false );
+            if (((SurfaceRender) parentScene).getDisplayMode3D()) {
+                surfaceClipCB.setSelected(false);
+            }
+            if ( surfaces[i].getIsClodMesh() == true )
+            {
+                detailSlider.setValue( surfaces[i].getLevelDetail() );
+                stateChanged(new ChangeEvent(detailSlider));
+            }
+        
+            triangleText.setText(String.valueOf(numTriangles / 3));
+            
+            // One length across the extracted surface changes from -1 to 1
+            // while one length across the actual volume changes by ((dim-1)*res)max
+            volumeText.setText(String.valueOf(volume * maxBox * maxBox * maxBox / 8.0f));
+            areaText.setText(String.valueOf(area * maxBox * maxBox));
+        }
+    }
+
+
+    /**
+     * Adding the surface with specific directory and file name.
+     *
+     * @param   dir   directory name
+     * @param   file  file name
+     */
+    public void addSurfaces(String dir, File surfaceFile)
+    {
+        addSurfaces( dir, surfaceFile, 0.5f );
+    }
+
+    /**
+     * Adding the surface with specific directory, file name, and surfaceOpacity.
+     *
+     * @param   dir   directory name
+     * @param   file  file name
+     * @param   surfaceOpacity opacity
+     */
+    public void addSurfaces(String dir, File surfaceFile, float surfaceOpacity ) {
+
+        ViewUserInterface.getReference().setDefaultDirectory(dir);
+        surfaceDirectoryName = dir;
+
+        String surfaceName = surfaceFile.getName();
+        int index = surfaceVector.size();
+        Color4f surfaceColor = getNewSurfaceColor( index );
+                    
+        FileSurface fileSurface = new FileSurface();
+        SurfaceAttributes[] surfaces = new SurfaceAttributes[1];
+        surfaces[0] = fileSurface.addSurface( parentScene.getImageA(), surfaceFile, surfaceColor, surfaceName, surfaceOpacity, -1, true);
+        addSurfaces( surfaces, false );
+    }
+
+    /**
+     * Add any attached surfaces the current image has in its file info (if
+     * the file info is in the xml format).
      */
     public void addAttachedSurfaces() {
 
@@ -1301,43 +911,43 @@ public class JPanelSurface extends JPanelRendererBase
                 }
 
                 if (!addedNames.contains(surfaceFile.getName())) {
-                    String surfaceName = surfaceFile.getName();
-                    float surfaceOpacity = fileInfo.getSurface(surfaceFileName).getOpacity();
-
-                    int index = surfaceVector.size();
-
-                    Color4f surfaceColor = new Color4f();
-
-                    surfaceColor.w = 1.0f;
-
-                    if (index < fixedColor.length) {
-
-                        // Use the fixed colors for the first six surfaces.
-                        surfaceColor.x = fixedColor[index].x;
-                        surfaceColor.y = fixedColor[index].y;
-                        surfaceColor.z = fixedColor[index].z;
-                    } else {
-
-                        // Use randomly generated colors for the seventh and
-                        // later surfaces.
-                        surfaceColor.x = 0.5f * (1.0f + randomGen.nextFloat());
-                        surfaceColor.y = 0.5f * (1.0f + randomGen.nextFloat());
-                        surfaceColor.z = 0.5f * (1.0f + randomGen.nextFloat());
-                    }
-
-                    addSurface(surfaceFile, surfaceColor, surfaceName, surfaceOpacity, -1, true);
-                    addedNames.add(surfaceName);
-
-                    /* Tell the surfaceRenderer to add the triangle mesh surface: */
-                    ((SurfaceRender) renderBase).updateData();
+                    addedNames.add( surfaceFile.getName() );
+                    addSurfaces( surfaceFile.getParent(), surfaceFile, fileInfo.getSurface(surfaceFileName).getOpacity() );
                 } else {
                     MipavUtil.displayError("Cannot add two surfaces with the same name.");
                 }
             }
-
-            surfaceList.setListData(addedNames);
         }
     }
+
+    /**
+     * static function returns the next default surface color, based on the
+     * current number of surfaces displayed. If the number of surfaces is less
+     * than the fixedColor.length then fixedColor is the source of the surface
+     * color, otherwise a random color is generated.
+     * @param index, the number of the new surface
+     * @return Color4f, the default surface color for the new surface.
+     */
+    public static Color4f getNewSurfaceColor( int index )
+    {
+        Color4f surfaceColor = new Color4f();
+        surfaceColor.w = 1.0f;
+        if (index < fixedColor.length) {
+            // Use the fixed colors for the first six surfaces.
+            surfaceColor.x = fixedColor[index].x;
+            surfaceColor.y = fixedColor[index].y;
+            surfaceColor.z = fixedColor[index].z;
+        } else {
+            Random randomGen = new Random();
+            // Use randomly generated colors for the seventh and
+            // later surfaces.
+            surfaceColor.x = 0.5f * (1.0f + randomGen.nextFloat());
+            surfaceColor.y = 0.5f * (1.0f + randomGen.nextFloat());
+            surfaceColor.z = 0.5f * (1.0f + randomGen.nextFloat());
+        }
+        return surfaceColor;
+    }
+
 
     /**
      * Adds a BranchGroup to the display.
@@ -1352,12 +962,10 @@ public class JPanelSurface extends JPanelRendererBase
         /* If a new mesh is added to the surRenderer, then pass the mesh
          * information to the PlaneRender objects: */
         if (kMesh != null) {
-            m_kSurface = new ModelTriangleMesh[1];
-            m_kSurface[0] = kMesh;
+            ModelTriangleMesh[] kSurface = new ModelTriangleMesh[1];
+            kSurface[0] = kMesh;
             surColor = Color.RED;
 
-            /** mask the surface added. */
-            maskInsideVoxels( surfaceVector.size(), getSurface(), true, 1.0f );
 
             /* Tell the surfaceRenderer to add the triangle mesh surface: */
             ((SurfaceRender) renderBase).updateData();
@@ -1365,9 +973,13 @@ public class JPanelSurface extends JPanelRendererBase
             int numTriangles = kMesh.getIndexCount();
             float volume = kMesh.volume();
             float area = kMesh.area();
-            SurfaceAttributes surface = new SurfaceAttributes( kBranch, "", "branch", new Color4f( 1, 0, 0, 1), 64, 100,
-                                                               PolygonAttributes.POLYGON_FILL, numTriangles, volume, area,
-                                                               true, 1, kMesh.center(), getSurfaceMask());
+            SurfaceAttributes surface = new SurfaceAttributes( kSurface, "", "branch", numTriangles, volume, area, kMesh.center());
+            surface.setBranch( kBranch );
+
+            /** mask the surface added. */
+            mSurfaceMask.maskInsideVoxels( surfaceVector.size(), parentScene.getImageA(),
+                                           surface.getMesh(), true, 1.0f, surface.getColor(), xBox, yBox, zBox );
+            surface.setMask( mSurfaceMask.getVolumeMask() );
 
             surfaceVector.add(surface);
             triangleText.setText(String.valueOf(numTriangles));
@@ -1380,7 +992,7 @@ public class JPanelSurface extends JPanelRendererBase
             Vector surfaceNames = new Vector();
 
             for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
-                String kElementName = ((SurfaceAttributes) en.nextElement()).name;
+                String kElementName = ((SurfaceAttributes) en.nextElement()).getName();
 
                 surfaceNames.addElement(kElementName);
 
@@ -1443,13 +1055,39 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public void addMesh(ModelTriangleMesh kOld, ModelTriangleMesh kNew, String kName) {
 
-        /* Find the original mesh, kOld, and remove it from the surfaceVector
-         * and surfaceList, adding the new mesh kNew in it's place: */
-        boolean bMeshFound = false;
-        BranchGroup kSurfaceBG;
+        SurfaceAttributes[] surface = containsMesh( kOld );
+        if (surface == null)
+        {
+            return;
+        }
 
+        /* Determine the surface color: */
+        Color4f surfaceColor = getNewSurfaceColor( surfaceVector.size() );
+        /* setup the mesh array: */
+        ModelTriangleMesh[] akComponent = new ModelTriangleMesh[1];
+        akComponent[0] = kNew;
+        /* Create a new SurfaceAttributes: */
+        int iNumTriangles = kNew.getIndexCount() / 3;
+        SurfaceAttributes[] surfaces = new SurfaceAttributes[1];
+        surfaces[0] = new SurfaceAttributes( akComponent, "", kName, iNumTriangles, kNew.volume(), kNew.area(), kNew.center() );
+        surfaces[0].setColor( surfaceColor );
+        /* Add the new surface: */
+        addSurfaces( surfaces, true );
+    }
+
+    /**
+     * containsMesh returns the SurfaceAttributes[] containing the input
+     * ModelTriangleMesh paramter, where the SurfaceAttributes[] array is of
+     * length 1. If the input mesh is not in the scene graph, then null is returned.
+     * @param kOld, the ModelTriangleMesh that is being searched for in the scene graph
+     * @return SurfaceAttributes[1], an array of 1 containing the
+     * SurfaceAttributes describing the input mesh, null if the mesh is not
+     * found.
+     */
+    private SurfaceAttributes[] containsMesh( ModelTriangleMesh kOld )
+    {
         for (int i = 0; i < surfaceList.getModel().getSize(); i++) {
-            kSurfaceBG = ((SurfaceAttributes) surfaceVector.get(i)).surface;
+            BranchGroup kSurfaceBG = ((SurfaceAttributes) surfaceVector.get(i)).getBranch();
 
             for (Enumeration e = kSurfaceBG.getAllChildren(); e.hasMoreElements();) {
                 Object kObj = e.nextElement();
@@ -1461,227 +1099,83 @@ public class JPanelSurface extends JPanelRendererBase
                         ModelTriangleMesh kChildMesh = (ModelTriangleMesh) (kShape.getGeometry());
 
                         if (kChildMesh == kOld) {
-                            bMeshFound = true;
-
-                            break;
+                            SurfaceAttributes[] surfaces = new SurfaceAttributes[1];
+                            surfaces[0] = ((SurfaceAttributes) surfaceVector.get(i));
+                            return surfaces;
                         }
                     }
                 }
             }
         }
-
-        if (!bMeshFound) {
-            return;
-        }
-
-        int index = surfaceVector.size();
-
-        /* Determine the surface color: */
-        Color4f surfaceColor = new Color4f();
-
-        surfaceColor.w = 1.0f;
-
-        if (index < fixedColor.length) {
-
-            /* Use the fixed colors for the first six surfaces. */
-            surfaceColor.x = fixedColor[index].x;
-            surfaceColor.y = fixedColor[index].y;
-            surfaceColor.z = fixedColor[index].z;
-        } else {
-
-            /* Use randomly generated colors for the seventh and later
-             * surfaces. */
-            surfaceColor.x = 0.5f * (1.0f + randomGen.nextFloat());
-            surfaceColor.y = 0.5f * (1.0f + randomGen.nextFloat());
-            surfaceColor.z = 0.5f * (1.0f + randomGen.nextFloat());
-        }
-
-        ModelTriangleMesh[] akComponent = new ModelTriangleMesh[1];
-
-        akComponent[0] = kNew;
-
-        /* Create a new surface mesh, and add it to the BranchGroup: */
-        BranchGroup root = createSurface(akComponent, surfaceColor, PolygonAttributes.POLYGON_FILL);
-
-        root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        root.setCapability(Group.ALLOW_CHILDREN_READ);
-        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        root.setCapability(BranchGroup.ALLOW_DETACH);
-        root.setCapability(Node.ALLOW_PICKABLE_READ);
-        root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-        root.setPickable(true);
-        root.compile();
-
-        /* Add the new BranchGroup and mesh to the scene: */
-        surfaceRootBG.addChild(root);
-
-        /* Set the m_kSurface data member: */
-        m_kSurface = new ModelTriangleMesh[1];
-        m_kSurface[0] = kNew;
-
-        /* Add the mesh information to the surfaceVector: */
-        int iNumTriangles = kNew.getIndexCount() / 3;
-        SurfaceAttributes kSurfaceAttributes = new SurfaceAttributes(root, "", kName, surfaceColor, 64, 100,
-                                                                     PolygonAttributes.POLYGON_FILL, iNumTriangles,
-                                                                     1.0f, 1.0f, false, 1.0f, new Point3f(), null);
-
-        surfaceVector.add(kSurfaceAttributes);
-
-        /* Add to the surfaceList: */
-        int iNameIndex = 0;
-        int iIndex = 0;
-        Vector surfaceNames = new Vector();
-
-        for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
-            String kElementName = ((SurfaceAttributes) en.nextElement()).name;
-
-            surfaceNames.addElement(kElementName);
-
-            if (kElementName.equals(kName)) {
-                iNameIndex = iIndex;
-            }
-
-            iIndex++;
-        }
-
-        surfaceList.setListData(surfaceNames);
-        surfaceList.setSelectedIndex(iNameIndex);
-
-        /* Update the other renderers: */
-        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-            ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
-        }
-
-        /* Tell the surfaceRenderer to add the triangle mesh surface: */
-        ((SurfaceRender) renderBase).updateData();
+        return null;
     }
 
+
     /**
-     * Add surface to the volume image.
+     * Add surface to the volume image. Calls the FileSurface.openSurfaces
+     * function to open a file dialog so the user can choose the surfaces to
+     * add.
      */
     public void addSurface() {
 
-        try {
-            addSurfaces();
-
-            if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-                ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
-            }
-
-            if (surfaceVector.size() > 0) {
-                ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(true);
-            }
-            /* Tell the surfaceRenderer to add the triangle mesh surface: */
-            ((SurfaceRender) renderBase).updateData();
-        } catch (IOException e) { }
-
+        FileSurface fileSurface = new FileSurface();
+        SurfaceAttributes[] surface = fileSurface.openSurfaces( parentScene.getImageA(), surfaceVector.size() );
+        addSurfaces( surface, false );
     }
 
     /**
-     * Adding the surface with specific directory and file name.
-     *
-     * @param   dir   directory name
-     * @param   file  file name
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * Adds an array of surfaces described by their SurfaceAttributes to the scene graph. 
+     * @param surfaces, the new surfaces (SurfaceAttributes[]) to add to the scene graph.
+     * @param pickable, when true turn picking on for the new surfaces, when
+     * false disable picking.
      */
-    public void addSurfaces(String dir, File file) throws IOException {
-
-        ViewUserInterface.getReference().setDefaultDirectory(dir);
-        surfaceDirectoryName = dir;
-
-        // only add surfaces that are not already in the list
-        boolean bNameAdded = false;
-
-        // for ( int i = 0; i < files.length; i++ ) {
-        String kName = file.getName();
-
-        bNameAdded = true;
-
-        int index = surfaceVector.size();
-
-        Color4f color = new Color4f();
-
-        color.w = 1.0f;
-
-        if (index < fixedColor.length) {
-
-            // Use the fixed colors for the first six surfaces.
-            color.x = fixedColor[index].x;
-            color.y = fixedColor[index].y;
-            color.z = fixedColor[index].z;
-        } else {
-
-            // Use randomly generated colors for the seventh and ater surfaces.
-            color.x = 0.5f * (1.0f + randomGen.nextFloat());
-            color.y = 0.5f * (1.0f + randomGen.nextFloat());
-            color.z = 0.5f * (1.0f + randomGen.nextFloat());
-        }
-
-        // add the surface to the scene graph
-        addSurface(file, color, kName, 0.5f, -1, false);
-
-        // add the surface to the image's file info if it is XML (so it can be saved)
-        if (parentScene.getParentFrame().getImageOriginal().getFileInfo()[0] instanceof FileInfoImageXML) {
-
-            for (int s = 0; s < parentScene.getParentFrame().getImageOriginal().getExtents()[2]; s++) {
-                ((FileInfoImageXML) parentScene.getParentFrame().getImageOriginal().getFileInfo()[s]).addSurface(surfaceDirectoryName +
-                                                                                                                 kName);
-            }
-        }
-
-        if (surfaceList.getSelectedIndices().length == 1) {
-            setElementsEnabled(true);
-        }
-
-        /* Tell the surfaceRenderer to add the triangle mesh surface: */
-        ((SurfaceRender) renderBase).updateData();
-
-        // if new surfaces were loaded, update the list data
-        if (bNameAdded) {
-            Vector surfaceNames = new Vector();
-
-            for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
-                surfaceNames.addElement(((SurfaceAttributes) en.nextElement()).name);
-            }
-
-            surfaceList.setListData(surfaceNames);
-
-            int[] aiSelected = surfaceList.getSelectedIndices();
-
-            if (aiSelected.length == 0) {
-                iSelect = 0;
-                surfaceList.setSelectedIndex(0);
-            }
-        }
-
-        if (surfaceVector.size() > 0) {
-            ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(true);
-        }
-    }
-
-    /**
-     * Disable back face culling.
-     */
-    public void disableBackFaceCulling() {
-        int selected = surfaceList.getSelectedIndex();
-
-        if (selected == -1) {
+    public void addSurfaces( SurfaceAttributes[] surfaces, boolean pickable )
+    {
+        if ( surfaces == null )
+        {
             return;
         }
+        int[] selected = new int[ surfaces.length ];
+        for ( int i = 0; i < surfaces.length; i++ )
+        {
+            if (  surfaces[i] != null )
+            {
+                createSurface( surfaces[i], pickable );
+                mSurfaceMask.maskInsideVoxels( surfaceVector.size(),
+                                               parentScene.getImageA(),
+                                               surfaces[i].getMesh(), false, surfaces[i].getOpacity(), surfaces[i].getColor(),
+                                               xBox, yBox, zBox);
+                surfaces[i].setMask( mSurfaceMask.getVolumeMask() );
+                
+                surfaceVector.add( surfaces[i] );
+                if (surfaceVector.size() == 1 )
+                {
+                    setElementsEnabled(true);
+                }
+                selected[i] = surfaceVector.indexOf( surfaces[i] );
 
-        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
+                // add the surface to the image's file info if it is XML (so it can be saved)
+                if (parentScene.getParentFrame().getImageOriginal().getFileInfo()[0] instanceof FileInfoImageXML) {
+                    for (int s = 0; s < parentScene.getParentFrame().getImageOriginal().getExtents()[2]; s++) {
+                        ((FileInfoImageXML) parentScene.getParentFrame().getImageOriginal().getFileInfo()[s]).addSurface(surfaceDirectoryName +
+                                                                                                                         surfaces[i].getName());
+                    }
+                }
+            }
+        }
+        /* Update the surfaceList combo box list of names: */
+        updateSurfaceNameList( selected );
 
-        if (root != null) {
-            root.setCollidable(surfaceBackFaceCB.isSelected());
-
-            Shape3D shape = (Shape3D) root.getChild(0);
-
-            shape.getAppearance().getPolygonAttributes().setCullFace(PolygonAttributes.CULL_NONE);
+        /* Tell the surfaceRenderer to add the triangle mesh
+         * surface: */
+        ((SurfaceRender) renderBase).updateData();
+        ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(true);
+        
+        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
+            ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
         }
     }
+
 
     /**
      * Dispose memory.
@@ -1689,7 +1183,6 @@ public class JPanelSurface extends JPanelRendererBase
     public void dispose() {
         parentScene = null;
         surfaceVector = null;
-        loadASCButton = null;
         levelSButton = null;
         levelVButton = null;
         levelWButton = null;
@@ -1698,6 +1191,7 @@ public class JPanelSurface extends JPanelRendererBase
         surfaceList = null;
         colorButton = null;
         colorLabel = null;
+        mImageAsTextureCheck = null;
         m_kAdvancedMaterialOptionsButton = null;
         m_kStereoButton = null;
         opacityLabel = null;
@@ -1714,7 +1208,6 @@ public class JPanelSurface extends JPanelRendererBase
         opacitySlider = null;
         colorChooser = null;
         m_kLightsControl = null;
-        randomGen = null;
         surfacePickableCB = null;
         surfaceClipCB = null;
         surfaceBackFaceCB = null;
@@ -1735,12 +1228,6 @@ public class JPanelSurface extends JPanelRendererBase
         staticLightZoom = null;
         surfaceOpacityEvents = null;
         surfaceDirectoryName = null;
-
-        m_aiMask = null;
-        m_akMaskColor = null;
-        m_akVertex = null;
-        m_aiConnect = null;
-
     }
 
     /**
@@ -1848,7 +1335,7 @@ public class JPanelSurface extends JPanelRendererBase
 
         // Find picked surface
         for (iIndex = 0; iIndex < surfaceVector.size(); iIndex++) {
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
+            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
             boolean bRootFound = false;
 
             for (int i = 0; i < root.numChildren(); i++) {
@@ -2048,24 +1535,6 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * Get the current added surface bit mask.
-     *
-     * @return  BitSet surface bit set mask
-     */
-    public BitSet getMask() {
-        return m_aiMask;
-    }
-
-    /**
-     * Get the current added surface mask color.
-     *
-     * @return  Color4f[]
-     */
-    public Color4f[] getMaskColor() {
-        return m_akMaskColor;
-    }
-
-    /**
      * Get the surface material reference.
      *
      * @param   iIndex  material index.
@@ -2074,8 +1543,8 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public Material getMaterial(int iIndex) {
 
-        if (!((SurfaceAttributes) surfaceVector.get(iIndex)).isVOIPt) {
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
+        if (!((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
+            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
             Shape3D shape = (Shape3D) root.getChild(0);
 
             /* Set the new surface material values: */
@@ -2151,45 +1620,12 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * Get the current added surface bit mask.
-     *
-     * @return  BitSet surface volume bit set mask.
-     */
-    public BitSet getSurfaceMask() {
-        return (BitSet) (surfaceMask.clone());
-    }
-
-    /**
      * Get the current surface opacity value.
      *
      * @return  surfaceOpaictySlice Surface opacity slider value
      */
     public int getSurfaceOpacity() {
         return surfaceOpacitySlice;
-    }
-
-    /**
-     * Get the current XML saved surface opacity attribute.
-     * @return surface opacity attribute
-     */
-    public float getSurfaceAttributeOpacity() {
-      int index = surfaceList.getSelectedIndex();
-      SurfaceAttributes attributes;
-      attributes = (SurfaceAttributes) surfaceVector.get(index);
-      if ( index < 0 ) return 0;
-      return attributes.opacity;
-    }
-
-    /**
-     * Get the current XML saved surface level of detail attribute.
-     * @return int  surface level of detail
-     */
-    public int getSurfaceLevelDetail() {
-      int index = surfaceList.getSelectedIndex();
-      SurfaceAttributes attributes;
-      attributes = (SurfaceAttributes) surfaceVector.get(index);
-      if ( index < 0 ) return 0;
-      return attributes.detailLevel;
     }
 
 
@@ -2388,7 +1824,7 @@ public class JPanelSurface extends JPanelRendererBase
 
         for ( int i = 0; i < surfaceVector.size();  i++ )
         {
-            String kElementName = ((SurfaceAttributes) surfaceVector.get(i)).name;
+            String kElementName = ((SurfaceAttributes) surfaceVector.get(i)).getName();
             if ( kElementName.equals( "branch" ) )
             {
                 surfaceVector.removeElementAt(i);
@@ -2400,39 +1836,6 @@ public class JPanelSurface extends JPanelRendererBase
         ((SurfaceRender) renderBase).updateData();
     }
 
-    /**
-     * Remove the surface from the volume render.
-     */
-    public void removeSurface() {
-        removeSurfaces();
-
-        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-            ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
-        }
-
-        if (surfaceVector.size() <= 0) {
-            ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(false);
-        }
-        ((SurfaceRender) renderBase).updateData();
-    }
-
-    /**
-     * Remove the specified surface subtree from the scene graph.
-     *
-     * @param  root  The root of the subtree to remove.
-     */
-    public void removeSurface(BranchGroup root) {
-
-        // remove the surface from the scene (if it exists)
-        for (int i = 0; i < surfaceRootBG.numChildren(); i++) {
-
-            if (surfaceRootBG.getChild(i) == root) {
-                surfaceRootBG.removeChild(i);
-            }
-        }
-
-        System.gc();
-    }
 
     /**
      * ReplaceMesh is used by the Geodesic when a mesh is cut along either an open or closed geodesic curve, the
@@ -2444,50 +1847,57 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public void replaceMesh(ModelTriangleMesh kOld, ModelTriangleMesh kNew) {
 
-        /* Find the original mesh, kOld, and remove it from the surfaceVector
-         * and surfaceList, adding the new mesh kNew in it's place: */
-        BranchGroup kSurfaceBG;
+        SurfaceAttributes[] surfaces = containsMesh( kOld );
+        if ( surfaces == null )
+        {
+            return;
+        }
 
-        for (int i = 0; i < surfaceList.getModel().getSize(); i++) {
-            kSurfaceBG = ((SurfaceAttributes) surfaceVector.get(i)).surface;
+//         /* Determine the surface color: */
+//         Color4f surfaceColor = surfaces[0].getColor();
+//         /* setup the mesh array: */
+//         ModelTriangleMesh[] akComponent = new ModelTriangleMesh[1];
+//         akComponent[0] = kNew;
+//         /* Create a new SurfaceAttributes: */
+//         int iNumTriangles = kNew.getIndexCount() / 3;
+//         SurfaceAttributes[] newSurfaces = new SurfaceAttributes[1];
+//         newSurfaces[0] = new SurfaceAttributes( akComponent, "", surfaces[0].getName(), iNumTriangles, kNew.volume(), kNew.area(), kNew.center() );
+//         newSurfaces[0].setColor( surfaceColor );
+//         newSurfaces[0].setOpacity( surfaces[0].getOpacity() );
+//         /* Add the new surface: */
+//         addSurfaces( newSurfaces, true );
+//         removeSurfaces( surfaces );
 
-            for (Enumeration e = kSurfaceBG.getAllChildren(); e.hasMoreElements();) {
-                Object kObj = e.nextElement();
 
-                if (kObj instanceof Shape3D) {
-                    Shape3D kShape = (Shape3D) kObj;
 
-                    if (kShape.getGeometry() instanceof ModelTriangleMesh) {
-                        ModelTriangleMesh kChildMesh = (ModelTriangleMesh) (kShape.getGeometry());
-
-                        if (kChildMesh == kOld) {
-                            kShape.removeGeometry(kOld);
-                            kShape.addGeometry(kNew);
-
-                            break;
-                        }
-                    }
+        boolean found = false;
+        for ( int i = 0; i < surfaceVector.size() && !found; i++ )
+        {
+            ModelTriangleMesh[] meshes = ((SurfaceAttributes)surfaceVector.get( i )).getMesh();
+            for ( int j = 0; j < meshes.length && !found; j++ )
+            {
+                if ( meshes[j] == kOld )
+                {
+                    Shape3D[] shapes = ((SurfaceAttributes)surfaceVector.get( i )).getShape();
+                    shapes[j].removeGeometry( kOld );
+                    shapes[j].addGeometry( kNew );
+                    found = true;
                 }
             }
         }
-
+        
         /* Remove from the scene graph, adding the new mesh, kNew, in it's
          * place: */
         for (int iChild = 0; iChild < surfaceRootBG.numChildren(); iChild++) {
-
             if (surfaceRootBG.getChild(iChild) instanceof BranchGroup) {
                 BranchGroup kBG = (BranchGroup) (surfaceRootBG.getChild(iChild));
-
                 if (kBG.getChild(0) instanceof Shape3D) {
                     Shape3D kShapeMesh = (Shape3D) (kBG.getChild(0));
-
                     if (kShapeMesh.getGeometry() instanceof ModelTriangleMesh) {
                         ModelTriangleMesh kChildMesh = (ModelTriangleMesh) (kShapeMesh.getGeometry());
-
                         if (kChildMesh == kOld) {
                             kShapeMesh.removeGeometry(kOld);
                             kShapeMesh.addGeometry(kNew);
-
                             break;
                         }
                     }
@@ -2585,7 +1995,7 @@ public class JPanelSurface extends JPanelRendererBase
      * @param iIndex  surface index
      */
     public void setOpacity(float opacity, int iIndex) {
-     ((SurfaceAttributes) surfaceVector.get(iIndex)).opacity = opacity;
+     ((SurfaceAttributes) surfaceVector.get(iIndex)).setOpacity( opacity );
     }
 
 
@@ -2595,7 +2005,7 @@ public class JPanelSurface extends JPanelRendererBase
      * @param iIndex int surface index
      */
     public void setLevelDetail(int levelDetail, int iIndex) {
-      ( (SurfaceAttributes) surfaceVector.get(iIndex)).detailLevel = levelDetail;
+      ( (SurfaceAttributes) surfaceVector.get(iIndex)).setLevelDetail( levelDetail );
     }
 
 
@@ -2609,8 +2019,8 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public void setMaterial(Material kMaterial, int iIndex) {
 
-        if (!((SurfaceAttributes) surfaceVector.get(iIndex)).isVOIPt) {
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
+        if (!((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
+            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
             Shape3D shape = (Shape3D) root.getChild(0);
 
             /* Set the new surface material values: */
@@ -2636,7 +2046,7 @@ public class JPanelSurface extends JPanelRendererBase
 
             Color4f kColor = new Color4f(kDiffuse.get());
             colorButton.setBackground(kDiffuse.get());
-            ((SurfaceAttributes) surfaceVector.get(iIndex)).color = kColor;
+            ((SurfaceAttributes) surfaceVector.get(iIndex)).setColor( kColor );
 
             kAmbient = null;
             kEmissive = null;
@@ -2697,13 +2107,13 @@ public class JPanelSurface extends JPanelRendererBase
 
             for (int i = 0; i < aiSelected.length; i++) {
 
-                if (((SurfaceAttributes) surfaceVector.get(aiSelected[i])).isVOIPt == false) {
+                if (((SurfaceAttributes) surfaceVector.get(aiSelected[i])).getIsVOIPt() == false) {
                     int numTriangles = 0;
                     float volume = 0;
                     float area = 0;
-                    BranchGroup root = ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).surface;
+                    BranchGroup root = ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).getBranch();
 
-                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).detailLevel = iValue;
+                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setLevelDetail( iValue );
 
                     for (int j = 0; j < root.numChildren(); j++) {
                         Shape3D shape = (Shape3D) root.getChild(j);
@@ -2737,9 +2147,9 @@ public class JPanelSurface extends JPanelRendererBase
                     // while one length across the actual volume changes by ((dim-1)*res)max
                     volumeText.setText("" + (volume * maxBox * maxBox * maxBox / 8.0f));
                     areaText.setText(String.valueOf(area * maxBox * maxBox));
-                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).triangles = numTriangles;
-                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).volume = volume;
-                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).area = area;
+                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setNumberTriangles( numTriangles );
+                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setVolume( volume );
+                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setArea( area );
                 }
             }
         } else if (event.getSource() == opacitySlider) {
@@ -2764,20 +2174,20 @@ public class JPanelSurface extends JPanelRendererBase
                 int iIndex = aiSelected[i];
                 int iValue = opacitySlider.getValue();
 
-                ((SurfaceAttributes) surfaceVector.get(iIndex)).opacity = iValue / 100.0f;
+                ((SurfaceAttributes) surfaceVector.get(iIndex)).setOpacity( iValue / 100.0f );
 
-                Color4f newColor = new Color4f( ((SurfaceAttributes) surfaceVector.get(iIndex)).color.x,
-                                                ((SurfaceAttributes) surfaceVector.get(iIndex)).color.y,
-                                                ((SurfaceAttributes) surfaceVector.get(iIndex)).color.z,
-                                                ((SurfaceAttributes) surfaceVector.get(iIndex)).opacity );
+                Color4f newColor = new Color4f( ((SurfaceAttributes) surfaceVector.get(iIndex)).getColor().x,
+                                                ((SurfaceAttributes) surfaceVector.get(iIndex)).getColor().y,
+                                                ((SurfaceAttributes) surfaceVector.get(iIndex)).getColor().z,
+                                                ((SurfaceAttributes) surfaceVector.get(iIndex)).getOpacity() );
                 /* Change the mask color: */
                 parentScene.getImageA().addSurfaceMask( iIndex, null, null, newColor );
                 /* update the surface renderer: */
                 ((SurfaceRender) renderBase).updateData();
 
                 // change the object opacity
-                if (((SurfaceAttributes) surfaceVector.get(iIndex)).isVOIPt) {
-                    BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
+                if (((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
+                    BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
 
                     for (int k = 0; k < root.numChildren(); k++) {
                         Shape3D shape = (Shape3D)
@@ -2800,7 +2210,7 @@ public class JPanelSurface extends JPanelRendererBase
                         appearance.setTransparencyAttributes(tap);
                     }
                 } else {
-                    BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
+                    BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
                     Shape3D shape = (Shape3D) root.getChild(0);
                     Appearance appearance = shape.getAppearance();
                     TransparencyAttributes tap = new TransparencyAttributes();
@@ -2828,7 +2238,7 @@ public class JPanelSurface extends JPanelRendererBase
      * Toggle between wireframe and filled polygon mode.
      */
     public void toggleWireframe() {
-        int iMode = polygonModeCB.getSelectedIndex();
+        int iMode = polygonIndexToMode( polygonModeCB.getSelectedIndex() );
 
         if (iMode == PolygonAttributes.POLYGON_LINE) {
             iMode = PolygonAttributes.POLYGON_FILL;
@@ -2867,7 +2277,7 @@ public class JPanelSurface extends JPanelRendererBase
             SurfaceAttributes attributes;
 
             if (index != -1) {
-                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(index)).surface;
+                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(index)).getBranch();
 
                 surfacePickableCB.setSelected(root.getPickable());
                 surfaceBackFaceCB.setSelected(root.getCollidable());
@@ -2884,7 +2294,7 @@ public class JPanelSurface extends JPanelRendererBase
                     iSelect = kList.getMinSelectionIndex();
 
                     // a single surface was selected, set edit text to its color
-                    Color4f color = attributes.color;
+                    Color4f color = attributes.getColor();
 
                     colorButton.setBackground(color.get());
                     setElementsEnabled(true);
@@ -2897,35 +2307,40 @@ public class JPanelSurface extends JPanelRendererBase
 
                 }
 
-                int mode = 0;
-
-                switch (((SurfaceAttributes) surfaceVector.get(index)).polygonMode) {
-
+                if ( polygonIndexToMode( polygonModeCB.getSelectedIndex() ) !=
+                     ((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode())
+                {
+                    int mode = 0;
+                    
+                    switch (((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode()) {
+                        
                     case PolygonAttributes.POLYGON_FILL:
                         mode = 0;
                         break;
-
+                        
                     case PolygonAttributes.POLYGON_LINE:
                         mode = 1;
                         break;
-
+                        
                     case PolygonAttributes.POLYGON_POINT:
                         mode = 2;
                         break;
+                    }
+                    
+                    polygonModeCB.setSelectedIndex(mode);
                 }
 
-                polygonModeCB.setSelectedIndex(mode);
-                triangleText.setText("" + attributes.triangles);
-                volumeText.setText("" + attributes.volume);
-                areaText.setText("" + attributes.area);
-                detailSlider.setValue(attributes.detailLevel);
-                opacitySlider.setValue((int) (attributes.opacity * 100));
+                triangleText.setText("" + attributes.getNumberTriangles());
+                volumeText.setText("" + attributes.getVolume());
+                areaText.setText("" + attributes.getArea());
+                detailSlider.setValue(attributes.getLevelDetail());
+                opacitySlider.setValue((int) (attributes.getOpacity() * 100));
 
                 boolean enable = true;
 
                 for (int i = 0; i < indices.length; i++) {
 
-                    if (!((SurfaceAttributes) surfaceVector.get(indices[i])).isClodMesh) {
+                    if (!((SurfaceAttributes) surfaceVector.get(indices[i])).getIsClodMesh()) {
                         enable = false;
                     }
                 }
@@ -2952,1510 +2367,6 @@ public class JPanelSurface extends JPanelRendererBase
     public void windowClosing(WindowEvent event) { }
 
     /**
-     * Identify voxels enclosed by the brain surface by using a flood fill. The flood fill is nonrecursive to avoid
-     * overflowing the program stack.
-     *
-     * @param  iX  the x-value of the seed point for the fill
-     * @param  iY  the y-value of the seed point for the fill
-     * @param  iZ  the z-value of the seed point for the fill
-     */
-    protected void floodFill(int iX, int iY, int iZ) {
-
-        // Allocate the maximum amount of space needed.   An empty stack has
-        // iTop == -1.
-        int[] aiXStack = new int[m_iQuantity];
-        int[] aiYStack = new int[m_iQuantity];
-        int[] aiZStack = new int[m_iQuantity];
-
-        // An empty stack has iTop = -1.  Push seed point onto stack.  All
-        // points pushed onto stack have background color zero.
-        int iTop = 0;
-
-        aiXStack[iTop] = iX;
-        aiYStack[iTop] = iY;
-        aiZStack[iTop] = iZ;
-
-        while (iTop >= 0) { // stack is not empty
-
-            // Read top of stack.  Do not pop since we need to return to this
-            // top value later to restart the fill in a different direction.
-            iX = aiXStack[iTop];
-            iY = aiYStack[iTop];
-            iZ = aiZStack[iTop];
-
-            // fill the pixel
-            surfaceMask.set(getIndex(iX, iY, iZ));
-
-            int iXp1 = iX + 1;
-
-            if ((iXp1 < m_iXBound) && !surfaceMask.get(getIndex(iXp1, iY, iZ))) {
-
-                // push pixel with background color
-                iTop++;
-                aiXStack[iTop] = iXp1;
-                aiYStack[iTop] = iY;
-                aiZStack[iTop] = iZ;
-
-                continue;
-            }
-
-            int iXm1 = iX - 1;
-
-            if ((0 <= iXm1) && !surfaceMask.get(getIndex(iXm1, iY, iZ))) {
-
-                // push pixel with background color
-                iTop++;
-                aiXStack[iTop] = iXm1;
-                aiYStack[iTop] = iY;
-                aiZStack[iTop] = iZ;
-
-                continue;
-            }
-
-            int iYp1 = iY + 1;
-
-            if ((iYp1 < m_iYBound) && !surfaceMask.get(getIndex(iX, iYp1, iZ))) {
-
-                // push pixel with background color
-                iTop++;
-                aiXStack[iTop] = iX;
-                aiYStack[iTop] = iYp1;
-                aiZStack[iTop] = iZ;
-
-                continue;
-            }
-
-            int iYm1 = iY - 1;
-
-            if ((0 <= iYm1) && !surfaceMask.get(getIndex(iX, iYm1, iZ))) {
-
-                // push pixel with background color
-                iTop++;
-                aiXStack[iTop] = iX;
-                aiYStack[iTop] = iYm1;
-                aiZStack[iTop] = iZ;
-
-                continue;
-            }
-
-            int iZp1 = iZ + 1;
-
-            if ((iZp1 < m_iZBound) && !surfaceMask.get(getIndex(iX, iY, iZp1))) {
-
-                // push pixel with background color
-                iTop++;
-                aiXStack[iTop] = iX;
-                aiYStack[iTop] = iY;
-                aiZStack[iTop] = iZp1;
-
-                continue;
-            }
-
-            int iZm1 = iZ - 1;
-
-            if ((0 <= iZm1) && !surfaceMask.get(getIndex(iX, iY, iZm1))) {
-
-                // push pixel with background color
-                iTop++;
-                aiXStack[iTop] = iX;
-                aiYStack[iTop] = iY;
-                aiZStack[iTop] = iZm1;
-
-                continue;
-            }
-
-            // Done in all directions, pop and return to search other
-            // directions.
-            iTop--;
-
-        }
-
-        aiXStack = null;
-        aiYStack = null;
-        aiZStack = null;
-    }
-
-    /**
-     * A convenience function for mapping the 3D voxel position (iX,iY,iZ) to a 1D array index. The images are stored as
-     * 1D arrays, so this function is used frequently.
-     *
-     * @param   iX  the x-value of the voxel position
-     * @param   iY  the y-value of the voxel position
-     * @param   iZ  the z-value of the voxel position
-     *
-     * @return  the 1D array index corresponding to (iX,iY,iZ)
-     */
-    protected final int getIndex(int iX, int iY, int iZ) {
-        return iX + (m_iXBound * (iY + (m_iYBound * iZ)));
-
-    }
-
-    /**
-     * Compute the point of intersection between a line (0,iY,iZ)+t(1,0,0) and the triangle defined by the three input
-     * points. All calculations are in voxel coordinates and the x-value of the intersection point is truncated to an
-     * integer.
-     *
-     * @param   kV0  a 3D vertex of the triangle
-     * @param   kV1  a 3D vertex of the triangle
-     * @param   kV2  a 3D vertex of the triangle
-     * @param   iY   the y-value of the origin of the line
-     * @param   iZ   the z-value of the origin of the line
-     *
-     * @return  the x-value of the intersection
-     */
-    protected float getIntersectX(Point3f kV0, Point3f kV1, Point3f kV2, float iY, float iZ) {
-
-        // Compute the intersection, if any, by calculating barycentric
-        // coordinates of the intersection of the line with the plane of
-        // the triangle.  The barycentric coordinates are K0 = fC0/fDet,
-        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
-        // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
-        // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
-        float fPu = iY - kV0.y, fPv = iZ - kV0.z;
-        float fE1u = kV1.y - kV0.y, fE1v = kV1.z - kV0.z;
-        float fE2u = kV2.y - kV0.y, fE2v = kV2.z - kV0.z;
-        float fE1dP = (fE1u * fPu) + (fE1v * fPv);
-        float fE2dP = (fE2u * fPu) + (fE2v * fPv);
-        float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
-        float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
-        float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
-        float fDet = (float) Math.abs((fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
-
-        float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
-
-        if ((fC1 < 0.0f) || (fC1 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
-
-        if ((fC2 < 0.0f) || (fC2 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        float fC0 = fDet - fC1 - fC2;
-
-        if ((fC0 < 0.0f) || (fC0 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        if (fDet == 0) {
-            return -1;
-        }
-
-        return ((fC0 * kV0.x) + (fC1 * kV1.x) + (fC2 * kV2.x)) / fDet;
-    }
-
-    /**
-     * Compute the point of intersection between a line (iX,0,iZ)+t(0,1,0) and the triangle defined by the three input
-     * points. All calculations are in voxel coordinates and the y-value of the intersection point is truncated to an
-     * integer.
-     *
-     * @param   kV0  a 3D vertex of the triangle
-     * @param   kV1  a 3D vertex of the triangle
-     * @param   kV2  a 3D vertex of the triangle
-     * @param   iX   the x-value of the origin of the line
-     * @param   iZ   the z-value of the origin of the line
-     *
-     * @return  the y-value of the intersection
-     */
-    protected float getIntersectY(Point3f kV0, Point3f kV1, Point3f kV2, float iX, float iZ) {
-
-        // Compute the intersection, if any, by calculating barycentric
-        // coordinates of the intersection of the line with the plane of
-        // the triangle.  The barycentric coordinates are K0 = fC0/fDet,
-        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
-        // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
-        // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
-        float fPu = iX - kV0.x, fPv = iZ - kV0.z;
-        float fE1u = kV1.x - kV0.x, fE1v = kV1.z - kV0.z;
-        float fE2u = kV2.x - kV0.x, fE2v = kV2.z - kV0.z;
-        float fE1dP = (fE1u * fPu) + (fE1v * fPv);
-        float fE2dP = (fE2u * fPu) + (fE2v * fPv);
-        float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
-        float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
-        float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
-        float fDet = (float) Math.abs((fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
-
-        float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
-
-        if ((fC1 < 0.0f) || (fC1 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
-
-        if ((fC2 < 0.0f) || (fC2 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        float fC0 = fDet - fC1 - fC2;
-
-        if ((fC0 < 0.0f) || (fC0 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        if (fDet == 0) {
-            return -1;
-        }
-
-        return ((fC0 * kV0.y) + (fC1 * kV1.y) + (fC2 * kV2.y)) / fDet;
-    }
-
-    /**
-     * Compute the point of intersection between a line (iX,iY,0)+t(0,0,1) and the triangle defined by the three input
-     * points. All calculations are in voxel coordinates and the z-value of the intersection point is truncated to an
-     * integer.
-     *
-     * @param   kV0  a 3D vertex of the triangle
-     * @param   kV1  a 3D vertex of the triangle
-     * @param   kV2  a 3D vertex of the triangle
-     * @param   iX   the x-value of the origin of the line
-     * @param   iY   the y-value of the origin of the line
-     *
-     * @return  the z-value of the intersection
-     */
-    protected float getIntersectZ(Point3f kV0, Point3f kV1, Point3f kV2, float iX, float iY) {
-
-        // Compute the intersection, if any, by calculating barycentric
-        // coordinates of the intersection of the line with the plane of
-        // the triangle.  The barycentric coordinates are K0 = fC0/fDet,
-        // K1 = fC1/fDet, and K2 = fC2/fDet with K0+K1+K2=1.  The intersection
-        // point with the plane is K0*V0+K1*V1+K2*V2.  The point is inside
-        // the triangle whenever K0, K1, and K2 are all in the interval [0,1].
-        float fPu = iX - kV0.x, fPv = iY - kV0.y;
-        float fE1u = kV1.x - kV0.x, fE1v = kV1.y - kV0.y;
-        float fE2u = kV2.x - kV0.x, fE2v = kV2.y - kV0.y;
-        float fE1dP = (fE1u * fPu) + (fE1v * fPv);
-        float fE2dP = (fE2u * fPu) + (fE2v * fPv);
-        float fE1dE1 = (fE1u * fE1u) + (fE1v * fE1v);
-        float fE1dE2 = (fE1u * fE2u) + (fE1v * fE2v);
-        float fE2dE2 = (fE2u * fE2u) + (fE2v * fE2v);
-        float fDet = (float) Math.abs((fE1dE1 * fE2dE2) - (fE1dE2 * fE1dE2));
-
-        float fC1 = (fE2dE2 * fE1dP) - (fE1dE2 * fE2dP);
-
-        if ((fC1 < 0.0f) || (fC1 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        float fC2 = (fE1dE1 * fE2dP) - (fE1dE2 * fE1dP);
-
-        if ((fC2 < 0.0f) || (fC2 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        float fC0 = fDet - fC1 - fC2;
-
-        if ((fC0 < 0.0f) || (fC0 > fDet)) {
-
-            // ray does not intersect triangle
-            return -1;
-        }
-
-        if (fDet == 0) {
-            return -1;
-        }
-
-        return ((fC0 * kV0.z) + (fC1 * kV1.z) + (fC2 * kV2.z)) / fDet;
-    }
-
-    /**
-     * Mask the tumor surface volume in voxels.
-     *
-     * @param  kMesh            ModelTriangleMesh Tumor surface
-     * @param  bHasVertexColor  boolean
-     */
-    protected void maskInsideVoxels(int index, ModelTriangleMesh[] kMesh, boolean bHasVertexColor, float fOpacity)
-    {
-
-        float iX, iY, iZ;
-
-        /* The plane coordinate x,y dimensions: */
-        float m_fX0;
-        float m_fY0;
-        float m_fZ0;
-        float m_fX1;
-        float m_fY1;
-        float m_fZ1;
-
-        int[] extents = parentScene.getImageA().getExtents();
-        int xDim = extents[0];
-        int yDim = extents[1];
-        int zDim = extents[2];
-
-        m_iQuantity = xDim * yDim * zDim;
-
-        m_aiMask = new BitSet(m_iQuantity);
-        m_akMaskColor = new Color4f[m_iQuantity];
-
-        // initialize the surface mask
-        surfaceMask = new BitSet(m_iQuantity);
-
-        m_iXBound = xDim;
-        m_iYBound = yDim;
-        m_iZBound = zDim;
-
-        float[] resols = parentScene.getImageA().getFileInfo()[0].getResolutions();
-
-        // local x, y, z box viarables.  Those local viarables make sure that xBox, yBox
-        // and zBox not changed in local method.
-        float xB, yB, zB, maxB;
-
-        xB = xBox;
-        yB = yBox;
-        zB = zBox;
-        maxB = xBox;
-
-        if (yB > maxB) {
-            maxB = yB;
-        }
-
-        if (zB > maxB) {
-            maxB = zB;
-        }
-
-        // Normalize the size
-        // xBox range between 0 - 1.
-        xB = xB / maxB;
-        yB = yBox / maxB;
-        zB = zBox / maxB;
-
-        m_fX0 = -xB;
-        m_fY0 = -yB;
-        m_fX1 = xB;
-        m_fY1 = yB;
-        m_fZ0 = -zB;
-        m_fZ1 = zB;
-
-        maxB = xB;
-
-        if (yB > maxB) {
-            maxB = yB;
-        }
-
-        if (zB > maxB) {
-            maxB = zB;
-        }
-
-        if (zB > maxB) {
-            m_fZ0 = -1f;
-            m_fZ1 = 1f;
-        }
-
-        if (kMesh == null) {
-            return;
-        }
-
-        for ( int mIndex = 0; mIndex < kMesh.length; mIndex++ ) {
-          // Get the non-resampled surface volume voxels.
-          m_akVertex = kMesh[mIndex].getVertexCopy();
-          m_aiConnect = kMesh[mIndex].getIndexCopy();
-          m_iTQuantity = (int) (m_aiConnect.length / 3);
-
-          int iVQuantity = kMesh[mIndex].getVertexCount();
-          Color3f[] kTriColors = new Color3f[iVQuantity];
-
-          if (bHasVertexColor && kMesh[mIndex].getCapability(GeometryArray.ALLOW_COLOR_READ)) {
-
-            for (int iC = 0; iC < iVQuantity; iC++) {
-              kTriColors[iC] = new Color3f();
-            }
-
-            kMesh[mIndex].getColors(0, kTriColors);
-          }
-
-          Point3f tV0 = new Point3f();
-          Point3f tV1 = new Point3f();
-          Point3f tV2 = new Point3f();
-
-          Point3f kV0 = new Point3f();
-          Point3f kV1 = new Point3f();
-          Point3f kV2 = new Point3f();
-
-          Color3f kC0, kC1, kC2;
-
-          for (int iT = 0; iT < m_iTQuantity; iT++) {
-
-            // get the vertices of the triangle
-            tV0 = m_akVertex[m_aiConnect[3 * iT]];
-            tV1 = m_akVertex[m_aiConnect[ (3 * iT) + 1]];
-            tV2 = m_akVertex[m_aiConnect[ (3 * iT) + 2]];
-
-            kV0.x = tV0.x;
-            kV0.y = tV0.y;
-            kV0.z = tV0.z;
-            kV1.x = tV1.x;
-            kV1.y = tV1.y;
-            kV1.z = tV1.z;
-            kV2.x = tV2.x;
-            kV2.y = tV2.y;
-            kV2.z = tV2.z;
-
-            Color4f kTriColor = null;
-
-            kC0 = kTriColors[m_aiConnect[3 * iT]];
-            kC1 = kTriColors[m_aiConnect[ (3 * iT) + 1]];
-            kC2 = kTriColors[m_aiConnect[ (3 * iT) + 2]];
-
-            if ( (kC0 != null) && (kC1 != null) && (kC2 != null)) {
-                kTriColor = new Color4f( (kC0.x + kC1.x + kC2.x) / 3.0f,
-                                         (kC0.y + kC1.y + kC2.y) / 3.0f,
-                                         (kC0.z + kC1.z + kC2.z) / 3.0f,
-                                         fOpacity );
-            }
-
-            kV0.x = ( (kV0.x - m_fX0) / (m_fX1 - m_fX0)) * (xDim - 1);
-            kV0.y = ( (kV0.y - m_fY0) / (m_fY1 - m_fY0)) * (yDim - 1);
-            kV0.z = ( (kV0.z - m_fZ0) / (m_fZ1 - m_fZ0)) * (zDim - 1);
-
-            kV1.x = ( (kV1.x - m_fX0) / (m_fX1 - m_fX0)) * (xDim - 1);
-            kV1.y = ( (kV1.y - m_fY0) / (m_fY1 - m_fY0)) * (yDim - 1);
-            kV1.z = ( (kV1.z - m_fZ0) / (m_fZ1 - m_fZ0)) * (zDim - 1);
-
-            kV2.x = ( (kV2.x - m_fX0) / (m_fX1 - m_fX0)) * (xDim - 1);
-            kV2.y = ( (kV2.y - m_fY0) / (m_fY1 - m_fY0)) * (yDim - 1);
-            kV2.z = ( (kV2.z - m_fZ0) / (m_fZ1 - m_fZ0)) * (zDim - 1);
-
-            kV0.z = zDim - 1 - kV0.z;
-            kV1.z = zDim - 1 - kV1.z;
-            kV2.z = zDim - 1 - kV2.z;
-
-            kV0.y = yDim - 1 - kV0.y;
-            kV1.y = yDim - 1 - kV1.y;
-            kV2.y = yDim - 1 - kV2.y;
-
-            // compute the axis-aligned bounding box of the triangle
-            float fXMin = kV0.x, fXMax = fXMin;
-            float fYMin = kV0.y, fYMax = fYMin;
-            float fZMin = kV0.z, fZMax = fZMin;
-
-            if (kV1.x < fXMin) {
-              fXMin = kV1.x;
-            }
-            else if (kV1.x > fXMax) {
-              fXMax = kV1.x;
-            }
-
-            if (kV1.y < fYMin) {
-              fYMin = kV1.y;
-            }
-            else if (kV1.y > fYMax) {
-              fYMax = kV1.y;
-            }
-
-            if (kV1.z < fZMin) {
-              fZMin = kV1.z;
-            }
-            else if (kV1.z > fZMax) {
-              fZMax = kV1.z;
-            }
-
-            if (kV2.x < fXMin) {
-              fXMin = kV2.x;
-            }
-            else if (kV2.x > fXMax) {
-              fXMax = kV2.x;
-            }
-
-            if (kV2.y < fYMin) {
-              fYMin = kV2.y;
-            }
-            else if (kV2.y > fYMax) {
-              fYMax = kV2.y;
-            }
-
-            if (kV2.z < fZMin) {
-              fZMin = kV2.z;
-            }
-            else if (kV2.z > fZMax) {
-              fZMax = kV2.z;
-            }
-
-            // Rasterize the triangle.  The rasterization is repeated in all
-            // three coordinate directions to make sure that floating point
-            // round-off errors do not cause any holes in the rasterized
-            // surface.
-            float iXMin = fXMin, iXMax = fXMax;
-            float iYMin = fYMin, iYMax = fYMax;
-            float iZMin = fZMin, iZMax = fZMax;
-            int ptr;
-            int end = m_aiMask.size();
-
-            for (iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
-
-              for (iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
-                iX = getIntersectX(kV0, kV1, kV2, iY, iZ);
-
-                if (iX != -1) {
-                  ptr = getIndex( (int) Math.round(iX), (int) Math.round(iY),
-                                 (int) Math.round(iZ));
-
-                  if ( (ptr >= 0) && (ptr < end)) {
-                    m_aiMask.set(ptr);
-                    m_akMaskColor[ptr] = kTriColor;
-                    surfaceMask.set(ptr);
-                  }
-
-                }
-              }
-            }
-
-            for (iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
-
-              for (iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
-                iY = getIntersectY(kV0, kV1, kV2, iX, iZ);
-
-                if (iY != -1) {
-                  ptr = getIndex( (int) Math.round(iX), (int) Math.round(iY),
-                                 (int) Math.round(iZ));
-
-                  if ( (ptr >= 0) && (ptr < end)) {
-                    m_aiMask.set(ptr);
-                    m_akMaskColor[ptr] = kTriColor;
-                    surfaceMask.set(ptr);
-                  }
-                }
-              }
-            }
-
-            for (iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
-
-              for (iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
-                iZ = getIntersectZ(kV0, kV1, kV2, iX, iY);
-
-                if (iZ != -1) {
-                  ptr = getIndex( (int) Math.round(iX), (int) Math.round(iY),
-                                 (int) Math.round(iZ));
-
-                  if ( (ptr >= 0) && (ptr < end)) {
-                    m_aiMask.set(ptr);
-                    m_akMaskColor[ptr] = kTriColor;
-                    surfaceMask.set(ptr);
-                  }
-                }
-              }
-            }
-          }
-
-          // compute centroid of the surface voxels to act as flood fill seed
-          float fXC = 0.0f, fYC = 0.0f, fZC = 0.0f;
-          int iCount = 0;
-
-          for (iZ = 1; iZ < (m_iZBound - 1); iZ++) {
-
-            for (iY = 1; iY < (m_iYBound - 1); iY++) {
-
-              for (iX = 1; iX < (m_iXBound - 1); iX++) {
-
-                if (m_aiMask.get(getIndex( (int) iX, (int) iY, (int) iZ))) {
-                  fXC += (float) iX;
-                  fYC += (float) iY;
-                  fZC += (float) iZ;
-                  iCount++;
-                }
-              }
-            }
-          }
-
-          float fInvCount = 1.0f / iCount;
-
-          fXC *= fInvCount;
-          fYC *= fInvCount;
-          fZC *= fInvCount;
-
-          floodFill( (int) fXC, (int) fYC, (int) fZC);
-        }
-        int v = 0;
-
-        for (int i = 0; i < surfaceMask.size(); i++) {
-
-            if (surfaceMask.get(i)) {
-                v++;
-            }
-        }
-
-        System.err.println("voxels = " + v);
-        System.err.println("volume = " + (v * resols[0] * resols[1] * resols[2]));
-
-        ModelImage imageA = parentScene.getImageA();
-        Color4f surColor4f = new Color4f( surColor );
-        surColor4f.w = fOpacity;
-        imageA.addSurfaceMask( index, m_aiMask, m_akMaskColor, surColor4f );
-    }
-
-    /**
-     * Reads lines of the file until a nonnull String results or the end of the file is reached.
-     *
-     * @param      file  the file to read from
-     *
-     * @return     the line read in
-     *
-     * @exception  IOException  if there is an error reading the file
-     */
-    private static String readLine(RandomAccessFile file) throws IOException {
-        String tempString = null;
-        boolean foundEOF = false;
-
-        while ((tempString == null) && (file.getFilePointer() < (file.length() - 1)) && (!foundEOF)) {
-
-            try {
-                tempString = file.readLine();
-            } catch (EOFException error) {
-                tempString = null;
-                foundEOF = true;
-            } catch (IOException error) {
-                throw (error);
-            }
-
-            if (tempString != null) {
-
-                if (tempString.length() == 0) {
-                    tempString = null;
-                }
-            }
-        } // while
-
-        return tempString;
-    }
-
-    /**
-     * Adds a new triangle mesh and material to the scene graph.
-     *
-     * @param   kMesh      ModelTriangleMesh old surface mesh
-     * @param   kMaterial  Material reference
-     * @param   file       File file reference.
-     * @param   name       String file name
-     * @param   opacity    float opacity value
-     *
-     * @return  int surface index
-     */
-    private int addModelTriangleMesh(ModelTriangleMesh[] kMesh, Material kMaterial, File file, String name,
-                                     float opacity) {
-        Color3f kDiffuse = new Color3f();
-        kMaterial.getDiffuseColor(kDiffuse);
-
-        Color4f kDiffuse4 = new Color4f(kDiffuse.x, kDiffuse.y, kDiffuse.z, 1.0f);
-
-
-        ModelTriangleMesh[] akMeshes = new ModelTriangleMesh[1];
-        akMeshes[0] = kMesh[0];
-
-        // return addSurfaceXML(kMesh, file, kDiffuse4, name, opacity);
-
-
-        BranchGroup root = createSurface(kMesh, kDiffuse4, PolygonAttributes.POLYGON_FILL);
-
-        root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        root.setCapability(Group.ALLOW_BOUNDS_READ);
-        root.setCapability(Group.ALLOW_CHILDREN_READ);
-        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        root.setCapability(BranchGroup.ALLOW_DETACH);
-        root.setCapability(Node.ALLOW_PICKABLE_READ);
-        root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-        root.setCapability(BranchGroup.ALLOW_LOCAL_TO_VWORLD_READ);
-        root.setPickable(false);
-
-        // Allow Java to optimize subtree.  Attach to the scene graph.
-        root.compile();
-        surfaceRootBG.addChild(root);
-
-
-        surColor = kDiffuse.get();
-        // m_kSurface = new ModelTriangleMesh[kMesh.length];
-
-        m_kSurface = new ModelTriangleMesh[1];
-        m_kSurface[0] = kMesh[0];
-        maskInsideVoxels( surfaceVector.size(), getSurface(), false, opacity);
-
-        int numTriangles = kMesh[0].getIndexCount();
-        float volume = kMesh[0].volume();
-        float area = kMesh[0].area();
-        SurfaceAttributes surface = new SurfaceAttributes(root, file.getPath(), name, kDiffuse4, 64, 100,
-                                                          PolygonAttributes.POLYGON_FILL, numTriangles, volume, area,
-                                                          true, opacity, kMesh[0].center(), getSurfaceMask());
-
-        surfaceVector.add(surface);
-        triangleText.setText(String.valueOf(numTriangles));
-        volumeText.setText(String.valueOf(volume));
-        areaText.setText(String.valueOf(area));
-        return surfaceVector.indexOf(surface);
-    }
-
-    /**
-     * Load a triangle mesh from the specified file and assign to it the specified color. A Shape3D object is created
-     * whose geometry is the triangle mesh and whose appearance contains a material. The material's diffuse and specular
-     * colors are set to the specified color. A BranchGroup node is created as the parent of the Shape3D object. The
-     * parent node is necessary to allow dynamic modification of a compiled scene graph.
-     *
-     * <p>Create outVoxels and outerVoxels byte arrays with sizes equal to the size of the volume and all the values
-     * initialized to zero. The surface is designed to go thru the voxel center so that the target points will be
-     * enclosed. Calculate the surface point in standard voxel space that goes from 0 to xDim - 1, 0 to yDim - 1, and 0
-     * to zDim - 1. Find the floor and ceilings for these x,y, and z values - this gives a total of 8 voxels. Set these
-     * 8 voxels to 1 in the outVoxels array. The verticies for a triangle in this standard voxel space may be too far
-     * apart and crate gaps. To prevent gaps from occurring recursively divide a triangle into 4 subtriangles if any 2
-     * of the verticies are a distance >= 1 apart. In creating 4 subtriangles the midpoints of the original triangle
-     * segments are added to the outVoxels array. Set all edge voxels of outVoxels that do not equal 1 to 2. Recursively
-     * set all zero valued outVoxels voxels that have a 6-connected neighbor with a value of 2 to 2. Then, in outVoxels
-     * all voxels outside the surface will have a value of 2, all voxels serving as floors or ceilings to the surface
-     * points will have a value of 1, and all voxels inside the surface will have a value of 0. For all the 1 values in
-     * outVoxels that represent a rounding toward the inside of the surface, set the corresponding values in outerVoxels
-     * to 1.</p>
-     *
-     * @param  file       The triangle mesh file to load.
-     * @param  color      The diffuse and specular color for the surface material.
-     * @param  name       file name
-     * @param  opacity    opacity value
-     * @param  idx        surface voxel index
-     * @param  isVisible  The progress bar is visible or not.
-     */
-    private void addSurface(File file, Color4f color, String name, float opacity, int idx, boolean isVisible) {
-
-        // open the file containing one or more meshes
-        RandomAccessFile in;
-        int iType, iQuantity;
-        int numTriangles = 0;
-        float volume = 0;
-        float area = 0;
-        boolean isSur = true;
-        int[] direction;
-        float[] startLocation;
-        Point3f[] akVertex;
-        Point3f center = new Point3f();
-        int[] aiConnect;
-        Point3f[][] akTriangle;
-        ModelImage imageA = parentScene.getImageA();
-        int[] extents = imageA.getExtents();
-        int xDim = extents[0];
-        int yDim = extents[1];
-        int zDim = extents[2];
-
-        surColor = color.get();
-
-        Point3f s1 = new Point3f();
-        Point3f s2 = new Point3f();
-        Point3f s3 = new Point3f();
-        float sx1, sy1, sz1, sx2, sy2, sz2, sx3, sy3, sz3;
-
-        float[] resols = imageA.getFileInfo()[0].getResolutions();
-        float xBox = (xDim - 1) * resols[0];
-        float yBox = (yDim - 1) * resols[1];
-        float zBox = (zDim - 1) * resols[2];
-        float xBoxTrans, yBoxTrans, zBoxTrans, maxBoxTrans;
-        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-        int i, j, k;
-        int iV1, iV2, iV3;
-        float d1, d2, d3;
-
-        if (file.getName().endsWith("sur")) {
-
-            try {
-                in = new RandomAccessFile(file, "r");
-                iType = in.readInt();
-                iQuantity = in.readInt();
-
-                isSur = true;
-            } catch (IOException e) {
-                return;
-            }
-        } else if (file.getName().endsWith("xml")) {
-            System.out.println("ruida xml");
-            try {
-                String filePath = file.getPath();
-
-                String fileName = file.getName();
-                ModelImage image = parentScene.getImageA();
-                FileVOI fileVOI = new FileVOI(fileName, surfaceDirectoryName, image);
-
-                Sphere[] spheres;
-                TransformGroup[] transforms;
-                Color3f black = new Color3f(Color.black);
-
-                VOI[] voi = fileVOI.readVOI();
-
-                BranchGroup sphereRoot = new BranchGroup();
-                sphereRoot.setCapability(BranchGroup.ALLOW_DETACH);
-                sphereRoot.setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-                sphereRoot.setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
-                sphereRoot.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-                sphereRoot.setCapability(Group.ALLOW_CHILDREN_READ);
-                sphereRoot.setCapability(Group.ALLOW_CHILDREN_WRITE);
-                sphereRoot.setCapability(Node.ALLOW_PICKABLE_READ);
-                sphereRoot.setCapability(Node.ALLOW_PICKABLE_WRITE);
-                sphereRoot.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-                sphereRoot.setCapability(Node.ALLOW_COLLIDABLE_READ);
-
-                maxBoxTrans = xBox;
-
-                if (yBox > maxBoxTrans) {
-                    maxBoxTrans = yBox;
-                }
-
-                if (zBox > maxBoxTrans) {
-                    maxBoxTrans = zBox;
-                }
-
-                // Normalize the size
-                // xBox range between 0 - 1.
-                xBoxTrans = xBox / maxBoxTrans;
-                yBoxTrans = yBox / maxBoxTrans;
-                zBoxTrans = zBox / maxBoxTrans;
-
-                iType = 0;
-
-                for (i = 0; i < voi.length; i++) {
-                    Point3Df[] points;
-                    int numPoints = voi[i].getNumPoints();
-
-                    points = new Point3Df[numPoints];
-
-                    for (int h = 0; h < numPoints; h++) {
-                        points[h] = new Point3Df();
-                    }
-
-                    points = voi[i].exportAllPoints();
-                    spheres = new Sphere[numPoints];
-                    transforms = new TransformGroup[numPoints];
-
-                    for (int w = 0; w < points.length; w++) {
-                        Transform3D t = new Transform3D();
-                        float x1 = -xBoxTrans + (2 * ((float) points[w].x / (xDim - 1)) * xBoxTrans);
-                        float y1 = yBoxTrans - (2 * ((float) points[w].y / (yDim - 1)) * yBoxTrans);
-                        float z1 = zBoxTrans - (2 * ((float) (points[w].z + 0.5f) / (zDim - 1)) * zBoxTrans);
-
-                        t.set(0.02, new Vector3d(x1, y1, z1));
-                        transforms[i] = new TransformGroup(t);
-                        transforms[i].setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-                        transforms[i].setCapability(BranchGroup.ALLOW_CHILDREN_READ);
-                        transforms[i].setCapability(BranchGroup.ALLOW_CHILDREN_WRITE);
-
-                        Appearance app = new Appearance();
-                        Material mat = new Material(black, new Color3f(voi[i].getColor()), black, black, 80f);
-
-                        mat.setCapability(Material.ALLOW_COMPONENT_WRITE);
-                        app.setMaterial(mat);
-                        app.setCapability(Appearance.ALLOW_MATERIAL_READ);
-                        app.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
-                        app.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
-                        app.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
-
-                        TransparencyAttributes tap = new TransparencyAttributes();
-
-                        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
-                        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-                        app.setTransparencyAttributes(tap);
-
-                        spheres[i] = new Sphere(.5f, app);
-                        spheres[i].setCapability(Sphere.ENABLE_APPEARANCE_MODIFY);
-                        spheres[i].getShape().setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-                        spheres[i].getShape().setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-                        spheres[i].getShape().setAppearanceOverrideEnable(true);
-                        spheres[i].getShape().setCapability(Geometry.ALLOW_INTERSECT);
-
-                        try {
-                            PickCanvas.setCapabilities(spheres[i].getShape(), PickTool.INTERSECT_FULL);
-                        } catch (RestrictedAccessException error) { }
-
-                        transforms[i].addChild(spheres[i]);
-
-                        sphereRoot.addChild(transforms[i]);
-                    }
-
-                    surfaceRootBG.addChild(sphereRoot);
-
-                    SurfaceAttributes surface = new SurfaceAttributes(sphereRoot, filePath, fileName,
-                                                                      new Color4f(voi[i].getColor()), 64, 100,
-                                                                      PolygonAttributes.POLYGON_FILL, numTriangles,
-                                                                      volume, area, (iType != 0), opacity, true,
-                                                                      getSurfaceMask());
-
-                    if (idx == -1) {
-                        surfaceVector.add(surface);
-                    } else {
-                        surfaceVector.set(idx, surface);
-                    }
-
-                    image.registerVOI(voi[i]);
-                }
-
-                image.notifyImageDisplayListeners();
-                isSur = false;
-            } catch (IOException e) {
-                return;
-            }
-
-            return;
-        } else {
-
-            try {
-                in = new RandomAccessFile(file, "r");
-                iType = 0;
-                iQuantity = ModelTriangleMesh.parseVRMLMesh(in);
-                in.seek(0);
-                isSur = false;
-            } catch (NoSuchElementException e) {
-                MipavUtil.displayError("Only load VRML file specifically written by MIPAV!");
-
-                return;
-            } catch (IOException e) {
-                return;
-            }
-        }
-
-        ModelTriangleMesh[] akComponent = new ModelTriangleMesh[iQuantity];
-        ViewJProgressBar progress = new ViewJProgressBar("Loading surface", "Loading surface", 0, 100, false, null,
-                                                         null);
-        progress.setVisible(isVisible);
-
-        try {
-
-            if (iType == 0) {
-
-                // meshes are type TriangleMesh
-                for (i = 0; i < iQuantity; i++) {
-
-                    if (isSur == true) {
-                        akComponent[i] = ModelTriangleMesh.loadTMesh(in, progress, i * 100 / iQuantity, iQuantity,
-                                                                     true);
-                    } else {
-
-                        if (i == 0) {
-                            akComponent[i] = ModelTriangleMesh.loadVRMLMesh(in, progress, i * 100 / iQuantity,
-                                                                            iQuantity, true);
-                        } else if (i > 0) {
-                            akComponent[i] = ModelTriangleMesh.loadVRMLMesh(in, progress, i * 100 / iQuantity,
-                                                                            iQuantity, false);
-                        }
-                    }
-
-                    if (akComponent[i] == null) {
-                        MipavUtil.displayError("Error while reading in triangle mesh.");
-
-                        return;
-                    }
-
-                    direction = ModelTriangleMesh.getDirection();
-                    int[] imageDirection = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
-                    if ( (direction[0] != imageDirection[0]) ||
-                         (direction[1] != imageDirection[1]) ||
-                         (direction[2] != imageDirection[2])   )
-                    {
-                        MipavUtil.displayError( "ModelTriangleMesh surface orientation does not match ModelImage orientation" );
-                    }
-                    
-                    startLocation = ModelTriangleMesh.getStartLocation();
-                    akVertex = akComponent[i].getVertexCopy();
-                    aiConnect = akComponent[i].getIndexCopy();
-                    akTriangle = new Point3f[aiConnect.length / 3][3];
-                    for (j = 0; j < (aiConnect.length / 3); j++) {
-
-                        for (k = 0; k < 3; k++) {
-                            akTriangle[j][k] = new Point3f();
-                        }
-                    }
-
-                    for (j = 0; j < aiConnect.length;) {
-                        iV1 = aiConnect[j++];
-                        akComponent[i].getCoordinate(iV1, s1);
-                        sx1 = (s1.x - startLocation[0]) / (resols[0] * direction[0]);
-                        sy1 = (s1.y - startLocation[1]) / (resols[1] * direction[1]);
-                        sz1 = (s1.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                        iV2 = aiConnect[j++];
-                        akComponent[i].getCoordinate(iV2, s2);
-                        sx2 = (s2.x - startLocation[0]) / (resols[0] * direction[0]);
-                        sy2 = (s2.y - startLocation[1]) / (resols[1] * direction[1]);
-                        sz2 = (s2.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                        iV3 = aiConnect[j++];
-                        akComponent[i].getCoordinate(iV3, s3);
-                        sx3 = (s3.x - startLocation[0]) / (resols[0] * direction[0]);
-                        sy3 = (s3.y - startLocation[1]) / (resols[1] * direction[1]);
-                        sz3 = (s3.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                        d1 = (float) Math.sqrt(((sx1 - sx2) * (sx1 - sx2)) + ((sy1 - sy2) * (sy1 - sy2)) +
-                                               ((sz1 - sz2) * (sz1 - sz2)));
-                        d2 = (float) Math.sqrt(((sx1 - sx3) * (sx1 - sx3)) + ((sy1 - sy3) * (sy1 - sy3)) +
-                                               ((sz1 - sz3) * (sz1 - sz3)));
-                        d3 = (float) Math.sqrt(((sx2 - sx3) * (sx2 - sx3)) + ((sy2 - sy3) * (sy2 - sy3)) +
-                                               ((sz2 - sz3) * (sz2 - sz3)));
-
-                        if ((d1 >= 1.0f) || (d2 >= 1.0f) || (d3 >= 1.0f)) {
-                            subTriangles(sx1, sy1, sz1, sx2, sy2, sz2, sx3, sy3, sz3);
-                        }
-                    }
-
-                    for (j = 0; j < akVertex.length; j++) {
-
-                        // The mesh files save the verticies as
-                        // pt.x*resX*direction[0] + startLocation
-                        // The loaded vertices go from -1 to 1
-                        // The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
-                        akVertex[j].x = ((2.0f * (akVertex[j].x - startLocation[0]) / direction[0]) -
-                                         ((xDim - 1) * resols[0])) / maxBox;
-                        akVertex[j].y = ((2.0f * (akVertex[j].y - startLocation[1]) / direction[1]) -
-                                         ((yDim - 1) * resols[1])) / maxBox;
-                        akVertex[j].z = ((2.0f * (akVertex[j].z - startLocation[2]) / direction[2]) -
-                                         ((zDim - 1) * resols[2])) / maxBox;
-                    }
-
-                    float xSum = 0f, ySum = 0f, zSum = 0f;
-                    for (j = 0; j < akVertex.length; j++) {
-                        xSum += akVertex[j].x;
-                        ySum += akVertex[j].y;
-                        zSum += akVertex[j].z;
-                    }
-
-                    center = new Point3f(xSum / akVertex.length, ySum / akVertex.length, zSum / akVertex.length);
-
-                    // Make sure the volume is calculated when in the original file units.
-                    volume += akComponent[i].volume();
-                    area += akComponent[i].area();
-                    akComponent[i].setVerticies(akVertex);
-                    numTriangles += akComponent[i].getIndexCount();
-                }
-            } else {
-
-                // meshes are type ClodMesh
-                for (i = 0; i < iQuantity; i++) {
-                    ModelClodMesh kClod = ModelClodMesh.loadCMesh(in, progress, i * 100 / iQuantity, iQuantity);
-
-                    direction = ModelClodMesh.getDirection();
-                    startLocation = ModelClodMesh.getStartLocation();
-                    akVertex = kClod.getMesh().getVertexCopy();
-                    aiConnect = kClod.getMesh().getIndexCopy();
-                    akTriangle = new Point3f[aiConnect.length / 3][3];
-
-                    for (j = 0; j < (aiConnect.length / 3); j++) {
-
-                        for (k = 0; k < 3; k++) {
-                            akTriangle[j][k] = new Point3f();
-                        }
-                    }
-
-                    akComponent[i] = kClod.getMesh();
-                    kClod.setLOD(kClod.getLOD() + 1);
-
-                    for (j = 0; j < aiConnect.length;) {
-                        iV1 = aiConnect[j++];
-                        akComponent[i].getCoordinate(iV1, s1);
-                        sx1 = (s1.x - startLocation[0]) / (resols[0] * direction[0]);
-                        sy1 = (s1.y - startLocation[1]) / (resols[1] * direction[1]);
-                        sz1 = (s1.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                        iV2 = aiConnect[j++];
-                        akComponent[i].getCoordinate(iV2, s2);
-                        sx2 = (s2.x - startLocation[0]) / (resols[0] * direction[0]);
-                        sy2 = (s2.y - startLocation[1]) / (resols[1] * direction[1]);
-                        sz2 = (s2.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                        iV3 = aiConnect[j++];
-                        akComponent[i].getCoordinate(iV3, s3);
-                        sx3 = (s3.x - startLocation[0]) / (resols[0] * direction[0]);
-                        sy3 = (s3.y - startLocation[1]) / (resols[1] * direction[1]);
-                        sz3 = (s3.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                        d1 = (float) Math.sqrt(((sx1 - sx2) * (sx1 - sx2)) + ((sy1 - sy2) * (sy1 - sy2)) +
-                                               ((sz1 - sz2) * (sz1 - sz2)));
-                        d2 = (float) Math.sqrt(((sx1 - sx3) * (sx1 - sx3)) + ((sy1 - sy3) * (sy1 - sy3)) +
-                                               ((sz1 - sz3) * (sz1 - sz3)));
-                        d3 = (float) Math.sqrt(((sx2 - sx3) * (sx2 - sx3)) + ((sy2 - sy3) * (sy2 - sy3)) +
-                                               ((sz2 - sz3) * (sz2 - sz3)));
-
-                        if ((d1 >= 1.0f) || (d2 >= 1.0f) || (d3 >= 1.0f)) {
-                            subTriangles(sx1, sy1, sz1, sx2, sy2, sz2, sx3, sy3, sz3);
-                        }
-                    }
-
-                    for (j = 0; j < akVertex.length; j++) {
-
-                        // The mesh files save the verticies as
-                        // pt.x*resX*direction[0] + startLocation
-                        // The loaded vertices go from -1 to 1
-                        // The loaded vertex is at (2.0f*pt.x*resX - (xDim-1)*resX)/((dim-1)*res)max
-                        akVertex[j].x = ((2.0f * (akVertex[j].x - startLocation[0]) / direction[0]) -
-                                         ((xDim - 1) * resols[0])) / maxBox;
-                        akVertex[j].y = ((2.0f * (akVertex[j].y - startLocation[1]) / direction[1]) -
-                                         ((yDim - 1) * resols[1])) / maxBox;
-                        akVertex[j].z = ((2.0f * (akVertex[j].z - startLocation[2]) / direction[2]) -
-                                         ((zDim - 1) * resols[2])) / maxBox;
-                    }
-
-                    float xSum = 0f, ySum = 0f, zSum = 0f;
-
-                    for (j = 0; j < akVertex.length; j++) {
-                        xSum += akVertex[j].x;
-                        ySum += akVertex[j].y;
-                        zSum += akVertex[j].z;
-                    }
-
-                    center = new Point3f(xSum / akVertex.length, ySum / akVertex.length, zSum / akVertex.length);
-
-                    kClod.setLOD(kClod.getMaximumLOD());
-                    akComponent[i] = kClod.getMesh();
-
-                    // Make sure the volume is calculated when in the original file units.
-                    volume += akComponent[i].volume();
-                    area += akComponent[i].area();
-                    akComponent[i].setVerticies(akVertex);
-                    kClod.setVerticies(akVertex);
-                    numTriangles += akComponent[i].getIndexCount();
-                }
-            }
-        } catch (IOException e) {
-            return;
-        }
-
-        progress.dispose();
-
-        BranchGroup root = createSurface(akComponent, color, PolygonAttributes.POLYGON_FILL);
-
-        root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        root.setCapability(Group.ALLOW_CHILDREN_READ);
-        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        root.setCapability(BranchGroup.ALLOW_DETACH);
-        root.setCapability(Node.ALLOW_PICKABLE_READ);
-        root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-        root.setPickable(false);
-
-        // Allow Java to optimize subtree.  Attach to the scene graph.
-        root.compile();
-        surfaceRootBG.addChild(root);
-        numTriangles = numTriangles / 3;
-
-        maskInsideVoxels( surfaceVector.size(), getSurface(), false, opacity);
-
-        SurfaceAttributes surface = new SurfaceAttributes(root, file.getPath(), name, color, 64, 100,
-                                                          PolygonAttributes.POLYGON_FILL, numTriangles, volume, area,
-                                                          (iType != 0), opacity, center, getSurfaceMask());
-
-        if (idx == -1) {
-            surfaceVector.add(surface);
-        } else {
-            surfaceVector.set(idx, surface);
-        }
-
-        triangleText.setText(String.valueOf(numTriangles));
-        volumeText.setText(String.valueOf(volume));
-        areaText.setText(String.valueOf(area));
-    }
-
-
-    private int addSurfaceXML(ModelTriangleMesh[] kMesh, File file, Color4f color, String name, float opacity) {
-
-        // open the file containing one or more meshes
-        RandomAccessFile in;
-        int iType, iQuantity;
-        int numTriangles = 0;
-        float volume = 0;
-        float area = 0;
-        boolean isSur = true;
-        int[] direction;
-        float[] startLocation;
-        Point3f[] akVertex;
-        Point3f center = new Point3f();
-        int[] aiConnect;
-        Point3f[][] akTriangle;
-        ModelImage imageA = parentScene.getImageA();
-        int[] extents = imageA.getExtents();
-        int xDim = extents[0];
-        int yDim = extents[1];
-        int zDim = extents[2];
-
-        surColor = color.get();
-
-        Point3f s1 = new Point3f();
-        Point3f s2 = new Point3f();
-        Point3f s3 = new Point3f();
-        float sx1, sy1, sz1, sx2, sy2, sz2, sx3, sy3, sz3;
-
-        float[] resols = imageA.getFileInfo()[0].getResolutions();
-        float xBox = (xDim - 1) * resols[0];
-        float yBox = (yDim - 1) * resols[1];
-        float zBox = (zDim - 1) * resols[2];
-        float xBoxTrans, yBoxTrans, zBoxTrans, maxBoxTrans;
-        float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-        int i, j, k;
-        int iV1, iV2, iV3;
-        float d1, d2, d3;
-
-        ModelTriangleMesh[] akComponent = new ModelTriangleMesh[kMesh.length];
-
-
-                // meshes are type TriangleMesh
-                for (i = 0; i < kMesh.length; i++) {
-
-                    akComponent[i] = kMesh[i];
-
-                    if (akComponent[i] == null) {
-                        MipavUtil.displayError("Error while reading in triangle mesh.");
-
-                        return -1;
-                    }
-
-                    direction = ModelTriangleMesh.getDirection();
-                    startLocation = ModelTriangleMesh.getStartLocation();
-                    akVertex = akComponent[i].getVertexCopy();
-                    aiConnect = akComponent[i].getIndexCopy();
-
-                    for (j = 0; j < aiConnect.length;) {
-                        iV1 = aiConnect[j++];
-                        akComponent[i].getCoordinate(iV1, s1);
-                        sx1 = (s1.x - startLocation[0]) / (resols[0] * direction[0]);
-                        sy1 = (s1.y - startLocation[1]) / (resols[1] * direction[1]);
-                        sz1 = (s1.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                        iV2 = aiConnect[j++];
-                        akComponent[i].getCoordinate(iV2, s2);
-                        sx2 = (s2.x - startLocation[0]) / (resols[0] * direction[0]);
-                        sy2 = (s2.y - startLocation[1]) / (resols[1] * direction[1]);
-                        sz2 = (s2.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                        iV3 = aiConnect[j++];
-                        akComponent[i].getCoordinate(iV3, s3);
-                        sx3 = (s3.x - startLocation[0]) / (resols[0] * direction[0]);
-                        sy3 = (s3.y - startLocation[1]) / (resols[1] * direction[1]);
-                        sz3 = (s3.z - startLocation[2]) / (resols[2] * direction[2]);
-
-                        d1 = (float) Math.sqrt(((sx1 - sx2) * (sx1 - sx2)) + ((sy1 - sy2) * (sy1 - sy2)) +
-                                               ((sz1 - sz2) * (sz1 - sz2)));
-                        d2 = (float) Math.sqrt(((sx1 - sx3) * (sx1 - sx3)) + ((sy1 - sy3) * (sy1 - sy3)) +
-                                               ((sz1 - sz3) * (sz1 - sz3)));
-                        d3 = (float) Math.sqrt(((sx2 - sx3) * (sx2 - sx3)) + ((sy2 - sy3) * (sy2 - sy3)) +
-                                               ((sz2 - sz3) * (sz2 - sz3)));
-
-                        if ((d1 >= 1.0f) || (d2 >= 1.0f) || (d3 >= 1.0f)) {
-                            subTriangles(sx1, sy1, sz1, sx2, sy2, sz2, sx3, sy3, sz3);
-                        }
-                    }
-
-                    for (j = 0; j < akVertex.length; j++) {
-
-                        // The mesh files save the verticies as
-                        // pt.x*resX*direction[0] + startLocation
-                        // The loaded vertices go from -1 to 1
-                        // The loaded vertex is at (2.0f*pt.x*xRes - (xDim-1)*xRes)/((dim-1)*res)max
-                        akVertex[j].x = ((2.0f * (akVertex[j].x - startLocation[0]) / direction[0]) -
-                                         ((xDim - 1) * resols[0])) / maxBox;
-                        akVertex[j].y = ((2.0f * (akVertex[j].y - startLocation[1]) / direction[1]) -
-                                         ((yDim - 1) * resols[1])) / maxBox;
-                        akVertex[j].z = ((2.0f * (akVertex[j].z - startLocation[2]) / direction[2]) -
-                                         ((zDim - 1) * resols[2])) / maxBox;
-                    }
-
-                    float xSum = 0f, ySum = 0f, zSum = 0f;
-
-                    for (j = 0; j < akVertex.length; j++) {
-                        xSum += akVertex[j].x;
-                        ySum += akVertex[j].y;
-                        zSum += akVertex[j].z;
-                    }
-
-                    center = new Point3f(xSum / akVertex.length, ySum / akVertex.length, zSum / akVertex.length);
-
-                    // Make sure the volume is calculated when in the original file units.
-                    volume += akComponent[i].volume();
-                    area += akComponent[i].area();
-                    akComponent[i].setVerticies(akVertex);
-                    numTriangles += akComponent[i].getIndexCount();
-                }
-
-
-
-
-        BranchGroup root = createSurface(akComponent, color, PolygonAttributes.POLYGON_FILL);
-
-        root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        root.setCapability(Group.ALLOW_CHILDREN_READ);
-        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        root.setCapability(BranchGroup.ALLOW_DETACH);
-        root.setCapability(Node.ALLOW_PICKABLE_READ);
-        root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-        root.setPickable(false);
-
-        // Allow Java to optimize subtree.  Attach to the scene graph.
-        root.compile();
-        surfaceRootBG.addChild(root);
-        numTriangles = numTriangles / 3;
-
-        maskInsideVoxels( surfaceVector.size(), getSurface(), false, opacity);
-
-        SurfaceAttributes surface = new SurfaceAttributes(root, file.getPath(), name, color, 64, 100,
-                                                          PolygonAttributes.POLYGON_FILL, numTriangles, volume, area,
-                                                          true, opacity, center, getSurfaceMask());
-
-        surfaceVector.add(surface);
-
-
-        triangleText.setText(String.valueOf(numTriangles));
-        volumeText.setText(String.valueOf(volume));
-        areaText.setText(String.valueOf(area));
-
-        return surfaceVector.indexOf(surface);
-    }
-
-
-    /**
-     * The action taken when the Add button is clicked in the list box. A file dialog is launched that allows the user
-     * to select new surfaces to load from disk.
-     *
-     * @throws  IOException  if there is a problem loading the chosen surface file
-     */
-    private void addSurfaces() throws IOException {
-        File[] files = null;
-        float opacityValue = 0;
-        int levelDetailValue = 0;
-        // file dialog to select surface mesh files (*.sur)
-        JFileChooser chooser = new JFileChooser();
-
-        chooser.setMultiSelectionEnabled(true);
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.SURFACE));
-
-        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-        } else {
-            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-        }
-
-        int returnVal = chooser.showOpenDialog(this);
-
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            files = chooser.getSelectedFiles();
-        } else {
-            return;
-        }
-
-        ViewUserInterface.getReference().setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) +
-                                                             File.separatorChar);
-        surfaceDirectoryName = ViewUserInterface.getReference().getDefaultDirectory();
-
-        // only add surfaces that are not already in the list
-        boolean bNameAdded = false;
-
-        /* For parsing and storing surface XML file information: */
-        FileSurfaceXML kSurfaceXML = null;
-        FileInfoSurfaceXML kFileInfo = null;
-
-        for (int i = 0; i < files.length; i++) {
-            String kName = files[i].getName();
-
-            bNameAdded = true;
-
-            int index = surfaceVector.size();
-
-            Color4f color = new Color4f();
-
-            color.w = 1.0f;
-
-            if (index < fixedColor.length) {
-
-                // Use the fixed colors for the first six surfaces.
-                color.x = fixedColor[index].x;
-                color.y = fixedColor[index].y;
-                color.z = fixedColor[index].z;
-            } else {
-
-                // Use randomly generated colors for the seventh and
-                // later surfaces.
-                color.x = 0.5f * (1.0f + randomGen.nextFloat());
-                color.y = 0.5f * (1.0f + randomGen.nextFloat());
-                color.z = 0.5f * (1.0f + randomGen.nextFloat());
-            }
-
-            // add the surface to the scene graph
-            System.err.println(kName);
-
-
-            if ((kName.indexOf(".sur") != -1) || (kName.indexOf(".wrl") != -1)) {
-                addSurface(files[i], color, kName, 0.5f, -1, true);
-
-                /* Tell the surfaceRenderer to add the triangle mesh surface: */
-                ((SurfaceRender) renderBase).updateData();
-            }
-            /* Read the xml file and add to the scene graph: */
-            else if (kName.indexOf(".xml") != -1) {
-                kSurfaceXML = new FileSurfaceXML(ViewUserInterface.getReference(), kName, files[i].getParent());
-                kFileInfo = kSurfaceXML.readSurfaceXML(kName, files[i].getParent());
-
-                if (kFileInfo != null) {
-                    int iSurface = addModelTriangleMesh(kFileInfo.getMesh(), kFileInfo.getMaterial(), files[i], kName, 1.0f);
-                    /* Tell the surfaceRenderer to add the triangle mesh
-                     * surface: */
-                    ((SurfaceRender) renderBase).updateData();
-                    ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(true);
-                    setMaterial(kFileInfo.getMaterial(), iSurface);
-                    setOpacity( kFileInfo.getOpacity(), iSurface);
-                    setLevelDetail(kFileInfo.getLevelDetail(), iSurface);
-                } else {
-                    throw new IOException();
-                }
-            }
-
-            // add the surface to the image's file info if it is XML (so it can be saved)
-            if (parentScene.getParentFrame().getImageOriginal().getFileInfo()[0] instanceof FileInfoImageXML) {
-
-                for (int s = 0; s < parentScene.getParentFrame().getImageOriginal().getExtents()[2]; s++) {
-                    ((FileInfoImageXML) parentScene.getParentFrame().getImageOriginal().getFileInfo()[s]).addSurface(surfaceDirectoryName +
-                                                                                                                     kName);
-                }
-            }
-        }
-
-        if (surfaceList.getSelectedIndices().length == 1) {
-            setElementsEnabled(true);
-        }
-
-        // if new surfaces were loaded, update the list data
-        if (bNameAdded) {
-            Vector surfaceNames = new Vector();
-
-            for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
-                surfaceNames.addElement(((SurfaceAttributes) en.nextElement()).name);
-            }
-
-            surfaceList.setListData(surfaceNames);
-
-            int[] aiSelected = surfaceList.getSelectedIndices();
-
-            if (aiSelected.length == 0) {
-                iSelect = 0;
-                surfaceList.setSelectedIndex(0);
-            }
-        }
-        /*
-        int index = surfaceList.getSelectedIndex();
-        SurfaceAttributes attributes;
-        attributes = (SurfaceAttributes) surfaceVector.get(index);
-        attributes.opacity = opacityValue;
-        attributes.detailLevel = levelDetailValue;
-        */
-        // setOpacitySlider((int)(opacityValue * 100 ));
-        // set
-    }
-
-    /**
      * Build the toolbar.
      */
     private void buildToolBar() {
@@ -4476,7 +2387,6 @@ public class JPanelSurface extends JPanelRendererBase
         levelVButton = toolbarBuilder.buildButton("LevelV", "Save single level (.wrl)", "levelvsave");
         levelWButton = toolbarBuilder.buildButton("LevelW", "Save multi objects (.wrl)", "levelwsave");
         levelXMLButton = toolbarBuilder.buildButton("LevelXML", "Save xml surface (.xml)", "savexml");
-        loadASCButton = toolbarBuilder.buildButton("ImportA", "Import FreeSurfer (.asc)", "openasc");
 
         toolBar.add(smooth1Button);
         toolBar.add(smooth2Button);
@@ -4486,14 +2396,33 @@ public class JPanelSurface extends JPanelRendererBase
         toolBar.add(levelVButton);
         toolBar.add(levelWButton);
         toolBar.add(levelXMLButton);
-        toolBar.add(loadASCButton);
 
         mainPanel.add(toolBar, BorderLayout.NORTH);
     }
 
+    /** Convert from the polygon mode combo-box list index to the
+     * PolygonAttributes.POLYGON_LINE, PolygonAttributes.POLYGON_POINT, and
+     * PolygonAttributes.POLYGON_FILL values:
+     * @param index, the index of the selected polygon mode in the polygonModeCB combo box.
+     * @return the corresponding PolygonAttributes defined value.
+     */
+    private int polygonIndexToMode( int index )
+    {
+        switch ( index )
+        {
+        case 1:
+            return (PolygonAttributes.POLYGON_LINE);
+        case 2:
+            return (PolygonAttributes.POLYGON_POINT);
+        case 0:
+        default:
+            return (PolygonAttributes.POLYGON_FILL);
+        }
+    }
+
     /**
-     * Changes the polygon mode of the selected surface by detaching it, calling the appropriate method, and reattaching
-     * it.
+     * Changes the polygon mode of the selected surface by detaching it,
+     * calling the appropriate method, and reattaching it.
      *
      * @param  mode  The new polygon mode to set.
      */
@@ -4504,18 +2433,14 @@ public class JPanelSurface extends JPanelRendererBase
         indices = surfaceList.getSelectedIndices();
 
         for (int i = 0; i < indices.length; i++) {
-            surface = ((SurfaceAttributes) surfaceVector.get(indices[i])).surface;
-            ((SurfaceAttributes) surfaceVector.get(indices[i])).polygonMode = mode;
-            surface.detach();
+            surface = ((SurfaceAttributes) surfaceVector.get(indices[i])).getBranch();
+            ((SurfaceAttributes) surfaceVector.get(indices[i])).setPolygonMode( mode );
 
             Object obj;
-
             for (Enumeration e = surface.getAllChildren(); e.hasMoreElements();) {
                 obj = e.nextElement();
-
                 try {
                     Shape3D shape = (Shape3D) obj;
-
                     shape.getAppearance().getPolygonAttributes().setPolygonMode(mode);
                 } catch (ClassCastException error) { /* if (obj instanceof BranchGroup) {
                                                       * Object obj2; // won't let me read these branch groups. for
@@ -4526,8 +2451,6 @@ public class JPanelSurface extends JPanelRendererBase
                                                       * obj3 = e3.nextElement(); } } }}*/
                 }
             }
-
-            surfaceRootBG.addChild(surface);
         }
     }
 
@@ -4556,17 +2479,18 @@ public class JPanelSurface extends JPanelRendererBase
      *
      * @return  Parent node of surface.
      */
-    private BranchGroup createSurface(ModelTriangleMesh[] meshes, Color4f color, int mode) {
+    private void createSurface(SurfaceAttributes surface, boolean pickable )
+    {
+        if ( mTexture == null )
+        {
+            createVolumeTexture();
+        }
 
-        // create a material with the desired color
-        Material material = new Material();
+        ModelTriangleMesh[] meshes = surface.getMesh();
+        int mode = surface.getPolygonMode();
+        Material material = surface.getMaterial();
+        float opacity = surface.getOpacity();
 
-        material.setCapability(Material.ALLOW_COMPONENT_READ);
-        material.setCapability(Material.ALLOW_COMPONENT_WRITE);
-        material.setDiffuseColor(color.x, color.y, color.z, color.w);
-        material.setSpecularColor(color.x, color.y, color.z);
-        material.setAmbientColor(color.x, color.y, color.z);
-        // material.setShininess(0);
 
         // set the mesh's render state
         Appearance appearance = new Appearance();
@@ -4581,9 +2505,26 @@ public class JPanelSurface extends JPanelRendererBase
 
         tap.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
         tap.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
+        if ((1 - opacity) == 0) {
+            tap.setTransparencyMode(TransparencyAttributes.NONE);
+        } else {
+            tap.setTransparencyMode(TransparencyAttributes.BLENDED);
+        }
+        tap.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
+        tap.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
+        tap.setTransparency(1 - opacity); // 0 = Opaque
 
         appearance.setTransparencyAttributes(tap);
         appearance.setMaterial(material);
+
+        TextureAttributes kTextureAttr = new TextureAttributes();
+        kTextureAttr.setTextureMode(TextureAttributes.REPLACE);
+        TextureUnitState[] textureState = new TextureUnitState[1];
+        textureState[0] = new TextureUnitState( mTexture, kTextureAttr, null );
+        textureState[0].setCapability( TextureUnitState.ALLOW_STATE_WRITE );
+        appearance.setTextureUnitState( textureState );
+        appearance.setCapability( Appearance.ALLOW_TEXTURE_UNIT_STATE_WRITE );
+
 
         // No back-face culling.  Supports double-sided meshes which can
         // regularly occur for level surfaces (open surfaces).
@@ -4634,12 +2575,56 @@ public class JPanelSurface extends JPanelRendererBase
 
             root.addChild(akSurfaceShape[i]);
         }
+        surface.setShape( akSurfaceShape );
 
         m_kSurface = new ModelTriangleMesh[2];
         m_kSurface = meshes;
 
-        return root;
+        root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        root.setCapability(Group.ALLOW_CHILDREN_READ);
+        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        root.setCapability(BranchGroup.ALLOW_DETACH);
+        root.setCapability(Node.ALLOW_PICKABLE_READ);
+        root.setCapability(Node.ALLOW_PICKABLE_WRITE);
+        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
+        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
+        root.setPickable( pickable );
+        surfacePickableCB.setSelected( pickable );
+        
+        // Allow Java to optimize subtree.  Attach to the scene graph.
+        root.compile();
+        surfaceRootBG.addChild(root);
+        surface.setBranch( root );
     }
+
+    /**
+     * Creates a 3D Texture object for the ModelImage displayed in the
+     * SurfaceRender object. The Texture3D object is used for texture-mapping
+     * on any or all ModelTriangleMesh objects displayed in the SurfaceRender.
+     */
+    private void createVolumeTexture()
+    {
+        
+        ModelImage imageA = ((SurfaceRender)parentScene).getImageA();
+        int[] localExtents = imageA.getExtents();
+
+        mTexture = new Texture3D(Texture.BASE_LEVEL, Texture.RGBA, localExtents[0], localExtents[1], localExtents[2]);
+        mTexture.setEnable(false);
+        mTexture.setMinFilter(Texture.BASE_LEVEL_LINEAR);
+        mTexture.setMagFilter(Texture.NICEST);
+
+        // m_kTexture.setAnisotropicFilterMode(Texture.ANISOTROPIC_SINGLE_VALUE);
+        // m_kTexture.setAnisotropicFilterDegree(5);
+        mTexture.setBoundaryModeS(Texture.CLAMP_TO_BOUNDARY);
+        mTexture.setBoundaryModeT(Texture.CLAMP_TO_BOUNDARY);
+        mTexture.setBoundaryModeR(Texture.CLAMP_TO_BOUNDARY);
+        mTexture.setBoundaryColor(0.0f, 0.0f, 0.0f, 0.0f);
+        mTexture.setImage(0, ((SurfaceRender)parentScene).generateVolumeTexture()) ;
+        mTexture.setCapability(Texture3D.ALLOW_IMAGE_WRITE);
+        mTexture.setCapability(Texture3D.ALLOW_IMAGE_READ);
+        mTexture.setCapability(Texture3D.ALLOW_ENABLE_WRITE);
+    }
+
 
     /**
      * Decimate the surface.
@@ -4653,7 +2638,7 @@ public class JPanelSurface extends JPanelRendererBase
             return;
         }
 
-        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
+        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).getBranch();
         ModelTriangleMesh[] meshes = new ModelTriangleMesh[root.numChildren()];
 
         for (int j = 0; j < root.numChildren(); j++) {
@@ -4699,27 +2684,13 @@ public class JPanelSurface extends JPanelRendererBase
 
         progressBar.updateValue(100, true);
         root.detach();
-        root = createSurface(meshes, ((SurfaceAttributes) surfaceVector.get(selected)).color,
-                             ((SurfaceAttributes) surfaceVector.get(selected)).polygonMode);
-        root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        root.setCapability(Group.ALLOW_CHILDREN_READ);
-        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        root.setCapability(BranchGroup.ALLOW_DETACH);
-        root.setCapability(Node.ALLOW_PICKABLE_READ);
-        root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-        root.setPickable(false);
-        surfacePickableCB.setSelected(false);
 
+        ((SurfaceAttributes) surfaceVector.get(selected)).setMesh( meshes );
+        createSurface( ((SurfaceAttributes) surfaceVector.get(selected)), false );
         if (((SurfaceRender) parentScene).getDisplayMode3D()) {
             surfaceClipCB.setSelected(false);
         }
-
-        root.compile();
-        surfaceRootBG.addChild(root);
-        ((SurfaceAttributes) surfaceVector.get(selected)).surface = root;
-        ((SurfaceAttributes) surfaceVector.get(selected)).isClodMesh = true;
+        ((SurfaceAttributes) surfaceVector.get(selected)).setIsClodMesh( true );
         decimateButton.setEnabled(false);
         detailSlider.setEnabled(true);
         detailLabel.setEnabled(true);
@@ -4762,14 +2733,14 @@ public class JPanelSurface extends JPanelRendererBase
 
             Color4f newColor = new Color4f(color);
 
-            ((SurfaceAttributes) surfaceVector.get(iIndex)).color = newColor;
+            ((SurfaceAttributes) surfaceVector.get(iIndex)).setColor( newColor );
             /* Change the mask color: */
             parentScene.getImageA().addSurfaceMask( iIndex, null, null, newColor );
             /* update the surface renderer: */
             ((SurfaceRender) renderBase).updateData();
 
-            if (((SurfaceAttributes) surfaceVector.get(iIndex)).isVOIPt) {
-                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
+            if (((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
+                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
 
                 for (int k = 0; k < root.numChildren(); k++) {
                     Shape3D shape = (Shape3D)
@@ -4787,7 +2758,7 @@ public class JPanelSurface extends JPanelRendererBase
             } else {
 
                 // change the material color
-                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).surface;
+                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
                 Shape3D shape = (Shape3D) root.getChild(0);
                 Appearance appearance = shape.getAppearance();
                 Material material = appearance.getMaterial();
@@ -4795,314 +2766,6 @@ public class JPanelSurface extends JPanelRendererBase
                 material.setDiffuseColor(newColor.x, newColor.y, newColor.z);
                 material.setSpecularColor(newColor.x, newColor.y, newColor.z);
                 material.setAmbientColor(newColor.x, newColor.y, newColor.z);
-            }
-        }
-    }
-
-    /**
-     * Calls a dialog to get a file name.
-     *
-     * @param   fName  if<code>true</code>, make it a load dialog.
-     *
-     * @return  File name.
-     */
-    private String getCurrentFileName(String fName) {
-        String name;
-
-        // file dialog to select surface mesh files (*.sur)
-        JFileChooser chooser = new JFileChooser();
-
-        chooser.setVisible(false);
-        chooser.setMultiSelectionEnabled(false);
-
-        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-        } else {
-            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-        }
-
-        name = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar + fName; // chooser.getSelectedFile().getName();
-        ViewUserInterface.getReference().setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) +
-                                                             File.separatorChar);
-
-        return name;
-    }
-
-    /**
-     * Calls a dialog to get a file name.
-     *
-     * @param   load  if <code>true</code>, make it a load dialog.
-     *
-     * @return  File name.
-     */
-    private String getFileName(boolean load) {
-        String name;
-
-        // file dialog to select surface mesh files (*.sur)
-        JFileChooser chooser = new JFileChooser();
-
-        chooser.setMultiSelectionEnabled(false);
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.SURFACE));
-
-        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-        } else {
-            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-        }
-
-        int returnVal;
-
-        if (load) {
-            returnVal = chooser.showOpenDialog(this);
-        } else {
-            returnVal = chooser.showSaveDialog(this);
-        }
-
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            name = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar +
-                   chooser.getSelectedFile().getName();
-        } else {
-            return null;
-        }
-
-        ViewUserInterface.getReference().setDefaultDirectory(String.valueOf(chooser.getCurrentDirectory()) +
-                                                             File.separatorChar);
-
-        return name;
-    }
-
-    /**
-     * Calls a file chooser then loads the triangle mesh from that file.
-     */
-    private void importA() {
-        String fileName;
-        String directory;
-        ViewJProgressBar progress = null;
-        String lineString = null;
-        String[] parseString = null;
-        int vertexNumber, numTriangles;
-        Point3f[] vertex = null;
-        int[] triangle = null;
-        int i;
-        float volume = 0.0f;
-        float area = 0.0f;
-        int iType = 0; // mesh is triangle mesh
-        int updateNumber;
-        int updatePoint;
-        int currentValue;
-        RandomAccessFile raFile = null;
-
-        // file dialog to select FreeSurfer ascii files (*.asc)
-        JFileChooser chooser = new JFileChooser();
-
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(ViewImageFileFilter.FREESURFER));
-
-        if (ViewUserInterface.getReference().getDefaultDirectory() != null) {
-            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-        } else {
-            chooser.setCurrentDirectory(new File(System.getProperties().getProperty("user.dir")));
-        }
-
-        int returnVal = chooser.showOpenDialog(this);
-
-        if (returnVal == JFileChooser.APPROVE_OPTION) {
-            fileName = chooser.getSelectedFile().getName();
-            directory = chooser.getCurrentDirectory() + "" + File.separatorChar;
-        } else {
-            return;
-        }
-
-        ViewUserInterface.getReference().setDefaultDirectory(directory);
-
-        try {
-            raFile = new RandomAccessFile(directory + fileName, "r");
-            lineString = readLine(raFile);
-
-            while ((lineString == null) || (lineString.charAt(0) == '#')) {
-                lineString = readLine(raFile);
-            }
-
-            parseString = parse(lineString);
-
-            if (parseString.length != 2) {
-
-                if (progress != null) {
-                    progress.dispose();
-                }
-
-                raFile.close();
-                MipavUtil.displayError("First noncommented line was " + lineString);
-            }
-
-            vertexNumber = Integer.valueOf(parseString[0]).intValue();
-            numTriangles = Integer.valueOf(parseString[1]).intValue();
-            System.out.println("vertex number = " + vertexNumber + " triangleNumber = " + numTriangles);
-            progress = new ViewJProgressBar("Loading triangle mesh", "Loading vertices", 0, 100, false, null, null);
-            progress.setLocation(200, 200);
-            progress.setVisible(true);
-            vertex = new Point3f[vertexNumber];
-            updatePoint = vertexNumber / 25;
-            updateNumber = 0;
-            currentValue = 0;
-
-            for (i = 0; i < vertexNumber; i++) {
-                lineString = readLine(raFile);
-                parseString = parse(lineString);
-
-                if (parseString.length < 3) {
-
-                    if (progress != null) {
-                        progress.dispose();
-                    }
-
-                    raFile.close();
-                    MipavUtil.displayError("vertex[" + i + "] has " + lineString);
-                }
-
-                // Need to align with standard X R->L, Y S->I, Z P->A coronal of
-                // standard COR volume image file
-                vertex[i] = new Point3f();
-                vertex[i].x = Float.valueOf(parseString[0]).floatValue() / 128.0f;
-                vertex[i].z = -Float.valueOf(parseString[1]).floatValue() / 128.0f;
-                vertex[i].y = Float.valueOf(parseString[2]).floatValue() / 128.0f;
-                updateNumber++;
-
-                if (updateNumber == updatePoint) {
-                    updateNumber = 0;
-                    currentValue++;
-                    progress.updateValueImmed(currentValue);
-                }
-            } // for (i = 0; i < vertexNumber; i++)
-
-            progress.setMessage("Loading triangles");
-            currentValue = 25;
-            progress.updateValueImmed(currentValue);
-            triangle = new int[3 * numTriangles];
-            updatePoint = numTriangles / 25;
-            updateNumber = 0;
-
-            for (i = 0; i < numTriangles; i++) {
-                lineString = readLine(raFile);
-                parseString = parse(lineString);
-
-                if (parseString.length < 3) {
-
-                    if (progress != null) {
-                        progress.dispose();
-                    }
-
-                    raFile.close();
-                    MipavUtil.displayError("triangle[" + i + "] has " + lineString);
-                }
-
-                triangle[3 * i] = Integer.valueOf(parseString[0]).intValue();
-                triangle[(3 * i) + 1] = Integer.valueOf(parseString[1]).intValue();
-                triangle[(3 * i) + 2] = Integer.valueOf(parseString[2]).intValue();
-                updateNumber++;
-
-                if (updateNumber == updatePoint) {
-                    updateNumber = 0;
-                    currentValue++;
-                    progress.updateValueImmed(currentValue);
-                }
-            } // for (i = 0; i < numTriangles; i++)
-
-            raFile.close();
-            progress.setMessage("Creating ModelTriangleMesh");
-            progress.updateValueImmed(50);
-
-            ModelTriangleMesh[] akComponent = new ModelTriangleMesh[1];
-            akComponent[0] = new ModelTriangleMesh(vertex, triangle);
-            volume = akComponent[0].volume();
-            area = akComponent[0].area();
-
-            int index = surfaceVector.size();
-
-            Color4f color = new Color4f();
-
-            color.w = 1.0f;
-
-            if (index < fixedColor.length) {
-
-                // Use the fixed colors for the first six surfaces.
-                color.x = fixedColor[index].x;
-                color.y = fixedColor[index].y;
-                color.z = fixedColor[index].z;
-            } else {
-
-                // Use randomly generated colors for the seventh and
-                // later surfaces.
-                color.x = 0.5f * (1.0f + randomGen.nextFloat());
-                color.y = 0.5f * (1.0f + randomGen.nextFloat());
-                color.z = 0.5f * (1.0f + randomGen.nextFloat());
-            }
-
-            progress.setMessage("Creating surface");
-            progress.updateValueImmed(75);
-
-            BranchGroup root = createSurface(akComponent, color, PolygonAttributes.POLYGON_FILL);
-
-            root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-            root.setCapability(Group.ALLOW_CHILDREN_READ);
-            root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-            root.setCapability(BranchGroup.ALLOW_DETACH);
-            root.setCapability(Node.ALLOW_PICKABLE_READ);
-            root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-            root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-            root.setPickable(false);
-
-            // Allow Java to optimize subtree.  Attach to the scene graph.
-            root.compile();
-            surfaceRootBG.addChild(root);
-            numTriangles = numTriangles / 3;
-
-            SurfaceAttributes surface = new SurfaceAttributes(root, directory, fileName, color, 64, 100,
-                                                              PolygonAttributes.POLYGON_FILL, numTriangles, volume,
-                                                              area, (iType != 0), getSurfaceMask());
-
-            surfaceVector.add(surface);
-            triangleText.setText(String.valueOf(numTriangles));
-            volumeText.setText(String.valueOf(volume));
-            areaText.setText(String.valueOf(area * maxBox * maxBox));
-
-            if (surfaceList.getSelectedIndices().length == 1) {
-                setElementsEnabled(true);
-            }
-
-            // update the list data
-            Vector surfaceNames = new Vector();
-
-            for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
-                surfaceNames.addElement(((SurfaceAttributes) en.nextElement()).name);
-            }
-
-            surfaceList.setListData(surfaceNames);
-
-            int[] aiSelected = surfaceList.getSelectedIndices();
-
-            if (aiSelected.length == 0) {
-                iSelect = 0;
-                surfaceList.setSelectedIndex(0);
-            }
-
-            progress.dispose();
-        } catch (IOException e) {
-
-            if (progress != null) {
-                progress.dispose();
-            }
-
-            MipavUtil.displayError("Load of " + directory + fileName + " failed.");
-        } finally {
-
-            try {
-
-                if (raFile != null) {
-                    raFile.close();
-                }
-            } catch (IOException ioe) {
-                // do nothing
             }
         }
     }
@@ -5122,7 +2785,6 @@ public class JPanelSurface extends JPanelRendererBase
 
         mainPanel = new JPanel(new BorderLayout());
         buildToolBar();
-        randomGen = new Random(367);
         iSelect = -1;
 
         // Layout
@@ -5195,6 +2857,13 @@ public class JPanelSurface extends JPanelRendererBase
         colorPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         colorPanel.add(colorButton);
         colorPanel.add(colorLabel);
+
+        mImageAsTextureCheck = new JCheckBox( "Display Image as Surface Texture" );
+        mImageAsTextureCheck.addActionListener(this);
+        mImageAsTextureCheck.setActionCommand("ImageAsTexture");
+        mImageAsTextureCheck.setSelected(false);
+        mImageAsTextureCheck.setEnabled(false);
+        colorPanel.add(mImageAsTextureCheck);
 
         /* Creates the advanced material options button, which launches the
          * material editor dialog: */
@@ -5440,105 +3109,71 @@ public class JPanelSurface extends JPanelRendererBase
         }
     }
 
+
     /**
-     * Parse a line of surface data.
-     *
-     * @param   inString  surface data
-     *
-     * @return  String[] string tokens
+     * Remove the surface from the volume render.
      */
-    private String[] parse(String inString) {
-        String[] tmpString = new String[4];
-        String[] outString;
-        int i;
-        int sNum = 0;
-        int firstEl = 0;
+    public void removeSurface() {
+        SurfaceAttributes[] surfaces = getSelectedSurfaces( surfaceList.getSelectedIndices() );
+        removeSurfaces( surfaces );
 
-        for (i = 0; i < inString.length(); i++) {
-
-            if (inString.charAt(i) <= 0x20) {
-
-                if (firstEl != i) {
-                    tmpString[sNum++] = inString.substring(firstEl, i);
-                }
-
-                firstEl = i + 1;
-            }
+        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
+            ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
         }
 
-        if (firstEl != i) {
-            tmpString[sNum++] = inString.substring(firstEl, i);
+        if (surfaceVector.size() <= 0) {
+            ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(false);
         }
-
-        if (sNum == 0) {
-            outString = new String[1];
-            outString[0] = inString;
-        } else {
-            outString = new String[sNum];
-
-            for (i = 0; i < (sNum); i++) {
-                outString[i] = tmpString[i];
-            }
-        }
-
-        return outString;
+        ((SurfaceRender) renderBase).updateData();
     }
 
     /**
-     * The action taken when the Remove button is clicked in the list box. All selected surfaces in the list box are
-     * removed from the scene graph.
+     * Remove the specified surface subtree from the scene graph.
+     *
+     * @param  root  The root of the subtree to remove.
      */
-    private void removeSurfaces() {
+    public void removeSurface(BranchGroup root) {
 
-        // construct the lists of items to be removed
-        int[] aiSelected = surfaceList.getSelectedIndices();
-        Vector removeSurfaces = new Vector();
+        // remove the surface from the scene (if it exists)
+        for (int i = 0; i < surfaceRootBG.numChildren(); i++) {
 
-        int i;
-
-        for (i = 0; i < aiSelected.length; i++) {
-            int iIndex = aiSelected[i];
-
-            removeSurfaces.add(surfaceVector.get(iIndex));
+            if (surfaceRootBG.getChild(i) == root) {
+                surfaceRootBG.removeChild(i);
+            }
         }
+
+        System.gc();
+    }
+
+    /**
+     * The action taken when the Remove button is clicked in the list box. All
+     * selected surfaces in the list box are removed from the scene graph.
+     * @param surfaces[] the selected surfaces (SurfaceAttributes[]) to be removed.
+     */
+    private void removeSurfaces( SurfaceAttributes[] surfaces ) {
 
         // remove the items
-        for (i = 0; i < aiSelected.length; i++) {
-            removeSurface(((SurfaceAttributes) removeSurfaces.get(i)).surface);
-            int removeIndex = surfaceVector.indexOf(removeSurfaces.get(i));
-            //surfaceVector.remove(removeSurfaces.get(i));
-            surfaceVector.removeElementAt(removeIndex);
-            parentScene.getImageA().removeSurfaceMask(removeIndex);
+        for ( int i = 0; i < surfaces.length; i++) {
+            removeSurface( surfaces[i].getBranch() );
 
-            // remove the surface from the image's file info if it is XML (so that it won't be saved with it)
+            // remove the surface from the image's file info if it is XML (so
+            // that it won't be saved with it)
             if (parentScene.getParentFrame().getImageOriginal().getFileInfo()[0] instanceof FileInfoImageXML) {
-
                 for (int s = 0; s < parentScene.getParentFrame().getImageOriginal().getExtents()[2]; s++) {
-                    ((FileInfoImageXML) parentScene.getParentFrame().getImageOriginal().getFileInfo()[s]).removeSurface(((SurfaceAttributes)
-                                                                                                                             removeSurfaces.get(i)).fullPath);
+                    ((FileInfoImageXML) parentScene.getParentFrame().getImageOriginal().getFileInfo()[s]).removeSurface(surfaces[i].getFullPath());
                 }
             }
+
+            int removeIndex = surfaceVector.indexOf( surfaces[i] );
+            surfaceVector.removeElementAt(removeIndex);
+            parentScene.getImageA().removeSurfaceMask(removeIndex);
         }
+        int[] selected = new int[1];
+        selected[0] = iSelect >= surfaceVector.size() ? surfaceVector.size() - 1 : iSelect;
+        updateSurfaceNameList( selected );
 
-        Vector surfaceNames = new Vector();
-
-        for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
-            surfaceNames.addElement(((SurfaceAttributes) en.nextElement()).name);
-        }
-
-        surfaceList.setListData(surfaceNames);
-
-        // determine the new selected list item
-        if (surfaceNames.size() > 0) {
-
-            // highlight another list item when current one is removed
-            if (iSelect >= surfaceNames.size()) {
-                surfaceList.setSelectedIndex(surfaceNames.size() - 1);
-            } else {
-                surfaceList.setSelectedIndex(iSelect);
-            }
-        } else {
-
+        if ( surfaceVector.size() == 0 )
+        {
             // clear out the color values if the list is empty
             iSelect = -1;
             setElementsEnabled(false);
@@ -5550,326 +3185,21 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * Saves a single level of detail to a mesh file.
-     *
-     * @param   meshes  ModelTriangleMesh[] The triangle meshes that make up that level of detail surface.
-     * @param   kOut    PrintWriter File output reference
-     * @param   color   Color3f surface color
-     *
-     * @throws  IOException  DOCUMENT ME!
+     * Called when surfaces are added or removed from the surfaceVector
+     * SurfaceAttributes list. Updates the surfaceList combo-box displayed in
+     * the user-interface.
+     * @param selected, array of names that are currently selected.
      */
-    private void savePortableMesh(ModelTriangleMesh[] meshes, PrintWriter kOut, Color3f color) throws IOException {
-        int i;
-        ModelTriangleMesh[] meshesCopy = new ModelTriangleMesh[meshes.length];
-
-        ModelTriangleMesh meshCopy;
-
-        if (kOut != null) {
-            float[] startLocation = parentScene.getImageA().getFileInfo(0).getOrigin();
-            float[] resolution = parentScene.getImageA().getFileInfo(0).getResolutions();
-            int[] extents = parentScene.getImageA().getExtents();
-            float[] box = new float[3];
-
-            box[0] = extents[0] * resolution[0];
-            box[1] = extents[1] * resolution[1];
-            box[2] = extents[2] * resolution[2];
-
-            float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-            int[] direction = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
-            int j;
-
-            Point3f[] akVertex;
-
-            for (i = 0; i < meshes.length; i++) {
-                meshCopy = new ModelTriangleMesh(meshes[i].getVertexCopy(), meshes[i].getNormalCopy(),
-                                                 meshes[i].getIndexCopy());
-                akVertex = meshCopy.getVertexCopy();
-
-                // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
-                // The loaded vertex is at 2.0f*pt.x*resX - (xDim-1)*resX
-                // The mesh files must save the verticies as
-                // pt.x*resX*direction[0] + startLocation
-                for (j = 0; j < akVertex.length; j++) {
-                    akVertex[j].x = ((((akVertex[j].x * maxBox) + box[0]) / 2.0f) * direction[0]) + startLocation[0];
-                    akVertex[j].y = ((((akVertex[j].y * maxBox) + box[1]) / 2.0f) * direction[1]) + startLocation[1];
-                    akVertex[j].z = ((((akVertex[j].z * maxBox) + box[2]) / 2.0f) * direction[2]) + startLocation[2];
-
-                    // flip y and z
-                    akVertex[j].y = (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[j].y;
-                    akVertex[j].z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[j].z;
-                }
-
-                meshCopy.setVerticies(akVertex);
-                meshesCopy[i] = meshCopy;
-            }
-
-            ModelTriangleMesh.saveAsPortableVRML(kOut, meshesCopy, true, direction, startLocation, box, color);
+    private void updateSurfaceNameList( int[] selected )
+    {
+        Vector surfaceNames = new Vector();
+        for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
+            surfaceNames.addElement(((SurfaceAttributes) en.nextElement()).getName());
         }
+        surfaceList.setListData(surfaceNames);
+        surfaceList.setSelectedIndices(selected);
     }
 
-    /**
-     * Saves a single level of detail to a mesh file.
-     *
-     * @param  meshes  The triangle meshes that make up that level of detail surface.
-     * @param  isSur   true if .sur file, otherwise .wrl file
-     * @param  color   surface color
-     */
-    private void saveSingleMesh(ModelTriangleMesh[] meshes, boolean isSur, Color3f color) {
-        int i;
-        String extension;
-        TransMatrix dicomMatrix;
-        TransMatrix inverseDicomMatrix = null;
-        double[][] inverseDicomArray = null;
-        float[] coord;
-        float[] tCoord;
-
-        String name = getFileName(false);
-
-        if (name == null) {
-            return;
-        }
-
-        ModelTriangleMesh[] meshesCopy = new ModelTriangleMesh[meshes.length];
-
-        ModelTriangleMesh meshCopy;
-
-        i = name.lastIndexOf('.');
-
-        if ((i > 0) && (i < (name.length() - 1))) {
-            extension = name.substring(i + 1).toLowerCase();
-
-            if (isSur && !extension.equals("sur")) {
-                MipavUtil.displayError("Extension must be .sur");
-
-                return;
-            } else if (!isSur && !extension.equals("wrl")) {
-                MipavUtil.displayError("Extension must be .wrl");
-
-                return;
-            }
-        } else if (isSur) {
-            name = name + ".sur";
-        } else {
-            name = name + ".wrl";
-        }
-
-        if (name != null) {
-
-            try {
-                float[] startLocation = parentScene.getImageA().getFileInfo(0).getOrigin();
-                float[] resolution = parentScene.getImageA().getFileInfo(0).getResolutions();
-                int[] extents = parentScene.getImageA().getExtents();
-                float[] box = new float[3];
-
-                box[0] = extents[0] * resolution[0];
-                box[1] = extents[1] * resolution[1];
-                box[2] = extents[2] * resolution[2];
-
-                float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-                int[] direction = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
-                int j;
-                Point3f[] akVertex;
-
-                for (i = 0; i < meshes.length; i++) {
-                    meshCopy = new ModelTriangleMesh(meshes[i].getVertexCopy(), meshes[i].getNormalCopy(),
-                                                     meshes[i].getIndexCopy());
-                    akVertex = meshCopy.getVertexCopy();
-
-                    // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
-                    // The loaded vertex is at 2.0f*pt.x*resX - (xDim-1)*resX
-                    // The mesh files must save the verticies as
-                    // pt.x*resX*direction[0] + startLocation
-                    if (isSur &&
-                            (parentScene.getImageA().getFileInfo()[0].getTransformID() ==
-                                 FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL)) {
-
-                        // Get the DICOM transform that describes the transformation from
-                        // axial to this image orientation
-                        dicomMatrix = (TransMatrix) (parentScene.getImageA().getMatrix().clone());
-                        inverseDicomMatrix = (TransMatrix) (parentScene.getImageA().getMatrix().clone());
-                        inverseDicomMatrix.invert();
-                        inverseDicomArray = inverseDicomMatrix.getMatrix();
-                        inverseDicomMatrix = null;
-                        coord = new float[3];
-                        tCoord = new float[3];
-
-                        for (j = 0; j < akVertex.length; j++) {
-                            akVertex[j].x = ((((akVertex[j].x * maxBox) + box[0]) / 2.0f) * direction[0]) +
-                                            startLocation[0];
-                            akVertex[j].y = ((((akVertex[j].y * maxBox) + box[1]) / 2.0f) * direction[1]) +
-                                            startLocation[1];
-                            akVertex[j].z = ((((akVertex[j].z * maxBox) + box[2]) / 2.0f) * direction[2]) +
-                                            startLocation[2];
-
-                            // flip y and z
-                            akVertex[j].y = (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[j].y;
-                            akVertex[j].z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[j].z;
-
-                            // Change the voxel coordinate into millimeter space
-                            coord[0] = (akVertex[j].x - startLocation[0]) / direction[0];
-                            coord[1] = (akVertex[j].y - startLocation[1]) / direction[1];
-                            coord[2] = (akVertex[j].z - startLocation[2]) / direction[2];
-
-                            // Convert the point to axial millimeter DICOM space
-                            dicomMatrix.transform(coord, tCoord);
-
-                            // Add in the DICOM origin
-                            tCoord[0] = tCoord[0] + startLocation[0];
-                            tCoord[1] = tCoord[1] + startLocation[1];
-                            tCoord[2] = tCoord[2] + startLocation[2];
-                            akVertex[j] = new Point3f(tCoord[0], tCoord[1], tCoord[2]);
-                        }
-                    } else {
-
-                        for (j = 0; j < akVertex.length; j++) {
-                            akVertex[j].x = ((((akVertex[j].x * maxBox) + box[0]) / 2.0f) * direction[0]) +
-                                            startLocation[0];
-                            akVertex[j].y = ((((akVertex[j].y * maxBox) + box[1]) / 2.0f) * direction[1]) +
-                                            startLocation[1];
-                            akVertex[j].z = ((((akVertex[j].z * maxBox) + box[2]) / 2.0f) * direction[2]) +
-                                            startLocation[2];
-
-                            // flip y and z
-                            akVertex[j].y = (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[j].y;
-                            akVertex[j].z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[j].z;
-                        }
-                    }
-
-                    meshCopy.setVerticies(akVertex);
-                    meshesCopy[i] = meshCopy;
-                }
-
-                if (isSur == true) {
-                    ModelTriangleMesh.save(name, meshesCopy, true, direction, startLocation, box, inverseDicomArray);
-                } else {
-                    ModelTriangleMesh.saveAsVRML(name, meshesCopy, true, direction, startLocation, box, color);
-                }
-            } catch (IOException error) {
-                MipavUtil.displayError("Error while trying to save single mesh");
-            }
-        }
-    }
-
-    /**
-     * Saves a single level of detail to a mesh file.
-     *
-     * @param  fName   DOCUMENT ME!
-     * @param  meshes  The triangle meshes that make up that level of detail surface.
-     * @param  isSur   true if .sur file, otherwise .wrl file
-     * @param  color   surface color, not used for now.
-     */
-    private void saveSingleMesh(String fName, ModelTriangleMesh[] meshes, boolean isSur, Color3f color) {
-        int i;
-        TransMatrix dicomMatrix;
-        TransMatrix inverseDicomMatrix = null;
-        double[][] inverseDicomArray = null;
-        float[] coord;
-        float[] tCoord;
-
-        String name = getCurrentFileName(fName);
-
-        if (name == null) {
-            return;
-        }
-
-        ModelTriangleMesh[] meshesCopy = new ModelTriangleMesh[meshes.length];
-
-
-
-        if (name != null) {
-
-            try {
-                float[] startLocation = parentScene.getImageA().getFileInfo(0).getOrigin();
-                float[] resolution = parentScene.getImageA().getFileInfo(0).getResolutions();
-                int[] extents = parentScene.getImageA().getExtents();
-                float[] box = new float[3];
-
-                box[0] = extents[0] * resolution[0];
-                box[1] = extents[1] * resolution[1];
-                box[2] = extents[2] * resolution[2];
-
-                float maxBox = Math.max(box[0], Math.max(box[1], box[2]));
-                int[] direction = MipavCoordinateSystems.getModelDirections( parentScene.getImageA() );
-                int j;
-                Point3f[] akVertex;
-
-                for (i = 0; i < meshes.length; i++) {
-                    ModelTriangleMesh meshCopy;
-                    meshCopy = new ModelTriangleMesh(meshes[i].getVertexCopy(), meshes[i].getNormalCopy(),
-                                                     meshes[i].getIndexCopy());
-                    akVertex = meshCopy.getVertexCopy();
-
-                    // The loaded vertices go from -(xDim-1)*resX/maxBox to (xDim-1)*resX/maxBox
-                    // The loaded vertex is at 2.0f*pt.x*resX - (xDim-1)*resX
-                    // The mesh files must save the verticies as
-                    // pt.x*resX*direction[0] + startLocation
-                    if (isSur &&
-                            (parentScene.getImageA().getFileInfo()[0].getTransformID() ==
-                                 FileInfoBase.TRANSFORM_SCANNER_ANATOMICAL)) {
-
-                        // Get the DICOM transform that describes the transformation from
-                        // axial to this image orientation
-                        dicomMatrix = (TransMatrix) (parentScene.getImageA().getMatrix().clone());
-                        inverseDicomMatrix = (TransMatrix) (parentScene.getImageA().getMatrix().clone());
-                        inverseDicomMatrix.invert();
-                        inverseDicomArray = inverseDicomMatrix.getMatrix();
-                        inverseDicomMatrix = null;
-                        coord = new float[3];
-                        tCoord = new float[3];
-
-                        for (j = 0; j < akVertex.length; j++) {
-                            akVertex[j].x = ((((akVertex[j].x * maxBox) + box[0]) / 2.0f) * direction[0]) +
-                                            startLocation[0];
-                            akVertex[j].y = ((((akVertex[j].y * maxBox) + box[1]) / 2.0f) * direction[1]) +
-                                            startLocation[1];
-                            akVertex[j].z = ((((akVertex[j].z * maxBox) + box[2]) / 2.0f) * direction[2]) +
-                                            startLocation[2];
-
-                            // flip y and z
-                            akVertex[j].y = (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[j].y;
-                            akVertex[j].z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[j].z;
-
-                            // Change the voxel coordinate into millimeter space
-                            coord[0] = (akVertex[j].x - startLocation[0]) / direction[0];
-                            coord[1] = (akVertex[j].y - startLocation[1]) / direction[1];
-                            coord[2] = (akVertex[j].z - startLocation[2]) / direction[2];
-
-                            // Convert the point to axial millimeter DICOM space
-                            dicomMatrix.transform(coord, tCoord);
-
-                            // Add in the DICOM origin
-                            tCoord[0] = tCoord[0] + startLocation[0];
-                            tCoord[1] = tCoord[1] + startLocation[1];
-                            tCoord[2] = tCoord[2] + startLocation[2];
-                            akVertex[j] = new Point3f(tCoord[0], tCoord[1], tCoord[2]);
-                        }
-                    } else {
-
-                        for (j = 0; j < akVertex.length; j++) {
-                            akVertex[j].x = ((((akVertex[j].x * maxBox) + box[0]) / 2.0f) * direction[0]) +
-                                            startLocation[0];
-                            akVertex[j].y = ((((akVertex[j].y * maxBox) + box[1]) / 2.0f) * direction[1]) +
-                                            startLocation[1];
-                            akVertex[j].z = ((((akVertex[j].z * maxBox) + box[2]) / 2.0f) * direction[2]) +
-                                            startLocation[2];
-
-                            // flip y and z
-                            akVertex[j].y = (2 * startLocation[1]) + (box[1] * direction[1]) - akVertex[j].y;
-                            akVertex[j].z = (2 * startLocation[2]) + (box[2] * direction[2]) - akVertex[j].z;
-                        }
-                    }
-
-                    meshCopy.setVerticies(akVertex);
-                    meshesCopy[i] = meshCopy;
-                }
-
-                ModelTriangleMesh.save(name, meshesCopy, true, direction, startLocation, box, inverseDicomArray);
-
-            } catch (IOException error) {
-                MipavUtil.displayError("Error while trying to save single mesh");
-            }
-        }
-    }
 
     /**
      * Sets the surface options GUI panel to enabled or disabled. If there are 0 or multiple surfaces selected, all the
@@ -5887,9 +3217,9 @@ public class JPanelSurface extends JPanelRendererBase
         smooth2Button.setEnabled(flag);
         smooth3Button.setEnabled(flag);
         levelXMLButton.setEnabled(flag);
-        loadASCButton.setEnabled(flag);
 
         colorLabel.setEnabled(flag);
+        mImageAsTextureCheck.setEnabled(flag);
         m_kAdvancedMaterialOptionsButton.setEnabled(flag);
         m_kStereoButton.setEnabled(flag);
         detailLabel.setEnabled(flag);
@@ -5962,97 +3292,6 @@ public class JPanelSurface extends JPanelRendererBase
         staticLightBG.addChild(lightArrayBG[9]);
     }
 
-    /**
-     * Subdivide the triangle.
-     *
-     * @param  sx1  float
-     * @param  sy1  float
-     * @param  sz1  float
-     * @param  sx2  float
-     * @param  sy2  float
-     * @param  sz2  float
-     * @param  sx3  float
-     * @param  sy3  float
-     * @param  sz3  float
-     */
-    private void subTriangles(float sx1, float sy1, float sz1, float sx2, float sy2, float sz2, float sx3, float sy3,
-                              float sz3) {
-        ModelImage imageA = parentScene.getImageA();
-        int[] extents = imageA.getExtents();
-        int xDim = extents[0];
-        int yDim = extents[1];
-        int zDim = extents[2];
-        float sx4, sy4, sz4;
-        float sx5, sy5, sz5;
-        float sx6, sy6, sz6;
-        int sxf4, syf4, szf4;
-        int sxf5, syf5, szf5;
-        int sxf6, syf6, szf6;
-        float d1, d2, d3;
-
-        sx4 = (sx1 + sx3) / 2.0f;
-        sy4 = (sy1 + sy3) / 2.0f;
-        sz4 = (sz1 + sz3) / 2.0f;
-        sx5 = (sx1 + sx2) / 2.0f;
-        sy5 = (sy1 + sy2) / 2.0f;
-        sz5 = (sz1 + sz2) / 2.0f;
-        sx6 = (sx2 + sx3) / 2.0f;
-        sy6 = (sy2 + sy3) / 2.0f;
-        sz6 = (sz2 + sz3) / 2.0f;
-
-        sxf4 = Math.max(0, (int) Math.floor(sx4));
-        syf4 = Math.max(0, (int) Math.floor(sy4));
-        szf4 = Math.max(0, (int) Math.floor(sz4));
-        sxf4 = Math.min(xDim - 1, sxf4);
-        syf4 = Math.min(yDim - 1, syf4);
-        szf4 = Math.min(zDim - 1, szf4);
-
-        sxf5 = Math.max(0, (int) Math.floor(sx5));
-        syf5 = Math.max(0, (int) Math.floor(sy5));
-        szf5 = Math.max(0, (int) Math.floor(sz5));
-        sxf5 = Math.min(xDim - 1, sxf5);
-        syf5 = Math.min(yDim - 1, syf5);
-        szf5 = Math.min(zDim - 1, szf5);
-
-        sxf6 = Math.max(0, (int) Math.floor(sx6));
-        syf6 = Math.max(0, (int) Math.floor(sy6));
-        szf6 = Math.max(0, (int) Math.floor(sz6));
-        sxf6 = Math.min(xDim - 1, sxf6);
-        syf6 = Math.min(yDim - 1, syf6);
-        szf6 = Math.min(zDim - 1, szf6);
-
-        d1 = (float) Math.sqrt(((sx1 - sx4) * (sx1 - sx4)) + ((sy1 - sy4) * (sy1 - sy4)) + ((sz1 - sz4) * (sz1 - sz4)));
-        d2 = (float) Math.sqrt(((sx1 - sx5) * (sx1 - sx5)) + ((sy1 - sy5) * (sy1 - sy5)) + ((sz1 - sz5) * (sz1 - sz5)));
-        d3 = (float) Math.sqrt(((sx4 - sx5) * (sx4 - sx5)) + ((sy4 - sy5) * (sy4 - sy5)) + ((sz4 - sz5) * (sz4 - sz5)));
-
-        if ((d1 >= 1.0f) || (d2 >= 1.0f) || (d3 >= 1.0f)) {
-            subTriangles(sx1, sy1, sz1, sx4, sy4, sz4, sx5, sy5, sz5);
-        }
-
-        d1 = (float) Math.sqrt(((sx4 - sx5) * (sx4 - sx5)) + ((sy4 - sy5) * (sy4 - sy5)) + ((sz4 - sz5) * (sz4 - sz5)));
-        d2 = (float) Math.sqrt(((sx4 - sx6) * (sx4 - sx6)) + ((sy4 - sy6) * (sy4 - sy6)) + ((sz4 - sz6) * (sz4 - sz6)));
-        d3 = (float) Math.sqrt(((sx5 - sx6) * (sx5 - sx6)) + ((sy5 - sy6) * (sy5 - sy6)) + ((sz5 - sz6) * (sz5 - sz6)));
-
-        if ((d1 >= 1.0f) || (d2 >= 1.0f) || (d3 >= 1.0f)) {
-            subTriangles(sx4, sy4, sz4, sx5, sy5, sz5, sx6, sy6, sz6);
-        }
-
-        d1 = (float) Math.sqrt(((sx3 - sx4) * (sx3 - sx4)) + ((sy3 - sy4) * (sy3 - sy4)) + ((sz3 - sz4) * (sz3 - sz4)));
-        d2 = (float) Math.sqrt(((sx3 - sx6) * (sx3 - sx6)) + ((sy3 - sy6) * (sy3 - sy6)) + ((sz3 - sz6) * (sz3 - sz6)));
-        d3 = (float) Math.sqrt(((sx4 - sx6) * (sx4 - sx6)) + ((sy4 - sy6) * (sy4 - sy6)) + ((sz4 - sz6) * (sz4 - sz6)));
-
-        if ((d1 >= 1.0f) || (d2 >= 1.0f) || (d3 >= 1.0f)) {
-            subTriangles(sx3, sy3, sz3, sx4, sy4, sz4, sx6, sy6, sz6);
-        }
-
-        d1 = (float) Math.sqrt(((sx2 - sx5) * (sx2 - sx5)) + ((sy2 - sy5) * (sy2 - sy5)) + ((sz2 - sz5) * (sz2 - sz5)));
-        d2 = (float) Math.sqrt(((sx2 - sx6) * (sx2 - sx6)) + ((sy2 - sy6) * (sy2 - sy6)) + ((sz2 - sz6) * (sz2 - sz6)));
-        d3 = (float) Math.sqrt(((sx5 - sx6) * (sx5 - sx6)) + ((sy5 - sy6) * (sy5 - sy6)) + ((sz5 - sz6) * (sz5 - sz6)));
-
-        if ((d1 >= 1.0f) || (d2 >= 1.0f) || (d3 >= 1.0f)) {
-            subTriangles(sx2, sy2, sz2, sx5, sy5, sz5, sx6, sy6, sz6);
-        }
-    }
 
     /**
      * Takes the image's default transformation and transforms the surface by that transformation. This can be changed
@@ -6070,7 +3309,7 @@ public class JPanelSurface extends JPanelRendererBase
             return;
         }
 
-        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).surface;
+        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).getBranch();
 
         root.detach();
 
@@ -6082,48 +3321,6 @@ public class JPanelSurface extends JPanelRendererBase
         surfaceRootBG.addChild(root);
     }
 
-    /**
-     * Writes a ModelTriangleMesh and Material to disk in the xml format, based on surface.xsd.
-     *
-     * @param  kMesh      ModelTriangleMesh surface mesh
-     * @param  kMaterial  Material material reference.
-     */
-    private void writeTriangleMeshXML(ModelTriangleMesh[] kMesh, Material kMaterial) {
-
-        /* Dialog: Prompt the user to select the filename: */
-        String name = getFileName(false);
-
-        if (name == null) {
-            return;
-        }
-
-        /* Check the filename extension: */
-        int i = name.lastIndexOf('.');
-
-        if ((i > 0) && (i < (name.length() - 1))) {
-            String extension = name.substring(i + 1).toLowerCase();
-
-            if (!extension.equals("xml")) {
-                MipavUtil.displayError("Extension must be .xml");
-
-                return;
-            }
-        } else {
-            name = name + ".xml";
-        }
-
-        i = name.lastIndexOf(File.separator);
-
-        String dir = name.substring(0, i + 1);
-        name = name.substring(i + 1);
-
-        /* Create the FileSurfaceXML to write the mesh: */
-        FileSurfaceXML kSurfaceXML = new FileSurfaceXML(ViewUserInterface.getReference(), null, null);
-
-        try {
-            kSurfaceXML.writeHeader(name, dir, kMesh, kMaterial, getSurfaceAttributeOpacity(), getSurfaceLevelDetail());
-        } catch (IOException kError) { }
-    }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 

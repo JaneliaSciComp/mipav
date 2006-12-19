@@ -19,6 +19,7 @@ import com.sun.j3d.utils.universe.*;
 
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.image.*;
 
 import java.io.*;
 
@@ -3482,5 +3483,47 @@ public class SurfaceRender extends RenderViewBase {
         dViewWidth = 15.0f * Math.tan(dFieldOfView / 15.0f);
         m_dOriginalScreenScale = kScreen.getPhysicalScreenWidth() / dViewWidth;
     }
+
+    /** 
+     * generates an ImageComponent3D containing the ModelImage data. Uses the
+     * PatientSlice object to output the data into the ImageComponent3D, so
+     * lut changes can be applied. The ImageComponent3D is used to create a
+     * Texture3D object for texture-mapping the ModelImage data onto
+     * ModelTriangleMesh objects.
+     * @return ImageComponent3D containing the ModelImage data.
+     */
+    public ImageComponent3D generateVolumeTexture()
+    {
+        if ( imageA == null )
+        {
+            return null;
+        }
+        int buffFactor = imageA.isColorImage() ? 4 : 1;
+        int[] localExtents = imageA.getExtents();
+        int[] iImageBufferA = new int[ localExtents[0] * localExtents[1] * buffFactor ];
+        int iNumberSlices = localExtents[2];
+        ImageComponent3D kImageComponent = new ImageComponent3D(ImageComponent.FORMAT_RGBA,
+                                                                localExtents[0], localExtents[1], localExtents[2],
+                                                                true, false);
+        kImageComponent.setCapability(ImageComponent3D.ALLOW_IMAGE_WRITE);
+        kImageComponent.setCapability(ImageComponent3D.ALLOW_IMAGE_READ);
+        kImageComponent.setCapability(ImageComponent3D.ALLOW_SIZE_READ);
+        kImageComponent.setCapability(ImageComponent3D.ALLOW_FORMAT_READ);
+
+        PatientSlice kPatientSlice = new PatientSlice( imageA, LUTa, null, null, FileInfoBase.UNKNOWN_ORIENT );
+
+        for (int iZ = 0; iZ < iNumberSlices; iZ++) {
+            kPatientSlice.updateSlice( iZ );
+
+            if ( kPatientSlice.showUsingOrientation( 0, iImageBufferA, null, true, false, 0, false ) )
+            {
+                BufferedImage kBuff = new BufferedImage( localExtents[0], localExtents[1], BufferedImage.TYPE_INT_ARGB );
+                kBuff.setRGB( 0, 0, localExtents[0], localExtents[1], iImageBufferA, 0, localExtents[0] );
+                kImageComponent.set( iZ, kBuff );
+            }
+        }
+        return kImageComponent;
+    }
+
 
 }

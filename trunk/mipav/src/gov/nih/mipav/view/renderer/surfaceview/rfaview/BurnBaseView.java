@@ -419,7 +419,7 @@ public class BurnBaseView {
 
         BitSet diffMask = new BitSet();
 
-        surfaceMask = surface.surfaceMask;
+        surfaceMask = surface.getMask();
 
         // System.err.println("surface.surfaceMask = " + surface.surfaceMask.size());
         BitSet burnMask = new BitSet(surfaceMask.size());
