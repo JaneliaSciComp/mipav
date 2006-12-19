@@ -13,7 +13,6 @@ import java.awt.event.*;
 import java.awt.image.*;
 
 import javax.media.j3d.*;
-import javax.media.j3d.*;
 
 import javax.swing.*;
 import javax.swing.event.*;
@@ -104,21 +103,37 @@ public class JStereoWindow extends JFrame
      * @param  kMesh       the displayed surface
      * @param  kTransform  the current model transformation (rotation, scale, translation) for the surface.
      */
-    public JStereoWindow(ModelTriangleMesh kMesh, Transform3D kTransform) {
+    public JStereoWindow( SurfaceAttributes kSurface, Transform3D kTransform) {
 
         /* Create the window: */
         super("StereoView");
 
-        /* The left and right-eye views are displayed in grayscale so the
-         * anaglyph view can be created using the two frame buffers: */
-        Appearance kAppearance = new Appearance();
-        kAppearance.setMaterial(new Material(new Color3f(0f, 0f, 0f), new Color3f(0f, 0f, 0f),
-                                             new Color3f(.8f, .8f, .8f), new Color3f(0f, 0f, 0f), 100f));
-        kAppearance.getMaterial().setLightingEnable(true);
+        ModelTriangleMesh[] kMeshes = kSurface.getMesh();
+        BranchGroup kLeft = new BranchGroup();
+        BranchGroup kRight = new BranchGroup();
+        for ( int i = 0; i < kMeshes.length; i++ )
+        {
+            ModelTriangleMesh kMesh = new ModelTriangleMesh(kMeshes[i].getVertexCopy(),
+                                                            kMeshes[i].getNormalCopy(),
+                                                            kMeshes[i].getIndexCopy()  );
 
+            /* The left and right-eye views are displayed in grayscale so the
+             * anaglyph view can be created using the two frame buffers: */
+            Appearance kAppearance = new Appearance();
+            kAppearance.setMaterial(new Material(new Color3f(0f, 0f, 0f), new Color3f(0f, 0f, 0f),
+                                                 new Color3f(.8f, .8f, .8f), new Color3f(0f, 0f, 0f), 100f));
+            kAppearance.getMaterial().setLightingEnable(true);
+
+            TransformGroup kTransformGroupLeft = new TransformGroup(new Transform3D());
+            kTransformGroupLeft.addChild( addBranchGroup(new Shape3D(kMesh, kAppearance), kTransform) );
+            kLeft.addChild(kTransformGroupLeft);
+
+            TransformGroup kTransformGroupRight = new TransformGroup(new Transform3D());
+            kTransformGroupRight.addChild( addBranchGroup(new Shape3D(kMesh, kAppearance), kTransform) );
+            kRight.addChild(kTransformGroupRight);
+        }
         /* Initialize and create the scene graphs and canvases: */
-        init(addBranchGroup(new Shape3D(kMesh, kAppearance), kTransform),
-             addBranchGroup(new Shape3D(kMesh, kAppearance), kTransform));
+        init( kLeft, kRight );
 
         /* Setup the user-interface: */
         setupInterface();
@@ -460,11 +475,11 @@ public class JStereoWindow extends JFrame
 
         /* Unpack the left color into separate RGB components: */
         int iLeftRed = ((iLeftC >> 16) & 0xFF);
-        int iLeftGreen = ((iLeftC >> 8) & 0xFF);
-        int iLeftBlue = (iLeftC & 0xFF);
+        //int iLeftGreen = ((iLeftC >> 8) & 0xFF);
+        //int iLeftBlue = (iLeftC & 0xFF);
 
         /* Unpack the Right color into separate RGB components: */
-        int iRightRed = ((iRightC >> 16) & 0xFF);
+        //int iRightRed = ((iRightC >> 16) & 0xFF);
         int iRightGreen = ((iRightC >> 8) & 0xFF);
         int iRightBlue = (iRightC & 0xFF);
 

@@ -6736,7 +6736,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
         }
         int iBound = extents[ 0 ];
         int jBound = extents[ 1 ];
-        int kBound = extents[ 2 ];
 
         /* Get the loop multiplication factors for indexing into the 1D array
          * with 3 index variables: based on the coordinate-systems:
@@ -6778,8 +6777,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
         boolean exportComplex = ( values.length == (2 * iBound * jBound) ) ? true : false;
         double real, imaginary, mag;
 
+
         /* loop over the 2D image (values) we're writing into */
-        float x, y, z;
+        float x = x0;
+        float y = y0;
+        float z = z0;
         for (int j = 0; j < jBound; j++)
         {
             /* Initialize the first diagonal point(x,y,z): */
@@ -6793,11 +6795,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
                 int kIndex = (int)z;
 
                 /* calculate the ModelImage space index: */
-                int index =
+                int index = (int)(
                     (iIndex * iFactor) +
                     (jIndex * jFactor) +
                     (kIndex * kFactor) +
-                    (tSlice * tFactor);
+                    (tSlice * tFactor));
 
                 /* Bounds checking, if out of bounds, set to zero: */
                 if (((x < 0) || (x >= dimExtents[0])) ||
@@ -6882,7 +6884,6 @@ public class ModelStorageBase extends ModelSerialCloneable {
             z0 = z0 + zSlopeY;
         }
     }
-
 
     /** Returns the image width, based on the Patient Coordinates orientation
      * from which the data will be viewed:
@@ -7045,14 +7046,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
     {
         if ( kColor != null )
         {
+            if ( m_kColorVector.size() > index )
+            {
+                m_kColorVector.removeElementAt(index);
+            }
             m_kColorVector.insertElementAt(kColor, index);
         }
         if ( kMask != null )
         {
+            if ( m_kMaskVector.size() > index )
+            {
+                m_kMaskVector.removeElementAt(index);
+            }
             m_kMaskVector.insertElementAt(kMask, index);
         }
         if ( kMaskColors != null )
         {
+            if ( m_kMaskColorVector.size() > index )
+            {
+                m_kMaskColorVector.removeElementAt(index);
+            }
             m_kMaskColorVector.insertElementAt(kMaskColors, index);
         }
     }

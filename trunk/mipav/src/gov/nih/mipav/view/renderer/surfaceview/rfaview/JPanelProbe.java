@@ -641,7 +641,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
             Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
             for (int i = 0; i < surfaceVector.size(); i++) {
-                String name = ((SurfaceAttributes) surfaceVector.get(i)).name;
+                String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
 
                 if (name.endsWith("_liver.sur") || name.endsWith("_vasculature.sur")) {
                     surfaceVector.remove(i);
@@ -653,7 +653,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
                 return;
             }
 
-            Point3f center = ((SurfaceAttributes) surfaceVector.get(selectedIndex)).center;
+            Point3f center = ((SurfaceAttributes) surfaceVector.get(selectedIndex)).getCenter();
             Vector3f surfaceCenter = new Vector3f(center.x, center.y, center.z);
             Transform3D t3d = new Transform3D();
 
@@ -839,7 +839,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
         for (int i = 0; i < surfaceVector.size(); i++) {
-            String name = ((SurfaceAttributes) surfaceVector.get(i)).name;
+            String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
 
             if (name.endsWith("_liver.sur") || name.endsWith("_vasculature.sur")) {
                 surfaceVector.remove(i);
@@ -928,7 +928,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
         for (int i = 0; i < surfaceVector.size(); i++) {
-            String name = ((SurfaceAttributes) surfaceVector.get(i)).name;
+            String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
 
             if (name.endsWith("_liver.sur") || name.endsWith("_vasculature.sur")) {
                 surfaceVector.remove(i);
@@ -1400,7 +1400,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         }
 
         for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
-            String name = ((SurfaceAttributes) en.nextElement()).name;
+            String name = ((SurfaceAttributes) en.nextElement()).getName();
 
             if (!name.endsWith("_liver.sur") && !name.endsWith("_vasculature.sur")) {
                 surfaceNames.addElement(name);
@@ -1423,7 +1423,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
 
             // attach the probe to the surface center if the user wants to
             if (snapToTarget) {
-                Point3f center = ((SurfaceAttributes) surfaceVector.get(surfaceVector.size() - 1)).center;
+                Point3f center = ((SurfaceAttributes) surfaceVector.get(surfaceVector.size() - 1)).getCenter();
                 Vector3f surfaceCenter = new Vector3f(center.x, center.y, center.z);
                 Transform3D t3d = new Transform3D();
 
@@ -1603,7 +1603,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
             Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
             for (int i = 0; i < surfaceVector.size(); i++) {
-                String name = ((SurfaceAttributes) surfaceVector.get(i)).name;
+                String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
 
                 if (name.endsWith("_liver.sur") || name.endsWith("_vasculature.sur")) {
                     surfaceVector.remove(i);
@@ -1620,7 +1620,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
 
                 for (int i = 0; i < surfaces.size(); i++) {
 
-                    if (((SurfaceAttributes) surfaces.get(i)).name.equals(((SurfaceAttributes) surfaceVector.get(selectedIndex)).name)) {
+                    if (((SurfaceAttributes) surfaces.get(i)).getName().equals(((SurfaceAttributes) surfaceVector.get(selectedIndex)).getName())) {
                         ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceList().setSelectedIndex(i);
                     }
                 }
@@ -1629,7 +1629,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
 
                 for (int i = 0; i < surfaces.size(); i++) {
 
-                    if (((SurfaceAttributes) surfaces.get(i)).name.equals(((SurfaceAttributes) surfaceVector.get(selectedIndex)).name)) {
+                    if (((SurfaceAttributes) surfaces.get(i)).getName().equals(((SurfaceAttributes) surfaceVector.get(selectedIndex)).getName())) {
                         ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceList().setSelectedIndex(i);
                     }
                 }
@@ -1638,7 +1638,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
             }
 
             if (snapToTarget) {
-                Point3f center = ((SurfaceAttributes) surfaceVector.get(selectedIndex)).center;
+                Point3f center = ((SurfaceAttributes) surfaceVector.get(selectedIndex)).getCenter();
                 Vector3f surfaceCenter = new Vector3f(center.x, center.y, center.z);
                 Transform3D t3d = new Transform3D();
 
@@ -3240,7 +3240,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         Vector surfaceVector = (Vector) ((SurfaceRender) renderBase).getSurfaceDialog().getSurfaceVector().clone();
 
         for (int i = 0; i < surfaceVector.size(); i++) {
-            String name = ((SurfaceAttributes) surfaceVector.get(i)).name;
+            String name = ((SurfaceAttributes) surfaceVector.get(i)).getName();
 
             if (name.endsWith("_liver.sur") || name.endsWith("_vasculature.sur")) {
                 surfaceVector.remove(i);
@@ -3253,7 +3253,7 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
 
         for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
             SurfaceAttributes sur = (SurfaceAttributes) en.nextElement();
-            String name = sur.name;
+            String name = sur.getName();
 
             if (name.equals(selection)) {
                 surface = sur;
@@ -3263,14 +3263,14 @@ public class JPanelProbe extends JPanelRendererBase implements ChangeListener, L
         if (surface != null) {
 
             // / should these be in voxel space instead of real (eg. mm) space?
-            Point3f volPt = transformPtVolumeToImage(surface.center);
+            Point3f volPt = transformPtVolumeToImage(surface.getCenter());
 
             targetXText.setText("" + MipavUtil.makeFloatString(volPt.x * xRes, 3));
             targetYText.setText("" + MipavUtil.makeFloatString(volPt.y * yRes, 3));
             targetZText.setText("" + MipavUtil.makeFloatString(volPt.z * zRes, 3));
 
             // / assumes that the units are the same in all dims
-            float mmVolume = surface.volume;
+            float mmVolume = surface.getVolume();
             String unitStr = parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasureAbbrevStr(parentFrame.getImageOriginal().getFileInfo(0).getUnitsOfMeasure(0));
 
             targetVolumeText.setText("" + mmVolume + " " + unitStr + "^3");

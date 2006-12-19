@@ -2,13 +2,8 @@ package gov.nih.mipav.view.renderer.surfaceview;
 
 
 import gov.nih.mipav.model.structures.*;
-
-import com.sun.j3d.utils.geometry.*;
-
 import java.util.*;
-
 import javax.media.j3d.*;
-
 import javax.vecmath.*;
 
 
@@ -23,235 +18,261 @@ public class SurfaceAttributes {
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Area of triangle mesh displayed associated with the surface. Changes with level of detail. */
-    public float area;
+    private float mArea;
 
     /** Surface center. */
-    public Point3f center;
+    private Point3f mCenter;
 
     /** Clod mesh. */
-    public ModelClodMesh clodMesh;
+    private ModelClodMesh mClodMesh;
+
+    /** ModelTriangleMesh. */
+    private ModelTriangleMesh[] mTriangleMesh;
+
+    /** Shape3D[] array */
+    private Shape3D[] mSurfaceShape;
 
     /**
      * Color of surface. The element type is Color4f, although currently the alpha channel does not appear to be
      * supported by Java3D materials (even though the Material API allows the alpha channel to be set for diffuse
      * colors).
      */
-    public Color4f color;
+    private Color4f mColor;
 
     /** Detail level of surface; only applies to clod meshes. */
-    public int detailLevel;
+    private int mLevelDetail;
 
     /** The full path to the surface file. */
-    public String fullPath;
+    private String mFullPath;
 
     /**
      * <code>true</code> indicates that this surface is a clod mesh, <code>false</code> that it is a standard triangle
      * mesh; clod meshes can change level of detail, triangle meshes cannot.
      */
-    public boolean isClodMesh;
+    private boolean mIsClodMesh;
 
     /** VOI point. */
-    public boolean isVOIPt = false;
+    private boolean mIsVOIPt = false;
 
     /** Name of surface displayed in list box. */
-    public String name;
+    private String mName;
 
     /** opacity of surface. */
-    public float opacity;
+    private float mOpacity;
 
     /**
      * Polygon mode of surface, one of PolygonAttribute.POLYGON_FILL, PolygonAttribute.POLYGON_LINE, or
      * PolygonAttribute.POLYGON_POINT.
      */
-    public int polygonMode;
+    private int mPolygonMode;
 
     /** Shininess of surface. */
-    public int shininess;
+    private int mShininess;
 
     /** Surface subtree, holds all the Shape3D objects that make up the surface. */
-    public BranchGroup surface;
+    private BranchGroup mSurfaceBranchGroup;
 
     /** Surface volume bit set mask. */
-    public BitSet surfaceMask;
+    private BitSet mSurfaceMask;
 
     /** Number of triangles displayed associated with the surface. Changes with level of detail. */
-    public int triangles;
+    private int mNumberTriangles;
 
     /** Volume of triangle mesh displayed associated with the surface. Changes with level of detail. */
-    public float volume;
+    private float mVolume;
+
+    private Material mMaterial;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-    /**
-     * Constructs new attributes structure to hold information needed for displaying each surface.
-     *
-     * @param  surface      Surface subtree.
-     * @param  fullPath     The full path to the surface file.
-     * @param  name         Name of surface.
-     * @param  color        Color of surface.
-     * @param  shininess    Shininess of surface.
-     * @param  detailLevel  Level of detail.
-     * @param  polygonMode  Fill, Line, etc.
-     * @param  triangles    Number of triangles in surface.
-     * @param  volume       Volume of mesh.
-     * @param  area         Area of mesh.
-     * @param  isClodMesh   Flag stating if this is a clod mesh.
-     * @param  surfaceMask  surface volume mask.
-     */
-    public SurfaceAttributes(BranchGroup surface, String fullPath, String name, Color4f color, int shininess,
-                             int detailLevel, int polygonMode, int triangles, float volume, float area,
-                             boolean isClodMesh, BitSet surfaceMask) {
 
-        this(surface, fullPath, name, color, shininess, detailLevel, polygonMode, triangles, volume, area, isClodMesh,
-             0.5f, surfaceMask);
+    public SurfaceAttributes( ModelTriangleMesh[] mesh, String fullPath, String name, int triangles, float volume, float area, Point3f center )
+    {
+        this.mTriangleMesh = mesh;
+        this.mClodMesh = null;
+        this.mSurfaceBranchGroup = null;
+        this.mFullPath = fullPath;
+        this.mName = name;
+        this.mShininess = 64;
+        this.mLevelDetail = 100;
+        this.mPolygonMode = PolygonAttributes.POLYGON_FILL;
+        this.mNumberTriangles = triangles;
+        this.mVolume = volume;
+        this.mArea = area;
+        this.mCenter = center;
+        this.mIsVOIPt = false;
+        this.mIsClodMesh = false;
+        this.mOpacity = 0.5f;
+        this.mSurfaceMask = null;
+        
+        this.setColor( new Color4f( 1, 0, 0, 1 ) ); 
     }
 
-    /**
-     * Constructs new attributes structure to hold information needed for displaying each surface.
-     *
-     * @param  surface      Surface subtree.
-     * @param  fullPath     The full path to the surface file.
-     * @param  name         Name of surface.
-     * @param  color        Color of surface.
-     * @param  shininess    Shininess of surface.
-     * @param  detailLevel  Level of detail.
-     * @param  polygonMode  Fill, Line, etc.
-     * @param  triangles    Number of triangles in surface.
-     * @param  volume       Volume of mesh.
-     * @param  area         Area of mesh.
-     * @param  isClodMesh   Flag stating if this is a clod mesh.
-     * @param  opacity      opacity of the surface
-     * @param  surfaceMask  Surface volume bit set mask
-     */
-    public SurfaceAttributes(BranchGroup surface, String fullPath, String name, Color4f color, int shininess,
-                             int detailLevel, int polygonMode, int triangles, float volume, float area,
-                             boolean isClodMesh, float opacity, BitSet surfaceMask) {
+    public void setMesh( ModelTriangleMesh[] mesh )
+    {
+        mTriangleMesh = mesh;
+    }
 
-        this.surface = surface;
-        this.fullPath = fullPath;
-        this.name = name;
-        this.color = color;
-        this.shininess = shininess;
-        this.detailLevel = detailLevel;
-        this.polygonMode = polygonMode;
-        this.triangles = triangles;
-        this.volume = volume;
-        this.area = area;
-        this.isClodMesh = isClodMesh;
-        this.opacity = opacity;
-        this.surfaceMask = surfaceMask;
 
-        // change the object opacity
-        BranchGroup root = surface;
-        Shape3D shape = (Shape3D) root.getChild(0);
-        Appearance appearance = shape.getAppearance();
-        TransparencyAttributes tap = new TransparencyAttributes();
+    public ModelTriangleMesh[] getMesh()
+    {
+        return mTriangleMesh;
+    }
 
-        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
+    public void setShape( Shape3D[] surfaceShape )
+    {
+        mSurfaceShape = surfaceShape;
+    }
 
-        if ((1 - opacity) == 0) {
-            tap.setTransparencyMode(TransparencyAttributes.NONE);
-        } else {
-            tap.setTransparencyMode(TransparencyAttributes.BLENDED);
+    public Shape3D[] getShape()
+    {
+        return mSurfaceShape;
+    }
+
+    public void setMaterial( Material material )
+    {
+        mMaterial = material;
+        Color3f diffuse = new Color3f();
+        mMaterial.getDiffuseColor( diffuse );
+        mColor.x = diffuse.x;
+        mColor.y = diffuse.y;
+        mColor.z = diffuse.z;
+    }
+
+    public Material getMaterial()
+    {
+        return mMaterial;
+    }
+
+    public void setOpacity( float opacity )
+    {
+        mOpacity = opacity;
+    }
+
+    public float getOpacity()
+    {
+        return mOpacity;
+    }
+
+    public void setLevelDetail( int levelDetail )
+    {
+        mLevelDetail = levelDetail;
+    }
+
+    public int getLevelDetail()
+    {
+        return mLevelDetail;
+    }
+
+
+    public void setBranch( BranchGroup branch )
+    {
+        mSurfaceBranchGroup = branch;
+    }
+    
+    public BranchGroup getBranch() 
+    {
+        return mSurfaceBranchGroup;
+    }
+
+    public void setMask( BitSet mask )
+    {
+        mSurfaceMask = mask;
+    }
+
+    public BitSet getMask()
+    {
+        return mSurfaceMask;
+    }
+
+    public boolean getIsVOIPt()
+    {
+        return mIsVOIPt;
+    }
+
+    public void setIsClodMesh( boolean isClod )
+    {
+        mIsClodMesh = isClod;
+    }
+
+    public boolean getIsClodMesh()
+    {
+        return mIsClodMesh;
+    }
+
+    public String getName()
+    {
+        return mName;
+    }
+    
+    public String getFullPath()
+    {
+        return mFullPath;
+    }
+
+    public void setColor( Color4f color )
+    {
+        mColor = color;
+
+        if ( mMaterial == null )
+        {
+            mMaterial = new Material();
+            mMaterial.setCapability(Material.ALLOW_COMPONENT_READ);
+            mMaterial.setCapability(Material.ALLOW_COMPONENT_WRITE);
         }
-
-        tap.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
-        tap.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
-        tap.setTransparency(1 - opacity); // 0 = Opaque
-
-        // appearance.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-        appearance.setTransparencyAttributes(tap);
+        mMaterial.setDiffuseColor( mColor.x, mColor.y, mColor.z, mColor.w);
+        mMaterial.setSpecularColor( mColor.x, mColor.y, mColor.z);
+        mMaterial.setAmbientColor( mColor.x, mColor.y, mColor.z);
     }
 
-
-    /**
-     * Constructs new attributes structure to hold information needed for displaying each surface.
-     *
-     * @param  surface      Surface subtree.
-     * @param  fullPath     The full path to the surface file.
-     * @param  name         Name of surface.
-     * @param  color        Color of surface.
-     * @param  shininess    Shininess of surface.
-     * @param  detailLevel  Level of detail.
-     * @param  polygonMode  Fill, Line, etc.
-     * @param  triangles    Number of triangles in surface.
-     * @param  volume       Volume of mesh.
-     * @param  area         Area of mesh.
-     * @param  isClodMesh   Flag stating if this is a clod mesh.
-     * @param  opacity      opacity of the surface
-     * @param  isVOIPt      VOI point or not.
-     * @param  surfaceMask  Surface volume bit set mask.
-     */
-    public SurfaceAttributes(BranchGroup surface, String fullPath, String name, Color4f color, int shininess,
-                             int detailLevel, int polygonMode, int triangles, float volume, float area,
-                             boolean isClodMesh, float opacity, boolean isVOIPt, BitSet surfaceMask) {
-
-        this.surface = surface;
-        this.fullPath = fullPath;
-        this.name = name;
-        this.color = color;
-        this.shininess = shininess;
-        this.detailLevel = detailLevel;
-        this.polygonMode = polygonMode;
-        this.triangles = triangles;
-        this.volume = volume;
-        this.area = area;
-        this.isClodMesh = isClodMesh;
-        this.opacity = opacity;
-        this.isVOIPt = isVOIPt;
-        this.surfaceMask = surfaceMask;
-
-        BranchGroup root = surface;
-
-        for (int i = 0; i < root.numChildren(); i++) {
-            Shape3D shape = (Shape3D) (((Sphere) (((TransformGroup) (root.getChild(i))).getChild(0))).getShape());
-            Appearance appearance = shape.getAppearance();
-            TransparencyAttributes tap = new TransparencyAttributes();
-
-            tap.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-
-            if ((1 - opacity) == 0) {
-                tap.setTransparencyMode(TransparencyAttributes.NONE);
-            } else {
-                tap.setTransparencyMode(TransparencyAttributes.BLENDED);
-            }
-
-            tap.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
-            tap.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
-            tap.setTransparency(1 - opacity); // 0 = Opaque
-
-            // appearance.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-            appearance.setTransparencyAttributes(tap);
-        }
-
+    public Color4f getColor()
+    {
+        return mColor;
     }
 
-    /**
-     * Constructs new attributes structure to hold information needed for displaying each surface.
-     *
-     * @param  surface      Surface subtree.
-     * @param  fullPath     The full path to the surface file.
-     * @param  name         Name of surface.
-     * @param  color        Color of surface.
-     * @param  shininess    Shininess of surface.
-     * @param  detailLevel  Level of detail.
-     * @param  polygonMode  Fill, Line, etc.
-     * @param  triangles    Number of triangles in surface.
-     * @param  volume       Volume of mesh.
-     * @param  area         Area of mesh.
-     * @param  isClodMesh   Flag stating if this is a clod mesh.
-     * @param  opacity      opacity of the surface
-     * @param  center       surface center
-     * @param  surfaceMask  surface volume mask
-     */
-    public SurfaceAttributes(BranchGroup surface, String fullPath, String name, Color4f color, int shininess,
-                             int detailLevel, int polygonMode, int triangles, float volume, float area,
-                             boolean isClodMesh, float opacity, Point3f center, BitSet surfaceMask) {
-        this(surface, fullPath, name, color, shininess, detailLevel, polygonMode, triangles, volume, area, isClodMesh,
-             opacity, surfaceMask);
-        this.center = center;
+    public void setPolygonMode( int mode )
+    {
+        mPolygonMode = mode;
     }
 
+    public int getPolygonMode()
+    {
+        return mPolygonMode;
+    }
+
+    public void setVolume( float volume )
+    {
+        mVolume = volume;
+    }
+
+    public float getVolume()
+    {
+        return mVolume;
+    }
+
+    public void setArea( float area )
+    {
+        mArea = area;
+    }
+
+    public float getArea()
+    {
+        return mArea;
+    }
+
+    public void setNumberTriangles( int nTriangles )
+    {
+        mNumberTriangles = nTriangles;
+    }
+
+    public int getNumberTriangles()
+    {
+        return mNumberTriangles;
+    }
+
+    public Point3f getCenter()
+    {
+        return mCenter;
+    }
 
 }

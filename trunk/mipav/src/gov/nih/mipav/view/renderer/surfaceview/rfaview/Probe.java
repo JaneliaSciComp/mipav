@@ -544,7 +544,7 @@ public class Probe implements MouseBehaviorCallback {
         probeRootParentTG.setTransform(probeTrans);
 
         if (!flag && (surfaceRender.getProbeDialog() != null) && surfaceRender.getProbeDialog().isSnapToTarget()) {
-            Point3f center = surfaceRender.getProbeDialog().getTargetSurface().center;
+            Point3f center = surfaceRender.getProbeDialog().getTargetSurface().getCenter();
             Vector3f surfaceCenter = new Vector3f(center.x, center.y, center.z);
             Transform3D t3d = new Transform3D();
 

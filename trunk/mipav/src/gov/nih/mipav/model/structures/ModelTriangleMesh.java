@@ -95,7 +95,9 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      *                    triangle is counterclockwise ordered as viewed by an observer outside the mesh.
      */
     public ModelTriangleMesh(Point3f[] akVertex, int[] aiConnect) {
-        super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS, aiConnect.length);
+        super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3,
+              2, new int[]{0, 0},
+              aiConnect.length);
 
         setCapability(Geometry.ALLOW_INTERSECT);
         setCapability(GeometryArray.ALLOW_COUNT_WRITE);
@@ -106,6 +108,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCapability(GeometryArray.ALLOW_COUNT_READ);
         setCapability(GeometryArray.ALLOW_COORDINATE_READ);
         setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+        setCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
+        setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_WRITE);
         setCapability(GeometryArray.ALLOW_FORMAT_READ);
         setCapability(Geometry.ALLOW_INTERSECT);
 
@@ -134,7 +138,9 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      *                    triangle is counterclockwise ordered as viewed by an observer outside the mesh.
      */
     public ModelTriangleMesh(Point3f[] akVertex, Vector3f[] akNormal, int[] aiConnect) {
-        super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS, aiConnect.length);
+        super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3,
+              2, new int[]{0, 0},
+              aiConnect.length);
 
         setCapability(Geometry.ALLOW_INTERSECT);
         setCapability(GeometryArray.ALLOW_COUNT_WRITE);
@@ -145,6 +151,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCapability(GeometryArray.ALLOW_COUNT_READ);
         setCapability(GeometryArray.ALLOW_COORDINATE_READ);
         setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+        setCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
+        setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_WRITE);
 
         // temporary variables to avoid 'new' calls
         m_kV0 = new Point3f();
@@ -173,7 +181,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      */
     public ModelTriangleMesh(Point3f[] akVertex, Vector3f[] akNormal, Color3f[] akColor, int[] aiConnect) {
         super(akVertex.length,
-              IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.COLOR_3,
+              IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_3,
+              2, new int[]{0, 0},
               aiConnect.length);
 
         setCapability(Geometry.ALLOW_INTERSECT);
@@ -185,6 +194,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCapability(GeometryArray.ALLOW_NORMAL_WRITE);
         setCapability(GeometryArray.ALLOW_COORDINATE_READ);
         setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+        setCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
+        setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_WRITE);
         setCapability(GeometryArray.ALLOW_COLOR_READ);
         setCapability(GeometryArray.ALLOW_COLOR_WRITE);
 
@@ -1789,7 +1800,6 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCoordinates(0, akVertex);
         computeNormals();
     }
-
 
     /**
      * Smooth mesh. The formula can be found in "The Visualization Toolkit" by Will Schoeder, Ken Martin, and Bill

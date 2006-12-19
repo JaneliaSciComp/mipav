@@ -52,7 +52,7 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererBase {
     private JLabel flythruLabelFileName = new JLabel();
 
     /** Surface smooth control panel reference. */
-    private JPanelSurfaceSmooth kDialogSmooth;
+    private JDialogSmoothMesh kDialogSmooth;
 
     /** File to open the mask suface. */
     private File kFile;
@@ -663,7 +663,7 @@ public class JPanelVirtualEndoscopySetup extends JPanelRendererBase {
         gbc.fill = GridBagConstraints.BOTH;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1;
-        kDialogSmooth = new JPanelSurfaceSmooth(m_kView);
+        kDialogSmooth = new JDialogSmoothMesh( parentFrame, false, JDialogSmoothMesh.SMOOTH1 );
         smoothPanel.add(kDialogSmooth.getMainPanel(), gbc);
 
         JPanel surfaceControlPanel = new JPanel();
