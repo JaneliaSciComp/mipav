@@ -28,17 +28,38 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    private JCheckBox distortBox = null;
+    private JRadioButton replaceDistortButton = null;
 
+    private JRadioButton removeDistortButton = null;
+    
+    private JCheckBox checkBlinksBox;
+    
+    private JRadioButton replaceBlinksButton = null;
+    private JRadioButton removeBlinksButton = null;
+    
+    
+    private JCheckBox checkDistortionBox;
+    
     /** DOCUMENT ME! */
     private double distortionThreshold = .8;
 
     /** DOCUMENT ME! */
     private boolean doDistortion = true;
 
+    private boolean doBlinks = true;
+    
+    private boolean doReplaceBlinks = true;
+    
+    private boolean doReplaceDistortion = true;
+    
     /** DOCUMENT ME! */
     private JTextField frameField = null;
 
+    /** */
+    private JTextField desiredFrameField = null;
+    
+    private JCheckBox desiredFrameBox = null;
+    
     /** DOCUMENT ME! */
     private PlugInAlgorithmProcessICG icgAlgo;
 
@@ -48,6 +69,8 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private int registrationFrame = 1;
 
+    private int desiredFrames = 0;
+    
     /** DOCUMENT ME! */
     private ModelImage resultImage = null;
 
@@ -60,7 +83,7 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
-    //~ Constructors ---------------------------------------------------------------------------------------------------
+            //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates a new PlugInDialogProcessICG object.
@@ -132,7 +155,7 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
             // image name so as to indicate that the image is now unlocked!
             // The image frames are enabled and then registed to the userinterface.
             Vector imageFrames = image.getImageFrameVector();
-
+                      
             for (int i = 0; i < imageFrames.size(); i++) {
                 ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
                 ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
@@ -143,8 +166,13 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
 
             }
 
+            resultImage = ((PlugInAlgorithmProcessICG)algorithm).getResultImage();
+            
+            if (algorithm.isCompleted()) {
+                insertScriptLine();
+            }
+            
             if (parentFrame != null) {
-                System.err.println("should update title");
                 userInterface.registerFrame(parentFrame);
                 ((ViewJFrameImage) parentFrame).initExtentsVariables(((ViewJFrameImage) parentFrame).getActiveImage());
                 ((ViewJFrameImage) parentFrame).setTitle();
@@ -170,13 +198,39 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
      */
     public void itemStateChanged(ItemEvent e) {
 
-        if (e.getSource() == distortBox) {
-
-            if (distortBox.isSelected()) {
+        if (e.getSource() == checkDistortionBox) {
+        	
+            if (checkDistortionBox.isSelected()) {
+            	removeDistortButton.setEnabled(true);
+            	replaceDistortButton.setEnabled(true);
                 sdField.setEnabled(true);
             } else {
+            	removeDistortButton.setEnabled(false);
+            	replaceDistortButton.setEnabled(false);
                 sdField.setEnabled(false);
             }
+        } else if (e.getSource() == checkBlinksBox) {
+        	if (checkBlinksBox.isSelected()) {
+            	removeBlinksButton.setEnabled(true);
+            	replaceBlinksButton.setEnabled(true);
+            } else {
+            	removeBlinksButton.setEnabled(false);
+            	replaceBlinksButton.setEnabled(false);
+            }
+        } else if (e.getSource() == desiredFrameBox) {
+        	desiredFrameField.setEnabled(desiredFrameBox.isSelected());
+        	if (desiredFrameBox.isSelected()) {
+        		checkDistortionBox.setSelected(true);
+        		removeDistortButton.setSelected(true);
+        		checkDistortionBox.setEnabled(false);
+        		removeDistortButton.setEnabled(false);
+            	replaceDistortButton.setEnabled(false);
+        	} else {
+        		checkDistortionBox.setEnabled(true);
+        		removeDistortButton.setEnabled(checkDistortionBox.isSelected());
+            	replaceDistortButton.setEnabled(checkDistortionBox.isSelected());
+        	}
+        	
         }
     }
 
@@ -200,7 +254,8 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
             }
 
             // Make algorithm
-            icgAlgo = new PlugInAlgorithmProcessICG(image, registrationFrame, distortionThreshold, doDistortion);
+            icgAlgo = new PlugInAlgorithmProcessICG(image, registrationFrame, distortionThreshold, doBlinks,
+            		doReplaceBlinks, doDistortion, doReplaceDistortion, desiredFrames);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -231,14 +286,7 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
             return;
         }
     }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void doPostAlgorithmActions() {
-        AlgorithmParameters.storeImageInRunner(resultImage);
-    }
-
+  
     /**
      * {@inheritDoc}
      */
@@ -251,8 +299,16 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
         doDistortion = scriptParameters.getParams().getBoolean("doDistortion");
 
         if (doDistortion) {
-            distortionThreshold = scriptParameters.getParams().getFloat("distortionThreshold");
+            distortionThreshold = scriptParameters.getParams().getDouble("distortionThreshold");
+            doReplaceDistortion = scriptParameters.getParams().getBoolean("doReplaceDistortion");
         }
+        
+        doBlinks = scriptParameters.getParams().getBoolean("doBlinks");
+        if (doBlinks) {
+        	doReplaceBlinks = scriptParameters.getParams().getBoolean("doReplaceBlinks");
+        }
+        
+        desiredFrames = scriptParameters.getParams().getInt("desiredFrames");
     }
 
     /**
@@ -260,13 +316,25 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
      */
     protected void storeParamsFromGUI() throws ParserException {
         scriptParameters.storeInputImage(image);
-        AlgorithmParameters.storeImageInRecorder(resultImage);
 
+        scriptParameters.storeOutputImageParams(getResultImage(), true);
+        
         scriptParameters.getParams().put(ParameterFactory.newParameter("doDistortion", doDistortion));
-
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doReplaceDistortion", doReplaceDistortion)); 
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doBlinks", doBlinks)); 
+        scriptParameters.getParams().put(ParameterFactory.newParameter("doReplaceBlinks", doReplaceBlinks)); 
         scriptParameters.getParams().put(ParameterFactory.newParameter("distortionThreshold", distortionThreshold));
-    }
+        scriptParameters.getParams().put(ParameterFactory.newParameter("desiredFrames", desiredFrames));
+    } 
 
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+       
+    }
+    
     /**
      * DOCUMENT ME!
      */
@@ -282,14 +350,41 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
         frameField = WidgetFactory.buildTextField(Integer.toString(currentFrame + 1));
         MipavUtil.makeNumericsOnly(frameField, false);
 
-        distortBox = WidgetFactory.buildCheckBox("Replace poorly aligned frames post registration", true, this);
+        checkDistortionBox = WidgetFactory.buildCheckBox("Check for distortion post registration", true, this);
+        checkDistortionBox.setEnabled(false);
+        
+        checkBlinksBox = WidgetFactory.buildCheckBox("Check for blinks pre registration", true, this);
+        
+        ButtonGroup group2 = new ButtonGroup();
+        replaceBlinksButton = WidgetFactory.buildRadioButton("Replace blinks", false, group2);
+        removeBlinksButton = WidgetFactory.buildRadioButton("Remove blinks", true, group2);
+        
+        
+        ButtonGroup group = new ButtonGroup();
+        replaceDistortButton = WidgetFactory.buildRadioButton("Replace poorly aligned frames", false, group);
+        removeDistortButton = WidgetFactory.buildRadioButton("Remove poorly aligned frames", true, group);
+        replaceDistortButton.setEnabled(false);
+        removeDistortButton.setEnabled(false);
+        
+        desiredFrameBox = WidgetFactory.buildCheckBox("Desired number of frames", true, this);
+                
+        desiredFrameField = WidgetFactory.buildTextField("15");
+        MipavUtil.makeNumericsOnly(desiredFrameField, false);
 
-        optionsPanel.add(distortBox);
+        optionsPanel.add(checkBlinksBox);
+        optionsPanel.addOnNextLine(removeBlinksButton);
+        optionsPanel.addOnNextLine(replaceBlinksButton);
+        
+        optionsPanel.addOnNextLine(checkDistortionBox);
+        optionsPanel.addOnNextLine(removeDistortButton);
+        optionsPanel.addOnNextLine(replaceDistortButton);
         optionsPanel.addOnNextLine(WidgetFactory.buildLabel("Standard deviation: "));
         optionsPanel.add(sdField);
 
         optionsPanel.addOnNextLine(WidgetFactory.buildLabel("Reference frame: "));
         optionsPanel.add(frameField);
+        optionsPanel.addOnNextLine(desiredFrameBox);
+        optionsPanel.add(desiredFrameField);
         getContentPane().add(optionsPanel.getPanel(), BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
         pack();
@@ -304,7 +399,7 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
      */
     private boolean setVariables() {
 
-        if (distortBox.isSelected()) {
+        if (replaceDistortButton.isSelected()) {
 
             try {
                 distortionThreshold = Double.parseDouble(sdField.getText());
@@ -327,8 +422,16 @@ public class PlugInDialogProcessICG extends JDialogScriptableBase implements Alg
             return false;
         }
 
-        doDistortion = distortBox.isSelected();
+        doBlinks = checkBlinksBox.isSelected();
+        doReplaceBlinks = replaceBlinksButton.isSelected();
+        
+        doDistortion = checkDistortionBox.isSelected();
+        doReplaceDistortion = replaceDistortButton.isSelected();
 
+        if (desiredFrameBox.isSelected()) {
+        	desiredFrames = Integer.parseInt(desiredFrameField.getText());
+        }
+        
         return true;
     }
 }
