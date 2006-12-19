@@ -794,7 +794,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         gbc.weightx = 100;
         gbc.weighty = 100;
 
-        onOffLabel = new JLabel("On/Off");
+        onOffLabel = new JLabel("On");
         onOffLabel.setFont(MipavUtil.font12);
         onOffLabel.setForeground(Color.black);
 
@@ -1067,7 +1067,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
     }
 
     /**
-     * Build the shinness control panel. 
+     * Build the shinness control panel.
      */
     private void buildShininessPanel() {
         shininessPanel = new JPanel(new GridBagLayout());
@@ -1311,7 +1311,7 @@ public class JPanelLights extends JPanelRendererBase implements ChangeListener, 
         /**
          * Unchanged.
          *
-         * @param  e  action event handler. 
+         * @param  e  action event handler.
          */
         public void actionPerformed(ActionEvent e) { }
     }
