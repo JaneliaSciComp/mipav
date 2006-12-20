@@ -405,7 +405,7 @@ public class AlgorithmLevelSetDiffusion extends AlgorithmBase {
             }
             if (!haveCurve) {
                 // If no curve is present in this slice, don't process this slice
-                break;
+                continue;
             }
             try {
                 srcImage.exportData(z*length, length, imgBuffer); // locks and releases lock
