@@ -537,7 +537,7 @@ public class JPanelSurface extends JPanelRendererBase
         } else if (command.equals("AdvancedMaterialOptions")) {
             displayAdvancedMaterialOptions( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("ChangeLight")) {
-            
+
             if (m_kLightsControl == null) {
                 m_kLightsControl = new JPanelLights(this, parentScene);
             }
@@ -694,7 +694,7 @@ public class JPanelSurface extends JPanelRendererBase
             for ( int i = 0; i < surfaces.length; i++ )
             {
                 BranchGroup root = surfaces[i].getBranch();
-                
+
                 if (root != null) {
                     root.setAlternateCollisionTarget(surfaceClipCB.isSelected());
                     if (surfaceClipCB.isSelected()) {
@@ -708,7 +708,7 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * For each file in the selected list, launch the stereo viewer: 
+     * For each file in the selected list, launch the stereo viewer:
      * @param surfaces, the list of selected surfaces (SurfaceAttributes)
      */
     private void displayStereo( SurfaceAttributes[] surfaces )
@@ -719,7 +719,7 @@ public class JPanelSurface extends JPanelRendererBase
                 /* Use the current view transform: */
                 Transform3D kTransform = new Transform3D();
                 parentScene.getSceneRootTG().getTransform(kTransform);
-                
+
                 /* Pass in a new copy of the triangle mesh: */
                 ModelTriangleMesh[] kMesh = surfaces[i].getMesh();
                 for ( int j = 0; j < kMesh.length; j++ )
@@ -731,7 +731,7 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * For each file in the selected list, launch the AdvancedMaterialOptions dialog: 
+     * For each file in the selected list, launch the AdvancedMaterialOptions dialog:
      * @param surfaces, the list of selected surfaces (SurfaceAttributes)
      */
     private void displayAdvancedMaterialOptions( SurfaceAttributes[] surfaces )
@@ -741,7 +741,7 @@ public class JPanelSurface extends JPanelRendererBase
             for (int i = 0; i < surfaces.length; i++) {
                 Material material = surfaces[i].getMaterial();
                 float fOpacity = surfaces[i].getOpacity();
-                
+
                 /* Launch the material editor: */
                 new JFrameSurfaceMaterialProperties(this, i, m_akLights, fOpacity, material);
             }
@@ -778,7 +778,7 @@ public class JPanelSurface extends JPanelRendererBase
             int numTriangles = 0;
             float volume = 0;
             float area = 0;
-            
+
             for (int j = 0; j < meshes.length; j++) {
                 if ( surfaces[i].getIsClodMesh() == true )
                 {
@@ -786,7 +786,7 @@ public class JPanelSurface extends JPanelRendererBase
                     clod.setLOD(clod.getMaximumLOD());
                     meshes[j] = clod.getMesh();
                 }
-            
+
                 if ( smoothType == JDialogSmoothMesh.SMOOTH1 )
                 {
                     meshes[j].smoothMesh( dialog.getIterations(), dialog.getAlpha(), dialog.getVolumeLimit(), dialog.getVolumePercent(), true);
@@ -800,19 +800,19 @@ public class JPanelSurface extends JPanelRendererBase
                 {
                     meshes[j].smoothThree(dialog.getIterations(), dialog.getLambda(), dialog.getMu(), true);
                 }
-                
+
                 meshes[j].computeNormals();
-            
+
                 if ( surfaces[i].getIsClodMesh() == true )
                 {
                     clod.setVerticies(meshes[j].getVertexCopy());
                 }
-            
+
                 numTriangles += meshes[j].getIndexCount();
                 volume += meshes[j].volume();
                 area += meshes[j].area();
             }
-        
+
             surfaces[i].setMesh( meshes );
             surfaces[i].setVolume( volume );
             surfaces[i].setArea( area );
@@ -826,9 +826,9 @@ public class JPanelSurface extends JPanelRendererBase
                 detailSlider.setValue( surfaces[i].getLevelDetail() );
                 stateChanged(new ChangeEvent(detailSlider));
             }
-        
+
             triangleText.setText(String.valueOf(numTriangles / 3));
-            
+
             // One length across the extracted surface changes from -1 to 1
             // while one length across the actual volume changes by ((dim-1)*res)max
             volumeText.setText(String.valueOf(volume * maxBox * maxBox * maxBox / 8.0f));
@@ -863,7 +863,7 @@ public class JPanelSurface extends JPanelRendererBase
         String surfaceName = surfaceFile.getName();
         int index = surfaceVector.size();
         Color4f surfaceColor = getNewSurfaceColor( index );
-                    
+
         FileSurface fileSurface = new FileSurface();
         SurfaceAttributes[] surfaces = new SurfaceAttributes[1];
         surfaces[0] = fileSurface.addSurface( parentScene.getImageA(), surfaceFile, surfaceColor, surfaceName, surfaceOpacity, -1, true);
@@ -1124,7 +1124,7 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * Adds an array of surfaces described by their SurfaceAttributes to the scene graph. 
+     * Adds an array of surfaces described by their SurfaceAttributes to the scene graph.
      * @param surfaces, the new surfaces (SurfaceAttributes[]) to add to the scene graph.
      * @param pickable, when true turn picking on for the new surfaces, when
      * false disable picking.
@@ -1146,7 +1146,7 @@ public class JPanelSurface extends JPanelRendererBase
                                                surfaces[i].getMesh(), false, surfaces[i].getOpacity(), surfaces[i].getColor(),
                                                xBox, yBox, zBox);
                 surfaces[i].setMask( mSurfaceMask.getVolumeMask() );
-                
+
                 surfaceVector.add( surfaces[i] );
                 if (surfaceVector.size() == 1 )
                 {
@@ -1170,7 +1170,7 @@ public class JPanelSurface extends JPanelRendererBase
          * surface: */
         ((SurfaceRender) renderBase).updateData();
         ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(true);
-        
+
         if (((SurfaceRender) renderBase).getProbeDialog() != null) {
             ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
         }
@@ -1766,7 +1766,7 @@ public class JPanelSurface extends JPanelRendererBase
             activeLightBulbIndex = -1;
         }
 
-        
+
         if (findArbitraryClipping) {
             ((SurfaceRender) renderBase).enableObjBehavior(true);
             parentScene.getClipDialog().enableClipArbiBehavior(false);
@@ -1885,7 +1885,7 @@ public class JPanelSurface extends JPanelRendererBase
                 }
             }
         }
-        
+
         /* Remove from the scene graph, adding the new mesh, kNew, in it's
          * place: */
         for (int iChild = 0; iChild < surfaceRootBG.numChildren(); iChild++) {
@@ -2311,22 +2311,22 @@ public class JPanelSurface extends JPanelRendererBase
                      ((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode())
                 {
                     int mode = 0;
-                    
+
                     switch (((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode()) {
-                        
+
                     case PolygonAttributes.POLYGON_FILL:
                         mode = 0;
                         break;
-                        
+
                     case PolygonAttributes.POLYGON_LINE:
                         mode = 1;
                         break;
-                        
+
                     case PolygonAttributes.POLYGON_POINT:
                         mode = 2;
                         break;
                     }
-                    
+
                     polygonModeCB.setSelectedIndex(mode);
                 }
 
@@ -2590,7 +2590,7 @@ public class JPanelSurface extends JPanelRendererBase
         root.setCapability(Node.ALLOW_COLLIDABLE_READ);
         root.setPickable( pickable );
         surfacePickableCB.setSelected( pickable );
-        
+
         // Allow Java to optimize subtree.  Attach to the scene graph.
         root.compile();
         surfaceRootBG.addChild(root);
@@ -2604,7 +2604,7 @@ public class JPanelSurface extends JPanelRendererBase
      */
     private void createVolumeTexture()
     {
-        
+
         ModelImage imageA = ((SurfaceRender)parentScene).getImageA();
         int[] localExtents = imageA.getExtents();
 
@@ -2863,7 +2863,6 @@ public class JPanelSurface extends JPanelRendererBase
         mImageAsTextureCheck.setActionCommand("ImageAsTexture");
         mImageAsTextureCheck.setSelected(false);
         mImageAsTextureCheck.setEnabled(false);
-        colorPanel.add(mImageAsTextureCheck);
 
         /* Creates the advanced material options button, which launches the
          * material editor dialog: */
@@ -3060,10 +3059,11 @@ public class JPanelSurface extends JPanelRendererBase
 
         JPanel optionsPanel = new JPanel();
 
-        optionsPanel.setLayout(new BorderLayout());
-        optionsPanel.add(colorPanel, BorderLayout.NORTH);
-        optionsPanel.add(sliderPanel, BorderLayout.CENTER);
-        optionsPanel.add(cbPanel, BorderLayout.SOUTH);
+        optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
+        optionsPanel.add(mImageAsTextureCheck);
+        optionsPanel.add(colorPanel);
+        optionsPanel.add(sliderPanel);
+        optionsPanel.add(cbPanel);
         optionsPanel.setBorder(buildTitledBorder("Surface options"));
 
         rightPanel = new JPanel();
