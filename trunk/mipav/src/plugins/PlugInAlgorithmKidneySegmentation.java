@@ -44,30 +44,12 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private int blueMin = 1000;
-
-    /** Portion of green pixels above threshold in fuzzy c means. */
-    private float greenFraction = 0.15f;
-
-    /** DOCUMENT ME! */
-    private int greenMin = 100;
-
-    /** DOCUMENT ME! */
-    private int greenNumber = 2;
+    
 
     /** Iterations used in erosion before IDIng = iters Iterations used in dilation after IDing = 6*iters. */
     private int iters = 6;
 
-    /** Portion of red pixels above threshold in fuzzy c means. */
-    private float redFraction = 0.25f;
-
-    /** DOCUMENT ME! */
-    private int redMin = 100;
-
-    /** DOCUMENT ME! */
-    private int redNumber = 2;
-
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -394,11 +376,22 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         AlgorithmMorphology25D dilationAlgo25D;
         int numObjects;
         VOI contourVOI;
+        VOI contourVOI2;
         short shortMask[];
         short shortBuffer[];
         boolean keepObject[];
+        AlgorithmMorphology25D closeAlgo25D;
         AlgorithmMorphology3D closeAlgo3D;
         AlgorithmVOIExtraction algoVOIExtraction;
+        Vector curves[];
+        BitSet sliceMask;
+        float floatBuffer[];
+        float sliceMin;
+        float sliceMax;
+        int numberConnected;
+        int connect1[];
+        int connect2[];
+        int nCurves;
         
         nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
@@ -449,7 +442,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         algoThreshDual.finalize();
         algoThreshDual = null;
         
-        //  new ViewJFrameImage(threshImage);
+        // new ViewJFrameImage(threshImage);
         
         fireProgressStateChanged("Filling holes in image ...");
         fillHolesAlgo25D = new AlgorithmMorphology25D(threshImage, 0, 0, AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0,
@@ -579,7 +572,17 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             dilationAlgo25D.finalize();
             dilationAlgo25D = null;
         }
-        // new ViewJFrameImage(threshImage);
+        // ModelImage threshImage2 = (ModelImage)threshImage.clone();
+        // new ViewJFrameImage(threshImage2);
+        
+        fireProgressStateChanged("Second hole fill ...");
+        fillHolesAlgo25D = new AlgorithmMorphology25D(threshImage, 0, 0, AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0,
+                entireImage);
+        fillHolesAlgo25D.run();
+        fillHolesAlgo25D.finalize();
+        fillHolesAlgo25D = null;
+        ModelImage threshImage2 = (ModelImage)threshImage.clone();
+        //new ViewJFrameImage(threshImage3);
         
         fireProgressStateChanged("Closing image ...");
         kernel = AlgorithmMorphology3D.CONNECTED6;
@@ -591,7 +594,24 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         closeAlgo3D.run();
         closeAlgo3D.finalize();
         closeAlgo3D = null;
-        // new ViewJFrameImage(threshImage);
+        //new ViewJFrameImage(threshImage);
+        
+        /*kernel = AlgorithmMorphology25D.CONNECTED4;
+        method = AlgorithmMorphology25D.CLOSE;
+        itersDilation = 1;
+        itersErosion = 1;
+        closeAlgo25D = new AlgorithmMorphology25D(threshImage2, kernel, circleDiameter, method, itersDilation, itersErosion,
+                numPruningPixels, edgingType, entireImage);
+        closeAlgo25D.run();
+        closeAlgo25D.finalize();
+        closeAlgo25D = null;*/
+        
+        fireProgressStateChanged("Third hole fill ...");
+        fillHolesAlgo25D = new AlgorithmMorphology25D(threshImage, 0, 0, AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0,
+                entireImage);
+        fillHolesAlgo25D.run();
+        fillHolesAlgo25D.finalize();
+        fillHolesAlgo25D = null;
         
         fireProgressStateChanged("Extracting VOIs...");
         algoVOIExtraction = new AlgorithmVOIExtraction(threshImage);
@@ -602,8 +622,57 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         algoVOIExtraction = null;
 
         destImage.setVOIs(threshImage.getVOIs());
+        /*contourVOI2 = destImage.getVOIs().VOIAt(0);
+        contourVOI2.setAllActive(true);
+        curves = contourVOI2.getCurves();
+        sliceMask = new BitSet(sliceSize);
+        floatBuffer = new float[sliceSize];
+        for (z = 0; z < zDim; z++) {
+            // Ideally 1 contour for each kidney
+            if (curves[z].size() <= 1) {
+                continue;
+            }
+            // Create a kidney 1 set and a kidney 2 set
+            // If either set has 2 or more curves, further
+            // processing is necessary
+            // See if any curves are within 4 pixels of each other
+            // For n curves checking n*(n-1)/2 connections are checked
+            numberConnected = 0;
+            nCurves = curves[z].size();
+            connect1 = new int[nCurves*(nCurves-1)/2];
+            connect2 = new int[nCurves*(nCurves-1)/2];
+            for (i = 0; i < curves[z].size() - 1; i++) {
+                for (j = i+1; j < curves[z].size(); j++) {
+                    
+                }
+            }
+            sliceMask.clear();
+            contourVOI.createActiveContourBinaryMask(xDim, yDim, z, sliceMask, false);
+            try {
+                srcImage.exportData(z*sliceSize, sliceSize, floatBuffer);
+            }
+            catch(IOException error) {
+                MipavUtil.displayError("Error on srcImage.exportData");
+                setCompleted(false);
+                return;
+            }
+            sliceMin = Float.MAX_VALUE;
+            sliceMax = -Float.MAX_VALUE;
+            for (i = 0; i < sliceSize; i++) {
+                if (sliceMask.get(i)) {
+                    if (floatBuffer[i] < sliceMin) {
+                        sliceMin = floatBuffer[i];
+                    }
+                    if (floatBuffer[i] > sliceMax) {
+                        sliceMax = floatBuffer[i];
+                    }
+                }
+            }
+        } // for (z = 0; z < zDim; z++)*/
+        
         threshImage.disposeLocal();
         threshImage = null;
+        
         setCompleted(true);
     }
 
