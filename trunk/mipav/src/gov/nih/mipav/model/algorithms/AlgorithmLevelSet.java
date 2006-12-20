@@ -855,7 +855,7 @@ public class AlgorithmLevelSet extends AlgorithmBase {
             fireProgressStateChanged(z * 100/ zDim);
             if (curves[z].size() == 0) {
                 // If  no curves are present in this slice, don't process this slice
-                break;
+                continue;
             }
             try {
                 srcImage.exportData(z*length, length, gBuffer); // locks and releases lock
