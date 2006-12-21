@@ -23,7 +23,7 @@ public class MjCorticalMesh {
     private int[] m_aiConnect = null;
 
     /** DOCUMENT ME! */
-    private Color3f[] m_akColor = null;
+    private Color4f[] m_akColor = null;
 
     /** projection of sphere onto cylinder. */
     private Point3f[] m_akCylinder = null;
@@ -125,11 +125,11 @@ public class MjCorticalMesh {
 
         /* dynamically allocate storage for each vertex normal and color */
         m_akNormal = new MjVector3f[iVQuantity];
-        m_akColor = new Color3f[iVQuantity];
+        m_akColor = new Color4f[iVQuantity];
 
         for (int i = 0; i < m_iVQuantity; i++) {
             m_akNormal[i] = new MjVector3f();
-            m_akColor[i] = new Color3f();
+            m_akColor[i] = new Color4f();
         }
 
         /* dynamically construct triangle mesh from input */
@@ -733,11 +733,11 @@ public class MjCorticalMesh {
      *
      * @return  DOCUMENT ME!
      */
-    public Color3f[] getColorCopy() {
-        Color3f[] akColors = new Color3f[m_iVQuantity];
+    public Color4f[] getColorCopy() {
+        Color4f[] akColors = new Color4f[m_iVQuantity];
 
         for (int i = 0; i < m_iVQuantity; i++) {
-            akColors[i] = new Color3f(m_akColor[i].x, m_akColor[i].y, m_akColor[i].z);
+            akColors[i] = new Color4f(m_akColor[i].x, m_akColor[i].y, m_akColor[i].z, 1f);
         }
 
         return akColors;
@@ -748,7 +748,7 @@ public class MjCorticalMesh {
      *
      * @return  DOCUMENT ME!
      */
-    public Color3f[] getColors() {
+    public Color4f[] getColors() {
         return m_akColor;
     }
 

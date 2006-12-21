@@ -43,6 +43,9 @@ public class SurfaceAttributes {
      */
     private Color4f mColor;
 
+    /** Saved copy of the current surface color.*/
+    private Color4f mColorBackup;
+
     /** Detail level of surface; only applies to clod meshes. */
     private int mLevelDetail;
 
@@ -328,6 +331,16 @@ public class SurfaceAttributes {
         mMaterial.setDiffuseColor( mColor.x, mColor.y, mColor.z, mColor.w);
         mMaterial.setSpecularColor( mColor.x, mColor.y, mColor.z);
         mMaterial.setAmbientColor( mColor.x, mColor.y, mColor.z);
+
+        for ( int i = 0; i < mTriangleMesh.length; i++ )
+        {
+            Color4f[] akColors = new Color4f[ mTriangleMesh[i].getVertexCount() ];
+            for ( int j = 0; j < mTriangleMesh[i].getVertexCount(); j++ )
+            {
+                akColors[j] = new Color4f( color.x, color.y, color.z, mOpacity );
+            }
+            mTriangleMesh[i].setColors( 0, akColors );
+        }
     }
 
     /**
@@ -420,6 +433,25 @@ public class SurfaceAttributes {
     public Point3f getCenter()
     {
         return mCenter;
+    }
+
+    /**
+     * When the surface mesh is displayed with texture, set the color to
+     * black. When the texture is removed, restore the original surface color.
+     * @param bEnabled, when true the surface is displayed w/texture, when
+     * false the surface color is restored.
+     */
+    public void setSurfaceTextureEnabled( boolean bEnabled )
+    {
+        if ( bEnabled )
+        {
+            mColorBackup = new Color4f( mColor );
+            setColor( new Color4f( 0f, 0f, 0f, mOpacity ) );
+        }
+        else
+        {
+            setColor( mColorBackup );
+        }
     }
 
 }

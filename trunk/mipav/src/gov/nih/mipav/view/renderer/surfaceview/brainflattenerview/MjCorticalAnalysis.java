@@ -46,7 +46,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
     };
 
     /** DOCUMENT ME! */
-    private Color3f[] m_akTriColors = null;
+    private Color4f[] m_akTriColors = null;
 
     /**
      * Flag set to indicate whether curvature colors are rendered on the mesh surface. If not, then average convexity
@@ -228,7 +228,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
         /* Commonly used items. */
         Transform3D kTransform = new Transform3D();
         int[] aiConnect = m_kCortical.getConnectivity();
-        Color3f[] akColor = m_kCortical.getColors();
+        Color4f[] akColor = m_kCortical.getColors();
 
         /* conformally map mesh to plane, sphere, and cylinder */
         /* set the user-selected puncture triangle: */
@@ -983,7 +983,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
         /* Commonly used items. */
         Transform3D kTransform = new Transform3D();
         int[] aiConnect = m_kCortical.getConnectivity();
-        Color3f[] akColor = m_kCortical.getColors();
+        Color4f[] akColor = m_kCortical.getColors();
 
         /* cortical mesh initializations */
         m_kCortical.computeMeanCurvature();
@@ -1005,6 +1005,9 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
         kMeshAppearance.setPolygonAttributes( new PolygonAttributes() );
         kMeshAppearance.setCapability( Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE );
         kMeshAppearance.setCapability( Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ );
+        kMeshAppearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
+        kMeshAppearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
+        kMeshAppearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
         m_kShapeMesh = new Shape3D(m_kTriangleMesh, kMeshAppearance);
 
         Material kMaterial = new Material();
@@ -1284,7 +1287,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
      *
      * @return  DOCUMENT ME!
      */
-    private static GeometryArray createGeometry(Point3f[] akPoint, Color3f[] akColor, int[] aiConnect) {
+    private static GeometryArray createGeometry(Point3f[] akPoint, Color4f[] akColor, int[] aiConnect) {
         GeometryInfo kGeometryInfo = new GeometryInfo(GeometryInfo.TRIANGLE_ARRAY);
         kGeometryInfo.setUseCoordIndexOnly(true);
         kGeometryInfo.setCoordinates(akPoint);
@@ -1318,7 +1321,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
      *
      * @return  DOCUMENT ME!
      */
-    private static ModelTriangleMesh createTriangleMesh(Point3f[] akPoint, Vector3f[] akNormal, Color3f[] akColor,
+    private static ModelTriangleMesh createTriangleMesh(Point3f[] akPoint, Vector3f[] akNormal, Color4f[] akColor,
                                                         int[] aiConnect) {
         ModelTriangleMesh kTMesh = new ModelTriangleMesh(akPoint, akNormal, akColor, aiConnect);
         kTMesh.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
@@ -1362,7 +1365,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
      * @param  iVQuantity  DOCUMENT ME!
      * @param  akColor     DOCUMENT ME!
      */
-    private static void setColors(float fCMin, float fCMax, float[] afCArray, int iVQuantity, Color3f[] akColor) {
+    private static void setColors(float fCMin, float fCMax, float[] afCArray, int iVQuantity, Color4f[] akColor) {
 
         for (int i = 0; i < iVQuantity; i++) {
 
@@ -1375,7 +1378,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
                 akColor[i].y = 0.0f; /* green */
                 akColor[i].z = 0.5f + (0.5f * (-afCArray[i] / fCMin)); /* blue */
             } else {
-                akColor[i].set(0.0f, 0.0f, 0.0f);
+                akColor[i].set(0.0f, 0.0f, 0.0f, 1f);
             }
         }
     }
@@ -1512,20 +1515,21 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
      * @param  iWhich   DOCUMENT ME!
      */
     private void drawTriangle(Point3f kStart, int[] aiIndex, int iWhich) {
-        Color3f[] akColor = m_kCortical.getColors();
+        Color4f[] akColor = m_kCortical.getColors();
 
         /* Restore previously picked triangle colors: */
         restoreTriColor();
 
         /* Set the picked triangle to black, saving it's color: */
-        m_akTriColors = new Color3f[aiIndex.length];
+        m_akTriColors = new Color4f[aiIndex.length];
         m_aiTriIndex = new int[aiIndex.length];
 
         for (int i = 0; i < aiIndex.length; i++) {
-            m_akTriColors[i] = new Color3f();
+            m_akTriColors[i] = new Color4f();
             m_akTriColors[i].x = akColor[aiIndex[i]].x;
             m_akTriColors[i].y = akColor[aiIndex[i]].y;
             m_akTriColors[i].z = akColor[aiIndex[i]].z;
+            m_akTriColors[i].w = akColor[aiIndex[i]].w;
 
             akColor[aiIndex[i]].x = 0f;
             akColor[aiIndex[i]].y = 0f;
@@ -1545,12 +1549,13 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
     private void restoreTriColor() {
 
         if ((m_akTriColors != null) && (m_aiTriIndex != null)) {
-            Color3f[] akColor = m_kCortical.getColors();
+            Color4f[] akColor = m_kCortical.getColors();
 
             for (int i = 0; i < m_aiTriIndex.length; i++) {
                 akColor[m_aiTriIndex[i]].x = m_akTriColors[i].x;
                 akColor[m_aiTriIndex[i]].y = m_akTriColors[i].y;
                 akColor[m_aiTriIndex[i]].z = m_akTriColors[i].z;
+                akColor[m_aiTriIndex[i]].w = m_akTriColors[i].w;
             }
 
             m_akTriColors = null;
@@ -1601,7 +1606,7 @@ public class MjCorticalAnalysis extends RenderViewBase implements MouseListener,
 
 
         int iVQuantity = m_kCortical.getVQuantity();
-        Color3f[] akColor = m_kCortical.getColors();
+        Color4f[] akColor = m_kCortical.getColors();
 
         for (int i = 0; i < iVQuantity; i++) {
             float fValue = afCArray[i];

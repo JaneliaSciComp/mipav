@@ -152,6 +152,9 @@ public class JPanelSurface extends JPanelRendererBase
     /** The material options button, which launches the material editor window. */
     private JButton m_kAdvancedMaterialOptionsButton;
 
+    /** Opens SurfacePaint dialog: */
+    private JCheckBox m_kSurfacePaintCheck;
+    
     /** For drawing the geodesic lines on the triangle mesh:. */
     private BranchGroup m_kGeodesicGroup = null;
 
@@ -327,6 +330,8 @@ public class JPanelSurface extends JPanelRendererBase
     private float xBox, yBox, zBox;
 
     private Texture3D mTexture = null;
+    private SurfacePaint mSurfacePaint = new SurfacePaint();
+
 
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -520,7 +525,6 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
-        System.out.println("command = " + command);
         if (command.equals("Add")) {
             addSurface();
         } else if (command.equals("Remove")) {
@@ -536,6 +540,9 @@ public class JPanelSurface extends JPanelRendererBase
             displayImageAsTexture( getSelectedSurfaces( surfaceList.getSelectedIndices() ), mImageAsTextureCheck.isSelected() );
         } else if (command.equals("AdvancedMaterialOptions")) {
             displayAdvancedMaterialOptions( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
+        } else if (command.equals("SurfacePaint")) {
+            mSurfacePaint.setEnable( m_kSurfacePaintCheck.isSelected() );
+            mSurfacePaint.setPickCanvas( pickCanvas );
         } else if (command.equals("ChangeLight")) {
 
             if (m_kLightsControl == null) {
@@ -631,6 +638,7 @@ public class JPanelSurface extends JPanelRendererBase
         {
             for ( int i = 0; i < surfaces.length; i++ )
             {
+                surfaces[i].setSurfaceTextureEnabled( asImage );
                 Shape3D[] shapes = surfaces[i].getShape();
                 for ( int j = 0; j < shapes.length; j++ )
                 {
@@ -1193,6 +1201,7 @@ public class JPanelSurface extends JPanelRendererBase
         colorLabel = null;
         mImageAsTextureCheck = null;
         m_kAdvancedMaterialOptionsButton = null;
+        m_kSurfacePaintCheck = null;
         m_kStereoButton = null;
         opacityLabel = null;
         triangleLabel = null;
@@ -1278,7 +1287,11 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public void findPickedObject(MouseEvent kEvent) {
 
-        if (!kEvent.isShiftDown() && parentScene.getParentFrame().isGeodesicEnable()) {
+        if (!kEvent.isShiftDown() && parentScene.getParentFrame().isGeodesicEnable() ) {
+            return;
+        }
+        if ( m_kSurfacePaintCheck.isSelected() )
+        {
             return;
         }
 
@@ -2858,12 +2871,6 @@ public class JPanelSurface extends JPanelRendererBase
         colorPanel.add(colorButton);
         colorPanel.add(colorLabel);
 
-        mImageAsTextureCheck = new JCheckBox( "Display Image as Surface Texture" );
-        mImageAsTextureCheck.addActionListener(this);
-        mImageAsTextureCheck.setActionCommand("ImageAsTexture");
-        mImageAsTextureCheck.setSelected(false);
-        mImageAsTextureCheck.setEnabled(false);
-
         /* Creates the advanced material options button, which launches the
          * material editor dialog: */
         m_kAdvancedMaterialOptionsButton = new JButton("Advanced Options");
@@ -2872,6 +2879,17 @@ public class JPanelSurface extends JPanelRendererBase
         m_kAdvancedMaterialOptionsButton.setActionCommand("AdvancedMaterialOptions");
         m_kAdvancedMaterialOptionsButton.setEnabled(false);
         colorPanel.add(m_kAdvancedMaterialOptionsButton);
+
+        /* Creates the surface paint button, which launches the surface
+         * dialog: */
+        m_kSurfacePaintCheck = new JCheckBox("Surface Paint Dialog");
+        m_kSurfacePaintCheck.addActionListener(this);
+        m_kSurfacePaintCheck.setActionCommand("SurfacePaint");
+        m_kSurfacePaintCheck.setSelected(false);
+        m_kSurfacePaintCheck.setEnabled(false);
+        /*
+        colorPanel.add(m_kSurfacePaintCheck);
+        */
 
         m_kStereoButton = new JButton("Stereo");
         m_kStereoButton.setToolTipText("Display stereo pair");
@@ -2916,6 +2934,17 @@ public class JPanelSurface extends JPanelRendererBase
         opacitySliderLabels[0].setEnabled(true);
         opacitySliderLabels[1].setEnabled(true);
         opacitySliderLabels[2].setEnabled(true);
+
+
+        mImageAsTextureCheck = new JCheckBox( "Display Image as Surface Texture" );
+        mImageAsTextureCheck.addActionListener(this);
+        mImageAsTextureCheck.setActionCommand("ImageAsTexture");
+        mImageAsTextureCheck.setSelected(false);
+        mImageAsTextureCheck.setEnabled(false);
+        JPanel texturePanel = new JPanel();
+        texturePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        texturePanel.add(mImageAsTextureCheck);
+        texturePanel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
         triangleLabel = new JLabel("Number of triangles");
         triangleLabel.setFont(serif12B);
@@ -3000,6 +3029,7 @@ public class JPanelSurface extends JPanelRendererBase
         sliderPanel.setLayout(new BoxLayout(sliderPanel, BoxLayout.Y_AXIS));
         sliderPanel.add(opacityLabel);
         sliderPanel.add(opacitySlider);
+        sliderPanel.add(texturePanel);
         sliderPanel.add(trianglePanel);
         sliderPanel.add(volumePanel);
         sliderPanel.add(areaPanel);
@@ -3221,6 +3251,7 @@ public class JPanelSurface extends JPanelRendererBase
         colorLabel.setEnabled(flag);
         mImageAsTextureCheck.setEnabled(flag);
         m_kAdvancedMaterialOptionsButton.setEnabled(flag);
+        m_kSurfacePaintCheck.setEnabled(flag);
         m_kStereoButton.setEnabled(flag);
         detailLabel.setEnabled(flag);
         detailSlider.setEnabled(flag);

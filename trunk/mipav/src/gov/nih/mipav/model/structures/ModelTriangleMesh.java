@@ -95,7 +95,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      *                    triangle is counterclockwise ordered as viewed by an observer outside the mesh.
      */
     public ModelTriangleMesh(Point3f[] akVertex, int[] aiConnect) {
-        super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3,
+        super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_4,
               2, new int[]{0, 0},
               aiConnect.length);
 
@@ -112,6 +112,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_WRITE);
         setCapability(GeometryArray.ALLOW_FORMAT_READ);
         setCapability(Geometry.ALLOW_INTERSECT);
+        setCapability(GeometryArray.ALLOW_COLOR_READ);
+        setCapability(GeometryArray.ALLOW_COLOR_WRITE);
 
         // temporary variables to avoid 'new' calls
         m_kV0 = new Point3f();
@@ -126,6 +128,13 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCoordinateIndices(0, aiConnect);
         computeNormals();
         setNormalIndices(0, aiConnect);
+        Color4f[] akColors = new Color4f[ akVertex.length ];
+        for ( int i = 0; i < akVertex.length; i++ )
+        {
+            akColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+        }
+        setColors( 0, akColors );
+        setColorIndices(0, aiConnect);
         m_kGenerator = null;
     }
 
@@ -138,7 +147,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      *                    triangle is counterclockwise ordered as viewed by an observer outside the mesh.
      */
     public ModelTriangleMesh(Point3f[] akVertex, Vector3f[] akNormal, int[] aiConnect) {
-        super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3,
+        super(akVertex.length, IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_4,
               2, new int[]{0, 0},
               aiConnect.length);
 
@@ -153,6 +162,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
         setCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
         setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_WRITE);
+        setCapability(GeometryArray.ALLOW_COLOR_READ);
+        setCapability(GeometryArray.ALLOW_COLOR_WRITE);
 
         // temporary variables to avoid 'new' calls
         m_kV0 = new Point3f();
@@ -167,6 +178,13 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCoordinateIndices(0, aiConnect);
         setNormals(0, akNormal);
         setNormalIndices(0, aiConnect);
+        Color4f[] akColors = new Color4f[ akVertex.length ];
+        for ( int i = 0; i < akVertex.length; i++ )
+        {
+            akColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+        }
+        setColors( 0, akColors );
+        setColorIndices(0, aiConnect);
         m_kGenerator = null;
     }
 
@@ -179,9 +197,9 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
      * @param  aiConnect  Connectivity array for the triangles. Each triple of indices represents one triangle. The
      *                    triangle is counterclockwise ordered as viewed by an observer outside the mesh.
      */
-    public ModelTriangleMesh(Point3f[] akVertex, Vector3f[] akNormal, Color3f[] akColor, int[] aiConnect) {
+    public ModelTriangleMesh(Point3f[] akVertex, Vector3f[] akNormal, Color4f[] akColor, int[] aiConnect) {
         super(akVertex.length,
-              IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_3,
+              IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_4,
               2, new int[]{0, 0},
               aiConnect.length);
 
