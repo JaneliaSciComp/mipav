@@ -1,8 +1,6 @@
 package gov.nih.mipav.model.algorithms;
 
 
-import gov.nih.mipav.*;
-
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -16,6 +14,8 @@ import javax.vecmath.*;
 
 /**
  * Anonymize an image of a patient's head by removing the face.
+ * TODO: Speed-up
+ * TODO: Clean-up
  *
  * <p>This version of of the de-facer uses BET to find the brain, the brain's location is then used to calculate a
  * plane. This plane is then used to remove the patient's face from the image.</p>
@@ -26,61 +26,73 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
     
     //~ Static fields/initializers -------------------------------------------------------------------------------------
     
-    /** DOCUMENT ME! */
+    /** Denotes quadrilateral with up to two unequal lengths. */   
+    public static final int QUADRILATERAL = 4;
+    
+    /** Denotes sphere. */
+    public static final int SPHERE = 1;
+    
+    /** Denotes cube with lengths not necessarily equal. */
+    public static final int CUBE = 6;
+    
+    /** Denotes quarter cylinder. */
+    public static final int QUARTER_CYLINDER = 2;
+    
+    /** Eventually won't be necessary. */
+    public static final int REMOVED_INTENSITY = 0;
+    
+    /** May no longer be necessary. */
+    public static final int MIN_RADIUS = 2;
+    
+    /** For indicating the sagittal image is facing right. */
     public static final int FACING_RIGHT = 1;
 
-    /** DOCUMENT ME! */
+    /** For indicating the sagittal image is facing left. */
     public static final int FACING_LEFT = 2;
 
-    /** DOCUMENT ME! */
+    /** For indicating the axial image is facing down. */
     public static final int FACING_DOWN = 3;
 
-    /** DOCUMENT ME! */
+    /** For indicating the axial image is facing up. */
     public static final int FACING_UP = 4;
 
-    /** DOCUMENT ME! */
+    /** For indicating the coronal image is facing into the screen. */
     public static final int FACING_INTO_SCREEN = 5;
 
-    /** DOCUMENT ME! */
+    /** For indicating the coronal image is facing out of the screen. */
     public static final int FACING_OUT_OF_SCREEN = 6;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private int currentProgressBarValue = 0;
-
-    /** DOCUMENT ME! */
+    /** Length to buffer brain by in millimeters. */
+    private int mmToPad;
+    
+    /** The orientation of an image. */
+    private int faceOrientation;
+    
+    /** Parameter for brain extraction by default set to <code>false</code> */
     private boolean estimateWithSphereBET = false;
 
-    /** DOCUMENT ME! */
-    private int faceOrientation;
-
-    /** DOCUMENT ME! */
+    /** Parameter for brain extraction by default set to .1 */
     private float imageInfluenceBET = 0.1f;
 
-    /** DOCUMENT ME! */
-    private int mmToDelete;
-
-    /** DOCUMENT ME! */
-    private int sliceSize;
-
-    /** DOCUMENT ME! */
+    /** Parameter for brain extraction by default set to .15 */
     private float stiffnessBET = 0.15f;
 
-    /** DOCUMENT ME! */
-    private float verticalDeletionLimit;
+    /** Computed as xDim*yDim */
+    private final int sliceSize;
+    
+    /** Computed as xDim*yDim*zDim */
+    private final int volumeSize;
 
-    /** DOCUMENT ME! */
-    private int volumeSize;
+    /** Length of the x dimension in pixels. */
+    private final int xDim;
 
-    /** DOCUMENT ME! */
-    private int xDim;
+    /** Length of the y dimension in pixels. */
+    private final int yDim;
 
-    /** DOCUMENT ME! */
-    private int yDim;
-
-    /** DOCUMENT ME! */
-    private int zDim;
+    /** Length of the z dimension in pixels. */
+    private final int zDim;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -89,16 +101,12 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
      *
      * @param  srcImg            The image to de-face
      * @param  faceDirection     the orientation of the patient's face, as determined by the dialog
-     * @param  extraMMsToDelete  the number of millimeters to try to delete from the non-brain portions of the head
-     * @param  verticalLimit     the limit to place on the deletion of the face in the from the 'bottom' of the face.
-     *                           Should be between 0 and 1, with 0 = no deletion and 1 = full deletion (until the brain
-     *                           is hit).
+     * @param  extraMMsToPad     the number of millimeters to buffer brain by after extraction
      */
-    public AlgorithmFaceAnonymizerBET(ModelImage srcImg, int faceDirection, int extraMMsToDelete, float verticalLimit) {
+    public AlgorithmFaceAnonymizerBET(ModelImage srcImg, int faceDirection, int extraMMsToPad) {
         srcImage = srcImg;
         faceOrientation = faceDirection;
-        mmToDelete = extraMMsToDelete;
-        verticalDeletionLimit = verticalLimit;
+        mmToPad = extraMMsToPad;
 
         xDim = srcImage.getExtents()[0];
         yDim = srcImage.getExtents()[1];
@@ -163,49 +171,83 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
 
     /**
      * Executes the de-facing algorithm.
+     * TODO: Once completed, set image mask to BitSet of removeRegion rather than setting intensity to zero.
      */
-    private void anonymizeFace() {
-        int curPosition, closestPosition;
-
+    private void anonymizeFace()
+    {
         fireProgressStateChanged(0, null, "Anonymizing face ...");
+        boolean removedFace = false;
         
+        // calc plane from BET extraction
+        BitSet brainMask = extractBrain();   
+        
+        //add mm to brainMask
+        fireProgressStateChanged(58, null, "Buffering brain by "+mmToPad+" mm...");
+        brainMask = bufferBrain(brainMask, mmToPad);        
+        
+        //define region of interest
+        fireProgressStateChanged(60, null, "Defining bounds...");
+        BitSet interestRegion = defineInterestRegion(CUBE);
 
-        // See if the image orientation is known
-        int betOrientation;
-
+        //define small shape
+        fireProgressStateChanged(62, null, "Defining initial region...");
+        BitSet initialRegion = defineInitialRegion(SPHERE, interestRegion); 
+        
+        //expand to random size shape near brain to approximate face         
+        fireProgressStateChanged(64, null, "Extracting face...");
+        BitSet removeRegion = extractFace(interestRegion, initialRegion, brainMask, QUARTER_CYLINDER);
+        
+        if(removeRegion.cardinality()>0) {
+            removedFace = true;
+        }
+        
+        if (!removedFace) {
+            MipavUtil.displayError("The face could not be located and removed, possibly because the brain segmentation was too large.");
+        }
+        else {
+            //smooth the dataset
+            fireProgressStateChanged(95, null, "Smoothing face...");
+            removeRegion = smoothFace(removeRegion, interestRegion, brainMask); 
+            for(int i=removeRegion.nextSetBit(0); i>=0; i=removeRegion.nextSetBit(i+1)) {
+                srcImage.set(i, REMOVED_INTENSITY);
+            }
+        }
+        
+        srcImage.clearMask();
+        
+        fireProgressStateChanged(100);
+        
+        setCompleted(true);
+    }
+    
+    /**
+     * Performs the BET brain extraction using parameters specified from JDialogFaceAnonymizer.
+     * 
+     * @return  A <code>BitSet</code> of size <code>srcImage.getSize()</code> where set values are the location of brain.
+     */
+    
+    private BitSet extractBrain()
+    {
+        int betOrientation;     
         if (faceOrientation == FACING_RIGHT) {
             betOrientation = AlgorithmBrainExtractor.SAT_COR;
-            curPosition = Integer.MIN_VALUE;
-            closestPosition = Integer.MIN_VALUE;
         } else if (faceOrientation == FACING_LEFT) {
             betOrientation = AlgorithmBrainExtractor.SAT_COR;
-            curPosition = Integer.MAX_VALUE;
-            closestPosition = Integer.MAX_VALUE;
         } else if (faceOrientation == FACING_DOWN) {
             betOrientation = FileInfoBase.AXIAL;
-            curPosition = Integer.MIN_VALUE;
-            closestPosition = Integer.MIN_VALUE;
         } else if (faceOrientation == FACING_UP) {
             betOrientation = FileInfoBase.AXIAL;
-            curPosition = Integer.MAX_VALUE;
-            closestPosition = Integer.MAX_VALUE;
         } else if (faceOrientation == FACING_INTO_SCREEN) {
             betOrientation = AlgorithmBrainExtractor.SAT_COR;
-            curPosition = Integer.MIN_VALUE;
-            closestPosition = Integer.MIN_VALUE;
         } else if (faceOrientation == FACING_OUT_OF_SCREEN) {
             betOrientation = AlgorithmBrainExtractor.SAT_COR;
-            curPosition = Integer.MAX_VALUE;
-            closestPosition = Integer.MAX_VALUE;
         } else {
             displayError("No face orientation given.");
             finalize();
-
-            return;
+            return null;
         }
 
         fireProgressStateChanged(3);
-
         boolean showInitialEstimation = false;
         Point3f initialCenter = JDialogExtractBrain.computeCenter(srcImage, betOrientation, estimateWithSphereBET);
         int iterations = 500;
@@ -223,261 +265,415 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         linkProgressToAlgorithm(bet);
         bet.setProgressValues(generateProgressValues(3, 57));
         bet.run();
-
-        int updateInterval = srcImage.getSize() / 19;
-
-        // calc plane from BET extraction
-        BitSet brainMask = srcImage.getMask();
-
-        int pBar = 0;
-        
-        // go through each slice, find the closest point in the direction the face should be pointing
-        for (int i = 0; i < srcImage.getSize(); i++) {
-
-            if ((i % updateInterval) == 0) {
-            	pBar++;
-                fireProgressStateChanged(57 + pBar);
-            }
-
-            if (brainMask.get(i)) {
-                curPosition = getNormalPosition(i);
-
-                if (faceOrientation == FACING_RIGHT) {
-
-                    if (curPosition > closestPosition) {
-                        closestPosition = curPosition;
-                    }
-                } else if (faceOrientation == FACING_LEFT) {
-
-                    if (curPosition < closestPosition) {
-                        closestPosition = curPosition;
-                    }
-                } else if (faceOrientation == FACING_DOWN) {
-
-                    if (curPosition > closestPosition) {
-                        closestPosition = curPosition;
-                    }
-                } else if (faceOrientation == FACING_UP) {
-
-                    if (curPosition < closestPosition) {
-                        closestPosition = curPosition;
-                    }
-                } else if (faceOrientation == FACING_INTO_SCREEN) {
-
-                    if (curPosition > closestPosition) {
-                        closestPosition = curPosition;
-                    }
-                } else if (faceOrientation == FACING_OUT_OF_SCREEN) {
-
-                    if (curPosition < closestPosition) {
-                        closestPosition = curPosition;
-                    }
-                }
-            }
-        }
-
-        if (closestPosition == Integer.MAX_VALUE) {
-            displayError("Unable to find the front of the segmented brain.");
-            finalize();
-
-            return;
-        }
-
-        // bump out point slightly
-        float percentBump = 0.025f;
-
-        if (faceOrientation == FACING_RIGHT) {
-            closestPosition += MipavMath.round(percentBump * srcImage.getExtents()[0]);
-        } else if (faceOrientation == FACING_LEFT) {
-            closestPosition -= MipavMath.round(percentBump * srcImage.getExtents()[0]);
-        } else if (faceOrientation == FACING_DOWN) {
-            closestPosition += MipavMath.round(percentBump * srcImage.getExtents()[1]);
-        } else if (faceOrientation == FACING_UP) {
-            closestPosition -= MipavMath.round(percentBump * srcImage.getExtents()[1]);
-        } else if (faceOrientation == FACING_INTO_SCREEN) {
-            closestPosition += MipavMath.round(percentBump * srcImage.getExtents()[2]);
-        } else if (faceOrientation == FACING_OUT_OF_SCREEN) {
-            closestPosition -= MipavMath.round(percentBump * srcImage.getExtents()[2]);
-        }
-
-        int removalIndex;
-        int removalStep;
-        int removalStart;
-        int removalEnd;
-        int removalPosition;
-
-        boolean foundBrain;
-        boolean removedFace = false;
+        bet.finalize();
+        bet = null;
+        BitSet brainMask = srcImage.getMask();        
+        return brainMask;
+    }
+    
+    /**
+     * 
+     * Appends the given <code>brainMaskTemp</code> by <code>mmToPad</code> in pixels in all directions.
+     * TODO: Use Algorithms -> Morphological -> Dilate
+     * 
+     * @param brainMaskTemp     The <code>BitSet</code> returned by <code>this.extractBrain()</code>.
+     * @param mmToPad           Length in millimeters that the brain's <code>BitSet</code> should be extended.
+     * @return                  The original <code>BitSet</code> with <code>mmToPad</code> in pixels appended to this <code>BitSet</code>
+     */
+    
+    private BitSet bufferBrain(BitSet brainMaskTemp, int mmToPad)   
+    {
+        BitSet brainMask = (BitSet)brainMaskTemp.clone();
+        BitSetUtility bitUtil = new BitSetUtility();
         float xRes = srcImage.getFileInfo(0).getResolutions()[0];
         float yRes = srcImage.getFileInfo(0).getResolutions()[1];
         float zRes = srcImage.getFileInfo(0).getResolutions()[2];
-
-        int faceLevel;
-
-        updateInterval = srcImage.getSize() / 19;
-
-        //progress should currently be at 76
-        
-        pBar = 0;
-        for (int i = 0; i < srcImage.getSize(); i++) {
-
-            if ((i % updateInterval) == 0) {
-            	pBar++;
-                fireProgressStateChanged(76 + pBar);
-            }
-
-            if (faceOrientation == FACING_RIGHT) {
-                faceLevel = (i % sliceSize) / xDim;
-
-                // in sagittal images, the face should be in the lower third of each slice (>
-                // yDim/verticalDeletionLimit)
-                if (faceLevel < (yDim * (1 - verticalDeletionLimit))) {
-                    continue;
-                }
-            } else if (faceOrientation == FACING_LEFT) {
-                faceLevel = (i % sliceSize) / xDim;
-
-                // in sagittal images, the face should be in the lower third of each slice (>
-                // yDim/verticalDeletionLimit)
-                if (faceLevel < (yDim * (1 - verticalDeletionLimit))) {
-                    continue;
-                }
-            } else if (faceOrientation == FACING_DOWN) {
-                faceLevel = i / sliceSize;
-
-                // in axial images, the face should be in the first third of the slices (< zDim/verticalDeletionLimit)
-                if (faceLevel > (zDim * verticalDeletionLimit)) {
-                    continue;
-                }
-            } else if (faceOrientation == FACING_UP) {
-                faceLevel = i / sliceSize;
-
-                // in axial images, the face should be in the first third of the slices (< zDim/verticalDeletionLimit)
-                if (faceLevel > (zDim * verticalDeletionLimit)) {
-                    continue;
-                }
-            } else if (faceOrientation == FACING_INTO_SCREEN) {
-                faceLevel = (i % sliceSize) / xDim;
-
-                // in coronal images, the face should be in the lower portion of each slice (>
-                // yDim/verticalDeletionLimit)
-                if (faceLevel < (yDim * (1 - verticalDeletionLimit))) {
-                    continue;
-                }
-            } else if (faceOrientation == FACING_OUT_OF_SCREEN) {
-                faceLevel = (i % sliceSize) / xDim;
-
-                // in coronal images, the face should be in the lower third of each slice (> yDim/verticalDeletionLimit)
-                if (faceLevel < (yDim * (1 - verticalDeletionLimit))) {
-                    continue;
-                }
-            } else {
-
-                // should never happen..
-                faceLevel = 0;
-
-                MipavUtil.displayError("Error in face orientation specification: " + faceOrientation);
-
-                srcImage.clearMask();
-                bet.finalize();
-                bet = null;
-                finalize();
-
-                return;
-            }
-
-            removalPosition = getNormalPosition(i);
-
-            // ignore points not on the "face plane"
-            if (removalPosition != closestPosition) {
-                continue;
-            }
-
-            if (faceOrientation == FACING_RIGHT) {
-                removalIndex = i - (int) (mmToDelete / xRes);
-                removalStep = 1;
-                removalStart = removalIndex;
-                removalEnd = i + (xDim - getNormalPosition(i));
-            } else if (faceOrientation == FACING_LEFT) {
-                removalIndex = i + (int) (mmToDelete / xRes);
-                removalStep = 1;
-                removalStart = i - getNormalPosition(i);
-                removalEnd = removalIndex;
-            } else if (faceOrientation == FACING_DOWN) {
-                removalIndex = i - (int) ((int) (mmToDelete / yRes) * xDim);
-                removalStep = xDim;
-                removalStart = removalIndex;
-                removalEnd = i + (sliceSize - (xDim * getNormalPosition(i)));
-            } else if (faceOrientation == FACING_UP) {
-                removalIndex = i + (int) ((int) (mmToDelete / yRes) * xDim);
-                removalStep = xDim;
-                removalStart = i - (xDim * getNormalPosition(i));
-                removalEnd = removalIndex;
-            } else if (faceOrientation == FACING_INTO_SCREEN) {
-                removalIndex = i - (int) ((int) (mmToDelete / zRes) * sliceSize);
-                removalStep = sliceSize;
-                removalStart = removalIndex;
-                removalEnd = i + (volumeSize - (sliceSize * getNormalPosition(i)));
-            } else if (faceOrientation == FACING_OUT_OF_SCREEN) {
-                removalIndex = i + (int) ((int) (mmToDelete / zRes) * sliceSize);
-                removalStep = sliceSize;
-                removalStart = i - (sliceSize * getNormalPosition(i));
-                removalEnd = removalIndex;
-            } else {
-
-                // should never happen..
-                removalIndex = 0;
-                removalStep = 0;
-                removalStart = 0;
-                removalEnd = 0;
-
-                MipavUtil.displayError("Error in face orientation specification: " + faceOrientation);
-
-                srcImage.clearMask();
-                bet.finalize();
-                bet = null;
-                finalize();
-
-                return;
-            }
-
-            foundBrain = false;
-
-            for (int j = removalStart; j < removalEnd; j += removalStep) {
-
-                if (brainMask.get(j)) {
-                    foundBrain = true;
-                }
-            }
-
-            if (!foundBrain) {
-
-                for (int j = removalStart; j < removalEnd; j += removalStep) {
-
-                    if (j < srcImage.getSize()) {
-                        srcImage.set(j, 0);
+        int xtoDelete = (int)(mmToPad / xRes);
+        int ytoDelete = (int)(mmToPad / yRes);
+        int ztoDelete = (int)(mmToPad / zRes);
+        double greatestDim = xtoDelete;
+        if(ytoDelete>greatestDim)
+            greatestDim = ytoDelete;
+        int sizeInc = (int)(greatestDim/Math.sqrt(2.0));
+        for(int i=brainMaskTemp.nextSetBit(0); i>=0; i=brainMaskTemp.nextSetBit(i+1)) {
+            if(bitUtil.isInScan(i+xDim+1) && !brainMaskTemp.get(i+xDim+1))
+                for(int j=1; j<sizeInc; j++)
+                    if(bitUtil.isInScan(i+j+j*xDim))
+                        brainMask.set(i+j+j*xDim);
+            if(bitUtil.isInScan(i-xDim+1) && !brainMaskTemp.get(i-xDim+1))
+                for(int j=1; j<sizeInc; j++)
+                    if(bitUtil.isInScan(i+j-j*xDim))
+                        brainMask.set(i+j-j*xDim);
+            if(bitUtil.isInScan(i-xDim-1) && !brainMaskTemp.get(i-xDim-1))
+                for(int j=1; j<sizeInc; j++)
+                    if(bitUtil.isInScan(i-j-j*xDim))
+                        brainMask.set(i-j-j*xDim);
+            if(bitUtil.isInScan(i+xDim-1) && !brainMaskTemp.get(i+xDim-1))
+                for(int j=1; j<sizeInc; j++)
+                    if(bitUtil.isInScan(i-j+j*xDim))
+                        brainMask.set(i-j+j*xDim); 
+            if(bitUtil.isInScan(i+1) && !brainMaskTemp.get(i + 1))
+                for(int j=1; j<=xtoDelete; j++)
+                    if(bitUtil.isInScan(i+j))
+                        brainMask.set(i+j);
+            if(bitUtil.isInScan(i-1) && !brainMaskTemp.get(i-1))
+                for(int j=1; j<=xtoDelete; j++)
+                    if(bitUtil.isInScan(i-j))
+                        brainMask.set(i-j);
+            if(bitUtil.isInScan(i+xDim) && !brainMaskTemp.get(i + xDim))
+                for(int j=1; j<=ytoDelete; j++)
+                    if(bitUtil.isInScan(i+j*xDim))
+                        brainMask.set(i+(j*xDim));
+            if(bitUtil.isInScan(i-xDim) && !brainMaskTemp.get(i-xDim))
+                for(int j=1; j<=ytoDelete; j++)
+                    if(bitUtil.isInScan(i-(j*xDim)))
+                        brainMask.set(i-(j*xDim));
+            if(bitUtil.isInScan(i+(sliceSize)) && !brainMaskTemp.get(i+(sliceSize)))
+                for(int j=1; j<=ztoDelete; j++)
+                    if(bitUtil.isInScan(i+(j*(sliceSize))))
+                        brainMask.set(i+(j*(sliceSize)));
+            if(bitUtil.isInScan(i-(sliceSize)) && !brainMaskTemp.get(i-(sliceSize)))
+                for(int j=1; j<=ztoDelete; j++)
+                    if(bitUtil.isInScan(i-(j*(sliceSize))))
+                        brainMask.set(i-(j*(sliceSize)));
+        }
+        return brainMask;
+    }
+    
+    /**
+     * Defines the bounding region for face de-identification.
+     * TODO: Streamline orientations
+     * 
+     * @param shape     Shape of bounding region for face de-identification.
+     * @return          A <code>BitSet</code> of size <code>srcImage.getSize()</code> where set values are the inital shape's location.
+     */
+    
+    private BitSet defineInterestRegion(int shape)
+    {
+        BitSetUtility bitUtil = new BitSetUtility();
+        BitSet corner = new BitSet(srcImage.getSize());
+        if(shape == CUBE) {            
+            if(faceOrientation == FACING_UP || faceOrientation == FACING_DOWN) {
+                for(int i=0; i<xDim; i++) {
+                    int cornerStep = 0, cornerStart = 0, cornerJump =0, cornerRowEnd = 0;
+                    if(faceOrientation == FACING_DOWN) {
+                        cornerStart = i + sliceSize/2;
+                        cornerStep = xDim;
+                        cornerJump = sliceSize;
+                        cornerRowEnd = yDim-1;
+                    }
+                    if(faceOrientation == FACING_UP) {
+                        cornerStart = i;
+                        cornerStep = xDim;
+                        cornerJump = sliceSize;
+                        cornerRowEnd = yDim/2;
+                    }
+                    for (int j = cornerStart; (j/sliceSize)<(zDim/2); j += cornerJump) {
+                        if(faceOrientation == FACING_DOWN) {
+                            for(int k = j; k%sliceSize > xDim; k += cornerStep) { 
+                                if(bitUtil.isInScan(k)) {
+                                    corner.set(k);
+                                }
+                            }
+                        }
+                        if(faceOrientation == FACING_UP)
+                        {
+                            for(int k = j; ((k % sliceSize)/xDim) <= cornerRowEnd; k += cornerStep) {  
+                                if(bitUtil.isInScan(k)) {
+                                    corner.set(k);
+                                }
+                            }
+                        }
                     }
                 }
-
-                removedFace = true;
+            }   
+            if(faceOrientation == FACING_INTO_SCREEN || faceOrientation == FACING_OUT_OF_SCREEN) {
+                for(int i=0; i<xDim; i++) {
+                    int cornerStep = 0, cornerStart = 0, cornerJump =0, cornerRowEnd = 0;
+                    if(faceOrientation == FACING_OUT_OF_SCREEN) {
+                        cornerStart = i + sliceSize/2;
+                        cornerStep = sliceSize;
+                        cornerJump = xDim;
+                        cornerRowEnd = zDim/2;
+                    }
+                    if(faceOrientation == FACING_INTO_SCREEN) {
+                        cornerStart = i + sliceSize/2 + volumeSize/2;
+                        cornerStep = sliceSize;
+                        cornerJump = xDim;
+                        cornerRowEnd = zDim;
+                    }
+                    for (int j = cornerStart; (j % sliceSize)/xDim < yDim && (j % sliceSize)/xDim>0; j += cornerJump) {
+                        for(int k = j; k / (sliceSize) < cornerRowEnd; k += cornerStep) {
+                            if(bitUtil.isInScan(k)) {
+                                corner.set(k);
+                            }
+                        }
+                    } 
+                }
             }
+            if(faceOrientation ==  FACING_LEFT || faceOrientation == FACING_RIGHT) {
+                for(int i=0; i<zDim; i++)  {
+                    int cornerColumnEnd = 0, cornerStep = 0, cornerStart = 0, cornerJump =0;
+                    if(faceOrientation == FACING_LEFT) {
+                        cornerStart = (sliceSize)*i + sliceSize/2 - xDim;
+                        cornerColumnEnd = (sliceSize)*i + sliceSize - (xDim/2);
+                        cornerStep = 1;
+                        cornerJump = xDim;
+                    }
+                    if(faceOrientation == FACING_RIGHT) {
+                        cornerStart = (sliceSize)*i + sliceSize/2 - xDim/2;
+                        cornerColumnEnd = (sliceSize)*i + sliceSize + xDim;
+                        cornerStep = 1;
+                        cornerJump = xDim;
+                    }
+                    for (int j = cornerStart; j < cornerColumnEnd; j += cornerJump) {
+                        for(int k = j; k<j+(cornerJump/2); k += cornerStep) {
+                            if(bitUtil.isInScan(k)) {
+                                corner.set(k);
+                            }
+                        }
+                    }
+                }
+            }
+            return corner;
         }
-
-        if (!removedFace) {
-            MipavUtil.displayError("The face could not be located and removed, possibly because the brain segmentation was too large.");
-        }
-
-        srcImage.clearMask();
-
-        bet.finalize();
-        bet = null;
-
-        fireProgressStateChanged(100);
-        
-
-        setCompleted(true);
+        else
+            return null;
     }
-
+    
+    /**
+     * 
+     * Defines an initial region for face de-identification.
+     * 
+     * @param shape             Initial shape to use for face de-identification.
+     * @param interestRegion    The bounding area of the face de-identification.
+     * @return                  A <code>BitSet</code> of size <code>srcImage.getSize()</code> where set values are the inital shape's location.
+     */
+    
+    private BitSet defineInitialRegion(int shape, BitSet interestRegion)
+    {
+        BitSet sphere = new BitSet(srcImage.getSize());
+        BitSetUtility bitUtil = new BitSetUtility();
+        if(shape == SPHERE) {
+            int xInit = 0, yInit = 0, zInit = 0, radius = 15;
+            if(faceOrientation == FACING_LEFT) {
+                xInit = 0;
+                yInit = yDim-1;
+                zInit = zDim/2;  
+            }
+            else if(faceOrientation == FACING_RIGHT) {
+                xInit = xDim-1;
+                yInit = yDim-1;
+                zInit = zDim/2;
+            }
+            else if(faceOrientation == FACING_DOWN) {
+                xInit = xDim/2;
+                yInit = yDim;
+                zInit = 0;
+            }
+            else if(faceOrientation == FACING_UP) {
+                xInit = xDim/2;
+                yInit = 0;
+                zInit = 0;
+            }
+            else if(faceOrientation == FACING_INTO_SCREEN) {
+                xInit = xDim/2;
+                yInit = yDim-1;
+                zInit = zDim-1;
+            }
+            else if(faceOrientation == FACING_OUT_OF_SCREEN) {
+                xInit = xDim/2;
+                yInit = yDim-1;
+                zInit = 0;
+            }
+            int[] points = CircleUtility.get1DPointsInSphere(xInit, yInit, zInit, radius, xDim, yDim);
+            for(int i=0; i<points.length; i++) {
+                if(bitUtil.isInScan(points[i]) && interestRegion.get(points[i])) {
+                    sphere.set(points[i]);
+                }       
+            }
+            return sphere;
+        }
+        else
+            return null;
+    }
+    
+    /**
+     * 
+     * Performs the face de-identification within the bounding area by approximating the given shape using 
+     * a geometry suitable for the given shape.  For example, the approximation of a quarter cylinder is performed
+     * using spheres with centers on the boundary points of the <code>initialRegion</code> with further iterations
+     * on the boundary points of the resulting shape.
+     * TODO:Remove time dependence
+     * 
+     * @param interestRegion    The bounding area for face de-identification.
+     * @param initialRegion     Initial area.
+     * @param brainMask         Brain extraction derived from BET and apended by <code>this.bufferBrain(BitSet, int)</code>
+     * @param shape             Shape to approximate inside the <code>interestRegion</code> for face de-identification.
+     * @return                  A <code>BitSet</code> of size <code>srcImage.getSize()</code> where set values denote face de-identification may be performed.
+     */
+    
+    private BitSet extractFace(BitSet interestRegion, BitSet initialRegion, BitSet brainMask, int shape)
+    {
+        BitSet brainSlice = (BitSet)interestRegion.clone();
+        BitSetUtility bitUtil = new BitSetUtility();
+        brainSlice.and(brainMask);
+        interestRegion.andNot(brainMask);
+        BitSet removeRegion = initialRegion;
+        BitSet removeInstanceRegion = new BitSet(srcImage.getSize());
+        BitSet cube = defineInterestRegion(CUBE); 
+        BitSet interestEdge = bitUtil.getEdgePoints(interestRegion);
+        BitSet imageSet = new BitSet(srcImage.getSize());
+        imageSet.set(0, srcImage.getSize()-1);
+        BitSet imageSetEdge = bitUtil.getEdgePoints(imageSet);
+        interestEdge.andNot(imageSetEdge);
+        Vector interestEdgePoints = bitUtil.convertSetToPoints(interestEdge);
+        fireProgressStateChanged(65);
+        Random pointPick = new Random();
+        if(shape == QUARTER_CYLINDER) {
+            int totalPointsRemoved = initialRegion.cardinality();
+            int totalArea = (int)((cube.cardinality() - brainSlice.cardinality()) * (Math.PI/4));  //cylinder inside two octants)
+            int decayedRadiusCount = 0;
+            final double time = System.currentTimeMillis();
+            final int minComplete = (int)(getProgressChangeListener().getProgressBar().getPercentComplete()*100);
+            int progress = 0;
+            while(totalPointsRemoved < totalArea && (System.currentTimeMillis()-time < 40000.0)) { 
+                int removePoint = pointPick.nextInt(srcImage.getSize());
+                if(removeRegion.get(removePoint) && bitUtil.isBoundaryPoint(removeRegion, removePoint) && !bitUtil.isBoundaryPoint(cube, removePoint)) { 
+                    int minDist = ((int)bitUtil.getMinDistance(removePoint, interestEdgePoints));
+                    if(minDist>MIN_RADIUS) {
+                        int radius = pointPick.nextInt(minDist-MIN_RADIUS) + MIN_RADIUS;
+                        double decayedRadius = ((double)radius) * Math.exp(-((double)totalPointsRemoved) / ((double)totalArea));
+                        if(((int)decayedRadius) > MIN_RADIUS) {
+                            progress = (int)(minComplete+(.3*((System.currentTimeMillis()-time)/40000.0))*100);
+                            fireProgressStateChanged(progress);
+                            int[] points = CircleUtility.get1DPointsInSphere(removePoint, ((int)decayedRadius), xDim, yDim);
+                            for(int i=0; i<points.length; i++) {
+                                if(bitUtil.isInScan(points[i]) && !brainMask.get(points[i]) && interestRegion.get(points[i])) {// && ((int)points[i]/(xDim)) == ((int)removePoint/(xDim)))
+                                    removeInstanceRegion.set(points[i]);
+                                    totalPointsRemoved++;
+                                }
+                            }
+                            removeRegion.or(removeInstanceRegion);
+                            interestRegion.andNot(removeInstanceRegion);
+                            removeInstanceRegion = new BitSet(srcImage.getSize());
+                        }
+                        else
+                            decayedRadiusCount++;
+                    }
+                    else
+                        decayedRadiusCount++;
+                }
+            }
+            return removeRegion;
+        }
+        /*else if(shape == CUBE)
+        {
+            int removePoint = 0;
+            int numFail = 0;
+            int successPoint = 0;
+            while(numFail < 10000)
+            {
+                removePoint = pointPick.nextInt(srcImage.getSize());
+                if(interestRegion.get(removePoint))
+                {
+                    int testRemovePoint = removePoint;
+                    boolean crossedX = true, crossedY = true, crossedZUp = true, crossedZDown = true;
+                    while(testRemovePoint%xDim != 0 && (interestRegion.get(testRemovePoint) || removeRegion.get(testRemovePoint))) {
+                        testRemovePoint--;
+                    }
+                    if(testRemovePoint%xDim == 0)
+                        crossedX = false;
+                    testRemovePoint = removePoint;
+                    while(testRemovePoint%(sliceSize) > xDim && (interestRegion.get(testRemovePoint) || removeRegion.get(testRemovePoint))) {
+                        testRemovePoint = testRemovePoint + xDim;
+                        
+                    }
+                    if(testRemovePoint%(sliceSize)<=xDim)
+                        crossedY = false;
+                    testRemovePoint = removePoint;
+                    while(testRemovePoint%(volumeSize)>(sliceSize) && (interestRegion.get(testRemovePoint) || removeRegion.get(testRemovePoint))) {
+                        testRemovePoint = testRemovePoint + (sliceSize);
+                    }
+                    if(testRemovePoint%(volumeSize)<=sliceSize)
+                        crossedZUp = false;
+                    testRemovePoint = removePoint;
+                    while(testRemovePoint%(volumeSize)>sliceSize && interestRegion.get(testRemovePoint)) {
+                        testRemovePoint = testRemovePoint - (sliceSize);
+                    }
+                    if(testRemovePoint%(volumeSize)<=sliceSize)
+                        crossedZDown = false;
+                    testRemovePoint = removePoint;
+                    if((!crossedX && !crossedY && !crossedZUp)) {
+                        int i = removePoint;
+                        while(i%xDim!=0) {
+                            int j = i;
+                            while(j%(sliceSize)>xDim) {
+                                int k = j;
+                                while(k%(volumeSize)>sliceSize) {
+                                    removeRegion.set(k); 
+                                    k = k+(sliceSize);
+                                }
+                                j = j+xDim;
+                            }
+                            i--;
+                        }
+                        interestRegion.andNot(removeRegion);
+                    }
+                    if((!crossedX  && !crossedY && !crossedZDown)) {
+                        int i = removePoint;
+                        while(i%xDim!=0) {
+                            int j = i;
+                            while(j%(sliceSize)>xDim) {
+                                int k = j;
+                                while(k%(volumeSize)>sliceSize) {
+                                    removeRegion.set(k); 
+                                    k = k-(sliceSize);
+                                }
+                                j = j+xDim;
+                            }
+                            i--;
+                        }
+                        interestRegion.andNot(removeRegion);
+                        successPoint++;
+                    }             
+                }
+                else
+                    numFail++;
+            }
+            return removeRegion;  
+        }*/
+        else
+            return null;
+    }
+    
+    /**
+     * 
+     * Connects near neighbors of set values in <code>removeRegion</code>.  Near neighbors are those values which are
+     * set and are within five percent of the image resolution.
+     * 
+     * @param removeRegion      The original <code>BitSet</code> for face de-identification.
+     * @param interestRegion    The bounding region.
+     * @param brainMask         The location of the brain in this image.
+     * @return                  A <code>BitSet</code> of size <code>srcImage.getSize()</code> where set values denote face de-identification may be performed.
+     */
+    
+    private BitSet smoothFace(BitSet removeRegion, BitSet interestRegion, BitSet brainMask)
+    {
+        BitSetUtility bitUtil = new BitSetUtility();
+        BitSet removeEdge = bitUtil.getEdgePoints(removeRegion);
+        BitSet imageSet = new BitSet(srcImage.getSize());
+        imageSet.set(0, srcImage.getSize()-1);
+        BitSet imageSetEdge = bitUtil.getEdgePoints(imageSet);
+        removeEdge.andNot(imageSetEdge);
+        BitSet removeRegionTemp = (BitSet)removeRegion.clone();
+        int levelCut = ((int)(((xDim+yDim+zDim)/3)*.05));
+        for(int i=removeEdge.nextSetBit(0); i>=0; i=removeEdge.nextSetBit(i+1)) {
+            removeRegionTemp = bitUtil.connectNearNeighbors(i, removeRegion, removeRegionTemp, levelCut);               
+        }
+        return removeRegionTemp;
+    }
+    
     /**
      * Constructs a string of the contruction parameters and outputs the string to the message frame if the logging
      * procedure is turned on.
@@ -485,30 +681,488 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
     private void constructLog() {
         historyString = new String("AnonymizeFaceBET(" + ")\n");
     }
-
+    
     /**
-     * Get the position in the dimension normal to the face (in slice) from an index, based on the face orientation.
+     * Private utility class for generating approximations to circles and spheres.
+     * TODO: Find where in MIPAV this is already done.
+     * 
+     * @author senseneyj
      *
-     * @param   index  the image index
-     *
-     * @return  the position of the index in the dimension normal to the face
      */
-    private int getNormalPosition(int index) {
+    
+    private static class CircleUtility
+    {
+        
+        /**
+         * 
+         * Calculates the points of an approximate sphere whose center is at <code>(xCenter, yCenter, zCenter)</code>
+         * witha given radius.
+         * 
+         * @return  Array of (x,y,z) coordinates of an approximate sphere.
+         */
+        
+        static int[][] get3DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius)
+        {
+            if(radius>1)
+            {
+                int[][] quadrant1 = getQuadrantBoundaryPoints(radius, 1);
+                int[][] quadrant2 = getQuadrantBoundaryPoints(radius, 2);
+                //int j = 0, k=0;
+                int[][][] slices = new int[2*radius+1][][];
+                int placeHolder = 0;    //shouldn't be necessary
+                for(int i=0; i<quadrant1.length-1; i++) {
+                   if(!(quadrant1[i][0] == quadrant1[i+1][0])) {
+                       int radiusTemp =  quadrant1[i][1];
+                       slices[placeHolder] = get2DPointsInCircle(yCenter, zCenter, radiusTemp);
+                       placeHolder++;
+                   }
+                }
+                slices[placeHolder] = get2DPointsInCircle(yCenter, zCenter, radius);
+                placeHolder++;
+                slices[placeHolder] = get2DPointsInCircle(yCenter, zCenter, radius);
+                placeHolder++;
+                for(int i=1; i<quadrant2.length; i++)
+                {
+                    if(!(quadrant2[i][0] == quadrant2[i-1][0]))
+                    {
+                        slices[placeHolder] = get2DPointsInCircle(yCenter, zCenter, Math.abs(quadrant2[i][1]));
+                        placeHolder++;
+                    }
+                }
+                int size = 0;
+                for(int i=0; i<slices.length; i++)
+                    size = size+slices[i].length;
+                int[][] spherePoints = new int[size][3];
+                int place = 0;
+                for(int i=0; i<slices.length; i++) {
+                    for(int n=0; n<slices[i].length; n++) {
+                        spherePoints[place][0] = xCenter+i-radius;
+                        spherePoints[place][1] = slices[i][n][0];
+                        spherePoints[place][2] = slices[i][n][1];
+                        place++;
+                    }
+                }
+                return spherePoints;
+            }
+            else {
+                int[][] spherePoints = new int[1][3];
+                spherePoints[0][0] = xCenter;
+                spherePoints[0][1] = yCenter;
+                spherePoints[0][2] = zCenter;
+                return spherePoints;
+            }
+            
+        }
+        
+        /**
+         * 
+         * Calculates the points of an approximate circle whose center is at <code>(xCenter, yCenter)</code>
+         * with a given radius.
+         * 
+         * @return  Array of (x,y) coordinates of an approximate circle.
+         */
+        
+        static int[][] get2DPointsInCircle(int xCenter, int yCenter, int r)
+        {
+            if(r>1) {
+                ArrayList points = new ArrayList();
+                int[] corner = new int[2];
+                int[][] quadrant1 = getQuadrantBoundaryPoints(r, 1);
+                int[][] quadrant3 = getQuadrantBoundaryPoints(r, 3);
+                for(int i=0; i<quadrant1.length; i++) {
+                    if((i==0) || !(quadrant1[i-1][1] == quadrant1[i][1])) {
+                        corner = quadrant1[i];
+                        for(int j=corner[0]; j>=-corner[0]; j--) {
+                            int[] tempPoint = new int[2];
+                            tempPoint[0] = xCenter + j;
+                            tempPoint[1] = yCenter + corner[1];
+                            points.add(tempPoint);
+                        }
+                    }
+                }
+                for(int i=1; i<quadrant3.length; i++) {
+                    if(!(quadrant3[i-1][1] == quadrant3[i][1])) {
+                        corner = quadrant3[i];
+                        for(int j=-corner[0]; j>=corner[0]; j--) {
+                            int[] tempPoint = new int[2];
+                            tempPoint[0] = xCenter + j;
+                            tempPoint[1] = yCenter + corner[1];
+                            points.add(tempPoint);
+                        }
+                    }
+                }
+                int[][] circlePoints = new int[points.size()][2];
+                for(int i=0; i<points.size(); i++) {
+                    circlePoints[i] = (int[])points.get(i);
+                }
+                return circlePoints;
+            }
+            else {
+                int[][] circlePoints = new int[1][2];
+                circlePoints[0][0] = xCenter;
+                circlePoints[0][1] = yCenter;
+                return circlePoints;
+            }
+        }
+        
+        /**
+         * 
+         * Calculates the points of an approximate sphere whose center is at <code>(xCenter, yCenter, zCenter)</code>
+         * with a given radius.
+         * 
+         * @return  Array of points of an approximate sphere.
+         */
+        
+        static int[] get1DPointsInSphere(int xCenter, int yCenter, int zCenter, int radius, int xDim, int yDim)
+        {
+            int[][] spherePoints = get3DPointsInSphere(xCenter, yCenter, zCenter, radius);
+            int[] convertedPoints = new int[spherePoints.length];
+            for(int i=0; i<spherePoints.length; i++) {
+                convertedPoints[i] = spherePoints[i][2]*(xDim*yDim)+spherePoints[i][1]*xDim + spherePoints[i][0];
+            }
+            return convertedPoints;
+        }
+        
+        /**
+         * 
+         * Calculates the points of an approximate sphere whose center is at <code>value</code>
+         * with a given radius.
+         * 
+         * @return  Array of points of an approximate sphere.
+         */
+        
+        static int[] get1DPointsInSphere(int value, int radius, int xDim, int yDim)
+        {
+            int z = value / (xDim*yDim);
+            int y = (value - z*(xDim*yDim)) / xDim;
+            int x = value - z*(xDim*yDim) - y*xDim;
+            return get1DPointsInSphere(x, y, z, radius, xDim, yDim);
+        }
+        
+        /**
+         * 
+         * Calculates the points of an approximate sphere whose center is at <code>(xCenter, yCenter)</code>
+         * with a given radius.
+         * 
+         * @return  Array of points of an approximate sphere.
+         */
+        
+        static int[] get1DPointsInCircle(int xCenter, int yCenter, int zCenter, int radius, int dimX, int dimY)
+        {
+            int[][] circlePoints = get2DPointsInCircle(xCenter, yCenter, radius);
+            int[] convertedPoints = new int[circlePoints.length];
+            for(int i=0; i<circlePoints.length; i++) {
+               convertedPoints[i] = zCenter*(dimX*dimY) + circlePoints[i][1]*dimX + circlePoints[i][0];
+            }
+            return convertedPoints;    
+        }
+        
+        /**
+         * Generates 2D data points in a given  quadrant for a specified <code>radius</code>
+         * 
+         * @see McIlroy, M. D.  Best approximate circles on integer grids. ACM Transactions on Graphics (TOG),  Volume 2 Issue 4. 
+         * @see http://portal.acm.org/citation.cfm?id=246
+         * 
+         * @param radius    Radius from origin for circle.
+         * @param quadrant  Allow 1 - 4 where 1: x>=0, y>0
+         *                                    2: x<0, y>=0
+         *                                    3: x<=0, y<0
+         *                                    4: x>0, y<=0 
+         *                                    
+         * @author senseneyj
+         */
+        
+        static int[][] getQuadrantBoundaryPoints(int radius, int quadrant)
+        {
+            ArrayList quadrantPoints = new ArrayList();
+            int x = 0, y = 0, dx = 0, dy = 0;
+            if(quadrant == 1 || quadrant == 2) {
+                x = radius;
+                y = 0;
+                dx = -1;
+                dy = 1;
+            }
+            else if(quadrant == 3 || quadrant == 4) {
+                x = -radius;
+                y = 0;
+                dx = 1;
+                dy = -1;
+            }
+            else
+                return null;
+            int epsilon, epsilonX, epsilonY, epsilonXY;
+            while(((quadrant == 1 || quadrant == 2) && x>0) || ((quadrant == 3 || quadrant == 4) && x<0))
+            {
+                int[] temp = new int[2];
+                temp[0] = x;
+                temp[1] = y;
+                quadrantPoints.add(temp);
+                epsilon = computeEpsilon(x, y, radius);
+                epsilonX = computeEpsilonX(epsilon, x, dx, radius);
+                epsilonY = computeEpsilonY(epsilon, y, dy, radius);
+                epsilonXY = computeEpsilonXY(epsilon, x, dx, y, dy);
+                if(-epsilonXY<epsilonY)
+                    x = x+dx;
+                if(epsilonXY<-epsilonX)
+                    y = y+dy;
+            }
+            int[][] quadrantArray = new int[quadrantPoints.size()][2];
+            if(quadrant == 1 || quadrant == 3) {
+                for(int i=0; i<quadrantPoints.size(); i++) {
+                    quadrantArray[i] = (int[])quadrantPoints.get(i);
+                }
+            }
+            else if(quadrant == 2 || quadrant == 4) {
+                int[] temp = new int[2];
+                for(int i=0; i<quadrantPoints.size(); i++) {
+                    temp = (int[])quadrantPoints.get(i);
+                    quadrantArray[i][0] = temp[1];
+                    quadrantArray[i][1] = -temp[0];
+                }
+            }
+            return quadrantArray;
+        }
+        
+        private static int computeEpsilon(int x, int y, int r)
+        {
+            return (int)(Math.pow(x, 2) + Math.pow(y, 2) - Math.pow(r, 2));
+        }
+        
+        private static int computeEpsilonX(int epsilon, int x, int dx, int r)
+        {
+            return epsilon + 2*x*dx + 1;
+        }
+        
+        private static int computeEpsilonY(int epsilon, int y, int dy, int r)
+        {
+            return epsilon + 2*y*dy + 1;
+        }
+        
+        private static int computeEpsilonXY(int epsilon, int x, int dx, int y, int dy)
+        {
+           return epsilon + 2*x*dx + 2*y*dy + 2;
+        }
+    }
+    
+    /**
+     * Private utility class for operations on BitSets
+     * TODO: Find where in MIPAV this is already done.
+     * 
+     * @author senseneyj
+     *
+     */
+    
+    private class BitSetUtility
+    {
+        /**
+         * 
+         * Calculates the distance between the closest point in this <code>BitSet</code> and the given <code>value</code>.
+         */
+        
+        float getMinDistance(int value, BitSet set)
+        {
+            return getMinDistance(value, convertSetToPoints(set));
+        }
+        
+        /**
+         * 
+         * Calculates the distance between the closest point in this <code>Vector</code> and the given <code>value</code>.
+         */
+        
+        float getMinDistance(int value, Vector setPoints)
+        {
+            int xValue = 0, yValue = 0, zValue = 0;
+            xValue = value % xDim;
+            yValue = (value % sliceSize) / xDim;
+            zValue = value / sliceSize;
+            float diffx, diffy, diffz;
+            Point3D point;
+            float distance = srcImage.getSize(), dist = 0;
+            for(int i=0; i<setPoints.size(); i++)
+            {
+                point = (Point3D)setPoints.get(i);
+                
+                diffx = point.x - xValue;
+                diffy = point.y - yValue;
+                diffz = point.z - zValue;
 
-        if (faceOrientation == FACING_RIGHT) {
-            return index % xDim;
-        } else if (faceOrientation == FACING_LEFT) {
-            return index % xDim;
-        } else if (faceOrientation == FACING_DOWN) {
-            return (index % sliceSize) / xDim;
-        } else if (faceOrientation == FACING_UP) {
-            return (index % sliceSize) / xDim;
-        } else if (faceOrientation == FACING_INTO_SCREEN) {
-            return index / sliceSize;
-        } else if (faceOrientation == FACING_OUT_OF_SCREEN) {
-            return index / sliceSize;
-        } else {
-            return Integer.MAX_VALUE;
+                dist = (diffx * diffx) + (diffy * diffy) +
+                       (diffz * diffz);
+
+                if (dist < distance) {
+                    distance = dist;
+                }
+            }
+            return ((float)Math.sqrt(distance));
+        }
+        
+        /**
+         * 
+         * Finds the points of the given <code>BitSet</code> which has at least one neighbor (not including diagonals) not in the BitSet.
+         */
+        
+        BitSet getEdgePoints(BitSet set)
+        {
+            BitSet edgePoints = new BitSet(srcImage.getSize());
+            for(int i=set.nextSetBit(0); i>=0; i=set.nextSetBit(i+1)) {
+                if(isBoundaryPoint(set, i))
+                    edgePoints.set(i);
+            }
+            return edgePoints;
+        }
+        
+        boolean isBoundaryPoint(BitSet set, int value)
+        {
+            
+            if(value % xDim == 0 || value % xDim == xDim-1 || 
+                    (value % sliceSize) / xDim == 0 || (value % sliceSize) / xDim == yDim-1 || 
+                    value / sliceSize == 0 || value / sliceSize == zDim-1)
+                return true; 
+            else {
+                if(!set.get(value-1))
+                    return true;
+                else if(!set.get(value+1))
+                    return true;
+                else if(!set.get(value+xDim))
+                    return true;
+                else if(!set.get(value-xDim))
+                    return true;
+                else if(!set.get(value+(sliceSize)))
+                    return true;
+                else if(!set.get(value-(sliceSize)))
+                    return true;
+                else
+                    return false;
+            }
+        }
+        
+        //TODO: Finish if usefulness is found.
+        
+        static final int LEFT_EXP = 0;
+        static final int RIGHT_EXP = 1;
+        static final int DOWN_EXP = 2;
+        static final int UP_EXP = 3;
+        static final int IN_EXP = 4;
+        static final int OUT_EXP = 5;
+        
+        int getBoundaryCode(BitSet set, int value)
+        {
+            int sum = 0;
+            if(set.get(value-1))
+                sum =+ 2^LEFT_EXP;
+            if(set.get(value+1))
+                sum =+ 2^RIGHT_EXP;
+            if(set.get(value+xDim))
+                sum =+ 2^DOWN_EXP;
+            if(set.get(value-xDim))
+                sum =+ 2^UP_EXP;
+            if(set.get(value+(sliceSize)))
+                sum =+ 2^IN_EXP;
+            if(set.get(value-(sliceSize)))
+                sum =+ 2^OUT_EXP;
+            return sum;
+        }
+        
+        boolean isInScan(int value)
+        {
+            if(value > 0 && value < volumeSize)
+                return true;
+            else
+                return false;
+        }
+        
+        /**
+         * 
+         * Returns a BitSet whose set values are those set in the connectingRegion and those values within the maxNeighborDistance of loc 
+         * where a value of this BitSet was set in between loc and some pixel within the maxNeighborDistance.
+         * 
+         */
+
+        BitSet connectNearNeighbors(int loc, BitSet connectingRegion, BitSet connectingRegionCopy, int maxNeighborDistance)
+        {
+            connectNearNeighborsUtil(loc, connectingRegion, connectingRegionCopy, 0, 0, maxNeighborDistance);
+            return connectingRegionCopy;
+        }
+        
+        private boolean connectNearNeighborsUtil(int loc, BitSet connectingRegion, BitSet connectingRegionCopy, int level, int dir, int levelCut)
+        {
+            final int start = 0, right = 1, left = 2, down = 3, up = 4, in = 5, out = 6;
+            if(level<levelCut && isInScan(loc)) {
+                if(level != 0 && connectingRegion.get(loc)) {
+                    return true;
+                }
+                else {
+                    switch(dir) {
+                        case start:
+                            if(!connectingRegion.get(loc+1))
+                                connectNearNeighborsUtil(loc+1, connectingRegion, connectingRegionCopy, level, right, levelCut);
+                            if(!connectingRegion.get(loc-1))
+                                connectNearNeighborsUtil(loc-1, connectingRegion, connectingRegionCopy, level, left, levelCut);
+                            if(!connectingRegion.get(loc-(xDim)))
+                                connectNearNeighborsUtil(loc-(xDim), connectingRegion, connectingRegionCopy, level, down, levelCut);
+                            if(!connectingRegion.get(loc+(xDim)))
+                                connectNearNeighborsUtil(loc+(xDim), connectingRegion, connectingRegionCopy, level, up, levelCut);
+                            if(!connectingRegion.get(loc+(sliceSize)))
+                                connectNearNeighborsUtil(loc+(sliceSize), connectingRegion, connectingRegionCopy, level, in, levelCut);
+                            if(!connectingRegion.get(loc-(sliceSize)))
+                                connectNearNeighborsUtil(loc-(sliceSize), connectingRegion, connectingRegionCopy, level, out, levelCut);
+                            break;
+                        case right:
+                            if(connectNearNeighborsUtil(loc+1, connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                                connectingRegionCopy.set(loc);
+                                return true;
+                            }
+                            break;
+                        case left:
+                            if(connectNearNeighborsUtil(loc-1, connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                                connectingRegionCopy.set(loc);
+                                return true;
+                            }
+                            break;
+                        case down:
+                            if(connectNearNeighborsUtil(loc-(xDim), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                                connectingRegionCopy.set(loc);
+                                return true;
+                            }
+                            break;
+                        case up:
+                            if(connectNearNeighborsUtil(loc+(xDim), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                                connectingRegionCopy.set(loc);
+                                return true;
+                            }
+                            break;
+                        case in:
+                            if(connectNearNeighborsUtil(loc+(sliceSize), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                                connectingRegionCopy.set(loc);
+                                return true;
+                            }
+                            break;
+                        case out:
+                            if(connectNearNeighborsUtil(loc-(sliceSize), connectingRegion, connectingRegionCopy, level+1, dir, levelCut)) {
+                                connectingRegionCopy.set(loc);
+                                return true;
+                            }
+                            break;
+                    }
+                    return false;
+                }
+            }
+            else {
+                return false;
+            }
+        }
+        
+        private Vector convertSetToPoints(BitSet set)
+        {
+            Vector setPoints = new Vector();
+            int xEdge = 0, yEdge = 0, zEdge = 0;
+            for(int i=set.nextSetBit(0); i>=0; i=set.nextSetBit(i+1)) {
+                xEdge = i % xDim;
+                yEdge = (i % sliceSize) / xDim;
+                zEdge = i / sliceSize;
+                setPoints.add(new Point3D(xEdge, yEdge, zEdge));
+            }
+            return setPoints;
         }
     }
 }

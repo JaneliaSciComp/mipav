@@ -30,103 +30,94 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -1027127665518969757L;
 
-    /** DOCUMENT ME! */
+    /** Face orientation not obtained from file information. */
     private static final int FACING_UNKNOWN = -1;
 
-    /** DOCUMENT ME! */
+    /** Indicates sagittal image with x-axis oriented posterior to anterior. */
     private static final int FACING_RIGHT = 1;
 
-    /** DOCUMENT ME! */
+    /** Indicates sagittal image with x-axis oriented anterior to posterior. */
     private static final int FACING_LEFT = 2;
 
-    /** DOCUMENT ME! */
+    /** Indicates axial image with y-axis oriented posterior to anterior. */
     private static final int FACING_DOWN = 3;
 
-    /** DOCUMENT ME! */
+    /** Indicates axial with y-axis oriented anterior to posterior. */
     private static final int FACING_UP = 4;
 
-    /** DOCUMENT ME! */
+    /** Indicates coronal image with z-axis oriented posterior to anterior. */
     private static final int FACING_INTO_SCREEN = 5;
 
-    /** DOCUMENT ME! */
+    /** Indicates coronal image with z-axis oriented anterior to posterior. */
     private static final int FACING_OUT_OF_SCREEN = 6;
 
-    /** DOCUMENT ME! */
+    /** The face orientation parameter. */
     private static final String PARAM_FACE_ORIENTATION = "face_orientation";
 
-    /** DOCUMENT ME! */
-    private static final String PARAM_EXTRA_MMS_TO_DELETE = "mms_to_delete_from_face";
+    /** Millimeters to add to brain mask. */
+    private static final String PARAM_EXTRA_MMS_TO_PAD = "mms_to_delete_from_face";
 
-    /** DOCUMENT ME! */
-    private static final String PARAM_VERT_DELETION_LIMIT = "vertical_deletion_limit_ratio";
-
-    /** DOCUMENT ME! */
+    /** Flag indicates BET should approximate initial brain by sphere. */
     private static final String PARAM_BET_DO_SPHERE_ESTIMATION = "bet_do_estimate_with_sphere";
 
-    /** DOCUMENT ME! */
+    /** BET based parameter for the depth to calculate in approximating brain maximum and minimum intensities.*/
     private static final String PARAM_BET_IMG_INFLUENCE = "bet_image_influence";
 
-    /** DOCUMENT ME! */
+    /** Controls the stiffness of the brain approximation mesh. */
     private static final String PARAM_BET_STIFFNESS = "bet_stiffness";
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** The algorithm corresponding to this dialog box. */
     private AlgorithmFaceAnonymizerBET defaceAlgo;
 
-    /** DOCUMENT ME! */
+    /** Flag indicates BET should approximate initial brain by sphere.  Initially set to false.  */
     private boolean estimateWithSphereBET = false;
 
-    /** DOCUMENT ME! */
+    /** Check box corresponding to <code>estimateSphereBET</code> */
     private JCheckBox estimateWithSphereCheckbox;
 
-    /** DOCUMENT ME! */
-    private JTextField extraDeletionField;
+    /** Text field corresponding to brain padding parameter. */
+    private JTextField extraBrainPaddingField;
 
-    /** DOCUMENT ME! */
-    private int extraMMsToDelete = 20;
+    /** FaceAnonymizer parameter.  Guarantees that the extracted brain will be avoided by the specified number of millimeters.  Initially set to 20. */
+    private int extraMMsToPad = 20;
 
-    /** DOCUMENT ME! */
+    /** Indicates face orientation of the image. */
     private int faceOrientation;
 
-    /** DOCUMENT ME! */
+    /** Button for facing down image. */
     private JRadioButton facingDownRadio;
 
-    /** DOCUMENT ME! */
+    /** Button for facing into the screen image. */
     private JRadioButton facingIntoRadio;
 
-    /** DOCUMENT ME! */
+    /** Button for facing left image. */
     private JRadioButton facingLeftRadio;
 
-    /** DOCUMENT ME! */
+    /** Button for facing out image. */
     private JRadioButton facingOutRadio;
 
-    /** DOCUMENT ME! */
+    /** Button for facing right image. */
     private JRadioButton facingRightRadio;
 
-    /** DOCUMENT ME! */
+    /** Button for facing up image. */
     private JRadioButton facingUpRadio;
 
-    /** DOCUMENT ME! */
+    /** the depth to calculate in approximating brain maximum and minimum intensities.  Initially set to .1 */
     private float imageInfluenceBET = 0.1f;
 
-    /** DOCUMENT ME! */
+    /** The text field corresponding to <code>imageInfluenceField</code>. */
     private JTextField imageInfluenceField;
 
-    /** DOCUMENT ME! */
+    /** The image that face anonymization will be performed on. */
     private ModelImage srcImage;
 
-    /** DOCUMENT ME! */
+    /** Controls the stiffness of the brain approximation mesh. Initially set to 0.15. */
     private float stiffnessBET = 0.15f;
 
-    /** DOCUMENT ME! */
+    /** The text field corresponding to <code>stiffnessBET</code>. */
     private JTextField stiffnessField;
-
-    /** DOCUMENT ME! */
-    private float verticalDeletionLimit = .33f;
-
-    /** DOCUMENT ME! */
-    private JTextField verticalLimitField;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -223,8 +214,8 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
 
         String str = new String();
         str += faceOrientation + delim;
-        str += extraMMsToDelete + delim;
-        str += verticalDeletionLimit + delim;
+        str += extraMMsToPad + delim;
+        //str += verticalDeletionLimit + delim;
         str += estimateWithSphereBET + delim;
         str += imageInfluenceBET + delim;
         str += stiffnessBET;
@@ -243,14 +234,11 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
             try {
                 StringTokenizer st = new StringTokenizer(defaultsString, ",");
                 faceOrientation = MipavUtil.getInt(st);
-                extraMMsToDelete = MipavUtil.getInt(st);
-                verticalDeletionLimit = MipavUtil.getFloat(st);
+                extraMMsToPad = MipavUtil.getInt(st);
                 estimateWithSphereBET = MipavUtil.getBoolean(st);
                 imageInfluenceBET = MipavUtil.getFloat(st);
                 stiffnessBET = MipavUtil.getFloat(st);
             } catch (Exception ex) {
-
-                // since there was a problem parsing the defaults string, start over with the original defaults
                 Preferences.debug("Resetting defaults for dialog: " + getDialogName());
                 Preferences.removeProperty(getDialogName());
                 ex.printStackTrace();
@@ -281,8 +269,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
             faceOrientation = scriptFaceOrientation;
         }
 
-        extraMMsToDelete = scriptParameters.getParams().getInt(PARAM_EXTRA_MMS_TO_DELETE);
-        verticalDeletionLimit = scriptParameters.getParams().getFloat(PARAM_VERT_DELETION_LIMIT);
+        extraMMsToPad = scriptParameters.getParams().getInt(PARAM_EXTRA_MMS_TO_PAD);
         estimateWithSphereBET = scriptParameters.getParams().getBoolean(PARAM_BET_DO_SPHERE_ESTIMATION);
         imageInfluenceBET = scriptParameters.getParams().getFloat(PARAM_BET_IMG_INFLUENCE);
         stiffnessBET = scriptParameters.getParams().getFloat(PARAM_BET_STIFFNESS);
@@ -295,8 +282,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         scriptParameters.storeInputImage(srcImage);
 
         scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_FACE_ORIENTATION, faceOrientation));
-        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_EXTRA_MMS_TO_DELETE, extraMMsToDelete));
-        scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_VERT_DELETION_LIMIT, verticalDeletionLimit));
+        scriptParameters.getParams().put(ParameterFactory.newInt(PARAM_EXTRA_MMS_TO_PAD, extraMMsToPad));
         scriptParameters.getParams().put(ParameterFactory.newBoolean(PARAM_BET_DO_SPHERE_ESTIMATION,
                                                                      estimateWithSphereBET));
         scriptParameters.getParams().put(ParameterFactory.newFloat(PARAM_BET_IMG_INFLUENCE, imageInfluenceBET));
@@ -310,8 +296,8 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
 
         try {
             System.gc();
-            defaceAlgo = new AlgorithmFaceAnonymizerBET(srcImage, faceOrientation, extraMMsToDelete,
-                                                        verticalDeletionLimit);
+            defaceAlgo = new AlgorithmFaceAnonymizerBET(srcImage, faceOrientation, extraMMsToPad);
+                                                        /*verticalDeletionLimit*/
             defaceAlgo.setBETParameters(estimateWithSphereBET, imageInfluenceBET, stiffnessBET);
             defaceAlgo.addListener(this);
 
@@ -376,10 +362,9 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         JPanel orientationPanel = new JPanel(new GridLayout(3, 2));
         orientationPanel.setBorder(MipavUtil.buildTitledBorder("Which way is the patient's face pointing?"));
 
-        // Create the radio buttons.
         facingRightRadio = new JRadioButton("Right");
         facingRightRadio.setFont(MipavUtil.font12);
-
+        
         if (faceOrientation == JDialogFaceAnonymizerBET.FACING_RIGHT) {
             facingRightRadio.setSelected(true);
         }
@@ -437,36 +422,25 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         JPanel removalPanel = new JPanel(new GridBagLayout());
         removalPanel.setBorder(MipavUtil.buildTitledBorder("Face removal options"));
 
-        extraDeletionField = new JTextField();
-        extraDeletionField.setText("" + extraMMsToDelete);
-        extraDeletionField.setColumns(2);
+        extraBrainPaddingField = new JTextField();
+        extraBrainPaddingField.setText("" + extraMMsToPad);
+        extraBrainPaddingField.setColumns(2);
 
-        JLabel extraDeletionLabel = new JLabel("Additional mms to delete from facial area");
-        extraDeletionLabel.setFont(MipavUtil.font12);
-
-        verticalLimitField = new JTextField();
-        verticalLimitField.setText("" + verticalDeletionLimit);
-        verticalLimitField.setColumns(2);
-
-        JLabel verticalLimitLabel = new JLabel("Vertical limit on the face deletion (0 = no removal, 1 = no limit)");
-        verticalLimitLabel.setFont(MipavUtil.font12);
-
+        JLabel extraPaddingLabel = new JLabel("Extracted brain is avoided by a buffer of this many mms");
+        extraPaddingLabel.setFont(MipavUtil.font12);
+  
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.ipadx = 5;
-        removalPanel.add(extraDeletionLabel, gbc);
+        removalPanel.add(extraPaddingLabel, gbc);
         gbc.anchor = GridBagConstraints.EAST;
         gbc.gridx++;
-        removalPanel.add(extraDeletionField, gbc);
+        removalPanel.add(extraBrainPaddingField, gbc);
         gbc.gridx = 0;
-        gbc.gridy++;
-        removalPanel.add(verticalLimitLabel, gbc);
-        gbc.gridx++;
-        removalPanel.add(verticalLimitField, gbc);
-
+  
         JPanel betPanel = new JPanel(new GridBagLayout());
         betPanel.setBorder(MipavUtil.buildTitledBorder("Brain extraction options"));
 
@@ -542,18 +516,10 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
             return false;
         }
 
-        if (MipavUtil.testParameter(extraDeletionField.getText(), 0, 500)) {
-            extraMMsToDelete = Integer.parseInt(extraDeletionField.getText());
+        if (MipavUtil.testParameter(extraBrainPaddingField.getText(), 0, 500)) {
+            extraMMsToPad = Integer.parseInt(extraBrainPaddingField.getText());
         } else {
-            MipavUtil.displayError("Number of mms to delete from facial regions should be between 0 and 500");
-
-            return false;
-        }
-
-        if (MipavUtil.testParameter(verticalLimitField.getText(), 0, 1)) {
-            verticalDeletionLimit = Float.parseFloat(verticalLimitField.getText());
-        } else {
-            MipavUtil.displayError("Vertical face deletion limit must be between 0 and 1");
+            MipavUtil.displayError("Number of mms to pad around brain region should be between 0 and 500");
 
             return false;
         }
