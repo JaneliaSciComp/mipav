@@ -843,7 +843,7 @@ public class FlythruRender extends SurfaceRender
     public void setRenderSurfaceColors(Color _color) {
 
         if (null != m_kSurfaceGeometryInfo) {
-            Color3f[] akVertexColors = null;
+            Color4f[] akVertexColors = null;
 
             // First, try to use the mean curvatures color map if specified.
             // if (null != m_kMeanCurvaturesLUT)
@@ -852,10 +852,10 @@ public class FlythruRender extends SurfaceRender
             int iNumVertices = afMeanCurvatures.length;
 
             // ModelLUTHelper kMap = new ModelLUTHelper(m_kMeanCurvaturesLUT);
-            akVertexColors = new Color3f[iNumVertices];
+            akVertexColors = new Color4f[iNumVertices];
 
             for (int iVertex = 0; iVertex < iNumVertices; ++iVertex) {
-                akVertexColors[iVertex] = new Color3f(_color);
+                akVertexColors[iVertex] = new Color4f(_color);
             }
             // }
 
@@ -1492,7 +1492,7 @@ public class FlythruRender extends SurfaceRender
             if (m_kSurfaceGeometryInfo.getColors() != null) {
                 m_kSurfaceMesh = new ModelTriangleMesh(m_kSurfaceGeometryInfo.getCoordinates(),
                                                        m_kSurfaceGeometryInfo.getNormals(),
-                                                       (Color3f[]) m_kSurfaceGeometryInfo.getColors(),
+                                                       (Color4f[]) m_kSurfaceGeometryInfo.getColors(),
                                                        m_kSurfaceGeometryInfo.getCoordinateIndices());
 
             } else {
@@ -1532,7 +1532,7 @@ public class FlythruRender extends SurfaceRender
     protected void resetRenderSurfaceColors() {
 
         if (null != m_kSurfaceGeometryInfo) {
-            Color3f[] akVertexColors = null;
+            Color4f[] akVertexColors = null;
 
             // First, try to use the mean curvatures color map if specified.
             if (null != m_kMeanCurvaturesLUT) {
@@ -1540,14 +1540,18 @@ public class FlythruRender extends SurfaceRender
                 int iNumVertices = afMeanCurvatures.length;
                 ModelLUTHelper kMap = new ModelLUTHelper(m_kMeanCurvaturesLUT);
 
-                akVertexColors = new Color3f[iNumVertices];
+                akVertexColors = new Color4f[iNumVertices];
 
                 for (int iVertex = 0; iVertex < iNumVertices; ++iVertex) {
-                    akVertexColors[iVertex] = new Color3f(new Color(kMap.mapValue(afMeanCurvatures[iVertex])));
+                    akVertexColors[iVertex] = new Color4f(new Color(kMap.mapValue(afMeanCurvatures[iVertex])));
                 }
             } // Next, try to use the defined in the ModelTriangleMesh.
-            else if (GeometryArray.COLOR_3 == (GeometryArray.COLOR_3 & m_kSurface.getVertexFormat())) {
-                akVertexColors = new Color3f[m_kSurface.getVertexCount()];
+            else if (GeometryArray.COLOR_4 == (GeometryArray.COLOR_4 & m_kSurface.getVertexFormat())) {
+                akVertexColors = new Color4f[m_kSurface.getVertexCount()];
+                for ( int i = 0; i < m_kSurface.getVertexCount(); i++ )
+                {
+                    akVertexColors[i] = new Color4f();
+                }
                 m_kSurface.getColors(0, akVertexColors);
             }
 

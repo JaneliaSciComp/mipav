@@ -147,12 +147,12 @@ public class SurfaceMask
 
             
             int iVQuantity = kMesh[mIndex].getVertexCount();
-            Color3f[] kTriColors = new Color3f[iVQuantity];
+            Color4f[] kTriColors = new Color4f[iVQuantity];
             
             if (bHasVertexColor && kMesh[mIndex].getCapability(GeometryArray.ALLOW_COLOR_READ)) {
                 
                 for (int iC = 0; iC < iVQuantity; iC++) {
-                    kTriColors[iC] = new Color3f();
+                    kTriColors[iC] = new Color4f();
                 }
                 
                 kMesh[mIndex].getColors(0, kTriColors);
@@ -166,7 +166,7 @@ public class SurfaceMask
             Point3f kV1 = new Point3f();
             Point3f kV2 = new Point3f();
             
-            Color3f kC0, kC1, kC2;
+            Color4f kC0, kC1, kC2;
             
             for (int iT = 0; iT < iTQuantity; iT++) {
                 
