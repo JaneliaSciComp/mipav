@@ -88,7 +88,7 @@ public class VOIVector extends ViewVOIVector {
         voi = (VOI) o;
 
         // check the voi name, fix if necessary
-        while (contains(voi)) {
+        if (contains(voi)) {
             voi.setName(buildName(voi.getName()));
         }
 
@@ -147,16 +147,16 @@ public class VOIVector extends ViewVOIVector {
     }
 
     /**
-     * DOCUMENT ME!
+     * Adds voi to the voi vector
      *
      * @param   voi  DOCUMENT ME!
      *
-     * @return  DOCUMENT ME!
+     * @return  true if successful, false if not
      */
     public boolean addVOI(VOI voi) {
 
         // check the voi name, fix if necessary
-        while (contains(voi)) {
+        if (contains(voi)) {
             voi.setName(buildName(voi.getName()));
         }
 
@@ -189,7 +189,7 @@ public class VOIVector extends ViewVOIVector {
         VOI voi = (VOI) o;
 
         // check the voi name, fix if necessary
-        while (contains(voi)) {
+        if (contains(voi)) {
             voi.setName(buildName(voi.getName()));
         }
 
