@@ -377,6 +377,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // swap the border painting
             Preferences.setProperty("ShowPaintBorder",
                                     String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
+            for(int i=0; i<controls.paintToolBar.getComponentCount(); i++)
+                if(controls.paintToolBar.getComponent(i).getName() != null)
+                    if(controls.paintToolBar.getComponent(i).getName().equals("ShowPaintBorder"))
+                        ((JButton)(controls.paintToolBar.getComponent(i))).setSelected(!((JButton)(controls.paintToolBar.getComponent(i))).isSelected());
             updateImages(true);
             getActiveImage().notifyImageDisplayListeners();
         } else if (command.equals("OpenXCEDESchema")) {
@@ -3266,7 +3270,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void keyPressed(KeyEvent e) {
 
-        // System.err.println("got something");
+        //System.err.println("got something");
         int keyCode = e.getKeyCode();
         componentImage.rememberPaintBrushSize();
 
@@ -3321,7 +3325,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 break;
-
+        
             case KeyEvent.VK_UP:
             case KeyEvent.VK_DOWN:
             case KeyEvent.VK_LEFT:

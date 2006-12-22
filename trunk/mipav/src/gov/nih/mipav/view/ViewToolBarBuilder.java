@@ -471,6 +471,7 @@ public class ViewToolBarBuilder implements ItemListener {
         paintToolBar.add(opacityPaintButton);
         
         borderPaintButton = buildButton("ShowPaintBorder", "Display border around painted areas.", "borderpaint");
+        borderPaintButton.setName("ShowPaintBorder");
         paintToolBar.add(borderPaintButton);
         
         paintToolBar.add(makeSeparator());
