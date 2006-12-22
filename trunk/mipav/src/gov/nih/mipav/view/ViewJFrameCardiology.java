@@ -672,6 +672,10 @@ public class ViewJFrameCardiology extends ViewJFrameBase implements KeyListener 
                 // swap the border painting
                 Preferences.setProperty("ShowPaintBorder",
                                         String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
+                for(int i=0; i<controls.paintToolBar.getComponentCount(); i++)
+                    if(controls.paintToolBar.getComponent(i).getName() != null)
+                        if(controls.paintToolBar.getComponent(i).getName().equals("ShowPaintBorder"))
+                            ((JButton)(controls.paintToolBar.getComponent(i))).setSelected(!((JButton)(controls.paintToolBar.getComponent(i))).isSelected());
                 updateImages(true);
                 break;
 
