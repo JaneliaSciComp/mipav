@@ -937,8 +937,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty(VOIStatisticList.minorAxisDescription, nf.format(tmpMinorAxis[0]));
             statProperty.setProperty(VOIStatisticList.centerDescription, comStr);
 
-            selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+            if (srcImage.getParentFrame() != null) {
+                selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
                                          srcImage.getParentFrame().useXOR(), false);
+            }
+            else {
+                selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+                        false, false);   
+            }
 
             // calc the perimeter
             totalPerimeter = 0f;
@@ -1596,8 +1602,14 @@ public class AlgorithmVOIProps extends AlgorithmBase implements VOIStatisticList
             statProperty.setProperty(VOIStatisticList.centerDescription, comStr);
 
             mask = new BitSet(imgBuffer.length);
-            selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
-                                         srcImage.getParentFrame().useXOR(), false);
+            if (srcImage.getParentFrame() != null) {
+                selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+                                             srcImage.getParentFrame().useXOR(), false);
+            }
+            else {
+                selectedVOI.createBinaryMask(mask, srcImage.getExtents()[0], srcImage.getExtents()[1],
+                        false, false);    
+            }
 
             if (srcImage.isColorImage()) {
 
