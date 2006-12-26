@@ -14,7 +14,7 @@ import javax.swing.*;
 
 
 /**
- * @version  December 15, 2006
+ * @version  December 26, 2006
  * @see      JDialogBase
  * @see      AlgorithmInterface
  *
@@ -36,7 +36,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
     /** DOCUMENT ME! */
     private ModelImage image; // source image
 
-    /** DOCUMENT ME! */
+    /** Number of iterations performed for both erosions and dilations */
     private int iters;
 
     /** DOCUMENT ME! */
@@ -44,6 +44,14 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
 
     /** DOCUMENT ME! */
     private JTextField itersText;
+    
+    private JCheckBox areaBox;
+    
+    /** If true, when a kidney curve in a slice encompasses less than 0.8 of the area
+     *  of both the previous and following kidney slice curves, then lower the
+     *  threshold and resegment to obtain a new larger area kidney curve for the slice.
+     */
+    private boolean areaCorrect;
 
     /** DOCUMENT ME! */
     private PlugInAlgorithmKidneySegmentation kidneySegAlgo = null;
@@ -163,6 +171,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
 
         String str = new String();
         str += iters;
+        str += areaCorrect;
 
         return str;
     }
@@ -177,6 +186,15 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
     public void setIters(int iters) {
         this.iters = iters;
     }
+    
+    /**
+     * Accessor that sets whether curves in a slice are increased in area
+     * if previous and following curves have consierably larger area
+     * @param areaCorrect
+     */
+    public void setAreaCorrect(boolean areaCorrect) {
+        this.areaCorrect = areaCorrect;
+    }
 
     
     /**
@@ -188,7 +206,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
             String name = makeImageName(image.getImageName(), "_kidneys");
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
-            kidneySegAlgo = new PlugInAlgorithmKidneySegmentation(resultImage, image, iters);
+            kidneySegAlgo = new PlugInAlgorithmKidneySegmentation(resultImage, image, iters, areaCorrect);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -248,6 +266,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         parentFrame = image.getParentFrame();
 
         setIters(scriptParameters.getNumIterations());
+        setAreaCorrect(scriptParameters.getParams().getBoolean("area_correct"));
     }
 
     /**
@@ -258,6 +277,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         scriptParameters.storeOutputImageParams(resultImage, true);
 
         scriptParameters.storeNumIterations(iters);
+        scriptParameters.getParams().put(ParameterFactory.newParameter("area_correct", areaCorrect));
     }
 
     /**
@@ -307,6 +327,13 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(itersText, gbc);
+        
+        areaBox = new JCheckBox("Correct curves with small area", true);
+        areaBox.setForeground(Color.black);
+        areaBox.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos++;
+        mainPanel.add(areaBox, gbc);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -367,7 +394,6 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         
         Vector[] curves = VOIs.VOIAt(i).getCurves();
         int nCurves = 0;
-        int previousCurves = 0;
         int slice;
         boolean haveTwoCurves = false;
 
@@ -401,6 +427,8 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
 
             return false;
         }
+        
+        areaCorrect = areaBox.isSelected();
 
         return true;
     } // end setVariables()
