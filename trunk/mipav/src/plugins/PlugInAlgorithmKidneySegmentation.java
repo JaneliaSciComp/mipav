@@ -1125,7 +1125,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             algoVOIExtraction = null;
             //System.out.println("threshSliceImage.getVOIs().size = " + threshSliceImage.getVOIs().size());
             
-            if (doingArea) {
+            if (doingArea && threshSliceImage.getVOIs().size() > 0 &&
+                threshSliceImage.getVOIs().VOIAt(0).getCurves()[0].size() > 0) {
                 sliceMask.clear();
                 threshSliceImage.getVOIs().VOIAt(0).createBinaryMask(sliceMask, xDim, yDim, xor, onlyActive);
                 area[z] = 0;
@@ -1134,7 +1135,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                         area[z]++;
                     }
                 } 
-            } // if (doingArea)
+            } // if (doingArea && threshSliceImage.getVOIs().size() > 0)
             
             if (threshSliceImage.getVOIs().size() > 0) {
                 gons = threshSliceImage.getVOIs().VOIAt(0).exportPolygons(0);
