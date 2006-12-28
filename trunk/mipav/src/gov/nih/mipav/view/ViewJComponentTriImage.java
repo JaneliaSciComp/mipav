@@ -1842,12 +1842,15 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
         float[] z = new float[1];
         VOI newPointVOI;
 
-        Point3Df localPoint = new Point3Df();
-        MipavCoordinateSystems.FileToPatient( pt, localPoint, imageActive, orientation );
-        x[0] = localPoint.x;
-        y[0] = localPoint.y;
-        z[0] = localPoint.z;
-
+        //Point3Df localPoint = new Point3Df();
+        //MipavCoordinateSystems.FileToPatient( pt, localPoint, imageActive, orientation );
+        //x[0] = localPoint.x;
+        //y[0] = localPoint.y;
+        //z[0] = localPoint.z;
+		x[0] = pt.x;
+        y[0] = pt.y;
+        z[0] = pt.z;
+			
         try {
             voiHandler.setVOI_ID(imageActive.getVOIs().size());
             newPointVOI = new VOI((short) imageActive.getVOIs().size(), "point3D_" + (voiHandler.getVOI_ID() + 1),
