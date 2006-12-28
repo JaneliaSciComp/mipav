@@ -21,13 +21,23 @@ import javax.vecmath.*;
 /**
  * This shows how to extend the AlgorithmBase class.
  *
- * @version  December 26, 2006
+ * @version  December 28, 2006
  * @author   DOCUMENT ME!
  * @see      AlgorithmBase
  *
  *           <p>$Logfile: /mipav/src/plugins/PlugInAlgorithmKidneySegmentation.java $ $Revision: 72 $ $Date: 2/06/06 5:50p $
  *           PlugInAlgorithmKidneySegmentation is used to generate an image containing only the image
  *           from an image of the abdominal cavity.
+ *           
+ *           The quality of an automatic segmentation must be validated by comparing it with a manual segmentation.  The Dice 
+ *           similiarity coefficient is used to compare the 2 segmentations.  Let A = manual segmentation and B = automatic
+ *           segmentation.  Then the Dice similarity coefficient = (A intersection B)/(A union B) = 
+ *           2 * (A intersection B)/(A + B).  The DSC ranges from no overlap with DSC = 0 to complete overlap with DSC = 1.
+ *           As recommended by Zijdenbos et al in the literature of image validation a good overlap occurs when DSC > 0.700.
+ *           For more information on the Dice Similiarity Coefficient see: "Statistical Validation of Image Segmentation Quality
+ *           Based on a Spatial Overlap Index" by Kelly H. Zou, Simon K. Warfield, Aditya Bharatha, Claire M. C. Tempany,
+ *           Michael R. Kaus, Steven J. Haker, William M. Wells III, Ferenc A. Jolesz, and Ron Kikinis, Acta Radiol 2004, 
+ *           11: 178-189.
  *           
  *           Program operation is as follows:
  *           1.) In 1 slice the user draws a contour in the interior of each kidney.  The contour does not need to follow 
@@ -93,7 +103,10 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    
+    /** In zero based numbering slice containing the middle of the kidneys
+     *  Default is Math.floor(srcImage.getExtents()[2]/2) - 1;
+     */
+    private int middleSlice;
 
     /** Iterations used in erosion before IDIng = iters Iterations used in dilation after IDing = iters. */
     private int iters = 5;
@@ -150,12 +163,15 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
      *
      * @param  resultImage    Result image model
      * @param  srcImg         Source image model.
+     * @apram  middleSlice    In zero based numbering the slice containing the middle of the kidneys
      * @param  iters          Number of iterations used in both erosions and dilations
      * @param  areaCorrect    If true, rethreshold kdney slice curves with small areas compared
      *                        to areas in 2 surrounding slices.
      */
-    public PlugInAlgorithmKidneySegmentation(ModelImage resultImage, ModelImage srcImg, int iters, boolean areaCorrect) {
+    public PlugInAlgorithmKidneySegmentation(ModelImage resultImage, ModelImage srcImg, int middleSlice, 
+                                             int iters, boolean areaCorrect) {
         super(resultImage, srcImg);
+        this.middleSlice = middleSlice;
         this.iters = iters;
         this.areaCorrect = areaCorrect;
     }
@@ -409,11 +425,351 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         
         setCompleted(true);
     }
+    
+    private void calc3D() {
+        int i;
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        int zDim = srcImage.getExtents()[2];
+        int totLength = sliceSize * zDim;
+        NumberFormat nf;
+        float sliceBuffer[];
+        BitSet sliceMask;
+        BitSet countUp;
+        BitSet countDown;
+        BitSet countLeft;
+        BitSet countRight;
+        int x, y;
+        int index;
+        boolean upSet;
+        boolean downSet;
+        boolean leftSet;
+        boolean rightSet;
+        float sliceMin;
+        int offset;
+        boolean sliceClear;
+        int extents2D[];
+        float aboveMin = 900.0f;
+        int kernel;
+        float circleDiameter;
+        int method;
+        int itersDilation;
+        int itersErosion;
+        int numPruningPixels;
+        int edgingType;
+        int numObjects;
+        boolean entireImage = true;
+        AlgorithmMorphology2D idObjectsAlgo2D;
+        int area[];
+        short shortBuffer[];
+        int maxObject;
+        int maxArea;
+        
+        
+        nf = NumberFormat.getNumberInstance();
+        nf.setMinimumFractionDigits(3);
+        nf.setMaximumFractionDigits(3);
+        
+        fireProgressStateChanged("Processing image ...");
+        
+        // Start the extraction process from the slice containing the middle of the kidneys
+        sliceBuffer = new float[sliceSize];
+        try {
+            srcImage.exportData(middleSlice*sliceSize, sliceSize, sliceBuffer);
+        }
+        catch (IOException error) {
+            MipavUtil.displayError("IOException on srcImage.exportData");
+            setCompleted(false);
+            return;
+        }
+        sliceMin = Float.MAX_VALUE;
+        for (i = 0; i < sliceSize; i++) {
+            if (sliceBuffer[i] < sliceMin) {
+                sliceMin = sliceBuffer[i];
+            }
+        }
+        sliceMask = new BitSet(sliceSize);
+        for (i = 0; i < sliceSize; i++) {
+            sliceMask.set(i);
+        }
+        countUp = new BitSet(sliceSize);
+        countDown = new BitSet(sliceSize);
+        countLeft = new BitSet(sliceSize);
+        countRight = new BitSet(sliceSize);
+        y = 0;
+        for (x = 0; x < xDim; x++) {
+            countUp.set(x);
+            countDown.set(x);
+            for (i = 1; (i <= 7) && countDown.get(x); i++) {
+                if (sliceBuffer[i*xDim + x] > (sliceMin + aboveMin)) {
+                    countDown.clear(x);   
+                }
+            }
+            if (countDown.get(x)) {
+                sliceMask.clear(x);
+            }
+            countLeft.set(x);
+            for (i = 1; (i <= 3) && countLeft.get(x); i++) {
+                if ((x - i) >= 0) {
+                    if (sliceBuffer[x-i] > (sliceMin + aboveMin)) {
+                        countLeft.clear(x);
+                    }
+                }
+            }
+            countRight.set(x);
+            for (i = 1; (i <= 3) && countRight.get(x); i++) {
+                if ((x + i) <= (xDim-1)) {
+                    if (sliceBuffer[x+i] > (sliceMin + aboveMin)) {
+                        countRight.clear(x);
+                    }
+                }
+            }
+            if (countLeft.get(x) && countRight.get(x)) {
+                sliceMask.clear(x);
+            }
+        } // for (x = 0; x < xDim; x++)
+        
+        y = yDim - 1;
+        offset = y * xDim;
+        for (x = 0; x < xDim; x++) {
+            countDown.set(offset + x);
+            countUp.set(offset + x);
+            for (i = 1; (i <= 7) && countUp.get(offset + x); i++) {
+                if (sliceBuffer[(y-i)*xDim + x] > (sliceMin + aboveMin)) {
+                    countUp.clear(offset + x);   
+                }
+            }
+            if (countUp.get(offset + x)) {
+                sliceMask.clear(offset + x);
+            }
+            countLeft.set(offset + x);
+            for (i = 1; (i <= 3) && countLeft.get(offset + x); i++) {
+                if ((x - i) >= 0) {
+                    if (sliceBuffer[offset + x-i] > (sliceMin + aboveMin)) {
+                        countLeft.clear(offset + x);
+                    }
+                }
+            }
+            countRight.set(offset + x);
+            for (i = 1; (i <= 3) && countRight.get(offset + x); i++) {
+                if ((x + i) <= (xDim-1)) {
+                    if (sliceBuffer[offset + x+i] > (sliceMin + aboveMin)) {
+                        countRight.clear(offset + x);
+                    }
+                }
+            }
+            if (countLeft.get(offset + x) && countRight.get(offset + x)) {
+                sliceMask.clear(offset + x);
+            }
+        } // for (x = 0; x < xDim; x++)
+        
+        x = 0;
+        for (y = 0; y < yDim; y++) {
+            offset = y*xDim;
+            countLeft.set(offset);
+            countRight.set(offset);
+            for (i = 1; (i <= 3) && countRight.get(offset); i++) {
+                if (sliceBuffer[offset + i] > (sliceMin + aboveMin)) {
+                    countRight.clear(offset);
+                }
+            }
+            if (countRight.get(offset)) {
+                sliceMask.clear(offset);
+            }
+            countUp.set(offset);
+            for (i = 1; (i <= 7) && countUp.get(offset); i++) {
+                if ((y - i) >= 0) {
+                    if (sliceBuffer[(y - i)* xDim] > (sliceMin + aboveMin)) {
+                        countUp.clear(offset);
+                    }
+                }
+            }
+            countDown.set(offset);
+            for (i = 1; (i <= 7) && countDown.get(offset); i++) {
+                if ((y + i) <= (yDim-1)) {
+                    if (sliceBuffer[(y + i)*xDim] > (sliceMin + aboveMin)) {
+                        countDown.clear(offset);
+                    }
+                }
+            }
+            if (countUp.get(offset) && (countDown.get(offset))) {
+                sliceMask.clear(offset);
+            }
+        } // for (y = 0; y < yDim; y++)
+        
+        x = xDim - 1;
+        for (y = 0; y < yDim; y++) {
+            offset = y*xDim;
+            countRight.set(offset + xDim-1);
+            countLeft.set(offset + xDim-1);
+            for (i = 1; (i <= 3) && countLeft.get(offset + xDim-1); i++) {
+                if (sliceBuffer[offset + xDim - 1 - i] > (sliceMin + aboveMin)) {
+                    countLeft.clear(offset + xDim - 1);
+                }
+            }
+            if (countLeft.get(offset + xDim - 1)) {
+                sliceMask.clear(offset + xDim - 1);
+            }
+            countUp.set(offset + xDim - 1);
+            for (i = 1; (i <= 7) && countUp.get(offset + xDim - 1); i++) {
+                if ((y - i) >= 0) {
+                    if (sliceBuffer[(y - i)* xDim + xDim - 1] > (sliceMin + aboveMin)) {
+                        countUp.clear(offset+ xDim - 1);
+                    }
+                }
+            }
+            countDown.set(offset + xDim - 1);
+            for (i = 1; (i <= 7) && countDown.get(offset + xDim - 1); i++) {
+                if ((y + i) <= (yDim-1)) {
+                    if (sliceBuffer[(y + i)*xDim + xDim - 1] > (sliceMin + aboveMin)) {
+                        countDown.clear(offset + xDim - 1);
+                    }
+                }
+            }
+            if (countUp.get(offset + xDim - 1) && (countDown.get(offset + xDim - 1))) {
+                sliceMask.clear(offset + xDim - 1);
+            }
+        } // for (y = 0; y < yDim; y++)
+        
+        sliceClear = true;
+        while (sliceClear) {
+            sliceClear = false;
+            for (y = 1; y < yDim-1; y++) {
+                for (x = 1; x < xDim - 1; x++) {
+                    index = y * xDim + x;
+                    if (sliceMask.get(index) && ((!sliceMask.get(index - 1)) || (!sliceMask.get(index + 1)) ||
+                        (!sliceMask.get((y-1)*xDim + x)) || (!sliceMask.get((y+1)*xDim + x)))) {
+                        countUp.set(index);
+                        for (i = 1; (i <= 7) && countUp.get(index); i++) {
+                            if ((y - i) >= 0) {
+                                if (sliceBuffer[(y - i)*xDim + x] > (sliceMin + aboveMin)) {
+                                    countUp.clear(index);
+                                }
+                            }
+                        } // for (i = 1; (i <= 7) && countUp.get(index); i++)
+                        countDown.set(index);
+                        for (i = 1; (i <= 7) && countDown.get(index); i++) {
+                            if ((y + i) <= (yDim-1)) {
+                                if (sliceBuffer[(y + i)*xDim + x] > (sliceMin + aboveMin))  {
+                                    countDown.clear(index);
+                                }
+                            }
+                        }  //  for (i = 1; (i <= 7) && countDown.get(index); i++)
+                        if (countUp.get(index) && (countDown.get(index))) {
+                            sliceMask.clear(index);
+                            sliceClear = true;
+                        }
+                        countLeft.set(index);
+                        for (i = 1; (i <= 3) && countLeft.get(index); i++) {
+                            if ((x - i) >= 0) {
+                                if (sliceBuffer[y*xDim + (x - i)] > (sliceMin + aboveMin)) {
+                                    countLeft.clear(index);
+                                }
+                            }
+                        } // for (i = 1; (i <= 3) && countLeft.get(index); i++)
+                        countRight.set(index);
+                        for (i = 1; (i <= 3) && countRight.get(index); i++) {
+                            if ((x + i) <= (xDim - 1)) {
+                                if (sliceBuffer[y*xDim + (x + i)] > (sliceMin + aboveMin)) {
+                                    countRight.clear(index);
+                                }
+                            }
+                        } // for (i = 1; (i <= 3) && countRight.get(index); i++)
+                        if (countLeft.get(index) && (countRight.get(index))) {
+                            sliceMask.clear(index);
+                            sliceClear = true;
+                        }
+                    } // if (sliceMask.get(index) && ((!sliceMask.get(index - 1)) || (!sliceMask.get(index + 1)) ||
+                } // for (x = 1; x < xDim - 1; x++)
+            } // for (y = 1; y < yDim-1; y++)
+        } // while (sliceClear)
+     
+        extents2D = new int[2];
+        extents2D[0] = xDim;
+        extents2D[1] = yDim;
+        
+        sliceImage = new ModelImage(ModelStorageBase.UBYTE, extents2D, "sliceImage", srcImage.getUserInterface());
+        shortBuffer = new short[sliceSize];
+        for (i = 0; i < sliceSize; i++) {
+            if (sliceMask.get(i)) {
+                shortBuffer[i] = 100;
+            }
+            else {
+                sliceBuffer[i] = 0;
+            }
+        }
+        try {
+            sliceImage.importData(0, shortBuffer, true);
+        }
+        catch (IOException error) {
+            MipavUtil.displayError("IOException on sliceImage.importData");
+            setCompleted(false);
+            return;    
+        }
+        
+        fireProgressStateChanged("IDing objects...");
+        kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
+        circleDiameter = 0.0f;
+        method = AlgorithmMorphology2D.ID_OBJECTS;
+        itersDilation = 0;
+        itersErosion = 0;
+        numPruningPixels = 0;
+        edgingType = 0;
+        idObjectsAlgo2D = new AlgorithmMorphology2D(sliceImage, kernel, circleDiameter, method, itersDilation,
+                                                    itersErosion, numPruningPixels, edgingType, entireImage);
+        idObjectsAlgo2D.setMinMax(10, 2000000);
+        idObjectsAlgo2D.run();
+        idObjectsAlgo2D.finalize();
+        idObjectsAlgo2D = null;
+        
+        sliceImage.calcMinMax();
+        numObjects = (int) sliceImage.getMax();
+        area = new int[numObjects];
+        
+        try {
+            sliceImage.exportData(0, sliceSize, shortBuffer);
+        }
+        catch (IOException error) {
+            MipavUtil.displayError("Error on sliceImage.exportData");
+            setCompleted(false);
+            return;
+        }
+        for (i = 0; i < sliceSize; i++) {
+            if (shortBuffer[i] > 0) {
+                area[shortBuffer[i]-1]++;
+            }
+        }
+        maxObject = 1;
+        maxArea = area[0];
+        for (i = 2; i <= numObjects; i++) {
+            if (area[i-1] > maxArea) {
+                maxArea = area[i-1];
+                maxObject = i;
+            }
+        }
+        
+        for (i = 0; i < sliceSize; i++) {
+            if (shortBuffer[i] != maxObject) {
+                shortBuffer[i] = 0;
+            }
+        }
+        try {
+            sliceImage.importData(0, shortBuffer, true);
+        }
+        catch (IOException error) {
+            MipavUtil.displayError("IOException on sliceImage.importData");
+            setCompleted(false);
+            return;    
+        }
+        new ViewJFrameImage(sliceImage);
+        setCompleted(true);
+    }
 
     /**
      * DOCUMENT ME!
      */
-    private void calc3D() {
+    private void oldCalc3D() {
 
         
         
