@@ -45,6 +45,12 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
     /** DOCUMENT ME! */
     private JTextField itersText;
     
+    private JLabel middleLabel;
+    
+    private JTextField middleText;
+    
+    private int middleSlice;
+    
     private JCheckBox areaBox;
     
     /** If true, when a kidney curve in a slice encompasses less than 0.8 of the area
@@ -170,13 +176,20 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         }
 
         String str = new String();
+        str += middleSlice;
         str += iters;
         str += areaCorrect;
 
         return str;
     }
 
-    
+    /**
+     * Accessor that sets the slice containing the middle of the kidneys
+     * @param middleSlice
+     */
+    public void setMiddleSlice(int middleSlice) {
+        this.middleSlice = middleSlice;
+    }
 
     /**
      * Accessor that sets the number of erosion and dilation iterations.
@@ -206,7 +219,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
             String name = makeImageName(image.getImageName(), "_kidneys");
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
-            kidneySegAlgo = new PlugInAlgorithmKidneySegmentation(resultImage, image, iters, areaCorrect);
+            kidneySegAlgo = new PlugInAlgorithmKidneySegmentation(resultImage, image, middleSlice, iters, areaCorrect);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -265,6 +278,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         image = scriptParameters.retrieveInputImage();
         parentFrame = image.getParentFrame();
 
+        setMiddleSlice(scriptParameters.getParams().getInt(" middle_slice"));
         setIters(scriptParameters.getNumIterations());
         setAreaCorrect(scriptParameters.getParams().getBoolean("area_correct"));
     }
@@ -276,6 +290,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         scriptParameters.storeInputImage(image);
         scriptParameters.storeOutputImageParams(resultImage, true);
 
+        scriptParameters.getParams().put(ParameterFactory.newParameter("middle_slice", middleSlice));
         scriptParameters.storeNumIterations(iters);
         scriptParameters.getParams().put(ParameterFactory.newParameter("area_correct", areaCorrect));
     }
@@ -285,7 +300,7 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
      */
     private void init() {
         setForeground(Color.black);
-        setTitle("Kidney segmentation 12/15/06");
+        setTitle("Kidney segmentation 12/28/06");
 
         GridBagConstraints gbc = new GridBagConstraints();
         int yPos = 0;
@@ -327,6 +342,25 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
         gbc.gridx = 1;
         gbc.gridy = yPos++;
         mainPanel.add(itersText, gbc);
+        
+        middleLabel = new JLabel("Slice with middle of kidneys");
+        middleLabel.setForeground(Color.black);
+        middleLabel.setFont(serif12);
+        gbc.gridx = 0;
+        gbc.gridy = yPos;
+        mainPanel.add(middleLabel, gbc);
+
+        middleText = new JTextField(5);
+        if (image.getNDims() > 2) {
+            middleText.setText(Integer.toString((int)Math.floor(image.getExtents()[2]/2)));
+        }
+        else {
+            middleText.setText("1");
+        }
+        middleText.setFont(serif12);
+        gbc.gridx = 1;
+        gbc.gridy = yPos++;
+        mainPanel.add(middleText, gbc);
         
         areaBox = new JCheckBox("Correct curves with small area", true);
         areaBox.setForeground(Color.black);
@@ -425,6 +459,29 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
             itersText.requestFocus();
             itersText.selectAll();
 
+            return false;
+        }
+        
+        tmpStr = middleText.getText();
+        // Change from 1 based to 0 based slice numbering
+        middleSlice = Integer.parseInt(tmpStr) - 1;
+        if (middleSlice < 0) {
+            MipavUtil.displayError("Middle slice must be at least 1");
+            middleText.requestFocus();
+            middleText.selectAll();
+
+            return false;
+        } else if ((image.getNDims() > 2) && (middleSlice > image.getExtents()[2] - 1)) {
+            MipavUtil.displayError("Middle slice must not exceed " + image.getExtents()[2]);
+            middleText.requestFocus();
+            middleText.selectAll();
+
+            return false;
+        } else if ((image.getNDims() == 2) && (middleSlice > 1)) {
+            MipavUtil.displayError("Middle slice must not exceed 1");
+            middleText.requestFocus();
+            middleText.selectAll();
+            
             return false;
         }
         
