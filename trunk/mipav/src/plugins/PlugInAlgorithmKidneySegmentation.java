@@ -426,6 +426,146 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         setCompleted(true);
     }
     
+    private void calc3D1() {
+        int i;
+        xDim = srcImage.getExtents()[0];
+        yDim = srcImage.getExtents()[1];
+        sliceSize = xDim * yDim;
+        float sliceBuffer[];
+        float sliceMin;
+        float aboveMin = 900.0f;
+        float threshold[] = new float[2];
+        float fillValue;
+        boolean entireImage;
+        boolean fillValueOutsideThresholds;
+        ModelImage threshImage;
+        int extents2D[] = new int[2];
+        AlgorithmThresholdDual algoThreshDual;
+        AlgorithmMorphology2D fillHolesAlgo2D;
+        AlgorithmMorphology2D idObjectsAlgo2D;
+        int maxObject;
+        int maxArea;
+        int area[];
+        int numObjects;
+        short shortBuffer[];
+        int kernel;
+        float circleDiameter;
+        int method;
+        int itersDilation;
+        int itersErosion;
+        int numPruningPixels;
+        int edgingType;
+        NumberFormat nf;
+        
+        nf = NumberFormat.getNumberInstance();
+        nf.setMinimumFractionDigits(3);
+        nf.setMaximumFractionDigits(3);
+        
+        fireProgressStateChanged("Processing image ...");
+        
+        // Start the extraction process from the slice containing the middle of the kidneys
+        sliceBuffer = new float[sliceSize];
+        try {
+            srcImage.exportData(middleSlice*sliceSize, sliceSize, sliceBuffer);
+        }
+        catch (IOException error) {
+            MipavUtil.displayError("IOException on srcImage.exportData");
+            setCompleted(false);
+            return;
+        }
+        sliceMin = Float.MAX_VALUE;
+        for (i = 0; i < sliceSize; i++) {
+            if (sliceBuffer[i] < sliceMin) {
+                sliceMin = sliceBuffer[i];
+            }
+        }
+        
+        threshold[0] = sliceMin + aboveMin;
+        threshold[1] = Float.MAX_VALUE;
+        extents2D[0] = xDim;
+        extents2D[1] = yDim;
+        fillValue = 0.0f;
+        entireImage = true;
+        fillValueOutsideThresholds = true;
+        fireProgressStateChanged("Thresholding image...");
+        threshImage = new ModelImage(ModelStorageBase.USHORT, extents2D, srcImage.getImageName() + "_thresh",
+                srcImage.getUserInterface());
+
+        
+        algoThreshDual = new AlgorithmThresholdDual(threshImage, srcImage, threshold, fillValue,
+                AlgorithmThresholdDual.BINARY_TYPE, entireImage, fillValueOutsideThresholds);
+        algoThreshDual.run();
+        algoThreshDual.finalize();
+        algoThreshDual = null;
+        
+        fireProgressStateChanged("Filling holes...");
+        
+        fillHolesAlgo2D = new AlgorithmMorphology2D(threshImage, 0, 0, AlgorithmMorphology2D.FILL_HOLES, 0, 0, 0, 0,
+                entireImage);
+        fillHolesAlgo2D.run();
+        fillHolesAlgo2D.finalize();
+        fillHolesAlgo2D = null;
+        
+        fireProgressStateChanged("IDing objects...");
+        kernel = AlgorithmMorphology2D.SIZED_CIRCLE;
+        circleDiameter = 0.0f;
+        method = AlgorithmMorphology2D.ID_OBJECTS;
+        itersDilation = 0;
+        itersErosion = 0;
+        numPruningPixels = 0;
+        edgingType = 0;
+        idObjectsAlgo2D = new AlgorithmMorphology2D(threshImage, kernel, circleDiameter, method, itersDilation,
+                                                    itersErosion, numPruningPixels, edgingType, entireImage);
+        idObjectsAlgo2D.setMinMax(10, 2000000);
+        idObjectsAlgo2D.run();
+        idObjectsAlgo2D.finalize();
+        idObjectsAlgo2D = null;
+        
+        threshImage.calcMinMax();
+        numObjects = (int) threshImage.getMax();
+        shortBuffer = new short[sliceSize];
+        area = new int[numObjects];
+        
+        try {
+            threshImage.exportData(0, sliceSize, shortBuffer);
+        }
+        catch (IOException error) {
+            MipavUtil.displayError("Error on threshImage.exportData");
+            setCompleted(false);
+            return;
+        }
+        for (i = 0; i < sliceSize; i++) {
+            if (shortBuffer[i] > 0) {
+                area[shortBuffer[i]-1]++;
+            }
+        }
+        maxObject = 1;
+        maxArea = area[0];
+        for (i = 2; i <= numObjects; i++) {
+            if (area[i-1] > maxArea) {
+                maxArea = area[i-1];
+                maxObject = i;
+            }
+        }
+        
+        for (i = 0; i < sliceSize; i++) {
+            if (shortBuffer[i] != maxObject) {
+                shortBuffer[i] = 0;
+            }
+        }
+        try {
+            threshImage.importData(0, shortBuffer, true);
+        }
+        catch (IOException error) {
+            MipavUtil.displayError("IOException on threshImage.importData");
+            setCompleted(false);
+            return;    
+        }
+        new ViewJFrameImage(threshImage);
+        setCompleted(true);
+        
+    }
+    
     private void calc3D() {
         int i;
         xDim = srcImage.getExtents()[0];
@@ -465,7 +605,27 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         short shortBuffer[];
         int maxObject;
         int maxArea;
-        
+        double m10;
+        double m01;
+        int nPts;
+        double m20;
+        double m11;
+        double m02;
+        double xdiff;
+        double ydiff;
+        double root;
+        double majorAxis;
+        double minorAxis;
+        double areaEllipse;
+        double normFactor;
+        float eccentricity;
+        double theta;
+        double a;
+        double b;
+        double t;
+        double xp;
+        double yp;
+        Point3Df ptArray[];
         
         nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
@@ -695,9 +855,6 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             if (sliceMask.get(i)) {
                 shortBuffer[i] = 100;
             }
-            else {
-                sliceBuffer[i] = 0;
-            }
         }
         try {
             sliceImage.importData(0, shortBuffer, true);
@@ -754,7 +911,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 shortBuffer[i] = 0;
             }
         }
-        try {
+   
+        /*try {
             sliceImage.importData(0, shortBuffer, true);
         }
         catch (IOException error) {
@@ -762,7 +920,89 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             setCompleted(false);
             return;    
         }
-        new ViewJFrameImage(sliceImage);
+        new ViewJFrameImage(sliceImage);*/
+        // Find the ellipse that best fits the abdominal cavity
+        m10 = 0.0;
+        m01 = 0.0;
+        nPts = 0;
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                index = y*xDim + x;
+                if (shortBuffer[index] != 0) {
+                    nPts++;
+                    m10 += x;
+                    m01 += y;
+                }
+            }
+        }
+        
+        m10 = m10 / nPts;
+        m01 = m01 / nPts;
+        
+        m20 = 0.0;
+        m11 = 0.0;
+        m02 = 0.0;
+        for (y = 0; y < yDim; y++) {
+            for (x = 0; x < xDim; x++) {
+                index = y*xDim + x;
+                if (shortBuffer[index] != 0) {
+                    xdiff = x - m10;
+                    ydiff = y - m01;
+                    m20 += xdiff * xdiff;
+                    m11 += xdiff * ydiff;
+                    m02 += ydiff * ydiff;
+                }
+            }
+        }
+        
+        m20 = (m20 / nPts);
+        m11 = (m11 / nPts);
+        m02 = (m02 / nPts);
+
+        // The eigenvalues of m20 m11
+        // m11 m02
+        // are proportional to the square of the semiaxes
+        // (m20 - e)*(m02 - e) - m11*m11 = 0;
+        root = Math.sqrt(((m20 - m02) * (m20 - m02)) + (4 * m11 * m11));
+        majorAxis = (float) Math.sqrt(2.0 * (m20 + m02 + root));
+        minorAxis = (float) Math.sqrt(2.0 * (m20 + m02 - root));
+
+        areaEllipse = (Math.PI / 4.0) * majorAxis * minorAxis;
+
+        normFactor = Math.sqrt(nPts / areaEllipse);
+
+        majorAxis = (float) (normFactor * majorAxis);
+        Preferences.debug("Major axis of ellipse = " + majorAxis + "\n");
+        minorAxis = (float) (normFactor * minorAxis);
+        Preferences.debug("Minor axis of ellipse = " + minorAxis + "\n");
+        eccentricity = (float) Math.sqrt(1.0 - ((minorAxis * minorAxis) / (majorAxis * majorAxis)));
+
+        // Jahne p. 507
+        theta = 0.5 * Math.atan2((2.0 * m11), (m20 - m02));
+        Preferences.debug("Major axis of ellipse forms an angle of " + ((180.0/Math.PI)* theta) + " degrees with the x axis\n");
+        
+        // Double check by drawing the ellipse as a VOI
+        // a = majorAxis/2, b = minorAxis/2
+        // Select x', y' coordinates along major and minor axes
+        // The points on the ellipse are given by
+        // x' = a * cos(t)
+        // y' = b * sin(t)
+        // x' = cos(theta)*(x-x0) - sin(theta)(y-y0)
+        // y' = sin(theta)*(x-x0) + cos(theta)(y-y0)
+        // x = x0 + cos(theta)*x' + sin(theta)*y'
+        // y = y0 - sin(theta)*x' + cos(theta)*y'
+        a = majorAxis/2.0;
+        b = minorAxis/2.0;
+        ptArray = new Point3Df[360];
+        for (i = 0; i < 360; i++) {
+            t = i*(Math.PI/360.0);
+            xp = a * Math.cos(t);
+            yp = b * Math.sin(t);
+            ptArray[i] = new Point3Df();
+            ptArray[i].x = (float)(m10 + Math.cos(theta)*xp + Math.sin(theta)*yp);
+            ptArray[i].y = (float)(m01 - Math.sin(theta)*xp + Math.cos(theta)*yp);
+            ptArray[i].z = 0.0f;
+        }
         setCompleted(true);
     }
 
