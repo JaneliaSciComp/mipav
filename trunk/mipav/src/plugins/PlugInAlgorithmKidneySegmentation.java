@@ -626,6 +626,9 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         double xp;
         double yp;
         Point3Df ptArray[];
+        VOI VOIEllipse;
+        VOI spineVOI;
+        Point3Df spinePt;
         
         nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
@@ -978,7 +981,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         eccentricity = (float) Math.sqrt(1.0 - ((minorAxis * minorAxis) / (majorAxis * majorAxis)));
 
         // Jahne p. 507
-        theta = 0.5 * Math.atan2((2.0 * m11), (m20 - m02));
+        // Increased tilt with image rotation to verify negaitve sign in theta equation
+        theta = -0.5 * Math.atan2((2.0 * m11), (m20 - m02));
         Preferences.debug("Major axis of ellipse forms an angle of " + ((180.0/Math.PI)* theta) + " degrees with the x axis\n");
         
         // Double check by drawing the ellipse as a VOI
@@ -995,14 +999,27 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         b = minorAxis/2.0;
         ptArray = new Point3Df[360];
         for (i = 0; i < 360; i++) {
-            t = i*(Math.PI/360.0);
+            t = i*(Math.PI/180.0);
             xp = a * Math.cos(t);
             yp = b * Math.sin(t);
             ptArray[i] = new Point3Df();
             ptArray[i].x = (float)(m10 + Math.cos(theta)*xp + Math.sin(theta)*yp);
             ptArray[i].y = (float)(m01 - Math.sin(theta)*xp + Math.cos(theta)*yp);
-            ptArray[i].z = 0.0f;
+            ptArray[i].z = middleSlice;
         }
+        VOIEllipse = new VOI((short)99, "ellipse", zDim, VOI.CONTOUR, -1.0f);
+        VOIEllipse.importCurve(ptArray, middleSlice);
+        destImage.getVOIs().addVOI(VOIEllipse);
+        // Locate the spine at (0.5*majorAxis, 0.56*minorAxis) so the spine is on the minor axis.
+        // The minor axis goes from (x',y') = (0,b) to (0,-b)
+        // (x,y) goes from (m10 + sin(theta)*b, m01 + cos(theta)*b) to (m10 - sin(theta)*b, m01  - cos(theta)*b)
+        spinePt = new Point3Df();
+        spinePt.x = (float)(m10 + 0.12*Math.sin(theta)*b);
+        spinePt.y = (float)(m01 + 0.12*Math.cos(theta)*b);
+        spinePt.z = middleSlice;
+        spineVOI = new VOI((short)100, "spine", zDim, VOI.POINT, -1.0f);
+        spineVOI.importPoint(spinePt, middleSlice);
+        destImage.getVOIs().addVOI(spineVOI);
         setCompleted(true);
     }
 
