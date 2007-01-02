@@ -352,7 +352,8 @@ public class PlugInDialogKidneySegmentation extends JDialogScriptableBase implem
 
         middleText = new JTextField(5);
         if (image.getNDims() > 2) {
-            middleText.setText(Integer.toString((int)Math.floor(image.getExtents()[2]/2)));
+            // Math.floor in article but use Math.ceil to use same slice as initial MIPAV display
+            middleText.setText(Integer.toString((int)Math.ceil(image.getExtents()[2]/2.0)));
         }
         else {
             middleText.setText("1");
