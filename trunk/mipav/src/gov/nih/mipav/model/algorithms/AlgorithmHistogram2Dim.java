@@ -13,7 +13,21 @@ import java.io.*;
 /**
  * This algorithm creates a two dimensional histogram of the data in 2 black and white images or 1 color image. if
  * doLinearRescale is true, the range of data in the second image is rescaled to be the same as the range of data in the
- * first image.
+ * first image.  That is the second image minimum is rescaled to the first image minimum and the second image maximum
+ * is rescaled to the first image maximum.  Also, if linear rescaling is used the number of bins in the second image
+ * is set equal to the number of bins in the first image.
+ * 
+ * The default number of bins equals the min(256,maximum value - minimum value + 1) if the data is not float or double.
+ * If the data is float or double, the default number of bins is 256.
+ * 
+ * ch1 = 0 to ch1 = bin1 - 2 all have a width of (bin1 - 1)/range1,
+ * but ch1 = bin1 - 1 has no width, it is a single value at max1.
+ * bin ch1 = 0 covers min1 <= ch1 < min1 + (max1 - min1)/(bin1 - 1)
+ * bin ch1 = 1 covers min1 + (max1 - min1)/(bin1 - 1) <= ch1 < min1 + 2*(max1 - min1)/(bin1 - 1)
+ * bin ch1 = bin1 - 2 covers min1 + (bin1 - 2)*(max - min1)/(bin1 - 1) <= ch1 < max1
+ * bin ch1 = bin1 - 1 covers only max1
+ * 
+ * The processing for maximum values is specially handled to prevent loss of top bin counts from rounding errors.
  */
 public class AlgorithmHistogram2Dim extends AlgorithmBase {
 
