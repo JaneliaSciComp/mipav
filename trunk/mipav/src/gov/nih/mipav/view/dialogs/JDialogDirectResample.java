@@ -71,6 +71,9 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     /** DOCUMENT ME! */
     ModelImage resultImageB = null;
+    
+    /** DOCUMENT ME! */
+    private JComboBox comboBoxInterp;
 
     /** Parent ui. */
     ViewUserInterface userInterface;
@@ -80,6 +83,9 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     /** Volume size X*Y*Z. */
     int volSize = 1;
+    
+    /** DOCUMENT ME! */
+    private int interp = 0;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -128,7 +134,18 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
     public void actionPerformed(ActionEvent event) {
         String command = event.getActionCommand();
 
-        if (command.equals("Resample")) {
+        if (command.equals("OK")) {
+        	setInterp();
+        	if(dim >= 3) {
+        		if(extXOutput.getText().trim().equals("") || extYOutput.getText().trim().equals("") || extZOutput.getText().trim().equals("")) {
+        			return;
+        		}
+        	}
+        	else {
+        		if(extXOutput.getText().trim().equals("") || extYOutput.getText().trim().equals("")) {
+        			return;
+        		}
+        	}
             volExtents[0] = dimPowerOfTwo(Integer.parseInt(extXOutput.getText()));
             newRes[0] = (float) ((extents[0]) * res[0]) / (float) (volExtents[0]);
             volExtents[1] = dimPowerOfTwo(Integer.parseInt(extYOutput.getText()));
@@ -147,7 +164,6 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
                     forceResample = true;
                 }
             } else {
-
                 if ((extents[0] == volExtents[0]) && (extents[1] == volExtents[1])) {
                     forceResample = false;
                 } else {
@@ -226,16 +242,14 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
      * Resample images to power of 2.
      */
     public void callAlgorithm() {
-
         if (forceResample && (resultImage == null)) {
-
             // resample image
             if (dim >= 3) {
-                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), AlgorithmTransform.TRILINEAR,
+                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), interp,
                                                        newRes[0], newRes[1], newRes[2], volExtents[0], volExtents[1],
                                                        volExtents[2], false, true, false);
             } else {
-                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), AlgorithmTransform.BILINEAR,
+                algoTransform = new AlgorithmTransform(image, new TransMatrix(4), interp,
                                                        newRes[0], newRes[1], volExtents[0], volExtents[1], false, true,
                                                        false);
             }
@@ -488,16 +502,41 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
         }
 
         mainBox.add(contentBox);
+        
+        
+        //*******INTERPOLATION****************
+        JPanel optionPanel = new JPanel();
+        optionPanel.setForeground(Color.black);
+        optionPanel.setBorder(buildTitledBorder("Options"));
+        JLabel labelInterp = new JLabel("Interpolation:");
+        labelInterp.setForeground(Color.black);
+        labelInterp.setFont(serif12);
+        labelInterp.setAlignmentX(Component.LEFT_ALIGNMENT);
+        comboBoxInterp = new JComboBox();
+        comboBoxInterp.setFont(serif12);
+        comboBoxInterp.setBackground(Color.white);
+        comboBoxInterp.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        JPanel OKCancelPanel = new JPanel(new FlowLayout());
+        comboBoxInterp.addItem("Nearest Neighbor");
 
-        // OKButton = buildOKButton();
-        OKButton = buildResampleButton();
-        OKCancelPanel.add(OKButton);
+        if (image.getNDims() == 2) {
+            comboBoxInterp.addItem("Bilinear");
+        } else {
+            comboBoxInterp.addItem("Trilinear");
+        }
 
-        cancelButton = buildCancelButton();
-        OKCancelPanel.add(cancelButton);
-        mainBox.add(OKCancelPanel);
+        comboBoxInterp.addItem("Bspline 3rd order");
+        comboBoxInterp.addItem("Bspline 4th order");
+        comboBoxInterp.addItem("Cubic Lagrangian");
+        comboBoxInterp.addItem("Quintic Lagrangian");
+        comboBoxInterp.addItem("Heptic Lagrangian");
+        comboBoxInterp.addItem("Windowed sinc");
+        comboBoxInterp.setSelectedIndex(1);
+        optionPanel.add(labelInterp);
+        optionPanel.add(comboBoxInterp);
+    
+        mainBox.add(optionPanel);
+        mainBox.add(buildButtons());
 
         getContentPane().add(mainBox);
 
@@ -570,20 +609,7 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
 
     }
 
-    /**
-     * Builds the OK button. Sets it internally as well return the just-built button.
-     *
-     * @return  DOCUMENT ME!
-     */
-    private JButton buildResampleButton() {
-        OKButton = new JButton("Resample");
-        OKButton.addActionListener(this);
-        OKButton.setMinimumSize(MipavUtil.defaultButtonSize);
-        OKButton.setPreferredSize(MipavUtil.defaultButtonSize);
-        OKButton.setFont(serif12B);
-
-        return OKButton;
-    }
+    
 
     /**
      * Calculate the dimension value to power of 2.
@@ -630,6 +656,38 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             }
         } else {
             return 512;
+        }
+    }
+    
+    /**
+     * Document ME
+     * 
+     */
+    private void setInterp() {
+    	int boxIndex = comboBoxInterp.getSelectedIndex();
+
+        if (boxIndex == 0) {
+            interp = AlgorithmTransform.NEAREST_NEIGHBOR;
+        } else if (boxIndex == 1) {
+
+            if (image.getNDims() == 2) {
+                interp = AlgorithmTransform.BILINEAR;
+            } else {
+                interp = AlgorithmTransform.TRILINEAR;
+            }
+        } // else if (boxIndex == 1)
+        else if (boxIndex == 2) {
+            interp = AlgorithmTransform.BSPLINE3;
+        } else if (boxIndex == 3) {
+            interp = AlgorithmTransform.BSPLINE4;
+        } else if (boxIndex == 4) {
+            interp = AlgorithmTransform.CUBIC_LAGRANGIAN;
+        } else if (boxIndex == 5) {
+            interp = AlgorithmTransform.QUINTIC_LAGRANGIAN;
+        } else if (boxIndex == 6) {
+            interp = AlgorithmTransform.HEPTIC_LAGRANGIAN;
+        } else if (boxIndex == 7) {
+            interp = AlgorithmTransform.WSINC;
         }
     }
 

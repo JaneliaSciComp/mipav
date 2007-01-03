@@ -95,6 +95,8 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
             }
         } else if (command.equals("Cancel")) {
             dispose();
+        }else if (command.equals("Help")) {
+            //MipavUtil.showHelp("");
         }
     }
 
@@ -405,13 +407,15 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
         buildOKButton();
         buildCancelButton();
 
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.add(OKButton);
-        buttonPanel.add(cancelButton);
+        //JPanel buttonPanel = new JPanel();
+        //buttonPanel.add(OKButton);
+        //buttonPanel.add(cancelButton);
+        
 
         getContentPane().add(imagePanel, BorderLayout.NORTH);
         getContentPane().add(destinationPanel, BorderLayout.CENTER);
-        getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        //getContentPane().add(buttonPanel, BorderLayout.SOUTH);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
 
         pack();
         setVisible(true);
