@@ -33,25 +33,25 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Image for Y-axis of Histogram */
     private ModelImage baseImage = null;
 
-    /** DOCUMENT ME! */
+    /** Number of bins for Image1 */
     private int bin1 = 256;
 
-    /** DOCUMENT ME! */
+    /** Number of bins for Image2 */
     private int bin2 = 256;
 
-    /** DOCUMENT ME! */
+    /** Boolean value. If true baseImage (Image2) is rescaled to the range of source image (Image1) */
     private boolean doLinearRescale;
 
-    /** DOCUMENT ME! */
+    /** For color images only. If true blue image is used as one of the images to create a 2D Histogram */
     private boolean useBlue = false;
 
-    /** DOCUMENT ME! */
+    /**  For color images only. If true green image is used as one of the images to create a 2D Histogram */
     private boolean useGreen = false;
 
-    /** DOCUMENT ME! */
+    /**  For color images only. If true red image is used as one of the images to create a 2D Histogram */
     private boolean useRed = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -63,9 +63,9 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
      * @param  destImg          image model where result image is to stored
      * @param  srcImg           image for x axis of histogram
      * @param  baseImage        image for y axis of histogram
-     * @param  doLinearRescale  DOCUMENT ME!
-     * @param  bin1             DOCUMENT ME!
-     * @param  bin2             DOCUMENT ME!
+     * @param  doLinearRescale  If true rescales the Image2 data to the range of Image1 data
+     * @param  bin1             Number of bins on x-axis (Image1)
+     * @param  bin2             Number of bins in y-axis (Image2)
      */
     public AlgorithmHistogram2Dim(ModelImage destImg, ModelImage srcImg, ModelImage baseImage, boolean doLinearRescale,
                                   int bin1, int bin2) {
@@ -83,12 +83,12 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
      *
      * @param  destImg          image model where result image is to stored
      * @param  srcImg           source image model
-     * @param  doLinearRescale  DOCUMENT ME!
-     * @param  bin1             DOCUMENT ME!
-     * @param  bin2             DOCUMENT ME!
-     * @param  useRed           DOCUMENT ME!
-     * @param  useGreen         DOCUMENT ME!
-     * @param  useBlue          DOCUMENT ME!
+     * @param  doLinearRescale  If true rescales the Image2 data to the range of Image1 data
+     * @param  bin1             Number of bins on x-axis (Image1)
+     * @param  bin2             Number of bins in y-axis (Image2)
+     * @param  useRed           For color images only. If true red image is used as one of the images to create a 2D Histogram
+     * @param  useGreen         For color images only. If true green image is used as one of the images to create a 2D Histogram
+     * @param  useBlue          For color images only. If true blue image is used as one of the images to create a 2D Histogram
      */
     public AlgorithmHistogram2Dim(ModelImage destImg, ModelImage srcImg, boolean doLinearRescale, int bin1, int bin2,
                                   boolean useRed, boolean useGreen, boolean useBlue) {
