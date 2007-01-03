@@ -9,6 +9,7 @@ import gov.nih.mipav.view.*;
 import java.awt.event.*;
 
 import java.io.*;
+
 import java.util.*;
 
 import javax.swing.*;
@@ -46,7 +47,7 @@ public class JDialogRunScriptController implements ActionListener {
         model.setScriptFile(scriptFile);
         populateModel(scriptFile);
         this.view = new JDialogRunScriptView(this, model);
-       // this.model.addObserver(view);
+        // this.model.addObserver(view);
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -62,20 +63,22 @@ public class JDialogRunScriptController implements ActionListener {
         if (command.equalsIgnoreCase("Run script")) {
             runScript();
         } else if (command.equalsIgnoreCase("Add image from file")) {
-        	ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
-        	JFileChooser chooser = fileChooser.getFileChooser();
-        	chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-        	int returnVal = chooser.showOpenDialog(null);
+            ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
+            JFileChooser chooser = fileChooser.getFileChooser();
+            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+
+            int returnVal = chooser.showOpenDialog(null);
 
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-            	boolean isMultiFile = fileChooser.isMulti();
-            	
-            	File [] files = chooser.getSelectedFiles();
-            	for (int i = 0; i < files.length; i++) {
-            		model.addToAvailableImageList(files[i].getName(), 
-            				files[i].getPath(), isMultiFile);
-            	}
-            	view.update();
+                boolean isMultiFile = fileChooser.isMulti();
+
+                File[] files = chooser.getSelectedFiles();
+
+                for (int i = 0; i < files.length; i++) {
+                    model.addToAvailableImageList(files[i].getName(), files[i].getPath(), isMultiFile);
+                }
+
+                view.update();
             }
         } else if (command.equalsIgnoreCase("Add VOI from file")) {
 
@@ -89,48 +92,53 @@ public class JDialogRunScriptController implements ActionListener {
             // ((JList) ((JScrollPane) view.getComponentByName("Images List:
             // scroll")).getViewport().getView()).getSelectedValue()); VOI[] vois =
             // ViewUserInterface.getReference().getActiveImageFrame().openVOI(imageScript.getModelImage(), false);
-           
-            int indices[] = view.getImageList().getSelectedIndices();
-           
+
+            int[] indices = view.getImageList().getSelectedIndices();
+
             ViewFileChooserBase fileChooser = new ViewFileChooserBase(true, false);
-        	JFileChooser chooser = fileChooser.getFileChooser();
+            JFileChooser chooser = fileChooser.getFileChooser();
             chooser.setDialogTitle("Open VOI");
             chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
             chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
 
             int returnVal = chooser.showOpenDialog(null);
+
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-            	File [] files = chooser.getSelectedFiles();
-            	for (int i = 0; i < files.length; i++) {
-            		for (int j = 0; j < indices.length; j++) {
-            			model.addVOI(files[i].getName(), files[i].getPath(), indices[j]);
-            		}
-            	}
-            	view.update();
+                File[] files = chooser.getSelectedFiles();
+
+                for (int i = 0; i < files.length; i++) {
+
+                    for (int j = 0; j < indices.length; j++) {
+                        model.addVOI(files[i].getName(), files[i].getPath(), indices[j]);
+                    }
+                }
+
+                view.update();
             } else {
                 return;
             }
 
-            
+
         } else if (command.equalsIgnoreCase("Save current image and VOI selections")) {
-        	if (view.isTreeReadyForScriptExecution()) {
-            String xmlTree = parseTreeToXML(view.getTreeRoot());
-            JFileChooser chooser = new JFileChooser();
-            chooser.setDialogTitle("Save script to XML");
-            chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-            chooser.showSaveDialog(view.getFrame());
 
-            File saveFile = new File(chooser.getCurrentDirectory(), chooser.getSelectedFile().getName());
+            if (view.isTreeReadyForScriptExecution()) {
+                String xmlTree = parseTreeToXML(view.getTreeRoot());
+                JFileChooser chooser = new JFileChooser();
+                chooser.setDialogTitle("Save script to XML");
+                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+                chooser.showSaveDialog(view.getFrame());
 
-            try {
-                PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(saveFile)));
-                out.write(xmlTree);
-                out.flush();
-                out.close();
-            } catch (IOException ioe) {
-                ioe.printStackTrace();
+                File saveFile = new File(chooser.getCurrentDirectory(), chooser.getSelectedFile().getName());
+
+                try {
+                    PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(saveFile)));
+                    out.write(xmlTree);
+                    out.flush();
+                    out.close();
+                } catch (IOException ioe) {
+                    ioe.printStackTrace();
+                }
             }
-        	}
         } else if (command.equalsIgnoreCase("Open saved image and VOI selections")) {
             JFileChooser chooser = new JFileChooser();
             chooser.setDialogTitle("Open saved image and VOI selections");
@@ -138,13 +146,14 @@ public class JDialogRunScriptController implements ActionListener {
             chooser.showOpenDialog(view.getFrame());
 
             try {
-            	if (chooser.getSelectedFile() != null) {
-            		
-            	
-                File openFile = new File(chooser.getCurrentDirectory(), chooser.getSelectedFile().getName());
-                org.w3c.dom.Document savedScript = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(openFile);
-                view.createScriptTree(savedScript);
-            	}
+
+                if (chooser.getSelectedFile() != null) {
+
+
+                    File openFile = new File(chooser.getCurrentDirectory(), chooser.getSelectedFile().getName());
+                    org.w3c.dom.Document savedScript = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(openFile);
+                    view.createScriptTree(savedScript);
+                }
             } catch (IOException ioe) {
                 ioe.printStackTrace();
             } catch (IllegalArgumentException iae) {
@@ -193,12 +202,13 @@ public class JDialogRunScriptController implements ActionListener {
      * DOCUMENT ME!
      *
      * @param   imageLocation  DOCUMENT ME!
+     * @param   doMulti        DOCUMENT ME!
      *
      * @return  DOCUMENT ME!
      */
     private String openImageWithFrame(String imageLocation, boolean doMulti) {
         ViewOpenFileUI openFile = new ViewOpenFileUI(true);
-        
+
         String imageName = openFile.open(imageLocation, doMulti, null);
 
         // if open failed, then imageName will be null
@@ -249,51 +259,52 @@ public class JDialogRunScriptController implements ActionListener {
      * @return  DOCUMENT ME!
      */
     private String parseTreeToXML(TreeNode root) {
-    	
-    	ScriptTreeNode scriptNode = (ScriptTreeNode)root.getChildAt(0);
-    	int numImagePlaceHolders = scriptNode.getChildCount();
-    	
-//    	find out how many times the script will run
-    	int numExecuters = ((ScriptTreeNode)scriptNode.getChildAt(0)).getChildCount();
-    	
-    	ScriptTreeNode imagePHNode = null;
-    	ScriptTreeNode imageNode = null;
-    	ScriptTreeNode voiNode = null;
-    	
-    	int numVOIs;
-    	
-    	
+
+        ScriptTreeNode scriptNode = (ScriptTreeNode) root.getChildAt(0);
+        int numImagePlaceHolders = scriptNode.getChildCount();
+
+        // find out how many times the script will run
+        int numExecuters = ((ScriptTreeNode) scriptNode.getChildAt(0)).getChildCount();
+
+        ScriptTreeNode imagePHNode = null;
+        ScriptTreeNode imageNode = null;
+        ScriptTreeNode voiNode = null;
+
+        int numVOIs;
+
+
         StringBuffer xmlDoc = new StringBuffer();
-        
+
         xmlDoc.append("<" + "root" + ">\n");
-     
+
         int numImages = 0;
         ScriptVOI scriptVOI = null;
-        
+
         for (int i = 0; i < numImagePlaceHolders; i++) {
-        	xmlDoc.append("\t<Image_Placeholder>\n");
-        	imagePHNode = (ScriptTreeNode) scriptNode.getChildAt(i);
-        	numImages = imagePHNode.getChildCount();
-        	
-        	for (int j = 0; j < numImages; j++) {
-        		imageNode = (ScriptTreeNode)imagePHNode.getChildAt(j);
-        		String imageName = ((String)imageNode.getUserObject()).trim();
+            xmlDoc.append("\t<Image_Placeholder>\n");
+            imagePHNode = (ScriptTreeNode) scriptNode.getChildAt(i);
+            numImages = imagePHNode.getChildCount();
+
+            for (int j = 0; j < numImages; j++) {
+                imageNode = (ScriptTreeNode) imagePHNode.getChildAt(j);
+
+                String imageName = ((String) imageNode.getUserObject()).trim();
                 xmlDoc.append("\t\t<Image");
                 xmlDoc.append(" name=\"" + imageName + "\"");
-                xmlDoc.append(" filePath= \"" + model.getScriptImage(imageName).getFileLocation() +
-                              " \" ");
-                xmlDoc.append(" isMulti=\"" + model.getScriptImage(imageName).isMultiFile() + " \" " + ">\n"); // images
-                
+                xmlDoc.append(" filePath=\"" + model.getScriptImage(imageName).getFileLocation() + "\"");
+                xmlDoc.append(" isMulti=\"" + model.getScriptImage(imageName).isMultiFile() + "\">\n"); // images
+
                 numVOIs = imageNode.getChildCount();
-                                
+
                 for (int k = 0; k < numVOIs; k++) {
-                	voiNode = (ScriptTreeNode)imageNode.getChildAt(k);
-                    String voiName = ((String)voiNode.getUserObject()).trim();
-                    
+                    voiNode = (ScriptTreeNode) imageNode.getChildAt(k);
+
+                    String voiName = ((String) voiNode.getUserObject()).trim();
+
                     scriptVOI = model.getScriptImage(imageName).getScriptVOI(voiName);
-                    
+
                     System.err.println("VOIName: " + voiName);
-                   
+
                     String filePath = scriptVOI.getVoiFileLocation();
 
                     if (filePath == null) {
@@ -306,59 +317,59 @@ public class JDialogRunScriptController implements ActionListener {
                         if (new java.io.File(fileName).exists()) {
                             filePath = fileName;
                         } else {
-                        	
-                        	while(filePath == null) {
-                            Object[] options = { "Save", "Set File Location" };
-                            int userSelection = JOptionPane.showOptionDialog(null,
-                                                                             "Unable to locate VOI: " + voiName +
-                                                                             ", in default MIPAV location either save it now, or set its location on the file system",
-                                                                             "Question", JOptionPane.DEFAULT_OPTION,
-                                                                             JOptionPane.QUESTION_MESSAGE, null,
-                                                                             options, options[0]);
-                           
-                            if (userSelection == 0) {
-                            	((ViewJFrameImage)
-                                        ViewUserInterface.getReference().getImageFrameVector().firstElement()).getActiveImage().getVOIs().VOIAt(0).setAllActive(true);
-                                String savedFile = ((ViewJFrameImage)
-                                                        ViewUserInterface.getReference().getImageFrameVector().firstElement())
-                                                       .saveVOIAs();
-                                filePath = savedFile;
-                            }
 
-                            if (userSelection == 1) {
-                                JFileChooser chooser = new JFileChooser();
-                                chooser.setDialogTitle("Set VOI file location");
-                                chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
-                                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
-                                
-                                int returnValue = chooser.showOpenDialog(view.getFrame());
+                            while (filePath == null) {
+                                Object[] options = { "Save", "Set File Location" };
+                                int userSelection = JOptionPane.showOptionDialog(null,
+                                                                                 "Unable to locate VOI: " + voiName +
+                                                                                 ", in default MIPAV location either save it now, or set its location on the file system",
+                                                                                 "Question", JOptionPane.DEFAULT_OPTION,
+                                                                                 JOptionPane.QUESTION_MESSAGE, null,
+                                                                                 options, options[0]);
 
-                                if (returnValue == JFileChooser.APPROVE_OPTION) {
-                                    String file = chooser.getSelectedFile().getName();
-                                    String directory = String.valueOf(chooser.getCurrentDirectory()) +
-                                                       File.separatorChar;
-                                    filePath = directory + file;
+                                if (userSelection == 0) {
+                                    ((ViewJFrameImage)
+                                         ViewUserInterface.getReference().getImageFrameVector().firstElement())
+                                        .getActiveImage().getVOIs().VOIAt(0).setAllActive(true);
+
+                                    String savedFile = ((ViewJFrameImage)
+                                                            ViewUserInterface.getReference().getImageFrameVector().firstElement())
+                                                           .saveVOIAs();
+                                    filePath = savedFile;
+                                }
+
+                                if (userSelection == 1) {
+                                    JFileChooser chooser = new JFileChooser();
+                                    chooser.setDialogTitle("Set VOI file location");
+                                    chooser.setCurrentDirectory(new File(ViewUserInterface.getReference().getDefaultDirectory()));
+                                    chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
+
+                                    int returnValue = chooser.showOpenDialog(view.getFrame());
+
+                                    if (returnValue == JFileChooser.APPROVE_OPTION) {
+                                        String file = chooser.getSelectedFile().getName();
+                                        String directory = String.valueOf(chooser.getCurrentDirectory()) +
+                                                           File.separatorChar;
+                                        filePath = directory + file;
+                                    }
                                 }
                             }
                         }
-                        }
                     }
 
-                    xmlDoc.append("\t\t\t<VOI");
-                    xmlDoc.append(" name=\"" + voiName + "\"" + 
-                    		" filePath= \"" + filePath + " \" " + " />\n");
+                    xmlDoc.append("\t\t\t<VOI name=\"" + voiName + "\"" + " filePath=\"" + filePath + "\"/>\n");
                     // xmlDoc.append("</VOI>\n");
                 }
-                xmlDoc.append("\t\t</Image>\n");
-        	}
 
-        	// xmlDoc.append("</" + ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim() + ">\n");
-        	xmlDoc.append("\t</Image_Placeholder>\n");
+                xmlDoc.append("\t\t</Image>\n");
+            }
+
+            // xmlDoc.append("</" + ((TreeNode) root.getChildAt(i).getChildAt(j)).toString().trim() + ">\n");
+            xmlDoc.append("\t</Image_Placeholder>\n");
         }
-            
-         
+
         xmlDoc.append("</" + "root" + ">\n");
-        
+
 
         // xmlDoc.toString().replace("Script Executer", "Script_Executer").replace("VOI Needed","VOI_Needed");
         // return xmlDoc.toString().replace(" ", "_").replace("$", "__").replace("'", "___");
@@ -376,6 +387,7 @@ public class JDialogRunScriptController implements ActionListener {
      */
     private void populateAvailableObjectsLists() {
         Enumeration images = ViewUserInterface.getReference().getRegisteredImages();
+
         while (images.hasMoreElements()) {
             model.addToAvailableImageList((ModelImage) images.nextElement());
         }
@@ -431,7 +443,7 @@ public class JDialogRunScriptController implements ActionListener {
             Vector scriptExecutors = new Vector();
             Vector scriptExecutorsVOIs = new Vector();
             view.fillImagesVOIs(scriptExecutors, scriptExecutorsVOIs);
-            
+
 
             for (int i = 0; i < scriptExecutors.size(); i++) {
                 Vector scriptImages = (Vector) scriptExecutors.elementAt(i);
@@ -444,16 +456,16 @@ public class JDialogRunScriptController implements ActionListener {
                     // open any images which were selected from disk in this dialog, then replace their filepath with
                     // their new image name
                     ScriptImage si = model.getScriptImage((String) scriptImages.elementAt(j));
-                   
+
                     try {
-                    	ViewUserInterface.getReference().getRegisteredImageByName(si.getImageName());
+                        ViewUserInterface.getReference().getRegisteredImageByName(si.getImageName());
                     } catch (IllegalArgumentException e) {
-                    	String imageName = openImageWithFrame(si.getFileLocation(), si.isMultiFile());
+                        String imageName = openImageWithFrame(si.getFileLocation(), si.isMultiFile());
                         imagesOpenedByDialog.addElement(ViewUserInterface.getReference().getRegisteredImageByName(imageName));
                         scriptImages.remove(j);
                         scriptImages.insertElementAt(imageName, j);
                     }
-                                        
+
                     Preferences.debug("run dialog:\tScript execution #" + i + "\t" + scriptVars[j] + " -> " +
                                       scriptImages.elementAt(j) + "\n", Preferences.DEBUG_SCRIPTING);
                 }
@@ -461,10 +473,9 @@ public class JDialogRunScriptController implements ActionListener {
                 Vector scriptVOIs = (Vector) scriptExecutorsVOIs.elementAt(i);
                 Preferences.debug("run dialog:\tScript execution #" + i + " VOIs to be used:\n",
                                   Preferences.DEBUG_SCRIPTING);
-//do it here
-                
-                
-                
+                // do it here
+
+
                 for (int j = 0; j < scriptVOIs.size(); j++) {
                     Preferences.debug("run dialog:\tScript execution #" + i + "\t" + scriptVars[j] + " VOI " + j +
                                       " -> " + scriptVOIs.elementAt(j) + "\n", Preferences.DEBUG_SCRIPTING);
