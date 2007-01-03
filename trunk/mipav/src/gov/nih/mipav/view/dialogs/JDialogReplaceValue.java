@@ -153,49 +153,6 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
 
         this.dispose();
     }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
-        
-        if (setChoiceButton.isSelected()) {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("replace_value", inputVal));
-        } else {
-            scriptParameters.getParams().put(ParameterFactory.newParameter("replace_value_range", rangeString));
-        }
-        scriptParameters.getParams().put(ParameterFactory.newParameter("replace_with_value", outputVal));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        if (scriptParameters.getParams().containsParameter("replace_value")) {
-            inputVal = scriptParameters.getParams().getDouble("replace_value");
-            rangesVector.addElement(new Values(inputVal));
-        } else {
-            rangeString = scriptParameters.getParams().getString("replace_value_range");
-            parseRanges();
-        }
-        
-        outputVal = scriptParameters.getParams().getDouble("replace_with_value");
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (displayLoc == NEW) {
-            AlgorithmParameters.storeImageInRunner(resultImage);
-        }
-    }
 
     /**
      * Handle selection changes to the user defined value/preset radio buttons.
@@ -230,7 +187,7 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
         algoReplace.addListener(this);
 
         createProgressBar(image.getImageName(), algoReplace);
-        
+
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
@@ -240,6 +197,57 @@ public class JDialogReplaceValue extends JDialogScriptableBase implements Algori
         } else {
             algoReplace.run();
         }
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (displayLoc == NEW) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        if (scriptParameters.doOutputNewImage()) {
+            displayLoc = NEW;
+        } else {
+            displayLoc = REPLACE;
+        }
+
+        if (scriptParameters.getParams().containsParameter("replace_value")) {
+            inputVal = scriptParameters.getParams().getDouble("replace_value");
+            rangesVector.addElement(new Values(inputVal));
+        } else {
+            rangeString = scriptParameters.getParams().getString("replace_value_range");
+            parseRanges();
+        }
+
+        outputVal = scriptParameters.getParams().getDouble("replace_with_value");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, (displayLoc == NEW));
+
+        if (setChoiceButton.isSelected()) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("replace_value", inputVal));
+        } else {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("replace_value_range", rangeString));
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("replace_with_value", outputVal));
     }
 
     /**
