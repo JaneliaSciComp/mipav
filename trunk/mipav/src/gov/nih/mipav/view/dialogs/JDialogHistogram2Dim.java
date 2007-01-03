@@ -1028,10 +1028,12 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
 
         buildOKButton();
         buildCancelButton();
+        buildHelpButton();
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(OKButton);
         buttonPanel.add(cancelButton);
+        buttonPanel.add(helpButton);
 
         getContentPane().add(imagePanel, BorderLayout.NORTH);
         getContentPane().add(rescalePanel, BorderLayout.CENTER);
