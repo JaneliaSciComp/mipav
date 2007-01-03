@@ -188,36 +188,60 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
             scale1 = (bin1 - 1) / range1;
             scale2 = (bin2 - 1) / range2;
 
-            // The first bin goes from min1 to min1 + (max1 - min1)/(bin1-1)
-            // The second bin goes from min1 + (max1 - min1)/(bin1-1) to
-            // min1 + 2*(max1 - min1)/(bin1-1)
-            // The last bin goes from min1 + (bin1-2)*(max1 - min1)/(bin1-1)
-            // to max1
+            // ch1 = 0 to ch1 = bin1 - 2 all have a width of (bin1 - 1)/range1,
+            // but ch1 = bin1 - 1 has no width, it is a single value at max1.
+            // bin ch1 = 0 covers min1 <= ch1 < min1 + (max1 - min1)/(bin1 - 1)
+            // bin ch1 = 1 covers min1 + (max1 - min1)/(bin1 - 1) <= ch1 <
+            //           min1 + 2*(max1 - min1)/(bin1 - 1)
+            // bin ch1 = bin1 - 2 covers min1 + (bin1 - 2)*(max - min1)/(bin1 - 1) <= ch1 < max1
+            // bin ch1 = bin1 - 1 covers only max1
             if (doLinearRescale) {
+                // Rescale the second image data so that its min2 becomes equal to min1 and
+                // max2 becomes equal to max1
+                // a * max2 + b = max1
+                // a * min2 + b = min1
+                // a * (max2 - min2) = max1 - min1
+                // a * range2 = range1
+                // a = range1 / range2
+                // (range1/range2) * max2 + b = max1
+                // b = max1 - (range1 * max2)/range2
+                // b = (max1*range2 - range1 * max2)/range2
+                // b = max1*max2 - max1 * min2 - max1 * max2 + min1 * max2)/ range2
+                // b = (min1*max2 - max1*min2)/range2
                 a = range1 / range2;
                 b = ((min1 * max2) - (max1 * min2)) / range2;
 
                 for (i = 0; i < length; i++) {
-                    baseBuffer[i] = (float) ((a * baseBuffer[i]) + b);
+                    // Handle the top channel separately to prevent its loss due to rounding errors
+                    if (baseBuffer[i] == max2) {
+                        baseBuffer[i] = (float)max1;
+                    }
+                    else {
+                        baseBuffer[i] = (float) ((a * baseBuffer[i]) + b);
+                    }
                 }
 
                 min2 = min1;
                 max2 = max1;
                 range2 = range1;
-                scale2 = (bin2 - 1) / range2;
+                scale2 = scale1;
             } // if (doLinearRescale)
 
             for (i = 0; i < length; i++) {
-                ch1 = (int) Math.round((buffer[i] - min1) * scale1);
-
-                if (ch1 > (bin1 - 1)) {
+                // Handle the top channel separately to prevent its loss due to rounding errors
+                if (buffer[i] == max1) {
                     ch1 = bin1 - 1;
                 }
+                else {
+                    ch1 = (int)((buffer[i] - min1) * scale1);
+                }    
 
-                ch2 = (int) Math.round((baseBuffer[i] - min2) * scale2);
-
-                if (ch2 > (bin2 - 1)) {
+                // Handle the top channel separately to prevent its loss due to rounding errors
+                if (baseBuffer[i] == max2) {
                     ch2 = bin2 - 1;
+                }
+                else {
+                    ch2 = (int) ((baseBuffer[i] - min2) * scale2);
                 }
 
                 // invert y
@@ -364,36 +388,61 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
             scale1 = (bin1 - 1) / range1;
             scale2 = (bin2 - 1) / range2;
 
-            // The first bin goes from min1 to min1 + (max1 - min1)/(bin1-1)
-            // The second bin goes from min1 + (max1 - min1)/(bin1-1) to
-            // min1 + 2*(max1 - min1)/(bin1-1)
-            // The last bin goes from min1 + (bin1-2)*(max1 - min1)/(bin1-1)
-            // to max1
+            
+            // ch1 = 0 to ch1 = bin1 - 2 all have a width of (bin1 - 1)/range1,
+            // but ch1 = bin1 - 1 has no width, it is a single value at max1.
+            // bin ch1 = 0 covers min1 <= ch1 < min1 + (max1 - min1)/(bin1 - 1)
+            // bin ch1 = 1 covers min1 + (max1 - min1)/(bin1 - 1) <= ch1 <
+            //           min1 + 2*(max1 - min1)/(bin1 - 1)
+            // bin ch1 = bin1 - 2 covers min1 + (bin1 - 2)*(max - min1)/(bin1 - 1) <= ch1 < max1
+            // bin ch1 = bin1 - 1 covers only max1
             if (doLinearRescale) {
+                // Rescale the second image data so that its min2 becomes equal to min1 and
+                // max2 becomes equal to max1
+                // a * max2 + b = max1
+                // a * min2 + b = min1
+                // a * (max2 - min2) = max1 - min1
+                // a * range2 = range1
+                // a = range1 / range2
+                // (range1/range2) * max2 + b = max1
+                // b = max1 - (range1 * max2)/range2
+                // b = (max1*range2 - range1 * max2)/range2
+                // b = max1*max2 - max1 * min2 - max1 * max2 + min1 * max2)/ range2
+                // b = (min1*max2 - max1*min2)/range2
                 a = range1 / range2;
                 b = ((min1 * max2) - (max1 * min2)) / range2;
 
                 for (i = 0; i < length; i++) {
-                    secondBuffer[i] = (float) ((a * secondBuffer[i]) + b);
+                    // Handle the top channel separately to prevent its loss due to rounding errors
+                    if (secondBuffer[i] == max2) {
+                        secondBuffer[i] = (float)max1;
+                    }
+                    else {
+                        secondBuffer[i] = (float) ((a * secondBuffer[i]) + b);
+                    }
                 }
 
                 min2 = min1;
                 max2 = max1;
                 range2 = range1;
-                scale2 = (bin2 - 1) / range2;
+                scale2 = scale1;
             } // if (doLinearRescale)
 
             for (i = 0; i < length; i++) {
-                ch1 = (int) ((buffer[i] - min1) * scale1);
-
-                if (ch1 > (bin1 - 1)) {
+                // Handle the top channel separately to prevent its loss due to rounding errors
+                if (buffer[i] == max1) {
                     ch1 = bin1 - 1;
                 }
+                else {
+                    ch1 = (int)((buffer[i] - min1) * scale1);
+                }    
 
-                ch2 = (int) ((secondBuffer[i] - min2) * scale2);
-
-                if (ch2 > (bin2 - 1)) {
+                // Handle the top channel separately to prevent its loss due to rounding errors
+                if (secondBuffer[i] == max2) {
                     ch2 = bin2 - 1;
+                }
+                else {
+                    ch2 = (int) ((secondBuffer[i] - min2) * scale2);
                 }
 
                 // invert y
