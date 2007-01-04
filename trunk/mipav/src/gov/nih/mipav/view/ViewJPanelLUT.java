@@ -4,7 +4,6 @@ package gov.nih.mipav.view;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
-import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
 import java.awt.*;
@@ -35,10 +34,6 @@ public class ViewJPanelLUT extends JPanel
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-     
-    private JComboBox outputBox;
-    private JComboBox outputBoxB;
-    
     /** DOCUMENT ME! */
     private JDialogCT ctDialogA, ctDialogB;
 
@@ -89,6 +84,13 @@ public class ViewJPanelLUT extends JPanel
 
     /** DOCUMENT ME! */
     private JCheckBox oneBasedLUTCheckBoxImageB;
+
+
+    /** DOCUMENT ME! */
+    private JComboBox outputBox;
+
+    /** DOCUMENT ME! */
+    private JComboBox outputBoxB;
 
     /** DOCUMENT ME! */
     private JPanel panelA;
@@ -381,14 +383,14 @@ public class ViewJPanelLUT extends JPanel
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                	outputBox.setEnabled(false);
+                    outputBox.setEnabled(false);
                     getHistoLUTComponentA().setMode(getHistoLUTComponentA().LINEAR);
                     histoPanelA.updateLUTRecorder();
                 }
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                	outputBoxB.setEnabled(false);
+                    outputBoxB.setEnabled(false);
                     getHistoLUTComponentB().setMode(getHistoLUTComponentB().LINEAR);
                     histoPanelB.updateLUTRecorder();
                 }
@@ -431,7 +433,7 @@ public class ViewJPanelLUT extends JPanel
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                	outputBox.setEnabled(true);
+                    outputBox.setEnabled(true);
                     panelParent.enableThresholdingItems(true);
                     toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
                     toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
@@ -462,7 +464,7 @@ public class ViewJPanelLUT extends JPanel
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                	outputBox.setEnabled(true);
+                    outputBox.setEnabled(true);
                     panelParent.enableThresholdingItems(true);
                     toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
                     toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
@@ -500,7 +502,7 @@ public class ViewJPanelLUT extends JPanel
             if (isImageASelected()) {
 
                 if (getHistoLUTComponentA() != null) {
-                	outputBox.setEnabled(true);
+                    outputBox.setEnabled(true);
                     panelParent.enableThresholdingItems(true);
                     toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
                     toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
@@ -529,7 +531,7 @@ public class ViewJPanelLUT extends JPanel
             } else {
 
                 if (getHistoLUTComponentB() != null) {
-                	outputBoxB.setEnabled(true);
+                    outputBoxB.setEnabled(true);
                     panelParent.enableThresholdingItems(true);
                     toolBarThreshold.getComponentAtIndex(0).setEnabled(true);
                     toolBarThreshold.getComponentAtIndex(1).setEnabled(true);
@@ -567,32 +569,29 @@ public class ViewJPanelLUT extends JPanel
             if (isImageASelected()) {
 
                 if (MipavUtil.testParameter(threshLowerF.getText(), panelParent.getImageA().getMin(),
-                                                ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
+                                            ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
 
                     if (MipavUtil.testParameter(threshUpperF.getText(),
-                                                    ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
-                                                    panelParent.getImageA().getMax())) {
+                                                ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
+                                                panelParent.getImageA().getMax())) {
 
-                    	
-                    	
-                    	int outputType = outputBox.getSelectedIndex();
+
+                        int outputType = outputBox.getSelectedIndex();
+
                         if (outputType == 0) {
                             outputType = AlgorithmThresholdDual.ORIGINAL_TYPE;
-                        }
-                        else if (outputType == 1) {
+                        } else if (outputType == 1) {
                             outputType = AlgorithmThresholdDual.BINARY_TYPE;
-                        }
-                        else { // outputType == 2
+                        } else { // outputType == 2
                             outputType = AlgorithmThresholdDual.SHORT_MASK_TYPE;
                         }
-                    	                    	
+
                         // run threshold algorithm
                         JDialogThreshold threshD = new JDialogThreshold();
 
                         threshD.runFromLUTFrame(panelParent.getImageA(), new Float(threshLowerF.getText()).floatValue(),
                                                 new Float(threshUpperF.getText()).floatValue(),
-                                                new Float(threshFillF.getText()).floatValue(),
-                                                outputType, isInverse);
+                                                new Float(threshFillF.getText()).floatValue(), outputType, isInverse);
 
                     } else {
                         threshUpperF.requestFocus();
@@ -606,31 +605,29 @@ public class ViewJPanelLUT extends JPanel
             } else {
 
                 if (MipavUtil.testParameter(threshLowerBF.getText(), panelParent.getImageB().getMin(),
-                                                ((Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x)) {
+                                            ((Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x)) {
 
                     if (MipavUtil.testParameter(threshUpperBF.getText(),
-                                                    ((Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
-                                                    panelParent.getImageB().getMax())) {
+                                                ((Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
+                                                panelParent.getImageB().getMax())) {
 
-                    	int outputType = outputBoxB.getSelectedIndex();
+                        int outputType = outputBoxB.getSelectedIndex();
+
                         if (outputType == 0) {
                             outputType = AlgorithmThresholdDual.ORIGINAL_TYPE;
-                        }
-                        else if (outputType == 1) {
+                        } else if (outputType == 1) {
                             outputType = AlgorithmThresholdDual.BINARY_TYPE;
-                        }
-                        else { // outputType == 2
+                        } else { // outputType == 2
                             outputType = AlgorithmThresholdDual.SHORT_MASK_TYPE;
                         }
-                    	
-                    	
+
+
                         // run threshold algorithm
                         JDialogThreshold threshD = new JDialogThreshold();
 
                         threshD.runFromLUTFrame(panelParent.getImageB(), new Float(threshLowerBF.getText()).floatValue(),
                                                 new Float(threshUpperBF.getText()).floatValue(),
-                                                new Float(threshFillBF.getText()).floatValue(),
-                                                outputType, isInverse);
+                                                new Float(threshFillBF.getText()).floatValue(), outputType, isInverse);
 
                     } else {
                         threshUpperBF.requestFocus();
@@ -973,8 +970,9 @@ public class ViewJPanelLUT extends JPanel
         } else {
             voxelVolumeLabel = new JLabel("Threshold area(red):");
         }
+
         voxelVolumeLabel.setFont(MipavUtil.font12);
-        
+
         toolBarThreshold.add(voxelVolumeLabel);
 
         JPanel topPanel = new JPanel(new BorderLayout());
@@ -1158,8 +1156,7 @@ public class ViewJPanelLUT extends JPanel
             threshFillF.setEnabled(outputBox.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE);
         } else if (source == outputBoxB) {
             threshFillBF.setEnabled(outputBoxB.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE);
-        } 
-        else if (source == oneBasedLUTCheckBoxImageA) {
+        } else if (source == oneBasedLUTCheckBoxImageA) {
 
             // get the color of the LUT index 0
             Color zeroIndexColor = getLUTa().getColor(0);
@@ -1249,7 +1246,7 @@ public class ViewJPanelLUT extends JPanel
             if (e.getSource().equals(threshLowerF)) {
 
                 if (MipavUtil.testParameter(threshLowerF.getText(), panelParent.getImageA().getMin(),
-                                                ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
+                                            ((Point2Df) (getLUTa().getTransferFunction().getPoint(3))).x)) {
 
                     getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
                                                                 new Float(threshUpperF.getText()).floatValue());
@@ -1260,8 +1257,8 @@ public class ViewJPanelLUT extends JPanel
             } else if (e.getSource().equals(threshUpperF)) {
 
                 if (MipavUtil.testParameter(threshUpperF.getText(),
-                                                ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
-                                                panelParent.getImageA().getMax())) {
+                                            ((Point2Df) (getLUTa().getTransferFunction().getPoint(2))).x,
+                                            panelParent.getImageA().getMax())) {
                     getHistoLUTComponentA().updateDualThreshold(new Float(threshLowerF.getText()).floatValue(),
                                                                 new Float(threshUpperF.getText()).floatValue());
                 } else {
@@ -1272,11 +1269,11 @@ public class ViewJPanelLUT extends JPanel
 
                 // System.err.println("MIN: " + imageA.getMin() + " MAX: " + imageA.getMax());
                 if (MipavUtil.testParameter(threshFillF.getText(), panelParent.getImageA().getMin(),
-                                                panelParent.getImageA().getMax())) { //
-                                                                                     // componentHistogramA.updateDualThreshold(new
-                                                                                     // 
-                                                                                     // Float(threshFillF.getText()).floatValue(),
-                                                                                     // -1);
+                                            panelParent.getImageA().getMax())) { //
+                                                                                 // componentHistogramA.updateDualThreshold(new
+                                                                                 //
+                                                                                 // Float(threshFillF.getText()).floatValue(),
+                                                                                 // -1);
                 } else {
                     threshFillF.requestFocus();
                     threshFillF.selectAll();
@@ -1284,7 +1281,7 @@ public class ViewJPanelLUT extends JPanel
             } else if (e.getSource().equals(threshLowerBF)) {
 
                 if (MipavUtil.testParameter(threshLowerBF.getText(), panelParent.getImageB().getMin(),
-                                                ((Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x)) {
+                                            ((Point2Df) (getLUTb().getTransferFunction().getPoint(3))).x)) {
 
                     getHistoLUTComponentB().updateDualThreshold(new Float(threshLowerBF.getText()).floatValue(),
                                                                 new Float(threshUpperBF.getText()).floatValue());
@@ -1295,8 +1292,8 @@ public class ViewJPanelLUT extends JPanel
             } else if (e.getSource().equals(threshUpperBF)) {
 
                 if (MipavUtil.testParameter(threshUpperBF.getText(),
-                                                ((Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
-                                                panelParent.getImageB().getMax())) {
+                                            ((Point2Df) (getLUTb().getTransferFunction().getPoint(2))).x,
+                                            panelParent.getImageB().getMax())) {
                     getHistoLUTComponentB().updateDualThreshold(new Float(threshLowerBF.getText()).floatValue(),
                                                                 new Float(threshUpperBF.getText()).floatValue());
                 } else {
@@ -1307,11 +1304,11 @@ public class ViewJPanelLUT extends JPanel
 
                 // System.err.println("MIN: " + imageA.getMin() + " MAX: " + imageA.getMax());
                 if (MipavUtil.testParameter(threshFillBF.getText(), panelParent.getImageB().getMin(),
-                                                panelParent.getImageB().getMax())) { //
-                                                                                     // componentHistogramA.updateDualThreshold(new
-                                                                                     // 
-                                                                                     // Float(threshFillF.getText()).floatValue(),
-                                                                                     // -1);
+                                            panelParent.getImageB().getMax())) { //
+                                                                                 // componentHistogramA.updateDualThreshold(new
+                                                                                 //
+                                                                                 // Float(threshFillF.getText()).floatValue(),
+                                                                                 // -1);
                 } else {
                     threshFillBF.requestFocus();
                     threshFillBF.selectAll();
@@ -1732,16 +1729,15 @@ public class ViewJPanelLUT extends JPanel
         interpCheckBoxA = new JCheckBox("Interpolate image", false);
         interpCheckBoxA.setFont(MipavUtil.font12);
         interpCheckBoxA.addItemListener(this);
-        
-        String [] outputChoices = new String[]{ panelParent.getImageA().getTypeString(),
-        		"Binary", "Short mask"};
-      
-        
+
+        String[] outputChoices = new String[] { panelParent.getImageA().getTypeString(), "Binary", "Short mask" };
+
+
         outputBox = new JComboBox(outputChoices);
         outputBox.setFont(MipavUtil.font12);
         outputBox.addItemListener(this);
-        outputBox.setEnabled(false);       	
-        
+        outputBox.setEnabled(false);
+
         JLabel nColorsLabel = new JLabel("Number of colors: ");
 
         nColorsLabel.setFont(MipavUtil.font12);
@@ -1788,7 +1784,7 @@ public class ViewJPanelLUT extends JPanel
         threshLabel2.setFont(MipavUtil.font12);
         threshLabel2.setForeground(Color.black);
 
-        JLabel threshFillLabel = new JLabel("Fill value (red):");
+        JLabel threshFillLabel = new JLabel("Fill value (non-red):");
 
         threshFillLabel.setFont(MipavUtil.font12);
         threshFillLabel.setForeground(Color.black);
@@ -2012,13 +2008,12 @@ public class ViewJPanelLUT extends JPanel
         interpCheckBoxB.setFont(MipavUtil.font12);
         interpCheckBoxB.addItemListener(this);
 
-        String [] outputChoices = new String[]{ panelParent.getImageA().getTypeString(),
-        		"Binary", "Short mask"};
+        String[] outputChoices = new String[] { panelParent.getImageA().getTypeString(), "Binary", "Short mask" };
         outputBoxB = new JComboBox(outputChoices);
         outputBoxB.setFont(MipavUtil.font12);
         outputBoxB.addItemListener(this);
         outputBoxB.setEnabled(false);
-        
+
 
         oneBasedLUTCheckBoxImageB = new JCheckBox("0 to 1 LUT adjustment", false);
         oneBasedLUTCheckBoxImageB.setFont(MipavUtil.font12);
@@ -2072,7 +2067,7 @@ public class ViewJPanelLUT extends JPanel
         threshLabel2.setFont(MipavUtil.font12);
         threshLabel2.setForeground(Color.black);
 
-        JLabel threshFillLabel = new JLabel("Outer value (red):");
+        JLabel threshFillLabel = new JLabel("Outer value (non-red):");
 
         threshFillLabel.setFont(MipavUtil.font12);
         threshFillLabel.setForeground(Color.black);
@@ -2284,7 +2279,7 @@ public class ViewJPanelLUT extends JPanel
 
             AlgorithmHistogram histoAlgoA = new AlgorithmHistogram(histogramA, panelParent.getImageA(), entireFlag);
 
-          //  histoAlgoA.setProgressBarVisible(progressFlag);
+            // histoAlgoA.setProgressBarVisible(progressFlag);
             histoAlgoA.setRunningInSeparateThread(false);
             histoAlgoA.run();
         }
@@ -2295,7 +2290,7 @@ public class ViewJPanelLUT extends JPanel
 
             AlgorithmHistogram histoAlgoB = new AlgorithmHistogram(histogramB, panelParent.getImageB(), entireFlag);
 
-           // histoAlgoB.setProgressBarVisible(progressFlag);
+            // histoAlgoB.setProgressBarVisible(progressFlag);
             histoAlgoB.setRunningInSeparateThread(false);
             histoAlgoB.run();
         }
@@ -2312,8 +2307,8 @@ public class ViewJPanelLUT extends JPanel
             thresholds[0] = ((Point2Df) (getLUTa().getTransferFunction().getPoint(1))).x;
             thresholds[1] = ((Point2Df) (getLUTa().getTransferFunction().getPoint(4))).x;
 
-            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, panelParent.getImageA(),
-                                                                    thresholds[0], thresholds[1]);
+            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, panelParent.getImageA(), thresholds[0],
+                                                                    thresholds[1]);
 
             if ((dialogLUT.cancelFlag == false) && (panelParent.getImageA().getType() != ModelStorageBase.BOOLEAN)) {
                 updateHistoLUT(panelParent.getImageA(), panelParent.getLUTa(), null, null, false);
@@ -2328,8 +2323,8 @@ public class ViewJPanelLUT extends JPanel
             thresholds[0] = ((Point2Df) (getLUTb().getTransferFunction().getPoint(1))).x;
             thresholds[1] = ((Point2Df) (getLUTb().getTransferFunction().getPoint(4))).x;
 
-            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, panelParent.getImageB(),
-                                                                    thresholds[0], thresholds[1]);
+            JDialogThresholdLUT dialogLUT = new JDialogThresholdLUT(panelParent, panelParent.getImageB(), thresholds[0],
+                                                                    thresholds[1]);
 
             if ((dialogLUT.cancelFlag == false) && (panelParent.getImageB().getType() != ModelStorageBase.BOOLEAN)) {
                 updateHistoLUT(null, null, panelParent.getImageB(), panelParent.getLUTb(), false);

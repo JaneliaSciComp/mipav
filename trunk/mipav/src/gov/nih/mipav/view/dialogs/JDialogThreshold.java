@@ -40,16 +40,9 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private static final int MAX_ENT = 2;
-        
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Holds the choices for the outputType */
-    private JComboBox outputBox;
-  
-
-    /** Same data-type, binary, or short mask */
-    private int outputType = 0;
-    
     /** DOCUMENT ME! */
     private int displayLoc; // Flag indicating if a new image is to be generated
 
@@ -88,6 +81,13 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
     /** DOCUMENT ME! */
     private double outMin = 0;
+
+    /** Holds the choices for the outputType. */
+    private JComboBox outputBox;
+
+
+    /** Same data-type, binary, or short mask. */
+    private int outputType = 0;
 
     /** or if the source image is to be replaced. */
     private boolean regionFlag; // true = apply algorithm to the whole image
@@ -192,12 +192,12 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
                 // The algorithm has completed and produced a new image to be displayed.
                 if ((outputType == AlgorithmThresholdDual.BINARY_TYPE) ||
-                    (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE)) {
+                        (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE)) {
                     updateFileInfoOtherModality(image, resultImage);
-                }
-                else {
+                } else {
                     updateFileInfo(image, resultImage);
                 }
+
                 resultImage.clearMask();
 
                 try {
@@ -293,11 +293,11 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
         if (source == outputBox) {
 
-        	if (outputBox.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE) {
-        		textFill.setEnabled(true);
-        	} else {
-        		textFill.setEnabled(false);
-        	}
+            if (outputBox.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE) {
+                textFill.setEnabled(true);
+            } else {
+                textFill.setEnabled(false);
+            }
         } else if (source == otsuCheckbox) {
 
             if (otsuCheckbox.isSelected()) {
@@ -412,15 +412,6 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
     }
 
     /**
-     * Accessor that sets the output type
-     *
-     * @param  output_type  0 is normal, 1 is binary, 2 is short mask
-     */
-    public void setOutputType(int output_type) {
-        outputType = output_type;
-    }
-
-    /**
      * Accessor that sets the display loc variable to new, so that a new image is created once the algorithm completes.
      */
     public void setDisplayLocNew() {
@@ -442,6 +433,15 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
      */
     public void setFillValue(float scale) {
         fillValue = scale;
+    }
+
+    /**
+     * Accessor that sets the output type.
+     *
+     * @param  output_type  0 is normal, 1 is binary, 2 is short mask
+     */
+    public void setOutputType(int output_type) {
+        outputType = output_type;
     }
 
     /**
@@ -482,16 +482,9 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         int[] destExtents = null;
         thresholds[0] = thres1;
         thresholds[1] = thres2;
-        FileInfoBase fileInfo[];
 
         int end;
 
-        //flip the inverse flag for short mask
-        if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE ||
-        		outputType == AlgorithmThresholdDual.BINARY_TYPE) {
-        	isInverse = !isInverse;
-        }
-        
         // System.err.println("Name is: " + name + " lower thresh: " + thresholds[0] + " upper thresh: " +
         // thresholds[1]);
 
@@ -525,12 +518,12 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
 
                     // resultImage      = new ModelImage(image.getType(), destExtents, " Threshold", userInterface);
                     resultImage = (ModelImage) image.clone();
-                    
-                    //reallocate to short type is doing a short mask
+
+                    // reallocate to short type is doing a short mask
                     if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE) {
-                    	resultImage.reallocate(ModelStorageBase.SHORT);
+                        resultImage.reallocate(ModelStorageBase.SHORT);
                     }
-                    
+
                     resultImage.setImageName(name);
 
                     if ((resultImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
@@ -547,9 +540,10 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                         }
                     }
                 }
-                
-                if (outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE ||
-                        outputType == AlgorithmThresholdDual.BINARY_TYPE) {
+
+                if ((outputType == AlgorithmThresholdDual.SHORT_MASK_TYPE) ||
+                        (outputType == AlgorithmThresholdDual.BINARY_TYPE)) {
+
                     for (int i = 0; i < end; i++) {
                         (resultImage.getFileInfo(i)).setModality(FileInfoBase.OTHER);
                     }
@@ -565,7 +559,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 thresholdAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), thresholdAlgo);
-                
+
                 // Hide dialog
                 setVisible(false);
 
@@ -603,7 +597,7 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
                 thresholdAlgo.addListener(this);
 
                 createProgressBar(image.getImageName(), thresholdAlgo);
-                
+
                 // Hide the dialog since the algorithm is about to run.
                 setVisible(false);
 
@@ -815,17 +809,17 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         textThres2.getActionMap().put("checkValue", new CheckValueAction());
 
         tempStr = new String("Output type:");
+
         JLabel outputLabel = new JLabel(tempStr);
         outputLabel.setForeground(Color.black);
         outputLabel.setFont(serif12);
-        
-        String [] outputChoices = new String[]{ image.getTypeString(),
-        		"Binary", "Short mask"};
-        
+
+        String[] outputChoices = new String[] { image.getTypeString(), "Binary", "Short mask" };
+
         outputBox = new JComboBox(outputChoices);
         outputBox.setFont(MipavUtil.font12);
-        outputBox.addItemListener(this);	
-        
+        outputBox.addItemListener(this);
+
 
         inverseCheckbox = new JCheckBox("Inverse threshold");
         inverseCheckbox.setFont(serif12);
@@ -849,7 +843,12 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         textFill = new JTextField(5);
         textFill.setText(makeString(min, 6));
         textFill.setFont(serif12);
-        textFill.setEnabled(false);
+
+        if (outputBox.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE) {
+            textFill.setEnabled(true);
+        } else {
+            textFill.setEnabled(false);
+        }
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
@@ -881,13 +880,13 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         gbc.gridwidth = 1;
         gbc.fill = GridBagConstraints.NONE;
         scalePanel.add(outputLabel, gbc);
-       
+
         gbc.gridx = 1;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         scalePanel.add(outputBox, gbc);
-        
+
         gbc.gridx = 0;
-        gbc.fill = gbc.NONE;
+        gbc.fill = GridBagConstraints.NONE;
         gbc.gridy = 4;
         scalePanel.add(otsuCheckbox, gbc);
         gbc.gridy = 5;
@@ -1014,9 +1013,9 @@ public class JDialogThreshold extends JDialogScriptableBase implements Algorithm
         }
 
         outputType = outputBox.getSelectedIndex();
-        
+
         if (outputBox.getSelectedIndex() == AlgorithmThresholdDual.ORIGINAL_TYPE) {
-        	tmpStr = textFill.getText();
+            tmpStr = textFill.getText();
 
             if (testParameter(tmpStr, outMin, outMax)) {
                 fillValue = Float.valueOf(tmpStr).floatValue();
