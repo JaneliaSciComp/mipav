@@ -377,10 +377,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // swap the border painting
             Preferences.setProperty("ShowPaintBorder",
                                     String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
-            for(int i=0; i<controls.paintToolBar.getComponentCount(); i++)
-                if(controls.paintToolBar.getComponent(i).getName() != null)
-                    if(controls.paintToolBar.getComponent(i).getName().equals("ShowPaintBorder"))
-                        ((JButton)(controls.paintToolBar.getComponent(i))).setSelected(!((JButton)(controls.paintToolBar.getComponent(i))).isSelected());
+
+            for (int i = 0; i < controls.paintToolBar.getComponentCount(); i++) {
+
+                if (controls.paintToolBar.getComponent(i).getName() != null) {
+
+                    if (controls.paintToolBar.getComponent(i).getName().equals("ShowPaintBorder")) {
+                        ((JButton) (controls.paintToolBar.getComponent(i))).setSelected(!((JButton)
+                                                                                              (controls.paintToolBar.getComponent(i)))
+                                                                                            .isSelected());
+                    }
+                }
+            }
+
             updateImages(true);
             getActiveImage().notifyImageDisplayListeners();
         } else if (command.equals("OpenXCEDESchema")) {
@@ -749,8 +758,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                 ModelLUT lutClone = null;
 
-                if(LUTb != null) {
-                	lutClone = (ModelLUT) LUTb.clone();
+                if (LUTb != null) {
+                    lutClone = (ModelLUT) LUTb.clone();
                 }
 
                 new ViewJFrameImage(clonedImage, lutClone, new Dimension(610, 200), getImageB().getLogMagDisplay());
@@ -1165,7 +1174,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             progressBar.setSeparateThread(false);
             VOIExtractionAlgo.addProgressChangeListener(progressBar);
             VOIExtractionAlgo.setProgressValues(0, 100);
-            
+
             // VOIExtractionAlgo.setActiveImage(false);
             VOIExtractionAlgo.run();
 
@@ -1567,8 +1576,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("matchImages")) {
             new JDialogMatchImages(this, getActiveImage());
         } else if (command.equals("maximumIntensityProjection")) {
-                JDialogMaximumIntensityProjection mip = new JDialogMaximumIntensityProjection(this, getActiveImage());
-                mip.callAlgorithm();
+            JDialogMaximumIntensityProjection mip = new JDialogMaximumIntensityProjection(this, getActiveImage());
+            mip.callAlgorithm();
         } else if (command.equals("performRAHE")) {
 
             // JDialogAHE ahe =
@@ -2761,29 +2770,25 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (zoom > componentImage.getZoomX()) {
             componentImage.setZoom((int) zoom, (int) zoom); // ***************************
 
-            // setZoom(zoom, zoom);
             updateImages(true);
 
             if ((componentImage.getSize(null).width + 200) > xScreen) {
                 width = xScreen - 200;
             } else {
-                width = componentImage.getSize(null).width /* + fudgeFactor*/;
+                width = componentImage.getSize(null).width;
             }
 
             if ((componentImage.getSize(null).height + 200) > yScreen) {
                 height = yScreen - 200;
             } else {
-                height = componentImage.getSize(null).height /* + fudgeFactor*/;
+                height = componentImage.getSize(null).height;
             }
         } else if ((width < componentImage.getSize(null).width) && (height >= componentImage.getSize(null).height)) {
 
-            // width += fudgeFactor;
-            height = componentImage.getSize(null).height /* + fudgeFactor*/ +
-                     scrollPane.getHorizontalScrollBar().getHeight();
+
+            height = componentImage.getSize(null).height + scrollPane.getHorizontalScrollBar().getHeight();
         } else if ((width >= componentImage.getSize(null).width) && (height < componentImage.getSize(null).height)) {
-            width = componentImage.getSize(null).width /* + fudgeFactor*/ +
-                    scrollPane.getVerticalScrollBar().getWidth();
-            // height += fudgeFactor;
+            width = componentImage.getSize(null).width + scrollPane.getVerticalScrollBar().getWidth();
 
             /*
              * The below else if block was modified to handle a bug found on Linux.  When a window was made smaller on
@@ -2802,18 +2807,14 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             addComponentListener(this);
 
             return;
-            // height += fudgeFactor;
         } else if ((width > componentImage.getSize(null).width) || (height > componentImage.getSize(null).height)) {
 
             if (width > componentImage.getSize(null).width) {
-                width = componentImage.getSize(null).width; // ?????
-
-                // height += fudgeFactor;
+                width = componentImage.getSize(null).width;
             }
 
             if (height > componentImage.getSize(null).height) {
-                height = componentImage.getSize(null).height /* + fudgeFactor*/;
-                // width += fudgeFactor;
+                height = componentImage.getSize(null).height;
             }
         } else {
             addComponentListener(this);
@@ -2828,13 +2829,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         setSize(scrollPane.getSize().width + getInsets().left + getInsets().right,
                 scrollPane.getSize().height + getInsets().top + getInsets().bottom);
 
-
-        // validate();
+        validate();
         setTitle();
         updateImages(true);
         addComponentListener(this);
-        // componentImage.frameHeight = getSize().height;
-        // componentImage.frameWidth = getSize().width;
+
     }
 
     /**
@@ -3272,7 +3271,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      */
     public void keyPressed(KeyEvent e) {
 
-        //System.err.println("got something");
+        // System.err.println("got something");
         int keyCode = e.getKeyCode();
         componentImage.rememberPaintBrushSize();
 
@@ -3327,7 +3326,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 break;
-        
+
             case KeyEvent.VK_UP:
             case KeyEvent.VK_DOWN:
             case KeyEvent.VK_LEFT:
@@ -5090,6 +5089,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
          * Nathan Pollack (Contractor - SSAI)  June 19, 2006
          */
         addComponentListener(this);
+        validate();
 
     } // end init()
 
