@@ -2,10 +2,10 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
 import gov.nih.mipav.model.structures.*;
-import gov.nih.mipav.model.file.*;
 
 import gov.nih.mipav.view.*;
 
@@ -220,115 +220,29 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
         int backgroundThreshold = histogramAnalysis(imgBuffer);
 
         Preferences.debug("Orient = " + orientation);
+        Preferences.debug("Brain extractor: extimateSphere: backgroundThreshold = " + backgroundThreshold + "\n");
 
-        if (sphereFlag) {
-            Preferences.debug("Brain extractor: extimateSphere: backgroundThreshold = " + backgroundThreshold + "\n");
+        int count = 0;
 
-            int count = 0;
+        for (int iZ = 0, iIndex = 0; iZ < zDim; iZ++) {
 
-            for (int iZ = 0, iIndex = 0; iZ < zDim; iZ++) {
+            for (int iY = 0; iY < yDim; iY++) {
 
-                for (int iY = 0; iY < yDim; iY++) {
+                for (int iX = 0; iX < xDim; iX++) {
 
-                    for (int iX = 0; iX < xDim; iX++) {
-
-                        if (imgBuffer[iIndex++] >= backgroundThreshold) {
-                            count++;
-                            centerPt.x += iIndex % xDim;
-                            centerPt.y += (iIndex % sliceSize) / xDim;
-                            centerPt.z += iIndex / sliceSize;
-                        }
+                    if (imgBuffer[iIndex++] >= backgroundThreshold) {
+                        count++;
+                        centerPt.x += iIndex % xDim;
+                        centerPt.y += (iIndex % sliceSize) / xDim;
+                        centerPt.z += iIndex / sliceSize;
                     }
                 }
             }
-
-            centerPt.x = (centerPt.x / count++);
-            centerPt.y = (centerPt.y / count++);
-            centerPt.z = (centerPt.z / count++);
-        } else {
-
-            // Make the estimation numerically robust by tracking voxel positions
-            // that are uniformly scaled into [-1,1]^3.
-            Preferences.debug("Brain extractor: extimateEllisoid: brightnessThreshold = " + backgroundThreshold + "\n");
-
-            float fBMax = (float) xDim;
-
-            if ((float) yDim > fBMax) {
-                fBMax = (float) yDim;
-            }
-
-            if ((float) zDim > fBMax) {
-                fBMax = (float) zDim;
-            }
-
-            float fInvBMax = 1.0f / fBMax;
-
-            // The arrays "less" and "greater" store positions of bright voxels
-            // that occur less or greater than YBound/2, respectively.  The
-            // array with the smaller number of voxels represents the scalp
-            // voxels in the upper-half of the head.  The comparison of counts
-            // is based on empirical studies.
-            Vector kLess = new Vector();
-            Vector kGreater = new Vector();
-            int iHalfYBound = yDim / 2;
-            int iHalfZBound = zDim / 2;
-
-            for (int iZ = 0, iIndex = 0; iZ < zDim; iZ++) {
-
-                for (int iY = 0; iY < yDim; iY++) {
-
-                    for (int iX = 0; iX < xDim; iX++) {
-
-                        if (imgBuffer[iIndex++] >= backgroundThreshold) {
-                            Point3f kVoxel = new Point3f(fInvBMax * iX, fInvBMax * iY, fInvBMax * iZ);
-
-                            if (orientation == AlgorithmBrainExtractor.SAT_COR) {
-
-                                if (iY < iHalfYBound) {
-                                    kLess.add(kVoxel);
-                                } else {
-                                    kGreater.add(kVoxel);
-                                }
-                            } else { // Axial image
-
-                                if (iZ < iHalfZBound) {
-                                    kLess.add(kVoxel);
-                                } else {
-
-                                    // kGreater.add(kVoxel);
-                                    kLess.add(kVoxel);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Fit points with an ellipsoid.  The algorithm uses a least-squares
-            // estimation of the coefficients for a quadratic equation that
-            // represents the ellipsoid.
-            AlgorithmQuadraticFit kQFit;
-            kQFit = new AlgorithmQuadraticFit(kLess);
-
-            // rescale from [-1,1]^3 to voxel coordinates
-            centerPt.scale(fBMax, kQFit.getCenter());
-
-            if (centerPt.x >= img.getExtents()[0]) {
-                centerPt.x = img.getExtents()[0] / 2;
-            }
-
-            if (centerPt.y >= img.getExtents()[1]) {
-                centerPt.y = img.getExtents()[1] / 2;
-            }
-
-            if (centerPt.z >= img.getExtents()[2]) {
-                centerPt.z = img.getExtents()[2] / 2;
-            }
-
-            centerPt.y *= 0.90f; // move it up alittle on the y axis
-
-            // m_kCenter.y *= 1.2f; // move it up alittle on the y axis
         }
+
+        centerPt.x = (centerPt.x / count++);
+        centerPt.y = (centerPt.y / count++);
+        centerPt.z = (centerPt.z / count++);
 
         Preferences.debug("center of mass = " + centerPt + "\n");
 
