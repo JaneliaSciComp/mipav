@@ -169,11 +169,14 @@ public class JDialogCumulativeHistogram extends JDialogBase implements Algorithm
 		
 		try {
 			new ViewJFrameImage(cumHistImage, null, new Dimension(610, 200));
-			dispose();
         } 
 		catch (OutOfMemoryError error) {
         	MipavUtil.displayError("Out of memory: unable to open new frame");
         }
+		finally {
+			hist = null;
+			dispose();
+		}
 	}
 	
 	
