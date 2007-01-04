@@ -936,7 +936,7 @@ public class JDialogVolViewResample extends JDialogBase {
         padButton.setMinimumSize(MipavUtil.defaultButtonSize);
         padButton.setPreferredSize(MipavUtil.defaultButtonSize);
         padButton.setFont(serif12B);
-        padButton.setEnabled(true);
+        padButton.setEnabled(false);
     }
 
     /**
