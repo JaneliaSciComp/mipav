@@ -438,7 +438,6 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
             }
 
             image.calcMinMax();
-            image.notifyImageDisplayListeners(null, true);
 
             extractBrainAlgo.finalize();
             extractBrainAlgo = null;
@@ -446,8 +445,10 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
         // necessary for paint to appear when using 'extract to paint' option
         if (parentFrame != null) {
-            ((ViewJFrameImage) parentFrame).setActiveImage(ViewJFrameImage.IMAGE_A);
+            ((ViewJFrameImage) parentFrame).getComponentImage().setPaintMask(image.getMask());
         }
+
+        image.notifyImageDisplayListeners(null, true);
     }
 
     /**

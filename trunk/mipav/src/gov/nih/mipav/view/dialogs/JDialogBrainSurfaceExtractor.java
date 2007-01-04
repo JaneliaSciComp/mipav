@@ -2,9 +2,9 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.model.algorithms.*;
-import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.scripting.parameters.*;
+import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
 
@@ -198,7 +198,6 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
                                           (extractBrainAlgo.getBrainVolume() / 1000.0f) + " cc\n");
                 resultImage = extractBrainAlgo.getResultImage();
 
-                
 
                 if (extractPaint) {
                     BitSet paintMask = extractBrainAlgo.getComputedPaintMask();
@@ -215,16 +214,22 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
                     new ViewJFrameImage(resultImage, null, new Dimension(600, 600));
                 }
             }
-            
+
             if (extractBrainAlgo.isCompleted()) {
                 insertScriptLine();
             }
-            
+
             extractBrainAlgo.finalize();
 
             if (imageCopy != null) {
                 imageCopy.disposeLocal();
             }
+            //          necessary for paint to appear when using 'extract to paint' option
+            if (parentFrame != null) {
+                ((ViewJFrameImage) parentFrame).getComponentImage().setPaintMask(image.getMask());
+            }
+
+            image.notifyImageDisplayListeners(null, true);
 
             extractBrainAlgo = null;
         }
@@ -258,7 +263,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
 
             createProgressBar(image.getImageName(), extractBrainAlgo);
             progressBar.setMessage("Extracting brain ...");
-                                 
+
             // Hide dialog
             setVisible(false);
 
@@ -269,7 +274,7 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
                     MipavUtil.displayError("A thread is already running on this object");
                 }
             } else {
-                
+
                 extractBrainAlgo.run();
             }
         } catch (OutOfMemoryError x) {
@@ -278,6 +283,36 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
 
             return;
         }
+    }
+
+    /**
+     * Construct a delimited string that contains the parameters to this algorithm.
+     *
+     * @param   delim  the parameter delimiter (defaults to " " if empty)
+     *
+     * @return  the parameter string
+     */
+    public String getParameterString(String delim) {
+
+        if (delim.equals("")) {
+            delim = " ";
+        }
+
+        String str = new String();
+        str += filterIterations + delim;
+        str += filterGaussianStdDev + delim;
+        str += edgeKernelSize + delim;
+        str += erosionIterations + delim;
+        str += closeKernelSize + delim;
+        str += closeIterations + delim;
+        str += showIntermediateImages + delim;
+        str += useSeparable + delim;
+        str += 1 + delim;
+        str += erosion25D + delim;
+        str += fillHoles + delim;
+        str += extractPaint;
+
+        return str;
     }
 
 
@@ -319,88 +354,6 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
         String defaultsString = new String(getParameterString(","));
 
         Preferences.saveDialogDefaults(getDialogName(), defaultsString);
-    }
-
-    /**
-     * Construct a delimited string that contains the parameters to this algorithm.
-     *
-     * @param   delim  the parameter delimiter (defaults to " " if empty)
-     *
-     * @return  the parameter string
-     */
-    public String getParameterString(String delim) {
-
-        if (delim.equals("")) {
-            delim = " ";
-        }
-
-        String str = new String();
-        str += filterIterations + delim;
-        str += filterGaussianStdDev + delim;
-        str += edgeKernelSize + delim;
-        str += erosionIterations + delim;
-        str += closeKernelSize + delim;
-        str += closeIterations + delim;
-        str += showIntermediateImages + delim;
-        str += useSeparable + delim;
-        str += 1 + delim;
-        str += erosion25D + delim;
-        str += fillHoles + delim;
-        str += extractPaint;
-
-        return str;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        
-        if (!extractPaint) {
-            AlgorithmParameters.storeImageInRecorder(resultImage);
-        }
-        
-        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_iterations", filterIterations));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("edge_kernel_size", edgeKernelSize));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("erosion_iterations", erosionIterations));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_gaussian_std_dev", filterGaussianStdDev));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_intermediate_images", showIntermediateImages));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("edge_do_separable_convolution", useSeparable));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_erosion_2.5d", erosion25D));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_fill_interior_holes", fillHoles));
-        scriptParameters.getParams().put(ParameterFactory.newParameter("do_extract_paint", extractPaint));
-    }
-    
-    /**
-     * {@inheritDoc}
-     */    
-    protected void setGUIFromParams(){
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-        
-        closeKernelSize = (Math.max(image.getFileInfo(0).getResolutions()[0], image.getFileInfo(0).getResolutions()[1]) *
-                               closeKernelPixels) + 1;
-        
-        filterIterations = scriptParameters.getParams().getInt("filter_iterations");
-        erosionIterations = scriptParameters.getParams().getInt("erosion_iterations");
-        edgeKernelSize = scriptParameters.getParams().getFloat("edge_kernel_size");
-        filterGaussianStdDev  = scriptParameters.getParams().getFloat("filter_gaussian_std_dev");
-        showIntermediateImages = scriptParameters.getParams().getBoolean("do_show_intermediate_images");
-        useSeparable = scriptParameters.getParams().getBoolean("edge_do_separable_convolution");
-        erosion25D = scriptParameters.getParams().getBoolean("do_erosion_2.5d");
-        fillHoles = scriptParameters.getParams().getBoolean("do_fill_interior_holes");
-        extractPaint = scriptParameters.getParams().getBoolean("do_extract_paint");
-    }
-    
-    /**
-     * Store the result image in the script runner's image table now that the action execution is finished.
-     */
-    protected void doPostAlgorithmActions() {
-        if (!extractPaint) {
-            AlgorithmParameters.storeImageInRunner(resultImage);
-        }
     }
 
     /**
@@ -455,6 +408,61 @@ public class JDialogBrainSurfaceExtractor extends JDialogScriptableBase
      */
     public void setUseSeparable(boolean use) {
         useSeparable = use;
+    }
+
+    /**
+     * Store the result image in the script runner's image table now that the action execution is finished.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (!extractPaint) {
+            AlgorithmParameters.storeImageInRunner(resultImage);
+        }
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        closeKernelSize = (Math.max(image.getFileInfo(0).getResolutions()[0],
+                                    image.getFileInfo(0).getResolutions()[1]) * closeKernelPixels) + 1;
+
+        filterIterations = scriptParameters.getParams().getInt("filter_iterations");
+        erosionIterations = scriptParameters.getParams().getInt("erosion_iterations");
+        edgeKernelSize = scriptParameters.getParams().getFloat("edge_kernel_size");
+        filterGaussianStdDev = scriptParameters.getParams().getFloat("filter_gaussian_std_dev");
+        showIntermediateImages = scriptParameters.getParams().getBoolean("do_show_intermediate_images");
+        useSeparable = scriptParameters.getParams().getBoolean("edge_do_separable_convolution");
+        erosion25D = scriptParameters.getParams().getBoolean("do_erosion_2.5d");
+        fillHoles = scriptParameters.getParams().getBoolean("do_fill_interior_holes");
+        extractPaint = scriptParameters.getParams().getBoolean("do_extract_paint");
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+
+        if (!extractPaint) {
+            AlgorithmParameters.storeImageInRecorder(resultImage);
+        }
+
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_iterations", filterIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("edge_kernel_size", edgeKernelSize));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("erosion_iterations", erosionIterations));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("filter_gaussian_std_dev",
+                                                                       filterGaussianStdDev));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_show_intermediate_images",
+                                                                       showIntermediateImages));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("edge_do_separable_convolution", useSeparable));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_erosion_2.5d", erosion25D));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_fill_interior_holes", fillHoles));
+        scriptParameters.getParams().put(ParameterFactory.newParameter("do_extract_paint", extractPaint));
     }
 
     /**
