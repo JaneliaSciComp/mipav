@@ -477,14 +477,10 @@ public class ViewToolBarBuilder implements ItemListener {
         paintToolBar.add(makeSeparator());
 
         JButton commitPaintButton = buildButton("CommitPaint", "Masks the inside of the painted area.", "paintinside");
-        commitPaintButton.setMinimumSize(new Dimension(20, 20));
-        commitPaintButton.setMargin(new Insets(2, 7, 2, 7));
         paintToolBar.add(commitPaintButton);
 
         JButton commitPaintButtonExt = buildButton("CommitPaintExt", "Masks the outside of the painted area.",
                                                    "paintoutside");
-        commitPaintButtonExt.setMinimumSize(new Dimension(20, 20));
-        commitPaintButtonExt.setMargin(new Insets(2, 7, 2, 7));
         paintToolBar.add(commitPaintButtonExt);
 
         paintToolBar.add(makeSeparator());
