@@ -1,9 +1,8 @@
 package gov.nih.mipav.view.dialogs;
 
 
-import gov.nih.mipav.model.algorithms.AlgorithmBase;
-import gov.nih.mipav.model.algorithms.AlgorithmInterface;
-import gov.nih.mipav.model.algorithms.utilities.AlgorithmChangeType;
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -13,7 +12,8 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
-import java.util.Vector;
+
+import java.util.*;
 
 import javax.swing.*;
 
@@ -54,13 +54,13 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private JButton applyButton;
-    
+
     /** Radio button to denote image is big endian. */
     private JRadioButton bigEnd;
 
     /** DOCUMENT ME! */
     private JPanel buttonPanel;
-    
+
     /** DOCUMENT ME!! */
     private AlgorithmChangeType changeTypeAlgo;
 
@@ -78,7 +78,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private int DIM;
-    
+
     /** Indicates the endianess of the image. */
     private boolean endianess;
 
@@ -102,10 +102,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private JTextField linkedImageField;
-    
+
     /** Radio button to denote image is little endian. */
     private JRadioButton littleEnd;
-    
+
     /** DOCUMENT ME! */
     private JButton loadButton;
 
@@ -204,7 +204,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private String[] titles;
-    
+
     /** DOCUMENT ME! */
     private JTextField[] tlrcACFields;
 
@@ -219,7 +219,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
     /** DOCUMENT ME! */
     private JComboBox transformIDBox;
-    
+
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
 
@@ -241,10 +241,10 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         super(theParentFrame, false);
 
         userInterface = ViewUserInterface.getReference();
-        
+
         image = im;
         resampleImage = im;
-        
+
         String addTitle = "";
 
         if (image.getNDims() == 3) {
@@ -298,7 +298,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 updateImageModality();
                 updateImageOrientation();
                 updateEndianess();
-                
+
                 // only update the resolutions if the tab is selected
                 // otherwise might do an apply to all for specific slice/time resolutions
                 if (tabbedPane.getSelectedIndex() == 1) {
@@ -517,29 +517,34 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         }
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  algorithm  DOCUMENT ME!
+     */
     public void algorithmPerformed(AlgorithmBase algorithm) {
-    
+
         if (algorithm instanceof AlgorithmChangeType) {
-        
+
             Vector imageFrames = image.getImageFrameVector();
-    
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
-    
-                    if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
-                        userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
-                    }
+
+            for (int i = 0; i < imageFrames.size(); i++) {
+                ((Frame) (imageFrames.elementAt(i))).setTitle(titles[i]);
+                ((Frame) (imageFrames.elementAt(i))).setEnabled(true);
+
+                if (((Frame) (imageFrames.elementAt(i))) != parentFrame) {
+                    userInterface.registerFrame((Frame) (imageFrames.elementAt(i)));
                 }
-    
-                if (parentFrame != null) {
-                    userInterface.registerFrame(parentFrame);
-                }
-    
-                image.notifyImageDisplayListeners(null, true);
-           
+            }
+
+            if (parentFrame != null) {
+                userInterface.registerFrame(parentFrame);
+            }
+
+            image.notifyImageDisplayListeners(null, true);
+
         }
-    
+
         changeTypeAlgo.finalize();
         changeTypeAlgo = null;
         System.gc();
@@ -785,7 +790,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
     public void setWCSystem(boolean wcSys) {
         wcSystem = wcSys;
     }
-    
+
     /**
      * Builds the ComboBox panel editing units of measure.
      *
@@ -853,6 +858,167 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         comboPanel.add(comboBoxUnitOfMeasure5);
 
         return comboPanel;
+    }
+
+    /**
+     * Builds the "edit image name" panel.
+     *
+     * @return  The panel on which the user can edit the name of the image.
+     */
+    private JPanel buildGeneralPanel() {
+        int i;
+
+        JPanel generalPanel = new JPanel(new GridBagLayout());
+        generalPanel.setBorder(buildTitledBorder(""));
+
+        JLabel nameLabel = new JLabel("Image name (without suffix):");
+        nameLabel.setFont(serif12);
+        nameLabel.setForeground(Color.black);
+
+        nameText = new JTextField();
+        nameText.setText(image.getImageName());
+        nameText.setFont(serif12);
+        nameText.addFocusListener(this);
+
+        JLabel modalityLabel = new JLabel("Image modality:");
+        modalityLabel.setFont(serif12);
+        modalityLabel.setForeground(Color.black);
+
+        modalityBox = new JComboBox();
+        modalityBox.setBackground(Color.white);
+        modalityStr = FileInfoBase.getModalityStr();
+
+        for (i = 0; i < modalityStr.length; i++) {
+            modalityBox.addItem(modalityStr[i]);
+        }
+
+        modality = image.getFileInfo(0).getModality();
+        modalityBox.setSelectedIndex(modality);
+        modalityBox.setFont(serif12);
+        modalityBox.addFocusListener(this);
+
+        JLabel endianLabel = new JLabel("Image endian order:");
+        endianLabel.setFont(serif12);
+        endianLabel.setForeground(Color.black);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+
+        JPanel endianessPanel = new JPanel(new GridBagLayout());
+        endianessPanel.setForeground(Color.black);
+        endianessPanel.setBorder(buildTitledBorder(""));
+
+        ButtonGroup endianessGroup = new ButtonGroup();
+        littleEnd = new JRadioButton("Little endian");
+        littleEnd.setFont(serif12);
+        endianessGroup.add(littleEnd);
+
+        bigEnd = new JRadioButton("Big endian");
+        bigEnd.setFont(serif12);
+        endianessGroup.add(bigEnd);
+
+        endianess = image.getFileInfo(0).getEndianess();
+
+        if (endianess == true) {
+            littleEnd.setSelected(true);
+            bigEnd.setSelected(false);
+        } else {
+            littleEnd.setSelected(false);
+            bigEnd.setSelected(true);
+        }
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.gridheight = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        endianessPanel.add(littleEnd, gbc);
+        gbc.gridy = 1;
+        endianessPanel.add(bigEnd, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.gridheight = 1;
+        gbc.gridwidth = 1;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        // if the image is an XML file.. we can now edit the XML linked image path
+        if (image.getFileInfo(0) instanceof FileInfoXML) {
+            JLabel linkLabel = new JLabel("XML linked image:");
+            linkLabel.setFont(serif12);
+            linkLabel.setForeground(Color.black);
+
+            generalPanel.add(linkLabel, gbc);
+            gbc.gridx = 1;
+            gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+            JPanel linkedImagePanel = new JPanel();
+            linkedImageField = new JTextField(40);
+            linkedImageField.setFont(MipavUtil.font12);
+
+            linkedImageButton = new JButton("Browse");
+            linkedImageButton.setFont(MipavUtil.font12B);
+            linkedImageButton.addActionListener(this);
+            linkedImageButton.setActionCommand("BrowseLinked");
+
+            linkedImagePanel.add(linkedImageField);
+            linkedImagePanel.add(linkedImageButton);
+            linkedImagePanel.setBorder(buildTitledBorder(""));
+
+            String path = ((FileInfoImageXML) image.getFileInfo(0)).getLinkedImagePath();
+
+            if (path != null) {
+
+                if (new File(path).exists()) {
+                    linkedImageField.setText(path);
+                } else {
+                    int response = JOptionPane.showConfirmDialog(this, "Linked file does not exist: maintain link?",
+                                                                 "Linked file", JOptionPane.YES_NO_OPTION);
+
+                    if (response == JOptionPane.YES_OPTION) {
+                        linkedImageField.setText(path);
+                    }
+                }
+            }
+
+            generalPanel.add(linkedImagePanel, gbc);
+
+            gbc.gridx = 0;
+            gbc.gridy = 1;
+            gbc.gridwidth = 1;
+        }
+
+        generalPanel.add(nameLabel, gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.weightx = 1;
+        generalPanel.add(nameText, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.gridwidth = 1;
+        gbc.weightx = 0;
+        generalPanel.add(modalityLabel, gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.weightx = 1;
+        generalPanel.add(modalityBox, gbc);
+        gbc.gridx = 0;
+        gbc.gridy++;
+        gbc.fill = GridBagConstraints.NONE;
+        gbc.weightx = 1;
+        generalPanel.add(endianLabel, gbc);
+        gbc.gridx = 1;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        generalPanel.add(endianessPanel, gbc);
+
+
+        return generalPanel;
     }
 
     /**
@@ -962,167 +1128,6 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         transformPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         return transformPanel;
-    }
-
-    /**
-     * Builds the "edit image name" panel.
-     *
-     * @return  The panel on which the user can edit the name of the image.
-     */
-    private JPanel buildGeneralPanel() {
-        int i;
-
-        JPanel generalPanel = new JPanel(new GridBagLayout());
-        generalPanel.setBorder(buildTitledBorder(""));
-
-        JLabel nameLabel = new JLabel("Image name (without suffix):");
-        nameLabel.setFont(serif12);
-        nameLabel.setForeground(Color.black);
-
-        nameText = new JTextField();
-        nameText.setText(image.getImageName());
-        nameText.setFont(serif12);
-        nameText.addFocusListener(this);
-
-        JLabel modalityLabel = new JLabel("Image modality:");
-        modalityLabel.setFont(serif12);
-        modalityLabel.setForeground(Color.black);
-
-        modalityBox = new JComboBox();
-        modalityBox.setBackground(Color.white);
-        modalityStr = FileInfoBase.getModalityStr();
-
-        for (i = 0; i < modalityStr.length; i++) {
-            modalityBox.addItem(modalityStr[i]);
-        }
-
-        modality = image.getFileInfo(0).getModality();
-        modalityBox.setSelectedIndex(modality);
-        modalityBox.setFont(serif12);
-        modalityBox.addFocusListener(this);
-
-        JLabel endianLabel = new JLabel("Image endian order:");
-        endianLabel.setFont(serif12);
-        endianLabel.setForeground(Color.black);
-        
-        GridBagConstraints gbc = new GridBagConstraints();
-                        
-        JPanel endianessPanel = new JPanel(new GridBagLayout());
-        endianessPanel.setForeground(Color.black);
-        endianessPanel.setBorder(buildTitledBorder(""));
-        boolean lFlag, bFlag;
-
-        if (image.getFileInfo(0).getEndianess() == FileBase.LITTLE_ENDIAN) {
-            lFlag = true;
-            bFlag = false;
-        } else {
-            lFlag = false;
-            bFlag = true;
-        }
-
-        ButtonGroup endianessGroup = new ButtonGroup();
-        littleEnd = new JRadioButton("Little endian", lFlag);
-        littleEnd.setFont(serif12);
-        endianessGroup.add(littleEnd);
-
-        bigEnd = new JRadioButton("Big endian", bFlag);
-        bigEnd.setFont(serif12);
-        endianessGroup.add(bigEnd);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.gridheight = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.weightx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        endianessPanel.add(littleEnd, gbc);
-        gbc.gridy = 1;
-        endianessPanel.add(bigEnd, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.WEST;
-        gbc.gridheight = 1;
-        gbc.gridwidth = 1;
-        gbc.insets = new Insets(5, 5, 5, 5);
-
-        // if the image is an XML file.. we can now edit the XML linked image path
-        if (image.getFileInfo(0) instanceof FileInfoXML) {
-            JLabel linkLabel = new JLabel("XML linked image:");
-            linkLabel.setFont(serif12);
-            linkLabel.setForeground(Color.black);
-
-            generalPanel.add(linkLabel, gbc);
-            gbc.gridx = 1;
-            gbc.gridwidth = GridBagConstraints.REMAINDER;
-
-            JPanel linkedImagePanel = new JPanel();
-            linkedImageField = new JTextField(40);
-            linkedImageField.setFont(MipavUtil.font12);
-
-            linkedImageButton = new JButton("Browse");
-            linkedImageButton.setFont(MipavUtil.font12B);
-            linkedImageButton.addActionListener(this);
-            linkedImageButton.setActionCommand("BrowseLinked");
-
-            linkedImagePanel.add(linkedImageField);
-            linkedImagePanel.add(linkedImageButton);
-            linkedImagePanel.setBorder(buildTitledBorder(""));
-
-            String path = ((FileInfoImageXML) image.getFileInfo(0)).getLinkedImagePath();
-
-            if (path != null) {
-
-                if (new File(path).exists()) {
-                    linkedImageField.setText(path);
-                } else {
-                    int response = JOptionPane.showConfirmDialog(this, "Linked file does not exist: maintain link?",
-                                                                 "Linked file", JOptionPane.YES_NO_OPTION);
-
-                    if (response == JOptionPane.YES_OPTION) {
-                        linkedImageField.setText(path);
-                    }
-                }
-            }
-
-            generalPanel.add(linkedImagePanel, gbc);
-
-            gbc.gridx = 0;
-            gbc.gridy = 1;
-            gbc.gridwidth = 1;
-        }
-
-        generalPanel.add(nameLabel, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.weightx = 1;
-        generalPanel.add(nameText, gbc);
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.gridwidth = 1;
-        gbc.weightx = 0;
-        generalPanel.add(modalityLabel, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        gbc.weightx = 1;
-        generalPanel.add(modalityBox, gbc);
-        gbc.gridx = 0;
-        gbc.gridy++;
-        gbc.fill = GridBagConstraints.NONE;
-        gbc.weightx = 1;
-        generalPanel.add(endianLabel, gbc);
-        gbc.gridx = 1;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-        generalPanel.add(endianessPanel, gbc);
-        
-        
-
-        return generalPanel;
     }
 
     /**
@@ -1438,7 +1443,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         JPanel stPanel = new JPanel(new GridBagLayout());
         stPanel.setBorder(buildTitledBorder(" Origin for the first image slice (upper left corner) "));
-        
+
         JLabel dim1 = new JLabel("1st dimension:");
         dim1.setFont(serif12);
         dim1.setForeground(Color.black);
@@ -2013,8 +2018,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         tabbedPane.addTab("Talairach", null, buildTalairachPanel());
 
         /**
-         *      if (((String)transformIDBox.getSelectedItem()).equals("Talairach Tournoux")) {
-         * showTalairachTab(true);     }
+         *      if (((String)transformIDBox.getSelectedItem()).equals("Talairach Tournoux")) { showTalairachTab(true);
+         * }
          */
         mainDialogPanel.add(tabbedPane);
 
@@ -2255,11 +2260,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
         newImageName = nameText.getText();
 
         modality = modalityBox.getSelectedIndex();
-        
-        if(littleEnd.isSelected())
+
+        if (littleEnd.isSelected()) {
             endianess = FileBase.LITTLE_ENDIAN;
-        else if(bigEnd.isSelected())
+        } else if (bigEnd.isSelected()) {
             endianess = FileBase.BIG_ENDIAN;
+        }
 
         switch (orientBox.getSelectedIndex()) {
 
@@ -2854,89 +2860,41 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         return true;
     }
-    
+
     /**
-     * Updates the image endianess
+     * Updates the image endianess.
      */
-    
     private void updateEndianess() {
-        boolean lFlag, bFlag;
-        if (image.getFileInfo(0).getEndianess() == FileBase.LITTLE_ENDIAN) {
-            lFlag = true;
-            bFlag = false;
+
+        int[] destExtents;
+
+        if (image.getNDims() == 2) { // source image is 2D
+
+            destExtents = new int[2];
+            destExtents[0] = image.getExtents()[0]; // X dim
+            destExtents[1] = image.getExtents()[1]; // Y dim
+
+            image.getFileInfo(0).setEndianess(endianess);
+        } else if (image.getNDims() == 3) {
+            destExtents = new int[3];
+            destExtents[0] = image.getExtents()[0];
+            destExtents[1] = image.getExtents()[1];
+            destExtents[2] = image.getExtents()[2];
+
+            for (int n = 0; n < image.getExtents()[2]; n++) {
+                image.getFileInfo(n).setEndianess(endianess);
+            }
         } else {
-            lFlag = false;
-            bFlag = true;
+            destExtents = new int[4];
+            destExtents[0] = image.getExtents()[0];
+            destExtents[1] = image.getExtents()[1];
+            destExtents[2] = image.getExtents()[2];
+            destExtents[3] = image.getExtents()[3];
+
+            for (int n = 0; n < (image.getExtents()[2] * image.getExtents()[3]); n++) {
+                image.getFileInfo(n).setEndianess(endianess);
+            }
         }
-        
-        if(lFlag && endianess == FileBase.BIG_ENDIAN || bFlag && endianess == FileBase.LITTLE_ENDIAN) {            
-            int[] destExtents;
-            
-            if (image.getNDims() == 2) { // source image is 2D
-
-                destExtents = new int[2];
-                destExtents[0] = image.getExtents()[0]; // X dim
-                destExtents[1] = image.getExtents()[1]; // Y dim
-
-                image.getFileInfo(0).setEndianess(endianess);
-            }
-            else if (image.getNDims() == 3) {
-                destExtents = new int[3];
-                destExtents[0] = image.getExtents()[0];
-                destExtents[1] = image.getExtents()[1];
-                destExtents[2] = image.getExtents()[2];
-
-                for (int n = 0; n < image.getExtents()[2]; n++) {
-                    image.getFileInfo(n).setEndianess(endianess);
-                }
-            } else {
-                destExtents = new int[4];
-                destExtents[0] = image.getExtents()[0];
-                destExtents[1] = image.getExtents()[1];
-                destExtents[2] = image.getExtents()[2];
-                destExtents[3] = image.getExtents()[3];
-
-                for (int n = 0; n < (image.getExtents()[2] * image.getExtents()[3]); n++) {
-                    image.getFileInfo(n).setEndianess(endianess);
-                }
-            }
-            try {
-                float tempMin = (float) image.getMin();
-                float inTempMax = (float) image.getMax();
-                boolean processIndep = false;
-                
-                changeTypeAlgo = new AlgorithmChangeType(image, image.getType(), tempMin, inTempMax, tempMin,
-                                                                                inTempMax, processIndep);
-
-                changeTypeAlgo.addListener(this);
-
-                createProgressBar(image.getImageName(), changeTypeAlgo);
-
-                Vector imageFrames = image.getImageFrameVector();
-                titles = new String[imageFrames.size()];
-
-                for (int i = 0; i < imageFrames.size(); i++) {
-                    titles[i] = ((Frame) (imageFrames.elementAt(i))).getTitle();
-                    ((Frame) (imageFrames.elementAt(i))).setTitle("Locked: " + titles[i]);
-                    ((Frame) (imageFrames.elementAt(i))).setEnabled(false);
-                    userInterface.unregisterFrame((Frame) (imageFrames.elementAt(i)));
-                }
-
-                if (isRunInSeparateThread()) {
-                    // Start the thread as a low priority because we wish to still have user interface work fast
-                    if (changeTypeAlgo.startMethod(Thread.MIN_PRIORITY) == false) {
-                        MipavUtil.displayError("A thread is already running on this object");
-                    }
-                } else {
-                    changeTypeAlgo.run();
-                }
-            } catch (OutOfMemoryError x) {
-                MipavUtil.displayError("Dialog change type: unable to allocate enough memory");
-
-                return;
-            }
-        }       
-        endianess = image.getFileInfo(0).getEndianess();
     }
 
     /**
@@ -3116,7 +3074,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 fileInfo[i].setUnitsOfMeasure(measure1, 1);
                 fileInfo[i].setUnitsOfMeasure(measure3, 2);
                 fileInfo[i].setUnitsOfMeasure(measure4, 3);
-                
+
                 fileInfo[i].setSliceThickness(sliceThickness);
 
                 if (resolutionBox.isSelected()) {
@@ -3136,7 +3094,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 fileInfo[i].setUnitsOfMeasure(measure3, 2);
                 fileInfo[i].setUnitsOfMeasure(measure4, 3);
                 fileInfo[i].setUnitsOfMeasure(measure5, 4);
-                
+
                 fileInfo[i].setSliceThickness(sliceThickness);
 
                 if (resolutionBox.isSelected()) {
