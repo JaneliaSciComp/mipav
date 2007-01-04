@@ -218,6 +218,9 @@ public class ViewMenuBar {
                                                              new JMenuItem[] {
                                                                  menuBuilder.buildMenuItem("2D Histogram", "histTwoDim",
                                                                                            0, null, false),
+                                                                 menuBuilder.buildMenuItem("Cumulative Histogram",
+                                                                                           "cumHistogram", 0, null,
+                                                                                           false),
                                                                  menuBuilder.makeMenu("Histogram equalization", false,
                                                                                       new JMenuItem[] {
                                                                                           menuBuilder.buildMenuItem("Neighborhood adaptive",
@@ -236,6 +239,9 @@ public class ViewMenuBar {
                                                                  menuBuilder.buildMenuItem("Histogram summary",
                                                                                            "HistoSummary", 0, null,
                                                                                            false),
+                                                                                           
+                                                                                          
+                                                                 
                                                              }),
                                         menuBuilder.makeMenu("Insight toolkit (ITK)", false,
                                                              new JMenuItem[] {
