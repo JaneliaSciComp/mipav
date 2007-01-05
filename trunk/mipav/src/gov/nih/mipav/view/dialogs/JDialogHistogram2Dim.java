@@ -29,91 +29,97 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Number of bins for first image */
     private int bin1;
 
-    /** DOCUMENT ME! */
+    /** Default number of bins for first image. Default is 256. */
     private boolean bin1Default;
 
-    /** DOCUMENT ME! */
+    /** Label description for bin1 */
     private JLabel bin1Label;
 
-    /** DOCUMENT ME! */
+    /** Textfield for bin1 */
     private JTextField bin1Text;
 
-    /** DOCUMENT ME! */
+    /** Number of bins for second image */
     private int bin2;
 
-    /** DOCUMENT ME! */
+    /** Default number of bins for first image. Default is 256. */
     private boolean bin2Default;
 
-    /** DOCUMENT ME! */
+    /** Label description for bin1 */
     private JLabel bin2Label;
 
-    /** DOCUMENT ME! */
+    /** Textfield for bin2  */
     private JTextField bin2Text;
 
-    /** DOCUMENT ME! */
+    /** Checkbox to select blue image */
     private JCheckBox blueCheckBox;
 
-    /** DOCUMENT ME! */
+    /** Number of colors present */
     private int colorsPresent = 0;
 
-    /** DOCUMENT ME! */
+    /** If true, the range of second image is same as the range of the first image */
     private boolean doLinearRescale = true;
+    
+    /** If true, calculates the log of the result image for better visualization */
+    private boolean doLogResult = true;
 
-    /** DOCUMENT ME! */
+    /** First image (Source image) */
     private ModelImage firstImage;
 
-    /** DOCUMENT ME! */
+    /** Checkbox to select green image */
     private JCheckBox greenCheckBox;
 
-    /** DOCUMENT ME! */
+    /** Instance of AlgorithmHistogram2Dim */
     private AlgorithmHistogram2Dim histogram2DimAlgo = null;
 
-    /** DOCUMENT ME! */
+    /** Combobox to select the second image */
     private JComboBox imageComboBox;
 
-    /** DOCUMENT ME! */
+    /** Image label */
     private JLabel labelImage;
 
-    /** DOCUMENT ME! */
+    /** Checkbox to select linear rescaling of second image */
     private JCheckBox linearCheckbox;
+    
+    /** Checkbox to display the log of result image */
+    private JCheckBox resultCheckbox;
 
-    /** DOCUMENT ME! */
+    /** Max intensity values in Red, Green and Blue images respectively */
     private double maxR, maxG, maxB;
 
-    /** DOCUMENT ME! */
+    /** Min. intensity values in Red, Green and Blue images respectively */
     private double minR, minG, minB;
 
-    /** DOCUMENT ME! */
+    /** Possible intensity values for second image */
     private double possibleInt2Values;
 
-    /** DOCUMENT ME! */
+    /** Possible intensity values for first image */
     private double possibleIntValues;
 
-    /** DOCUMENT ME! */
+    /** Checkbox to select Red image */
     private JCheckBox redCheckBox;
 
-    /** DOCUMENT ME! */
-    private ModelImage resultImage = null; // result image
+    /** Image where the result is stored */
+    private ModelImage resultImage = null; 
 
-    /** DOCUMENT ME! */
+    /** Second image (Base image) */
     private ModelImage secondImage = null;
 
-    /** DOCUMENT ME! */
+    /** String titles for the new windows  */
     private String[] titles;
 
-    /** DOCUMENT ME! */
+    /** If true, blue image is selected as of the two images for calculating histogram */
     private boolean useBlue = false;
 
-    /** DOCUMENT ME! */
+    /** If true, green image is selected as of the two images for calculating histogram */
     private boolean useGreen = false;
 
-    /** DOCUMENT ME! */
+    /** If true, red image is selected as of the two images for calculating histogram */
     private boolean useRed = false;
 
-    /** DOCUMENT ME! */
+    /** Keeps record of the present structure of the application */
     private ViewUserInterface userInterface;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -426,6 +432,15 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
 
 
     /**
+     * Accessor that sets whether or not log of result image is displayed.
+     *
+     * @param  doLogResult If true, displays the log of result image for better visualization  
+     */
+    public void setDoLogResult(boolean doLogResult) {
+        this.doLogResult = doLogResult;
+    }
+    
+    /**
      * Accessor to set the secondImage.
      *
      * @param  secondImage  DOCUMENT ME!
@@ -471,14 +486,14 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
             int[] extents = new int[2];
             extents[0] = bin1;
             extents[1] = bin2;
-            resultImage = new ModelImage(ModelStorageBase.INTEGER, extents, name, firstImage.getUserInterface());
+            resultImage = new ModelImage(ModelStorageBase.DOUBLE, extents, name, firstImage.getUserInterface());
 
             // Make algorithm
             if (firstImage.isColorImage()) {
-                histogram2DimAlgo = new AlgorithmHistogram2Dim(resultImage, firstImage, doLinearRescale, bin1, bin2,
+                histogram2DimAlgo = new AlgorithmHistogram2Dim(resultImage, firstImage, doLinearRescale, doLogResult, bin1, bin2,
                                                                useRed, useGreen, useBlue);
             } else {
-                histogram2DimAlgo = new AlgorithmHistogram2Dim(resultImage, firstImage, secondImage, doLinearRescale,
+                histogram2DimAlgo = new AlgorithmHistogram2Dim(resultImage, firstImage, secondImage, doLinearRescale, doLogResult,
                                                                bin1, bin2);
             }
 
@@ -539,6 +554,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
         }
 
         setDoLinearRescale(scriptParameters.getParams().getBoolean("do_linear_rescale"));
+        setDoLogResult(scriptParameters.getParams().getBoolean("do_log_result"));
         setBin1(scriptParameters.getParams().getInt("bin_1"));
         setBin2(scriptParameters.getParams().getInt("bin_2"));
         setBin1Default(scriptParameters.getParams().getBoolean("do_use_bin_1_default"));
@@ -650,6 +666,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
             AlgorithmParameters.storeImageInRecorder(getResultImage());
 
             scriptParameters.getParams().put(ParameterFactory.newParameter("do_linear_rescale", doLinearRescale));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_log_result", doLogResult));
             scriptParameters.getParams().put(ParameterFactory.newParameter("bin_1", bin1));
             scriptParameters.getParams().put(ParameterFactory.newParameter("bin_2", bin2));
             scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_bin_1_default", bin1Default));
@@ -692,6 +709,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
             AlgorithmParameters.storeImageInRecorder(getResultImage());
 
             scriptParameters.getParams().put(ParameterFactory.newParameter("do_linear_rescale", doLinearRescale));
+            scriptParameters.getParams().put(ParameterFactory.newParameter("do_log_result", doLogResult));
             scriptParameters.getParams().put(ParameterFactory.newParameter("bin_1", bin1));
             scriptParameters.getParams().put(ParameterFactory.newParameter("bin_2", bin2));
             scriptParameters.getParams().put(ParameterFactory.newParameter("do_use_bin_1_default", bin1Default));
@@ -954,7 +972,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
 
         JPanel rescalePanel = new JPanel(new GridBagLayout());
         rescalePanel.setForeground(Color.black);
-        rescalePanel.setBorder(buildTitledBorder("Linear rescaling"));
+        rescalePanel.setBorder(buildTitledBorder("Options"));
 
         if (useBlue) {
             linearCheckbox = new JCheckBox("Linearly rescale blue");
@@ -980,7 +998,8 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
 
         linearCheckbox.addItemListener(this);
         rescalePanel.add(linearCheckbox, gbc);
-
+        
+        
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = 1;
@@ -1025,6 +1044,16 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
         bin2Text.setText(String.valueOf(bin2));
         bin2Text.setFont(serif12);
         rescalePanel.add(bin2Text, gbc);
+        
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        resultCheckbox = new JCheckBox("Calculate log of the result image");
+        resultCheckbox.setFont(serif12);
+        resultCheckbox.setForeground(Color.black);
+        resultCheckbox.setSelected(true);
+        resultCheckbox.setEnabled(true);
+        resultCheckbox.addItemListener(this);
+        rescalePanel.add(resultCheckbox, gbc);
 
         buildOKButton();
         buildCancelButton();
@@ -1038,7 +1067,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
         getContentPane().add(imagePanel, BorderLayout.NORTH);
         getContentPane().add(rescalePanel, BorderLayout.CENTER);
         getContentPane().add(buttonPanel, BorderLayout.SOUTH);
-
+        
         pack();
         setVisible(true);
     }
@@ -1052,6 +1081,7 @@ public class JDialogHistogram2Dim extends JDialogScriptableBase implements Algor
         String tmpStr;
 
         doLinearRescale = linearCheckbox.isSelected();
+        doLogResult = resultCheckbox.isSelected();
 
         if (firstImage.isColorImage()) {
             userInterface = firstImage.getUserInterface();
