@@ -4963,7 +4963,7 @@ public class VOI extends ModelSerialCloneable {
      * @param  XOR         indicates that nested VOI contours will be exclusive ORed with other contours of the VOI
      * @param  onlyActive  Only mask regions that are active (i.e. selected )
      */
-    private void createBinaryMask(int xDim, int yDim, int slice, BitSet mask, boolean XOR, boolean onlyActive) {
+    public void createBinaryMask(int xDim, int yDim, int slice, BitSet mask, boolean XOR, boolean onlyActive) {
 
         // System.err.println("doing create binary mask");
         int x = 0, y;
