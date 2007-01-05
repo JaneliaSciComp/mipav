@@ -129,9 +129,13 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
     
     private VOI contourVOI2;
     
+    private VOI contourVOI3 = null;
+    
     private VOI contourVOI3L;
     
     private VOI contourVOI3R;
+    
+    private VOI contourVOI4 = null;
     
     private VOI contourVOI4L;
     
@@ -603,7 +607,6 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         int numObjects;
         boolean entireImage = true;
         AlgorithmMorphology2D idObjectsAlgo2D;
-        int area[];
         short shortBuffer[];
         int maxObject;
         int maxArea;
@@ -661,7 +664,6 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         float xcen2;
         Polygon poly;
         int rep;
-        AlgorithmVOIProps algoVOIProps;
         float VOIMin;
         float VOIMax;
         float fillValue;
@@ -677,17 +679,18 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         AlgorithmMorphology3D dilationAlgo3D;
         AlgorithmMorphology25D dilationAlgo25D;
         float sphereDiameter;
-        short shortMask[];
         boolean keepObject[];
         AlgorithmMorphology3D closeAlgo3D;
         AlgorithmVOIExtraction algoVOIExtraction;
         Vector curves2[];
-        VOI contourVOI3;
         int nCurves;
         VOI VOI1;
-        VOI contourVOI4;
         Vector curves3[];
         float threshold[] = new float[2];
+        float imageMin = (float)srcImage.getMin();
+        int zc;
+        BitSet imageMask;
+       
         
         nf = NumberFormat.getNumberInstance();
         nf.setMinimumFractionDigits(3);
@@ -1128,6 +1131,30 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
         VOIEllipseL.createBinaryMask(maskL, xDim, yDim, xor, onlyActive);
         VOIEllipseR.createBinaryMask(maskR, xDim, yDim, xor, onlyActive);
         
+        for (z = 0; z < zDim; z++) {
+            try {
+                destImage.exportData(z*sliceSize, sliceSize, sliceBuffer);
+            }
+            catch (IOException error) {
+                MipavUtil.displayError("IOException on destImage.exportData");
+                setCompleted(false);
+                return;
+            }
+            for (i = 0; i < sliceSize; i++) {
+                if ((!maskL.get(i)) && (!maskR.get(i))) {
+                    sliceBuffer[i] = imageMin;
+                }
+            }
+            try {
+                destImage.importData(z*sliceSize, sliceBuffer, true);
+            }
+            catch(IOException error) {
+                MipavUtil.displayError("IOException on destImage.importData");
+                setCompleted(false);
+                return;
+            }
+        }
+        
         VOIs = srcImage.getVOIs();
         nVOIs = VOIs.size();
         
@@ -1145,45 +1172,60 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 break;
             }
         }
+        zc = z;
         
         
         // Find the x center of mass of each of the 2 drawn curves
-        xcen1 = ((VOIContour)(curves[z].elementAt(0))).getCenterOfMass().x;
-        xcen2 = ((VOIContour)(curves[z].elementAt(1))).getCenterOfMass().x;
+        xcen1 = ((VOIContour)(curves[zc].elementAt(0))).getCenterOfMass().x;
+        xcen2 = ((VOIContour)(curves[zc].elementAt(1))).getCenterOfMass().x;
         contourVOIL = new VOI((short)10, "contourL", zDim, VOI.CONTOUR, -1.0f);
         contourVOIR = new VOI((short)11, "contourR", zDim, VOI.CONTOUR, -1.0f);
         
         if (xcen1 < xcen2) {
-            poly = ((VOIContour)(curves[z].elementAt(0))).exportPolygon();
-            contourVOIL.importPolygon(poly, z);
-            poly = ((VOIContour)(curves[z].elementAt(1))).exportPolygon();
-            contourVOIR.importPolygon(poly, z);
+            poly = ((VOIContour)(curves[zc].elementAt(0))).exportPolygon();
+            contourVOIL.importPolygon(poly, zc);
+            poly = ((VOIContour)(curves[zc].elementAt(1))).exportPolygon();
+            contourVOIR.importPolygon(poly, zc);
         }
         else {
-            poly = ((VOIContour)(curves[z].elementAt(0))).exportPolygon();
-            contourVOIR.importPolygon(poly, z);
-            poly = ((VOIContour)(curves[z].elementAt(1))).exportPolygon();
-            contourVOIL.importPolygon(poly, z);    
+            poly = ((VOIContour)(curves[zc].elementAt(0))).exportPolygon();
+            contourVOIR.importPolygon(poly, zc);
+            poly = ((VOIContour)(curves[zc].elementAt(1))).exportPolygon();
+            contourVOIL.importPolygon(poly, zc);    
         }
         
         for (rep = 0; rep <= 1; rep++) {
-            (destImage.getVOIs()).removeAllElements();
             if (rep == 0) {
                 contourVOI = contourVOIL;
             }
             else {
                 contourVOI = contourVOIR;
             }
-            (destImage.getVOIs()).addVOI(contourVOI);
-            contourVOI.setActive(true);
-            algoVOIProps = new AlgorithmVOIProps(srcImage, AlgorithmVOIProps.PROCESS_PER_VOI, JDialogVOIStatistics.NO_RANGE);
-            algoVOIProps.run();
-            VOIMin = algoVOIProps.getMinIntensity();
+            try {
+                destImage.exportData(zc*sliceSize, sliceSize, sliceBuffer);
+            }
+            catch (IOException error) {
+                MipavUtil.displayError("IOException on destImage.exportData");
+                setCompleted(false);
+                return;
+            }
+            imageMask = new BitSet(totLength);
+            contourVOI.createBinaryMask(xDim, yDim, zc, imageMask, xor, onlyActive);
+            VOIMin = Float.MAX_VALUE;
+            VOIMax = -Float.MAX_VALUE;
+            for (i = 0; i < sliceSize; i++) {
+                if (imageMask.get(zc*sliceSize + i)) {
+                    if (sliceBuffer[i] < VOIMin) {
+                        VOIMin = sliceBuffer[i];
+                    }
+                    if (sliceBuffer[i] > VOIMax) {
+                        VOIMax = sliceBuffer[i];
+                    }
+                }
+            }
+            
             Preferences.debug("VOI minimum = " + VOIMin + "\n");
-            VOIMax = algoVOIProps.getMaxIntensity();
             Preferences.debug("VOI maximum = " + VOIMax + "\n");
-            algoVOIProps.finalize();
-            algoVOIProps = null;
             
             // Use the top 50% of the values between the VOIMin and VOIMax
             threshold[0] = VOIMin + 0.5f*(VOIMax - VOIMin);
@@ -1192,7 +1234,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             entireImage = true;
             fillValueOutsideThresholds = true;
             fireProgressStateChanged("Thresholding image ...");
-            fireProgressStateChanged(10);
+            fireProgressStateChanged(rep*50 + 5);
             threshImage = new ModelImage(ModelStorageBase.BOOLEAN, srcImage.getExtents(), srcImage.getImageName() + "_thresh",
                     srcImage.getUserInterface());
             extents2D = new int[2];
@@ -1208,16 +1250,23 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 fileInfo.setUnitsOfMeasure(srcImage.getFileInfo()[0].getUnitsOfMeasure());
                 threshImage.setFileInfo(fileInfo, i);
             } // for (i = 0; i < srcImage.getExtents()[2]; i++)
-            algoThreshDual = new AlgorithmThresholdDual(threshImage, srcImage, threshold, fillValue,
+            algoThreshDual = new AlgorithmThresholdDual(threshImage, destImage, threshold, fillValue,
                                                    AlgorithmThresholdDual.BINARY_TYPE, entireImage, fillValueOutsideThresholds);
             algoThreshDual.run();
             algoThreshDual.finalize();
             algoThreshDual = null;
             
-            // new ViewJFrameImage(threshImage);
+            /* new ViewJFrameImage(threshImage);
+            boolean test = true;
+            if (test) {
+                (destImage.getVOIs()).removeAllElements();
+                (destImage.getVOIs()).addVOI(contourVOI);
+                setCompleted(true);
+                return;
+            } */
             
             fireProgressStateChanged("Filling holes in image ...");
-            fireProgressStateChanged(20);
+            fireProgressStateChanged(rep*50 + 10);
             fillHolesAlgo25D = new AlgorithmMorphology25D(threshImage, 0, 0, AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0,
                     entireImage);
             fillHolesAlgo25D.run();
@@ -1227,7 +1276,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             // new ViewJFrameImage(threshImage);
             
             fireProgressStateChanged("Eroding image ...");
-            fireProgressStateChanged(25);
+            fireProgressStateChanged(rep*50 + 13);
             kernel = AlgorithmMorphology25D.CONNECTED4;
             method = AlgorithmMorphology25D.ERODE;
             itersDilation = 0;
@@ -1259,7 +1308,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             // new ViewJFrameImage(threshImage);
             
             fireProgressStateChanged("IDing objects ...");
-            fireProgressStateChanged(35);
+            fireProgressStateChanged(rep*50 + 18);
             kernel = AlgorithmMorphology3D.SIZED_SPHERE;
             sphereDiameter = 0.0f;
             method = AlgorithmMorphology3D.ID_OBJECTS;
@@ -1282,13 +1331,9 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             numObjects = (int) threshImage.getMax();
             // new ViewJFrameImage(threshImage);
             
-            shortMask = new short[totLength];
             shortBuffer = new short[totLength];
             keepObject = new boolean[numObjects];
-            for (i = 0; i < totLength; i++) {
-                shortMask[i] = -1;
-            }
-            shortMask = srcImage.generateVOIMask(shortMask, contourVOI.getID());
+            
             try {
                 threshImage.exportData(0, totLength, shortBuffer);
             }
@@ -1298,7 +1343,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 return;
             }
             for (i = 0; i < totLength; i++) {
-                if (shortMask[i] != -1) {
+                if (imageMask.get(i)) {
                     if (shortBuffer[i] != 0) {
                         keepObject[shortBuffer[i]-1] = true;
                     }
@@ -1324,7 +1369,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             // new ViewJFrameImage(threshImage);
             
             fireProgressStateChanged("Dilating image ...");
-            fireProgressStateChanged(45);
+            fireProgressStateChanged(rep*50 + 23);
             kernel = AlgorithmMorphology3D.CONNECTED6;
             method = AlgorithmMorphology3D.DILATE;
             itersDilation = 1;
@@ -1352,7 +1397,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             // new ViewJFrameImage(threshImage2);
             
             fireProgressStateChanged("Second hole fill ...");
-            fireProgressStateChanged(55);
+            fireProgressStateChanged(rep*50 + 28);
             fillHolesAlgo25D = new AlgorithmMorphology25D(threshImage, 0, 0, AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0,
                     entireImage);
             fillHolesAlgo25D.run();
@@ -1361,7 +1406,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             //new ViewJFrameImage(threshImage3);
             
             fireProgressStateChanged("Closing image ...");
-            fireProgressStateChanged(60);
+            fireProgressStateChanged(rep*50 + 30);
             kernel = AlgorithmMorphology3D.CONNECTED6;
             method = AlgorithmMorphology3D.CLOSE;
             itersDilation = 1;
@@ -1384,7 +1429,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             closeAlgo25D = null;*/
             
             fireProgressStateChanged("Third hole fill ...");
-            fireProgressStateChanged(70);
+            fireProgressStateChanged(rep*50 + 35);
             fillHolesAlgo25D = new AlgorithmMorphology25D(threshImage, 0, 0, AlgorithmMorphology25D.FILL_HOLES, 0, 0, 0, 0,
                     entireImage);
             fillHolesAlgo25D.run();
@@ -1392,7 +1437,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             fillHolesAlgo25D = null;
             
             fireProgressStateChanged("Extracting VOIs...");
-            fireProgressStateChanged(75);
+            fireProgressStateChanged(rep*50 + 38);
             algoVOIExtraction = new AlgorithmVOIExtraction(threshImage);
             //algoVOIExtraction.setColorTable(colorTable);
             //algoVOIExtraction.setNameTable(nameTable);
@@ -1408,7 +1453,7 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             sliceBuffer = new float[sliceSize];
             contourVOI3 = new VOI((short)3, "contourVOI3", zDim, VOI.CONTOUR, -1.0f);
             fireProgressStateChanged("Redoing some slices...");
-            fireProgressStateChanged(85);
+            fireProgressStateChanged(rep*50 + 43);
             lastFraction = new float[zDim];
             for (z = 0; z < zDim; z++) {
                 lastFraction[z] = 0.5f;
@@ -1429,10 +1474,10 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                 if (nCurves > 1) {
                     
                     try {
-                        srcImage.exportData(z*sliceSize, sliceSize, sliceBuffer);
+                        destImage.exportData(z*sliceSize, sliceSize, sliceBuffer);
                     }
                     catch (IOException error) {
-                        MipavUtil.displayError("IOException on srcImage.exportData");
+                        MipavUtil.displayError("IOException on destImage.exportData");
                         setCompleted(false);
                         return;
                     }
@@ -1446,7 +1491,8 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                     }
                     VOI1 = new VOI((short)1, "one.voi", 1, VOI.CONTOUR, -1.0f);
                     for (i = 0; i < nCurves; i++) {
-                        VOI1.importCurve((VOIContour)(curves2[z].elementAt(i)), 0);
+                        poly = ((VOIContour)(curves2[z].elementAt(i))).exportPolygon();
+                        VOI1.importPolygon(poly, 0);
                     } // for (i = 0; i < nCurves; i++)
                     (sliceImage.getVOIs()).addVOI(VOI1);
                     nextVOI = contourVOI3;
@@ -1456,7 +1502,13 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
             } // for (z = 0; z < zDim; z++)
             if (!areaCorrect) {
                 (destImage.getVOIs()).removeAllElements();
-                (destImage.getVOIs()).addVOI(contourVOI3);
+                if (rep == 0) {
+                    contourVOI3L = contourVOI3;
+                }
+                if (rep == 1) {
+                    (destImage.getVOIs()).addVOI(contourVOI3L);
+                    (destImage.getVOIs()).addVOI(contourVOI3);
+                }
             } // if (!areaCorrect)
             
             if (areaCorrect) {
@@ -1478,18 +1530,20 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                          }
                      } // for (z = 0; z < zDim; z++)
                      if (curves3[0].size() > 0) {
-                         nextVOI.importCurve((VOIContour)(curves3[0].elementAt(0)), 0);
+                         poly = ((VOIContour)(curves3[0].elementAt(0))).exportPolygon();
+                         contourVOI4.importPolygon(poly, 0);
                      }
                      if (curves3[zDim-1].size() > 0) {
-                         nextVOI.importCurve((VOIContour)(curves3[zDim-1].elementAt(0)), zDim-1);
+                         poly = ((VOIContour)(curves3[zDim-1].elementAt(0))).exportPolygon();
+                         contourVOI4.importPolygon(poly, zDim-1);
                      }
                      for (z = 1; z < zDim - 1; z++) {
                          if ((curves3[z].size() > 0) && (area[z] < 0.8*area[z-1]) && (area[z] < 0.8*area[z+1])) {
                              try {
-                                 srcImage.exportData(z*sliceSize, sliceSize, sliceBuffer);
+                                 destImage.exportData(z*sliceSize, sliceSize, sliceBuffer);
                              }
                              catch (IOException error) {
-                                 MipavUtil.displayError("IOException on srcImage.exportData");
+                                 MipavUtil.displayError("IOException on destImage.exportData");
                                  setCompleted(false);
                                  return;
                              }
@@ -1502,28 +1556,37 @@ public class PlugInAlgorithmKidneySegmentation extends AlgorithmBase {
                                  return;    
                              }
                              VOI1 = new VOI((short)1, "one.voi", 1, VOI.CONTOUR, -1.0f);
-                             VOI1.importCurve((VOIContour)(curves3[z].elementAt(0)), 0);
+                             poly = ((VOIContour)(curves3[z].elementAt(0))).exportPolygon();
+                             VOI1.importPolygon(poly, 0);
                              (sliceImage.getVOIs()).addVOI(VOI1);
                              sliceFix(true);
                              if (!finished) {
-                                 nextVOI.importCurve((VOIContour)(curves3[z].elementAt(0)), z); 
+                                 poly = ((VOIContour)(curves3[z].elementAt(0))).exportPolygon(); 
+                                 contourVOI4.importPolygon(poly, z);
                              }
                              (sliceImage.getVOIs()).removeAllElements();   
                          } // if ((curves3.size() > 0) && (area[z] < 0.8*area[z-1]) && (area[z] < 0.8*area[z+1]))
                          else {
                              if (curves3[z].size() > 0) {
-                                 nextVOI.importCurve((VOIContour)(curves3[z].elementAt(0)), z); 
+                                 poly = ((VOIContour)(curves3[z].elementAt(0))).exportPolygon(); 
+                                 contourVOI4.importPolygon(poly, z);
                              }
                          } // else
                      } // for (z = 1; z < zDim - 1; z++)
                  (destImage.getVOIs()).removeAllElements();
-                 (destImage.getVOIs()).addVOI(contourVOI4L);
-                 (destImage.getVOIs()).addVOI(contourVOI4R);
+                 if (rep == 0) {
+                     contourVOI4L = contourVOI4;
+                 }
+                 if (rep == 1) {
+                     (destImage.getVOIs()).addVOI(contourVOI4L);
+                     (destImage.getVOIs()).addVOI(contourVOI4);    
+                 }    
             } // if (areaCorrect)
             
             threshImage.disposeLocal();
             threshImage = null;
         } // for (rep = 0; rep <= 1; rep++)
+        
         setCompleted(true);
     }
     
