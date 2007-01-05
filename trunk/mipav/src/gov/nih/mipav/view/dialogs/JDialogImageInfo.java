@@ -918,7 +918,7 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
         endianess = image.getFileInfo(0).getEndianess();
 
-        if (endianess == true) {
+        if (endianess == FileBase.LITTLE_ENDIAN) {
             littleEnd.setSelected(true);
             bigEnd.setSelected(false);
         } else {
