@@ -44,6 +44,9 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
 
     /** Boolean value. If true baseImage (Image2) is rescaled to the range of source image (Image1) */
     private boolean doLinearRescale;
+    
+    /** Boolean value. If true, the log of the result image is displayed for better visualization  */
+    private boolean doLogResult;
 
     /** For color images only. If true blue image is used as one of the images to create a 2D Histogram */
     private boolean useBlue = false;
@@ -64,15 +67,17 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
      * @param  srcImg           image for x axis of histogram
      * @param  baseImage        image for y axis of histogram
      * @param  doLinearRescale  If true rescales the Image2 data to the range of Image1 data
+     * @param  doLogResult  	If true, displays the log of the result image for better visualization 
      * @param  bin1             Number of bins on x-axis (Image1)
      * @param  bin2             Number of bins in y-axis (Image2)
      */
-    public AlgorithmHistogram2Dim(ModelImage destImg, ModelImage srcImg, ModelImage baseImage, boolean doLinearRescale,
+    public AlgorithmHistogram2Dim(ModelImage destImg, ModelImage srcImg, ModelImage baseImage, boolean doLinearRescale, boolean doLogResult,
                                   int bin1, int bin2) {
 
         super(destImg, srcImg);
         this.baseImage = baseImage;
         this.doLinearRescale = doLinearRescale;
+        this.doLogResult = doLogResult;
         this.bin1 = bin1;
         this.bin2 = bin2;
     }
@@ -84,17 +89,19 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
      * @param  destImg          image model where result image is to stored
      * @param  srcImg           source image model
      * @param  doLinearRescale  If true rescales the Image2 data to the range of Image1 data
+     * @param  doLogResult  	If true, displays the log of the result image for better visualization
      * @param  bin1             Number of bins on x-axis (Image1)
      * @param  bin2             Number of bins in y-axis (Image2)
      * @param  useRed           For color images only. If true red image is used as one of the images to create a 2D Histogram
      * @param  useGreen         For color images only. If true green image is used as one of the images to create a 2D Histogram
      * @param  useBlue          For color images only. If true blue image is used as one of the images to create a 2D Histogram
      */
-    public AlgorithmHistogram2Dim(ModelImage destImg, ModelImage srcImg, boolean doLinearRescale, int bin1, int bin2,
+    public AlgorithmHistogram2Dim(ModelImage destImg, ModelImage srcImg, boolean doLinearRescale, boolean doLogResult, int bin1, int bin2,
                                   boolean useRed, boolean useGreen, boolean useBlue) {
 
         super(destImg, srcImg);
         this.doLinearRescale = doLinearRescale;
+        this.doLogResult = doLogResult;
         this.bin1 = bin1;
         this.bin2 = bin2;
         this.useRed = useRed;
@@ -144,7 +151,7 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
 
         float[] buffer;
         float[] baseBuffer;
-        int[] histBuffer;
+        double[] histBuffer;
         double min1, min2, max1, max2, range1, range2, scale1, scale2;
         double a, b;
         int ch1, ch2;
@@ -159,7 +166,7 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
         try {
             buffer = new float[length];
             baseBuffer = new float[length];
-            histBuffer = new int[bin1 * bin2];
+            histBuffer = new double[bin1 * bin2];
         } catch (OutOfMemoryError oome) {
             buffer = null;
             baseBuffer = null;
@@ -279,8 +286,19 @@ public class AlgorithmHistogram2Dim extends AlgorithmBase {
 
                 return;
             }
-
-            destImage.importData(0, histBuffer, true);
+            
+            if (doLogResult) {
+            	
+            	for (i = 0; i < histBuffer.length; i++) {
+            		histBuffer[i] = histBuffer[i] + 1;
+            		histBuffer[i] = Math.log(histBuffer[i]);
+            	}
+            	destImage.importData(0, histBuffer, true);
+            	
+            }
+            else {
+            	destImage.importData(0, histBuffer, true);
+            }
 
         } catch (IOException error) {
             displayError("Algorithm Histogram2Dim reports: image locked");
