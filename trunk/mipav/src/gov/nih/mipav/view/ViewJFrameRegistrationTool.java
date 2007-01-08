@@ -435,6 +435,10 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private float zoom = 1; // zoom factor
+    
+    private JPanel innerPanel;
+    private JPanel innerPanelA;
+    private JPanel innerPanelB;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1180,16 +1184,27 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     public synchronized void componentResized(ComponentEvent event) {
         int width, height;
         int minimumHeight = 100;
+        
+        width = (int) Math.round(Math.max(getSize().width - (2 * getInsets().left) - 3, minimumToolBarWidth));
+        height = (int) Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom - 3,
+                                           minimumHeight));
 
         if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
+            return;
+        }
+        
+       /*
+        * The if statement below was needed becasue in Linux, multiple events were causing window resizing
+        * 
+        */
+        if ((innerPanel.getWidth() <= componentImage.getSize(null).width) || (innerPanel.getHeight() <= componentImage.getSize(null).height)) { 
+        	removeComponentListener(this);
             return;
         }
 
         removeComponentListener(this);
 
-        width = (int) Math.round(Math.max(getSize().width - (2 * getInsets().left) - 3, minimumToolBarWidth));
-        height = (int) Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom - 3,
-                                           minimumHeight));
+        
 
         scrollPane.setSize(width, height);
 
@@ -2301,9 +2316,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
      */
     private void buildScrollPanes(ViewUserInterface ui) {
 
-        JPanel innerPanel = null;
-        JPanel innerPanelA = null;
-        JPanel innerPanelB = null;
+        
 
         try {
 
