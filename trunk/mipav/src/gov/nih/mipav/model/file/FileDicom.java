@@ -514,6 +514,7 @@ public class FileDicom extends FileDicomBase {
             // *******  Gets  the next element
             getNextElement(endianess); // gets group, element, length
             name = convertGroupElement(groupWord, elementWord);
+            
             // if (debug) {    Preferences.debug("group = " + groupWord + " element = " + elementWord + " length = " +
             // elementLength + "\n"); }
 
@@ -711,6 +712,7 @@ public class FileDicom extends FileDicomBase {
                 // 1.2.840.10008.1.2.2      Explicit VR Big Endian
                 // 1.2.840.10008.1.2.4.50   8-bit Lossy JPEG (JPEG Coding Process 1)
                 // 1.2.840.10008.1.2.4.51   12-bit Lossy JPEG (JPEG Coding Process 4)
+                // 1.2.840.10008.1.2.4.57   Lossless JPEG Non-hierarchical (JPEG Coding Process 14)
                 // we should bounce out if we don't support this transfer syntax
                 if (strValue.trim().equals("1.2.840.10008.1.2")) {
 
@@ -2138,10 +2140,10 @@ public class FileDicom extends FileDicomBase {
 
         initializeFullRead();
         seek(fileInfo.getOffset());
-
+        
         boolean endianess = fileInfo.getEndianess();
         getNextElement(endianess); // gets group, element, length
-
+        
         String name = convertGroupElement(groupWord, elementWord);
 
         if (!name.equals("7FE0,0010")) {
