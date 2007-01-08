@@ -1197,7 +1197,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         * The if statement below was needed becasue in Linux, multiple events were causing window resizing
         * 
         */
-        if ((innerPanel.getWidth() <= componentImage.getSize(null).width) || (innerPanel.getHeight() <= componentImage.getSize(null).height)) { 
+        if ((innerPanel.getWidth() <= componentImage.getWidth()) || (innerPanel.getHeight() <= componentImage.getHeight())) { 
         	removeComponentListener(this);
             return;
         }
