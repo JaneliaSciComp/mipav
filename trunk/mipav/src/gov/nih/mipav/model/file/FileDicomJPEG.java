@@ -437,7 +437,7 @@ public class FileDicomJPEG {
         numCOL = imagewidth = imageWidth;
         numROW = imageHeight;
         psv = Ss;
-
+        
         short[][] curRowBuf = new short[numCOL][4];
         short[][] prevRowBuf = new short[numCOL][4];
         int[] buffer;
@@ -1148,7 +1148,6 @@ public class FileDicomJPEG {
             // numbits is 0 when the size of the code is greater than 8.
             // that happens 3-4% of the time.
             if (numbits[tableNum][code] != 0) {
-
                 // numbits is the number of bits this code is actually supposed to take up
                 // so reset bitCount back down.
                 bitCount = bitCount - 8 + numbits[tableNum][code];
@@ -1175,7 +1174,7 @@ public class FileDicomJPEG {
                 int k = 8;
 
                 while (code > maxcode[tableNum][k]) {
-
+                
                     if (bitCount == 8) {
                         previous = current;
                         current = getNext();
@@ -1230,8 +1229,15 @@ public class FileDicomJPEG {
                 }
 
                 // if d is really a negative number, make it so
-                if (d < extendTest[s]) {
-                    d += extendOffset[s];
+                if(s < extendTest.length) {
+                    if (d < extendTest[s]) {
+                        d += extendOffset[s];
+                    }
+                }
+                else {
+                    if (d < extendTest[s-1]) {
+                        d = extendOffset[s-1];
+                    }
                 }
             }
             // 0s are quite common.  often s = 0, which means add nothing to predictor.
