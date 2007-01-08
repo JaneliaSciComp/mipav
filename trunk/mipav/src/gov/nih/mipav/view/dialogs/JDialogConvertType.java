@@ -272,6 +272,11 @@ public class JDialogConvertType extends JDialogScriptableBase
 
             if ((changeTypeAlgo.isCompleted() == true) && (resultImage != null)) {
                 updateFileInfo(image, resultImage);
+                
+                for (int n = 0; n < resultImage.getExtents()[2]; n++) {
+                    resultImage.getFileInfo(n).setEndianess(endianess);
+            	}
+
 
                 // The algorithm has completed and produced a new image to be displayed.
                 try {
@@ -726,6 +731,9 @@ public class JDialogConvertType extends JDialogScriptableBase
                     // Make result image of the new data type
                     resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_changed"),
                                                  userInterface);
+                    
+                    resultImage.getFileInfo(0).setEndianess(endianess);
+                	
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
@@ -764,7 +772,8 @@ public class JDialogConvertType extends JDialogScriptableBase
             } else {
 
                 try {
-
+                	
+                	image.getFileInfo(1).setEndianess(endianess);
                     // No need to make new image space because the user has choosen to replace the source image
                     // Make the algorithm class
                     changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
@@ -818,10 +827,12 @@ public class JDialogConvertType extends JDialogScriptableBase
                 destExtents[0] = image.getExtents()[0];
                 destExtents[1] = image.getExtents()[1];
                 destExtents[2] = image.getExtents()[2];
-
-                for (int n = 0; n < image.getExtents()[2]; n++) {
-                    image.getFileInfo(n).setEndianess(endianess);
-                }
+                
+                //for (int n = 0; n < image.getExtents()[2]; n++) {
+                //        image.getFileInfo(n).setEndianess(endianess);
+                //	}
+                
+                
             } else {
                 destExtents = new int[4];
                 destExtents[0] = image.getExtents()[0];
@@ -829,9 +840,9 @@ public class JDialogConvertType extends JDialogScriptableBase
                 destExtents[2] = image.getExtents()[2];
                 destExtents[3] = image.getExtents()[3];
 
-                for (int n = 0; n < (image.getExtents()[2] * image.getExtents()[3]); n++) {
-                    image.getFileInfo(n).setEndianess(endianess);
-                }
+                //for (int n = 0; n < (image.getExtents()[2] * image.getExtents()[3]); n++) {
+                  //      image.getFileInfo(n).setEndianess(endianess);
+                    //}
             }
 
             if (displayLoc == NEW) {
@@ -841,6 +852,10 @@ public class JDialogConvertType extends JDialogScriptableBase
                     // Make result image of the new data type
                     resultImage = new ModelImage(dataType, destExtents, makeImageName(image.getImageName(), "_changed"),
                                                  userInterface);
+                    
+                    for (int n = 0; n < resultImage.getExtents()[2]; n++) {
+                        resultImage.getFileInfo(n).setEndianess(endianess);
+                	}
 
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(resultImage, image, inTempMin, inTempMax, outTempMin,
@@ -879,7 +894,11 @@ public class JDialogConvertType extends JDialogScriptableBase
             } else {
 
                 try {
-
+                	
+                	for (int n = 0; n < image.getExtents()[2]; n++) {
+                        image.getFileInfo(n).setEndianess(endianess);
+                	}
+                	
                     // Make algorithm
                     changeTypeAlgo = new AlgorithmChangeType(image, dataType, inTempMin, inTempMax, outTempMin,
                                                              outTempMax, processIndep);
