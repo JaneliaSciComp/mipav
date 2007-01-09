@@ -1182,43 +1182,11 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
      * @param  event  event that triggered function
      */
     public synchronized void componentResized(ComponentEvent event) {
-        int width, height;
-        int minimumHeight = 100;
-        
-        width = (int) Math.round(Math.max(getSize().width - (2 * getInsets().left) - 3, minimumToolBarWidth));
-        height = (int) Math.round(Math.max(getSize().height - getInsets().top - componentY - getInsets().bottom - 3,
-                                           minimumHeight));
-
         if ((getSize().width >= (xScreen - 20)) || (getSize().height >= (yScreen - 20))) {
             return;
         }
-        
-       /*
-        * The if statement below was needed becasue in Linux, multiple events were causing window resizing
-        * 
-        */
-        if ((innerPanel.getWidth() <= componentImage.getWidth()) || (innerPanel.getHeight() <= componentImage.getHeight())) { 
-        	removeComponentListener(this);
-            return;
-        }
-
-        removeComponentListener(this);
-
-        
-
-        scrollPane.setSize(width, height);
-
-        scrollPaneSeparateA.setSize(width / 2, height);
-        scrollPaneSeparateB.setSize(width / 2, height);
-
-        setSize(Math.max(scrollPane.getSize().width + getInsets().left + getInsets().right,
-                         minimumToolBarWidth + getInsets().left + getInsets().right),
-                Math.max(getInsets().top + componentY + scrollPane.getSize().height + getInsets().bottom,
-                         minimumHeight));
-
         validate();
         setTitle();
-        addComponentListener(this);
         updateImages(true);
     }
 
