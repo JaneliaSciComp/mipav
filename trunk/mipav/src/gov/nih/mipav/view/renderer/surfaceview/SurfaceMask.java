@@ -231,12 +231,9 @@ public class SurfaceMask
                 Color4f kTriColor = null;
                 if ( bCreateVertexColors )
                 {
-                    if ( !imageA.isColorImage() )
-                    {
-                        kTriColors[aiConnect[3 * iT]] = getModelImageColor( imageA, 1 - fOpacity, kV0 );
-                        kTriColors[aiConnect[ (3 * iT) + 1]] = getModelImageColor( imageA, 1 - fOpacity, kV1 );
-                        kTriColors[aiConnect[ (3 * iT) + 2]] = getModelImageColor( imageA, 1 - fOpacity, kV2 );
-                    }
+                    kTriColors[aiConnect[3 * iT]] = getModelImageColor( imageA, 1 - fOpacity, kV0 );
+                    kTriColors[aiConnect[ (3 * iT) + 1]] = getModelImageColor( imageA, 1 - fOpacity, kV1 );
+                    kTriColors[aiConnect[ (3 * iT) + 2]] = getModelImageColor( imageA, 1 - fOpacity, kV2 );
 
                     if ( bUseImageMask && (kImageMask != null) && (kImageMaskColor != null) )
                     {
@@ -486,9 +483,50 @@ public class SurfaceMask
             float value = imageA.getFloat( (int)kModelPoint.x, (int)kModelPoint.y, (int)kModelPoint.z ) / 255.0f;
             kColor = new Color4f( value, value, value, fTransparency );
         }
+        else
+        {
+            int[] iterFactors = imageA.getVolumeIterationFactors( );
+            int index  =  (int)((iterFactors[0] * kModelPoint.x) +
+                                (iterFactors[1] * kModelPoint.y) +
+                                (iterFactors[2] * kModelPoint.z)   ) * 4;
+
+            kColor.w = imageA.getFloat( index + 0 ) / 255.0f;
+            kColor.x = imageA.getFloat( index + 1 ) / 255.0f;
+            kColor.y = imageA.getFloat( index + 2 ) / 255.0f;
+            kColor.z = imageA.getFloat( index + 3 ) / 255.0f;
+        }
         return kColor;
     }
 
+    /**
+     * Given a triangle vertex point from a ModelTriangleMesh, determines the
+     * corresponding ModelImage index point, and recreates the color that
+     * would have originally been assigned to the vertex.
+     * @param kTrianglePoint ModelTriangleMesh point in ModelImage coordinates
+     * @return original color of the triangle point.
+     */
+    public Color4f getModelImageColorNonScaled( ModelImage imageA, float fTransparency, Point3f kModelPoint )
+    {
+        Color4f kColor = new Color4f();
+        if ( !imageA.isColorImage() )
+        {
+            float value = imageA.getFloat( (int)kModelPoint.x, (int)kModelPoint.y, (int)kModelPoint.z );
+            kColor = new Color4f( value, value, value, fTransparency );
+        }
+        else
+        {
+            int[] iterFactors = imageA.getVolumeIterationFactors( );
+            int index  =  (int)((iterFactors[0] * kModelPoint.x) +
+                                (iterFactors[1] * kModelPoint.y) +
+                                (iterFactors[2] * kModelPoint.z)   ) * 4;
+
+            kColor.w = imageA.getFloat( index + 0 );
+            kColor.x = imageA.getFloat( index + 1 );
+            kColor.y = imageA.getFloat( index + 2 );
+            kColor.z = imageA.getFloat( index + 3 );
+        }
+        return kColor;
+    }
 
     /**
      * Get the current added surface bit mask.

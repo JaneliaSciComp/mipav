@@ -535,8 +535,11 @@ public class JPanelSurface extends JPanelRendererBase
         } else if (command.equals("Stereo")) {
             displayStereo( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("ImageAsTexture")) {
-            displayImageAsTexture( getSelectedSurfaces( surfaceList.getSelectedIndices() ),
-                                   ((SurfaceRender)parentScene).getSurfaceTexture().getEnabled() );
+            if ( ((SurfaceRender)parentScene).getSurfaceTexture() != null )
+            {
+                displayImageAsTexture( getSelectedSurfaces( surfaceList.getSelectedIndices() ),
+                                       ((SurfaceRender)parentScene).getSurfaceTexture().getEnabled() );
+            }
         } else if (command.equals("AdvancedMaterialOptions")) {
             displayAdvancedMaterialOptions( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("TexturePaint")) {
@@ -2629,20 +2632,6 @@ public class JPanelSurface extends JPanelRendererBase
         mTexture.setCapability(Texture3D.ALLOW_ENABLE_WRITE);
     }
 
-    /**
-     * Called from SurfacePaint. Used to interactively paint the ModelImage
-     * texture.  Not currently used because the J3D setSubImage function does
-     * not work for ImageComponent3D objects.
-     * @param modelPoint, the ModelImage point to be painted.
-     */
-    public void updateVolumeTexture( Point3f modelPoint )
-    {
-        JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
-        surfaceTexturePanel.updateSurfaceTextureImage( modelPoint );
-        ((SurfaceRender)parentScene).getSurfaceTexture().setEnabled( true );
-        displayImageAsTexture( getSelectedSurfaces( surfaceList.getSelectedIndices() ),
-                               ((SurfaceRender)parentScene).getSurfaceTexture().getEnabled() );
-    }
 
     /**
      * Called from SurfacePaint. Used to paint the ModelImage texture with the
