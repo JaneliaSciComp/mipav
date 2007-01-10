@@ -195,6 +195,8 @@ public class SurfacePaint
         mOpacityPaintButton.setActionCommand("OpacityPaint");
         mOpacityPaintButton.setEnabled(false );
         mPaintToolBar.add( mOpacityPaintButton);
+
+        mColorChooser = new JColorChooser(mColorPaintButton.getBackground());
     }
 
     /** Enables/disables the user-interface
@@ -219,6 +221,18 @@ public class SurfacePaint
     public void enableSurfacePaintCan( boolean flag )
     {
         mPaintCanButton.setEnabled( flag );
+    }
+
+    /** Enables/disables the Surface per-vertex paint user-interface
+     * @param flag, when true per-vertex paint is enabled, when false the per-vertex paint is disabled
+     * is disabled.
+     */
+    public void enableSurfacePaint( boolean flag )
+    {
+        mPaintBrushButton.setEnabled( flag );
+        mDropperButton.setEnabled( flag );
+        mEraserButton.setEnabled( flag );
+        mBrushSizeText.setEnabled( flag );
     }
 
     /**
@@ -247,6 +261,8 @@ public class SurfacePaint
         String command = event.getActionCommand();
         if ( command.equals( "PaintBrush" ) )
         {
+            mPaintColor.set( mColorChooser.getColor() );
+            mPaintColor.w = mOpacity;
             setPaintMode( SurfacePaint.VERTEX );
         }
         else if ( command.equals( "PaintCan" ) )
@@ -264,15 +280,13 @@ public class SurfacePaint
         }
         else if ( command.equals( "ColorPaint" ) )
         {
-            mColorChooser = new JColorChooser(mColorPaintButton.getBackground());
-
             JDialog kDialog = JColorChooser.createDialog(new Frame(), "Set Paint Color", true, mColorChooser,
                                                          this, this);
             kDialog.setVisible(true);
         }
         else if ( command.equals( "OpacityPaint" ) )
         {
-            new JDialogOpacityControls( null, this, mOpacity);
+            new JDialogOpacityControls( null, this, mOpacity );
         }
         else if ( command.equals( "BrushSizeChanged" ) ) 
         {
@@ -403,21 +417,7 @@ public class SurfacePaint
                 {
                     /* Get the coordinates of the picked point on the mesh. */
                     ModelTriangleMesh kMesh = (ModelTriangleMesh) kPickResult.getGeometryArray();
-                    /* Erase */
-                    if ( mEraserButton.isSelected() )
-                    {
-                        Shape3D kShape = (Shape3D) kPickResult.getNode( PickResult.SHAPE3D );
-                        if ( kShape != null )
-                        {
-                            Color3f kColor = new Color3f();
-                            kShape.getAppearance().getMaterial().getDiffuseColor( kColor );
-                            mPaintColor.set( kColor.get() );
-                            mPaintColor.w = 1 - kShape.getAppearance().getTransparencyAttributes().getTransparency();
-                        }
-                    }
-                    
                     int[] indices = kPick.getPrimitiveCoordinateIndices();
-                    
                     Point3f vert0 = new Point3f();
                     kMesh.getCoordinate( indices[0], vert0 );
                     Point3f vert1 = new Point3f();
@@ -429,16 +429,42 @@ public class SurfacePaint
                     float dist1 = kPickPoint.distance( vert1 );
                     float dist2 = kPickPoint.distance( vert2 );
                     int closest = indices[0];
+                    Point3f kClosestPoint = vert0;
                     if ( dist1 < dist0 )
                     {
                         closest = indices[1];
                         dist0 = dist1;
+                        kClosestPoint = vert1;
                     }
                     if ( dist2 < dist0 )
                     {
                         closest = indices[2];
                         dist0 = dist2;
+                        kClosestPoint = vert2;
                     }
+
+                    /* Erase */
+                    if ( mEraserButton.isSelected() )
+                    {
+                        Shape3D kShape = (Shape3D) kPickResult.getNode( PickResult.SHAPE3D );
+                        float fOpacity = 1;
+                        if ( kShape != null )
+                        {
+                            fOpacity = 1 - kShape.getAppearance().getTransparencyAttributes().getTransparency();
+                        }
+                        if ( m_kPanel.getTextureStatus() != JPanelSurfaceTexture.NONE )
+                        {
+                            mPaintColor =
+                                m_kPanel.getSurfaceMask().getModelImageColor( m_kPanel.getTextureImage(), fOpacity,
+                                                                              m_kPanel.getSurfaceMask().getModelImagePoint( kClosestPoint ) );
+                        }
+                        else if ( kShape != null )
+                        {
+                            Color3f kColor = new Color3f();
+                            kShape.getAppearance().getMaterial().getDiffuseColor( kColor );
+                            mPaintColor.set( kColor.get() );
+                        }
+                    }         
                     /* Dropper */
                     if ( mDropperButton.isSelected() )
                     {
@@ -448,31 +474,7 @@ public class SurfacePaint
                     }
                     else if ( mPaintCanButton.isSelected() && (mPaintGrowDialog != null) )
                     {
-                        /* Get the coordinates of the picked point on the mesh. */
-                        Point3f volumePoint = m_kPanel.getSurfaceMask().getModelImagePoint( kPickPoint );
-                        Point3i modelPoint = new Point3i( (int)volumePoint.x, (int)volumePoint.y, (int)volumePoint.z );
-                        ModelImage kImage = m_kPanel.getTextureImage();
-                        if ( kImage.isColorImage() )
-                        {
-                            float alpha = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 0 );
-                            float red = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 1 );
-                            float green = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 2 );
-                            float blue = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 3 );
-                            mPaintGrowDialog.setPositionText("  X: " + String.valueOf(modelPoint.x) +
-                                                             " Y: " + String.valueOf(modelPoint.y) +
-                                                             " Z: " + String.valueOf(modelPoint.z) + "  Color:  " +
-                                                             red + " " + green + " " + blue + " " + alpha);
-                        }
-                        else
-                        {
-                            float val = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z );
-                            mPaintGrowDialog.setPositionText("  X: " + String.valueOf(modelPoint.x) +
-                                                             " Y: " + String.valueOf(modelPoint.y) +
-                                                             " Z: " + String.valueOf(modelPoint.z) + "  Intensity:  " +
-                                                             val );
-                        }
-                        
-                        
+                        getModelColor( kPickPoint, mPaintGrowDialog );
                     }
                     else
                     {                            
@@ -656,7 +658,41 @@ public class SurfacePaint
     {
         mOpacity = opacity;
         mPaintColor.w = mOpacity;
-        System.err.println( "SurfacePaint " + mOpacity );
+    }
+
+    private Color4f getModelColor( Point3f kPickPoint, JDialogPaintGrow kDialog  )
+    {
+        /* Get the coordinates of the picked point on the mesh. */
+        Point3f volumePoint = m_kPanel.getSurfaceMask().getModelImagePoint( kPickPoint );
+        Point3i modelPoint = new Point3i( (int)volumePoint.x, (int)volumePoint.y, (int)volumePoint.z );
+        ModelImage kImage = m_kPanel.getTextureImage();
+        if ( kImage.isColorImage() )
+        {
+            float alpha = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 0 );
+            float red = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 1 );
+            float green = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 2 );
+            float blue = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 3 );
+            if ( kDialog != null )
+            {
+                kDialog.setPositionText("  X: " + String.valueOf(modelPoint.x) +
+                                                 " Y: " + String.valueOf(modelPoint.y) +
+                                                 " Z: " + String.valueOf(modelPoint.z) + "  Color:  " +
+                                                 red + " " + green + " " + blue + " " + alpha);
+            }
+            return new Color4f( red/255.0f, green/255.0f, blue/255.0f, alpha/255.0f );
+        }
+        else
+        {
+            float val = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z );
+            if ( kDialog != null )
+            {
+                kDialog.setPositionText("  X: " + String.valueOf(modelPoint.x) +
+                                                 " Y: " + String.valueOf(modelPoint.y) +
+                                                 " Z: " + String.valueOf(modelPoint.z) + "  Intensity:  " +
+                                                 val );
+            }
+            return new Color4f( val/255.0f, val/255.0f, val/255.0f, mOpacity );
+        }
     }
 
 

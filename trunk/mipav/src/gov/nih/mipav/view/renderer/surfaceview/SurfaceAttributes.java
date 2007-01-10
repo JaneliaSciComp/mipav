@@ -342,7 +342,6 @@ public class SurfaceAttributes {
         }
         mMaterial.setAmbientColor( mColor.x, mColor.y, mColor.z);
         mMaterial.setDiffuseColor( mColor.x, mColor.y, mColor.z, mColor.w);
-        System.err.println( "setColor " + mColor + " " + mOpacity );
 
         for ( int i = 0; i < mTriangleMesh.length; i++ )
         {
