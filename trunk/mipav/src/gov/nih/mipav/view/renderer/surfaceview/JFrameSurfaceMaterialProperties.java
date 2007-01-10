@@ -10,8 +10,6 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.media.j3d.*;
-import javax.media.j3d.*;
-
 import javax.swing.*;
 import javax.swing.event.*;
 
@@ -166,28 +164,28 @@ public class JFrameSurfaceMaterialProperties extends JFrame
         if (kCommand.equals("Ambient")) {
             m_kColorChooser = new JColorChooser(m_kAmbientColorButton.getBackground());
 
-            JDialog kDialog = m_kColorChooser.createDialog(new Frame(), "Set Ambient Color", true, m_kColorChooser,
+            JDialog kDialog = JColorChooser.createDialog(new Frame(), "Set Ambient Color", true, m_kColorChooser,
                                                            this, this);
             m_iWhichButton = Material.AMBIENT;
             kDialog.setVisible(true);
         } else if (kCommand.equals("Diffuse")) {
             m_kColorChooser = new JColorChooser(m_kDiffuseColorButton.getBackground());
 
-            JDialog kDialog = m_kColorChooser.createDialog(new Frame(), "Set Diffuse color", true, m_kColorChooser,
+            JDialog kDialog = JColorChooser.createDialog(new Frame(), "Set Diffuse color", true, m_kColorChooser,
                                                            this, this);
             m_iWhichButton = Material.DIFFUSE;
             kDialog.setVisible(true);
         } else if (kCommand.equals("Specular")) {
             m_kColorChooser = new JColorChooser(m_kSpecularColorButton.getBackground());
 
-            JDialog kDialog = m_kColorChooser.createDialog(new Frame(), "Set Specular color", true, m_kColorChooser,
+            JDialog kDialog = JColorChooser.createDialog(new Frame(), "Set Specular color", true, m_kColorChooser,
                                                            this, this);
             m_iWhichButton = Material.SPECULAR;
             kDialog.setVisible(true);
         } else if (kCommand.equals("Emissive")) {
             m_kColorChooser = new JColorChooser(m_kEmissiveColorButton.getBackground());
 
-            JDialog kDialog = m_kColorChooser.createDialog(new Frame(), "Set Emissive color", true, m_kColorChooser,
+            JDialog kDialog = JColorChooser.createDialog(new Frame(), "Set Emissive color", true, m_kColorChooser,
                                                            this, this);
             m_iWhichButton = Material.EMISSIVE;
             kDialog.setVisible(true);
@@ -449,7 +447,7 @@ public class JFrameSurfaceMaterialProperties extends JFrame
 
         tap.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
         tap.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
-        tap.setTransparency(fOpacity);
+        tap.setTransparency( 1.0f - fOpacity);
         kAppearance.setTransparencyAttributes(tap);
 
 

@@ -5,7 +5,6 @@ import gov.nih.mipav.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
-import java.awt.image.*;
 import java.io.*;
 import javax.vecmath.*;
 
@@ -125,6 +124,10 @@ public class PatientSlice
      * blending with the PlaneRender image. Included here for rendering
      * performance */
     private float[] m_afMask = null;
+
+    /** Flag indicating whether the slice is axis-aligned or diagonal (for RFA
+     * probe rotataions)  */
+    private boolean m_bAxisAligned = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -899,7 +902,7 @@ public class PatientSlice
             }
 
             if ( m_bShowDiagonal )
-            {
+            {   
                 imageA.exportDiagonal( timeSliceA, slice,
                                        localImageExtents, m_kFourCorners, imageBufferA, m_bInterpolate );
                 if (imageB != null)
@@ -1018,4 +1021,51 @@ public class PatientSlice
             }
         }
     }
+
+    /**
+     * Determines if a slice is axis-aligned, based on the m_kFourCorners[]
+     * four corners of the slice in 3D Model space. 
+     * @return true when the slice is axis-aligned, false otherwise.
+     */
+    private boolean axisAligned()
+    {
+        Point3Df kPatientCorner = new Point3Df();
+        for ( int i = 0; i < 4; i++ )
+        {
+            if ( m_kFourCorners[i] == null )
+            {
+                m_bAxisAligned = true;
+                return m_bAxisAligned;
+            }
+            MipavCoordinateSystems.FileToPatient( m_kFourCorners[i], kPatientCorner,
+                                                  imageA, orientation );
+            if ( kPatientCorner.z != m_kPatientPoint.z )
+            {
+                m_bAxisAligned = false;
+                return m_bAxisAligned;
+            }
+            if ( (kPatientCorner.x != 0) && (kPatientCorner.x != (localImageExtents[0] - 1)) )
+            {
+                m_bAxisAligned = false;
+                return m_bAxisAligned;
+            }
+            if ( (kPatientCorner.y != 0) && (kPatientCorner.y != (localImageExtents[1] - 1)) )
+            {
+                m_bAxisAligned = false;
+                return m_bAxisAligned;
+            }
+
+        }
+        m_bAxisAligned = true;
+        return m_bAxisAligned;
+    }
+
+    /** Returns whether the current slice is axis-aligned or rotated.
+     * @return true when axis-aligned, false otherwise.
+     */
+    public boolean getAxisAligned()
+    {
+        return m_bAxisAligned;
+    }
+
 }

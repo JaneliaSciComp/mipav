@@ -340,4 +340,14 @@ public class ViewJComponentTriSliceImage {
         disposeLocal();
         super.finalize();
     }
+
+    /**
+     * Returns whether the slice is axis-aligned or rotated.
+     * @return true when the slice is axis-aligned, false otherwise.
+     */
+    public boolean getAxisAligned()
+    {
+        return m_kPatientSlice.getAxisAligned();
+    }
+
 }

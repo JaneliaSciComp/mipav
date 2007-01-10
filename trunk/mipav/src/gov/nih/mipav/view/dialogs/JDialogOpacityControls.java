@@ -2,6 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.surfaceview.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -36,6 +37,9 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
 
     /** Opacity slider. */
     private JSlider opacitySlider;
+
+    /** SurfacePaint reference */
+    private SurfacePaint surfacePaint = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -87,6 +91,19 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
         // init(initVal);
     }
 
+    /**
+     * Creates new dialog with a slider and close button.
+     *
+     * @param  theParentFrame  The parent frame
+     * @param  initVal         The initial value of the opacity.
+     */
+    public JDialogOpacityControls(Frame theParentFrame, SurfacePaint surfacePaint, float initVal) {
+        super(theParentFrame, false);
+        this.surfacePaint = surfacePaint;
+        init(initVal);
+    }
+
+
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
@@ -102,6 +119,10 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
 
             if (controls != null) {
                 controls.getTools().setOpacity(opacity);
+            }
+            if ( surfacePaint != null )
+            {
+                surfacePaint.setOpacity( opacity );
             }
 
             dispose();
@@ -206,8 +227,17 @@ public class JDialogOpacityControls extends JDialogBase implements ChangeListene
             current.setText(String.valueOf(opacity));
 
             if (!opacitySlider.getValueIsAdjusting()) {
-                controls.getTools().setOpacity(opacity);
-                ((ViewJFrameBase) parentFrame).updateImages(true);
+                if (controls != null) {
+                    controls.getTools().setOpacity(opacity);
+                }
+                if ( parentFrame != null )
+                {
+                    ((ViewJFrameBase) parentFrame).updateImages(true);
+                }
+                if ( surfacePaint != null )
+                {
+                    surfacePaint.setOpacity( opacity );
+                }
             }
         }
     }

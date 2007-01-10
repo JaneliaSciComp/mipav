@@ -7071,6 +7071,26 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     *  Returns the surface mask from this image.
+     * @param index, the index of the mask to remove.
+     * @return the BitSet mask 
+     */
+    public BitSet getSurfaceMask( int index )
+    {
+        return (BitSet)m_kMaskVector.get(index);
+    }
+
+    /**
+     *  Returns the surface mask from this image.
+     * @param index, the index of the mask to remove.
+     * @return the BitSet mask 
+     */
+    public Color4f getSurfaceMaskColor( int index )
+    {
+        return (Color4f)m_kColorVector.get(index);
+    }
+
+    /**
      *  Removes the surface mask from this image.
      * @param index, the index of the mask to remove.
      */

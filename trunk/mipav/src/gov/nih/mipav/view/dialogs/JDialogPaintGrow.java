@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
+import gov.nih.mipav.view.renderer.surfaceview.*;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -358,6 +359,10 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
     /** DOCUMENT ME! */
     private boolean upSetFromFieldR = false;
 
+    /** SurfacePaint reference */
+    private SurfacePaint surfacePaint = null;
+
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -415,6 +420,22 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         frame = theParentFrame;
         this.setRadioBoth = setRadioBoth;
         this.leadString = leadString;
+        init();
+    }
+
+    /**
+     * Creates new dialog and sets up GUI components.
+     *
+     * @param  theParentFrame  Parent frame.
+     * @param  surfacePaint for Painting on a ModelTriangleMesh surface
+     * @param  paintListeners  DOCUMENT ME!
+     */
+    public JDialogPaintGrow(Frame theParentFrame, SurfacePaint surfacePaint, Vector paintListeners)
+    {
+        super(theParentFrame, false);
+        paintGrowListeners = paintListeners;
+        frame = theParentFrame;
+        this.surfacePaint = surfacePaint;
         init();
     }
 
@@ -2048,6 +2069,12 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
             } else {
                 haveColor = false;
             }
+        } else if ( (frame == null) && (surfacePaint != null) ) {
+            if ( surfacePaint.getPaintImage().isColorImage() ) {
+                haveColor = true;
+            } else {
+                haveColor = false;
+            }
         }
 
         JPanel positionPanel = new JPanel(new GridBagLayout());
@@ -2083,6 +2110,11 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 ((ViewJFramePaintVasculature) frame).getComponentImage().getActiveImage().calcMinMax();
                 maxValue = ((ViewJFramePaintVasculature) frame).getComponentImage().getActiveImage().getMax();
                 minValue = ((ViewJFramePaintVasculature) frame).getComponentImage().getActiveImage().getMin();
+            } else if ( (frame == null) && (surfacePaint != null) ) {
+                imageType = surfacePaint.getPaintImage().getType();
+                surfacePaint.getPaintImage().calcMinMax();
+                maxValue = surfacePaint.getPaintImage().getMax();
+                minValue = surfacePaint.getPaintImage().getMin();
             }
 
             range = maxValue - minValue;
@@ -2365,6 +2397,15 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                 minValueG = ((ViewJFramePaintVasculature) frame).getComponentImage().getActiveImage().getMinG();
                 maxValueB = ((ViewJFramePaintVasculature) frame).getComponentImage().getActiveImage().getMaxB();
                 minValueB = ((ViewJFramePaintVasculature) frame).getComponentImage().getActiveImage().getMinB();
+            } else if ( (frame == null) && (surfacePaint != null) ) {
+                imageType = surfacePaint.getPaintImage().getType();
+                surfacePaint.getPaintImage().calcMinMax();
+                maxValueR = surfacePaint.getPaintImage().getMaxR();
+                minValueR = surfacePaint.getPaintImage().getMinR();
+                maxValueG = surfacePaint.getPaintImage().getMaxG();
+                minValueG = surfacePaint.getPaintImage().getMinG();
+                maxValueB = surfacePaint.getPaintImage().getMaxB();
+                minValueB = surfacePaint.getPaintImage().getMinB();
             }
 
             rangeR = maxValueR - minValueR;
@@ -3086,6 +3127,11 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
                                                                                                                                                        frame)
                                                                                                                                                       .getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getFileInfo()[0].getUnitsOfMeasure(0)]);
             sizeString = unitString + "^3";
+        } else if ( (frame == null) && (surfacePaint != null) ) {
+            unitString = new String(surfacePaint.getPaintImage().getFileInfo()[0].sUnits[surfacePaint.getPaintImage().getFileInfo()[0].getUnitsOfMeasure(0)]);
+            if (surfacePaint.getPaintImage().getNDims() == 3) {
+                sizeString = unitString + "^3";
+            }
         }
 
         maxSizeLabel = new JLabel("Maximum size ( " + sizeString + " )");
@@ -3141,6 +3187,13 @@ public class JDialogPaintGrow extends JDialogBase implements RegionGrowDialog, C
         } else if (frame instanceof ViewJFrameTriImage) {
 
             if (((ViewJFrameTriImage) frame).getTriImage(ViewJFrameTriImage.AXIAL_A).getActiveImage().getType() ==
+                    ModelStorageBase.BOOLEAN) {
+                enableVariableCheckbox = false;
+            } else {
+                enableVariableCheckbox = true;
+            }
+        } else if ( (frame == null) && (surfacePaint != null) ) {
+            if (surfacePaint.getPaintImage().getType() ==
                     ModelStorageBase.BOOLEAN) {
                 enableVariableCheckbox = false;
             } else {

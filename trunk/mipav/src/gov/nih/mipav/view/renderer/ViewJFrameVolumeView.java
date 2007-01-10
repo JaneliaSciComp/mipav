@@ -630,8 +630,15 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
         } else if (command.equals("SurfaceDialog")) {
             insertTab("Surface", surfacePanel);
             insertSurfaceTab("Surface", surfacePanel);
+            setSize(getSize().width, getSize().height - 1);
 
-            // hack to get the panel's scroll pane to show up correctly
+            int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -
+                         panelToolbar.getHeight();
+
+            surRender.getSurfaceDialog().resizePanel(maxPanelWidth, height);
+        } else if (command.equals("SurfaceTexture")) {
+            insertTab("SurfaceTexture", surRender.getSurfaceTexturePanel() );
+            insertSurfaceTab("SurfaceTexture", surRender.getSurfaceTexturePanel() );
             setSize(getSize().width, getSize().height - 1);
 
             int height = getSize().height - getInsets().top - getInsets().bottom - menuBar.getSize().height -

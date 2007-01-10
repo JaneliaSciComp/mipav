@@ -2050,15 +2050,28 @@ public class ModelImage extends ModelStorageBase {
                     }
                 } /* LUT update of a non-ModelImage data strucuture: */
                 else if ((frameList.elementAt(i) instanceof
-                              gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
+                          gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
                     ModelImage imgA = ((gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
-                                           frameList.elementAt(i)).getImageA();
+                                       frameList.elementAt(i)).getImageA();
                     ModelImage imgB = ((gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
-                                           frameList.elementAt(i)).getImageB();
-
+                                       frameList.elementAt(i)).getImageB();
+                    
                     if (this == imgA) {
                         ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgB) {
+                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
+                    }
+                }
+                else if ((frameList.elementAt(i) instanceof
+                          gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
+                    ModelImage imgS = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
+                                       frameList.elementAt(i)).getImageSeparate();
+                    ModelImage imgL = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
+                                       frameList.elementAt(i)).getImageLink();
+                    
+                    if (this == imgS) {
+                        ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
+                    } else if (this == imgL) {
                         ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
                     }
                 }
@@ -2111,6 +2124,19 @@ public class ModelImage extends ModelStorageBase {
                 }
 
                 ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, null, forceShow, -1);
+            }
+            else if ((frameList.elementAt(i) instanceof
+                      gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
+                ModelImage imgS = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
+                                   frameList.elementAt(i)).getImageSeparate();
+                ModelImage imgL = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
+                                   frameList.elementAt(i)).getImageLink();
+                
+                if (this == imgS) {
+                    ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTA(RGBT);
+                } else if (this == imgL) {
+                    ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTB(RGBT);
+                }
             }
         }
 

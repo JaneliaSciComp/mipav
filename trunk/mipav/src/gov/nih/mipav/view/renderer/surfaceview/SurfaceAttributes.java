@@ -43,9 +43,6 @@ public class SurfaceAttributes {
      */
     private Color4f mColor;
 
-    /** Saved copy of the current surface color.*/
-    private Color4f mColorBackup;
-
     /** Detail level of surface; only applies to clod meshes. */
     private int mLevelDetail;
 
@@ -125,7 +122,6 @@ public class SurfaceAttributes {
         this.mCenter = center;
         this.mIsVOIPt = false;
         this.mIsClodMesh = false;
-        this.mOpacity = 0.5f;
         this.mSurfaceMask = null;
         /* sets the default color */
         this.setColor( new Color4f( 1, 0, 0, 1 ) ); 
@@ -177,11 +173,14 @@ public class SurfaceAttributes {
     public void setMaterial( Material material )
     {
         mMaterial = material;
-        Color3f diffuse = new Color3f();
-        mMaterial.getDiffuseColor( diffuse );
-        mColor.x = diffuse.x;
-        mColor.y = diffuse.y;
-        mColor.z = diffuse.z;
+        if ( mMaterial != null )
+        {
+            Color3f diffuse = new Color3f();
+            mMaterial.getDiffuseColor( diffuse );
+            mColor.x = diffuse.x;
+            mColor.y = diffuse.y;
+            mColor.z = diffuse.z;
+        }
     }
 
     /**
@@ -314,6 +313,16 @@ public class SurfaceAttributes {
     }
 
     /**
+     * Restores the ModelTriangleMesh per-vertex colors to the surface
+     * color. Used to clear all paint or remove the per-vertex texture-based
+     * color.
+     */
+    public void restoreVertexColors()
+    {
+        setColor( mColor );
+    }
+
+    /**
      * Sets the surface color. Also sets the Material diffuse, specular, and
      * ambient colors.
      * @param color, the new surface Color.
@@ -327,17 +336,20 @@ public class SurfaceAttributes {
             mMaterial = new Material();
             mMaterial.setCapability(Material.ALLOW_COMPONENT_READ);
             mMaterial.setCapability(Material.ALLOW_COMPONENT_WRITE);
+            mMaterial.setColorTarget( Material.AMBIENT_AND_DIFFUSE );
+            mMaterial.setEmissiveColor( 0f, 0f, 0f );
+            mMaterial.setSpecularColor( 0f, 0f, 0f );
         }
-        mMaterial.setDiffuseColor( mColor.x, mColor.y, mColor.z, mColor.w);
-        mMaterial.setSpecularColor( mColor.x, mColor.y, mColor.z);
         mMaterial.setAmbientColor( mColor.x, mColor.y, mColor.z);
+        mMaterial.setDiffuseColor( mColor.x, mColor.y, mColor.z, mColor.w);
+        System.err.println( "setColor " + mColor + " " + mOpacity );
 
         for ( int i = 0; i < mTriangleMesh.length; i++ )
         {
             Color4f[] akColors = new Color4f[ mTriangleMesh[i].getVertexCount() ];
             for ( int j = 0; j < mTriangleMesh[i].getVertexCount(); j++ )
             {
-                akColors[j] = new Color4f( color.x, color.y, color.z, mOpacity );
+                akColors[j] = new Color4f( color.x, color.y, color.z, 1 - mOpacity );
             }
             mTriangleMesh[i].setColors( 0, akColors );
         }
@@ -350,6 +362,15 @@ public class SurfaceAttributes {
     public Color4f getColor()
     {
         return mColor;
+    }
+
+    /**
+     * Gets a Color3f copy of the surface color.
+     * @return a Color3f copy of the surface color.
+     */
+    public Color3f getColor3()
+    {
+        return new Color3f( mColor.x, mColor.y, mColor.z );
     }
 
     /**
@@ -434,24 +455,4 @@ public class SurfaceAttributes {
     {
         return mCenter;
     }
-
-    /**
-     * When the surface mesh is displayed with texture, set the color to
-     * black. When the texture is removed, restore the original surface color.
-     * @param bEnabled, when true the surface is displayed w/texture, when
-     * false the surface color is restored.
-     */
-    public void setSurfaceTextureEnabled( boolean bEnabled )
-    {
-        if ( bEnabled )
-        {
-            mColorBackup = new Color4f( mColor );
-            setColor( new Color4f( 0f, 0f, 0f, mOpacity ) );
-        }
-        else
-        {
-            setColor( mColorBackup );
-        }
-    }
-
 }
