@@ -456,7 +456,7 @@ public class SurfacePaint
                         {
                             mPaintColor =
                                 m_kPanel.getSurfaceMask().getModelImageColor( m_kPanel.getTextureImage(), fOpacity,
-                                                                              m_kPanel.getSurfaceMask().getModelImagePoint( kClosestPoint ) );
+                                                                              m_kPanel.getSurfaceMask().getModelImagePoint( kClosestPoint ));
                         }
                         else if ( kShape != null )
                         {
@@ -474,18 +474,12 @@ public class SurfacePaint
                     }
                     else if ( mPaintCanButton.isSelected() && (mPaintGrowDialog != null) )
                     {
-                        getModelColor( kPickPoint, mPaintGrowDialog );
+                        getModelColor( kPickPoint );
                     }
                     else
                     {                            
                         kMesh.setColor( closest, mPaintColor );
                     }
-                }
-                else
-                {
-                    /* Get the coordinates of the picked point on the mesh. */
-                    Point3f modelPoint = m_kPanel.getSurfaceMask().getModelImagePoint( kPickPoint );
-                    m_kPanel.updateVolumeTexture( modelPoint );
                 }
             }
         }
@@ -660,42 +654,32 @@ public class SurfacePaint
         mPaintColor.w = mOpacity;
     }
 
-    private Color4f getModelColor( Point3f kPickPoint, JDialogPaintGrow kDialog  )
+    /**
+     * Display the ModelImage color in the JDialogPaintGrow interface.
+     * @param kPickPoint, the model triangle mesh point under the mouse.
+     */
+    private void getModelColor( Point3f kPickPoint  )
     {
-        /* Get the coordinates of the picked point on the mesh. */
-        Point3f volumePoint = m_kPanel.getSurfaceMask().getModelImagePoint( kPickPoint );
-        Point3i modelPoint = new Point3i( (int)volumePoint.x, (int)volumePoint.y, (int)volumePoint.z );
         ModelImage kImage = m_kPanel.getTextureImage();
-        if ( kImage.isColorImage() )
-        {
-            float alpha = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 0 );
-            float red = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 1 );
-            float green = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 2 );
-            float blue = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z, 3 );
-            if ( kDialog != null )
-            {
-                kDialog.setPositionText("  X: " + String.valueOf(modelPoint.x) +
-                                                 " Y: " + String.valueOf(modelPoint.y) +
-                                                 " Z: " + String.valueOf(modelPoint.z) + "  Color:  " +
-                                                 red + " " + green + " " + blue + " " + alpha);
-            }
-            return new Color4f( red/255.0f, green/255.0f, blue/255.0f, alpha/255.0f );
-        }
-        else
-        {
-            float val = kImage.getFloat( modelPoint.x, modelPoint.y, modelPoint.z );
-            if ( kDialog != null )
-            {
-                kDialog.setPositionText("  X: " + String.valueOf(modelPoint.x) +
-                                                 " Y: " + String.valueOf(modelPoint.y) +
-                                                 " Z: " + String.valueOf(modelPoint.z) + "  Intensity:  " +
-                                                 val );
-            }
-            return new Color4f( val/255.0f, val/255.0f, val/255.0f, mOpacity );
-        }
+
+        /* Get the coordinates of the picked point on the mesh. */
+        Point3f modelPoint = m_kPanel.getSurfaceMask().getModelImagePoint( kPickPoint );
+        Color4f modelColor =  m_kPanel.getSurfaceMask().getModelImageColorNonScaled( kImage, 1, modelPoint );
+        mPaintGrowDialog.setPositionText("  X: " + String.valueOf(modelPoint.x) +
+                                         " Y: " + String.valueOf(modelPoint.y) +
+                                         " Z: " + String.valueOf(modelPoint.z) + "  Color:  " +
+                                         modelColor.x + " " + modelColor.y + " " + modelColor.z );
     }
 
 
+    /**
+     * Grows a region based on a starting point supplied. A voxel is added to
+     * the the paintMask mask if its intensity is between the the bounds which
+     * are also supplied.
+     *
+     * @param  kImage the image to grow the region in
+     * @param  kSeedPoint the starting point in the image
+     */
     public void regionGrow( ModelImage kImage, Point3f kSeedPoint )
     {
         //Cursor cursor = getCursor();
@@ -710,7 +694,8 @@ public class SurfacePaint
 
             System.err.println( "regionGrow" );
             int[] imageExtents = kImage.getExtents();
-            float saveValue = kImage.getFloat( (int)kSeedPoint.x, (int)kSeedPoint.y, (int)kSeedPoint.z );
+            
+            Color4f modelColor =  m_kPanel.getSurfaceMask().getModelImageColorNonScaled( kImage, 1, kSeedPoint );
 
             Point3Ds seed = new Point3Ds( (short)kSeedPoint.x,
                                           (short)kSeedPoint.y,
@@ -719,27 +704,45 @@ public class SurfacePaint
             AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(kImage, 1.0f, 1.0f);
             regionGrowAlgo.setRunningInSeparateThread(false);
 
-            float less = mPaintGrowDialog.getLowerBound();
-            float more = mPaintGrowDialog.getUpperBound();
-            if (kImage.getType() == ModelStorageBase.BOOLEAN) {
-                less = 0;
-                more = 0;
-            }
-            
-               // bounds are not constrained by cropping volume, use image extents as bounds
             CubeBounds regionGrowBounds = new CubeBounds(imageExtents[0], 0, imageExtents[1], 0, imageExtents[2], 0);
 
-            int count = regionGrowAlgo.regionGrow3D( paintMask, seed,
+            int count = 0;
+            if ( !kImage.isColorImage() )
+            {
+                float less = mPaintGrowDialog.getLowerBound();
+                float more = mPaintGrowDialog.getUpperBound();
+                if (kImage.getType() == ModelStorageBase.BOOLEAN) {
+                    less = 0;
+                    more = 0;
+                }
+                count = regionGrowAlgo.regionGrow3D( paintMask, seed,
                                                      mPaintGrowDialog.getFuzzyThreshold(),
                                                      false,
                                                      mPaintGrowDialog.getDisplayFuzzy(),
                                                      mPaintGrowDialog,
-                                                     saveValue - less,
-                                                     saveValue + more,
+                                                     modelColor.x - less, modelColor.x + more,
                                                      mPaintGrowDialog.getMaxSize(),
                                                      mPaintGrowDialog.getMaxDistance(),
                                                      mPaintGrowDialog.getVariableThresholds(),
                                                      0, regionGrowBounds);
+            }
+            else
+            {
+                count = regionGrowAlgo.regionGrow3D( paintMask, seed,
+                                                     mPaintGrowDialog.getFuzzyThreshold(),
+                                                     false,
+                                                     mPaintGrowDialog.getDisplayFuzzy(),
+                                                     mPaintGrowDialog,
+                                                     modelColor.x - mPaintGrowDialog.getLowerBoundR(),
+                                                     modelColor.x + mPaintGrowDialog.getUpperBoundR(),
+                                                     modelColor.y - mPaintGrowDialog.getLowerBoundG(),
+                                                     modelColor.y + mPaintGrowDialog.getUpperBoundG(),
+                                                     modelColor.z - mPaintGrowDialog.getLowerBoundB(),
+                                                     modelColor.z + mPaintGrowDialog.getUpperBoundB(),
+                                                     mPaintGrowDialog.getMaxSize(),
+                                                     mPaintGrowDialog.getMaxDistance(),
+                                                     0, regionGrowBounds);
+            }
             System.err.println( "done regionGrow: " + count );
             m_kPanel.updateVolumeTexture( paintMask, mPaintColor );
         } catch (OutOfMemoryError error) {
@@ -749,141 +752,4 @@ public class SurfacePaint
         
         //setCursor(cursor);
     }
-
-    /**
-     * Grows a region based on a starting supplied. A voxel is added to the the paintBitmap mask if its intensity is
-     * between the the bounds which are also supplied. Used for color images.
-     *
-     * <p>When click is <code>false</code>, adds points in the newly grown region which weren't in the old one remove
-     * points which were in the old region but aren't in the new one (and which weren't in the region painted before the
-     * last click), otherwise, the regions are simply added into the new set.</p>
-     *
-     * @param  x           x coordinate of the seed point
-     * @param  y           y coordinate of the seed point
-     * @param  z           z coordinate of the seed point
-     * @param  valueR      Red value at the seed point
-     * @param  valueG      Green value at the seed point
-     * @param  valueB      Blue value at the seed point
-     * @param  image       the image to perform the region grow in
-     * @param  leadString  the string to append to the region grow output
-     * @param  click       whether this region grow was initiated by a click on the image
-     */
-    /*
-    public void regionGrow(short x, short y, short z, float valueR, float valueG, float valueB, ModelImage image,
-                           String leadString, boolean click) {
-        Cursor cursor = getCursor();
-
-        setCursor(MipavUtil.waitCursor);
-
-        int count;
-
-        BitSet tempBitmap = null;
-
-        if (click) {
-
-            // backup the current paint mask
-            backupPaintBitmap();
-
-            if (seedPaintBitmap == null) {
-                seedPaintBitmap = new BitSet();
-            } else {
-                seedPaintBitmap.clear();
-            }
-        } else {
-            tempBitmap = (BitSet) seedPaintBitmap.clone();
-            seedPaintBitmap.clear();
-        }
-
-        if (x != -1) {
-            saveX = x;
-            saveY = y;
-            saveZ = z;
-            saveValueR = valueR;
-            saveValueG = valueG;
-            saveValueB = valueB;
-        } else {
-            return;
-        }
-
-        if (mPaintGrowDialog != null) {
-            fuzzyThreshold = mPaintGrowDialog.getFuzzyThreshold();
-            useVOI = mPaintGrowDialog.getUseVOI();
-            displayFuzzy = mPaintGrowDialog.getDisplayFuzzy();
-            sizeLimit = mPaintGrowDialog.getMaxSize();
-            maxDistance = mPaintGrowDialog.getMaxDistance();
-            lessR = mPaintGrowDialog.getLowerBoundR();
-            moreR = mPaintGrowDialog.getUpperBoundR();
-            lessG = mPaintGrowDialog.getLowerBoundG();
-            moreG = mPaintGrowDialog.getUpperBoundG();
-            lessB = mPaintGrowDialog.getLowerBoundB();
-            moreB = mPaintGrowDialog.getUpperBoundB();
-        }
-
-        if ((fuzzyThreshold == -2.0f) || (sizeLimit == -2) || (maxDistance == -2)) {
-            return;
-        }
-
-        try {
-            AlgorithmRegionGrow regionGrowAlgo = new AlgorithmRegionGrow(image, 1.0f, 1.0f);
-
-            regionGrowAlgo.setRunningInSeparateThread(false);
-
-            if (image.getNDims() == 2) {
-                count = regionGrowAlgo.regionGrow2D(seedPaintBitmap, new Point(saveX, saveY), fuzzyThreshold, useVOI,
-                                                    displayFuzzy, mPaintGrowDialog, saveValueR - lessR, saveValueR + moreR,
-                                                    saveValueG - lessG, saveValueG + moreG, saveValueB - lessB,
-                                                    saveValueB + moreB, sizeLimit, maxDistance);
-                showRegionInfo(count, leadString);
-            } else if ((image.getNDims() == 3) || (image.getNDims() == 4)) {
-                CubeBounds regionGrowBounds;
-
-                if (((JDialogPaintGrow) mPaintGrowDialog).boundsConstrained()) {
-
-                    // constrain bounds to cropping volume
-                    regionGrowBounds = ((ViewJFrameTriImage) frame).getBoundedVolume();
-                } else {
-
-                    // bounds are not constrained by cropping volume, use image extents as bounds
-                    regionGrowBounds = new CubeBounds(imageExtents[0], 0, imageExtents[1], 0, imageExtents[2], 0);
-                }
-
-                count = regionGrowAlgo.regionGrow3D(seedPaintBitmap, new Point3Ds(saveX, saveY, saveZ), fuzzyThreshold,
-                                                    useVOI, displayFuzzy, mPaintGrowDialog, saveValueR - lessR,
-                                                    saveValueR + moreR, saveValueG - lessG, saveValueG + moreG,
-                                                    saveValueB - lessB, saveValueB + moreB, sizeLimit, maxDistance,
-                                                    timeSlice, regionGrowBounds);
-                showRegionInfo(count, leadString);
-            }
-        } catch (OutOfMemoryError error) {
-            System.gc();
-            MipavUtil.displayError("Out of memory: ComponentEditImage.regionGrow");
-        }
-
-        if (!click) {
-
-            // add points in the newly grown region which weren't in the old one
-            BitSet diff = (BitSet) seedPaintBitmap.clone();
-
-            diff.andNot(tempBitmap);
-            paintBitmap.or(diff);
-
-            // remove points which were in the old region but aren't in the new one
-            // (and which weren't in the region painted before the last click)
-            diff = (BitSet) seedPaintBitmap.clone();
-            tempBitmap.andNot(diff);
-            tempBitmap.andNot(paintBitmapBU);
-            paintBitmap.xor(tempBitmap);
-        } else {
-            paintBitmap.or(seedPaintBitmap);
-        }
-
-        if (mPaintGrowDialog != null) {
-            mPaintGrowDialog.notifyPaintListeners(true, false, paintBitmap);
-        }
-
-        image.notifyImageDisplayListeners(null, true);
-        setCursor(cursor);
-    }
-    */
-
 }
