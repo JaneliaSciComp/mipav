@@ -2661,8 +2661,16 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public ModelImage getTextureImage()
     {
-        JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
-        return surfaceTexturePanel.getTextureImage();
+        return ((SurfaceRender)parentScene).getSurfaceTexture().getTextureImage();
+    }
+
+    /** 
+     * Returns the texture status, either TEXTURE, VERTEX_COLOR, or NONE
+     * @return the texture status, either TEXTURE, VERTEX_COLOR, or NONE
+     */
+    public int getTextureStatus()
+    {
+        return ((SurfaceRender)parentScene).getSurfaceTexture().getTextureStatus();
     }
 
     /**
@@ -2670,10 +2678,18 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public void restoreVertexColors()
     {
-        SurfaceAttributes[] surfaces = getAllSurfaces();
-        for ( int i = 0; i < surfaces.length; i++ )
+        JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
+        if ( surfaceTexturePanel.getTextureStatus() != JPanelSurfaceTexture.NONE )
         {
-            surfaces[i].restoreVertexColors();
+            surfaceTexturePanel.updateSurfaceTextureImage( 0, null, null );
+        }
+        else
+        {
+            SurfaceAttributes[] surfaces = getAllSurfaces();
+            for ( int i = 0; i < surfaces.length; i++ )
+            {
+                surfaces[i].restoreVertexColors();
+            }
         }
     }
 
@@ -2706,6 +2722,16 @@ public class JPanelSurface extends JPanelRendererBase
     public void enableSurfacePaintCan( boolean bEnable )
     {
         mSurfacePaint.enableSurfacePaintCan( bEnable );
+    }
+
+    /**
+     * Enables/Disables the SurfacePaint per-vertex functions.
+     * @param bEnable when true the SurfacePaint per-vertex functions (PaintBrush, Dropper, Eraser, BrushSize) are
+     * enabled, when false they are disabled.
+     */
+    public void enableSurfacePaint( boolean bEnable )
+    {
+        mSurfacePaint.enableSurfacePaint( bEnable );
     }
 
 

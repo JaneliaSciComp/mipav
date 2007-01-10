@@ -427,6 +427,7 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
                 updateImages( mLUTSeparate, null, false, 0 );
             }
             ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaintCan( true );
+            ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaint( false );
         }
         else if (command.equals("ImageAsVertexColor"))
         {
@@ -434,6 +435,7 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
             ((SurfaceRender)renderBase).getSurfaceDialog().generateNewTextureCoords( mImageA, true, false );
             updateImages( null, null, false, 0 );
             ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaintCan( true );
+            ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaint( true );
         }
         else if (command.equals("ImageNone"))
         {
@@ -441,6 +443,7 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
             updateImages( null, null, false, 0 );
             ((SurfaceRender)renderBase).getSurfaceDialog().restoreVertexColors();
             ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaintCan( false );
+            ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaint( true );
         }
         else if (command.equals("LinkLUTs"))
         {
@@ -756,11 +759,16 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
         {
             return;
         }
-        mImageA.addSurfaceMask( index, paintMask, null, kColor );
+        boolean bUsePaintMask = false;
+        if ( paintMask != null )
+        {
+            bUsePaintMask = true;
+            mImageA.addSurfaceMask( index, paintMask, null, kColor );
+        }
 
         if ( mTextureStatus == VERTEX_COLOR )
         {
-            ((SurfaceRender)renderBase).getSurfaceDialog().generateNewTextureCoords( mImageA, true, true );
+            ((SurfaceRender)renderBase).getSurfaceDialog().generateNewTextureCoords( mImageA, true, bUsePaintMask );
             updateImages( null, null, false, 0 );
         }
         else
@@ -779,7 +787,7 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
             BufferedImage mBuff = new BufferedImage( localExtents[0], localExtents[1], BufferedImage.TYPE_INT_ARGB );
             for (int iZ = 0; iZ < iNumberSlices; iZ++) {
                 mPatientSlice.updateSlice( iZ );
-                if ( mPatientSlice.showUsingOrientation( 0, iImageBufferA, null, true, false, 0, true ) )
+                if ( mPatientSlice.showUsingOrientation( 0, iImageBufferA, null, true, false, 0, bUsePaintMask ) )
                 {
                     mBuff.setRGB( 0, 0, localExtents[0], localExtents[1], iImageBufferA, 0, localExtents[0] );
                     kSurfaceTextureImage.set( iZ, mBuff );

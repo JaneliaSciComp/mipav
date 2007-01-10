@@ -193,72 +193,6 @@ public class SurfaceMask
                 kV2.y = tV2.y;
                 kV2.z = tV2.z;
 
-                Color4f kTriColor = null;
-
-                if ( bCreateVertexColors )
-                {
-                    Point3f mV0 = getModelImagePoint( tV0 );
-                    Point3f mV1 = getModelImagePoint( tV1 );
-                    Point3f mV2 = getModelImagePoint( tV2 );
-                    
-                    if ( !imageA.isColorImage() )
-                    {
-                        float value = imageA.getFloat( (int)mV0.x, (int)mV0.y, (int)mV0.z ) / 255.0f;
-                        kTriColors[aiConnect[3 * iT]] = new Color4f( value, value, value, 1 - fOpacity );
-
-                        value = imageA.getFloat( (int)mV1.x, (int)mV1.y, (int)mV1.z ) / 255.0f;
-                        kTriColors[aiConnect[ (3 * iT) + 1]] = new Color4f( value, value, value, 1 - fOpacity );
-
-                        value = imageA.getFloat( (int)mV2.x, (int)mV2.y, (int)mV2.z ) / 255.0f;
-                        kTriColors[aiConnect[ (3 * iT) + 2]] = new Color4f( value, value, value, 1 - fOpacity );
-                    }
-
-                    if ( bUseImageMask && (kImageMask != null) && (kImageMaskColor != null) )
-                    {
-                        int maskIndex =  (int)((iterFactors[0] * mV0.x) +
-                                           (iterFactors[1] * mV0.y) +
-                                           (iterFactors[2] * mV0.z)   );
-                        if ( kImageMask.get( maskIndex ) )
-                        {
-                            kTriColors[aiConnect[3 * iT]] = new Color4f( kImageMaskColor.x,
-                                                                         kImageMaskColor.y,
-                                                                         kImageMaskColor.z,
-                                                                         kImageMaskColor.w );
-                        }
-                        maskIndex =  (int)((iterFactors[0] * mV1.x) +
-                                       (iterFactors[1] * mV1.y) +
-                                       (iterFactors[2] * mV1.z)   );
-                        if ( kImageMask.get( maskIndex ) )
-                        {
-                            kTriColors[aiConnect[(3 * iT) + 1]] = new Color4f( kImageMaskColor.x,
-                                                                               kImageMaskColor.y,
-                                                                               kImageMaskColor.z,
-                                                                               kImageMaskColor.w );
-                        }
-                        maskIndex =  (int)((iterFactors[0] * mV2.x) +
-                                       (iterFactors[1] * mV2.y) +
-                                       (iterFactors[2] * mV2.z)   );
-                        if ( kImageMask.get( maskIndex ) )
-                        {
-                            kTriColors[aiConnect[(3 * iT) + 2]] = new Color4f( kImageMaskColor.x,
-                                                                               kImageMaskColor.y,
-                                                                               kImageMaskColor.z,
-                                                                               kImageMaskColor.w );
-                        }
-                    }
-                }
-
-                kC0 = kTriColors[aiConnect[3 * iT]];
-                kC1 = kTriColors[aiConnect[ (3 * iT) + 1]];
-                kC2 = kTriColors[aiConnect[ (3 * iT) + 2]];
-
-                if ( (kC0 != null) && (kC1 != null) && (kC2 != null)) {
-                    kTriColor = new Color4f( (kC0.x + kC1.x + kC2.x) / 3.0f,
-                                             (kC0.y + kC1.y + kC2.y) / 3.0f,
-                                             (kC0.z + kC1.z + kC2.z) / 3.0f,
-                                             1 - fOpacity );
-                }
-
                 kV0.x = ( (kV0.x - m_fX0) / (m_fX1 - m_fX0)) * (xDim - 1);
                 kV0.y = ( (kV0.y - m_fY0) / (m_fY1 - m_fY0)) * (yDim - 1);
                 kV0.z = ( (kV0.z - m_fZ0) / (m_fZ1 - m_fZ0)) * (zDim - 1);
@@ -289,11 +223,65 @@ public class SurfaceMask
                                                                      kV2.y/(float)(yDim-1),
                                                                      kV2.z/(float)(zDim-1) );
 
-
                 kV0.y = yDim - 1 - kV0.y;
                 kV1.y = yDim - 1 - kV1.y;
                 kV2.y = yDim - 1 - kV2.y;
 
+
+                Color4f kTriColor = null;
+                if ( bCreateVertexColors )
+                {
+                    if ( !imageA.isColorImage() )
+                    {
+                        kTriColors[aiConnect[3 * iT]] = getModelImageColor( imageA, 1 - fOpacity, kV0 );
+                        kTriColors[aiConnect[ (3 * iT) + 1]] = getModelImageColor( imageA, 1 - fOpacity, kV1 );
+                        kTriColors[aiConnect[ (3 * iT) + 2]] = getModelImageColor( imageA, 1 - fOpacity, kV2 );
+                    }
+
+                    if ( bUseImageMask && (kImageMask != null) && (kImageMaskColor != null) )
+                    {
+                        int maskIndex =  (int)((iterFactors[0] * kV0.x) +
+                                               (iterFactors[1] * kV0.y) +
+                                               (iterFactors[2] * kV0.z)   );
+                        if ( kImageMask.get( maskIndex ) )
+                        {
+                            kTriColors[aiConnect[3 * iT]] = new Color4f( kImageMaskColor.x,
+                                                                         kImageMaskColor.y,
+                                                                         kImageMaskColor.z,
+                                                                         kImageMaskColor.w );
+                        }
+                        maskIndex =  (int)((iterFactors[0] * kV1.x) +
+                                       (iterFactors[1] * kV1.y) +
+                                       (iterFactors[2] * kV1.z)   );
+                        if ( kImageMask.get( maskIndex ) )
+                        {
+                            kTriColors[aiConnect[(3 * iT) + 1]] = new Color4f( kImageMaskColor.x,
+                                                                               kImageMaskColor.y,
+                                                                               kImageMaskColor.z,
+                                                                               kImageMaskColor.w );
+                        }
+                        maskIndex =  (int)((iterFactors[0] * kV2.x) +
+                                       (iterFactors[1] * kV2.y) +
+                                       (iterFactors[2] * kV2.z)   );
+                        if ( kImageMask.get( maskIndex ) )
+                        {
+                            kTriColors[aiConnect[(3 * iT) + 2]] = new Color4f( kImageMaskColor.x,
+                                                                               kImageMaskColor.y,
+                                                                               kImageMaskColor.z,
+                                                                               kImageMaskColor.w );
+                        }
+                    }
+                }
+                kC0 = kTriColors[aiConnect[3 * iT]];
+                kC1 = kTriColors[aiConnect[ (3 * iT) + 1]];
+                kC2 = kTriColors[aiConnect[ (3 * iT) + 2]];
+
+                if ( (kC0 != null) && (kC1 != null) && (kC2 != null)) {
+                    kTriColor = new Color4f( (kC0.x + kC1.x + kC2.x) / 3.0f,
+                                             (kC0.y + kC1.y + kC2.y) / 3.0f,
+                                             (kC0.z + kC1.z + kC2.z) / 3.0f,
+                                             1 - fOpacity );
+                }
 
                 // compute the axis-aligned bounding box of the triangle
                 float fXMin = kV0.x, fXMax = fXMin;
@@ -481,6 +469,24 @@ public class SurfaceMask
         kV0.y = yDim - 1 - kV0.y;
 
         return kV0;
+    }
+
+    /**
+     * Given a triangle vertex point from a ModelTriangleMesh, determines the
+     * corresponding ModelImage index point, and recreates the color that
+     * would have originally been assigned to the vertex.
+     * @param kTrianglePoint ModelTriangleMesh point in ModelImage coordinates
+     * @return original color of the triangle point.
+     */
+    public Color4f getModelImageColor( ModelImage imageA, float fTransparency, Point3f kModelPoint )
+    {
+        Color4f kColor = new Color4f();
+        if ( !imageA.isColorImage() )
+        {
+            float value = imageA.getFloat( (int)kModelPoint.x, (int)kModelPoint.y, (int)kModelPoint.z ) / 255.0f;
+            kColor = new Color4f( value, value, value, fTransparency );
+        }
+        return kColor;
     }
 
 
