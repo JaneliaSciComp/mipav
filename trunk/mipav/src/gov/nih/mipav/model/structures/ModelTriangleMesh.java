@@ -84,6 +84,11 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     /** temporary variables to avoid 'new' calls. */
     private Point3f m_kV0, m_kV1, m_kV2, m_kV3;
 
+    /** store the Material properties of the mesh: */
+    private Material m_kMaterial = null;
+    /** store the mesh transparency: */
+    private float m_fTransparency = 0f;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -99,30 +104,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
               2, new int[]{0, 0},
               aiConnect.length);
 
-        setCapability(Geometry.ALLOW_INTERSECT);
-        setCapability(GeometryArray.ALLOW_COUNT_WRITE);
-        setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_WRITE);
-        setCapability(GeometryArray.ALLOW_NORMAL_WRITE);
-        setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-        setCapability(GeometryArray.ALLOW_NORMAL_READ);
-        setCapability(GeometryArray.ALLOW_COUNT_READ);
-        setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-        setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
-        setCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
-        setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_WRITE);
-        setCapability(GeometryArray.ALLOW_FORMAT_READ);
-        setCapability(Geometry.ALLOW_INTERSECT);
-        setCapability(GeometryArray.ALLOW_COLOR_READ);
-        setCapability(GeometryArray.ALLOW_COLOR_WRITE);
-
-        // temporary variables to avoid 'new' calls
-        m_kV0 = new Point3f();
-        m_kV1 = new Point3f();
-        m_kV2 = new Point3f();
-        m_kV3 = new Point3f();
-        m_kE0 = new Vector3f();
-        m_kE1 = new Vector3f();
-        m_kN = new Vector3f();
+        init();
 
         setCoordinates(0, akVertex);
         setCoordinateIndices(0, aiConnect);
@@ -151,28 +133,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
               2, new int[]{0, 0},
               aiConnect.length);
 
-        setCapability(Geometry.ALLOW_INTERSECT);
-        setCapability(GeometryArray.ALLOW_COUNT_WRITE);
-        setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_WRITE);
-        setCapability(GeometryArray.ALLOW_NORMAL_WRITE);
-        setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-        setCapability(GeometryArray.ALLOW_NORMAL_READ);
-        setCapability(GeometryArray.ALLOW_COUNT_READ);
-        setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-        setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
-        setCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
-        setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_WRITE);
-        setCapability(GeometryArray.ALLOW_COLOR_READ);
-        setCapability(GeometryArray.ALLOW_COLOR_WRITE);
-
-        // temporary variables to avoid 'new' calls
-        m_kV0 = new Point3f();
-        m_kV1 = new Point3f();
-        m_kV2 = new Point3f();
-        m_kV3 = new Point3f();
-        m_kE0 = new Vector3f();
-        m_kE1 = new Vector3f();
-        m_kN = new Vector3f();
+        init();
 
         setCoordinates(0, akVertex);
         setCoordinateIndices(0, aiConnect);
@@ -203,7 +164,124 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
               2, new int[]{0, 0},
               aiConnect.length);
 
+        init();
+
+        setCoordinates(0, akVertex);
+        setCoordinateIndices(0, aiConnect);
+        setNormals(0, akNormal);
+        setNormalIndices(0, aiConnect);
+        setColors(0, akColor);
+        setColorIndices(0, aiConnect);
+        m_kGenerator = null;
+    }
+
+    /**
+     * A triangle mesh whose vertex normal vectors have been precomputed.
+     *
+     * @param  akVertex   array of vertices in the mesh
+     * @param  akNormal   array of vertex normals for the mesh
+     * @param  akColor    array of vertex colors
+     * @param  akTexCoord array of Texture Coordinates
+     * @param  aiConnect  Connectivity array for the triangles. Each triple of indices represents one triangle. The
+     *                    triangle is counterclockwise ordered as viewed by an observer outside the mesh.
+     */
+    public ModelTriangleMesh(Point3f[] akVertex, Vector3f[] akNormal, TexCoord3f[] akTexCoord, int[] aiConnect) {
+        super(akVertex.length,
+              IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_4,
+              2, new int[]{0, 0},
+              aiConnect.length);
+
+        init();
+
+        setCoordinates(0, akVertex);
+        setCoordinateIndices(0, aiConnect);
+        setNormals(0, akNormal);
+        setNormalIndices(0, aiConnect);
+        Color4f[] akColors = new Color4f[ akVertex.length ];
+        for ( int i = 0; i < akVertex.length; i++ )
+        {
+            akColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+        }
+        setColors( 0, akColors );
+        setColorIndices(0, aiConnect);
+        setTextureCoordinates( 0, 0, akTexCoord );
+        setTextureCoordinateIndices( 0, 0, aiConnect);
+        m_kGenerator = null;
+    }
+
+    /**
+     * A triangle mesh whose vertex normal vectors have been precomputed.
+     *
+     * @param  akVertex   array of vertices in the mesh
+     * @param  akNormal   array of vertex normals for the mesh
+     * @param  akColor    array of vertex colors
+     * @param  akTexCoord array of Texture Coordinates
+     * @param  aiConnect  Connectivity array for the triangles. Each triple of indices represents one triangle. The
+     *                    triangle is counterclockwise ordered as viewed by an observer outside the mesh.
+     */
+    public ModelTriangleMesh(Point3f[] akVertex, Vector3f[] akNormal, Color4f[] akColor, TexCoord3f[] akTexCoord, int[] aiConnect) {
+        super(akVertex.length,
+              IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_4,
+              2, new int[]{0, 0},
+              aiConnect.length);
+
+        init();
+
+        setCoordinates(0, akVertex);
+        setCoordinateIndices(0, aiConnect);
+        setNormals(0, akNormal);
+        setNormalIndices(0, aiConnect);
+        setColors( 0, akColor );
+        setColorIndices(0, aiConnect);
+        setTextureCoordinates( 0, 0, akTexCoord );
+        setTextureCoordinateIndices( 0, 0, aiConnect);
+        m_kGenerator = null;
+    }
+
+    /**
+     * Copies a ModelTriangleMesh by copying it's components.
+     *
+     * @param  ModelTriangleMesh   ModelTriangleMesh to copy
+     */
+    public ModelTriangleMesh( ModelTriangleMesh kMesh )
+    {
+        super( kMesh.getVertexCount(),
+              IndexedTriangleArray.COORDINATES | IndexedTriangleArray.NORMALS | IndexedTriangleArray.TEXTURE_COORDINATE_3 | IndexedTriangleArray.COLOR_4,
+              2, new int[]{0, 0},
+               kMesh.getIndexCount() );
+        
+        init();
+        int numVertices = kMesh.getVertexCount();
+        int numIndex = kMesh.getIndexCount();
+        Point3f[] akVertex = new Point3f[ numVertices ];
+        Vector3f[] akNormal = new Vector3f[ numVertices ];
+        Color4f[] akColor = new Color4f[ numVertices ];
+        TexCoord3f[] akTexCoord = new TexCoord3f[ numVertices ];
+        int[] aiConnect = kMesh.getIndexCopy();
+
+        kMesh.getCopies( akVertex, akNormal, akColor, akTexCoord );
+
+        setCoordinates(0, akVertex);
+        setCoordinateIndices(0, aiConnect);
+        setNormals(0, akNormal);
+        setNormalIndices(0, aiConnect);
+        setColors( 0, akColor );
+        setColorIndices(0, aiConnect);
+        setTextureCoordinates( 0, 0, akTexCoord );
+        setTextureCoordinateIndices( 0, 0, aiConnect);
+        m_kGenerator = null;
+    }
+
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Initializes capabilities and temporary variables.
+     */
+    private void init()
+    {
         setCapability(Geometry.ALLOW_INTERSECT);
+        setCapability(GeometryArray.ALLOW_FORMAT_READ);
         setCapability(GeometryArray.ALLOW_COUNT_READ);
         setCapability(GeometryArray.ALLOW_COUNT_WRITE);
         setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_WRITE);
@@ -212,6 +290,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCapability(GeometryArray.ALLOW_NORMAL_WRITE);
         setCapability(GeometryArray.ALLOW_COORDINATE_READ);
         setCapability(GeometryArray.ALLOW_COORDINATE_WRITE);
+        setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
         setCapability(GeometryArray.ALLOW_TEXCOORD_WRITE);
         setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_WRITE);
         setCapability(GeometryArray.ALLOW_COLOR_READ);
@@ -226,16 +305,8 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         m_kE1 = new Vector3f();
         m_kN = new Vector3f();
 
-        setCoordinates(0, akVertex);
-        setCoordinateIndices(0, aiConnect);
-        setNormals(0, akNormal);
-        setNormalIndices(0, aiConnect);
-        setColors(0, akColor);
-        setColorIndices(0, aiConnect);
-        m_kGenerator = null;
     }
 
-    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * DOCUMENT ME!
@@ -909,14 +980,41 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             str = kIn.readLine().trim();
             stoken = new StringTokenizer(str);
 
+            Material kMaterial = null;
+            float transparency = 0f;
             if (stoken.nextToken().equals("appearance")) {
-                str = kIn.readLine();
-                str = kIn.readLine();
-                str = kIn.readLine();
-                str = kIn.readLine();
-                str = kIn.readLine();
-                str = kIn.readLine();
-                str = kIn.readLine();
+                kMaterial = new Material();
+                kMaterial.setCapability(Material.ALLOW_COMPONENT_READ);
+                kMaterial.setCapability(Material.ALLOW_COMPONENT_WRITE);
+
+                str = kIn.readLine(); // material Material {
+                str = kIn.readLine().trim(); // emissive Color
+                stoken = new StringTokenizer(str);  stoken.nextToken();
+                float red = Float.valueOf( stoken.nextToken() ).floatValue();
+                float green = Float.valueOf( stoken.nextToken() ).floatValue();
+                float blue = Float.valueOf( stoken.nextToken() ).floatValue();
+                kMaterial.setEmissiveColor( new Color3f( red, green, blue ) );
+
+                str = kIn.readLine().trim(); // diffuse color
+                stoken = new StringTokenizer(str);  stoken.nextToken();
+                red = Float.valueOf( stoken.nextToken() ).floatValue();
+                green = Float.valueOf( stoken.nextToken() ).floatValue();
+                blue = Float.valueOf( stoken.nextToken() ).floatValue();
+                kMaterial.setDiffuseColor( red, green, blue );
+
+                str = kIn.readLine().trim(); // specular Color
+                stoken = new StringTokenizer(str);  stoken.nextToken();
+                red = Float.valueOf( stoken.nextToken() ).floatValue();
+                green = Float.valueOf( stoken.nextToken() ).floatValue();
+                blue = Float.valueOf( stoken.nextToken() ).floatValue();
+                kMaterial.setSpecularColor( new Color3f( red, green, blue ) );
+
+                str = kIn.readLine().trim(); // transparency
+                stoken = new StringTokenizer(str);  stoken.nextToken();
+                transparency = Float.valueOf( stoken.nextToken() ).floatValue();
+
+                str = kIn.readLine(); // }
+                str = kIn.readLine(); // }
             }
 
             str = kIn.readLine().trim();
@@ -1028,7 +1126,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 
             progress.updateValueImmed(added + (100 / total));
 
-            return new ModelTriangleMesh(akVertex, aiConnect);
+            ModelTriangleMesh kMesh = new ModelTriangleMesh(akVertex, aiConnect);
+            kMesh.setMaterial( kMaterial );
+            kMesh.setTransparency( transparency );
+            return kMesh;
         } catch (IOException e) {
             return null;
         }
@@ -1288,9 +1389,6 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     public float area() {
 
         float fSum = 0.0f;
-        Point3f normal = new Point3f();
-        Vector3f v1 = new Vector3f();
-        Vector3f v2 = new Vector3f();
 
         for (int iT = 0; iT < getIndexCount(); /**/) {
 
@@ -1590,7 +1688,6 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             kTopo.insertTriangle(iV0, iV1, iV2);
         }
 
-        Vector vConsistComps = kTopo.getConsistentComponents();
         HashMap triMap = kTopo.getTriangleMap();
         ModelSurfaceTopology.Triangle kT;
         Iterator kTIter = triMap.keySet().iterator();
@@ -1663,6 +1760,63 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 
         return akVertex;
     }
+
+    /**
+     * Make a copy of the colors of a triangle mesh.
+     *
+     * @return  A copy of the array of colors of the triangle mesh.
+     */
+    public Color4f[] getColorCopy() {
+        Color4f[] akColor = new Color4f[getVertexCount()];
+
+        for (int i = 0; i < getVertexCount(); i++) {
+            akColor[i] = new Color4f();
+        }
+
+        getColors(0, akColor);
+
+        return akColor;
+    }
+
+    /**
+     * Copies the components of a ModelTriangleMesh into the parameters. More
+     * efficient than copying the components individually.
+     * @param akVertex, the array of coordinates to copy into.
+     * @param akNormal, the array of normals to copy into.
+     * @param akColor, the array of colors to copy into.
+     * @param akTexCoord, the array of texture coordinates to copy into.
+     */
+    public void getCopies( Point3f[] akVertex, Vector3f[] akNormal, Color4f[] akColor, TexCoord3f[] akTexCoord  )
+    {
+        for (int i = 0; i < getVertexCount(); i++) {
+            akVertex[i] = new Point3f();
+            akNormal[i] = new Vector3f();
+            akColor[i] = new Color4f();
+            akTexCoord[i] = new TexCoord3f();
+        }
+        getCoordinates(0, akVertex);
+        getNormals(0, akNormal);
+        getColors(0, akColor);
+        getTextureCoordinates(0, 0, akTexCoord);
+    }
+
+    /**
+     * Make a copy of the texture coordinates of a triangle mesh.
+     *
+     * @return  A copy of the array of texture coordinates of the triangle mesh.
+     */
+    public TexCoord3f[] getTexCoordCopy() {
+        TexCoord3f[] akTexCoords = new TexCoord3f[getVertexCount()];
+
+        for (int i = 0; i < getVertexCount(); i++) {
+            akTexCoords[i] = new TexCoord3f();
+        }
+
+        getTextureCoordinates(0, 0, akTexCoords);
+
+        return akTexCoords;
+    }
+
 
     /**
      * Save the triangle mesh to a binary file. The format for the file is
@@ -2677,7 +2831,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         kOut.print(color.x + " ");
         kOut.print(color.y + " ");
         kOut.print(color.z);
-        kOut.print("\n\t\t\ttransparency 0.5\n");
+        kOut.print("\n\t\t\ttransparency " + m_fTransparency + "\n");
         kOut.print("\t\t}\n");
         kOut.print("\t}\n");
 
@@ -3021,7 +3175,38 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setNormalIndices(0, aiConnect);
     }
 
+    /** Sets the material properties of the mesh.
+     * @param kMaterial, new material properties.
+     */
+    public void setMaterial( Material kMaterial )
+    {
+        m_kMaterial = kMaterial;
+    }
 
+    /** Gets the material properties of the mesh:
+     * @return material properties.
+     */
+    public Material getMaterial()
+    {
+        return m_kMaterial;
+    }
+
+    /** Sets the mesh transparency.
+     * @param transparency, mesh transparency
+     */
+    public void setTransparency( float transparency )
+    {
+        m_fTransparency = transparency;
+    }
+
+    /** Gets the mesh transparency.
+     * @return mesh transparency.
+     */
+    public float getTransparency()
+    {
+        return m_fTransparency;
+    }
+    
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 

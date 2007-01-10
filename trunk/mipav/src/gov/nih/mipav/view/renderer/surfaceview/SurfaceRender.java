@@ -19,7 +19,6 @@ import com.sun.j3d.utils.universe.*;
 
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.*;
 
 import java.io.*;
 
@@ -28,6 +27,7 @@ import java.util.*;
 import javax.media.j3d.*;
 
 import javax.swing.event.*;
+import javax.swing.JPanel;
 
 import javax.vecmath.*;
 
@@ -235,6 +235,9 @@ public class SurfaceRender extends RenderViewBase {
     /** Dialog for loading and displaying surfaces. */
     private JPanelSurface surfacePanel;
 
+    /** Panel for displaying the SurfaceTexture interface: */
+    private JPanelSurfaceTexture surfaceTexturePanel;
+
     /*********************************************************************************/
 
     /** Tri planar view and the 3D texture volume view switch group. */
@@ -252,14 +255,14 @@ public class SurfaceRender extends RenderViewBase {
     /** Each Texture2D adds a ImageComponent2D: */
     private ImageComponent2D[] sliceImageComponent2D = new ImageComponent2D[3];
 
+    /** Texture mapping for the RFA probe rotation: */
+    Vector4f[][] m_kRFACoordMaps = new Vector4f[3][2];
+
     /** Cubic tansform3D. */
     private Transform3D transformCubic;
 
     /** Setup the initial position of the image, added to ScenerootTG transform group. */
     private Transform3D transformNode3d;
-
-    /** Units of measure of imageA. */
-    private int[] units = new int[4];
 
     /** View object in rendering a three dimensional scene from one viewpoint. */
     private View view;
@@ -291,6 +294,7 @@ public class SurfaceRender extends RenderViewBase {
 
     /** Dimensions of image A. */
     private int xDim, yDim, zDim, tDim;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -359,8 +363,6 @@ public class SurfaceRender extends RenderViewBase {
             resols[1] = 1.0f;
             resols[2] = 1.0f;
         }
-        units = imageA.getUnitsOfMeasure();
-
         parallelScaleT3D = new Transform3D();
         boxPanel = new JPanelDisplay(this);
         slicePanel = new JPanelSlices(this);
@@ -413,6 +415,8 @@ public class SurfaceRender extends RenderViewBase {
         rotationControlPanel = new JPanelCamera(this);
         geodesicPanel = new JPanelGeodesic(this);
         sculptorPanel = new JPanelSculptor(this);
+        surfaceTexturePanel = new JPanelSurfaceTexture( this, imageA );
+
         rotationControlPanel.setVisible(false);
         _pBar.updateValueImmed(30);
         mousePanel.setup();
@@ -812,6 +816,12 @@ public class SurfaceRender extends RenderViewBase {
             surfacePanel.dispose();
             surfacePanel = null;
         }
+        
+        if ( surfaceTexturePanel != null )
+        {
+            surfaceTexturePanel.dispose();
+            surfaceTexturePanel = null;
+        }        
 
         if (clipPanel != null) {
             clipPanel.dispose();
@@ -1136,6 +1146,23 @@ public class SurfaceRender extends RenderViewBase {
         return surfacePanel;
     }
 
+    /** Returns the surface texture panel interface. 
+     * @return surface texture panel.
+     */
+    public JPanelSurfaceTexture getSurfaceTexture()
+    {
+        return surfaceTexturePanel;
+    }
+
+    /** Returns the surface texture panel mainPanel interface. 
+     * @return surface texture mainPanel.
+     */
+    public JPanel getSurfaceTexturePanel()
+    {
+        return surfaceTexturePanel.getMainPanel();
+    }
+
+
     /**
      * Return the viewPanel from parent frame.
      *
@@ -1197,6 +1224,10 @@ public class SurfaceRender extends RenderViewBase {
         return (Group) kReturn;
     }
 
+    /**
+     * Returns the ModelImage resolutions.
+     * @return ModelImage resolutions
+     */
     public float[] getResolutions()
     {
         return resols;
@@ -2121,6 +2152,10 @@ public class SurfaceRender extends RenderViewBase {
             if ( bUpdate[i] )
             {
                 sliceImageComponent2D[i].set(triSliceImages[i].getImage());
+                triSliceGeometry[i].getAppearance().setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
+                                                                                                 TexCoordGeneration.TEXTURE_COORDINATE_2,
+                                                                                                 m_kRFACoordMaps[i][0],
+                                                                                                 m_kRFACoordMaps[i][1] ) );
                 bReturn = true;
             }
         }
@@ -2551,6 +2586,10 @@ public class SurfaceRender extends RenderViewBase {
                                        null, null, forceShow, boxSliceVertices[i] ) == true)
             {
                 sliceImageComponent2D[i].set(triSliceImages[i].getImage());
+                triSliceGeometry[i].getAppearance().setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
+                                                                                                 TexCoordGeneration.TEXTURE_COORDINATE_2,
+                                                                                                 m_kRFACoordMaps[i][0],
+                                                                                                 m_kRFACoordMaps[i][1] ) );
             }
             /* Turn slice bounding boxes on: */
             if ( bReset )
@@ -2755,18 +2794,21 @@ public class SurfaceRender extends RenderViewBase {
 
         /* Read the axis strings from the FileInfo data structure: */
         String[] akAxisLabels = new String[3];
-        String[][] aakAxisFiles = new String[3][2];
+        String[][] aakAxisFiles = new String[][]{ {"u", "u"}, {"u", "u"}, {"u", "u"}};
         
         int[] axisOrientation = MipavCoordinateSystems.getAxisOrientation(imageA); 
-        for ( int i = 0; i < 3; i++ )
+        if ( axisOrientation != null )
         {
-            akAxisLabels[i] = FileInfoBase.getAxisOrientationStr( axisOrientation[i] ).toLowerCase();
-            // System.out.println(akAxisLabels[i]);
-            /* The file name correspond to the axis strings, read the file
-             * names from the axis strings: */
-            aakAxisFiles[i][0] = new String( String.valueOf( akAxisLabels[i].charAt(0) ) );
-            aakAxisFiles[i][1] = new String( String.valueOf( akAxisLabels[i].charAt( akAxisLabels[i].lastIndexOf( " " ) + 1 ) ) );
-            //System.err.println( aakAxisFiles[i][0] + " " + aakAxisFiles[i][1] );
+            for ( int i = 0; i < 3; i++ )
+            {
+                akAxisLabels[i] = FileInfoBase.getAxisOrientationStr( axisOrientation[i] ).toLowerCase();
+                // System.out.println(akAxisLabels[i]);
+                /* The file name correspond to the axis strings, read the file
+                 * names from the axis strings: */
+                aakAxisFiles[i][0] = new String( String.valueOf( akAxisLabels[i].charAt(0) ) );
+                aakAxisFiles[i][1] = new String( String.valueOf( akAxisLabels[i].charAt( akAxisLabels[i].lastIndexOf( " " ) + 1 ) ) );
+                //System.err.println( aakAxisFiles[i][0] + " " + aakAxisFiles[i][1] );
+            }
         }
 
         /* Get the sides of the faces that correspond to the axis labels. Axis
@@ -2969,6 +3011,75 @@ public class SurfaceRender extends RenderViewBase {
         boxSliceVertices[2] = null;
     }
 
+    /** Generates the texture coord map vectors for the three orthogonal
+     * slices. */
+    private void generateRFACoordMaps()
+    {
+        
+        // Define vectors used for mapping each coordinate from its
+        // real range X=[0,xdim-1], Y=[0,ydim-1], Z=[0,zdim-1] into
+        // the (s,t,r) texture coordinates where each texture coordinate
+        // is defined over the range [0,1].
+        // Note that integral screen coordinates represent pixel centers
+        // whereas integral texture coordinates represent texel boundaries.
+        // Therefore, X maps to s=(X+0.5)/xdim, and correspondingly
+        // for Y and Z mapping to t and r, respectively.
+        for ( int i = 0; i < 2; i++ )
+        {
+            m_kRFACoordMaps[0][i] =
+                generateRFACoordMaps( FileInfoBase.AXIAL, i );
+            m_kRFACoordMaps[1][i] =
+                generateRFACoordMaps( FileInfoBase.CORONAL, i );
+            m_kRFACoordMaps[2][i] =
+                generateRFACoordMaps( FileInfoBase.SAGITTAL, i );
+        }
+
+        /* The following logic is to match TextureCoordinate Maps to the
+         * ViewJComponentBoxSlice Vertex Array: */
+        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.AXIAL );
+        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.CORONAL );
+        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.SAGITTAL );
+
+        if ( (axialOrder[0] > axialOrder[1]) && (axialOrder[2] != 0) )
+        {
+            Vector4f temp = m_kRFACoordMaps[0][0];
+            m_kRFACoordMaps[0][0] = m_kRFACoordMaps[0][1];
+            m_kRFACoordMaps[0][1] = temp;
+        }
+        if ( (coronalOrder[0] > coronalOrder[1]) && (coronalOrder[2] != 0) )
+        {
+            Vector4f temp = m_kRFACoordMaps[1][0];
+            m_kRFACoordMaps[1][0] = m_kRFACoordMaps[1][1];
+            m_kRFACoordMaps[1][1] = temp;
+        }
+        if ( (sagittalOrder[0] > sagittalOrder[1]) && (sagittalOrder[2] != 0) )
+        {
+            Vector4f temp = m_kRFACoordMaps[2][0];
+            m_kRFACoordMaps[2][0] = m_kRFACoordMaps[2][1];
+            m_kRFACoordMaps[2][1] = temp;
+        }
+
+        if ( (axialOrder[0] < axialOrder[1]) && (axialOrder[2] == 0) )
+        {
+            Vector4f temp = m_kRFACoordMaps[0][0];
+            m_kRFACoordMaps[0][0] = m_kRFACoordMaps[0][1];
+            m_kRFACoordMaps[0][1] = temp;
+        }
+        if ( (coronalOrder[0] < coronalOrder[1]) && (coronalOrder[2] == 0) )
+        {
+            Vector4f temp = m_kRFACoordMaps[1][0];
+            m_kRFACoordMaps[1][0] = m_kRFACoordMaps[1][1];
+            m_kRFACoordMaps[1][1] = temp;
+        }
+        if ( (sagittalOrder[0] < sagittalOrder[1]) && (sagittalOrder[2] == 0) )
+        {
+            Vector4f temp = m_kRFACoordMaps[2][0];
+            m_kRFACoordMaps[2][0] = m_kRFACoordMaps[2][1];
+            m_kRFACoordMaps[2][1] = temp;
+        }
+    }
+
+
     /**
      * create texture coordmaps for the texture-mapped planes displaying the
      * triSliceImages.
@@ -2976,7 +3087,7 @@ public class SurfaceRender extends RenderViewBase {
      * coordinates are generated (AXIAL, CORONAL, or SAGITTAL)
      * @param texCoord, the dimension along which the texture coordinate varies
      */
-    private Vector4f generateCoordMaps( int orientation, int texCoord )
+    private Vector4f generateRFACoordMaps( int orientation, int texCoord )
     {
         int[] axisOrder = MipavCoordinateSystems.getAxisOrder( imageA, orientation );
         float[] coordMapArray = new float[3];
@@ -3100,66 +3211,8 @@ public class SurfaceRender extends RenderViewBase {
             maxBox = zBox;
         }
 
-        // Define vectors used for mapping each coordinate from its
-        // real range X=[0,xdim-1], Y=[0,ydim-1], Z=[0,zdim-1] into
-        // the (s,t,r) texture coordinates where each texture coordinate
-        // is defined over the range [0,1].
-        // Note that integral screen coordinates represent pixel centers
-        // whereas integral texture coordinates represent texel boundaries.
-        // Therefore, X maps to s=(X+0.5)/xdim, and correspondingly
-        // for Y and Z mapping to t and r, respectively.
-        Vector4f[][] coordMaps = new Vector4f[3][2];
-        for ( int i = 0; i < 2; i++ )
-        {
-            coordMaps[0][i] = generateCoordMaps( FileInfoBase.AXIAL, i );
-            coordMaps[1][i] = generateCoordMaps( FileInfoBase.CORONAL, i );
-            coordMaps[2][i] = generateCoordMaps( FileInfoBase.SAGITTAL, i );
-        }
-
-        /* The following logic is to match TextureCoordinate Maps to the
-         * ViewJComponentBoxSlice Vertex Array: */
-        int[] axialOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.AXIAL );
-        int[] coronalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.CORONAL );
-        int[] sagittalOrder = MipavCoordinateSystems.getAxisOrder( imageA, FileInfoBase.SAGITTAL );
-
-        if ( (axialOrder[0] > axialOrder[1]) && (axialOrder[2] != 0) )
-        {
-            Vector4f temp = coordMaps[0][0];
-            coordMaps[0][0] = coordMaps[0][1];
-            coordMaps[0][1] = temp;
-        }
-        if ( (coronalOrder[0] > coronalOrder[1]) && (coronalOrder[2] != 0) )
-        {
-            Vector4f temp = coordMaps[1][0];
-            coordMaps[1][0] = coordMaps[1][1];
-            coordMaps[1][1] = temp;
-        }
-        if ( (sagittalOrder[0] > sagittalOrder[1]) && (sagittalOrder[2] != 0) )
-        {
-            Vector4f temp = coordMaps[2][0];
-            coordMaps[2][0] = coordMaps[2][1];
-            coordMaps[2][1] = temp;
-        }
-
-        if ( (axialOrder[0] < axialOrder[1]) && (axialOrder[2] == 0) )
-        {
-            Vector4f temp = coordMaps[0][0];
-            coordMaps[0][0] = coordMaps[0][1];
-            coordMaps[0][1] = temp;
-        }
-        if ( (coronalOrder[0] < coronalOrder[1]) && (coronalOrder[2] == 0) )
-        {
-            Vector4f temp = coordMaps[1][0];
-            coordMaps[1][0] = coordMaps[1][1];
-            coordMaps[1][1] = temp;
-        }
-        if ( (sagittalOrder[0] < sagittalOrder[1]) && (sagittalOrder[2] == 0) )
-        {
-            Vector4f temp = coordMaps[2][0];
-            coordMaps[2][0] = coordMaps[2][1];
-            coordMaps[2][1] = temp;
-        }
-
+        // must be called before xBox, yBox, and zBox are normalized:
+        generateRFACoordMaps();
 
         // Normalize the size
         // xBox range between 0 - 1.
@@ -3243,15 +3296,18 @@ public class SurfaceRender extends RenderViewBase {
             app.setTexture(sliceTextures[i]);
             app.setTexCoordGeneration(new TexCoordGeneration(TexCoordGeneration.OBJECT_LINEAR,
                                                              TexCoordGeneration.TEXTURE_COORDINATE_2,
-                                                             coordMaps[i][0],
-                                                             coordMaps[i][1] ) );
+                                                             m_kRFACoordMaps[i][0],
+                                                             m_kRFACoordMaps[i][1] ) );
             app.setPolygonAttributes( new PolygonAttributes( PolygonAttributes.POLYGON_FILL,
                                                              PolygonAttributes.CULL_NONE, 0f ) );
+            app.setCapability( Appearance.ALLOW_TEXGEN_WRITE );
 
             QuadArray kGeometry = new QuadArray(4, QuadArray.COORDINATES | QuadArray.TEXTURE_COORDINATE_2);
             kGeometry.setCoordinates( 0, boxSlices[i].getVertices() );
             triSliceGeometry[i] = new Shape3D( kGeometry, app );
             triSliceGeometry[i].setCapability( Shape3D.ALLOW_GEOMETRY_WRITE );
+            triSliceGeometry[i].setCapability( Shape3D.ALLOW_APPEARANCE_WRITE );
+            triSliceGeometry[i].setCapability( Shape3D.ALLOW_APPEARANCE_READ );
             objTransSlices_TG[i].addChild( triSliceGeometry[i] );
 
         }
@@ -3483,47 +3539,4 @@ public class SurfaceRender extends RenderViewBase {
         dViewWidth = 15.0f * Math.tan(dFieldOfView / 15.0f);
         m_dOriginalScreenScale = kScreen.getPhysicalScreenWidth() / dViewWidth;
     }
-
-    /** 
-     * generates an ImageComponent3D containing the ModelImage data. Uses the
-     * PatientSlice object to output the data into the ImageComponent3D, so
-     * lut changes can be applied. The ImageComponent3D is used to create a
-     * Texture3D object for texture-mapping the ModelImage data onto
-     * ModelTriangleMesh objects.
-     * @return ImageComponent3D containing the ModelImage data.
-     */
-    public ImageComponent3D generateVolumeTexture()
-    {
-        if ( imageA == null )
-        {
-            return null;
-        }
-        int buffFactor = imageA.isColorImage() ? 4 : 1;
-        int[] localExtents = imageA.getExtents();
-        int[] iImageBufferA = new int[ localExtents[0] * localExtents[1] * buffFactor ];
-        int iNumberSlices = localExtents[2];
-        ImageComponent3D kImageComponent = new ImageComponent3D(ImageComponent.FORMAT_RGBA,
-                                                                localExtents[0], localExtents[1], localExtents[2],
-                                                                true, false);
-        kImageComponent.setCapability(ImageComponent3D.ALLOW_IMAGE_WRITE);
-        kImageComponent.setCapability(ImageComponent3D.ALLOW_IMAGE_READ);
-        kImageComponent.setCapability(ImageComponent3D.ALLOW_SIZE_READ);
-        kImageComponent.setCapability(ImageComponent3D.ALLOW_FORMAT_READ);
-
-        PatientSlice kPatientSlice = new PatientSlice( imageA, LUTa, null, null, FileInfoBase.UNKNOWN_ORIENT );
-
-        for (int iZ = 0; iZ < iNumberSlices; iZ++) {
-            kPatientSlice.updateSlice( iZ );
-
-            if ( kPatientSlice.showUsingOrientation( 0, iImageBufferA, null, true, false, 0, false ) )
-            {
-                BufferedImage kBuff = new BufferedImage( localExtents[0], localExtents[1], BufferedImage.TYPE_INT_ARGB );
-                kBuff.setRGB( 0, 0, localExtents[0], localExtents[1], iImageBufferA, 0, localExtents[0] );
-                kImageComponent.set( iZ, kBuff );
-            }
-        }
-        return kImageComponent;
-    }
-
-
 }

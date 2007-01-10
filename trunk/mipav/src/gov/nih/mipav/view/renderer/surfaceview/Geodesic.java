@@ -120,6 +120,12 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
     /** triangle normal array. */
     private Vector3f[] m_akNormals;
 
+    /** triangle texture coordinate array. */
+    private TexCoord3f[] m_akTexCoords;
+
+    /** triangle color array. */
+    private Color4f[] m_akColors;
+
     /** toggle for displaying Dijkstra's path as well as the smoothed path:. */
     private boolean m_bDisplayDijkstra = false;
 
@@ -294,6 +300,12 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
     /** New normal link list. */
     private LinkedList m_kNewNormals;
+
+    /** New texCoords link list. */
+    private LinkedList m_kNewTexCoords;
+
+    /** New Colors link list. */
+    private LinkedList m_kNewColors;
 
     /** new triangle link list. */
     private LinkedList m_kNewTriangles;
@@ -985,6 +997,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
         m_kNewVerts = new LinkedList();
         m_kNewNormals = new LinkedList();
+        m_kNewTexCoords = new LinkedList();
+        m_kNewColors = new LinkedList();
         m_kNewTriangles = new LinkedList();
         m_kRemoveTriangles = new LinkedList();
 
@@ -1031,6 +1045,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         if (kGeodesic_Separate.size() > 0) {
             m_kNewVerts.clear();
             m_kNewNormals.clear();
+            m_kNewTexCoords.clear();
+            m_kNewColors.clear();
             m_kNewTriangles.clear();
 
             iVertexCount = kCutMesh.getVertexCount();
@@ -1078,19 +1094,10 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
             /* Backup the unmodified mesh: */
             m_kSurfaceBackup = null;
-            m_kSurfaceBackup = new ModelTriangleMesh(m_kSurface.getVertexCopy(), m_kSurface.getNormalCopy(),
-                                                     m_kSurface.getIndexCopy());
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_COUNT_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_COLOR_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_NORMAL_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_COUNT_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-            m_kSurfaceBackup.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-            m_kSurfaceBackup.setCapability(IndexedGeometryArray.ALLOW_COLOR_INDEX_READ);
-            m_kSurfaceBackup.setCapability(IndexedGeometryArray.ALLOW_NORMAL_INDEX_READ);
-            m_kSurfaceBackup.setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_READ);
+            m_kSurfaceBackup = new ModelTriangleMesh(m_kSurface ); 
+//             .getVertexCopy(), m_kSurface.getNormalCopy(),
+//                                                      m_kSurface.getColorCopy(), m_kSurface.getTexCoordCopy(), 
+//                                                      m_kSurface.getIndexCopy() );
 
             m_kPanel.replaceMesh(m_kSurface, m_kModified);
             m_kSurface = null;
@@ -1104,6 +1111,10 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         m_kNewVerts = null;
         m_kNewNormals.clear();
         m_kNewNormals = null;
+        m_kNewTexCoords.clear();
+        m_kNewTexCoords = null;
+        m_kNewColors.clear();
+        m_kNewColors = null;
         m_kNewTriangles.clear();
         m_kNewTriangles = null;
         m_kRemoveTriangles.clear();
@@ -2210,7 +2221,9 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
      *
      * @return  int
      */
-    private int checkOnEdge(ModelTriangleMesh kMesh, Point3f kPoint, int[] aiTriIndex, Vector3f kNormal) {
+    private int checkOnEdge(ModelTriangleMesh kMesh, Point3f kPoint, int[] aiTriIndex,
+                            Vector3f kNormal, TexCoord3f kTexCoord, Color4f kColor )
+    {
         int iReturn = -1;
         m_fEpsilon *= 2f;
 
@@ -2232,6 +2245,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
                                         (fDot * kEdge.z) + kTri1.z);
 
         Vector3f kNewNormal;
+        TexCoord3f kNewTexCoord;
+        Color4f kNewColor;
 
         if (kNewPoint.epsilonEquals(kPoint, m_fEpsilon)) {
             kPoint.x = kNewPoint.x;
@@ -2242,6 +2257,17 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
             kNormal.x = kNewNormal.x;
             kNormal.y = kNewNormal.y;
             kNormal.z = kNewNormal.z;
+
+            kNewTexCoord = getTexCoord(kMesh, aiTriIndex[0], aiTriIndex[1]);
+            kTexCoord.x = kNewTexCoord.x;
+            kTexCoord.y = kNewTexCoord.y;
+            kTexCoord.z = kNewTexCoord.z;
+
+            kNewColor = getColor(kMesh, aiTriIndex[0], aiTriIndex[1]);
+            kColor.x = kNewColor.x;
+            kColor.y = kNewColor.y;
+            kColor.z = kNewColor.z;
+            kColor.w = kNewColor.w;
             iReturn = 2;
         }
 
@@ -2262,6 +2288,17 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
                 kNormal.x = kNewNormal.x;
                 kNormal.y = kNewNormal.y;
                 kNormal.z = kNewNormal.z;
+
+                kNewTexCoord = getTexCoord(kMesh, aiTriIndex[0], aiTriIndex[2]);
+                kTexCoord.x = kNewTexCoord.x;
+                kTexCoord.y = kNewTexCoord.y;
+                kTexCoord.z = kNewTexCoord.z;
+
+                kNewColor = getColor(kMesh, aiTriIndex[0], aiTriIndex[2]);
+                kColor.x = kNewColor.x;
+                kColor.y = kNewColor.y;
+                kColor.z = kNewColor.z;
+                kColor.w = kNewColor.w;
                 iReturn = 1;
             }
         }
@@ -2282,6 +2319,17 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
                 kNormal.x = kNewNormal.x;
                 kNormal.y = kNewNormal.y;
                 kNormal.z = kNewNormal.z;
+
+                kNewTexCoord = getTexCoord(kMesh, aiTriIndex[2], aiTriIndex[1]);
+                kTexCoord.x = kNewTexCoord.x;
+                kTexCoord.y = kNewTexCoord.y;
+                kTexCoord.z = kNewTexCoord.z;
+
+                kNewColor = getColor(kMesh, aiTriIndex[2], aiTriIndex[1]);
+                kColor.x = kNewColor.x;
+                kColor.y = kNewColor.y;
+                kColor.z = kNewColor.z;
+                kColor.w = kNewColor.w;
                 iReturn = 0;
             }
         }
@@ -2297,9 +2345,22 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
             kNormal.x = kNewNormal.x;
             kNormal.y = kNewNormal.y;
             kNormal.z = kNewNormal.z;
+
+            kNewTexCoord = getTexCoord(kMesh, aiTriIndex);
+            kTexCoord.x = kNewTexCoord.x;
+            kTexCoord.y = kNewTexCoord.y;
+            kTexCoord.z = kNewTexCoord.z;
+
+            kNewColor = getColor(kMesh, aiTriIndex);
+            kColor.x = kNewColor.x;
+            kColor.y = kNewColor.y;
+            kColor.z = kNewColor.z;
+            kColor.w = kNewColor.w;
         }
 
         kNewNormal = null;
+        kNewTexCoord = null;
+        kNewColor = null;
 
         return iReturn;
     }
@@ -2385,25 +2446,35 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
     private boolean createEdgeLists(ModelTriangleMesh kMesh) {
 
         if (m_akCoordinates != null) {
-
             for (int iVert = 0; iVert < m_akCoordinates.length; iVert++) {
                 m_akCoordinates[iVert] = null;
             }
         }
-
         m_akCoordinates = null;
 
         if (m_akNormals != null) {
-
             for (int iVert = 0; iVert < m_akNormals.length; iVert++) {
                 m_akNormals[iVert] = null;
             }
         }
-
         m_akNormals = null;
 
-        if (m_akEdgeList != null) {
+        if (m_akTexCoords != null) {
+            for (int iVert = 0; iVert < m_akTexCoords.length; iVert++) {
+                m_akTexCoords[iVert] = null;
+            }
+        }
+        m_akTexCoords = null;
 
+        if (m_akColors != null) {
+            for (int iVert = 0; iVert < m_akColors.length; iVert++) {
+                m_akColors[iVert] = null;
+            }
+        }
+        m_akColors = null;
+
+
+        if (m_akEdgeList != null) {
             for (int iEdge = 0; iEdge < m_akEdgeList.length; iEdge++) {
                 m_akEdgeList[iEdge].clear();
             }
@@ -2418,6 +2489,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         m_iVertexCount = kMesh.getVertexCount();
         m_akCoordinates = new Point3f[m_iVertexCount];
         m_akNormals = new Vector3f[m_iVertexCount];
+        m_akTexCoords = new TexCoord3f[m_iVertexCount];
+        m_akColors = new Color4f[m_iVertexCount];
 
         m_akEdgeList = new LinkedList[m_iVertexCount];
 
@@ -2425,10 +2498,14 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
             m_akEdgeList[iEdge] = new LinkedList();
             m_akCoordinates[iEdge] = new Point3f();
             m_akNormals[iEdge] = new Vector3f();
+            m_akTexCoords[iEdge] = new TexCoord3f();
+            m_akColors[iEdge] = new Color4f( );
         }
 
         kMesh.getCoordinates(0, m_akCoordinates);
         kMesh.getNormals(0, m_akNormals);
+        kMesh.getTextureCoordinates(0, 0, m_akTexCoords);
+        kMesh.getColors(0, m_akColors);
 
         m_iIndexCount = kMesh.getIndexCount();
         m_aiIndex = new int[m_iIndexCount];
@@ -2523,6 +2600,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
          * right front-facing normals : */
         Point3f[] akVertices = new Point3f[iVertexCount];
         Vector3f[] akNormals = new Vector3f[iVertexCount];
+        TexCoord3f[] akTexCoords = new TexCoord3f[iVertexCount];
+        Color4f[] akColors = new Color4f[iVertexCount];
 
         int iIndex = 0;
 
@@ -2532,6 +2611,12 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
             Vector3f kNormal = new Vector3f();
             kMesh.getNormal(iVert, kNormal);
+
+            TexCoord3f kTexCoord = new TexCoord3f();
+            kMesh.getTextureCoordinate(0, iVert, kTexCoord);
+
+            Color4f kColor = new Color4f( );
+            kMesh.getColor(iVert, kColor);
 
             boolean bAdd = true;
 
@@ -2545,6 +2630,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
             if (bAdd && (iIndex < iVertexCount)) {
                 akVertices[iIndex] = new Point3f(kCoordinate);
                 akNormals[iIndex] = new Vector3f(kNormal);
+                akTexCoords[iIndex] = new TexCoord3f(kTexCoord);
+                akColors[iIndex] = new Color4f(kColor);
                 iIndex++;
             }
         }
@@ -2552,6 +2639,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         for (int iNewIndex = 0; iNewIndex < m_kNewVerts.size(); iNewIndex++) {
             akVertices[iIndex] = new Point3f((Point3f) m_kNewVerts.get(iNewIndex));
             akNormals[iIndex] = new Vector3f((Vector3f) m_kNewNormals.get(iNewIndex));
+            akTexCoords[iIndex] = new TexCoord3f((TexCoord3f) m_kNewTexCoords.get(iNewIndex));
+            akColors[iIndex] = new Color4f((Color4f) m_kNewColors.get(iNewIndex));
             iIndex++;
         }
 
@@ -2636,14 +2725,7 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
             return null;
         }
 
-        ModelTriangleMesh kCutMesh = new ModelTriangleMesh(akVertices, akNormals, aiConnect);
-        kCutMesh.setCapability(GeometryArray.ALLOW_COUNT_READ);
-        kCutMesh.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-        kCutMesh.setCapability(GeometryArray.ALLOW_NORMAL_READ);
-        kCutMesh.setCapability(GeometryArray.ALLOW_COUNT_READ);
-        kCutMesh.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-        kCutMesh.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-        kCutMesh.setCapability(IndexedGeometryArray.ALLOW_NORMAL_INDEX_READ);
+        ModelTriangleMesh kCutMesh = new ModelTriangleMesh(akVertices, akNormals, akColors, akTexCoords, aiConnect);
 
         return kCutMesh;
     }
@@ -3174,6 +3256,67 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
     }
 
     /**
+     * Calculates and returns the start point texture coordinate for a new
+     * starting point inside an existing triangle. The new texture coordinate
+     * is the average of the texture coordinates at each point in the triangle
+     * the starting point is inside
+     *
+     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   aiIndex  int[] 3 triangle points
+     *
+     * @return  Texture3f Average texture coordinate of the triangle.
+     */
+    private TexCoord3f getTexCoord(ModelTriangleMesh kMesh, int[] aiIndex) {
+        TexCoord3f kTexCoord = new TexCoord3f();
+        TexCoord3f kTexCoord0 = new TexCoord3f();
+        kMesh.getTextureCoordinate(0, aiIndex[0], kTexCoord0);
+
+        TexCoord3f kTexCoord1 = new TexCoord3f();
+        kMesh.getTextureCoordinate(0, aiIndex[1], kTexCoord1);
+
+        TexCoord3f kTexCoord2 = new TexCoord3f();
+        kMesh.getTextureCoordinate(0, aiIndex[2], kTexCoord2);
+
+        kTexCoord.x = (kTexCoord0.x + kTexCoord1.x + kTexCoord2.x) / 3.0f;
+
+        kTexCoord.y = (kTexCoord0.y + kTexCoord1.y + kTexCoord2.y) / 3.0f;
+
+        kTexCoord.z = (kTexCoord0.z + kTexCoord1.z + kTexCoord2.z) / 3.0f;
+
+        return kTexCoord;
+    }
+
+    /**
+     * Calculates and returns the start point color for a new starting point
+     * inside an existing triangle. The new color is the average of the colors
+     * at each point in the triangle the starting point is inside
+     *
+     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   aiIndex  int[] 3 triangle points
+     *
+     * @return  Color4f Average color of the triangle.
+     */
+    private Color4f getColor(ModelTriangleMesh kMesh, int[] aiIndex) {
+        Color4f kColor = new Color4f();
+        Color4f kColor0 = new Color4f();
+        kMesh.getColor(aiIndex[0], kColor0);
+
+        Color4f kColor1 = new Color4f();
+        kMesh.getColor(aiIndex[1], kColor1);
+
+        Color4f kColor2 = new Color4f();
+        kMesh.getColor(aiIndex[2], kColor2);
+
+        kColor.x = (kColor0.x + kColor1.x + kColor2.x) / 3.0f;
+        kColor.y = (kColor0.y + kColor1.y + kColor2.y) / 3.0f;
+        kColor.z = (kColor0.z + kColor1.z + kColor2.z) / 3.0f;
+        kColor.w = (kColor0.w + kColor1.w + kColor2.w) / 3.0f;
+
+        return kColor;
+    }
+
+
+    /**
      * Get the the triangle normal from the given triangle index.
      *
      * @param   kMesh    ModelTriangleMesh surface mesh
@@ -3200,6 +3343,60 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
         return kNormal;
     }
+
+    /**
+     * Get the the triangle texture coordinate from the given triangle index.
+     *
+     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   iIndex1  int triangle point index 1
+     * @param   iIndex2  int triangle point index 2
+     *
+     * @return  interpolated texture coordinate the triangle
+     */
+    private TexCoord3f getTexCoord(ModelTriangleMesh kMesh, int iIndex1, int iIndex2) {
+        TexCoord3f kSide1 = new TexCoord3f();
+        TexCoord3f kSide2 = new TexCoord3f();
+        kMesh.getTextureCoordinate(0, iIndex1, kSide1);
+        kMesh.getTextureCoordinate(0, iIndex2, kSide2);
+
+        TexCoord3f kTexCoord = new TexCoord3f();
+        kTexCoord.x = (kSide1.x + kSide2.x) / 2.0f;
+        kTexCoord.y = (kSide1.y + kSide2.y) / 2.0f;
+        kTexCoord.z = (kSide1.z + kSide2.z) / 2.0f;
+
+        kSide1 = null;
+        kSide2 = null;
+
+        return kTexCoord;
+    }
+
+    /**
+     * Get the the triangle color from the given triangle index.
+     *
+     * @param   kMesh    ModelTriangleMesh surface mesh
+     * @param   iIndex1  int triangle point index 1
+     * @param   iIndex2  int triangle point index 2
+     *
+     * @return  interpolated color the triangle
+     */
+    private Color4f getColor(ModelTriangleMesh kMesh, int iIndex1, int iIndex2) {
+        Color4f kSide1 = new Color4f();
+        Color4f kSide2 = new Color4f();
+        kMesh.getColor(iIndex1, kSide1);
+        kMesh.getColor(iIndex2, kSide2);
+
+        Color4f kColor = new Color4f();
+        kColor.x = (kSide1.x + kSide2.x) / 2.0f;
+        kColor.y = (kSide1.y + kSide2.y) / 2.0f;
+        kColor.z = (kSide1.z + kSide2.z) / 2.0f;
+        kColor.w = (kSide1.w + kSide2.w) / 2.0f;
+
+        kSide1 = null;
+        kSide2 = null;
+
+        return kColor;
+    }
+
 
     /**
      * getPathIndex returns what the new vertex index should be. If the input index, iIndex, does fall on the cut path,
@@ -3387,10 +3584,16 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         int iEndEdge = -1;
         Vector3f kStartNormal = new Vector3f();
         Vector3f kEndNormal = new Vector3f();
+
+        TexCoord3f kStartTexCoord = new TexCoord3f();
+        TexCoord3f kEndTexCoord = new TexCoord3f();
+
+        Color4f kStartColor = new Color4f();
+        Color4f kEndColor = new Color4f();
         m_fEpsilon /= 5.0f;
 
         if (bAddStart) {
-            iStartEdge = checkOnEdge(m_kSurface, m_kStartPoint, m_aiStartIndex, kStartNormal);
+            iStartEdge = checkOnEdge(m_kSurface, m_kStartPoint, m_aiStartIndex, kStartNormal, kStartTexCoord, kStartColor);
 
             if (iStartEdge != -1) {
                 bStartOnEdge = true;
@@ -3398,7 +3601,7 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         }
 
         if (bAddEnd) {
-            iEndEdge = checkOnEdge(m_kSurface, m_kEndPoint, m_aiEndIndex, kEndNormal);
+            iEndEdge = checkOnEdge(m_kSurface, m_kEndPoint, m_aiEndIndex, kEndNormal, kEndTexCoord, kEndColor);
 
             if (iEndEdge != -1) {
                 bEndOnEdge = true;
@@ -3409,6 +3612,12 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
         /* Normals: */
         m_akNormals = new Vector3f[m_iVertexCount];
+
+        /* TextureCoordinates: */
+        m_akTexCoords = new TexCoord3f[m_iVertexCount];
+
+        /* Colors: */
+        m_akColors = new Color4f[m_iVertexCount];
 
         /* Vertices: */
         m_akCoordinates = new Point3f[m_iVertexCount];
@@ -3448,6 +3657,12 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
                 m_akNormals[iVertex] = new Vector3f();
                 m_kSurface.getNormal(iVertex, m_akNormals[iVertex]);
+
+                m_akTexCoords[iVertex] = new TexCoord3f();
+                m_kSurface.getTextureCoordinate(0, iVertex, m_akTexCoords[iVertex]);
+
+                m_akColors[iVertex] = new Color4f();
+                m_kSurface.getColor(iVertex, m_akColors[iVertex]);
             }
             /* All the vertices have been added, if the number of new vertices
              * is 2, add both the start and end vertices: */
@@ -3456,9 +3671,13 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
                 if (iVertex == (m_iVertexCount - 2)) {
                     m_akCoordinates[iVertex] = new Point3f(m_kStartPoint);
                     m_akNormals[iVertex] = new Vector3f(kStartNormal);
+                    m_akTexCoords[iVertex] = new TexCoord3f(kStartTexCoord);
+                    m_akColors[iVertex] = new Color4f(kStartColor);
                 } else if (iVertex == (m_iVertexCount - 1)) {
                     m_akCoordinates[iVertex] = new Point3f(m_kEndPoint);
                     m_akNormals[iVertex] = new Vector3f(kEndNormal);
+                    m_akTexCoords[iVertex] = new TexCoord3f(kEndTexCoord);
+                    m_akColors[iVertex] = new Color4f(kEndColor);
                 }
             }
             /* All the vertices have been added, if the number of new vertices
@@ -3469,9 +3688,13 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
                 if (bAddStart) {
                     m_akCoordinates[iVertex] = new Point3f(m_kStartPoint);
                     m_akNormals[iVertex] = new Vector3f(kStartNormal);
+                    m_akTexCoords[iVertex] = new TexCoord3f(kStartTexCoord);
+                    m_akColors[iVertex] = new Color4f(kStartColor);
                 } else if (bAddEnd) {
                     m_akCoordinates[iVertex] = new Point3f(m_kEndPoint);
                     m_akNormals[iVertex] = new Vector3f(kEndNormal);
+                    m_akTexCoords[iVertex] = new TexCoord3f(kEndTexCoord);
+                    m_akColors[iVertex] = new Color4f(kEndColor);
                 }
             }
 
@@ -3801,19 +4024,7 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         m_iNumTriangles += 2 * iNumberNewVertices;
 
         /* Store the new Mesh in m_kModified: */
-        m_kModified = new ModelTriangleMesh(m_akCoordinates, m_akNormals, m_aiIndex);
-        m_kModified.setCapability(GeometryArray.ALLOW_COUNT_READ);
-        m_kModified.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-        m_kModified.setCapability(GeometryArray.ALLOW_COLOR_READ);
-        m_kModified.setCapability(GeometryArray.ALLOW_NORMAL_READ);
-        m_kModified.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
-        m_kModified.setCapability(GeometryArray.ALLOW_COUNT_READ);
-        m_kModified.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-        m_kModified.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-        m_kModified.setCapability(IndexedGeometryArray.ALLOW_COLOR_INDEX_READ);
-        m_kModified.setCapability(IndexedGeometryArray.ALLOW_NORMAL_INDEX_READ);
-        m_kModified.setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_READ);
-
+        m_kModified = new ModelTriangleMesh(m_akCoordinates, m_akNormals, m_akColors, m_akTexCoords, m_aiIndex);
         aiIndex = null;
 
         if (bFirstSegment) {
@@ -3887,6 +4098,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
     private void outputDeletedAsNew() {
         LinkedList kVertices = new LinkedList();
         LinkedList kNormals = new LinkedList();
+        LinkedList kTexCoords = new LinkedList();
+        LinkedList kColors = new LinkedList();
 
         int iNumDeletedTris = 0;
         int iNumTris = m_iIndexCount / 3;
@@ -3912,16 +4125,22 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
                 if (!kVertices.contains(m_akCoordinates[i0])) {
                     kVertices.add(m_akCoordinates[i0]);
                     kNormals.add(m_akNormals[i0]);
+                    kTexCoords.add(m_akTexCoords[i0]);
+                    kColors.add(m_akColors[i0]);
                 }
 
                 if (!kVertices.contains(m_akCoordinates[i1])) {
                     kVertices.add(m_akCoordinates[i1]);
                     kNormals.add(m_akNormals[i1]);
+                    kTexCoords.add(m_akTexCoords[i1]);
+                    kColors.add(m_akColors[i1]);
                 }
 
                 if (!kVertices.contains(m_akCoordinates[i2])) {
                     kVertices.add(m_akCoordinates[i2]);
                     kNormals.add(m_akNormals[i2]);
+                    kTexCoords.add(m_akTexCoords[i2]);
+                    kColors.add(m_akColors[i2]);
                 }
 
                 int iNewIndex0 = kVertices.indexOf(m_akCoordinates[i0]);
@@ -3938,30 +4157,26 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
         Point3f[] kCoordinates = new Point3f[kVertices.size()];
         Vector3f[] kNormalVectors = new Vector3f[kNormals.size()];
+        TexCoord3f[] kTexCoordVectors = new TexCoord3f[kTexCoords.size()];
+        Color4f[] kColorVectors = new Color4f[kColors.size()];
 
         for (int iVert = 0; iVert < kVertices.size(); iVert++) {
             kCoordinates[iVert] = new Point3f((Point3f) kVertices.get(iVert));
             kNormalVectors[iVert] = new Vector3f((Vector3f) kNormals.get(iVert));
+            kTexCoordVectors[iVert] = new TexCoord3f((TexCoord3f) kTexCoords.get(iVert));
+            kColorVectors[iVert] = new Color4f((Color4f) kColors.get(iVert));
         }
 
         kVertices.clear();
         kVertices = null;
         kNormals.clear();
         kNormals = null;
+        kTexCoords.clear();
+        kTexCoords = null;
+        kColors.clear();
+        kColors = null;
 
-        ModelTriangleMesh kAddMesh = new ModelTriangleMesh(kCoordinates, kNormalVectors, aiConnect);
-        kAddMesh.setCapability(GeometryArray.ALLOW_COUNT_READ);
-        kAddMesh.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-        kAddMesh.setCapability(GeometryArray.ALLOW_COLOR_READ);
-        kAddMesh.setCapability(GeometryArray.ALLOW_NORMAL_READ);
-        kAddMesh.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
-        kAddMesh.setCapability(GeometryArray.ALLOW_COUNT_READ);
-        kAddMesh.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-        kAddMesh.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-        kAddMesh.setCapability(IndexedGeometryArray.ALLOW_COLOR_INDEX_READ);
-        kAddMesh.setCapability(IndexedGeometryArray.ALLOW_NORMAL_INDEX_READ);
-        kAddMesh.setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_READ);
-
+        ModelTriangleMesh kAddMesh = new ModelTriangleMesh(kCoordinates, kNormalVectors, kColorVectors, kTexCoordVectors, aiConnect);
         if (m_kPanel != null) {
             m_kPanel.addMesh(m_kSurface, kAddMesh, new String("Geodesic_" + m_iNumNewMeshes++ + ".sur"));
         }
@@ -4211,15 +4426,10 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         m_kSurface = kMesh;
 
         if (m_kOriginal == null) {
-            m_kOriginal = new ModelTriangleMesh(kMesh.getVertexCopy(), kMesh.getNormalCopy(), kMesh.getIndexCopy());
-            m_kOriginal.setCapability(GeometryArray.ALLOW_COUNT_READ);
-            m_kOriginal.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-            m_kOriginal.setCapability(GeometryArray.ALLOW_NORMAL_READ);
-            m_kOriginal.setCapability(GeometryArray.ALLOW_COUNT_READ);
-            m_kOriginal.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-            m_kOriginal.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-            m_kOriginal.setCapability(IndexedGeometryArray.ALLOW_NORMAL_INDEX_READ);
-
+            m_kOriginal = new ModelTriangleMesh(kMesh);
+// .getVertexCopy(), kMesh.getNormalCopy(), kMesh.getColorCopy(),
+//                                                 kMesh.getTexCoordCopy(),
+//                                                 kMesh.getIndexCopy());
             m_kLastFinished = m_kOriginal;
             m_kFinished = m_kOriginal;
             m_kLastCut = m_kOriginal;
@@ -4547,6 +4757,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         Point4f kPathPoint;
         Point4f kNextPoint;
         Vector3f kNormal;
+        TexCoord3f kTexCoord;
+        Color4f kColor;
 
         /* The first point on the Geodesic Path is already in the mesh, by
          * definition: */
@@ -4659,6 +4871,14 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
                         kNormal = getNormal(kMesh, iSideIndex[0], iSideIndex[1]);
                         m_kNewNormals.add(new Vector3f(kNormal));
 
+                        /* Add the new texCoord: */
+                        kTexCoord = getTexCoord(kMesh, iSideIndex[0], iSideIndex[1]);
+                        m_kNewTexCoords.add(new TexCoord3f(kTexCoord));
+
+                        /* Add the new color: */
+                        kColor = getColor(kMesh, iSideIndex[0], iSideIndex[1]);
+                        m_kNewColors.add(new Color4f(kColor));
+
                         iNumNewVerts++;
                     }
 
@@ -4716,6 +4936,14 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
                         kNormal = getNormal(kMesh, iSideIndex[0], iSideIndex[1]);
                         m_kNewNormals.add(new Vector3f(kNormal));
 
+                        /* Add the new texCoord: */
+                        kTexCoord = getTexCoord(kMesh, iSideIndex[0], iSideIndex[1]);
+                        m_kNewTexCoords.add(new TexCoord3f(kTexCoord));
+
+                        /* Add the new color: */
+                        kColor = getColor(kMesh, iSideIndex[0], iSideIndex[1]);
+                        m_kNewColors.add(new Color4f(kColor));
+
                         iNumNewVerts++;
                     }
 
@@ -4738,6 +4966,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
         m_kNewVerts = new LinkedList();
         m_kNewNormals = new LinkedList();
+        m_kNewTexCoords = new LinkedList();
+        m_kNewColors = new LinkedList();
         m_kNewTriangles = new LinkedList();
         m_kRemoveTriangles = new LinkedList();
 
@@ -4764,20 +4994,11 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
             /* Backup the unmodified mesh: */
             m_kSurfaceBackup = null;
-            m_kSurfaceBackup = new ModelTriangleMesh(m_kSurface.getVertexCopy(), m_kSurface.getNormalCopy(),
-                                                     m_kSurface.getIndexCopy());
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_COUNT_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_COORDINATE_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_COLOR_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_NORMAL_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_TEXCOORD_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_COUNT_READ);
-            m_kSurfaceBackup.setCapability(GeometryArray.ALLOW_FORMAT_READ);
-            m_kSurfaceBackup.setCapability(IndexedGeometryArray.ALLOW_COORDINATE_INDEX_READ);
-            m_kSurfaceBackup.setCapability(IndexedGeometryArray.ALLOW_COLOR_INDEX_READ);
-            m_kSurfaceBackup.setCapability(IndexedGeometryArray.ALLOW_NORMAL_INDEX_READ);
-            m_kSurfaceBackup.setCapability(IndexedGeometryArray.ALLOW_TEXCOORD_INDEX_READ);
-
+            m_kSurfaceBackup = new ModelTriangleMesh(m_kSurface);
+// .getVertexCopy(), m_kSurface.getNormalCopy(),
+//                                                      m_kSurface.getColorCopy(),
+//                                                      m_kSurface.getTexCoordCopy(),
+//                                                      m_kSurface.getIndexCopy());
             m_kPanel.replaceMesh(m_kSurface, m_kModified);
             m_kSurface = null;
             m_kSurface = m_kModified;
@@ -4790,6 +5011,10 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         m_kNewVerts = null;
         m_kNewNormals.clear();
         m_kNewNormals = null;
+        m_kNewTexCoords.clear();
+        m_kNewTexCoords = null;
+        m_kNewColors.clear();
+        m_kNewColors = null;
         m_kNewTriangles.clear();
         m_kNewTriangles = null;
         m_kRemoveTriangles.clear();
@@ -4815,6 +5040,8 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
         Point3i kDeleteTri = new Point3i();
 
         Vector3f kNewNormal = new Vector3f();
+        TexCoord3f kNewTexCoord = new TexCoord3f();
+        Color4f kNewColor = new Color4f();
         Point4f kNewVertex = new Point4f();
 
         int iPathIndex;
@@ -4857,11 +5084,15 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
             kNewVertex = (Point4f) kPath.get(iPath);
             iPathIndex = (int) kNewVertex.w;
             kMesh.getNormal(iPathIndex, kNewNormal);
+            kMesh.getTextureCoordinate(0, iPathIndex, kNewTexCoord);
+            kMesh.getColor(iPathIndex, kNewColor);
 
             /* Add the new vertex, with a new index, the new normal to the
              * lists: */
             m_kNewVerts.add(new Point3f(kNewVertex.x, kNewVertex.y, kNewVertex.z));
             m_kNewNormals.add(new Vector3f(kNewNormal));
+            m_kNewTexCoords.add(new TexCoord3f(kNewTexCoord));
+            m_kNewColors.add(new Color4f(kNewColor));
 
             /* Add the new path index to the new list: */
             if (!bOpen && (kNewPath != null)) {
