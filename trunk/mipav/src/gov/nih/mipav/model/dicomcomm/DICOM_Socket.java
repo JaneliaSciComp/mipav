@@ -198,18 +198,18 @@ public class DICOM_Socket {
         try {
 
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-                Preferences.debug("DICOMSocket sendBinary( socket = " + socket + ") \n");
+                Preferences.debug("DICOMSocket writeBinary( socket = " + socket + ") \n");
             }
 
             outStream.write(data, offset, count);
             outStream.flush();
 
             if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
-                Preferences.debug("\n" + DICOM_Util.timeStamper() + " **** DICOMSocket.sendBinary: ****\n");
+                Preferences.debug("\n" + DICOM_Util.timeStamper() + " **** DICOMSocket.writeBinary: ****\n");
             }
         } catch (Exception e) {
             close();
-            throw new DICOM_Exception("DICOMSocket sendBinary( " + data + ", " + offset + ", " + count + " ):" + e);
+            throw new DICOM_Exception("DICOMSocket writeBinary( " + data + ", " + offset + ", " + count + " ):" + e);
         }
 
         if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {

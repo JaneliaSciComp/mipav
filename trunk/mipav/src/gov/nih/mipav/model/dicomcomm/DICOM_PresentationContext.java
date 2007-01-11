@@ -22,7 +22,6 @@ public class DICOM_PresentationContext extends DICOM_PDUItemType {
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
-
     /**
      * Creates a new DICOM_PresentationContext object.
      */
@@ -119,7 +118,7 @@ public class DICOM_PresentationContext extends DICOM_PDUItemType {
             ((DICOM_PDUItemType) trnSyntax.elementAt(i)).write(connection);
         }
 
-        connection.flush();
+        // connection.flush();
     }
 
 }

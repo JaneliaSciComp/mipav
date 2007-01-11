@@ -8,7 +8,7 @@ public class DICOM_PresentationContextAccept extends DICOM_PDUItemType {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Presentation Context ID */
+    /** Presentation Context ID. */
     public byte presentationContextID;
 
     /** Result default to 2. */
@@ -18,7 +18,6 @@ public class DICOM_PresentationContextAccept extends DICOM_PDUItemType {
     public DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(PDUTYPE_TransferSyntax);
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
-
 
     /**
      * Creates a new DICOM_PresentationContextAccept object.
@@ -84,7 +83,7 @@ public class DICOM_PresentationContextAccept extends DICOM_PDUItemType {
         connection.writeByte(reserved3);
 
         trnSyntax.write(connection);
-        connection.flush();
+        // connection.flush();
     }
 
 }
