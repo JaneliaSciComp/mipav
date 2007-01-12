@@ -920,6 +920,8 @@ public class DICOM_PDUService extends DICOM_Comms {
      */
     private boolean canWeHandleTransferSyntax(DICOM_PDUItemType trnSyntax) {
 
+    	
+    	/** is this correct?  can we only handle implicit little endian...? */
         if (DICOM_TransferSyntaxUtil.convertToAlias(trnSyntax.getUID()) ==
                 DICOM_TransferSyntaxUtil.IMPLICIT_LITTLE_ENDIAN) {
             return (true);
@@ -1057,7 +1059,8 @@ public class DICOM_PDUService extends DICOM_Comms {
             }
 
             Vector arrayTrnSyntax = presContext.trnSyntax;
-
+//System.err.println("arrayPresContexts.size() is " + arrayPresContexts.size());
+//System.err.println("presContext ID: " + presContext.presentationContextID);
             for (int j = 0; j < presContext.trnSyntax.size(); j++) {
                 DICOM_PresentationContextAccept pca = new DICOM_PresentationContextAccept();
                 pca.presentationContextID = presContext.presentationContextID;
@@ -1086,7 +1089,7 @@ public class DICOM_PDUService extends DICOM_Comms {
 
                 trnSyntax = (DICOM_PDUItemType) arrayTrnSyntax.elementAt(j);
                 pca.trnSyntax.setUID(trnSyntax.getUID());
-
+//System.err.println("Transfer Syntax: " + trnSyntax.toString());
                 if (canWeHandleTransferSyntax(trnSyntax)) {
                     pca.result = 0; // 0 = accepted
                     atLeastOne = true;
@@ -1111,7 +1114,16 @@ public class DICOM_PDUService extends DICOM_Comms {
 
 
                 // add presentation context accepted to list accept list
+                
+                /**
+                 * matt & ben :  when you have and accept and reject under same presentation ID
+                 * GE server did not like (aborted)... so don't tell them you are rejecting anything
+                 */
+                if (pca.result != 4) {
                 associateAC.addPresentationContextAccept(pca);
+                } else {
+                	System.err.println("equal to four, not adding");
+                }
 
                 if (Preferences.debugLevel(Preferences.DEBUG_COMMS)) {
                     Preferences.debug("\n");
@@ -1177,7 +1189,7 @@ public class DICOM_PDUService extends DICOM_Comms {
      */
     private boolean shouldWeAcceptAbstractSyntax(DICOM_PDUItemType abstractSyntax) {
         String str = DICOM_Util.unpadStringVal(abstractSyntax.getUID().getBytes());
-
+        
         if (proposedAbstractSyntaxs.get(str) != null) {
             return (true);
         }
