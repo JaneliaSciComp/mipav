@@ -1,5 +1,6 @@
 package gov.nih.mipav.view;
 
+
 import gov.nih.mipav.*;
 
 import gov.nih.mipav.model.algorithms.*;
@@ -10,12 +11,13 @@ import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.dialogs.*;
 
-
 import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
+
 import java.text.*;
+
 import java.util.*;
 
 import javax.swing.*;
@@ -48,6 +50,15 @@ public abstract class ViewJFrameBase extends JFrame
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
+    /** Labels for the current absolute position:. */
+    protected JLabel absoluteLabel = null;
+
+    /** Labels for the current absolute position values:. */
+    protected JLabel[] absoluteLabelVals = null;
+
+    /** JPanel containing the absoulte position labels:. */
+    protected JPanel absolutePanel = new JPanel(new GridBagLayout());
+
     /** Indicates the amount of blending when two images are loaded in the image frame. */
     protected float alphaBlend = 0.5f;
 
@@ -75,6 +86,18 @@ public abstract class ViewJFrameBase extends JFrame
     /** Reference to progress bar. */
     protected ViewJProgressBar progressBar;
 
+    /** Labels for the current scanner position:. */
+    protected JLabel scannerLabel = null;
+
+    /** Labels for the current scanner position values:. */
+    protected JLabel[] scannerLabelVals = null;
+
+    /** JPanel containing the scanner position labels:. */
+    protected JPanel scannerPanel = new JPanel(new GridBagLayout());
+
+    /** The main tabbed pane in the volume view frame. */
+    protected JTabbedPane tabbedPane;
+
     /** Reference to the user interface. */
     protected ViewUserInterface userInterface;
 
@@ -100,26 +123,8 @@ public abstract class ViewJFrameBase extends JFrame
     private int red;
 
 
+    /** DOCUMENT ME! */
     private String voiSavedFileName = null;
-
-    /** The main tabbed pane in the volume view frame. */
-    protected JTabbedPane tabbedPane;
-
-    /** JPanel containing the scanner position labels: */
-    protected JPanel scannerPanel = new JPanel(new GridBagLayout());
-    /** JPanel containing the absoulte position labels: */
-    protected JPanel absolutePanel = new JPanel(new GridBagLayout());
-
-    /** Labels for the current scanner position: */
-    protected JLabel scannerLabel = null;
-    /** Labels for the current scanner position values: */
-    protected JLabel[] scannerLabelVals = null;
-
-    /** Labels for the current absolute position: */
-    protected JLabel absoluteLabel = null;
-    /** Labels for the current absolute position values: */
-    protected JLabel[] absoluteLabelVals = null;
-
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -215,15 +220,6 @@ public abstract class ViewJFrameBase extends JFrame
      *                be displayed
      */
     public abstract void setAlphaBlend(int value);
-
-    /**
-     * Returns a default alphaBlend value for blending of two images.
-     * @return a default alphaBlend value
-     */
-    public float getAlphaBlend()
-    {
-        return 0.5f;
-    }
 
     /**
      * Sets the menu and controls (i.e. toolbars) of the main frame! This puts only the menus and controls needed to
@@ -327,9 +323,11 @@ public abstract class ViewJFrameBase extends JFrame
                 nrrd = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.SPM) && (displayMode == IMAGE_A)) {
                 spm = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_GENESIS) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_GENESIS) &&
+                           (displayMode == IMAGE_A)) {
                 geSigna = true;
-            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_SIGNA4X) && (displayMode == IMAGE_A)) {
+            } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.GE_SIGNA4X) &&
+                           (displayMode == IMAGE_A)) {
                 geSigna4x = true;
             } else if (((imageA.getFileInfo()[0]).getFileFormat() == FileUtility.MINC) && (displayMode == IMAGE_A)) {
                 minc = true;
@@ -476,6 +474,69 @@ public abstract class ViewJFrameBase extends JFrame
     }
 
     /**
+     * The label panel of the x, y, z slider position.
+     */
+    public void buildLabelPanel() {
+
+        if (scannerLabel != null) {
+            return;
+        }
+
+        scannerLabel = new JLabel("Scanner Position");
+        scannerLabel.setForeground(Color.black);
+        scannerLabel.setFont(MipavUtil.font14B);
+        scannerLabelVals = new JLabel[3];
+        scannerLabelVals[0] = new JLabel("A-P: ");
+        scannerLabelVals[1] = new JLabel("L-R: ");
+        scannerLabelVals[2] = new JLabel("S-I: ");
+
+        absoluteLabel = new JLabel("Absolute Volume coordinates");
+        absoluteLabel.setToolTipText("Coordinates in 3D image space");
+        absoluteLabel.setForeground(Color.black);
+        absoluteLabel.setFont(MipavUtil.font14B);
+        absoluteLabelVals = new JLabel[4];
+        absoluteLabelVals[0] = new JLabel("X: ");
+        absoluteLabelVals[1] = new JLabel("Y: ");
+        absoluteLabelVals[2] = new JLabel("Z: ");
+        absoluteLabelVals[3] = new JLabel("1D index: ");
+
+        for (int i = 0; i < 3; i++) {
+            scannerLabelVals[i].setForeground(Color.black);
+            scannerLabelVals[i].setFont(MipavUtil.font12B);
+
+            absoluteLabelVals[i].setForeground(Color.black);
+            absoluteLabelVals[i].setFont(MipavUtil.font12B);
+        }
+
+        absoluteLabelVals[3].setForeground(Color.black);
+        absoluteLabelVals[3].setFont(MipavUtil.font12B);
+
+        GridBagConstraints gbc2 = new GridBagConstraints();
+        gbc2.anchor = GridBagConstraints.WEST;
+
+        gbc2.gridx = 0;
+        gbc2.gridy = 0;
+        gbc2.gridwidth = 1;
+        gbc2.gridheight = 1;
+
+        scannerPanel.add(scannerLabel, gbc2);
+        absolutePanel.add(absoluteLabel, gbc2);
+
+        gbc2.gridy++;
+        scannerPanel.add(new JLabel(), gbc2);
+        absolutePanel.add(new JLabel(), gbc2);
+
+        for (int i = 0; i < 3; i++) {
+            gbc2.gridy++;
+            scannerPanel.add(scannerLabelVals[i], gbc2);
+            absolutePanel.add(absoluteLabelVals[i], gbc2);
+        }
+
+        gbc2.gridy++;
+        absolutePanel.add(absoluteLabelVals[3], gbc2);
+    }
+
+    /**
      * Returns whether or not the close image B option should appear after loading.
      *
      * @return  whether the &quot;Close image B&quot; option should appear after image B is loaded
@@ -561,6 +622,15 @@ public abstract class ViewJFrameBase extends JFrame
      * @param  event  the component event
      */
     public void componentShown(ComponentEvent event) { }
+
+    /**
+     * Returns a default alphaBlend value for blending of two images.
+     *
+     * @return  a default alphaBlend value
+     */
+    public float getAlphaBlend() {
+        return 0.5f;
+    }
 
     /**
      * Accessor that returns displayMode.
@@ -1620,7 +1690,7 @@ public abstract class ViewJFrameBase extends JFrame
                 aviFile.setIsScript(options.isScript());
 
                 if (!aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(), getRGBTB(), red, green, blue, opacity,
-                                            alphaBlend, paintBitmap, options.getAVICompression())) {
+                                        alphaBlend, paintBitmap, options.getAVICompression())) {
 
                     System.err.println("AVI image write cancelled");
                 }
@@ -1730,6 +1800,12 @@ public abstract class ViewJFrameBase extends JFrame
             FileIO fileIO = new FileIO();
 
             suffix = FileIO.getSuffixFrom(fileName);
+
+            if (suffix.equals("")) {
+                fileName = options.getFileName();
+                suffix = FileIO.getSuffixFrom(fileName);
+            }
+
             fileType = fileIO.getFileType(fileName, directory, false);
             fileIO = null;
         }
@@ -2709,7 +2785,7 @@ public abstract class ViewJFrameBase extends JFrame
                 aviFile.setIsScript(options.isScript());
 
                 if (!aviFile.writeImage(imageAvi, imageB, LUTa, LUTb, getRGBTA(), getRGBTB(), red, green, blue, opacity,
-                                            alphaBlend, paintBitmap, options.getAVICompression())) {
+                                        alphaBlend, paintBitmap, options.getAVICompression())) {
 
                     System.err.println("AVI image write cancelled");
                 }
@@ -2939,10 +3015,16 @@ public abstract class ViewJFrameBase extends JFrame
         }
     }
 
-  public String saveVOIAs(){
-      saveVOIAs(true);
-      return this.voiSavedFileName;
-  }
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public String saveVOIAs() {
+        saveVOIAs(true);
+
+        return this.voiSavedFileName;
+    }
 
     /**
      * This method allows the user to choose how to save the VOI.
@@ -3081,7 +3163,6 @@ public abstract class ViewJFrameBase extends JFrame
                 }
 
                 FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
-
 
 
                 if (!doPoint) {
@@ -3341,6 +3422,73 @@ public abstract class ViewJFrameBase extends JFrame
         }
 
         return subStr;
+    }
+
+    /**
+     * Sets the Absolute position label.
+     *
+     * @param  position  DOCUMENT ME!
+     */
+    protected void setAbsPositionLabels(Point3Df position) {
+
+        if (absoluteLabelVals == null) {
+            return;
+        }
+
+        absoluteLabelVals[0].setText("X: " + (int) position.x);
+        absoluteLabelVals[1].setText("Y: " + (int) position.y);
+        absoluteLabelVals[2].setText("Z: " + (int) position.z);
+
+        int[] dimExtents = imageA.getExtents();
+        int index = (int) ((position.z * dimExtents[0] * dimExtents[1]) + (position.y * dimExtents[0]) + position.x);
+
+        int iBuffFactor = imageA.isColorImage() ? 4 : 1;
+        absoluteLabelVals[3].setText("1D index: " + index + " = " + imageA.getFloat(index * iBuffFactor));
+    }
+
+    /**
+     * Sets the Scanner position label.
+     *
+     * @param  position  DOCUMENT ME!
+     */
+    protected void setScannerPosition(Point3Df position) {
+
+        if (scannerLabelVals == null) {
+            return;
+        }
+
+        DecimalFormat nf = new DecimalFormat("#####0.0##");
+        Point3Df kOut = new Point3Df();
+        MipavCoordinateSystems.getScannerCoordinates(position, kOut, imageA);
+
+        float[] tCoord = new float[3];
+        tCoord[0] = kOut.x;
+        tCoord[1] = kOut.y;
+        tCoord[2] = kOut.z;
+
+        String[] labels = new String[3];
+        labels[0] = new String("A-P: ");
+
+        if (imageA.getRadiologicalView()) {
+            labels[1] = new String("R-L: ");
+        } else {
+            tCoord[1] *= -1;
+            labels[1] = new String("L-R: ");
+        }
+
+        labels[2] = new String("I-S: ");
+
+
+        for (int i = 0; i < 3; i++) {
+
+            if (tCoord[i] < 0) {
+                scannerLabelVals[i].setText(labels[i] + labels[i].charAt(0) + ": " +
+                                            String.valueOf(nf.format(tCoord[i])));
+            } else {
+                scannerLabelVals[i].setText(labels[i] + labels[i].charAt(2) + ": " +
+                                            String.valueOf(nf.format(tCoord[i])));
+            }
+        }
     }
 
     /**
@@ -4191,7 +4339,8 @@ public abstract class ViewJFrameBase extends JFrame
                                    ((AFNITypeStringB == FileInfoAfni.HEAD_ANAT_TYPE) && (image.getNDims() == 4)))) ||
                              ((AFNITypeStringA == FileInfoAfni.GEN_ANAT_TYPE) &&
                                   ((AFNITypeStringB == FileInfoAfni.GEN_FUNC_TYPE) ||
-                                       ((AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image.getNDims() == 4)))))) ||
+                                       ((AFNITypeStringB == FileInfoAfni.GEN_ANAT_TYPE) && (image.getNDims() ==
+                                                                                                4)))))) ||
                        ((AFNIViewTypeA == FileInfoAfni.AFNI_TLRC) && (imageA.getNDims() == 3) &&
                             (AFNIViewTypeB == FileInfoAfni.AFNI_ORIG) &&
                             (((AFNITypeStringA == FileInfoAfni.HEAD_ANAT_TYPE) &&
@@ -6165,142 +6314,6 @@ public abstract class ViewJFrameBase extends JFrame
                 } // for (i=botX; i <= topX; i++)
             } // for (t = 0; t < tLast; t++)
         } // else doNN
-    }
-
-    /**
-     * The label panel of the x, y, z slider position.
-     */
-    public void buildLabelPanel() {
-        if ( scannerLabel != null )
-        {
-            return;
-        }
-        scannerLabel = new JLabel( "Scanner Position" );
-        scannerLabel.setForeground( Color.black );
-        scannerLabel.setFont(MipavUtil.font14B);
-        scannerLabelVals = new JLabel[3];
-        scannerLabelVals[0] = new JLabel( "A-P: " );
-        scannerLabelVals[1] = new JLabel( "L-R: " );
-        scannerLabelVals[2] = new JLabel( "S-I: " );
-
-        absoluteLabel = new JLabel( "Absolute Volume coordinates" );
-        absoluteLabel.setToolTipText("Coordinates in 3D image space");
-        absoluteLabel.setForeground( Color.black );
-        absoluteLabel.setFont(MipavUtil.font14B);
-        absoluteLabelVals = new JLabel[4];
-        absoluteLabelVals[0] = new JLabel( "X: " );
-        absoluteLabelVals[1] = new JLabel( "Y: " );
-        absoluteLabelVals[2] = new JLabel( "Z: " );
-        absoluteLabelVals[3] = new JLabel( "1D index: " );
-
-        for ( int i = 0; i < 3; i++ )
-        {
-            scannerLabelVals[i].setForeground( Color.black );
-            scannerLabelVals[i].setFont(MipavUtil.font12B);
-
-            absoluteLabelVals[i].setForeground( Color.black );
-            absoluteLabelVals[i].setFont(MipavUtil.font12B);
-        }
-        absoluteLabelVals[3].setForeground( Color.black );
-        absoluteLabelVals[3].setFont(MipavUtil.font12B);
-
-        GridBagConstraints gbc2 = new GridBagConstraints();
-        gbc2.anchor = GridBagConstraints.WEST;
-
-        gbc2.gridx = 0;
-        gbc2.gridy = 0;
-        gbc2.gridwidth = 1;
-        gbc2.gridheight = 1;
-
-        scannerPanel.add( scannerLabel, gbc2);
-        absolutePanel.add( absoluteLabel, gbc2);
-
-        gbc2.gridy++;
-        scannerPanel.add( new JLabel(), gbc2);
-        absolutePanel.add( new JLabel(), gbc2);
-
-        for ( int i = 0; i < 3; i++ )
-        {
-            gbc2.gridy++;
-            scannerPanel.add( scannerLabelVals[i], gbc2);
-            absolutePanel.add( absoluteLabelVals[i], gbc2);
-        }
-        gbc2.gridy++;
-        absolutePanel.add( absoluteLabelVals[3], gbc2);
-    }
-
-    /*
-     * Sets the Scanner position label.
-     * @param position, the slice positions in FileCoordinates.
-     */
-    protected void setScannerPosition( Point3Df position )
-    {
-        if ( scannerLabelVals == null )
-        {
-            return;
-        }
-        DecimalFormat nf = new DecimalFormat("#####0.0##");
-        Point3Df kOut = new Point3Df();
-        MipavCoordinateSystems.getScannerCoordinates( position, kOut, imageA );
-        float[] tCoord = new float[3];
-        tCoord[0] = kOut.x;
-        tCoord[1] = kOut.y;
-        tCoord[2] = kOut.z;
-
-        String[] labels = new String[3];
-        labels[0] = new String( "A-P: " );
-        if ( imageA.getRadiologicalView() )
-        {
-            labels[1] = new String( "R-L: " );
-        }
-        else
-        {
-            tCoord[1] *= -1;
-            labels[1] = new String( "L-R: " );
-        }
-        labels[2] = new String( "I-S: " );
-
-
-        for ( int i = 0; i < 3; i++ )
-        {
-            if (tCoord[i] < 0)
-            {
-                scannerLabelVals[i].setText( labels[i] +
-                                             labels[i].charAt(0) + ": " +
-                                             String.valueOf(nf.format(tCoord[i])));
-            }
-            else
-            {
-                scannerLabelVals[i].setText( labels[i] +
-                                             labels[i].charAt(2) + ": " +
-                                             String.valueOf(nf.format(tCoord[i])));
-            }
-        }
-    }
-
-    /*
-     * Sets the Absolute position label.
-     * @param position, the slice positions in FileCoordinates.
-     */
-    protected void setAbsPositionLabels( Point3Df position )
-    {
-        if ( absoluteLabelVals == null )
-        {
-            return;
-        }
-        absoluteLabelVals[0].setText( "X: " + (int)position.x );
-        absoluteLabelVals[1].setText( "Y: " + (int)position.y  );
-        absoluteLabelVals[2].setText( "Z: " + (int)position.z  );
-        int[] dimExtents = imageA.getExtents();
-        int index =
-            (int)((position.z * dimExtents[0] * dimExtents[1]) +
-                  (position.y * dimExtents[0]) +
-                  position.x);
-
-        int iBuffFactor = imageA.isColorImage() ? 4 : 1;
-        absoluteLabelVals[3].setText( "1D index: " +
-                                        index + " = " +
-                                        imageA.getFloat( index * iBuffFactor ) );
     }
 
 }

@@ -94,8 +94,50 @@ public class FileMinc extends FileBase {
         }
     }
 
-
     //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Looks for the CDF tag at the start of the image 'C''D''F''\001' in image header ID. If present, the image is a
+     * MINC format.
+     *
+     * @throws  IOException  Indicates error reading the file
+     *
+     * @return  boolean true if the header contains CDF tag 'C''D''F''\001'
+     */
+    public boolean isMinc() throws IOException {
+
+        try {
+
+            if (raFile != null) {
+                raFile.close();
+            }
+
+            raFile = new RandomAccessFile(fileDir + fileName, "r");
+
+            if (raFile == null) {
+                return false;
+            }
+
+            raFile.seek(0);
+            // endianess = FileBase.BIG_ENDIAN;
+            // fileInfo.setEndianess(endianess);
+
+            String magic = getString(4);
+
+            // Every MINC image starts with the CDF tag
+            if (magic.equals("CDF" + '\001')) {
+                return true;
+            } else {
+                return false;
+            }
+
+        } catch (OutOfMemoryError e) {
+            MipavUtil.displayError("Out of memory in FileMinc.isMinc.");
+            throw new IOException();
+        } catch (EOFException eofe) {
+            return false;
+        }
+    }
 
     /**
      * Reads in all the tags available in the file and stores them in FileInfoMinc.
@@ -458,7 +500,7 @@ public class FileMinc extends FileBase {
      */
     public ModelImage readImage(boolean one) throws IOException {
         FileInfoMinc fileInfo = null;
-        
+
         fireProgressStateChanged(5);
 
         try {
@@ -641,7 +683,8 @@ public class FileMinc extends FileBase {
 
                     if (fileInfo.getExtents().length == 3) {
                         rawFile.readImage(buffer,
-                                          fileInfo.getOffset() + (fileInfo.getExtents()[2] / 2 * buffer.length * imgTypeFac),
+                                          fileInfo.getOffset() +
+                                          (fileInfo.getExtents()[2] / 2 * buffer.length * imgTypeFac),
                                           fileInfo.getDataType());
                     } else {
                         rawFile.readImage(buffer, fileInfo.getOffset(), fileInfo.getDataType());
@@ -680,61 +723,78 @@ public class FileMinc extends FileBase {
 
         if (fileInfo.getExtents().length == 3) {
             fireProgressStateChanged(100);
-            
+
         }
 
         buffer = null;
-        
-        // use the study and series/acquisition numbers for the image name if they are in the header, otherwise leave it as the file name
+
+        // use the study and series/acquisition numbers for the image name if they are in the header, otherwise leave
+        // it as the file name
         String studyNum = null;
         String seriesNum = null;
         FileMincVarElem[] varArray = fileInfo.getVarArray();
+
         for (int i = 0; i < varArray.length; i++) {
+
             if (varArray[i].name.equalsIgnoreCase("study")) {
                 FileMincAttElem[] attArray = varArray[i].vattArray;
+
                 for (int j = 0; j < attArray.length; j++) {
+
                     if (attArray[j].name.equalsIgnoreCase("study_id")) {
                         String str = new String();
+
                         for (int k = 0; k < attArray[j].values.length; k++) {
                             str += attArray[j].values[k];
                         }
+
                         studyNum = str.trim();
                     } else if (attArray[j].name.equalsIgnoreCase("acquisition_id")) {
                         String str = new String();
+
                         for (int k = 0; k < attArray[j].values.length; k++) {
                             str += attArray[j].values[k];
                         }
+
                         seriesNum = str.trim();
                     }
                 }
             }
         }
-        
+
         // if we didn't find the study and series numbers in the minc vars, then look for dicom-extracted tags
-        if (studyNum == null || seriesNum == null) {
+        if ((studyNum == null) || (seriesNum == null)) {
+
             for (int i = 0; i < varArray.length; i++) {
+
                 if (varArray[i].name.equalsIgnoreCase("dicom_0x0020")) {
                     FileMincAttElem[] attArray = varArray[i].vattArray;
+
                     for (int j = 0; j < attArray.length; j++) {
+
                         if (attArray[j].name.equalsIgnoreCase("el_0x0010")) {
                             String str = new String();
+
                             for (int k = 0; k < attArray[j].values.length; k++) {
                                 str += attArray[j].values[k];
                             }
+
                             studyNum = str.trim();
                         } else if (attArray[j].name.equalsIgnoreCase("el_0x0011")) {
                             String str = new String();
+
                             for (int k = 0; k < attArray[j].values.length; k++) {
                                 str += attArray[j].values[k];
                             }
+
                             seriesNum = str.trim();
                         }
                     }
                 }
             }
         }
-        
-        if (studyNum != null && seriesNum != null) {
+
+        if ((studyNum != null) && (seriesNum != null)) {
             image.setImageName(studyNum + "_" + seriesNum);
         }
 
@@ -753,33 +813,34 @@ public class FileMinc extends FileBase {
      * @see        FileInfoMinc
      * @see        FileMinc
      */
-    public void writeImage(ModelImage _image, FileWriteOptions options) throws IOException {        
+    public void writeImage(ModelImage _image, FileWriteOptions options) throws IOException {
         fireProgressStateChanged(5);
-        
+
         raFile.setLength(0);
 
         ModelImage image = null;
         fireProgressStateChanged(10);
 
         try {
-  
+
             image = new ModelImage(_image.getFileInfo()[0].getDataType(), _image.getFileInfo()[0].getExtents(),
                                    _image.getImageFileName());
-     
+
             image.copyFileTypeInfo(_image);
-            
+
             FileInfoBase fileInfo = _image.getFileInfo(0);
             int nImages = options.getEndSlice() - options.getBeginSlice() + 1;
             int sliceSize = fileInfo.getExtents()[0] * fileInfo.getExtents()[1];
-            
+
             double[] mins = new double[nImages];
             double[] maxs = new double[nImages];
             double[] intercepts = new double[nImages];
             double[] slopes = new double[nImages];
 
             double vmin, vmax; // volume min and max
-            
+
             if (fileInfo.getFileFormat() == FileUtility.MINC) {
+
                 // Valid_range see line  823 in FileInfoMinc!!!!!!!.
                 vmin = ((FileInfoMinc) (fileInfo)).vmin;
                 vmax = ((FileInfoMinc) (fileInfo)).vmax;
@@ -787,26 +848,28 @@ public class FileMinc extends FileBase {
                 vmin = getDefaultMin(fileInfo);
                 vmax = getDefaultMax(fileInfo);
             }
-            
+
             double slopeDivisor = vmax - vmin;
+
             if (slopeDivisor == 0) {
                 slopeDivisor = 1;
             }
-            
+
             int jp;
             float[] sliceData = new float[sliceSize];
             double smin, smax; // slice min and max
+
             for (int j = options.getBeginSlice(); j <= options.getEndSlice(); j++) {
                 jp = j - options.getBeginSlice();
 
-                if (_image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT ||
-                    _image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE){
+                if ((_image.getFileInfo()[0].getDataType() == ModelStorageBase.FLOAT) ||
+                        (_image.getFileInfo()[0].getDataType() == ModelStorageBase.DOUBLE)) {
                     slopes[jp] = 1.0;
                     intercepts[jp] = 0.0;
                     mins[jp] = vmin;
                     maxs[jp] = vmax;
                 } else {
-                    
+
                     _image.exportData(j * sliceSize, sliceSize, sliceData);
                     smin = Double.MAX_VALUE;
                     smax = -Double.MAX_VALUE;
@@ -852,7 +915,7 @@ public class FileMinc extends FileBase {
                             for (int j = 0; j < image.getExtents()[2]; j++) {
                                 _image.exportData(j * sliceSize, sliceSize, sliceData);
                                 fireProgressStateChanged(15 +
-                                                        Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 35));
+                                                         Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 35));
 
                                 for (int k = 0; k < sliceSize; k++) {
                                     sliceData[k] = (float) ((sliceData[k] - intercepts[j]) / slopes[j]);
@@ -864,18 +927,19 @@ public class FileMinc extends FileBase {
                             for (int j = 0; j < image.getExtents()[2]; j++) {
                                 rawChunkFile.writeImage(image, j * sliceSize, (j + 1) * sliceSize, j);
                                 fireProgressStateChanged(50 +
-                                                        Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 50));
+                                                         Math.round((float) j / (fileInfoMinc.getExtents()[2] - 1) * 50));
                             }
 
                             fireProgressStateChanged(100);
-                            
+
                         } else {
+
                             // TODO: is this correct?  don't 2D/4D images need to be rescaled too?
                             rawChunkFile.writeImage(image, 0, sliceSize, 0);
                         }
 
                         fireProgressStateChanged(100);
-                        
+
                         location = fileInfoMinc.getVarElem(i).vsize;
                         writePadding();
                     } else if (fileInfoMinc.getVarElem(i).name.equals("image-min")) {
@@ -911,13 +975,14 @@ public class FileMinc extends FileBase {
                             raFile.write((byte) 0);
                         }
                     } else {
+
                         // at all other tags both before & after image
                         location = fileInfoMinc.getVarElem(i).begin;
                         raFile.seek(fileInfoMinc.getVarElem(i).begin);
 
                         for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
-                            writeNextElem(fileInfoMinc.getVarElem(i).values.elementAt(j), fileInfoMinc.getVarElem(i).nc_type,
-                                          fileInfoMinc.getEndianess());
+                            writeNextElem(fileInfoMinc.getVarElem(i).values.elementAt(j),
+                                          fileInfoMinc.getVarElem(i).nc_type, fileInfoMinc.getEndianess());
                         }
 
                         writePadding();
@@ -995,11 +1060,12 @@ public class FileMinc extends FileBase {
 
                 // write out placeholders values pointed to by NC_VARIABLEs of extracted dicom tag groups (if any)
                 Enumeration groupEnum = dicomConvertedTagTable.keys();
+
                 while (groupEnum.hasMoreElements()) {
                     groupEnum.nextElement();
                     writeInt(0, FileBase.BIG_ENDIAN);
                 }
-                
+
                 // write out placeholder for the study variable (only written if a minc-supported modality)
                 if (getMincModality(fileInfo.getModality()) != null) {
                     writeInt(0, FileBase.BIG_ENDIAN);
@@ -1009,7 +1075,7 @@ public class FileMinc extends FileBase {
             }
         } catch (OutOfMemoryError e) {
             raFile.close();
-            
+
 
             if (image != null) {
                 image.disposeLocal();
@@ -1019,54 +1085,11 @@ public class FileMinc extends FileBase {
         }
 
         raFile.close();
-        
+
         image.disposeLocal();
         image = null;
     }
-    
-    /**
-     * Looks for the CDF tag at the start of the image 'C''D''F''\001' in image header ID.
-     * If present, the image is a MINC format.
-     *
-     * @throws  IOException  Indicates error reading the file
-     *
-     * @return  boolean true if the header contains CDF tag 'C''D''F''\001' 
-     */
-    public boolean isMinc() throws IOException {
-    	
-    	File fileHeader;
-    	    	
-    	try {
 
-            if (raFile != null) {
-                raFile.close();
-            }
-
-            fileHeader = new File(fileDir + fileName);
-            raFile = new RandomAccessFile(fileHeader, "r");
-            
-    	if (raFile == null) {
-            return false;
-        }
-    	
-        raFile.seek(0);
-        //endianess = FileBase.BIG_ENDIAN;
-        //fileInfo.setEndianess(endianess);
-
-        String magic = getString(4);
-
-        // Every MINC image starts with the CDF tag
-        if (magic.equals("CDF" + '\001')) {
-        	return true;
-        } else {
-        	return false;
-        }
-    	    	
-    	} catch (OutOfMemoryError e) {
-            MipavUtil.displayError("Out of memory in FileMinc.isMinc.");
-            throw new IOException();
-        }
-    }
     /**
      * Extracts any Dicom tags from a given FileInfoBase (if the file info is dicom) and puts them into a Hashtable.
      *
@@ -1109,6 +1132,78 @@ public class FileMinc extends FileBase {
     }
 
     /**
+     * Return the default volume maximum for different file data types. This is used to rescale the image data before
+     * storing it on disk (the reader then uses the same values to scale the data back).
+     *
+     * @param   fileInfo  The fileInfo containing information about the image being saved.
+     *
+     * @return  The default volume maximum for a given fileInfo.
+     */
+    private static double getDefaultMax(FileInfoBase fileInfo) {
+
+        switch (fileInfo.getDataType()) {
+
+            case ModelStorageBase.BYTE:
+            case ModelStorageBase.UBYTE:
+                return Byte.MAX_VALUE;
+
+            case ModelStorageBase.SHORT:
+            case ModelStorageBase.USHORT:
+                return Short.MAX_VALUE;
+
+            case ModelStorageBase.INTEGER:
+            case ModelStorageBase.UINTEGER:
+                return Integer.MAX_VALUE;
+
+            case ModelStorageBase.FLOAT:
+            case ModelStorageBase.DOUBLE:
+                return fileInfo.getMax();
+
+            default:
+                return fileInfo.getMax();
+        }
+    }
+
+    /**
+     * Return the default volume minimum for different file data types. This is used to rescale the image data before
+     * storing it on disk (the reader then uses the same values to scale the data back).
+     *
+     * @param   fileInfo  The fileInfo containing information about the image being saved.
+     *
+     * @return  The default volume minimum for a given fileInfo.
+     */
+    private static double getDefaultMin(FileInfoBase fileInfo) {
+
+        switch (fileInfo.getDataType()) {
+
+            case ModelStorageBase.BYTE:
+                return Byte.MIN_VALUE + 1;
+
+            case ModelStorageBase.UBYTE:
+                return 0;
+
+            case ModelStorageBase.SHORT:
+                return Short.MIN_VALUE + 1;
+
+            case ModelStorageBase.USHORT:
+                return 0;
+
+            case ModelStorageBase.INTEGER:
+                return Integer.MIN_VALUE + 1;
+
+            case ModelStorageBase.UINTEGER:
+                return 0;
+
+            case ModelStorageBase.FLOAT:
+            case ModelStorageBase.DOUBLE:
+                return fileInfo.getMin();
+
+            default:
+                return fileInfo.getMin();
+        }
+    }
+
+    /**
      * Returns the value of a dicom tag, represented as a string. Null tag values are ignored, as are array value types.
      *
      * @param   key  The dicom tag key (contains the tag group and element strings). TODO: maybe remove this parameter.
@@ -1123,6 +1218,7 @@ public class FileMinc extends FileBase {
 
         // note: don't parse the dicom value into something more human-readable, just put it into the minc
         Object value = tag.getValue(false);
+
         if (value == null) {
 
             // Preferences.debug("skipping null tag:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
@@ -1130,6 +1226,7 @@ public class FileMinc extends FileBase {
         }
 
         String valueStr = null;
+
         if (value instanceof Integer) {
             valueStr = value.toString();
             Preferences.debug("Int:\t" + group + "," + element + "\n", Preferences.DEBUG_FILEIO);
@@ -1180,6 +1277,36 @@ public class FileMinc extends FileBase {
         }
 
         return valueStr;
+    }
+
+    /**
+     * Get the minc modality string from the mipav modality type.
+     *
+     * @param   modality  The mipav image modality.
+     *
+     * @return  The appropriate minc modality string if there is one; null if there is not equivalent minc modality or
+     *          if the mipav modality is unknown.
+     */
+    private static String getMincModality(int modality) {
+        // note: not handling GAMMA or DSA__ minc modalities (don't know how they map to mipav modalities)
+
+        if (modality == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
+            return "PET__";
+        } else if (modality == FileInfoBase.MAGNETIC_RESONANCE) {
+            return "MRI__";
+        } else if (modality == FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY) {
+            return "SPECT";
+        } else if (modality == FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY) {
+            return "MRS__";
+        } else if (modality == FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY) {
+            return "MRA__";
+        } else if (modality == FileInfoBase.COMPUTED_TOMOGRAPHY) {
+            return "CT___";
+        } else if (modality == FileInfoBase.DIGITAL_RADIOGRAPHY) {
+            return "DR___";
+        }
+
+        return null;
     }
 
     /**
@@ -1266,6 +1393,7 @@ public class FileMinc extends FileBase {
         // figure out the amount to adjust START3D by due to dicom-exported tags
         int exportedTagsSize = 0;
         Enumeration groupEnum = tagTable.keys();
+
         while (groupEnum.hasMoreElements()) {
             String group = (String) groupEnum.nextElement();
 
@@ -1286,6 +1414,7 @@ public class FileMinc extends FileBase {
 
             // ...calc the size of the attributes elsewhere...
             Enumeration elemEnum = ((Hashtable) tagTable.get(group)).keys();
+
             while (elemEnum.hasMoreElements()) {
                 String element = (String) elemEnum.nextElement();
                 String value = (String) ((Hashtable) tagTable.get(group)).get(element);
@@ -1484,6 +1613,7 @@ public class FileMinc extends FileBase {
     private void writeDicomTagsToHeader(Hashtable tagTable, int beginningOffset) throws IOException {
         Enumeration groupEnum = tagTable.keys();
         int i = 0;
+
         while (groupEnum.hasMoreElements()) {
             String group = (String) groupEnum.nextElement();
 
@@ -1722,18 +1852,19 @@ public class FileMinc extends FileBase {
 
         // adding exported dicom tags moves the start of the non-header portion of the file downwards
         currentNonHeaderStartLocation += getSizeOfExportedDicomTags(dicomConvertedTagTable);
-        
+
         // adding in the study var and modality attribute will also move the non-header portion of the file downwards
         String mincModality = getMincModality(fileInfo.getModality());
+
         if (mincModality != null) {
             int studyVarSize = 0;
-            
+
             studyVarSize += getSizeOfWrittenName("study", 0);
             studyVarSize += 4;
             studyVarSize += 4;
             studyVarSize += 4;
             studyVarSize += 4;
-            
+
             studyVarSize += getSizeOfWrittenName("varid", 0);
             studyVarSize += 4;
             studyVarSize += getSizeOfWrittenName("MINC standard variable", 1);
@@ -1749,19 +1880,23 @@ public class FileMinc extends FileBase {
             studyVarSize += getSizeOfWrittenName("modality", 0);
             studyVarSize += 4;
             studyVarSize += getSizeOfWrittenName(mincModality, 1);
-            
+
             studyVarSize += 4;
             studyVarSize += 4;
             studyVarSize += 4;
-            
+
             currentNonHeaderStartLocation += studyVarSize;
         }
 
         if (mincModality == null) {
-            // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag groups)
+
+            // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
+            // groups)
             writeInt(7 + dicomConvertedTagTable.size(), endianess);
         } else {
-            // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag groups + the study tag)
+
+            // the number of NC_VARIABLE entries (7 for basic image info hardcoded below + any dicom-exported tag
+            // groups + the study tag)
             writeInt(8 + dicomConvertedTagTable.size(), endianess);
         }
 
@@ -1786,6 +1921,7 @@ public class FileMinc extends FileBase {
         writePadding(); // pad to four byte boundary
         writeName("children", 0, endianess); // attribute 5
         writeInt(FileInfoMinc.NC_CHAR, endianess);
+
         if (mincModality == null) {
             writeName("image", 1, endianess);
         } else {
@@ -1952,8 +2088,9 @@ public class FileMinc extends FileBase {
             writeDouble(((FileInfoMinc) (fileInfo)).vmin, endianess);
             writeDouble(((FileInfoMinc) (fileInfo)).vmax, endianess);
         } else {
-            //writeDouble(fileInfo.getMin(), endianess);
-            //writeDouble(fileInfo.getMax(), endianess);
+
+            // writeDouble(fileInfo.getMin(), endianess);
+            // writeDouble(fileInfo.getMax(), endianess);
             writeDouble(getDefaultMin(fileInfo), endianess);
             writeDouble(getDefaultMax(fileInfo), endianess);
         }
@@ -1999,7 +2136,8 @@ public class FileMinc extends FileBase {
                 break;
 
             default:
-                throw new IOException(ModelStorageBase.getBufferTypeStr(fileInfo.getDataType()) + " image data is not supported by the MINC file type.");
+                throw new IOException(ModelStorageBase.getBufferTypeStr(fileInfo.getDataType()) +
+                                      " image data is not supported by the MINC file type.");
         }
 
         if (fileInfo.getExtents().length == 3) {
@@ -2062,8 +2200,9 @@ public class FileMinc extends FileBase {
 
         writeInt(8 * nImages, endianess);
         writeInt(imgBegin + imgSize + pad + (8 * nImages), endianess);
-        
+
         int nextDataPortionLocation = imgBegin + imgSize + pad + (8 * nImages) + (8 * nImages);
+
         // write the image modality to the minc header
         if (mincModality != null) {
             writeName("study", 0, endianess);
@@ -2071,7 +2210,7 @@ public class FileMinc extends FileBase {
             writeInt(0, endianess);
             writeInt(FileInfoMinc.NC_ATTRIBUTE, endianess);
             writeInt(5, endianess);
-            
+
             writeName("varid", 0, endianess);
             writeInt(FileInfoMinc.NC_CHAR, endianess);
             writeName("MINC standard variable", 1, endianess);
@@ -2087,11 +2226,11 @@ public class FileMinc extends FileBase {
             writeName("modality", 0, endianess);
             writeInt(FileInfoMinc.NC_CHAR, endianess);
             writeName(mincModality, 1, endianess);
-            
+
             writeInt(FileInfoMinc.NC_INT, endianess);
             writeInt(4, endianess);
             writeInt(nextDataPortionLocation, endianess);
-            
+
             nextDataPortionLocation += 4;
         }
 
@@ -2312,103 +2451,6 @@ public class FileMinc extends FileBase {
 
             default:
                 MipavUtil.displayError("Invalid type in FileMinc.writeValuesArray");
-        }
-    }
-    
-    /**
-     * Get the minc modality string from the mipav modality type.
-     * 
-     * @param   modality  The mipav image modality.
-     * 
-     * @return  The appropriate minc modality string if there is one; null if there is not equivalent minc modality or if the mipav modality is unknown.
-     */
-    private static final String getMincModality(int modality) {
-        // note: not handling GAMMA or DSA__ minc modalities (don't know how they map to mipav modalities)
-        
-        if (modality == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) {
-            return "PET__";
-        } else if (modality == FileInfoBase.MAGNETIC_RESONANCE) {
-            return "MRI__";
-        } else if (modality == FileInfoBase.SINGLE_PHOTON_EMISSION_COMPUTED_TOMOGRAPHY) {
-            return "SPECT";
-        } else if (modality == FileInfoBase.MAGNETIC_RESONANCE_SPECTROSCOPY) {
-            return "MRS__";
-        } else if (modality == FileInfoBase.MAGNETIC_RESONANCE_ANGIOGRAPHY) {
-            return "MRA__";
-        } else if (modality == FileInfoBase.COMPUTED_TOMOGRAPHY) {
-            return "CT___";
-        } else if (modality == FileInfoBase.DIGITAL_RADIOGRAPHY) {
-            return "DR___";
-        }
-        
-        return null;
-    }
-    
-    /**
-     * Return the default volume minimum for different file data types.  This is used to rescale the image data before storing 
-     * it on disk (the reader then uses the same values to scale the data back).
-     * 
-     * @param   fileInfo  The fileInfo containing information about the image being saved.
-     * 
-     * @return  The default volume minimum for a given fileInfo.
-     */
-    private static final double getDefaultMin(FileInfoBase fileInfo) {
-        switch (fileInfo.getDataType()) {
-            case ModelStorageBase.BYTE:
-                return Byte.MIN_VALUE + 1;
-
-            case ModelStorageBase.UBYTE:
-                return 0;
-
-            case ModelStorageBase.SHORT:
-                return Short.MIN_VALUE + 1;
-
-            case ModelStorageBase.USHORT:
-                return 0;
-
-            case ModelStorageBase.INTEGER:
-                return Integer.MIN_VALUE + 1;
-                
-            case ModelStorageBase.UINTEGER:
-                return 0;
-
-            case ModelStorageBase.FLOAT:
-            case ModelStorageBase.DOUBLE:
-                return fileInfo.getMin();
-                
-            default:
-                return fileInfo.getMin();
-        }
-    }
-    
-    /**
-     * Return the default volume maximum for different file data types.  This is used to rescale the image data before storing 
-     * it on disk (the reader then uses the same values to scale the data back).
-     * 
-     * @param   fileInfo  The fileInfo containing information about the image being saved.
-     * 
-     * @return  The default volume maximum for a given fileInfo.
-     */
-    private static final double getDefaultMax(FileInfoBase fileInfo) {
-        switch (fileInfo.getDataType()) {
-            case ModelStorageBase.BYTE:
-            case ModelStorageBase.UBYTE:
-                return Byte.MAX_VALUE;
-
-            case ModelStorageBase.SHORT:
-            case ModelStorageBase.USHORT:
-                return Short.MAX_VALUE;
-
-            case ModelStorageBase.INTEGER:
-            case ModelStorageBase.UINTEGER:
-                return Integer.MAX_VALUE;
-
-            case ModelStorageBase.FLOAT:
-            case ModelStorageBase.DOUBLE:
-                return fileInfo.getMax();
-                
-            default:
-                return fileInfo.getMax();
         }
     }
 }

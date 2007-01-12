@@ -84,7 +84,7 @@ public class FileIO {
     private JDialogUnknownIO unknownIODialog;
 
 
-    /** user defined file type associations...that were obtained from the prefs */
+    /** user defined file type associations...that were obtained from the prefs. */
     private String[] userDefinedFileTypeAssociations = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -265,7 +265,6 @@ public class FileIO {
 
     }
 
-    
 
     /**
      * Breaks the filename into basename and suffix, then returns the suffix.
@@ -781,11 +780,12 @@ public class FileIO {
      * @see     FileBase
      */
     public int getFileType(String fileName, String fileDir, boolean doWrite) {
-    	int fileType;
+        int fileType;
         int i;
-    	
-        
-    	String beginString;
+
+
+        String beginString;
+
         if (fileName.lastIndexOf('.') > -1) {
             beginString = fileName.substring(0, fileName.lastIndexOf('.'));
         } else {
@@ -795,20 +795,22 @@ public class FileIO {
         if ((beginString.equalsIgnoreCase("d3proc")) || (beginString.equalsIgnoreCase("reco")) ||
                 (beginString.equalsIgnoreCase("2dseq"))) {
             fileType = FileUtility.BRUKER;
+
             return fileType;
         }
-    	
 
         fileName.trim();
 
         String suffix = getSuffixFrom(fileName);
-        
+
         fileType = FileUtility.getFileTypeFromSuffix(suffix);
-        
+
         if (fileType == FileUtility.UNDEFINED) {
-        	if(suffix.equalsIgnoreCase(".pic")) {
-        		//Both Biorad and JIMI use the pic suffix
-        		try {
+
+            if (suffix.equalsIgnoreCase(".pic")) {
+
+                // Both Biorad and JIMI use the pic suffix
+                try {
                     File file = new File(fileDir + fileName);
                     RandomAccessFile raFile = new RandomAccessFile(file, "r");
 
@@ -833,9 +835,9 @@ public class FileIO {
                 } catch (IOException e) {
                     System.gc();
                 }
-        	}
-        	else if(suffix.equalsIgnoreCase(".img")) {
-        		//Both ANALYZE and NIFTI use .img and .hdr
+            } else if (suffix.equalsIgnoreCase(".img")) {
+
+                // Both ANALYZE and NIFTI use .img and .hdr
                 if (doWrite) {
                     JDialogAnalyzeNIFTIChoice choice = new JDialogAnalyzeNIFTIChoice(UI.getMainFrame());
 
@@ -846,8 +848,7 @@ public class FileIO {
                     } else {
                         fileType = FileUtility.NIFTI;
                     }
-                } 
-                else { // read
+                } else { // read
                     fileType = FileUtility.ANALYZE;
 
                     int p = fileName.lastIndexOf(".");
@@ -879,9 +880,9 @@ public class FileIO {
                         System.gc();
                     }
                 }
-        	}
-        	else if(suffix.equalsIgnoreCase(".ima")) {
-        		//Both Dicom and Siemens Magnetom Vision file type have the ima suffix
+            } else if (suffix.equalsIgnoreCase(".ima")) {
+
+                // Both Dicom and Siemens Magnetom Vision file type have the ima suffix
                 try {
                     File file = new File(fileDir + fileName);
                     RandomAccessFile raFile = new RandomAccessFile(file, "r");
@@ -900,9 +901,8 @@ public class FileIO {
 
                     if (ModelNameString.equals("MAGNETOM VISION")) {
                         fileType = FileUtility.MAGNETOM_VISION;
-                    }
-                    else {
-                    	fileType = FileUtility.DICOM;
+                    } else {
+                        fileType = FileUtility.DICOM;
                     }
                 } catch (OutOfMemoryError error) {
                     System.gc();
@@ -911,10 +911,15 @@ public class FileIO {
                 } catch (IOException e) {
                     System.gc();
                 }
-        	}
+            } else if (suffix.equalsIgnoreCase("") && doWrite) {
+                Preferences.debug("FileIO: Cannot save a file without an extension: " + fileName + "\n",
+                                  Preferences.DEBUG_FILEIO);
+
+                return FileUtility.UNDEFINED;
+            }
         }
 
-        //check to see if there are any user defined associations
+        // check to see if there are any user defined associations
         if (userDefinedFileTypeAssociations != null) {
 
             for (int k = 0; k < userDefinedFileTypeAssociations.length; k++) {
@@ -924,9 +929,10 @@ public class FileIO {
                 }
             }
         }
-        
+
         try {
-        	if (fileType == FileUtility.UNDEFINED) {
+
+            if (fileType == FileUtility.UNDEFINED) {
                 fileType = isDicom(fileName, fileDir);
             }
 
@@ -945,10 +951,9 @@ public class FileIO {
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = isMinc(fileName, fileDir);
             }
-            
 
 
-   			if (fileType == FileUtility.UNDEFINED) {
+            if (fileType == FileUtility.UNDEFINED) {
 
                 fileType = isAnalyze(fileName, fileDir);
             }
@@ -956,11 +961,11 @@ public class FileIO {
             if (fileType == FileUtility.UNDEFINED) {
                 fileType = isNIFTI(fileName, fileDir);
             }
-        }
-        catch (IOException ioe) {
+        } catch (IOException ioe) {
 
             if (ioe instanceof FileNotFoundException) {
                 MipavUtil.displayError("File does not exist '" + fileDir + fileName + "'.");
+                ioe.printStackTrace();
 
                 return FileUtility.ERROR;
             }
@@ -968,13 +973,15 @@ public class FileIO {
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + ioe);
                 Preferences.debug("FileIO: " + ioe + "\n");
+                ioe.printStackTrace();
             } else {
                 Preferences.debug("FileIO: " + ioe + "\n");
+                ioe.printStackTrace();
             }
 
             fileType = FileUtility.UNDEFINED;
         }
-        
+
 
         return fileType;
     }
@@ -1014,7 +1021,6 @@ public class FileIO {
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
-     * @return  <code>FileUtility.DICOM</code> if the file is a DICOM file, and <code>FileUtility.UNDEFINED</code> otherwise
      * @return  <code>FileBase.ANALYZE</code> if the file is a ANALYZE type, and <code>FileBase.UNDEFINED</code>
      *          otherwise
      *
@@ -1095,8 +1101,8 @@ public class FileIO {
      * @param   fileName  Name of the image file to read.
      * @param   fileDir   Directory of the image file to read.
      *
-     * @return  <code>FileBase.gedno</code> if the file is a GE MR Signa 4.x file, and <code>FileUtility.UNDEFINED</code>
-     *          otherwise
+     * @return  <code>FileBase.gedno</code> if the file is a GE MR Signa 4.x file, and <code>
+     *          FileUtility.UNDEFINED</code> otherwise
      *
      * @throws  IOException  DOCUMENT ME!
      */
@@ -2134,23 +2140,23 @@ public class FileIO {
             // check for image position
             if (((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,0032") != null) {
 
-            	double xLoc0 = ((FileInfoDicom) image.getFileInfo(0)).xLocation;
-            	double yLoc0 = ((FileInfoDicom) image.getFileInfo(0)).yLocation;
-            	double zLoc0 = ((FileInfoDicom) image.getFileInfo(0)).zLocation;
+                double xLoc0 = ((FileInfoDicom) image.getFileInfo(0)).xLocation;
+                double yLoc0 = ((FileInfoDicom) image.getFileInfo(0)).yLocation;
+                double zLoc0 = ((FileInfoDicom) image.getFileInfo(0)).zLocation;
 
-            	double xLoc1 = ((FileInfoDicom) image.getFileInfo(1)).xLocation;
-            	double yLoc1 = ((FileInfoDicom) image.getFileInfo(1)).yLocation;
-            	double zLoc1 = ((FileInfoDicom) image.getFileInfo(1)).zLocation;
+                double xLoc1 = ((FileInfoDicom) image.getFileInfo(1)).xLocation;
+                double yLoc1 = ((FileInfoDicom) image.getFileInfo(1)).yLocation;
+                double zLoc1 = ((FileInfoDicom) image.getFileInfo(1)).zLocation;
 
                 double res3Dim = 1;
 
                 res3Dim = ((xLoc0 - xLoc1) * (xLoc0 - xLoc1)) + ((yLoc0 - yLoc1) * (yLoc0 - yLoc1)) +
                           ((zLoc0 - zLoc1) * (zLoc0 - zLoc1));
-                res3Dim =  Math.sqrt(res3Dim);
+                res3Dim = Math.sqrt(res3Dim);
 
                 // System.err.println("res3Dim Spacing: " + res3Dim);
                 if ((res3Dim != 0)) {
-                    image.getFileInfo(0).setResolutions((float)res3Dim, 2);
+                    image.getFileInfo(0).setResolutions((float) res3Dim, 2);
 
                     // System.out.println (" res3Dim 1  = " + res3Dim);
                     for (int m = 1; m < (nImages - 1); m++) {
@@ -2167,10 +2173,10 @@ public class FileIO {
                                   ((zLoc0 - zLoc1) * (zLoc0 - zLoc1));
                         res3Dim = Math.sqrt(res3Dim);
 
-                        image.getFileInfo(m).setResolutions((float)res3Dim, 2);
+                        image.getFileInfo(m).setResolutions((float) res3Dim, 2);
                     }
 
-                    image.getFileInfo(nImages - 1).setResolutions((float)res3Dim, 2);
+                    image.getFileInfo(nImages - 1).setResolutions((float) res3Dim, 2);
                 }
             }
 
@@ -2199,12 +2205,23 @@ public class FileIO {
                         image.getFileInfo(0).setResolutions(sliceDifference, 2);
 
                         for (int m = 0; m < (nImages - 1); m++) {
-                            image.getFileInfo(m).setResolutions(Float.parseFloat((String)((FileDicomTag)((FileInfoDicom)image.getFileInfo(m + 1)).getTagsList().get("0020,1041")).getValue(true)) - 
-                                                                Float.parseFloat((String)((FileDicomTag)((FileInfoDicom)image.getFileInfo(m)).getTagsList().get("0020,1041")).getValue(true)), 2);
+                            image.getFileInfo(m).setResolutions(Float.parseFloat((String)
+                                                                                 ((FileDicomTag)
+                                                                                      ((FileInfoDicom)
+                                                                                           image.getFileInfo(m + 1))
+                                                                                          .getTagsList().get("0020,1041"))
+                                                                                     .getValue(true)) -
+                                                                Float.parseFloat((String)
+                                                                                 ((FileDicomTag)
+                                                                                      ((FileInfoDicom)
+                                                                                           image.getFileInfo(m))
+                                                                                          .getTagsList().get("0020,1041"))
+                                                                                     .getValue(true)), 2);
                         }
 
                         if (nImages > 2) {
-                            image.getFileInfo(nImages - 1).setResolutions(image.getFileInfo(nImages - 2).getResolution(2), 2);
+                            image.getFileInfo(nImages - 1).setResolutions(image.getFileInfo(nImages - 2).getResolution(2),
+                                                                          2);
                         }
                     }
                 }
@@ -2354,22 +2371,21 @@ public class FileIO {
         this.fileName = fileName;
         this.fileDir = fileDir;
         fileName.trim();
-        
 
-         fileType = getFileType(fileName, fileDir, false); // set the fileType
-         
-         if(fileType == FileUtility.ERROR) {
-        	 return null;
-         }
 
-         if (fileType == FileUtility.UNDEFINED) { // if image type not defined by extension, popup
-        	 fileType = getFileType(); // dialog to get user to define image type
-             userDefinedFileType = fileType;
-             userDefinedSuffix = "." + fileName.split("\\.")[1];
-         }
+        fileType = getFileType(fileName, fileDir, false); // set the fileType
+
+        if (fileType == FileUtility.ERROR) {
+            return null;
+        }
+
+        if (fileType == FileUtility.UNDEFINED) { // if image type not defined by extension, popup
+            fileType = getFileType(); // dialog to get user to define image type
+            userDefinedFileType = fileType;
+            userDefinedSuffix = "." + fileName.split("\\.")[1];
+        }
 
         fileType = chkMultiFile(fileType, multiFile); // for multifile support...
-
 
 
         try {
@@ -3077,6 +3093,8 @@ public class FileIO {
                 }
 
                 suffix = unknownIODialog.getSuffix(); // get the expected suffix from the dialog
+
+                options.setFileType(fileType);
             } else if (fileType == FileUtility.JIMI) { // if type is JIMI, then try and use suffix from fileInfo
                 suffix = image.getFileInfo(0).getFileSuffix();
 
@@ -3278,7 +3296,7 @@ public class FileIO {
 
             // updates menubar for each image
             Vector imageFrames = UI.getImageFrameVector();
-            
+
 
             if (imageFrames.size() < 1) {
                 UI.buildMenu();
@@ -3738,12 +3756,12 @@ public class FileIO {
      * @param  message  this message should FILE_READ, FILE_OPEN
      */
     private void createProgressBar(FileBase fBase, String fName, String message) {
-  
-    	//progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
-    	//progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
-    	
-    	
-    	//the quiet flag is needed to determine if progress bar is visible or not
+
+        // progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true);
+        // progressBar.setVisible(ViewUserInterface.getReference().isAppFrameVisible() && !quiet);
+
+
+        // the quiet flag is needed to determine if progress bar is visible or not
         progressBar = new ViewJProgressBar(fName, message + fName + " ...", 0, 100, true, null, null, !quiet);
         progressBar.progressStateChanged(new ProgressChangeEvent(this, 0, null, null));
 
@@ -8629,6 +8647,7 @@ public class FileIO {
         }
 
         originalFileInfos = (FileInfoBase[]) (image.getFileInfo().clone());
+
         int sliceSize = image.getSliceSize();
 
         if (image.isDicomImage()) {
@@ -8666,7 +8685,8 @@ public class FileIO {
             myFileInfo.vr_type = FileInfoDicom.EXPLICIT;
 
             // necessary to save (non-pet) floating point minc files to dicom
-            if ((image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT) && (myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
+            if ((image.getFileInfo(0).getFileFormat() == FileUtility.MINC) && (image.getType() == ModelImage.FLOAT) &&
+                    (myFileInfo.getModality() != FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)) {
                 ModelImage newImage = (ModelImage) image.clone();
 
                 // in-place conversion is required so that the minc file info is retained
@@ -8753,11 +8773,12 @@ public class FileIO {
 
                 TransMatrix invMatrix = (TransMatrix) matrix.clone();
                 invMatrix.invert();
-                
+
                 float[] imageOrg = image.getFileInfo(0).getOrigin();
                 double[] imageOrgDbl = new double[imageOrg.length];
-                for(int k=0;k<imageOrg.length;k++){
-                	imageOrgDbl[k] = (double)imageOrg[k];
+
+                for (int k = 0; k < imageOrg.length; k++) {
+                    imageOrgDbl[k] = (double) imageOrg[k];
                 }
 
                 matrix.transform(imageOrgDbl, axialOrigin);
@@ -8780,10 +8801,10 @@ public class FileIO {
                         options.setRecalculateInstanceNumber(false);
                     }
                 }
-                
+
                 double vmin;
                 double vmax;
-                
+
                 if (image.getFileInfo(0).getFileFormat() == FileUtility.MINC) {
                     vmin = ((FileInfoMinc) image.getFileInfo(0)).vmin;
                     vmax = ((FileInfoMinc) image.getFileInfo(0)).vmax;
@@ -8791,7 +8812,7 @@ public class FileIO {
                     vmin = image.getMin();
                     vmax = image.getMax();
                 }
-                
+
                 double slopeDivisor = vmax - vmin;
 
                 if (slopeDivisor == 0) {
@@ -8813,8 +8834,9 @@ public class FileIO {
                     // transform the slice position back into dicom space and store it in the file info
                     invMatrix.transform(axialOrigin, dicomOrigin);
 
-                    String tmpStr = new String(Float.toString((float)dicomOrigin[0]) + "\\" + Float.toString((float)dicomOrigin[1]) +
-                                               "\\" + Float.toString((float)dicomOrigin[2]));
+                    String tmpStr = new String(Float.toString((float) dicomOrigin[0]) + "\\" +
+                                               Float.toString((float) dicomOrigin[1]) + "\\" +
+                                               Float.toString((float) dicomOrigin[2]));
                     ((FileInfoDicom) (fBase[k])).setValue("0020,0032", tmpStr, tmpStr.length());
 
                     // move the slice position to the next slice in the image
@@ -8826,33 +8848,36 @@ public class FileIO {
                     }
 
                     // rescaling intercepts and slopes for each slice.
-                    if ((fBase[k].getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY)
-                            && ((image.getType() == ModelStorageBase.FLOAT) || (image.getType() == ModelStorageBase.DOUBLE))) {
-                        
+                    if ((fBase[k].getModality() == FileInfoBase.POSITRON_EMISSION_TOMOGRAPHY) &&
+                            ((image.getType() == ModelStorageBase.FLOAT) ||
+                                 (image.getType() == ModelStorageBase.DOUBLE))) {
+
                         double smin, smax; // slice min and max
 
                         try {
                             image.exportData(k * sliceSize, sliceSize, sliceData);
                         } catch (IOException ioe) {
                             image.setFileInfo(originalFileInfos);
-                        
+
                             ioe.printStackTrace();
-                        
+
                             if (!quiet) {
                                 MipavUtil.displayError("FileIO: " + ioe);
                             }
-                            
+
                             return false;
                         }
-                        
+
                         smin = Double.MAX_VALUE;
                         smax = -Double.MAX_VALUE;
-                            
+
                         // calculate min max values per slice
                         for (int pixel = 0; pixel < sliceData.length; pixel++) {
+
                             if (sliceData[pixel] < smin) {
                                 smin = sliceData[pixel];
                             }
+
                             if (sliceData[pixel] > smax) {
                                 smax = sliceData[pixel];
                             }
@@ -8860,7 +8885,7 @@ public class FileIO {
 
                         fBase[k].setRescaleSlope((smax - smin) / slopeDivisor);
                         fBase[k].setRescaleIntercept(smin - (fBase[k].getRescaleSlope() * vmin));
-                        
+
                         ((FileInfoDicom) fBase[k]).setValue("0028,1052", "" + fBase[k].getRescaleIntercept());
                         ((FileInfoDicom) fBase[k]).setValue("0028,1053", "" + fBase[k].getRescaleSlope());
                     }
