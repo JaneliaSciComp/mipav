@@ -342,6 +342,14 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
             	MipavUtil.displayError("Number of masks exceed resize number");
             }
             else {
+            	//we need to commit the paint to mask
+            	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+            	ModelImage imageB = image.getParentFrame().getImageB();
+            	image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
+                image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false);
+                image.getParentFrame().getComponentImage().setModifyFlag(true);
+                image.notifyImageDisplayListeners();
+                refreshImagePaint(image, obj);
             	newLabelList(Nbx, Nby);
             	refreshLabelDisplay();
             }
