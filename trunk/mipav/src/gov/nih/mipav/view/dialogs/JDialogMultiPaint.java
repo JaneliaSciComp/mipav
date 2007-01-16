@@ -1080,6 +1080,19 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         int k=1;
         //this boolean is needed to test if image b has a color of 1 in it
         boolean hasOne = false;
+        if(vals.size() == 0) {
+        	color[1] = lutB.getColor(1);
+        	multiButton[1].setBackground(color[1]);
+    		listButton[1].setBackground(color[1]);
+    		multiButton[1].setText(String.valueOf(1));
+    		listButton[1].setText(String.valueOf(1));
+    		buttonTextArrayList.set(0, new Integer(1));	
+    		multiButton[1].setSelected(true);
+    		listButton[1].setSelected(true);
+    		image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+			image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
+			((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
+        }
         while(iter.hasNext()) {
         	Integer maskVal = (Integer)iter.next();
         	int maskVal_int = maskVal.intValue();
