@@ -1095,14 +1095,16 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         	}
         	else {
         		for (int n = 1; n <= (nbx * nby); n++) {
-        			if(!hasOne && color[1].getRGB() == lutB.getColor(1).getRGB()) {
-        				color[1] = lutB.getColor(maskVal_int);
-        	        	multiButton[1].setBackground(color[1]);
-        	    		listButton[1].setBackground(color[1]);
-        	    		multiButton[1].setText(String.valueOf(maskVal_int));
-        	    		listButton[1].setText(String.valueOf(maskVal_int));
-        	    		buttonTextArrayList.set(0, new Integer(maskVal_int));
-        				break;
+        			if(!hasOne) {
+        				if(color[1].getRGB() == lutB.getColor(1).getRGB()) {
+	        				color[1] = lutB.getColor(maskVal_int);
+	        	        	multiButton[1].setBackground(color[1]);
+	        	    		listButton[1].setBackground(color[1]);
+	        	    		multiButton[1].setText(String.valueOf(maskVal_int));
+	        	    		listButton[1].setText(String.valueOf(maskVal_int));
+	        	    		buttonTextArrayList.set(0, new Integer(maskVal_int));
+	        				break;
+        				}
         			}
         			if(color[n] == null) {
         				color[n] = lutB.getColor(maskVal_int);
@@ -1141,16 +1143,18 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     		}
         	else {
 	        	for (n = 1; n <= (nbx * nby); n++) {
-	        		if(!hasOne && color[1].getRGB() == lutB.getColor(1).getRGB()) {
-	        			selected = 1;
-	        			multiButton[1].setBackground(color[1]);
-	        			multiButton[1].setSelected(true);
-	        			listButton[1].setBackground(color[1]);
-	        			listButton[1].setSelected(true);
-	        			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
-	        			image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
-	        			test = true;
-	        			break;
+		        		if(!hasOne) {
+		        			if(color[1].getRGB() == lutB.getColor(1).getRGB()) {
+			        			selected = 1;
+			        			multiButton[1].setBackground(color[1]);
+			        			multiButton[1].setSelected(true);
+			        			listButton[1].setBackground(color[1]);
+			        			listButton[1].setSelected(true);
+			        			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+			        			image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
+			        			test = true;
+			        			break;
+		        			}
 	        		}
 	        		if(color[n] == null) {
 	        			selected = n;
