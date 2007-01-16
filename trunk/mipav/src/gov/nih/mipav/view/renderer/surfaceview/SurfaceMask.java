@@ -480,7 +480,9 @@ public class SurfaceMask
         Color4f kColor = new Color4f();
         if ( !imageA.isColorImage() )
         {
-            float value = imageA.getFloat( (int)kModelPoint.x, (int)kModelPoint.y, (int)kModelPoint.z ) / 255.0f;
+            float value = imageA.getFloatTriLinearBounds( kModelPoint.x,
+                                                          kModelPoint.y,
+                                                          kModelPoint.z ) / 255.0f;
             kColor = new Color4f( value, value, value, fTransparency );
         }
         else
