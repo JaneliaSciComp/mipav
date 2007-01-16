@@ -2058,7 +2058,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 		
 	}
 
-	@Override
+	/**
+	 * windowclosing...override of WindowListener interface
+	 * 
+	 */
 	public void windowClosing(WindowEvent event) {
 		//we need to commit the paint to mask
     	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
