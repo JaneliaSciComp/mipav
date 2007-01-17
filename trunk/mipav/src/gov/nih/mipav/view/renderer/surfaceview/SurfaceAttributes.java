@@ -124,7 +124,7 @@ public class SurfaceAttributes {
         this.mIsClodMesh = false;
         this.mSurfaceMask = null;
         /* sets the default color */
-        this.setColor( new Color4f( 1, 0, 0, 1 ) ); 
+        mColor = new Color4f( 1, 0, 0, 1 ); 
     }
 
     // Access functions: 
@@ -175,6 +175,10 @@ public class SurfaceAttributes {
         mMaterial = material;
         if ( mMaterial != null )
         {
+            if ( mMaterial.getCapability( Material.ALLOW_COMPONENT_WRITE ) )
+            {
+                mMaterial.setColorTarget( Material.AMBIENT_AND_DIFFUSE );
+            }
             Color3f diffuse = new Color3f();
             mMaterial.getDiffuseColor( diffuse );
             mColor.x = diffuse.x;

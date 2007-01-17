@@ -34,7 +34,7 @@ public class FileSurfaceXML extends FileXML {
     private static final String[] m_kMaterialStr = { "Ambient", "Diffuse", "Emissive", "Specular", "Shininess" };
 
     /** array of strings representing the tags under <Mesh> in the xml schema. */
-    private static final String[] m_kMeshStr = { "Vertices", "Normals", "Connectivity" };
+    private static final String[] m_kMeshStr = { "Vertices", "Normals", "Colors", "Connectivity" };
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -79,7 +79,7 @@ public class FileSurfaceXML extends FileXML {
      *
      * @return  FileInfoSurfaceXML
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  file exception
      */
     public FileInfoSurfaceXML readSurfaceXML(String headerFileName, String headerDir) throws IOException {
         SurfaceXMLHandler kHandler = null;
@@ -102,7 +102,7 @@ public class FileSurfaceXML extends FileXML {
      * @param   headerName  file name to write to
      * @param   headerDir   name of directory to write to
      * @param   kMesh       ModelTriangleMesh representing the surface
-     * @param   kMaterial   DOCUMENT ME!
+     * @param   kMaterial   surface material
      *
      * @return  if header write was successful
      *
@@ -153,14 +153,17 @@ public class FileSurfaceXML extends FileXML {
           int iVertexCount = kMesh[index].getVertexCount();
           Point3f[] akCoordinates = new Point3f[iVertexCount];
           Vector3f[] akNormals = new Vector3f[iVertexCount];
+          Color4f[] akColors = new Color4f[iVertexCount];
 
           for (int i = 0; i < iVertexCount; i++) {
             akCoordinates[i] = new Point3f();
             akNormals[i] = new Vector3f();
+            akColors[i] = new Color4f();
           }
 
           kMesh[index].getCoordinates(0, akCoordinates);
           kMesh[index].getNormals(0, akNormals);
+          kMesh[index].getColors(0, akColors);
 
           int iIndexCount = kMesh[index].getIndexCount();
           int[] aiIndex = new int[iIndexCount];
@@ -203,7 +206,12 @@ public class FileSurfaceXML extends FileXML {
                       kSurfaceXMLHandler.getNormalString(akNormals));
           }
 
-          closedTag(bw, m_kMeshStr[2],
+          if (akColors != null) {
+            closedTag(bw, m_kMeshStr[2],
+                      kSurfaceXMLHandler.getColorString(akColors));
+          }
+
+          closedTag(bw, m_kMeshStr[3],
                     kSurfaceXMLHandler.getIndexString(aiIndex));
 
           openTag(bw, m_kSurfaceStr[5], false);
@@ -212,10 +220,12 @@ public class FileSurfaceXML extends FileXML {
           for (int i = 0; i < iVertexCount; i++) {
             akCoordinates[i] = null;
             akNormals[i] = null;
+            akColors[i] = null;
           }
 
           akCoordinates = null;
           akNormals = null;
+          akColors = null;
           aiIndex = null;
 
         }
@@ -247,14 +257,17 @@ public class FileSurfaceXML extends FileXML {
         /** Current buffer:. */
         String elementBuffer = new String();
 
-        /** DOCUMENT ME! */
+        /** fileInfo data structure for reading the surface information into: */
         FileInfoSurfaceXML fileInfo;
 
-        /** DOCUMENT ME! */
+        /** Triangle mesh connectivity (index) array */
         private int[] m_aiIndex = null;
 
-        /** DOCUMENT ME! */
+        /** Triangle mesh normals (may be null) */
         private Vector3f[] m_akNormals = null;
+
+        /** Triangle mesh colors (may be null) */
+        private Color4f[] m_akColors = null;
 
         /** Vertex, Normal, and Connectivity arrays to read into from the file:. */
         private Point3f[] m_akVertices = null;
@@ -262,7 +275,7 @@ public class FileSurfaceXML extends FileXML {
         /**
          * Creates a new SurfaceXMLHandler object.
          *
-         * @param  fInfo  DOCUMENT ME!
+         * @param  fInfo  FileInfo for storing the file data into.
          */
         public SurfaceXMLHandler(FileInfoSurfaceXML fInfo) {
             fileInfo = fInfo;
@@ -325,6 +338,8 @@ public class FileSurfaceXML extends FileXML {
                 getVertices(elementBuffer);
             } else if (currentKey.equals("Normals")) {
                 getNormals(elementBuffer);
+            } else if (currentKey.equals("Colors")) {
+                getColors(elementBuffer);
             } else if (currentKey.equals("Connectivity")) {
                 getConnectivity(elementBuffer);
             } else if (currentKey.equals("Mesh")) {
@@ -333,20 +348,16 @@ public class FileSurfaceXML extends FileXML {
                     System.err.println("Error reading in SurfaceXML file");
                 }
 
-                if (m_akNormals != null) {
-                    fileInfo.setMesh(m_akVertices, m_akNormals, m_aiIndex);
-                } else {
-                    fileInfo.setMesh(m_akVertices, null, m_aiIndex);
-                }
+                fileInfo.setMesh(m_akVertices, m_akNormals, m_akColors, m_aiIndex);
             }
         }
 
         /**
          * Called when writing the surface.xml file: Converts the input Color3f to a String for writing:
          *
-         * @param   kColor  DOCUMENT ME!
+         * @param   kColor  color object
          *
-         * @return  DOCUMENT ME!
+         * @return  the color in string format
          */
         public String getColorString(Color3f kColor) {
             String kColorString = new String(kColor.x + " " + kColor.y + " " + kColor.z);
@@ -357,9 +368,9 @@ public class FileSurfaceXML extends FileXML {
         /**
          * Called when writing the surface.xml file: Converts the input array of int[] to a String for writing:
          *
-         * @param   aiConnectivity  DOCUMENT ME!
+         * @param   aiConnectivity  the connectivity array
          *
-         * @return  DOCUMENT ME!
+         * @return  the connectivity array in string format
          */
         public String getIndexString(int[] aiConnectivity) {
             String kIndexString = new String();
@@ -374,9 +385,9 @@ public class FileSurfaceXML extends FileXML {
         /**
          * Called when writing the surface.xml file: Converts the input array of Vector3f[] to a String for writing:
          *
-         * @param   akNormals  DOCUMENT ME!
+         * @param   akNormals  normals array
          *
-         * @return  DOCUMENT ME!
+         * @return  normals array in string format
          */
         public String getNormalString(Vector3f[] akNormals) {
             String kNormalString = new String();
@@ -390,11 +401,29 @@ public class FileSurfaceXML extends FileXML {
         }
 
         /**
+         * Called when writing the surface.xml file: Converts the input array of Color4f[] to a String for writing:
+         *
+         * @param   akColors  array of Color4f, representing the surface triangle mesh per-vertex colors.
+         *
+         * @return  colors array in string format
+         */
+        public String getColorString(Color4f[] akColors) {
+            String kColorString = new String();
+
+            for (int i = 0; i < akColors.length; i++) {
+                kColorString = kColorString.concat(new String(akColors[i].x + " " + akColors[i].y +
+                                                              " " + akColors[i].z + " " + akColors[i].w + " "));
+            }
+
+            return kColorString;
+        }
+
+        /**
          * Called when writing the surface.xml file: Converts the input array of Point3f[] to a String for writing:
          *
-         * @param   akVertices  DOCUMENT ME!
+         * @param   akVertices  mesh coordinate array
          *
-         * @return  DOCUMENT ME!
+         * @return  mesh coordinate array in string format
          */
         public String getVertexString(Point3f[] akVertices) {
             String kVertexString = new String();
@@ -434,9 +463,9 @@ public class FileSurfaceXML extends FileXML {
         /**
          * Called when reading the input surface.xml file: Parses the input string into a Color3f variable:
          *
-         * @param   kParseString  DOCUMENT ME!
+         * @param   kParseString  input string containing the material color
          *
-         * @return  DOCUMENT ME!
+         * @return  the material color in Color3f format
          */
         private Color3f getColor(String kParseString) {
             Color3f kColor = new Color3f();
@@ -459,7 +488,7 @@ public class FileSurfaceXML extends FileXML {
          * Called when reading the input surface.xml file: Parses the input string into a an array of int[] to represent
          * the mesh connectivity:
          *
-         * @param  kParseString  DOCUMENT ME!
+         * @param  kParseString  the string containing the connectivity information
          */
         private void getConnectivity(String kParseString) {
             LinkedList kIndexList = new LinkedList();
@@ -492,7 +521,7 @@ public class FileSurfaceXML extends FileXML {
          * Called when reading the input surface.xml file: Parses the input string into a an array of Vector3f[],
          * representing the mesh normals:
          *
-         * @param  kParseString  DOCUMENT ME!
+         * @param  kParseString  string containing mesh normals
          */
         private void getNormals(String kParseString) {
             LinkedList kNormalList = new LinkedList();
@@ -527,10 +556,48 @@ public class FileSurfaceXML extends FileXML {
         }
 
         /**
+         * Called when reading the input surface.xml file: Parses the input string into a an array of Color4f[],
+         * representing the mesh per-vertex colors:
+         *
+         * @param  kParseString  input sting containing per-vertex color information.
+         */
+        private void getColors(String kParseString) {
+            LinkedList kColorList = new LinkedList();
+            Color4f kColor = new Color4f();
+            StringTokenizer kSt = new StringTokenizer(kParseString, " ");
+
+            while (kSt.hasMoreTokens()) {
+                try {
+                    kColor.x = Float.parseFloat(kSt.nextToken());
+                    kColor.y = Float.parseFloat(kSt.nextToken());
+                    kColor.z = Float.parseFloat(kSt.nextToken());
+                    kColor.w = Float.parseFloat(kSt.nextToken());
+                    kColorList.add(new Color4f(kColor));
+                } catch (Exception nfex) {
+                    System.out.println(nfex.toString());
+                }
+            }
+
+            int iSize = kColorList.size();
+
+            if (iSize > 0) {
+                m_akColors = new Color4f[iSize];
+
+                for (int i = 0; i < iSize; i++) {
+                    m_akColors[i] = (Color4f) kColorList.get(i);
+                }
+            }
+
+            kColorList = null;
+            kColor = null;
+            kSt = null;
+        }
+
+        /**
          * Called when reading the input surface.xml file: Parses the input string into a an array of Point3f[],
          * representing the mesh vertices:
          *
-         * @param  kParseString  DOCUMENT ME!
+         * @param  kParseString  string containing mesh coordinates
          */
         private void getVertices(String kParseString) {
             LinkedList kVertList = new LinkedList();

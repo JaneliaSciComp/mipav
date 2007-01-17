@@ -168,9 +168,29 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
 
         setCoordinates(0, akVertex);
         setCoordinateIndices(0, aiConnect);
-        setNormals(0, akNormal);
+
+        if ( akNormal == null )
+        {
+            computeNormals();
+        }
+        else
+        {
+            setNormals(0, akNormal);
+        }
         setNormalIndices(0, aiConnect);
-        setColors(0, akColor);
+        if ( akColor == null )
+        {
+            Color4f[] akColors = new Color4f[ akVertex.length ];
+            for ( int i = 0; i < akVertex.length; i++ )
+            {
+                akColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+            }
+            setColors(0, akColors);
+        }
+        else
+        {
+            setColors(0, akColor);
+        }
         setColorIndices(0, aiConnect);
         m_kGenerator = null;
     }
