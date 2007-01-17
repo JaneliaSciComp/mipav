@@ -52,6 +52,11 @@
 									<xs:list itemType="xs:float" />
 								</xs:simpleType>
 							</xs:element>
+							<xs:element name="Colors" minOccurs="0">
+								<xs:simpleType>
+									<xs:list itemType="xs:float" />
+								</xs:simpleType>
+							</xs:element>
 							<xs:element name="Connectivity">
 								<xs:simpleType>
 									<xs:list itemType="xs:int" />

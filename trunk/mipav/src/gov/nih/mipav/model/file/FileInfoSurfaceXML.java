@@ -196,11 +196,12 @@ public class FileInfoSurfaceXML extends FileInfoXML {
     /**
      * Creates the ModelTriangleMesh for the surface:
      *
-     * @param  kVertices       DOCUMENT ME!
-     * @param  kNormals        DOCUMENT ME!
-     * @param  aiConnectivity  DOCUMENT ME!
+     * @param  kVertices       Mesh coordinates
+     * @param  kNormals        Mesh normals (may be null)
+     * @param  kColors         Mesh colors (may be null)
+     * @param  aiConnectivity  Mesh index connectivity array
      */
-    public void setMesh(Point3f[] kVertices, Vector3f[] kNormals, int[] aiConnectivity) {
+    public void setMesh(Point3f[] kVertices, Vector3f[] kNormals, Color4f[] kColors, int[] aiConnectivity) {
 
        int i;
        if ( m_kMesh == null ) {
@@ -215,11 +216,7 @@ public class FileInfoSurfaceXML extends FileInfoXML {
            m_kMesh[i] = mesh[i];
          }
        }
-        if (kNormals != null) {
-            m_kMesh[meshIndex++] = new ModelTriangleMesh(kVertices, kNormals, aiConnectivity);
-        } else {
-            m_kMesh[meshIndex++] = new ModelTriangleMesh(kVertices, aiConnectivity);
-        }
+       m_kMesh[meshIndex++] = new ModelTriangleMesh(kVertices, kNormals, kColors, aiConnectivity);
     }
 
     /**

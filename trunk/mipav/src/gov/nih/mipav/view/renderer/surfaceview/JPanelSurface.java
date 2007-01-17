@@ -2055,36 +2055,13 @@ public class JPanelSurface extends JPanelRendererBase
         if (!((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
             BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
             Shape3D shape = (Shape3D) root.getChild(0);
-
-            /* Set the new surface material values: */
-            Appearance kAppearance = shape.getAppearance();
-            Material kMaterialOriginal = kAppearance.getMaterial();
-
-            Color3f kAmbient = new Color3f();
-            Color3f kEmissive = new Color3f();
+            shape.getAppearance().setMaterial( kMaterial );
             Color3f kDiffuse = new Color3f();
-            Color3f kSpecular = new Color3f();
-            kMaterial.getAmbientColor(kAmbient);
-            kMaterial.getEmissiveColor(kEmissive);
             kMaterial.getDiffuseColor(kDiffuse);
-            kMaterial.getSpecularColor(kSpecular);
-
-            float fShininess = kMaterial.getShininess();
-
-            kMaterialOriginal.setAmbientColor(kAmbient);
-            kMaterialOriginal.setEmissiveColor(kEmissive);
-            kMaterialOriginal.setDiffuseColor(kDiffuse);
-            kMaterialOriginal.setSpecularColor(kSpecular);
-            kMaterialOriginal.setShininess(fShininess);
-
             Color4f kColor = new Color4f(kDiffuse.get());
             colorButton.setBackground(kDiffuse.get());
-            ((SurfaceAttributes) surfaceVector.get(iIndex)).setColor( kColor );
-
-            kAmbient = null;
-            kEmissive = null;
+            ((SurfaceAttributes) surfaceVector.get(iIndex)).setMaterial( kMaterial );
             kDiffuse = null;
-            kSpecular = null;
         }
     }
 
