@@ -336,19 +336,18 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         } else if (command.equals("Resize")) {
             int Nbx = Integer.valueOf(numberXField.getText()).intValue();
             int Nby = Integer.valueOf(numberYField.getText()).intValue();
-            // resetLabelList(Nbx,Nby);
+
+            //we need to commit paint to mask
+            BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
             ModelImage imgB = image.getParentFrame().getImageB();
+            image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
+            image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+            image.getParentFrame().getComponentImage().setModifyFlag(true);
+            image.notifyImageDisplayListeners();
             if (getMaskTreeSet(imgB).size() > Nbx * Nby) {
             	MipavUtil.displayError("Number of masks exceed resize number");
             }
             else {
-            	//we need to commit the paint to mask
-            	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-            	ModelImage imageB = image.getParentFrame().getImageB();
-            	image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
-                image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false);
-                image.getParentFrame().getComponentImage().setModifyFlag(true);
-                image.notifyImageDisplayListeners();
                 refreshImagePaint(image, obj);
             	newLabelList(Nbx, Nby);
             	refreshLabelDisplay();
