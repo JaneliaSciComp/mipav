@@ -705,20 +705,27 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners(null, true);
         } else if (command.equals("ShowPaintBorder")) {
-            //          swap the border painting
+
+            // swap the border painting
             Preferences.setProperty("ShowPaintBorder",
                                     String.valueOf("" + !Preferences.is(Preferences.PREF_SHOW_PAINT_BORDER)));
-            for(int i=0; i<controls.paintToolBar.getComponentCount(); i++)
-                if(controls.paintToolBar.getComponent(i).getName() != null)
-                    if(controls.paintToolBar.getComponent(i).getName().equals("ShowPaintBorder"))
-                        ((JButton)(controls.paintToolBar.getComponent(i))).setSelected(!((JButton)(controls.paintToolBar.getComponent(i))).isSelected());
+
+            for (int i = 0; i < controls.paintToolBar.getComponentCount(); i++) {
+
+                if (controls.paintToolBar.getComponent(i).getName() != null) {
+
+                    if (controls.paintToolBar.getComponent(i).getName().equals("ShowPaintBorder")) {
+                        ((JButton) (controls.paintToolBar.getComponent(i))).setSelected(!((JButton)
+                                                                                              (controls.paintToolBar.getComponent(i)))
+                                                                                            .isSelected());
+                    }
+                }
+            }
+
             updateImages(true);
             triImage[AXIAL_A].getActiveImage().notifyImageDisplayListeners();
-            
-        }
-        
-        
-            else if (command.equals("CommitPaint")) {
+
+        } else if (command.equals("CommitPaint")) {
 
             if (getSelectedImage() == ViewJComponentBase.BOTH) {
 
@@ -1069,26 +1076,28 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             volumePositionFrame = null;
             volumePositionFrame = new VolumePositionFrame(this, tabbedPane);
-            setOldLayout( false );
+            setOldLayout(false);
             volumePositionFrame.setVisible(true);
         } else if (command.equals("RadiologicalView")) {
-            imageA.setRadiologicalView( true );
-            if ( imageB != null )
-            {
-                imageB.setRadiologicalView( true );
+            imageA.setRadiologicalView(true);
+
+            if (imageB != null) {
+                imageB.setRadiologicalView(true);
             }
+
             Point3Df kCenter = triImage[0].getCenter();
-            setPositionLabels( (int)kCenter.x, (int)kCenter.y, (int)kCenter.z );
-            updateImages( true );
+            setPositionLabels((int) kCenter.x, (int) kCenter.y, (int) kCenter.z);
+            updateImages(true);
         } else if (command.equals("NeurologicalView")) {
-            imageA.setRadiologicalView( false );
-            if ( imageB != null )
-            {
-                imageB.setRadiologicalView( false );
+            imageA.setRadiologicalView(false);
+
+            if (imageB != null) {
+                imageB.setRadiologicalView(false);
             }
+
             Point3Df kCenter = triImage[0].getCenter();
-            setPositionLabels( (int)kCenter.x, (int)kCenter.y, (int)kCenter.z );
-            updateImages( true );
+            setPositionLabels((int) kCenter.x, (int) kCenter.y, (int) kCenter.z);
+            updateImages(true);
         }
 
         this.requestFocusInWindow();
@@ -1101,6 +1110,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     public void addCoordinateChangeListener(CoordinateChangeListener listener) {
         coordinateListeners.add(listener);
+    }
+
+    /**
+     * Called when the volumePositionFrame closes, the volumePositionPanel is again displayed in the window:.
+     */
+    public void addTabbedPane() {
+        cleanVolumePositionPanel();
+        volumePositionPanel = null;
+        setOldLayout(true);
     }
 
     /**
@@ -1510,7 +1528,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  event  DOCUMENT ME!
      */
     public void mouseClicked(MouseEvent event) {
-    	
+
         if (event.getButton() == MouseEvent.BUTTON3) {
 
             if (event.getSource() instanceof AbstractButton) {
@@ -1518,7 +1536,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                 if (btnSource.getActionCommand().equals("MagImage") ||
                         btnSource.getActionCommand().equals("UnMagImage")) {
-                	
+
                     handleZoomPopupMenu(btnSource, event);
                 }
             }
@@ -1619,11 +1637,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
 
     /**
-     * sets the crosshair positions and slices for each of the triImages. The
-     * inputs are in FileCoordinates, and are passed to the triImages in
-     * FileCoordinates. Each triImage converts from FileCoordinates to the
-     * local PatientCoordinate space, based on the triImage orientation
-     * (FileInfoBase.AXIAL, FileInfoBase.CORONAL, FileInfoBase.SAGITTAL).
+     * sets the crosshair positions and slices for each of the triImages. The inputs are in FileCoordinates, and are
+     * passed to the triImages in FileCoordinates. Each triImage converts from FileCoordinates to the local
+     * PatientCoordinate space, based on the triImage orientation (FileInfoBase.AXIAL, FileInfoBase.CORONAL,
+     * FileInfoBase.SAGITTAL).
      *
      * @param  i  model space coordinate
      * @param  j  model space coordinate
@@ -1990,8 +2007,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  z  the z volume coordinate
      */
     public void setPositionLabels(int x, int y, int z) {
-        setAbsPositionLabels( new Point3Df( x, y, z ));
-        setScannerPosition( new Point3Df( x, y, z ));
+        setAbsPositionLabels(new Point3Df(x, y, z));
+        setScannerPosition(new Point3Df(x, y, z));
 
         if (showTalairachPosition) {
             setTalairachPositionLabels(x, y, z);
@@ -2069,7 +2086,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         // x, y, z passed in from ViewJComponentEditImage.mouseReleased() are
         // already in image volume space
-        setCenter( x, y, z );
+        setCenter(x, y, z);
         setPositionLabels(x, y, z);
     }
 
@@ -2154,38 +2171,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
-     * Sets the CubeBounds data member volumeBounds to the crop volume defined
-     * by the lower and upper volume points. The CubeBounds are ordered low to
-     * high and are checked against the volume extents.
-     * @param lower the lower bound in File Coordinates
-     * @param upper the upper bound in File Coordinates
-     */
-    private void setVolumeBounds( Point3Df lower, Point3Df upper )
-    {
-        int[] xBounds = new int[2];
-        xBounds[0] = (int)lower.x <= (int)upper.x ? (int)lower.x : (int)upper.x;
-        xBounds[1] = (int)lower.x <= (int)upper.x ? (int)upper.x : (int)lower.x;
-        xBounds[0] = Math.max( xBounds[0], 0 );
-        xBounds[1] = Math.min( xBounds[1], extents[0] - 1 );
-
-        int[] yBounds = new int[2];
-        yBounds[0] = (int)lower.y <= (int)upper.y ? (int)lower.y : (int)upper.y;
-        yBounds[1] = (int)lower.y <= (int)upper.y ? (int)upper.y : (int)lower.y;
-        yBounds[0] = Math.max( yBounds[0], 0 );
-        yBounds[1] = Math.min( yBounds[1], extents[1] - 1 );
-
-        int[] zBounds = new int[2];
-        zBounds[0] = (int)lower.z <= (int)upper.z ? (int)lower.z : (int)upper.z;
-        zBounds[1] = (int)lower.z <= (int)upper.z ? (int)upper.z : (int)lower.z;
-        zBounds[0] = Math.max( zBounds[0], 0 );
-        zBounds[1] = Math.min( zBounds[1], extents[2] - 1 );
-
-        volumeBounds = new CubeBounds( xBounds[1], xBounds[0],
-                                       yBounds[1], yBounds[0],
-                                       zBounds[1], zBounds[0]  );
-    }
-
-    /**
      * Sets the color of the X slice crosshairs.
      *
      * @param  c  Color the color to set the X slice to
@@ -2247,9 +2232,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         if (source == tImageSlider) {
             int newValue = 1;
 
-            if (tImageSlider.getValueIsAdjusting() == true) {
-                return;
-            }
+            // removed to make the slider behavior match the time slider in the main mipav frame
+            // if (tImageSlider.getValueIsAdjusting() == true) {
+            // return;
+            // }
 
             newValue = Math.round((tImageSlider.getValue() / 100.0f * (extents[3] - 1)) - 0.01f);
             setTimeSlice(newValue);
@@ -2654,11 +2640,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(traverseButton);
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
+
         ButtonGroup magGroup = new ButtonGroup();
         imageToolBar.add(toolbarBuilder.buildToggleButton("MagImage", "Magnify image 2.0x", "zoomin", magGroup));
         imageToolBar.add(toolbarBuilder.buildToggleButton("UnMagImage", "Magnify image 0.5x", "zoomout", magGroup));
         imageToolBar.add(toolbarBuilder.buildToggleButton("ZoomOne", "Magnify image 1.0x", "zoom1", magGroup));
-        
+
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
@@ -2793,7 +2780,8 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         paintToolBar.add(colorPaintButton);
         paintToolBar.add(toolbarBuilder.buildTextButton("Opacity", "Change opacity of paint", "OpacityPaint"));
-        paintToolBar.add(toolbarBuilder.buildButton("ShowPaintBorder", "Show border around painted areas.", "borderpaint"));
+        paintToolBar.add(toolbarBuilder.buildButton("ShowPaintBorder", "Show border around painted areas.",
+                                                    "borderpaint"));
         paintToolBar.add(ViewToolBarBuilder.makeSeparator());
         paintToolBar.add(toolbarBuilder.buildButton("CommitPaint", "Changes image where painted inside",
                                                     "paintinside"));
@@ -2918,8 +2906,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /**
      * Builds the volume position panel, which is the panel that sits in the plug-in area of the 2x2 tri-planar layout.
-     *
-     * @return  JPanel the JPanel that has been constructed
      */
     protected void buildVolumePositionPanel() {
         cleanVolumePositionPanel();
@@ -2996,7 +2982,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
          * conventions: */
         JPanel viewPanel = new JPanel(gbLayout);
         viewPanel.setBorder(BorderFactory.createTitledBorder("Viewing Convention"));
+
         ButtonGroup displayGroup = new ButtonGroup();
+
         /* radiological radio button: */
         JRadioButton radiologicalView = new JRadioButton();
         radiologicalView.setSelected(true);
@@ -3004,10 +2992,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         radiologicalView.setActionCommand("RadiologicalView");
         gbConstraints.gridx = 0;
         gbConstraints.gridy = 0;
-        viewPanel.add( radiologicalView, gbConstraints );
+        viewPanel.add(radiologicalView, gbConstraints);
         gbConstraints.gridx++;
+
         // viewPanel.add( new JLabel( "Radiological View" ), gbConstraints );
-        displayGroup.add( radiologicalView );
+        displayGroup.add(radiologicalView);
 
         /* neurological radio button: */
         JRadioButton neurologicalView = new JRadioButton();
@@ -3016,13 +3005,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         neurologicalView.setActionCommand("NeurologicalView");
         gbConstraints.gridx = 0;
         gbConstraints.gridy++;
-        viewPanel.add( neurologicalView, gbConstraints );
+        viewPanel.add(neurologicalView, gbConstraints);
         gbConstraints.gridx++;
-        viewPanel.add( new JLabel( "Neurological View" ), gbConstraints );
-        displayGroup.add( neurologicalView );
+        viewPanel.add(new JLabel("Neurological View"), gbConstraints);
+        displayGroup.add(neurologicalView);
 
         tabbedPane = new JTabbedPane();
-        super.buildLabelPanel( );
+        super.buildLabelPanel();
 
         tabbedPane.add("Volume", absolutePanel);
         tabbedPane.add("Scanner", scannerPanel);
@@ -3031,21 +3020,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         volumePositionPanel.setLayout(new GridLayout(1, 1));
         volumePositionPanel.add(tabbedPane);
-    }
-
-    /** Clears the volumePositionPanel, so it can be recreated when the
-     * volumePositionFrame is closed: */
-    private void cleanVolumePositionPanel()
-    {
-        if ( volumePositionPanel != null )
-        {
-            volumePositionPanel.removeAll();
-            chkShowTalairachGrid = null;
-            chkShowTalairachGridMarkers = null;
-            tabbedPane.removeAll();
-            tabbedPane = null;
-            volumePositionPanel = null;
-        }
     }
 
     /**
@@ -3101,7 +3075,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
          * triImage[].setZoom calls have been made: */
         setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
         setCrop(new Point3Df(extents[0] * 0.25f, extents[1] * 0.25f, extents[2] * 0.25f),
-                new Point3Df(extents[0] * 0.75f, extents[1] * 0.75f, extents[2] * 0.75f)  );
+                new Point3Df(extents[0] * 0.75f, extents[1] * 0.75f, extents[2] * 0.75f));
 
 
         setTitle();
@@ -3178,39 +3152,40 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
 
 
-        JPanel mainPanel = new JPanel(new GridLayout(1,1,8,8));
+        JPanel mainPanel = new JPanel(new GridLayout(1, 1, 8, 8));
         JPanel topPanel = new JPanel(new GridLayout(1, 1, 8, 8));
         JPanel bottomPanel = new JPanel(new GridLayout(1, 1, 8, 8));
         JSplitPane splitPane1 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[axialIndex],
-        		scrollPane[sagittalIndex]);
+                                               scrollPane[sagittalIndex]);
         splitPane1.setDividerLocation(0.5);
         splitPane1.setResizeWeight(0.5);
         splitPane1.setOneTouchExpandable(true);
         topPanel.add(splitPane1);
+
         JSplitPane splitPane2 = null;
 
 
         if (pluginPanel != null) {
-            //mainPanel.add(pluginPanel);
-        	splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[coronalIndex],
-        			pluginPanel);
+
+            // mainPanel.add(pluginPanel);
+            splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[coronalIndex], pluginPanel);
         } else {
-            if ( volumePositionPanel != null ) {
-            	splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[coronalIndex],
-            			volumePositionPanel);
+
+            if (volumePositionPanel != null) {
+                splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane[coronalIndex], volumePositionPanel);
             }
         }
+
         splitPane2.setDividerLocation(0.5);
         splitPane2.setResizeWeight(0.5);
         splitPane2.setOneTouchExpandable(true);
         bottomPanel.add(splitPane2);
 
-        JSplitPane splitPane3 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topPanel,
-        		bottomPanel);
+        JSplitPane splitPane3 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, topPanel, bottomPanel);
         splitPane3.setDividerLocation(0.5);
         splitPane3.setResizeWeight(0.5);
         splitPane3.setOneTouchExpandable(true);
-        
+
         mainPanel.add(splitPane3);
 
         getContentPane().removeAll();
@@ -3554,13 +3529,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected void handleZoomPopupMenu(Component component, MouseEvent event) {
         JPopupMenu popupMenu = new JPopupMenu();
 
-        
 
         JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
         menuItem.addActionListener(this);
         menuItem.setActionCommand("Zoom linearly");
         popupMenu.add(menuItem);
-        
+
         menuItem = new JMenuItem("Use exponential zoom increment");
         menuItem.addActionListener(this);
         menuItem.setActionCommand("Zoom exponentially");
@@ -3985,16 +3959,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
             JSplitPane splitPane1 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, panelAB, panelA);
             JSplitPane splitPane2 = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitPane1, panelB);
-            
 
-           
+
             splitPane1.setOneTouchExpandable(true);
             splitPane2.setOneTouchExpandable(true);
             splitPane1.setDividerLocation(0.5);
             splitPane2.setDividerLocation(0.67);
             splitPane1.setResizeWeight(0.5);
             splitPane2.setResizeWeight(0.5);
-            
+
             getContentPane().add(splitPane2, BorderLayout.CENTER);
             setSize(getSize().width, defaultPreferredHeight);
             pack();
@@ -4147,6 +4120,21 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     }
 
     /**
+     * Clears the volumePositionPanel, so it can be recreated when the volumePositionFrame is closed:.
+     */
+    private void cleanVolumePositionPanel() {
+
+        if (volumePositionPanel != null) {
+            volumePositionPanel.removeAll();
+            chkShowTalairachGrid = null;
+            chkShowTalairachGridMarkers = null;
+            tabbedPane.removeAll();
+            tabbedPane = null;
+            volumePositionPanel = null;
+        }
+    }
+
+    /**
      * Calculates the optimal zoom value for an image based on the two parameters desiredWidth and desiredHeight. Since
      * MIPAV doesn't officially support images with differing zoom values, the zoom value returned will be that value
      * which, when applied to the image, will ensure the image size on screen is no more than both desiredWidth or
@@ -4163,13 +4151,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         int[] extentsSagittal = triImage[SAGITTAL_A].getExtents();
         int[] extentsCoronal = triImage[CORONAL_A].getExtents();
 
-        float zoomAxialWidth = desiredWidth /
-            (extentsAxial[0] * triImage[AXIAL_A].getResolutionX());
-        float zoomSagittalWidth = desiredWidth /
-            (extentsSagittal[0] *
-             triImage[SAGITTAL_A].getResolutionX());
-        float zoomCoronalWidth = desiredWidth /
-            (extentsCoronal[0] * triImage[CORONAL_A].getResolutionX());
+        float zoomAxialWidth = desiredWidth / (extentsAxial[0] * triImage[AXIAL_A].getResolutionX());
+        float zoomSagittalWidth = desiredWidth / (extentsSagittal[0] * triImage[SAGITTAL_A].getResolutionX());
+        float zoomCoronalWidth = desiredWidth / (extentsCoronal[0] * triImage[CORONAL_A].getResolutionX());
 
         float optimalZoomWidth = Math.min(zoomAxialWidth, Math.min(zoomSagittalWidth, zoomCoronalWidth));
 
@@ -4180,6 +4164,27 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         float optimalZoomHeight = Math.min(zoomAxialHeight, Math.min(zoomSagittalHeight, zoomCoronal));
 
         return Math.min(optimalZoomWidth, optimalZoomHeight);
+    }
+
+    /**
+     * Transition between the 2x2 window layout and 3x1 window layout:
+     *
+     * @param  bLayout  the new layout, = 2x2 layout when true and 3x1 when false
+     */
+    private void setOldLayout(boolean bLayout) {
+        oldLayout = bLayout;
+        Preferences.setProperty(Preferences.PREF_TRIPLANAR_2X2_LAYOUT, String.valueOf(oldLayout));
+
+        float optimalZoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
+
+        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+            if (triImage[i] != null) {
+                triImage[i].setZoom(optimalZoom, optimalZoom);
+            }
+        }
+
+        updateLayout();
     }
 
     /**
@@ -4232,6 +4237,34 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         }
     }
 
+    /**
+     * Sets the CubeBounds data member volumeBounds to the crop volume defined by the lower and upper volume points. The
+     * CubeBounds are ordered low to high and are checked against the volume extents.
+     *
+     * @param  lower  the lower bound in File Coordinates
+     * @param  upper  the upper bound in File Coordinates
+     */
+    private void setVolumeBounds(Point3Df lower, Point3Df upper) {
+        int[] xBounds = new int[2];
+        xBounds[0] = ((int) lower.x <= (int) upper.x) ? (int) lower.x : (int) upper.x;
+        xBounds[1] = ((int) lower.x <= (int) upper.x) ? (int) upper.x : (int) lower.x;
+        xBounds[0] = Math.max(xBounds[0], 0);
+        xBounds[1] = Math.min(xBounds[1], extents[0] - 1);
+
+        int[] yBounds = new int[2];
+        yBounds[0] = ((int) lower.y <= (int) upper.y) ? (int) lower.y : (int) upper.y;
+        yBounds[1] = ((int) lower.y <= (int) upper.y) ? (int) upper.y : (int) lower.y;
+        yBounds[0] = Math.max(yBounds[0], 0);
+        yBounds[1] = Math.min(yBounds[1], extents[1] - 1);
+
+        int[] zBounds = new int[2];
+        zBounds[0] = ((int) lower.z <= (int) upper.z) ? (int) lower.z : (int) upper.z;
+        zBounds[1] = ((int) lower.z <= (int) upper.z) ? (int) upper.z : (int) lower.z;
+        zBounds[0] = Math.max(zBounds[0], 0);
+        zBounds[1] = Math.min(zBounds[1], extents[2] - 1);
+
+        volumeBounds = new CubeBounds(xBounds[1], xBounds[0], yBounds[1], yBounds[0], zBounds[1], zBounds[0]);
+    }
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
@@ -4265,35 +4298,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             }
         }
     }
-
-    /** Called when the volumePositionFrame closes, the volumePositionPanel is
-     * again displayed in the window: */
-    public void addTabbedPane()
-    {
-        cleanVolumePositionPanel();
-        volumePositionPanel = null;
-        setOldLayout( true );
-    }
-
-    /** Transition between the 2x2 window layout and 3x1 window layout:
-     * @param bLayout, the new layout, = 2x2 layout when true and 3x1 when false
-     */
-    private void setOldLayout( boolean bLayout )
-    {
-        oldLayout = bLayout;
-        Preferences.setProperty(Preferences.PREF_TRIPLANAR_2X2_LAYOUT, String.valueOf(oldLayout));
-
-        float optimalZoom = getOptimalZoom(DEFAULT_OPTIMAL_ZOOM, DEFAULT_OPTIMAL_ZOOM);
-
-        for (int i = 0; i < MAX_TRI_IMAGES; i++) {
-
-            if (triImage[i] != null) {
-                triImage[i].setZoom(optimalZoom, optimalZoom);
-            }
-        }
-        updateLayout();
-    }
-
 
 
 }
