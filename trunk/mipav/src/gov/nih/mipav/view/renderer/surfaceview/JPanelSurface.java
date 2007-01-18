@@ -2938,7 +2938,7 @@ public class JPanelSurface extends JPanelRendererBase
 
         /* Creates the surface paint button, which launches the surface
          * dialog: */
-        m_kSurfaceTextureButton = new JButton("Surface Texture Dialog");
+        m_kSurfaceTextureButton = new JButton("Surface Texture");
         m_kSurfaceTextureButton.addActionListener(this);
         m_kSurfaceTextureButton.setActionCommand("SurfaceTexture");
         m_kSurfaceTextureButton.setSelected(false);
