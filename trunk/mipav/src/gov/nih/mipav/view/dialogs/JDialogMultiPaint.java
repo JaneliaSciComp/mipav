@@ -344,8 +344,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
             image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
             image.getParentFrame().getComponentImage().setModifyFlag(true);
             image.notifyImageDisplayListeners();
+            refreshImagePaint(image, obj);
             if (getMaskTreeSet(imgB).size() > Nbx * Nby) {
             	MipavUtil.displayError("Number of masks exceed resize number");
+            	selectedMaskToPaint(selected);
             }
             else {
                 refreshImagePaint(image, obj);
@@ -1542,6 +1544,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         listPanel.setName("listPanel");
         listPanel.setBorder(buildTitledBorder("Label list"));
 
+ 
         for (int i = 0; i < nbx; i++) {
 
             for (int j = 0; j < nby; j++) {
