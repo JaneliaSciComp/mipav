@@ -4,8 +4,7 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.filters.*;
 import gov.nih.mipav.model.file.*;
-import gov.nih.mipav.model.scripting.ParserException;
-import gov.nih.mipav.model.scripting.parameters.ParameterFactory;
+import gov.nih.mipav.model.scripting.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -324,11 +323,11 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
 
                 outputOptionsPanel.setProcessWholeImage(MipavUtil.getBoolean(st));
                 sepCheckbox.setSelected(MipavUtil.getBoolean(st));
+                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
                 sigmaPanel.setSigmaX(MipavUtil.getFloat(st));
                 sigmaPanel.setSigmaY(MipavUtil.getFloat(st));
                 sigmaPanel.setSigmaZ(MipavUtil.getFloat(st));
                 sigmaPanel.enableResolutionCorrection(MipavUtil.getBoolean(st));
-                image25DCheckbox.setSelected(MipavUtil.getBoolean(st));
                 colorChannelPanel.setRedProcessingRequested(MipavUtil.getBoolean(st));
                 colorChannelPanel.setGreenProcessingRequested(MipavUtil.getBoolean(st));
                 colorChannelPanel.setBlueProcessingRequested(MipavUtil.getBoolean(st));
@@ -421,7 +420,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     gradientMagSepAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), gradientMagSepAlgo);
-                    
+
                     gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -465,7 +464,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     gradientMagSepAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), gradientMagSepAlgo);
-                    
+
                     gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -552,7 +551,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     gradientMagSepAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), gradientMagSepAlgo);
-                    
+
                     gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagSepAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagSepAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -593,7 +592,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagSepAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), gradientMagSepAlgo);
 
                     gradientMagSepAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
@@ -681,7 +680,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     gradientMagAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), gradientMagAlgo);
-                    
+
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -723,9 +722,9 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     // notify this object when it has completed of failed. See algorithm performed event.
                     // This is made possible by implementing AlgorithmedPerformed interface
                     gradientMagAlgo.addListener(this);
-                    
+
                     createProgressBar(image.getImageName(), gradientMagAlgo);
-                    
+
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -813,7 +812,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     gradientMagAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), gradientMagAlgo);
-                    
+
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -857,7 +856,7 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
                     gradientMagAlgo.addListener(this);
 
                     createProgressBar(image.getImageName(), gradientMagAlgo);
-                    
+
                     gradientMagAlgo.setRed(colorChannelPanel.isRedProcessingRequested());
                     gradientMagAlgo.setGreen(colorChannelPanel.isGreenProcessingRequested());
                     gradientMagAlgo.setBlue(colorChannelPanel.isBlueProcessingRequested());
@@ -897,6 +896,50 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
             }
         }
 
+    }
+
+    /**
+     * Perform any actions required after the running of the algorithm is complete.
+     */
+    protected void doPostAlgorithmActions() {
+
+        if (outputOptionsPanel.isOutputNewImageSet()) {
+            AlgorithmParameters.storeImageInRunner(getResultImage());
+        }
+    }
+
+    /**
+     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
+     */
+    protected void setGUIFromParams() {
+        image = scriptParameters.retrieveInputImage();
+        userInterface = ViewUserInterface.getReference();
+        parentFrame = image.getParentFrame();
+
+        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
+        sigmaPanel = new JPanelSigmas(image);
+        colorChannelPanel = new JPanelColorChannels(image);
+
+        scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
+        setSeparable(scriptParameters.doProcessSeparable());
+        setImage25D(scriptParameters.doProcess3DAs25D());
+        scriptParameters.setSigmasGUI(sigmaPanel);
+        scriptParameters.setColorOptionsGUI(colorChannelPanel);
+    }
+
+    /**
+     * Store the parameters from the dialog to record the execution of this algorithm.
+     *
+     * @throws  ParserException  If there is a problem creating one of the new parameters.
+     */
+    protected void storeParamsFromGUI() throws ParserException {
+        scriptParameters.storeInputImage(image);
+        scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
+
+        scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
+        scriptParameters.storeProcessSeparable(separable);
+        scriptParameters.storeSigmas(sigmaPanel);
+        scriptParameters.storeColorOptions(colorChannelPanel);
     }
 
     /**
@@ -960,48 +1003,5 @@ public class JDialogGradientMagnitude extends JDialogScriptableBase
         separable = sepCheckbox.isSelected();
 
         return true;
-    }
-    
-    /**
-     * Perform any actions required after the running of the algorithm is complete.
-     */
-    protected void doPostAlgorithmActions() {
-        if (outputOptionsPanel.isOutputNewImageSet()) {
-            AlgorithmParameters.storeImageInRunner(getResultImage());
-        }
-    }
-
-    /**
-     * Set up the dialog GUI based on the parameters before running the algorithm as part of a script.
-     */
-    protected void setGUIFromParams() {
-        image = scriptParameters.retrieveInputImage();
-        userInterface = ViewUserInterface.getReference();
-        parentFrame = image.getParentFrame();
-
-        outputOptionsPanel = new JPanelAlgorithmOutputOptions(image);
-        sigmaPanel = new JPanelSigmas(image);
-        colorChannelPanel = new JPanelColorChannels(image);
-        
-        scriptParameters.setOutputOptionsGUI(outputOptionsPanel);
-        setSeparable(scriptParameters.doProcessSeparable());
-        setImage25D(scriptParameters.doProcess3DAs25D());
-        scriptParameters.setSigmasGUI(sigmaPanel);
-        scriptParameters.setColorOptionsGUI(colorChannelPanel);
-    }
-
-    /**
-     * Store the parameters from the dialog to record the execution of this algorithm.
-     * 
-     * @throws  ParserException  If there is a problem creating one of the new parameters.
-     */
-    protected void storeParamsFromGUI() throws ParserException {
-        scriptParameters.storeInputImage(image);
-        scriptParameters.storeOutputImageParams(resultImage, outputOptionsPanel.isOutputNewImageSet());
-
-        scriptParameters.storeProcessingOptions(outputOptionsPanel.isProcessWholeImageSet(), image25D);
-        scriptParameters.storeProcessSeparable(separable);
-        scriptParameters.storeSigmas(sigmaPanel);
-        scriptParameters.storeColorOptions(colorChannelPanel);
     }
 }
