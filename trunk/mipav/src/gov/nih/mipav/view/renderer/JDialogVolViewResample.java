@@ -191,6 +191,12 @@ public class JDialogVolViewResample extends JDialogBase {
         res = imageA.getFileInfo(0).getResolutions();
         nDim = extents.length;
 
+        if (nDim != 3) {
+            MipavUtil.displayError("The volume renderer only supports 3D image volumes.");
+
+            return;
+        }
+
         // Checking to see if the image has all dimensions that are a power of 2.
         for (int i = 0; i < extents.length; i++) {
             volExtents[i] = dimPowerOfTwo(extents[i]);
@@ -209,8 +215,11 @@ public class JDialogVolViewResample extends JDialogBase {
 
         try {
             init();
+
             // if do not need resample, set the resample button text to OK.
-            if ( !forceResample ) OKButton.setText("OK");
+            if (!forceResample) {
+                OKButton.setText("OK");
+            }
         } catch (NoClassDefFoundError error) {
             Preferences.debug("Unable to load volume renderer.  Missing Java3D class. " + error.getMessage() + "\n");
             MipavUtil.displayError("Unable to load volume renderer.  Missing Java3D class.");
@@ -368,7 +377,7 @@ public class JDialogVolViewResample extends JDialogBase {
     /**
      * Builds the Cancel button. Sets it internally as well return the just-built button.
      *
-     * @return  Return the noll resample button. 
+     * @return  Return the noll resample button.
      */
     public JButton buildNotResampleButton() {
         cancelButton = new JButton("Cancel");
