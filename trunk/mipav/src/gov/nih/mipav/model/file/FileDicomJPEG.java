@@ -158,18 +158,18 @@ public class FileDicomJPEG {
 
     /** DOCUMENT ME! */
     private static final byte M_ERROR = (byte) 0x100;
-
+ 
     /** Entry n is 2**(n-1); used to test whether we need to make a number negative. */
     private static int[] extendTest = {
         0, 0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080, 0x0100, 0x0200, 0x0400, 0x0800, 0x1000,
-        0x2000, 0x4000
+        0x2000, 0x4000, 0x8000
     };
 
     /** Entry n is (-1 << n) + 1; used to make a number negative. */
     private static int[] extendOffset = {
         0, ((-1) << 1) + 1, ((-1) << 2) + 1, ((-1) << 3) + 1, ((-1) << 4) + 1, ((-1) << 5) + 1, ((-1) << 6) + 1,
         ((-1) << 7) + 1, ((-1) << 8) + 1, ((-1) << 9) + 1, ((-1) << 10) + 1, ((-1) << 11) + 1, ((-1) << 12) + 1,
-        ((-1) << 13) + 1, ((-1) << 14) + 1, ((-1) << 15) + 1
+        ((-1) << 13) + 1, ((-1) << 14) + 1, ((-1) << 15) + 1, ((-1) << 16) + 1
     };
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -211,8 +211,8 @@ public class FileDicomJPEG {
     private int[] hSampFactor;
 
     /**
-     * Read in DHT header. Huffman code balues, used to determine Huffman table (value array). Also directly accessed
-     * when numbits > 8.
+     * Read in DHT header. Huffman code values, used to determine Huffman table (value array). Also directly accessed
+     * when numbits > 8, since fast lookup is not possible.
      */
     private byte[][] huffval;
 
@@ -278,6 +278,32 @@ public class FileDicomJPEG {
      */
     public FileDicomJPEG(byte[] imageBuffer, int width, int height) {
         image = imageBuffer;
+        //try
+        //{
+        //    File f = new File("C:\\f.txt");
+        //    FileWriter write = new FileWriter(f);
+        //    String s = new String();
+        //    for(int i=0; i<image.length; i++)
+        //    {
+        //        s = s+(Byte.toString(image[i])+" ");
+        //        if(i%100==0)
+        //        {
+        //            s = s+"\n\r";
+        //            write.write(s);
+        //            s = new String();
+        //        }
+        //    }
+        //   write.write(s+"\n\r");
+        //    write.flush();
+        //   write.close();
+        //    
+        //}
+        //catch(Exception e)
+        //{
+        //    e.printStackTrace();
+        //}
+        
+        
         bits = new byte[4][17];
         huffval = new byte[4][256];
         mincode = new short[4][17];
@@ -365,7 +391,25 @@ public class FileDicomJPEG {
         restartInRows = restartInterval / imageWidth;
         restartRowsToGo = restartInRows;
         nextRestartNum = 0;
-
+        //index = index+2;
+        //if(image[index] == 0)
+        //{
+        //    System.out.println("Index: "+index+"\tValue: "+image[index]);
+        //    boolean zero = true;
+        //    while(zero)
+        //    {
+        //        index++;
+        //        System.out.println("Index: "+index+"\tValue: "+image[index]);
+        //        if(image[index] == 0)
+        //        {}
+        //        else
+        //        {
+        //            System.out.println("FinalIndex: "+index);
+        //            zero = false;
+        //        }
+        //    }
+        //}
+        //System.out.println("Index: "+index+"\tValue: "+image[index]);
         return decodeImage(index);
     }
 
@@ -399,13 +443,13 @@ public class FileDicomJPEG {
             curRowBuf[0][curComp] = (short) (d + (1 << (dataPrecision - Pt - 1)));
         }
 
-
         // the rest of the first row
         for (col = 1; col < numCOL; col++) {
 
             for (curComp = 0; curComp < compsInScan; curComp++) {
                 d = table.huffDecode(tableNo[curComp]);
-
+                //if(d!=0)
+                //    
                 if (d == -1) {
 
                     if (table.isMarker() == true) {
@@ -433,7 +477,7 @@ public class FileDicomJPEG {
         int predictor;
         int numCOL, numROW;
         int imagewidth, psv;
-
+        //System.out.println("Image: "+image[index]+" "+image[index+1]+" "+image[index+2]+" "+image[index+3]+"\tIndex: "+index+" to "+(index+3));
         numCOL = imagewidth = imageWidth;
         numROW = imageHeight;
         psv = Ss;
@@ -540,6 +584,8 @@ public class FileDicomJPEG {
                 for (curComp = 0; curComp < compsInScan; curComp++) {
                     ci = curComp;
                     d = table.huffDecode(tableNo[curComp]);
+                    //if(index > 75)
+                    //    
 
                     if (d == -1) {
 
@@ -1123,7 +1169,8 @@ public class FileDicomJPEG {
         public int huffDecode(int tableNum) {
             int code = 0;
             int s, d;
-
+            //if(image[index] != 0)
+            //    System.out.println("Index: "+index+"\tImage: "+image[index]);
             // get 8 bits
             for (int i = 0; i < 8; i++) {
 
@@ -1142,6 +1189,7 @@ public class FileDicomJPEG {
 
                 int temp = (current >>> (7 - bitCount)) & 1; // ??? & 1
                 code = (code << 1) | temp;
+                
                 bitCount++;
             }
 
@@ -1187,10 +1235,11 @@ public class FileDicomJPEG {
                         }
                     }
 
-                    int temp = (current >>> (7 - bitCount)) & 1;
+                    int temp = (current >>> (7 - bitCount)) & 1; //>>> but signed
                     code = (code << 1) | temp;
                     k++;
                     bitCount++;
+                    
                 }
 
                 // With garbage input we may reach the sentinel value k = 17.
@@ -1208,10 +1257,18 @@ public class FileDicomJPEG {
             // read in s number of bits and set d to that number
             if (s != 0) {
                 d = 0;
-
+                //System.out.println(image[index]+" "+image[index+1]+" "+image[index+2]+" "+image[index+3]);
+                //if(s==16)
+                    
+                //int z=0;
+                //boolean isNeverRead = true;
                 for (int i = 0; i < s; i++) {
 
-                    if (bitCount == 8) {
+                    if (bitCount == 8 && i<9) {
+                        //if(z==1)
+                        //    System.out.println("Already Happened: "+s+"\tI: "+i+"\tBitCount: "+bitCount);
+                        //isNeverRead = false;
+                        //z = 1;
                         previous = current;
                         current = getNext();
                         bitCount = 0;
@@ -1223,7 +1280,7 @@ public class FileDicomJPEG {
                         }
                     }
 
-                    int temp = (current >> (7 - bitCount)) & 1;
+                    int temp = (current >>> (7 - bitCount)) & 1;    
                     d = (d << 1) | temp;
                     bitCount++;
                 }
@@ -1236,9 +1293,10 @@ public class FileDicomJPEG {
                 }
                 else {
                     if (d < extendTest[s-1]) {
-                        d = extendOffset[s-1];
+                        d += extendOffset[s-1];
                     }
                 }
+                
             }
             // 0s are quite common.  often s = 0, which means add nothing to predictor.
             else {
@@ -1246,6 +1304,8 @@ public class FileDicomJPEG {
             }
 
             // return value to add to predictor
+            //if(d != 0)
+                //System.out.println("D: "+d);
             return d;
         }
 

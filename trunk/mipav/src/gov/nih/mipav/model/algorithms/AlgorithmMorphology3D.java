@@ -1558,11 +1558,9 @@ public class AlgorithmMorphology3D extends AlgorithmBase {
                         startZ = offsetZ * sliceSize;
                         endZ = startZ + stepZ;
 
-                        // Took this out and check it later.  This caused the a subtle error by setting
-                        // a pixel on an incorrect slice
-                        // if (startZ < 0) {
-                        // startZ = 0;
-                        // }
+                         if (startZ < 0) {
+                         startZ = 0;
+                         }
 
                         if (endZ > imgSize) {
                             endZ = imgSize;
