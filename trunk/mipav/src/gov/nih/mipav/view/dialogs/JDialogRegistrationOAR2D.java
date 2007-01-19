@@ -564,7 +564,7 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
                     String name = makeImageName(matchImage.getImageName(), "_register");
 
                     transform = new AlgorithmTransform(matchImage, reg2.getTransform(), interp2, xresA, yresA, xdimA,
-                                                       ydimA, false, false, false);
+                                                       ydimA, true, false, false);
 
                     transform.setUpdateOriginFlag(true);
                     transform.run();
