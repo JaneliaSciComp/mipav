@@ -523,6 +523,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                 if (triImage[i] != null) {
                     triImage[i].setMode(ViewJComponentBase.PAINT_VOI);
+                    triImage[i].setProtractorVisible(false);
+                    triImage[i].setIntensityLineVisible(false);
+                    triImage[i].repaint();
                 }
             }
 
@@ -532,6 +535,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                 if (triImage[i] != null) {
                     triImage[i].setMode(ViewJComponentBase.DROPPER_PAINT);
+                    triImage[i].setProtractorVisible(false);
+                    triImage[i].setIntensityLineVisible(false);
+                    triImage[i].repaint();
                 }
             }
         } else if (command.equals("Eraser")) {
@@ -544,9 +550,19 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                 if (triImage[i] != null) {
                     triImage[i].setMode(ViewJComponentBase.ERASER_PAINT);
+                    triImage[i].setProtractorVisible(false);
+                    triImage[i].setIntensityLineVisible(false);
+                    triImage[i].repaint();
                 }
             }
         } else if (command.equals("EraseAll")) {
+        	for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+                if (triImage[i] != null) {
+                    triImage[i].setProtractorVisible(false);
+                    triImage[i].setIntensityLineVisible(false);
+                    triImage[i].repaint();
+                }
+            }
             triImage[AXIAL_A].eraseAllPaint(false);
 
             imageA.notifyImageDisplayListeners(null, true);
@@ -572,6 +588,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                 if (triImage[i] != null) {
                     triImage[i].setMode(ViewJComponentBase.DEFAULT);
+                    triImage[i].setProtractorVisible(false);
+                    triImage[i].setIntensityLineVisible(false);
+                    
                 }
             }
 
@@ -580,9 +599,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             centerButtonSelected = !centerButtonSelected;
 
             btnInvisible[3].setSelected(!centerButtonSelected);
+            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
+                if (triImage[i] != null) {
+                	triImage[i].setMode(ViewJComponentBase.DEFAULT);
+                    triImage[i].setProtractorVisible(false);
+                    triImage[i].setIntensityLineVisible(false);
+                    triImage[i].repaint();
+                }
+            }
             if (centerButtonSelected) {
                 setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
+               
             } else {
 
                 for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -633,16 +661,18 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 btnInvisible[2].setSelected(true);
             }
 
-            if ((imageB != null) && (!radioImageBoth.isEnabled())) {
-                radioImageBoth.setEnabled(true);
-            }
+            
 
             if (((JToggleButton) source).isSelected()) {
+            	
+            	if ((imageB != null) && (!radioImageBoth.isEnabled())) {
+                    radioImageBoth.setEnabled(true);
+                }
 
                 for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                     if (triImage[i] != null) {
-                        triImage[i].setMode(ViewJComponentBase.LINE);
+                        triImage[i].setMode(ViewJComponentBase.DEFAULT);
                         triImage[i].setIntensityLineVisible(true);
                         triImage[i].setProtractorVisible(false);
                         triImage[i].repaint();
@@ -786,6 +816,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                 if (triImage[i] != null) {
                     triImage[i].setMode(ViewJComponentBase.PAINT_CAN);
+                    triImage[i].setProtractorVisible(false);
+                    triImage[i].setIntensityLineVisible(false);
+                    triImage[i].repaint();
                 }
             }
 
@@ -941,6 +974,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                 if (triImage[i] != null) {
                     triImage[i].setMode(ViewJComponentBase.POINT_VOI);
+                    triImage[i].setProtractorVisible(false);
+                    triImage[i].setIntensityLineVisible(false);
+                    triImage[i].repaint();
                 }
             }
         } else if (command.equals("NewVOI")) {
@@ -2642,27 +2678,27 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         ButtonGroup magGroup = new ButtonGroup();
-        imageToolBar.add(toolbarBuilder.buildToggleButton("MagImage", "Magnify image 2.0x", "zoomin", magGroup));
-        imageToolBar.add(toolbarBuilder.buildToggleButton("UnMagImage", "Magnify image 0.5x", "zoomout", magGroup));
-        imageToolBar.add(toolbarBuilder.buildToggleButton("ZoomOne", "Magnify image 1.0x", "zoom1", magGroup));
+        imageToolBar.add(toolbarBuilder.buildButton("MagImage", "Magnify image 2.0x", "zoomin"));
+        imageToolBar.add(toolbarBuilder.buildButton("UnMagImage", "Magnify image 0.5x", "zoomout"));
+        imageToolBar.add(toolbarBuilder.buildButton("ZoomOne", "Magnify image 1.0x", "zoom1"));
 
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         ButtonGroup intensityLineGroup = new ButtonGroup();
-        imageToolBar.add(toolbarBuilder.buildToggleButton("Line", "Draw line VOI", "linear", intensityLineGroup));
+        imageToolBar.add(toolbarBuilder.buildToggleButton("Line", "Draw line VOI", "linear", VOIGroup));
         intensityLineGroup.add(btnInvisible[0]);
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         ButtonGroup centerGroup = new ButtonGroup();
         imageToolBar.add(toolbarBuilder.buildToggleButton("Center", "Identify center of volume", "centerpt",
-                                                          centerGroup));
+        		VOIGroup));
 
         centerGroup.add(btnInvisible[3]);
 
         imageToolBar.add(toolbarBuilder.buildToggleButton("Protractor", "Alignment tool", "protractor",
-                                                          intensityLineGroup));
+        		VOIGroup));
 
         intensityLineGroup.add(btnInvisible[2]);
 
