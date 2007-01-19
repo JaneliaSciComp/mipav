@@ -203,6 +203,7 @@ public class SurfaceAttributes {
     public void setOpacity( float opacity )
     {
         mOpacity = opacity;
+        mColor.w = 1 - opacity;
     }
 
     /**
@@ -349,12 +350,13 @@ public class SurfaceAttributes {
 
         for ( int i = 0; i < mTriangleMesh.length; i++ )
         {
-            Color4f[] akColors = new Color4f[ mTriangleMesh[i].getVertexCount() ];
             for ( int j = 0; j < mTriangleMesh[i].getVertexCount(); j++ )
             {
-                akColors[j] = new Color4f( color.x, color.y, color.z, 1 - mOpacity );
+                // Sets the color, but does not update the geometry yet (faster):
+                mTriangleMesh[i].setColorDelay( j,  mColor );
             }
-            mTriangleMesh[i].setColors( 0, akColors );
+            // updates the geometry all at once (faster):
+            mTriangleMesh[i].setColorUpdate( );
         }
     }
 

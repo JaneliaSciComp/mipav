@@ -89,6 +89,9 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     /** store the mesh transparency: */
     private float m_fTransparency = 0f;
 
+    /** Store the mesh colors: */
+    private Color4f[] m_kColors;
+
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -110,12 +113,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCoordinateIndices(0, aiConnect);
         computeNormals();
         setNormalIndices(0, aiConnect);
-        Color4f[] akColors = new Color4f[ akVertex.length ];
+        m_kColors = new Color4f[ akVertex.length ];
         for ( int i = 0; i < akVertex.length; i++ )
         {
-            akColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+            m_kColors[i] = new Color4f( 1f, 1f, 1f, 1f );
         }
-        setColors( 0, akColors );
+        setColors( 0, m_kColors );
         setColorIndices(0, aiConnect);
         m_kGenerator = null;
     }
@@ -139,12 +142,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCoordinateIndices(0, aiConnect);
         setNormals(0, akNormal);
         setNormalIndices(0, aiConnect);
-        Color4f[] akColors = new Color4f[ akVertex.length ];
+        m_kColors = new Color4f[ akVertex.length ];
         for ( int i = 0; i < akVertex.length; i++ )
         {
-            akColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+            m_kColors[i] = new Color4f( 1f, 1f, 1f, 1f );
         }
-        setColors( 0, akColors );
+        setColors( 0, m_kColors );
         setColorIndices(0, aiConnect);
         m_kGenerator = null;
     }
@@ -178,19 +181,16 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             setNormals(0, akNormal);
         }
         setNormalIndices(0, aiConnect);
-        if ( akColor == null )
+        m_kColors = new Color4f[ akVertex.length ];
+        for ( int i = 0; i < akVertex.length; i++ )
         {
-            Color4f[] akColors = new Color4f[ akVertex.length ];
-            for ( int i = 0; i < akVertex.length; i++ )
+            m_kColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+            if ( akColor != null )
             {
-                akColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+                m_kColors[i] = new Color4f( akColor[i].x, akColor[i].y, akColor[i].z, akColor[i].w );
             }
-            setColors(0, akColors);
         }
-        else
-        {
-            setColors(0, akColor);
-        }
+        setColors(0, m_kColors);
         setColorIndices(0, aiConnect);
         m_kGenerator = null;
     }
@@ -217,12 +217,12 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCoordinateIndices(0, aiConnect);
         setNormals(0, akNormal);
         setNormalIndices(0, aiConnect);
-        Color4f[] akColors = new Color4f[ akVertex.length ];
+        m_kColors = new Color4f[ akVertex.length ];
         for ( int i = 0; i < akVertex.length; i++ )
         {
-            akColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+            m_kColors[i] = new Color4f( 1f, 1f, 1f, 1f );
         }
-        setColors( 0, akColors );
+        setColors( 0, m_kColors );
         setColorIndices(0, aiConnect);
         setTextureCoordinates( 0, 0, akTexCoord );
         setTextureCoordinateIndices( 0, 0, aiConnect);
@@ -251,7 +251,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCoordinateIndices(0, aiConnect);
         setNormals(0, akNormal);
         setNormalIndices(0, aiConnect);
-        setColors( 0, akColor );
+        setColors( 0, m_kColors );
         setColorIndices(0, aiConnect);
         setTextureCoordinates( 0, 0, akTexCoord );
         setTextureCoordinateIndices( 0, 0, aiConnect);
@@ -275,17 +275,17 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         int numIndex = kMesh.getIndexCount();
         Point3f[] akVertex = new Point3f[ numVertices ];
         Vector3f[] akNormal = new Vector3f[ numVertices ];
-        Color4f[] akColor = new Color4f[ numVertices ];
+        m_kColors = new Color4f[ numVertices ];
         TexCoord3f[] akTexCoord = new TexCoord3f[ numVertices ];
         int[] aiConnect = kMesh.getIndexCopy();
 
-        kMesh.getCopies( akVertex, akNormal, akColor, akTexCoord );
+        kMesh.getCopies( akVertex, akNormal, m_kColors, akTexCoord );
 
         setCoordinates(0, akVertex);
         setCoordinateIndices(0, aiConnect);
         setNormals(0, akNormal);
         setNormalIndices(0, aiConnect);
-        setColors( 0, akColor );
+        setColors( 0, m_kColors );
         setColorIndices(0, aiConnect);
         setTextureCoordinates( 0, 0, akTexCoord );
         setTextureCoordinateIndices( 0, 0, aiConnect);
@@ -1781,6 +1781,7 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         return akVertex;
     }
 
+
     /**
      * Make a copy of the colors of a triangle mesh.
      *
@@ -1835,6 +1836,44 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         getTextureCoordinates(0, 0, akTexCoords);
 
         return akTexCoords;
+    }
+
+
+    /**
+     * Used for fast color update while painting the triangle mesh, stores the
+     * color update information for later loading into the surface.
+     * @param index, the vertex index to set the color for
+     * @param kColor, the new color
+     */
+    public void setColorDelay( int index, Color4f kColor )
+    {
+        m_kColors[index].x = kColor.x;
+        m_kColors[index].y = kColor.y;
+        m_kColors[index].z = kColor.z;
+        m_kColors[index].w = kColor.w;
+    }
+
+    /**
+     * Sets the color and stores the color update information in a local copy.
+     * @param index, the vertex index to set the color for
+     * @param kColor, the new color
+     */
+    public void setColor( int index, Color4f kColor )
+    {
+        m_kColors[index].x = kColor.x;
+        m_kColors[index].y = kColor.y;
+        m_kColors[index].z = kColor.z;
+        m_kColors[index].w = kColor.w;
+        super.setColor( index, kColor );
+    }
+
+    /**
+     * Used for fast color update while painting. After paint operations, set
+     * the color of the triangle mesh with the stored colors.
+     */
+    public void setColorUpdate()
+    {
+        setColors( 0, m_kColors );
     }
 
 
