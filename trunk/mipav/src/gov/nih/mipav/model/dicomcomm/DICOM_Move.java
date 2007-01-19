@@ -49,7 +49,7 @@ public class DICOM_Move implements Runnable {
         pdu = new DICOM_PDUService();
 
         try {
-            pdu.connectClientToServer(AETitle, false);
+            pdu.connectClientToServer(AETitle, false, null, null);
         } catch (DICOM_Exception e) {
             pdu = null;
         }

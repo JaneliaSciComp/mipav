@@ -78,7 +78,7 @@ public class DICOM_Verification { // is an SOP {
 
             // define an instance of the PDU_Service class to set up the connection to the remote AE
             pdu = new DICOM_PDUService();
-            pdu.connectClientToServer(remoteAETitle, true);
+            pdu.connectClientToServer(remoteAETitle, true, null, null);
             write(pdu);
             pdu.close();
         } catch (OutOfMemoryError error) {

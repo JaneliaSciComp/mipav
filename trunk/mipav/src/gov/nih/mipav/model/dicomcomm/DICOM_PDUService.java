@@ -254,10 +254,12 @@ public class DICOM_PDUService extends DICOM_Comms {
      *
      * @param   remoteAppTitle  the application entity title to attempt to connect to
      * @param   verification    if true only add Verification UID syntax.
-     *
+     * @param   transferSyntax  if this is passed in, only add this transfer syntax to the the available pres contexts
+     * @param   classUID        used in conjunction with transfer syntax to specify ONE type of abstract syntax to use
      * @throws  DICOM_Exception  Throws an error if there was a problem connecting to the server.
      */
-    public void connectClientToServer(String remoteAppTitle, boolean verification) throws DICOM_Exception {
+    public void connectClientToServer(String remoteAppTitle, boolean verification, 
+    		String transferSyntax, String classUID) throws DICOM_Exception {
         byte itemType;
 
         setLocalAddress(getLocalAppTitle());
@@ -270,24 +272,37 @@ public class DICOM_PDUService extends DICOM_Comms {
 
         associateRQ.clearPresentationContexts();
 
-        for (Enumeration e = proposedAbstractSyntaxs.elements(); e.hasMoreElements();) {
-            DICOM_PresentationContext presContext = new DICOM_PresentationContext();
-            DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_TransferSyntax);
-            trnSyntax.setUID(DICOM_Constants.UID_TransferLITTLEENDIAN);
-            presContext.addTransferSyntax(trnSyntax);
-            presContext.setAbstractSyntax((DICOM_PDUItemType) e.nextElement());
-            associateRQ.addPresentationContext(presContext);
-        }
+        /** We did not pass in a transfer syntax so we are giving a list of ALL we support */
+        if (transferSyntax == null) {
         
-        for (Enumeration e = proposedAbstractSyntaxs.elements(); e.hasMoreElements();) {
-            DICOM_PresentationContext presContext = new DICOM_PresentationContext();
-            DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_TransferSyntax);
-            trnSyntax.setUID(DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
-            presContext.addTransferSyntax(trnSyntax);
-            presContext.setAbstractSyntax((DICOM_PDUItemType) e.nextElement());
-            associateRQ.addPresentationContext(presContext);
+        	for (Enumeration e = proposedAbstractSyntaxs.elements(); e.hasMoreElements();) {
+        	   DICOM_PresentationContext presContext = new DICOM_PresentationContext();
+ 	           DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_TransferSyntax);
+ 	           trnSyntax.setUID(DICOM_Constants.UID_TransferLITTLEENDIAN);
+	           presContext.addTransferSyntax(trnSyntax);
+	           presContext.setAbstractSyntax((DICOM_PDUItemType) e.nextElement());
+	           associateRQ.addPresentationContext(presContext);
+        	}
+        	
+       		for (Enumeration e = proposedAbstractSyntaxs.elements(); e.hasMoreElements();) {
+       			DICOM_PresentationContext presContext = new DICOM_PresentationContext();
+       			DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_TransferSyntax);
+       			trnSyntax.setUID(DICOM_Constants.UID_TransferLITTLEENDIANEXPLICIT);
+       			presContext.addTransferSyntax(trnSyntax);
+       			presContext.setAbstractSyntax((DICOM_PDUItemType) e.nextElement());
+       			associateRQ.addPresentationContext(presContext);
+       		}
+        } else {  // we passed in a transfer syntax and classUID, so we only want to add that one
+        	
+        	DICOM_PresentationContext presContext = new DICOM_PresentationContext();
+   			DICOM_PDUItemType trnSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_TransferSyntax);
+   			trnSyntax.setUID(transferSyntax);
+   			presContext.addTransferSyntax(trnSyntax);
+   			DICOM_PDUItemType abstractSyntax = new DICOM_PDUItemType(DICOM_PDUTypeBase.PDUTYPE_AbstractSyntax);
+   			abstractSyntax.setUID(classUID);
+   			presContext.setAbstractSyntax(abstractSyntax);
+   			associateRQ.addPresentationContext(presContext);
         }
-
         associateRQ.setUserInformation(constructUserInformation());
         associateRQ.setCalledAppTitle(remoteAppTitle.getBytes());
 
