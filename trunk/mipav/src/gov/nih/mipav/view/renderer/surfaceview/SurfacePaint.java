@@ -78,7 +78,7 @@ public class SurfacePaint
     /** Paint brush size text field */
     private JTextField mBrushSizeText;
     /** current paint brush size */
-    private int mBrushSize = 2;
+    private int mBrushSize = 1;
     /** Color selection button */
     private JButton mColorPaintButton;
 
@@ -163,11 +163,11 @@ public class SurfacePaint
 
         mPaintToolBar.add( ViewToolBarBuilder.makeSeparator() );
 
-        JLabel brushSizeLabel = new JLabel("Brush size (pixels):");
+        JLabel brushSizeLabel = new JLabel("Brush size:");
         brushSizeLabel.setForeground(Color.black);
         brushSizeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-        mBrushSizeText = new JTextField( "2", 2 );
+        mBrushSizeText = new JTextField( "1", 2 );
         mBrushSizeText.setEditable(true);
         mBrushSizeText.setAlignmentX(Component.LEFT_ALIGNMENT);
         mBrushSizeText.addActionListener(this);
@@ -271,6 +271,11 @@ public class SurfacePaint
         }
         else if ( command.equals( "Eraser" ) )
         {
+            if ( mEraserButton.isSelected() )
+            {
+                mBrushSize = 1;
+                mBrushSizeText.setText( "1" );
+            }
             setPaintMode( SurfacePaint.VERTEX );
         }
         else if ( command.equals( "EraseAll" ) )
@@ -381,7 +386,8 @@ public class SurfacePaint
 
             /* Pick the first intersection since we executed a pick
              * closest. */
-            for ( int i = 0; i < kPickResult.numIntersections(); i++ )
+            //for ( int i = 0; i < kPickResult.numIntersections(); i++ )
+            for ( int i = 0; i < 1; i++ )
             {
                 PickIntersection kPick = kPickResult.getIntersection(i);
                 
@@ -481,8 +487,24 @@ public class SurfacePaint
                     else
                     {                            
                         kMesh.setColor( closest, mPaintColor );
+                        Point3f kVert = new Point3f();
+                        if ( mBrushSize > 1 )
+                        {
+                            boolean update = false;
+                            for ( int v = 0; v < kMesh.getVertexCount(); v++ )
+                            {
+                                kMesh.getCoordinate( v, kVert );
+                                if ( kVert.distance( kPickPoint ) < (mBrushSize/100.0f) )
+                                {
+                                    // Sets the color, but does not update the geometry yet (faster):
+                                    kMesh.setColorDelay( v, mPaintColor );
+                                    update = true;
+                                }
+                            }
+                            // updates the geometry all at once (faster):
+                            kMesh.setColorUpdate();
+                        }
                     }
-                    
                 }
             }
         }
@@ -596,7 +618,7 @@ public class SurfacePaint
         
         /* Set the location for picking that was stored when the mouse was
          * presed: */
-        m_kPickCanvas.setTolerance( mBrushSize );
+        m_kPickCanvas.setTolerance( 1.0f );
         m_kPickCanvas.setShapeLocation( kMouseEvent );
         mPickShape = m_kPickCanvas.getPickShape();
         kPickDirection = new Vector3d();

@@ -268,6 +268,14 @@ public class SurfaceMask
                                                                                kImageMaskColor.w );
                         }
                     }
+                    
+                    if (kMesh[mIndex].getCapability(GeometryArray.ALLOW_COLOR_WRITE) )
+                    {
+                        // Sets the color, but does not update the geometry yet (faster):
+                        kMesh[mIndex].setColorDelay( aiConnect[ (3 * iT) + 0], kTriColors[aiConnect[ (3 * iT) + 0]] );
+                        kMesh[mIndex].setColorDelay( aiConnect[ (3 * iT) + 1], kTriColors[aiConnect[ (3 * iT) + 1]] );
+                        kMesh[mIndex].setColorDelay( aiConnect[ (3 * iT) + 2], kTriColors[aiConnect[ (3 * iT) + 2]] );
+                    }
                 }
                 kC0 = kTriColors[aiConnect[3 * iT]];
                 kC1 = kTriColors[aiConnect[ (3 * iT) + 1]];
@@ -422,11 +430,11 @@ public class SurfaceMask
             floodFill( (int) fXC, (int) fYC, (int) fZC);
 
             kMesh[mIndex].setTextureCoordinates( 0, 0, akTexCoords );
-            kMesh[mIndex].setTextureCoordinateIndices( 0, 0, aiConnect );
-            
-            if (bCreateVertexColors && kMesh[mIndex].getCapability(GeometryArray.ALLOW_COLOR_WRITE))
+            kMesh[mIndex].setTextureCoordinateIndices( 0, 0, aiConnect );           
+            if ( bCreateVertexColors && kMesh[mIndex].getCapability(GeometryArray.ALLOW_COLOR_WRITE) )
             {
-                kMesh[mIndex].setColors( 0, kTriColors );
+                // updates the geometry all at once (faster):
+                kMesh[mIndex].setColorUpdate();
             }
         }
         int v = 0;
