@@ -450,7 +450,7 @@ public class JDialogRegistrationOAR3D extends JDialogScriptableBase implements A
                     String name = makeImageName(matchImage.getImageName(), "_register");
 
                     transform = new AlgorithmTransform(matchImage, finalMatrix, interp2, xresA, yresA, zresA, xdimA,
-                                                       ydimA, zdimA, false, false, false);
+                                                       ydimA, zdimA, true, false, false);
 
                     transform.setUpdateOriginFlag(true);
                     transform.run();

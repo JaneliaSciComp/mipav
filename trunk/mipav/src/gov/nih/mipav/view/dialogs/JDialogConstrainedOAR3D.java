@@ -520,7 +520,7 @@ public class JDialogConstrainedOAR3D extends JDialogScriptableBase implements Al
 
                     String name = makeImageName(matchImage.getImageName(), "_register");
                     transform = new AlgorithmTransform(matchImage, reg3.getTransform(), interp2, xresA, yresA, zresA,
-                                                       xdimA, ydimA, zdimA, false, false, false);
+                                                       xdimA, ydimA, zdimA, true, false, false);
 
                     transform.setUpdateOriginFlag(true);
 
