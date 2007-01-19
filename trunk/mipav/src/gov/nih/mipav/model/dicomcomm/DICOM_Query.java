@@ -81,7 +81,7 @@ public class DICOM_Query extends DICOM_SOP implements Runnable {
         pdu = new DICOM_PDUService();
 
         try {
-            pdu.connectClientToServer(AETitle, false);
+            pdu.connectClientToServer(AETitle, false, null, null);
         } catch (DICOM_Exception e) {
             pdu = null;
         }

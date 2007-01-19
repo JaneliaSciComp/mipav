@@ -77,7 +77,17 @@ public class DICOM_Store implements Runnable {
             // define an instance of the PDU_Service class to set up the connection
             // to the remote AE
             pdu = new DICOM_PDUService();
-            pdu.connectClientToServer(remoteAETitle, false);
+            
+            
+            // grab the first DICOM file (if directory) to see what the transfer syntax is:
+           
+            String firstFilename = getFirstFile(fileName);
+            System.err.println("firstFileName: " + firstFilename);
+            if (firstFilename != null) {
+            	getUIDs(firstFilename);
+            }
+            
+            pdu.connectClientToServer(remoteAETitle, false, transferSyntax, classUID);
 
             if (sendImages(fileName) == true) {
                 frame.appendSendMessage("Success -- " + fileName + " to " + remoteAETitle + "\n");
@@ -122,7 +132,11 @@ public class DICOM_Store implements Runnable {
             } else {
 
                 // Get UIDs  and pass it as a parameter in the next method (write. )
-                getUIDs(fileName);
+            	
+            	//ben update: this has been moved to when we connect to the server so that we can tell the server
+            	//   exactly what type of file we are going to send
+            	
+                //getUIDs(fileName);
                 storageSOP.write(pdu, ddo, transferSyntax, classUID, instanceUID);
                 returnVal = true;
             }
@@ -162,6 +176,10 @@ public class DICOM_Store implements Runnable {
                     instanceUID = DICOM_Util.trimIgnorableChar(instanceUID.trim());
                 }
 
+                if (transferSyntax != null) {
+                	transferSyntax = DICOM_Util.trimIgnorableChar(transferSyntax.trim());
+                }
+                
                 if (classUID == null) {
                     modality = (String) (fInfoDicom.getValue("0008,0060"));
                     modality.trim();
@@ -236,8 +254,40 @@ public class DICOM_Store implements Runnable {
 
             return false;
         }
-
         return true;
     }
 
+    private String getFirstFile(String dir) {
+    	int i;
+        File fileDir = null;
+        String[] dirList;
+
+        try {
+            fileDir = new File(dir);
+
+            if (fileDir.isFile() == true) {
+            	return dir;
+            } else if (fileDir.isDirectory() == false) {
+                MipavUtil.displayError("DICOM send images: Not a directory");
+            } else {
+                dirList = fileDir.list();
+
+                String test = null;
+                for (i = 0; i < dirList.length; i++) {
+                	test = getFirstFile(getFirstFile(dir + File.separatorChar + dirList[i]));
+                	if (test != null) {
+                		return test;
+                	}                	                	
+                }
+            }
+        } catch (OutOfMemoryError error) {
+            MipavUtil.displayError("Error opening directory:" + error);
+            
+            return null;
+        }
+    	
+        return null;
+        
+    }
+    
 }

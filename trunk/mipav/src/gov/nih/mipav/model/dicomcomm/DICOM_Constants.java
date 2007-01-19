@@ -9,7 +9,7 @@ public class DICOM_Constants {
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
-    public static final int MAXSUBLENGTH = 32000;
+    public static final int MAXSUBLENGTH = 1024;
 
     /** DICOM Protocol Version - Default = 1. */
     public static final int PROTOCOLVERSION = 1;
