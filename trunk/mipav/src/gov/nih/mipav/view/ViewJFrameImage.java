@@ -1336,7 +1336,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("OpacityPaint")) {
             new JDialogOpacityControls(this, controls);
         } else if (command.equals("CommitPaint")) {
-
             if (getActiveImage() == imageA) {
                 componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, true, null);
             } else {
@@ -3138,12 +3137,17 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void handleMaskToPaint(boolean showProgressBar) {
 
         if (componentImage != null) {
-            float[] intensityMapB = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
-                                                                                                // same size as image
-                                                                                                // dimensions
-            BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
-
             if (imageB != null) {
+            	float[] intensityMapB;
+            	if(imageB.isColorImage()) {
+            		intensityMapB = new float[(imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make intensity map
+            	}else {
+            		intensityMapB = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
+            	}
+            	
+                // same size as image
+                // dimensions
+            	BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
                 ViewJProgressBar progressBar = null;
 
                 if (showProgressBar) {
@@ -3152,6 +3156,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     MipavUtil.centerOnScreen(progressBar);
                     progressBar.setVisible(showProgressBar);
                 }
+                
+                
 
                 try {
                     int numSlices = ((imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
@@ -3164,15 +3170,36 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
                         // selected intensity
-                        for (int i = 0; i < intensityMapB.length; i++) {
+                        
+                        
+                       Color activeColor = getControls().getTools().getPaintColor();
+                 	   int activeRed = activeColor.getRed();
+                 	   int activeGreen = activeColor.getGreen();
+                 	   int activeBlue = activeColor.getBlue();
+                 	   
+                       if(imageB.isColorImage()) {
+                    	   for (int k = 0; k <= (intensityMapB.length - 4); k=k+4) {
+                    		   int r,g,b;
+                    		   r = (new Float(intensityMapB[k+1])).intValue();
+                    		   g = (new Float(intensityMapB[k+2])).intValue();
+                    		   b = (new Float(intensityMapB[k+3])).intValue();
 
-                            if (intensityMapB[i] == componentImage.intensityDropper) {
-                                bitSet.set((currentSlice * intensityMapB.length) + i); // turn the paint bit set index
-                                                                                       // to ON
-                                intensityMapB[i] = 0; // erase the painted mask from this index
-                            }
-                        }
-
+                    		   if(r==activeRed && g==activeGreen && b==activeBlue) {
+                    			   bitSet.set((currentSlice * intensityMapB.length) + (k/4)); // turn the paint bit set index to ON
+                    			   intensityMapB[k+1] = 0; // erase the painted mask from this index
+                    			   intensityMapB[k+2] = 0; // erase the painted mask from this index
+                    			   intensityMapB[k+3] = 0; // erase the painted mask from this index
+                    		   }
+                    	   }  
+                       }else {
+                    	   for (int i = 0; i < intensityMapB.length; i++) {
+                               if (intensityMapB[i] == componentImage.intensityDropper) {
+                                   bitSet.set((currentSlice * intensityMapB.length) + i); // turn the paint bit set index to ON
+                                   intensityMapB[i] = 0; // erase the painted mask from this index
+                               }
+                           }
+                       }
+                        
                         // put the modified slice back into image
                         imageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
 
@@ -3183,8 +3210,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                     updateImages(true);
                 } catch (Exception ex) {
-
                     // do nothing. the error will be displayed when this if block exits
+                	ex.printStackTrace();
                     MipavUtil.displayError("Cannot complete the operation due to an internal error.");
                 } finally {
 
@@ -3193,7 +3220,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     }
                 }
             } else {
-
+            	
                 // if we get here, there is no mask on the image.
                 MipavUtil.displayError("This function is only useful when the image has a mask. To use this feature, please add a mask.");
             }
