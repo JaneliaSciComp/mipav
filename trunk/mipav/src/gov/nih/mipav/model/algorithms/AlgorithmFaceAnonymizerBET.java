@@ -567,7 +567,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
             }
             return removeRegion;
         }
-        /*else if(shape == CUBE)
+        /*else if(shape == CUBE)    //while this code works, it does not take advantage of the random and self-annealing processes above.
         {
             int removePoint = 0;
             int numFail = 0;
@@ -669,7 +669,7 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         BitSet removeRegionTemp = (BitSet)removeRegion.clone();
         int levelCut = ((int)(((xDim+yDim+zDim)/3)*.05));
         for(int i=removeEdge.nextSetBit(0); i>=0; i=removeEdge.nextSetBit(i+1)) {
-            removeRegionTemp = bitUtil.connectNearNeighbors(i, removeRegion, removeRegionTemp, levelCut);               
+            removeRegion = bitUtil.connectNearNeighbors(i, removeRegion, removeRegionTemp, levelCut);               
         }
         return removeRegionTemp;
     }
@@ -1036,8 +1036,6 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
             }
         }
         
-        //TODO: Finish if usefulness is found.
-        
         static final int LEFT_EXP = 0;
         static final int RIGHT_EXP = 1;
         static final int DOWN_EXP = 2;
@@ -1073,8 +1071,24 @@ public class AlgorithmFaceAnonymizerBET extends AlgorithmBase {
         
         /**
          * 
-         * Returns a BitSet whose set values are those set in the connectingRegion and those values within the maxNeighborDistance of loc 
-         * where a value of this BitSet was set in between loc and some pixel within the maxNeighborDistance.
+         * Set elements of the returned BitSet meet at least one of the following criteria: 
+         * <ol>
+         *  <li>Element is set in <code>connectingRegion</code>.</li>
+         *  <li>Walking up, down, right, and/or left from <code>loc</code> to this element requires less than or equal to <code>maxNeighborDistance</code> steps.</li>
+         * </ol>
+         * 
+         */
+        
+        BitSet connectNearNeighbors(int loc, BitSet connectingRegion, int maxNeighborDistance)
+        {
+            BitSet connectingRegionCopy = (BitSet)connectingRegion.clone();
+            connectNearNeighborsUtil(loc, connectingRegion, connectingRegionCopy, 0, 0, maxNeighborDistance);
+            return connectingRegionCopy;
+        }
+        
+        /**
+         * 
+         * A helper method for <code>connectNearNeighbors(int, BitSet, int)</code> that allows faster copies
          * 
          */
 
