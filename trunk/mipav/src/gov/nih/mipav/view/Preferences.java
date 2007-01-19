@@ -96,9 +96,9 @@ public class Preferences {
     /** Constant that indicates whether the angle of line VOIs should be shown on screen. */
     public static final String PREF_SHOW_LINE_ANGLE = "ShowLineVOIAngle";
 
-    /** Constant that indicates whether [SHIFT] must be held down to draw continuous contours (false = hold-shift) */
+    /** Constant that indicates whether [SHIFT] must be held down to draw continuous contours (false = hold-shift). */
     public static final String PREF_CONTINUOUS_VOI_CONTOUR = "ContinuousVOIContours";
-    
+
     /** Constant that indicates whether the triplanar frame should use the old 2x2 layout or the newer 3x1 layout. */
     public static final String PREF_TRIPLANAR_2X2_LAYOUT = "TriPlanar2x2Layout";
 
@@ -113,7 +113,7 @@ public class Preferences {
 
     /** DOCUMENT ME! */
     public static final String PREF_SHOW_OUTPUT = "ShowOutput";
-   
+
     /** DOCUMENT ME! */
     public static final String PREF_LAST_STACK_FLAG = "LastStackFlag";
 
@@ -138,12 +138,15 @@ public class Preferences {
     /** DOCUMENT ME! */
     public static final String PREF_STORAGE_RESOURCE_SRB = "defaultStorageResource";
 
+    /** DOCUMENT ME! */
     public static final String PREF_SRB_VERSION = "srbVersion";
-    
+
+    /** DOCUMENT ME! */
     public static final String PREF_SRB_TRANSFER_MODE = "srbTransferMode";
-    
+
+    /** DOCUMENT ME! */
     public static final String PREF_SRB_TEMP_DIR = "srbTempDir";
-    
+
     /** Constant that indicates the initial directory in which to open the file chooser of the image browser. */
     public static final String PREF_DEFAULT_IMAGE_BROWSER_DIR = "DefaultImageBrowserDirectory";
 
@@ -173,7 +176,7 @@ public class Preferences {
 
     /** Constant used to identify debugging level for general output by communications. */
     public static final int DEBUG_COMMS = 3;
-    
+
     /** Constant used to identify debugging level for output of scripting system messages. */
     public static final int DEBUG_SCRIPTING = 4;
 
@@ -198,8 +201,9 @@ public class Preferences {
     /** DOCUMENT ME! */
     private static Hashtable userShortcutTable;
 
+    /** DOCUMENT ME! */
     private static Hashtable defaultShortcutTable = buildDefaultShortcuts();
-    
+
     /** DOCUMENT ME! */
     private static KeyStroke currentShortcut;
 
@@ -353,52 +357,52 @@ public class Preferences {
 
                     // System.err.println("token is: " + token);
                     shortcutStr = token.substring(0, token.indexOf(","));
-                    
+
                     if (!defaultShortcutTable.containsKey(shortcutStr)) {
-                    
-                    keyStr = token.substring(token.indexOf(",") + 1, token.length()).trim();
-                    modifiers = 0;
 
-                    if (keyStr.indexOf("CTRL") != -1) {
-                        modifiers += Event.CTRL_MASK;
-                    }
+                        keyStr = token.substring(token.indexOf(",") + 1, token.length()).trim();
+                        modifiers = 0;
 
-                    if (keyStr.indexOf("ALT") != -1) {
-                        modifiers += Event.ALT_MASK;
-                    }
+                        if (keyStr.indexOf("CTRL") != -1) {
+                            modifiers += Event.CTRL_MASK;
+                        }
 
-                    if (keyStr.indexOf("SHIFT") != -1) {
+                        if (keyStr.indexOf("ALT") != -1) {
+                            modifiers += Event.ALT_MASK;
+                        }
 
-                        // System.err.println("KEYSTRING: " + keyStr);
-                        modifiers += Event.SHIFT_MASK;
-                        // System.err.println("found shift: " + keyStr.charAt(keyStr.length()-1));
-                    }
+                        if (keyStr.indexOf("SHIFT") != -1) {
 
-                    int fIndex = 0;
+                            // System.err.println("KEYSTRING: " + keyStr);
+                            modifiers += Event.SHIFT_MASK;
+                            // System.err.println("found shift: " + keyStr.charAt(keyStr.length()-1));
+                        }
 
-                    if ((keyStr.length() == 2) || (keyStr.length() == 3)) {
-                        fIndex = Integer.parseInt(keyStr.substring(1));
-                        
-                        
-                        userShortcutTable.put(shortcutStr,
-                                          KeyStroke.getKeyStroke(MipavUtil.functionKeys[fIndex], 0, false));
-                    } else {
+                        int fIndex = 0;
 
-                        if (modifiers != 0) {
+                        if ((keyStr.length() == 2) || (keyStr.length() == 3)) {
+                            fIndex = Integer.parseInt(keyStr.substring(1));
+
 
                             userShortcutTable.put(shortcutStr,
-                                              KeyStroke.getKeyStroke(keyStr.charAt(keyStr.length() - 1), modifiers,
-                                                                     false));
+                                                  KeyStroke.getKeyStroke(MipavUtil.functionKeys[fIndex], 0, false));
                         } else {
-                            userShortcutTable.put(shortcutStr, KeyStroke.getKeyStroke(keyStr.charAt(0), modifiers, false));
+
+                            if (modifiers != 0) {
+
+                                userShortcutTable.put(shortcutStr,
+                                                      KeyStroke.getKeyStroke(keyStr.charAt(keyStr.length() - 1),
+                                                                             modifiers, false));
+                            } else {
+                                userShortcutTable.put(shortcutStr,
+                                                      KeyStroke.getKeyStroke(keyStr.charAt(0), modifiers, false));
+                            }
                         }
                     }
-                    }
                 }
-                
-                //throw in the defaults just in case
-                
-                
+
+                // throw in the defaults just in case
+
 
             } else {
                 success = false;
@@ -602,6 +606,15 @@ public class Preferences {
     }
 
     /**
+     * Gets the Default Hashtable used to store the shortcut keystrokes and commands.
+     *
+     * @return  Hashtable the shortcut hashtable
+     */
+    public static Hashtable getDefaultShortcutTable() {
+        return defaultShortcutTable;
+    }
+
+    /**
      * Accessor to get default DICOM image storage location.
      *
      * @return  default storage information
@@ -696,6 +709,20 @@ public class Preferences {
     }
 
     /**
+     * Returns the index of the latest used file filter.
+     *
+     * @return  the index of the latest used file filter.
+     */
+    public static int getFileFilter() {
+
+        if (mipavProps == null) {
+            read();
+        }
+
+        return Integer.parseInt(getProperty("FilenameFilter"));
+    }
+
+    /**
      * Accessor to get host (chat/file) server Internet Protocol for selected Name.
      *
      * @param   AETitle  application entity title
@@ -741,6 +768,22 @@ public class Preferences {
 
             // use default here
             return new String("divinci.gif");
+        }
+    }
+
+    /**
+     * Returns the image directory used last time.
+     *
+     * @return  the image directory used last time.
+     */
+    public static String getImageDirectory() {
+
+        String str = Preferences.getProperty("ImageDirectory");
+
+        if (str != null) {
+            return str;
+        } else {
+            return (System.getProperties().getProperty("user.dir"));
         }
     }
 
@@ -1390,9 +1433,22 @@ public class Preferences {
 
         return mipavProps.getProperty(key);
     }
-    
-    
-   
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static final String getScriptFile() {
+        String s = getProperty("ScriptFile");
+
+        if (s == null) {
+            s = "";
+        }
+
+        return s;
+    }
+
 
     /**
      * Returns the default script directory. if null, returns the user's current working directory + "scripts"
@@ -1411,30 +1467,7 @@ public class Preferences {
 
         return str;
     }
-    
-    /**
-     * Sets the scripts directory to the new scripts directory.
-     * @param scriptsDirectory  the new scripts directory
-     */
-    public static final void setScriptsDirectory(String scriptsDirectory) {
-        if (scriptsDirectory != null) {
-            setProperty("ScriptsDir", scriptsDirectory);
-        }
-    }
-    
-    public static final String getScriptFile(){
-        String s = getProperty("ScriptFile");
-        if(s == null){
-            s = "";
-        }
-        return s;
-    }
 
-    public static final void setScriptFile(String scriptFile){
-        if(scriptFile != null){
-            setProperty("ScriptFile", scriptFile);
-        }
-    }
     /**
      * Retrieves the SRB server authentication scheme.
      *
@@ -1511,14 +1544,15 @@ public class Preferences {
      * @return  KeyStroke the shortcut's keystroke
      */
     public static KeyStroke getShortcut(String command) {
-    	KeyStroke ks = null;
-    	
+        KeyStroke ks = null;
+
         if (command != null) {
-        	ks = (KeyStroke) defaultShortcutTable.get(command);
-        	if (ks == null) {
-        		ks = (KeyStroke) userShortcutTable.get(command);
-        	}
-        } 
+            ks = (KeyStroke) defaultShortcutTable.get(command);
+
+            if (ks == null) {
+                ks = (KeyStroke) userShortcutTable.get(command);
+            }
+        }
 
         return ks;
     }
@@ -1534,8 +1568,9 @@ public class Preferences {
         KeyStroke shortcut = null;
         String command = null;
 
-        //first check defaults
+        // first check defaults
         Enumeration en = defaultShortcutTable.keys();
+
         while (en.hasMoreElements()) {
             command = (String) en.nextElement();
             shortcut = (KeyStroke) defaultShortcutTable.get(command);
@@ -1544,10 +1579,11 @@ public class Preferences {
                 return command;
             }
         }
-        
-        
-        //next check user shortcuts
+
+
+        // next check user shortcuts
         en = userShortcutTable.keys();
+
         while (en.hasMoreElements()) {
             command = (String) en.nextElement();
             shortcut = (KeyStroke) userShortcutTable.get(command);
@@ -1561,23 +1597,49 @@ public class Preferences {
     }
 
     /**
-     * Gets the User defined Hashtable used to store the shortcut keystrokes and commands.
+     * Returns the temporary directory which is used during file transfer.
      *
-     * @return  Hashtable the shortcut hashtable
+     * @return  the temporary directory which is used during file transfer.
      */
-    public static Hashtable getUserShortcutTable() {
-        return userShortcutTable;
+    public static String getSRBTempDir() {
+
+        if (mipavProps == null) {
+            read();
+        }
+
+        return getProperty(PREF_SRB_TEMP_DIR);
+
     }
 
     /**
-     * Gets the Default Hashtable used to store the shortcut keystrokes and commands.
+     * Returns the transfer mode of srb server.
      *
-     * @return  Hashtable the shortcut hashtable
+     * @return  the transfer mode of srb server.
      */
-    public static Hashtable getDefaultShortcutTable() {
-        return defaultShortcutTable;
+    public static String getSRBTransferMode() {
+
+        if (mipavProps == null) {
+            read();
+        }
+
+        return getProperty(PREF_SRB_TRANSFER_MODE);
     }
-    
+
+    /**
+     * Returns the srb server version which Jargon need to be adapted to.
+     *
+     * @return  the srb server version which Jargon need to be adapted to.
+     */
+    public static String getSRBVersion() {
+
+        if (mipavProps == null) {
+            read();
+        }
+
+        return getProperty(PREF_SRB_VERSION);
+
+    }
+
     /**
      * Retrieves the default storage resource for the user.
      *
@@ -1672,6 +1734,15 @@ public class Preferences {
         }
 
         return getProperty(PREF_USERNAME_SRB);
+    }
+
+    /**
+     * Gets the User defined Hashtable used to store the shortcut keystrokes and commands.
+     *
+     * @return  Hashtable the shortcut hashtable
+     */
+    public static Hashtable getUserShortcutTable() {
+        return userShortcutTable;
     }
 
     /**
@@ -1779,7 +1850,7 @@ public class Preferences {
      * @return  DOCUMENT ME!
      */
     public static boolean isDefaultCommand(String command) {
-    	return defaultShortcutTable.contains(command);
+        return defaultShortcutTable.contains(command);
     }
 
     /**
@@ -1796,15 +1867,17 @@ public class Preferences {
         }
 
         Enumeration keys = defaultShortcutTable.keys();
-        
+
         KeyStroke defaultKey = null;
-        while(keys.hasMoreElements()) {
-        	defaultKey = (KeyStroke)defaultShortcutTable.get(keys.nextElement());
-        	if (defaultKey.equals(ks)) {
-        		return true;
-        	}
+
+        while (keys.hasMoreElements()) {
+            defaultKey = (KeyStroke) defaultShortcutTable.get(keys.nextElement());
+
+            if (defaultKey.equals(ks)) {
+                return true;
+            }
         }
-        
+
         return false;
     }
 
@@ -2123,6 +2196,33 @@ public class Preferences {
     }
 
     /**
+     * Sets the current used file filter as the latest used file filter.
+     *
+     * @param  fileFilterIndex  the index of the current used file filter.
+     */
+    public static void setFileFilter(int fileFilterIndex) {
+        setProperty("FilenameFilter", new Integer(fileFilterIndex));
+    }
+
+    /**
+     * Sets the image directory as the latest used image directory.
+     *
+     * @param  imageDirectory  the current used image directory.
+     */
+    public static void setImageDirectory(File imageDirectory) {
+
+        if (imageDirectory == null) {
+            return;
+        }
+
+        if (imageDirectory.isDirectory()) {
+            setProperty("ImageDirectory", imageDirectory.getAbsolutePath());
+        } else {
+            setProperty("ImageDirectory", imageDirectory.getParent());
+        }
+    }
+
+    /**
      * Sets the last image loaded in the Preferences file. If it is a duplicate, moves it up on the list.
      *
      * @param  name       Full pathname of last image loaded.
@@ -2377,6 +2477,30 @@ public class Preferences {
     }
 
     /**
+     * DOCUMENT ME!
+     *
+     * @param  scriptFile  DOCUMENT ME!
+     */
+    public static final void setScriptFile(String scriptFile) {
+
+        if (scriptFile != null) {
+            setProperty("ScriptFile", scriptFile);
+        }
+    }
+
+    /**
+     * Sets the scripts directory to the new scripts directory.
+     *
+     * @param  scriptsDirectory  the new scripts directory
+     */
+    public static final void setScriptsDirectory(String scriptsDirectory) {
+
+        if (scriptsDirectory != null) {
+            setProperty("ScriptsDir", scriptsDirectory);
+        }
+    }
+
+    /**
      * Sets the server authentication schema which the SRB server is using.
      *
      * @param  serverAuthSRB  the new SRB server authentication schema
@@ -2441,6 +2565,48 @@ public class Preferences {
     }
 
     /**
+     * Sets the temporary directory which is used during file transfer to the new temporary directory.
+     *
+     * @param  tempDir  the temporary directory.
+     */
+    public static void setSRBTempDir(String tempDir) {
+
+        if (tempDir == null) {
+            return;
+        }
+
+        setProperty(PREF_SRB_TEMP_DIR, tempDir);
+    }
+
+    /**
+     * Sets the transfer mode of srb server to the new transfer mode.
+     *
+     * @param  transferMode  the new transfer mode.
+     */
+    public static void setSRBTransferMode(String transferMode) {
+
+        if (transferMode == null) {
+            return;
+        }
+
+        setProperty(PREF_SRB_TRANSFER_MODE, transferMode);
+    }
+
+    /**
+     * Sets the srb server version which Jargon need to be adapted to.
+     *
+     * @param  srbVersion  the new srb server version.
+     */
+    public static void setSRBVersion(String srbVersion) {
+
+        if (srbVersion == null) {
+            return;
+        }
+
+        setProperty(PREF_SRB_VERSION, srbVersion);
+    }
+
+    /**
      * Sets the default storage resource for the user.
      *
      * @param  storageResource  the new storage resource.
@@ -2464,157 +2630,33 @@ public class Preferences {
     }
 
     /**
-     * Returns the transfer mode of srb server.
-     * @return the transfer mode of srb server.
-     */
-    public static String getSRBTransferMode(){
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_SRB_TRANSFER_MODE);
-    }
-    
-    /**
-     * Sets the transfer mode of srb server to the new transfer mode.
-     * @param transferMode the new transfer mode.
-     */
-    public static void setSRBTransferMode(String transferMode){
-        if(transferMode == null){
-            return;
-        }
-        setProperty(PREF_SRB_TRANSFER_MODE, transferMode);
-    }
-    
-    /**
-     * Returns the srb server version which Jargon need to be adapted to.
-     * @return  the srb server version which Jargon need to be adapted to.
-     */
-    public static String getSRBVersion(){
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_SRB_VERSION);
-        
-    }
-    
-    /**
-     * Sets the srb server version which Jargon need to be adapted to.
-     * @param srbVersion  the new srb server version.
-     */
-    public static void setSRBVersion(String srbVersion){
-        if(srbVersion == null){
-            return;
-        }
-        setProperty(PREF_SRB_VERSION, srbVersion);
-    }
-    
-    /**
-     * Returns the temporary directory which is used during file transfer.
-     * @return the temporary directory which is used during file transfer.
-     */
-    public static String getSRBTempDir(){
-
-        if (mipavProps == null) {
-            read();
-        }
-
-        return getProperty(PREF_SRB_TEMP_DIR);
-        
-    }
-
-    /**
-     * Sets the temporary directory which is used during file transfer to the
-     * new temporary directory.
-     * @param tempDir the temporary directory.
-     */
-    public static void setSRBTempDir(String tempDir){
-        if(tempDir == null){
-            return;
-        }
-        setProperty(PREF_SRB_TEMP_DIR, tempDir);
-    }
-    
-    /**
-     * Returns the index of the latest used file filter.
-     * @return the index of the latest used file filter.
-     */
-    public static int getFileFilter(){
-        if(mipavProps == null){
-            read();
-        }
-        
-        return Integer.parseInt(getProperty("FilenameFilter"));
-    }
-    
-    /**
-     * Sets the current used file filter as the latest used file filter.
-     * @param fileFilterIndex  the index of the current used file filter.
-     */
-    public static void setFileFilter(int fileFilterIndex){
-        setProperty("FilenameFilter", new Integer(fileFilterIndex));
-    }
-    
-    /**
-     * Returns the image directory used last time.
-     * @return  the image directory used last time.
-     */
-    public static String getImageDirectory() {
-
-        String str = Preferences.getProperty("ImageDirectory");
-
-        if (str != null) {
-            return str;
-        } else {
-            return (System.getProperties().getProperty("user.dir"));
-        }
-    }
-    
-    /**
-     * Sets the image directory as the latest used image directory. 
-     * @param imageDirectory the current used image directory.
-     */
-    public static void setImageDirectory(File imageDirectory){
-        if(imageDirectory == null){
-            return;
-        }
-        
-        if(imageDirectory.isDirectory()){
-            setProperty("ImageDirectory", imageDirectory.getAbsolutePath());
-        }else{
-            setProperty("ImageDirectory", imageDirectory.getParent());
-        }
-    }
-
-    /**
-     * Builds the default shortcut hashtable (not user modifiable)
-     * @return default shortcut hashtable
+     * Builds the default shortcut hashtable (not user modifiable).
+     *
+     * @return  default shortcut hashtable
      */
     private static Hashtable buildDefaultShortcuts() {
-    	
-    	defaultShortcutTable = new Hashtable();
-    	defaultShortcutTable.put("OpenNewImage", KeyStroke.getKeyStroke('F', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("SaveImage", KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("SaveImageAs", KeyStroke.getKeyStroke('S', Event.SHIFT_MASK + Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("undoVOI", KeyStroke.getKeyStroke('Z', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("cutVOI", KeyStroke.getKeyStroke('X', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("copyVOI", KeyStroke.getKeyStroke('C', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("pasteVOI", KeyStroke.getKeyStroke('V', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("selectAllVOIs", KeyStroke.getKeyStroke('A', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("Tri-planar", KeyStroke.getKeyStroke('T', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("AboutImage", KeyStroke.getKeyStroke('H', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("EditImageInfo", KeyStroke.getKeyStroke('E', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("MemoryUsage", KeyStroke.getKeyStroke('M', Event.CTRL_MASK, false));
-    	defaultShortcutTable.put("ToggleImageIntensities", KeyStroke.getKeyStroke('T', 0, false));
-    	
-    	for (int i = 0; i < 9; i++) {
-    		defaultShortcutTable.put("LastImage " + i, KeyStroke.getKeyStroke(Integer.toString(i).charAt(0), Event.CTRL_MASK, false));
+
+        defaultShortcutTable = new Hashtable();
+        defaultShortcutTable.put("OpenNewImage", KeyStroke.getKeyStroke('F', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("SaveImage", KeyStroke.getKeyStroke('S', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("SaveImageAs", KeyStroke.getKeyStroke('S', Event.SHIFT_MASK + Event.CTRL_MASK, false));
+        defaultShortcutTable.put("undoVOI", KeyStroke.getKeyStroke('Z', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("cutVOI", KeyStroke.getKeyStroke('X', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("copyVOI", KeyStroke.getKeyStroke('C', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("pasteVOI", KeyStroke.getKeyStroke('V', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("selectAllVOIs", KeyStroke.getKeyStroke('A', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("Tri-planar", KeyStroke.getKeyStroke('T', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("AboutImage", KeyStroke.getKeyStroke('H', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("EditImageInfo", KeyStroke.getKeyStroke('E', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("MemoryUsage", KeyStroke.getKeyStroke('M', Event.CTRL_MASK, false));
+        defaultShortcutTable.put("ToggleImageIntensities", KeyStroke.getKeyStroke('T', 0, false));
+
+        for (int i = 0; i < 9; i++) {
+            defaultShortcutTable.put("LastImage " + i,
+                                     KeyStroke.getKeyStroke(Integer.toString(i + 1).charAt(0), Event.CTRL_MASK, false));
         }
-    	
-    	return defaultShortcutTable;
+
+        return defaultShortcutTable;
     }
-    
+
 }
