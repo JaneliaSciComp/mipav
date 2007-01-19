@@ -275,6 +275,9 @@ public class JPanelSurface extends JPanelRendererBase
     /** Surface color. */
     private Color surColor;
 
+    /** Check Box for surface transparency. */
+    private JCheckBox surfaceTransparencyCB;
+
     /** Check Box for surface back face culling. */
     private JCheckBox surfaceBackFaceCB;
 
@@ -562,6 +565,8 @@ public class JPanelSurface extends JPanelRendererBase
             setPickable( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("backface")) {
             setBackface( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
+        } else if (command.equals("transparency")) {
+            setTransparency( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("Clipping") && ((SurfaceRender) parentScene).getDisplayMode3D()) {
             setClipping( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("ChangePolyMode")) {
@@ -730,6 +735,30 @@ public class JPanelSurface extends JPanelRendererBase
             }
         }
     }
+
+    /**
+     * Turns Transparency on/off for the selected surfaces.
+     * @param surfaces, the list of selected surfaces (SurfaceAttributes)
+     */
+    private void setTransparency( SurfaceAttributes[] surfaces )
+    {
+        if ( surfaces != null )
+        {
+            for ( int i = 0; i < surfaces.length; i++ )
+            {
+                Shape3D[] shapes = surfaces[i].getShape();
+                for ( int j = 0; j < shapes.length; j++ )
+                {
+                    if (surfaceTransparencyCB.isSelected()) {
+                        shapes[j].getAppearance().getTransparencyAttributes().setTransparencyMode(TransparencyAttributes.BLENDED);
+                    } else {
+                        shapes[j].getAppearance().getTransparencyAttributes().setTransparencyMode(TransparencyAttributes.NONE);
+                    }
+                }
+            }
+        }
+    }
+
 
     /**
      * Turns Clipping on/off for the selected surfaces.
@@ -1267,6 +1296,7 @@ public class JPanelSurface extends JPanelRendererBase
         surfacePickableCB = null;
         surfaceClipCB = null;
         surfaceBackFaceCB = null;
+        surfaceTransparencyCB = null;
         listPanel = null;
         rightPanel = null;
         lightArray = null;
@@ -2247,6 +2277,13 @@ public class JPanelSurface extends JPanelRendererBase
                 surfacePickableCB.setSelected(root.getPickable());
                 surfaceBackFaceCB.setSelected(root.getCollidable());
 
+                Shape3D[] shapes = ((SurfaceAttributes) surfaceVector.get(index)).getShape();
+                for ( int j = 0; j < shapes.length; j++ )
+                {
+                    
+                    surfaceTransparencyCB.setSelected( shapes[j].getAppearance().getTransparencyAttributes().getTransparencyMode() == TransparencyAttributes.BLENDED );
+                }
+
                 if (((SurfaceRender) parentScene).getDisplayMode3D()) {
                     surfaceClipCB.setSelected(root.getAlternateCollisionTarget());
                 }
@@ -2485,11 +2522,12 @@ public class JPanelSurface extends JPanelRendererBase
         TransparencyAttributes tap = new TransparencyAttributes();
         tap.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
         tap.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
+        tap.setCapability(TransparencyAttributes.ALLOW_MODE_READ);
+        tap.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
         tap.setTransparencyMode(TransparencyAttributes.BLENDED);
         tap.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
         tap.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
-        System.err.println( "Surface opacity " + surface.getOpacity() );
-        tap.setTransparency(0);
+        tap.setTransparency( opacity );
         appearance.setTransparencyAttributes(tap);
 
         // Material
@@ -3131,12 +3169,20 @@ public class JPanelSurface extends JPanelRendererBase
         surfaceBackFaceCB.setFont(serif12B);
         surfaceBackFaceCB.setSelected(true);
 
+        surfaceTransparencyCB = new JCheckBox("Transparency", true);
+        surfaceTransparencyCB.addActionListener(this);
+        surfaceTransparencyCB.setActionCommand("transparency");
+        surfaceTransparencyCB.setFont(serif12B);
+        surfaceTransparencyCB.setSelected(true);
+
+
         JPanel cbSurfacePanel = new JPanel();
 
         cbSurfacePanel.setLayout(new BoxLayout(cbSurfacePanel, BoxLayout.Y_AXIS));
         cbSurfacePanel.add(surfacePickableCB);
         cbSurfacePanel.add(surfaceClipCB);
         cbSurfacePanel.add(surfaceBackFaceCB);
+        cbSurfacePanel.add(surfaceTransparencyCB);
 
         JPanel cbPanel = new JPanel();
 
@@ -3343,6 +3389,7 @@ public class JPanelSurface extends JPanelRendererBase
         surfacePickableCB.setEnabled(flag);
         surfaceClipCB.setEnabled(flag);
         surfaceBackFaceCB.setEnabled(flag);
+        surfaceTransparencyCB.setEnabled(flag);
         
         mSurfacePaint.setEnabled( flag );
         if ( ((SurfaceRender)parentScene).getSurfaceTexture() != null )
