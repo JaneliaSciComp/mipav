@@ -385,7 +385,6 @@ public class SurfacePaint
             {
                 PickIntersection kPick = kPickResult.getIntersection(i);
                 
-                
                 /* Get the coordinates of the picked point on the mesh. */
                 Point3f kPickPoint = null;
                 try {
@@ -403,15 +402,18 @@ public class SurfacePaint
                 Transform3D kTransform = new Transform3D();
                 mMouseRotate.getTransform( kTransform );
                 kTransform.transform( kPickNormal );
+                kPickNormal.normalize();
                 
                 Vector3f kDirection = new Vector3f( (float)kPickDirection.x, (float)kPickDirection.y, (float)kPickDirection.z );
+                kDirection.normalize();
                 // If the PickShape is not a PickBounds, then we can test
                 // the dot-product:
+                //                 double angle = Math.acos( kDirection.dot( kPickNormal ) ) * (360.0 / (2.0 * Math.PI));
+                //                 System.err.println( "Pick: " + angle );
                 if ( !(mPickShape instanceof PickBounds) &&
                      (kDirection.dot( kPickNormal ) > 0) )
                 {
                     break;
-                    //continue;
                 }
                 if ( m_PaintMode == SurfacePaint.VERTEX )
                 {
@@ -480,6 +482,7 @@ public class SurfacePaint
                     {                            
                         kMesh.setColor( closest, mPaintColor );
                     }
+                    
                 }
             }
         }
@@ -604,7 +607,11 @@ public class SurfacePaint
         }
         else if ( mPickShape instanceof PickCone )
         {
+            Point3d kPickStart = new Point3d();
             ((PickCone)mPickShape).getDirection( kPickDirection );
+            ((PickCone)mPickShape).getOrigin( kPickStart );
+            PickRay kPickRay = new PickRay( kPickStart, kPickDirection );
+            m_kPickCanvas.setShape( kPickRay, kPickStart );
         }
         else if ( mPickShape instanceof PickCylinder )
         {
