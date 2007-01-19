@@ -271,11 +271,6 @@ public class SurfacePaint
         }
         else if ( command.equals( "Eraser" ) )
         {
-            if ( mEraserButton.isSelected() )
-            {
-                mBrushSize = 1;
-                mBrushSizeText.setText( "1" );
-            }
             setPaintMode( SurfacePaint.VERTEX );
         }
         else if ( command.equals( "EraseAll" ) )
@@ -386,124 +381,126 @@ public class SurfacePaint
 
             /* Pick the first intersection since we executed a pick
              * closest. */
-            //for ( int i = 0; i < kPickResult.numIntersections(); i++ )
-            for ( int i = 0; i < 1; i++ )
+            PickIntersection kPick = kPickResult.getIntersection(0);
+            
+            /* Get the coordinates of the picked point on the mesh. */
+            Point3f kPickPoint = null;
+            try {
+                kPickPoint = new Point3f(kPick.getPointCoordinates());
+            } catch ( java.lang.RuntimeException e ) {
+                return;
+            }
+            if ( kPickPoint == null )
             {
-                PickIntersection kPick = kPickResult.getIntersection(i);
+                return;
+            }
                 
+            Vector3f kPickNormal = new Vector3f(kPick.getPointNormal());
+            Transform3D kTransform = new Transform3D();
+            mMouseRotate.getTransform( kTransform );
+            kTransform.transform( kPickNormal );
+            kPickNormal.normalize();
+            
+            Vector3f kDirection = new Vector3f( (float)kPickDirection.x, (float)kPickDirection.y, (float)kPickDirection.z );
+            kDirection.normalize();
+            // If the PickShape is not a PickBounds, then we can test
+            // the dot-product:
+            if ( !(mPickShape instanceof PickBounds) &&
+                 (kDirection.dot( kPickNormal ) > 0) )
+            {
+                return;
+            }
+            if ( m_PaintMode == SurfacePaint.VERTEX )
+            {
                 /* Get the coordinates of the picked point on the mesh. */
-                Point3f kPickPoint = null;
-                try {
-                    kPickPoint = new Point3f(kPick.getPointCoordinates());
-                } catch ( java.lang.RuntimeException e )
+                ModelTriangleMesh kMesh = (ModelTriangleMesh) kPickResult.getGeometryArray();
+                int[] indices = kPick.getPrimitiveCoordinateIndices();
+                Point3f vert0 = new Point3f();
+                kMesh.getCoordinate( indices[0], vert0 );
+                Point3f vert1 = new Point3f();
+                kMesh.getCoordinate( indices[1], vert1 );
+                Point3f vert2 = new Point3f();
+                kMesh.getCoordinate( indices[2], vert2 );
+                
+                float dist0 = kPickPoint.distance( vert0 );
+                float dist1 = kPickPoint.distance( vert1 );
+                float dist2 = kPickPoint.distance( vert2 );
+                int closest = indices[0];
+                Point3f kClosestPoint = vert0;
+                if ( dist1 < dist0 )
                 {
-                    continue;
+                    closest = indices[1];
+                    dist0 = dist1;
+                    kClosestPoint = vert1;
                 }
-                if ( kPickPoint == null )
+                if ( dist2 < dist0 )
                 {
-                    continue;
+                    closest = indices[2];
+                    dist0 = dist2;
+                    kClosestPoint = vert2;
                 }
                 
-                Vector3f kPickNormal = new Vector3f(kPick.getPointNormal());
-                Transform3D kTransform = new Transform3D();
-                mMouseRotate.getTransform( kTransform );
-                kTransform.transform( kPickNormal );
-                kPickNormal.normalize();
-                
-                Vector3f kDirection = new Vector3f( (float)kPickDirection.x, (float)kPickDirection.y, (float)kPickDirection.z );
-                kDirection.normalize();
-                // If the PickShape is not a PickBounds, then we can test
-                // the dot-product:
-                //                 double angle = Math.acos( kDirection.dot( kPickNormal ) ) * (360.0 / (2.0 * Math.PI));
-                //                 System.err.println( "Pick: " + angle );
-                if ( !(mPickShape instanceof PickBounds) &&
-                     (kDirection.dot( kPickNormal ) > 0) )
+                /* Erase */
+                float fOpacity = 1;
+                if ( mEraserButton.isSelected() )
                 {
-                    break;
+                    Shape3D kShape = (Shape3D) kPickResult.getNode( PickResult.SHAPE3D );
+                    if ( kShape != null )
+                    {
+                        fOpacity = 1 - kShape.getAppearance().getTransparencyAttributes().getTransparency();
+                    }
+                    if ( m_kPanel.getTextureStatus() != JPanelSurfaceTexture.NONE )
+                    {
+                        mPaintColor =
+                            m_kPanel.getSurfaceMask().getModelImageColor( m_kPanel.getTextureImage(), fOpacity,
+                                                                          m_kPanel.getSurfaceMask().getModelImagePoint( kClosestPoint ));
+                    }
+                    else if ( kShape != null )
+                    {
+                        Color3f kColor = new Color3f();
+                        kShape.getAppearance().getMaterial().getDiffuseColor( kColor );
+                        mPaintColor.set( kColor.get() );
+                    }
+                }         
+                /* Dropper */
+                if ( mDropperButton.isSelected() )
+                {
+                    kMesh.getColor( closest, mPaintColor );
+                    mColorPaintButton.setBackground( mPaintColor.get() );
+                    mOpacity = mPaintColor.w;
                 }
-                if ( m_PaintMode == SurfacePaint.VERTEX )
+                else if ( mPaintCanButton.isSelected() && (mPaintGrowDialog != null) )
                 {
-                    /* Get the coordinates of the picked point on the mesh. */
-                    ModelTriangleMesh kMesh = (ModelTriangleMesh) kPickResult.getGeometryArray();
-                    int[] indices = kPick.getPrimitiveCoordinateIndices();
-                    Point3f vert0 = new Point3f();
-                    kMesh.getCoordinate( indices[0], vert0 );
-                    Point3f vert1 = new Point3f();
-                    kMesh.getCoordinate( indices[1], vert1 );
-                    Point3f vert2 = new Point3f();
-                    kMesh.getCoordinate( indices[2], vert2 );
-                    
-                    float dist0 = kPickPoint.distance( vert0 );
-                    float dist1 = kPickPoint.distance( vert1 );
-                    float dist2 = kPickPoint.distance( vert2 );
-                    int closest = indices[0];
-                    Point3f kClosestPoint = vert0;
-                    if ( dist1 < dist0 )
+                    getModelColor( kPickPoint );
+                }
+                else
+                {                            
+                    kMesh.setColor( closest, mPaintColor );
+                    Point3f kVert = new Point3f();
+                    if ( mBrushSize > 1 )
                     {
-                        closest = indices[1];
-                        dist0 = dist1;
-                        kClosestPoint = vert1;
-                    }
-                    if ( dist2 < dist0 )
-                    {
-                        closest = indices[2];
-                        dist0 = dist2;
-                        kClosestPoint = vert2;
-                    }
-
-                    /* Erase */
-                    if ( mEraserButton.isSelected() )
-                    {
-                        Shape3D kShape = (Shape3D) kPickResult.getNode( PickResult.SHAPE3D );
-                        float fOpacity = 1;
-                        if ( kShape != null )
+                        boolean update = false;
+                        for ( int v = 0; v < kMesh.getVertexCount(); v++ )
                         {
-                            fOpacity = 1 - kShape.getAppearance().getTransparencyAttributes().getTransparency();
-                        }
-                        if ( m_kPanel.getTextureStatus() != JPanelSurfaceTexture.NONE )
-                        {
-                            mPaintColor =
-                                m_kPanel.getSurfaceMask().getModelImageColor( m_kPanel.getTextureImage(), fOpacity,
-                                                                              m_kPanel.getSurfaceMask().getModelImagePoint( kClosestPoint ));
-                        }
-                        else if ( kShape != null )
-                        {
-                            Color3f kColor = new Color3f();
-                            kShape.getAppearance().getMaterial().getDiffuseColor( kColor );
-                            mPaintColor.set( kColor.get() );
-                        }
-                    }         
-                    /* Dropper */
-                    if ( mDropperButton.isSelected() )
-                    {
-                        kMesh.getColor( closest, mPaintColor );
-                        mColorPaintButton.setBackground( mPaintColor.get() );
-                        mOpacity = mPaintColor.w;
-                    }
-                    else if ( mPaintCanButton.isSelected() && (mPaintGrowDialog != null) )
-                    {
-                        getModelColor( kPickPoint );
-                    }
-                    else
-                    {                            
-                        kMesh.setColor( closest, mPaintColor );
-                        Point3f kVert = new Point3f();
-                        if ( mBrushSize > 1 )
-                        {
-                            boolean update = false;
-                            for ( int v = 0; v < kMesh.getVertexCount(); v++ )
+                            kMesh.getCoordinate( v, kVert );
+                            if ( kVert.distance( kPickPoint ) < (mBrushSize/100.0f) )
                             {
-                                kMesh.getCoordinate( v, kVert );
-                                if ( kVert.distance( kPickPoint ) < (mBrushSize/100.0f) )
+                                // if erase mode and the mesh is volume
+                                // per-vertex color, get the original color:
+                                if ( mEraserButton.isSelected() &&
+                                     (m_kPanel.getTextureStatus() != JPanelSurfaceTexture.NONE) )
                                 {
-                                    // Sets the color, but does not update the geometry yet (faster):
-                                    kMesh.setColorDelay( v, mPaintColor );
-                                    update = true;
+                                    mPaintColor =
+                                        m_kPanel.getSurfaceMask().getModelImageColor( m_kPanel.getTextureImage(), fOpacity,
+                                                                                      m_kPanel.getSurfaceMask().getModelImagePoint( kVert ));
                                 }
+                                // Sets the color, but does not update the geometry yet (faster):
+                                kMesh.setColorDelay( v, mPaintColor );
+                                update = true;
                             }
-                            // updates the geometry all at once (faster):
-                            kMesh.setColorUpdate();
                         }
+                        // updates the geometry all at once (faster):
+                        kMesh.setColorUpdate();
                     }
                 }
             }
