@@ -1253,7 +1253,11 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             return;
         } else if ((mode == LINE) || (mode == MOVE_POINT)) {
             return;
-        } else {
+        } else if(mode == ZOOMING_IN ) {
+        	return;
+        }else if(mode == ZOOMING_OUT ) {
+        	return;
+        }else {
             setMode(DEFAULT);
 
             return;
@@ -1814,7 +1818,8 @@ public class ViewJComponentTriImage extends ViewJComponentEditImage
             if (intensityLine != null) {
                 return;
             }
-        } else {
+        }
+        else {
             super.setMode(newMode);
         }
 
