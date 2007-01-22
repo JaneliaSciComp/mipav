@@ -212,6 +212,10 @@ public class SurfacePaint
         mBrushSizeText.setEnabled( flag );
         mColorPaintButton.setEnabled( flag );
         mOpacityPaintButton.setEnabled( flag );
+        if ( flag == false )
+        {
+            mPaintCanButton.setEnabled( flag );
+        }
     }
 
     /** Enables/disables the Paint Can user-interface
@@ -718,7 +722,6 @@ public class SurfacePaint
         BitSet paintMask = new BitSet();
         try {
 
-            System.err.println( "regionGrow" );
             int[] imageExtents = kImage.getExtents();
             
             Color4f modelColor =  m_kPanel.getSurfaceMask().getModelImageColorNonScaled( kImage, 1, kSeedPoint );
@@ -769,7 +772,6 @@ public class SurfacePaint
                                                      mPaintGrowDialog.getMaxDistance(),
                                                      0, regionGrowBounds);
             }
-            System.err.println( "done regionGrow: " + count );
             m_kPanel.updateVolumeTexture( paintMask, mPaintColor );
         } catch (OutOfMemoryError error) {
             System.gc();

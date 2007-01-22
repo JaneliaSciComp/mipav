@@ -1095,10 +1095,6 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
             /* Backup the unmodified mesh: */
             m_kSurfaceBackup = null;
             m_kSurfaceBackup = new ModelTriangleMesh(m_kSurface ); 
-//             .getVertexCopy(), m_kSurface.getNormalCopy(),
-//                                                      m_kSurface.getColorCopy(), m_kSurface.getTexCoordCopy(), 
-//                                                      m_kSurface.getIndexCopy() );
-
             m_kPanel.replaceMesh(m_kSurface, m_kModified);
             m_kSurface = null;
             m_kSurface = m_kModified;
@@ -4427,9 +4423,6 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
 
         if (m_kOriginal == null) {
             m_kOriginal = new ModelTriangleMesh(kMesh);
-// .getVertexCopy(), kMesh.getNormalCopy(), kMesh.getColorCopy(),
-//                                                 kMesh.getTexCoordCopy(),
-//                                                 kMesh.getIndexCopy());
             m_kLastFinished = m_kOriginal;
             m_kFinished = m_kOriginal;
             m_kLastCut = m_kOriginal;
@@ -4995,10 +4988,6 @@ public class Geodesic implements MouseListener, MouseMotionListener, KeyListener
             /* Backup the unmodified mesh: */
             m_kSurfaceBackup = null;
             m_kSurfaceBackup = new ModelTriangleMesh(m_kSurface);
-// .getVertexCopy(), m_kSurface.getNormalCopy(),
-//                                                      m_kSurface.getColorCopy(),
-//                                                      m_kSurface.getTexCoordCopy(),
-//                                                      m_kSurface.getIndexCopy());
             m_kPanel.replaceMesh(m_kSurface, m_kModified);
             m_kSurface = null;
             m_kSurface = m_kModified;

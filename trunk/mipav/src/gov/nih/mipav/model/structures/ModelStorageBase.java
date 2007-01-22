@@ -6649,17 +6649,25 @@ public class ModelStorageBase extends ModelSerialCloneable {
                             {
                                 fReturn = new float[ jBound * iBound * 4];
                             }
-                            kMaskColor = ((Color4f) m_kColorVector.elementAt(iMask));
-
-                            Color4f[] kMaskColors = (Color4f[]) m_kMaskColorVector.elementAt(iMask);
-                            if ( kMaskColors[index] != null )
+                            if ( m_kColorVector.size() > iMask )
                             {
-                                kMaskColor = kMaskColors[index];
+                                kMaskColor = ((Color4f) m_kColorVector.elementAt(iMask));
                             }
-                            fReturn[(j * iBound + i) * 4 + 0] = kMaskColor.w;
-                            fReturn[(j * iBound + i) * 4 + 1] = 255 * kMaskColor.x;
-                            fReturn[(j * iBound + i) * 4 + 2] = 255 * kMaskColor.y;
-                            fReturn[(j * iBound + i) * 4 + 3] = 255 * kMaskColor.z;
+                            if ( m_kMaskColorVector.size() > iMask )
+                            {
+                                Color4f[] kMaskColors = (Color4f[]) m_kMaskColorVector.elementAt(iMask);
+                                if ( kMaskColors[index] != null )
+                                {
+                                    kMaskColor = kMaskColors[index];
+                                }
+                            }
+                            if ( kMaskColor != null )
+                            {
+                                fReturn[(j * iBound + i) * 4 + 0] = kMaskColor.w;
+                                fReturn[(j * iBound + i) * 4 + 1] = 255 * kMaskColor.x;
+                                fReturn[(j * iBound + i) * 4 + 2] = 255 * kMaskColor.y;
+                                fReturn[(j * iBound + i) * 4 + 3] = 255 * kMaskColor.z;
+                            }
                         }
                     }
                 }
@@ -7071,13 +7079,46 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * Returns the array of BitSet masks for backup.
+     * @return the BitSet mask array.
+     */
+    public BitSet[] removeSurfaceMasks( )
+    {
+        BitSet[] masks = new BitSet[m_kMaskVector.size()];
+        for ( int i = 0; i < m_kMaskVector.size(); i++ )
+        {
+            masks[i] = (BitSet)m_kMaskVector.get(i);
+        }
+        m_kMaskVector.removeAllElements();
+        return masks;
+    }
+
+    /**
+     * Restores the mask list from the array.
+     * @param masks, array of BitSet masks
+     */
+    public void restoreSurfaceMasks( BitSet[] masks )
+    {
+        m_kMaskVector.removeAllElements();
+        for ( int i = 0; i < masks.length; i++ )
+        {
+            m_kMaskVector.insertElementAt( masks[i], i );
+        }
+    }
+
+
+    /**
      *  Returns the surface mask from this image.
      * @param index, the index of the mask to remove.
      * @return the BitSet mask 
      */
     public BitSet getSurfaceMask( int index )
     {
-        return (BitSet)m_kMaskVector.get(index);
+        if ( m_kMaskVector.size() > index )
+        {
+            return (BitSet)m_kMaskVector.get(index);
+        }
+        return null;
     }
 
     /**
@@ -7087,7 +7128,11 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public Color4f getSurfaceMaskColor( int index )
     {
-        return (Color4f)m_kColorVector.get(index);
+        if ( m_kColorVector.size() > index )
+        {
+            return (Color4f)m_kColorVector.get(index);
+        }
+        return null;
     }
 
     /**
@@ -7096,9 +7141,18 @@ public class ModelStorageBase extends ModelSerialCloneable {
      */
     public void removeSurfaceMask( int index )
     {
-        m_kColorVector.removeElementAt(index);
-        m_kMaskVector.removeElementAt(index);
-        m_kMaskColorVector.removeElementAt(index);
+        if ( m_kColorVector.size() > index )
+        {
+            m_kColorVector.removeElementAt(index);
+        }
+        if ( m_kMaskVector.size() > index )
+        {
+            m_kMaskVector.removeElementAt(index);
+        }
+        if ( m_kMaskColorVector.size() > index )
+        {
+            m_kMaskColorVector.removeElementAt(index);
+        }
     }
 
     /** Sets the radiological view flag

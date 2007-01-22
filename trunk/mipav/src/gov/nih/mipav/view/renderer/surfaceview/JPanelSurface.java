@@ -329,10 +329,6 @@ public class JPanelSurface extends JPanelRendererBase
     /** Displays the volume of triangle. */
     private JTextField volumeText;
 
-    /** 3D Texture used to display the ModelImage data as a texture mapped
-     * onto the ModelTriangleMesh */
-    private Texture3D mTexture = null;
-
     /** Paint interface/algorithm for allowing the user to interactively paint
      * the vertices of the ModelTriangleMesh */
     private SurfacePaint mSurfacePaint = null;
@@ -538,11 +534,7 @@ public class JPanelSurface extends JPanelRendererBase
         } else if (command.equals("Stereo")) {
             displayStereo( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("ImageAsTexture")) {
-            if ( ((SurfaceRender)parentScene).getSurfaceTexture() != null )
-            {
-                displayImageAsTexture( getSelectedSurfaces( surfaceList.getSelectedIndices() ),
-                                       ((SurfaceRender)parentScene).getSurfaceTexture().getEnabled() );
-            }
+            displayImageAsTexture( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("AdvancedMaterialOptions")) {
             displayAdvancedMaterialOptions( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("TexturePaint")) {
@@ -673,25 +665,20 @@ public class JPanelSurface extends JPanelRendererBase
      * @param surfaces, the list of selected surfaces (SurfaceAttributes)
      * @param asImage, when true displays the ModelImage as a texture, when false, disables the 3D texture.
      */
-    private void displayImageAsTexture(  SurfaceAttributes[] surfaces, boolean asImage )
+    private void displayImageAsTexture(  SurfaceAttributes[] surfaces )
     {
+        if ( ((SurfaceRender)parentScene).getSurfaceTexture() == null )
+        {
+            return;
+        }
         if ( surfaces != null )
         {
             for ( int i = 0; i < surfaces.length; i++ )
             {
-                if ( !asImage )
-                {
-                    colorButton.setBackground( surfaces[i].getColor().get() );
-                }
                 Shape3D[] shapes = surfaces[i].getShape();
                 for ( int j = 0; j < shapes.length; j++ )
                 {
-                    TextureUnitState[] textureUnitState = shapes[j].getAppearance().getTextureUnitState();
-                    if ( (textureUnitState != null) && (textureUnitState.length > 0) )
-                    {
-                        textureUnitState[0].getTexture().setImage(0, ((SurfaceRender)parentScene).getSurfaceTexture().getSurfaceTextureImage()) ;
-                        textureUnitState[0].getTexture().setEnable( asImage );
-                    }
+                    shapes[j].getAppearance().setTextureUnitState( ((SurfaceRender)parentScene).getSurfaceTexture().getTextureUnitState() );
                 }
             }
         }
@@ -1170,6 +1157,22 @@ public class JPanelSurface extends JPanelRendererBase
      */
     private SurfaceAttributes[] containsMesh( ModelTriangleMesh kOld )
     {
+        /*
+        SurfaceAttributes[] surfaces = getAllSurfaces();
+        for (int i = 0; i < surfaces.length; i++)
+        {
+            ModelTriangleMesh[] meshes = surfaces[i].getMesh();
+            for ( int j = 0; j < meshes.length; j++ )
+            {
+                if ( kOld == meshes[j] )
+                {
+                    SurfaceAttributes[] foundSurfaces = new SurfaceAttributes[1];
+                    foundSurfaces[0] = surfaces[i];
+                    return foundSurfaces;
+                }
+            }
+        }
+        */
         for (int i = 0; i < surfaceList.getModel().getSize(); i++) {
             BranchGroup kSurfaceBG = ((SurfaceAttributes) surfaceVector.get(i)).getBranch();
 
@@ -1954,6 +1957,7 @@ public class JPanelSurface extends JPanelRendererBase
                     Shape3D[] shapes = ((SurfaceAttributes)surfaceVector.get( i )).getShape();
                     shapes[j].removeGeometry( kOld );
                     shapes[j].addGeometry( kNew );
+                    meshes[j] = kNew;
                     found = true;
                 }
             }
@@ -2375,7 +2379,6 @@ public class JPanelSurface extends JPanelRendererBase
 
         Border etchedBorder = BorderFactory.createEtchedBorder();
         ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
-        ;
 
         toolBar = new JToolBar();
         toolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
@@ -2488,11 +2491,6 @@ public class JPanelSurface extends JPanelRendererBase
      */
     private void createSurface(SurfaceAttributes surface, boolean pickable )
     {
-        if ( mTexture == null )
-        {
-            createVolumeTexture();
-        }
-
         ModelTriangleMesh[] meshes = surface.getMesh();
         int mode = surface.getPolygonMode();
         float opacity = surface.getOpacity();
@@ -2534,14 +2532,7 @@ public class JPanelSurface extends JPanelRendererBase
         Material material = surface.getMaterial();
         appearance.setMaterial(material);
 
-        // Texture Attributes:
-        TextureAttributes kTextureAttr = new TextureAttributes();
-        kTextureAttr.setTextureMode(TextureAttributes.REPLACE);
-        //  Texture Unit State:
-        TextureUnitState[] textureState = new TextureUnitState[1];
-        textureState[0] = new TextureUnitState( mTexture, kTextureAttr, null );
-        textureState[0].setCapability( TextureUnitState.ALLOW_STATE_WRITE );
-        appearance.setTextureUnitState( textureState );
+        //appearance.setTextureUnitState( textureState );
 
         // Polygon Attributes:
         // No back-face culling.  Supports double-sided meshes which can
@@ -2619,34 +2610,6 @@ public class JPanelSurface extends JPanelRendererBase
         surface.setBranch( root );
     }
 
-    /**
-     * Creates a 3D Texture object for the ModelImage displayed in the
-     * SurfaceRender object. The Texture3D object is used for texture-mapping
-     * on any or all ModelTriangleMesh objects displayed in the SurfaceRender.
-     */
-    private void createVolumeTexture()
-    {
-
-        ModelImage imageA = ((SurfaceRender)parentScene).getImageA();
-        int[] localExtents = imageA.getExtents();
-
-        mTexture = new Texture3D(Texture.BASE_LEVEL, Texture.RGBA, localExtents[0], localExtents[1], localExtents[2]);
-        mTexture.setEnable(false);
-        mTexture.setMinFilter(Texture.BASE_LEVEL_LINEAR);
-        mTexture.setMagFilter(Texture.NICEST);
-
-        // m_kTexture.setAnisotropicFilterMode(Texture.ANISOTROPIC_SINGLE_VALUE);
-        // m_kTexture.setAnisotropicFilterDegree(5);
-        mTexture.setBoundaryModeS(Texture.CLAMP_TO_BOUNDARY);
-        mTexture.setBoundaryModeT(Texture.CLAMP_TO_BOUNDARY);
-        mTexture.setBoundaryModeR(Texture.CLAMP_TO_BOUNDARY);
-        mTexture.setBoundaryColor(0.0f, 0.0f, 0.0f, 0.0f);
-        mTexture.setImage(0, ((SurfaceRender)parentScene).getSurfaceTexture().getSurfaceTextureImage()) ;
-        mTexture.setCapability(Texture3D.ALLOW_IMAGE_WRITE);
-        mTexture.setCapability(Texture3D.ALLOW_IMAGE_READ);
-        mTexture.setCapability(Texture3D.ALLOW_ENABLE_WRITE);
-    }
-
 
     /**
      * Called from SurfacePaint. Used to paint the ModelImage texture with the
@@ -2656,7 +2619,7 @@ public class JPanelSurface extends JPanelRendererBase
     public void updateVolumeTexture( BitSet paintMask, Color4f kColor )
     {
         JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
-        surfaceTexturePanel.updateSurfaceTextureImage( 0, paintMask, kColor );
+        surfaceTexturePanel.updateSurfaceTextureImage( paintMask, kColor );
     }
 
     /** 
@@ -2685,14 +2648,21 @@ public class JPanelSurface extends JPanelRendererBase
         JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
         if ( surfaceTexturePanel.getTextureStatus() != JPanelSurfaceTexture.NONE )
         {
-            surfaceTexturePanel.updateSurfaceTextureImage( 0, null, null );
+            surfaceTexturePanel.updateSurfaceTextureImage( null, null );
         }
         else
         {
-            SurfaceAttributes[] surfaces = getAllSurfaces();
+            int[] aiSelected = surfaceList.getSelectedIndices();
+            SurfaceAttributes[] surfaces = getSelectedSurfaces( aiSelected );
             for ( int i = 0; i < surfaces.length; i++ )
             {
+                parentScene.getImageA().addSurfaceMask( aiSelected[i], null, null, surfaces[i].getColor() );
                 surfaces[i].restoreVertexColors();
+                Shape3D[] shapes = surfaces[i].getShape();
+                for ( int j = 0; j < shapes.length; j++ )
+                {
+                    shapes[j].getAppearance().setTextureUnitState( null );
+                }
             }
         }
     }
@@ -2708,10 +2678,16 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public void generateNewTextureCoords( ModelImage kImage, boolean bVertexColors, boolean bUseImageMask ) 
     {
-        SurfaceAttributes[] surfaces = getAllSurfaces();
+        int[] aiSelected = surfaceList.getSelectedIndices();
+        SurfaceAttributes[] surfaces = getSelectedSurfaces( aiSelected );
         for ( int i = 0; i < surfaces.length; i++ )
         {
-            mSurfaceMask.maskInsideVoxels( 0,
+            Shape3D[] shapes = surfaces[i].getShape();
+            for ( int j = 0; j < shapes.length; j++ )
+            {
+                shapes[j].getAppearance().setTextureUnitState( null );
+            }
+            mSurfaceMask.maskInsideVoxels( aiSelected[i],
                                            kImage,
                                            surfaces[i].getMesh(), false, bVertexColors, bUseImageMask,
                                            surfaces[i].getOpacity(), surfaces[i].getColor());
