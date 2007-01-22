@@ -187,7 +187,10 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
             m_kColors[i] = new Color4f( 1f, 1f, 1f, 1f );
             if ( akColor != null )
             {
-                m_kColors[i] = new Color4f( akColor[i].x, akColor[i].y, akColor[i].z, akColor[i].w );
+                m_kColors[i].x = akColor[i].x;
+                m_kColors[i].y = akColor[i].y;
+                m_kColors[i].z = akColor[i].z;
+                m_kColors[i].w = akColor[i].w;
             }
         }
         setColors(0, m_kColors);
@@ -251,6 +254,18 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setCoordinateIndices(0, aiConnect);
         setNormals(0, akNormal);
         setNormalIndices(0, aiConnect);
+        m_kColors = new Color4f[ akVertex.length ];
+        for ( int i = 0; i < akVertex.length; i++ )
+        {
+            m_kColors[i] = new Color4f( 1f, 1f, 1f, 1f );
+            if ( akColor != null )
+            {
+                m_kColors[i].x = akColor[i].x;
+                m_kColors[i].y = akColor[i].y;
+                m_kColors[i].z = akColor[i].z;
+                m_kColors[i].w = akColor[i].w;
+            }
+        }
         setColors( 0, m_kColors );
         setColorIndices(0, aiConnect);
         setTextureCoordinates( 0, 0, akTexCoord );
@@ -291,7 +306,6 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
         setTextureCoordinateIndices( 0, 0, aiConnect);
         m_kGenerator = null;
     }
-
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 

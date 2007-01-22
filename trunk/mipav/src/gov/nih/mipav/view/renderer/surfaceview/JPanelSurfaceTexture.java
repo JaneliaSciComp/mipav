@@ -119,6 +119,14 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
     /** Renders the ModelImage data with LUT changes */
     private PatientSlice mPatientSlice = null;
 
+    /** 3D Texture used to display the ModelImage data as a texture mapped
+     * onto the ModelTriangleMesh */
+    private Texture3D mTexture = null;
+
+    /** TextureUnitState contains texture information for the rendered
+     * surfaces: */
+    private TextureUnitState[] mTextureUnitState;
+
     /** Constructor:
      * @param kView, the SurfaceRender this panel is displayed with
      * @param imageA, the ModelImage used to generate the volume texture.
@@ -143,14 +151,12 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
 
 
     /** 
-     * Returns the volume texture data in ImageComponent3D form, with LUT
-     * changes. Used to set the Texture3D in the JPanelSurface class when the
-     * ModelTriangleMesh surface/display attributes are created.
-     * @return mSurfaceTextureImage, the volume texture data with LUT changes.
+     * Returns the volume texture TextureUnitState.
+     * @return mTextureUnitState, the volume texture data.
      */
-    public ImageComponent3D getSurfaceTextureImage()
+    public TextureUnitState[] getTextureUnitState()
     {
-        return mSurfaceTextureImage;
+        return mTextureUnitState;
     }
 
     /** Initializes the interface, and generates the first default texture.
@@ -254,7 +260,45 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
         initLUT();
 
         mSurfaceTextureImage = generateVolumeTexture();
+        createVolumeTexture();
     }
+
+    /**
+     * Creates a 3D Texture object for the ModelImage displayed in the
+     * SurfaceRender object. The Texture3D object is used for texture-mapping
+     * on any or all ModelTriangleMesh objects displayed in the SurfaceRender.
+     */
+    private void createVolumeTexture()
+    {
+
+        int[] localExtents = mImageA.getExtents();
+
+        mTexture = new Texture3D(Texture.BASE_LEVEL, Texture.RGBA, localExtents[0], localExtents[1], localExtents[2]);
+        mTexture.setEnable(true);
+        mTexture.setMinFilter(Texture.BASE_LEVEL_LINEAR);
+        mTexture.setMagFilter(Texture.NICEST);
+
+        // m_kTexture.setAnisotropicFilterMode(Texture.ANISOTROPIC_SINGLE_VALUE);
+        // m_kTexture.setAnisotropicFilterDegree(5);
+        mTexture.setBoundaryModeS(Texture.CLAMP_TO_BOUNDARY);
+        mTexture.setBoundaryModeT(Texture.CLAMP_TO_BOUNDARY);
+        mTexture.setBoundaryModeR(Texture.CLAMP_TO_BOUNDARY);
+        mTexture.setBoundaryColor(0.0f, 0.0f, 0.0f, 0.0f);
+        mTexture.setImage(0, mSurfaceTextureImage );
+        mTexture.setCapability(Texture3D.ALLOW_IMAGE_WRITE);
+        mTexture.setCapability(Texture3D.ALLOW_IMAGE_READ);
+        mTexture.setCapability(Texture3D.ALLOW_ENABLE_WRITE);
+
+        // Texture Attributes:
+        TextureAttributes kTextureAttr = new TextureAttributes();
+        kTextureAttr.setTextureMode(TextureAttributes.REPLACE);
+
+        //  Texture Unit State:
+        mTextureUnitState = new TextureUnitState[1];
+        mTextureUnitState[0] = new TextureUnitState( mTexture, kTextureAttr, null );
+        mTextureUnitState[0].setCapability( TextureUnitState.ALLOW_STATE_WRITE );
+    }
+
 
     /** 
      * Initializes or re-initializes the Histogram LUT interface based on the
@@ -433,14 +477,12 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
         {
             mTextureStatus = VERTEX_COLOR;
             ((SurfaceRender)renderBase).getSurfaceDialog().generateNewTextureCoords( mImageA, true, false );
-            updateImages( null, null, false, 0 );
             ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaintCan( true );
             ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaint( true );
         }
         else if (command.equals("ImageNone"))
         {
             mTextureStatus = NONE;
-            updateImages( null, null, false, 0 );
             ((SurfaceRender)renderBase).getSurfaceDialog().restoreVertexColors();
             ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaintCan( false );
             ((SurfaceRender)renderBase).getSurfaceDialog().enableSurfacePaint( true );
@@ -612,6 +654,7 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
         if ( mTextureStatus == TEXTURE )
         {
             mSurfaceTextureImage = generateVolumeTexture();
+            mTexture.setImage(0, mSurfaceTextureImage );
         }
         /* Report the update to JPanelSurface: */
         ActionEvent event = new ActionEvent( (Object)this, 0, "ImageAsTexture" );
@@ -685,23 +728,23 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
      * updateSurfaceTextureImage. Paints the ImageComponent3D object with the paint mask. 
      * @param paintMask, paint bit map to add to the texture.
      */
-    public void updateSurfaceTextureImage( int index, BitSet paintMask, Color4f kColor )
+    public void updateSurfaceTextureImage( BitSet paintMask, Color4f kColor )
     {
         if ( mImageA == null )
         {
             return;
         }
         boolean bUsePaintMask = false;
+        BitSet[] saveMasks = mImageA.removeSurfaceMasks();
         if ( paintMask != null )
         {
             bUsePaintMask = true;
-            mImageA.addSurfaceMask( index, paintMask, null, kColor );
+            mImageA.addSurfaceMask( 0, paintMask, null, kColor );
         }
 
         if ( mTextureStatus == VERTEX_COLOR )
         {
             ((SurfaceRender)renderBase).getSurfaceDialog().generateNewTextureCoords( mImageA, true, bUsePaintMask );
-            updateImages( null, null, false, 0 );
         }
         else
         {
@@ -727,9 +770,10 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
             }
             mSurfaceTextureImage = null;
             mSurfaceTextureImage = kSurfaceTextureImage;
+
+            mTexture.setImage(0, mSurfaceTextureImage );
         }
-        /* Report the update to JPanelSurface: */
-        ActionEvent event = new ActionEvent( (Object)this, 0, "ImageAsTexture" );
-        ((SurfaceRender)renderBase).getSurfaceDialog().actionPerformed( event );
+
+        mImageA.restoreSurfaceMasks( saveMasks );
     }
 }
