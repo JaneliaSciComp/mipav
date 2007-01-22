@@ -1,0 +1,243 @@
+package gov.nih.mipav.model.algorithms.utilities;
+
+
+import gov.nih.mipav.model.algorithms.*;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
+
+import java.io.*;
+
+
+/**
+ * Flips 2D, 3D or 4D grays scale or color dataset about X or Y axis.
+ *
+ * @version  1.0 July 14, 2000
+ * @author   Matthew J. McAuliffe, Ph.D.
+ */
+
+public class AlgorithmFlip extends AlgorithmBase {
+
+    //~ Static fields/initializers -------------------------------------------------------------------------------------
+
+    /** Flip along Y axis. */
+    public static final int Y_AXIS = 0;
+
+    /** Flip along X axis. */
+    public static final int X_AXIS = 1;
+
+    /** Flip along Z axis. */
+    public static final int Z_AXIS = 2;
+
+    //~ Instance fields ------------------------------------------------------------------------------------------------
+
+    /** Axis to flip along. */
+    private int flipAxis = Y_AXIS;
+
+    //~ Constructors ---------------------------------------------------------------------------------------------------
+
+    /**
+     * Flips 2D, 3D or 4D grays scale or color dataset about X or Y axis.
+     *
+     * @param  srcImg    source image model
+     * @param  flipMode  flip about which axis
+     */
+    public AlgorithmFlip(ModelImage srcImg, int flipMode) {
+        super(null, srcImg);
+
+        if ((flipMode == Y_AXIS) || (flipMode == X_AXIS) || (flipMode == Z_AXIS)) {
+            flipAxis = flipMode;
+        } else {
+            flipAxis = Y_AXIS;
+        }
+    }
+
+    /**
+     * Flips 2D, 3D or 4D grays scale or color dataset about X or Y axis.
+     *
+     * @param  srcImg    source image model
+     * @param  flipMode  flip about which axis
+     * @param  progress  mode of progress bar (see AlgorithmBase)
+     */
+    public AlgorithmFlip(ModelImage srcImg, int flipMode, int progress) {
+        this(srcImg, flipMode);
+      //  progressMode = progress;
+    }
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * Prepares this class for destruction.
+     */
+    public void finalize() {
+        super.finalize();
+    }
+
+
+    /**
+     * Runs the flip algorithm.
+     */
+    public void runAlgorithm() {
+
+        if (srcImage == null) {
+            displayError("Source Image is null");
+
+            return;
+        }
+
+        constructLog();
+
+        if (srcImage.getNDims() == 2) {
+            calcInPlace(1);
+        } else if (srcImage.getNDims() == 3) {
+            calcInPlace(srcImage.getExtents()[2]);
+        } else if (srcImage.getNDims() == 4) {
+            calcInPlace(srcImage.getExtents()[2] * srcImage.getExtents()[3]);
+        }
+    }
+
+    /**
+     * Generates the flipped image and replaces the source image with the flippeded image.
+     *
+     * @param  nImages  Number of images to be flipped. If 2D image then nImage = 1, if 3D or 4D image where each image
+     *                  is to processed independently then nImages equals the number of images in the volume.
+     */
+    private void calcInPlace(int nImages) {
+        int slice;
+        float[] sliceBuffer;
+        float[] sliceBufferTemp = null;
+        int buffFactor;
+        boolean logMagDisplay = false;
+
+        try {
+
+            if (srcImage.isColorImage()) {
+                buffFactor = 4;
+            } else if ((srcImage.getType() == ModelStorageBase.COMPLEX) ||
+                           (srcImage.getType() == ModelStorageBase.DCOMPLEX)) {
+                buffFactor = 2;
+                logMagDisplay = srcImage.getLogMagDisplay();
+            } else {
+                buffFactor = 1;
+            }
+
+            slice = buffFactor * srcImage.getSliceSize();
+            sliceBuffer = new float[slice];
+            fireProgressStateChanged(srcImage.getImageName(), "Flipping image ...");
+        } catch (OutOfMemoryError e) {
+            System.gc();
+            displayError("Algorithm Flip: Out of memory");
+            setCompleted(false);
+            return;
+        }
+
+        int mod = nImages / 10; // mod is 10 percent of length
+        if (mod == 0) {
+            // since % mod gives a divide by zero error for mod = 0
+            mod = 1;
+        }
+
+        /* axisOrder is always the default: (no coordinate axis remapping) */
+        int[] axisOrder = { 0, 1, 2 };
+        /* axisFlip depends on flipAxis: */
+        boolean[] axisFlip = { false, false, false };
+        int index = 2;
+        if (flipAxis == Y_AXIS) {
+            index = 0;
+        } else if (flipAxis == X_AXIS) {
+            index = 1;
+        }
+        axisFlip[index] = true;
+
+        int tDim = 1;
+        int volume = 1;
+        int zDim = 1;
+        if (srcImage.getNDims() == 4) {
+            zDim = srcImage.getExtents()[2];
+            tDim = srcImage.getExtents()[3];
+            volume = slice * zDim;
+        }
+        else if (srcImage.getNDims() == 3) {
+            zDim = srcImage.getExtents()[2];
+        }
+
+        /* If flipping the z-axis, then loop 1/2 the times and swap the z slices... */
+        if ( index == 2 )
+        {
+            zDim /= 2;
+            sliceBufferTemp = new float[slice];
+        }
+
+        /* For each slice: */
+        for (int t = 0; (t < tDim) && !threadStopped; t++) {
+            for (int z = 0; (z < zDim) && !threadStopped; z++) {
+                if ((nImages > 1) && (((t * zDim + z) % mod) == 0)) {
+                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / (nImages - 1) * 100));
+                }
+
+                try {
+                    srcImage.export( axisOrder, axisFlip, t, z, sliceBuffer);
+                    if ( index == 2 )
+                    {
+                        int zTemp = (srcImage.getExtents()[2] - 1 - z);
+                        srcImage.export( axisOrder, axisFlip, t, zTemp, sliceBufferTemp);
+                        srcImage.importData(t * volume + zTemp * slice, sliceBufferTemp, false);
+                    }
+                    srcImage.importData(t * volume + z * slice, sliceBuffer, false);
+                } catch (IOException error) {
+                    displayError("AlgorithmSubset reports: Destination image already locked.");
+                    setCompleted(false);
+                    return;
+                }
+            }
+        }
+
+        if (threadStopped) {
+            sliceBuffer = null;
+            sliceBufferTemp = null;
+            finalize();
+            return;
+        }
+
+        if (buffFactor == 2) {
+            srcImage.setLogMagDisplay(logMagDisplay);
+            srcImage.calcMinMaxMag(logMagDisplay);
+        }
+
+        /* Update FileInfo for mapping into DICOM space: */
+        FileInfoBase[] fileInfo = srcImage.getFileInfo();
+        float loc = fileInfo[0].getOrigin(index);
+        int orient = fileInfo[0].getAxisOrientation(index);
+
+        if ( loc > 0.0f ) {
+            loc = loc - ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
+        } else {
+            loc = loc + ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
+        }
+        orient = FileInfoBase.oppositeOrient(orient);
+        for (int i = 0; i < fileInfo.length; i++) {
+            fileInfo[i].setAxisOrientation(orient, index);
+            fileInfo[i].setOrigin(loc, index);
+            if ( index == 2 )
+            {
+                fileInfo[i].setOrigin( loc + (fileInfo[0].getResolutions()[index] * i), index);
+            }
+        }
+        setCompleted(true);
+    }
+
+    /**
+     * Constructs a string of the contruction parameters and out puts the string to the messsage frame if the logging
+     * procedure is turned on.
+     */
+    private void constructLog() {
+
+        if (flipAxis == Y_AXIS) {
+            historyString = new String("Flip(Y_AXIS)\n");
+        } else if (flipAxis == X_AXIS) {
+            historyString = new String("Flip(X_AXIS)\n");
+        } else {
+            historyString = new String("Flip(Z_AXIS)\n");
+        }
+    }
+
+}
