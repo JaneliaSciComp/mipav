@@ -873,26 +873,27 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 triImage[AXIAL_A].calcPaintedVolume(null);
             }
         } else if (command.equals("UnMagImage")) {
-            float oldZoom = zoom;
+            float oldZoom = triImage[AXIAL_A].getZoomX();
 
+            float newZoom = 1;
             if ((zoomMode == ViewJComponentEditImage.LINEAR) && (triImage[AXIAL_A].getZoomX() > 1.0f)) {
 
                 // linear zoom is prevented if getZoomX() <= 1.0
-                zoom = triImage[AXIAL_A].getZoomX() - 1.0f;
+            	newZoom = triImage[AXIAL_A].getZoomX() - 1.0f;
             } else {
-                zoom = 0.5f * triImage[AXIAL_A].getZoomX();
+            	newZoom = 0.5f * triImage[AXIAL_A].getZoomX();
             }
 
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
-                    triImage[i].setZoom(zoom, zoom);
+                    triImage[i].setZoom(newZoom, newZoom);
 
                     Point2Df oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
-                        int newX = MipavMath.round((oldCrosshairPoint.x * zoom) / oldZoom);
-                        int newY = MipavMath.round((oldCrosshairPoint.y * zoom) / oldZoom);
+                        int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
+                        int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
 
                         triImage[i].updateCrosshairPosition(newX, newY);
 
@@ -905,25 +906,26 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             updateImages(true);
             setTitle();
         } else if (command.equals("MagImage")) {
-            float oldZoom = zoom;
+            float oldZoom = triImage[AXIAL_A].getZoomX();
 
+            float newZoom = 1;
             if ((zoomMode == ViewJComponentEditImage.LINEAR) && (triImage[AXIAL_A] != null)) {
-                zoom = triImage[AXIAL_A].getZoomX() + 1.0f;
+            	newZoom = triImage[AXIAL_A].getZoomX() + 1.0f;
             } else if (triImage[AXIAL_A] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
             {
-                zoom = 2.0f * triImage[AXIAL_A].getZoomX();
+            	newZoom = 2.0f * triImage[AXIAL_A].getZoomX();
             }
 
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
-                    triImage[i].setZoom(zoom, zoom);
+                    triImage[i].setZoom(newZoom, newZoom);
 
                     Point2Df oldCrosshairPoint = triImage[i].getCrosshairPoint();
 
                     if (oldCrosshairPoint != null) {
-                        int newX = MipavMath.round((oldCrosshairPoint.x * zoom) / oldZoom);
-                        int newY = MipavMath.round((oldCrosshairPoint.y * zoom) / oldZoom);
+                        int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
+                        int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
 
                         triImage[i].updateCrosshairPosition(newX, newY);
 
@@ -940,7 +942,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
-                    float oldZoom = zoom;
+                    float oldZoom = triImage[i].getZoomX();
 
                     triImage[i].setZoom(1, 1);
 
@@ -1598,7 +1600,9 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 AbstractButton btnSource = (AbstractButton) event.getSource();
 
                 if (btnSource.getActionCommand().equals("MagImage") ||
-                        btnSource.getActionCommand().equals("UnMagImage")) {
+                        btnSource.getActionCommand().equals("UnMagImage") ||
+                        btnSource.getActionCommand().equals("IndivMagImage")||
+                        btnSource.getActionCommand().equals("IndivMinImage")) {
 
                     handleZoomPopupMenu(btnSource, event);
                     
@@ -2786,8 +2790,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         
         magButton = toolbarBuilder.buildButton("MagImage", "Magnify all frames 2.0x", "zoomin");
+        magButton.addMouseListener(this);
         imageToolBar.add(magButton);
         minButton = toolbarBuilder.buildButton("UnMagImage", "Magnify all frames 0.5x", "zoomout");
+        minButton.addMouseListener(this);
         imageToolBar.add(minButton);
         imageToolBar.add(toolbarBuilder.buildButton("ZoomOne", "Magnify all frames 1.0x", "zoom1"));
 
@@ -2796,9 +2802,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         
         //ButtonGroup indivMagGroup = new ButtonGroup();
         indivMagButton = toolbarBuilder.buildToggleButton("IndivMagImage", "Magnify individual frame 2.0x", "trizoomin", VOIGroup);
+        indivMagButton.addMouseListener(this);
         imageToolBar.add(indivMagButton);
         
         indivMinButton = toolbarBuilder.buildToggleButton("IndivMinImage", "Magnify individual frame 0.5x", "trizoomout", VOIGroup);
+        indivMinButton.addMouseListener(this);
         imageToolBar.add(indivMinButton);
         
         //bogusMagButton = toolbarBuilder.buildToggleButton("bogusMinImage", "Magnify individual frame 0.5x", "trizoomout", indivMagGroup);
@@ -3705,17 +3713,17 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  event      MouseEvent
      */
     protected void handleZoomPopupMenu(Component component, MouseEvent event) {
-        JPopupMenu popupMenu = new JPopupMenu();
+    	JPopupMenu popupMenu = new JPopupMenu();
 
+        JMenuItem menuItem = new JMenuItem("Use exponential zoom increment");
 
-        JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("Zoom linearly");
-        popupMenu.add(menuItem);
-
-        menuItem = new JMenuItem("Use exponential zoom increment");
         menuItem.addActionListener(this);
         menuItem.setActionCommand("Zoom exponentially");
+        popupMenu.add(menuItem);
+
+        menuItem = new JMenuItem("Use linear zoom increment");
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand("Zoom linearly");
         popupMenu.add(menuItem);
 
         popupMenu.show(component, event.getX(), event.getY());
@@ -4454,25 +4462,26 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * 
      **/
     private void zoomInFrame(int frame) {
-    	float oldZoom = zoom;
+    	float oldZoom = triImage[frame].getZoomX();
 
+    	float newZoom = 1;
         if ((zoomMode == ViewJComponentEditImage.LINEAR) && (triImage[frame] != null)) {
-            zoom = triImage[frame].getZoomX() + 1.0f;
+        	newZoom = triImage[frame].getZoomX() + 1.0f;
         } else if (triImage[frame] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
         {
-            zoom = 2.0f * triImage[frame].getZoomX();
+        	newZoom = 2.0f * triImage[frame].getZoomX();
         }
 
      
 
             if (triImage[frame] != null) {
-                triImage[frame].setZoom(zoom, zoom);
+                triImage[frame].setZoom(newZoom, newZoom);
 
                 Point2Df oldCrosshairPoint = triImage[frame].getCrosshairPoint();
 
                 if (oldCrosshairPoint != null) {
-                    int newX = MipavMath.round((oldCrosshairPoint.x * zoom) / oldZoom);
-                    int newY = MipavMath.round((oldCrosshairPoint.y * zoom) / oldZoom);
+                    int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
+                    int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
 
                     triImage[frame].updateCrosshairPosition(newX, newY);
 
@@ -4495,26 +4504,27 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * 
      **/
     private void zoomOutFrame(int frame) {
-    	 float oldZoom = zoom;
+    	 float oldZoom = triImage[frame].getZoomX();
 
+    	 float newZoom = 1;
          if ((zoomMode == ViewJComponentEditImage.LINEAR) && (triImage[frame].getZoomX() > 1.0f)) {
 
              // linear zoom is prevented if getZoomX() <= 1.0
-             zoom = triImage[frame].getZoomX() - 1.0f;
+        	 newZoom = triImage[frame].getZoomX() - 1.0f;
          } else {
-             zoom = 0.5f * triImage[frame].getZoomX();
+        	 newZoom = 0.5f * triImage[frame].getZoomX();
          }
 
 
 
              if (triImage[frame] != null) {
-                 triImage[frame].setZoom(zoom, zoom);
+                 triImage[frame].setZoom(newZoom, newZoom);
 
                  Point2Df oldCrosshairPoint = triImage[frame].getCrosshairPoint();
 
                  if (oldCrosshairPoint != null) {
-                     int newX = MipavMath.round((oldCrosshairPoint.x * zoom) / oldZoom);
-                     int newY = MipavMath.round((oldCrosshairPoint.y * zoom) / oldZoom);
+                     int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
+                     int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
 
                      triImage[frame].updateCrosshairPosition(newX, newY);
 
