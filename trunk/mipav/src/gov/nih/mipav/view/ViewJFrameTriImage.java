@@ -170,7 +170,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected static final int NUM_INVISIBLE_BUTTONS = 4;
 
     /** DOCUMENT ME! */
-    public static int zoomMode = ViewJComponentEditImage.LINEAR;
+    public static int zoomMode = ViewJComponentEditImage.EXPONENTIAL;
 
     /** Maximum number of tri-images! */
     public static final int MAX_TRI_IMAGES = 9;
@@ -345,8 +345,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     /** DOCUMENT ME! */
     private JToggleButton dropperPaintToggleButton;
 
+
+    /** refs to indiviadual frame zooming in and out buttons. */
+    private JToggleButton indivMagButton, indivMinButton;
+
     /** DOCUMENT ME! */
     private JButton leastSquaresButton;
+
+    /** refs to the magnify and minimize button.* */
+    private JButton magButton, minButton;
 
     /** DOCUMENT ME! */
     private JToggleButton paintCanToggleButton;
@@ -365,13 +372,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
     /** Volume Boundary may be changed for cropping the volume. */
     private CubeBounds volumeBounds;
-    
-    /** refs to the magnify and minimize button **/
-    private JButton magButton, minButton;
-    
-    
-    /** refs to indiviadual frame  zooming in and out buttons */
-    private JToggleButton indivMagButton, indivMinButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -563,13 +563,16 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 }
             }
         } else if (command.equals("EraseAll")) {
-        	for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
                 if (triImage[i] != null) {
                     triImage[i].setProtractorVisible(false);
                     triImage[i].setIntensityLineVisible(false);
                     triImage[i].repaint();
                 }
             }
+
             triImage[AXIAL_A].eraseAllPaint(false);
 
             imageA.notifyImageDisplayListeners(null, true);
@@ -597,7 +600,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     triImage[i].setMode(ViewJComponentBase.DEFAULT);
                     triImage[i].setProtractorVisible(false);
                     triImage[i].setIntensityLineVisible(false);
-                    
+
                 }
             }
 
@@ -606,18 +609,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             centerButtonSelected = !centerButtonSelected;
 
             btnInvisible[3].setSelected(!centerButtonSelected);
+
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
-                	triImage[i].setMode(ViewJComponentBase.DEFAULT);
+                    triImage[i].setMode(ViewJComponentBase.DEFAULT);
                     triImage[i].setProtractorVisible(false);
                     triImage[i].setIntensityLineVisible(false);
                     triImage[i].repaint();
                 }
             }
+
             if (centerButtonSelected) {
                 setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
-               
+
             } else {
 
                 for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -668,11 +673,10 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 btnInvisible[2].setSelected(true);
             }
 
-            
 
             if (((JToggleButton) source).isSelected()) {
-            	
-            	if ((imageB != null) && (!radioImageBoth.isEnabled())) {
+
+                if ((imageB != null) && (!radioImageBoth.isEnabled())) {
                     radioImageBoth.setEnabled(true);
                 }
 
@@ -876,12 +880,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             float oldZoom = triImage[AXIAL_A].getZoomX();
 
             float newZoom = 1;
+
             if ((zoomMode == ViewJComponentEditImage.LINEAR) && (triImage[AXIAL_A].getZoomX() > 1.0f)) {
 
                 // linear zoom is prevented if getZoomX() <= 1.0
-            	newZoom = triImage[AXIAL_A].getZoomX() - 1.0f;
+                newZoom = triImage[AXIAL_A].getZoomX() - 1.0f;
             } else {
-            	newZoom = 0.5f * triImage[AXIAL_A].getZoomX();
+                newZoom = 0.5f * triImage[AXIAL_A].getZoomX();
             }
 
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -909,11 +914,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             float oldZoom = triImage[AXIAL_A].getZoomX();
 
             float newZoom = 1;
+
             if ((zoomMode == ViewJComponentEditImage.LINEAR) && (triImage[AXIAL_A] != null)) {
-            	newZoom = triImage[AXIAL_A].getZoomX() + 1.0f;
+                newZoom = triImage[AXIAL_A].getZoomX() + 1.0f;
             } else if (triImage[AXIAL_A] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
             {
-            	newZoom = 2.0f * triImage[AXIAL_A].getZoomX();
+                newZoom = 2.0f * triImage[AXIAL_A].getZoomX();
             }
 
             for (int i = 0; i < MAX_TRI_IMAGES; i++) {
@@ -958,32 +964,35 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     }
                 }
             }
+
             magButton.setEnabled(true);
-    		minButton.setEnabled(true);
+            minButton.setEnabled(true);
             validate();
             updateImages(true);
             setTitle();
-        } else if(command.equals("IndivMagImage")){
-        	for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+        } else if (command.equals("IndivMagImage")) {
+
+            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
 
                     triImage[i].setMode(ViewJComponentBase.ZOOMING_IN);
                     triImage[i].setCursor(MipavUtil.magnifyCursor);
 
-               }
-                
+                }
+
             }
-        	
-        }else if(command.equals("IndivMinImage")){
-        	for (int i = 0; i < MAX_TRI_IMAGES; i++) {
+
+        } else if (command.equals("IndivMinImage")) {
+
+            for (int i = 0; i < MAX_TRI_IMAGES; i++) {
 
                 if (triImage[i] != null) {
                     triImage[i].setMode(ViewJComponentBase.ZOOMING_OUT);
                     triImage[i].setCursor(MipavUtil.unmagnifyCursor);
-               }
+                }
             }
-        }else if (command.equals("Zoom linearly")) {
+        } else if (command.equals("Zoom linearly")) {
             zoomMode = ViewJComponentEditImage.LINEAR;
         } else if (command.equals("Zoom exponentially")) {
             zoomMode = ViewJComponentEditImage.EXPONENTIAL;
@@ -1165,6 +1174,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             setPositionLabels((int) kCenter.x, (int) kCenter.y, (int) kCenter.z);
             updateImages(true);
         }
+
         this.requestFocusInWindow();
     }
 
@@ -1593,7 +1603,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  event  DOCUMENT ME!
      */
     public void mouseClicked(MouseEvent event) {
- 
+
         if (event.getButton() == MouseEvent.BUTTON3) {
 
             if (event.getSource() instanceof AbstractButton) {
@@ -1601,93 +1611,102 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
                 if (btnSource.getActionCommand().equals("MagImage") ||
                         btnSource.getActionCommand().equals("UnMagImage") ||
-                        btnSource.getActionCommand().equals("IndivMagImage")||
+                        btnSource.getActionCommand().equals("IndivMagImage") ||
                         btnSource.getActionCommand().equals("IndivMinImage")) {
 
                     handleZoomPopupMenu(btnSource, event);
-                    
+
                     return;
-                }  
+                }
             }
-  	
+
         }
-        
 
-        if(event.getSource() instanceof ViewJComponentTriImage) {
-        	//since we set the mode to xooming in to all frames...we just need to check one of the frames
-        	// to see what mode we are in
-        	if(triImage[0] != null) {
 
-        		if(triImage[0].getMode() == ViewJComponentBase.ZOOMING_IN) {
+        if (event.getSource() instanceof ViewJComponentTriImage) {
 
-        			int frame = (new Integer(((ViewJComponentTriImage)event.getSource()).getName())).intValue();
+            // since we set the mode to xooming in to all frames...we just need to check one of the frames
+            // to see what mode we are in
+            if (triImage[0] != null) {
 
-        			zoomInFrame(frame);
-        			
-        			triImage[0].setMode(ViewJComponentBase.DEFAULT);
-        			
-        			traverseButton.setSelected(true);
-        			
-        			
-        			
-        			//if after zooming a particular frame, all the frame are of the same zoom,
-        			//then we should enable the global  zooms...otherwise disable them
-        			float zoomX = triImage[0].getZoomX();
-        			boolean test = true;
-        			for (int i = 1; i < MAX_TRI_IMAGES; i++) {
-        				if(triImage[i] != null) {
-        					if (zoomX != triImage[i].getZoomX()) {
-        						test = false;
-        					}
-        					//also..lets reset the mode for the others
-        					triImage[i].setMode(ViewJComponentBase.DEFAULT);
-        				}
-        			}
-        			if(test) {
-        				magButton.setEnabled(true);
-        				minButton.setEnabled(true);
-        			}else {
-        				magButton.setEnabled(false);
-        				minButton.setEnabled(false);
-        			}
-        		}
-        		else if(triImage[0].getMode() == ViewJComponentBase.ZOOMING_OUT) {
+                if (triImage[0].getMode() == ViewJComponentBase.ZOOMING_IN) {
 
-            		int frame = (new Integer(((ViewJComponentTriImage)event.getSource()).getName())).intValue();
+                    int frame = (new Integer(((ViewJComponentTriImage) event.getSource()).getName())).intValue();
 
-            		zoomOutFrame(frame);
-            		
-            		triImage[0].setMode(ViewJComponentBase.DEFAULT);
-            		
-            		traverseButton.setSelected(true);
+                    zoomInFrame(frame);
 
-            		//if after zooming a particular frame, all the frame are of the same zoom,
-            		//then we should enable the global  zooms...otherwise disable them
-            		float zoomX = triImage[0].getZoomX();
-            		boolean test = true;
-            		for (int i = 1; i < MAX_TRI_IMAGES; i++) {
-            			if(triImage[i] != null) {
-            				if (zoomX != triImage[i].getZoomX()) {
-            					test = false;
-            				}
-            				//also..lets reset the mode for the others
-            				triImage[i].setMode(ViewJComponentBase.DEFAULT);
-            			}
-            		}
-            		if(test) {
-            			magButton.setEnabled(true);
-            			minButton.setEnabled(true);
-            		}else {
-            			magButton.setEnabled(false);
-            			minButton.setEnabled(false);
-            		}	
-            	}
-        		
-        	}
-        	
+                    triImage[0].setMode(ViewJComponentBase.DEFAULT);
+
+                    traverseButton.setSelected(true);
+
+
+                    // if after zooming a particular frame, all the frame are of the same zoom,
+                    // then we should enable the global  zooms...otherwise disable them
+                    float zoomX = triImage[0].getZoomX();
+                    boolean test = true;
+
+                    for (int i = 1; i < MAX_TRI_IMAGES; i++) {
+
+                        if (triImage[i] != null) {
+
+                            if (zoomX != triImage[i].getZoomX()) {
+                                test = false;
+                            }
+
+                            // also..lets reset the mode for the others
+                            triImage[i].setMode(ViewJComponentBase.DEFAULT);
+                        }
+                    }
+
+                    if (test) {
+                        magButton.setEnabled(true);
+                        minButton.setEnabled(true);
+                    } else {
+                        magButton.setEnabled(false);
+                        minButton.setEnabled(false);
+                    }
+                } else if (triImage[0].getMode() == ViewJComponentBase.ZOOMING_OUT) {
+
+                    int frame = (new Integer(((ViewJComponentTriImage) event.getSource()).getName())).intValue();
+
+                    zoomOutFrame(frame);
+
+                    triImage[0].setMode(ViewJComponentBase.DEFAULT);
+
+                    traverseButton.setSelected(true);
+
+                    // if after zooming a particular frame, all the frame are of the same zoom,
+                    // then we should enable the global  zooms...otherwise disable them
+                    float zoomX = triImage[0].getZoomX();
+                    boolean test = true;
+
+                    for (int i = 1; i < MAX_TRI_IMAGES; i++) {
+
+                        if (triImage[i] != null) {
+
+                            if (zoomX != triImage[i].getZoomX()) {
+                                test = false;
+                            }
+
+                            // also..lets reset the mode for the others
+                            triImage[i].setMode(ViewJComponentBase.DEFAULT);
+                        }
+                    }
+
+                    if (test) {
+                        magButton.setEnabled(true);
+                        minButton.setEnabled(true);
+                    } else {
+                        magButton.setEnabled(false);
+                        minButton.setEnabled(false);
+                    }
+                }
+
+            }
+
         }
-        	
-        
+
+
     }
 
     /**
@@ -2788,7 +2807,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
-        
+
         magButton = toolbarBuilder.buildButton("MagImage", "Magnify all frames 2.0x", "zoomin");
         magButton.addMouseListener(this);
         imageToolBar.add(magButton);
@@ -2799,23 +2818,23 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
 
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
-        
-        //ButtonGroup indivMagGroup = new ButtonGroup();
-        indivMagButton = toolbarBuilder.buildToggleButton("IndivMagImage", "Magnify individual frame 2.0x", "trizoomin", VOIGroup);
+
+        // ButtonGroup indivMagGroup = new ButtonGroup();
+        indivMagButton = toolbarBuilder.buildToggleButton("IndivMagImage", "Magnify individual frame 2.0x", "trizoomin",
+                                                          VOIGroup);
         indivMagButton.addMouseListener(this);
         imageToolBar.add(indivMagButton);
-        
-        indivMinButton = toolbarBuilder.buildToggleButton("IndivMinImage", "Magnify individual frame 0.5x", "trizoomout", VOIGroup);
+
+        indivMinButton = toolbarBuilder.buildToggleButton("IndivMinImage", "Magnify individual frame 0.5x",
+                                                          "trizoomout", VOIGroup);
         indivMinButton.addMouseListener(this);
         imageToolBar.add(indivMinButton);
-        
-        //bogusMagButton = toolbarBuilder.buildToggleButton("bogusMinImage", "Magnify individual frame 0.5x", "trizoomout", indivMagGroup);
-        //bogusMagButton.setVisible(false);
-        //imageToolBar.add(bogusMagButton);
-        
+
+        // bogusMagButton = toolbarBuilder.buildToggleButton("bogusMinImage", "Magnify individual frame 0.5x",
+        // "trizoomout", indivMagGroup); bogusMagButton.setVisible(false); imageToolBar.add(bogusMagButton);
+
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
-        
-        
+
 
         ButtonGroup intensityLineGroup = new ButtonGroup();
         imageToolBar.add(toolbarBuilder.buildToggleButton("Line", "Draw line VOI", "linear", VOIGroup));
@@ -2824,13 +2843,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         ButtonGroup centerGroup = new ButtonGroup();
-        imageToolBar.add(toolbarBuilder.buildToggleButton("Center", "Identify center of volume", "centerpt",
-        		VOIGroup));
+        imageToolBar.add(toolbarBuilder.buildToggleButton("Center", "Identify center of volume", "centerpt", VOIGroup));
 
         centerGroup.add(btnInvisible[3]);
 
-        imageToolBar.add(toolbarBuilder.buildToggleButton("Protractor", "Alignment tool", "protractor",
-        		VOIGroup));
+        imageToolBar.add(toolbarBuilder.buildToggleButton("Protractor", "Alignment tool", "protractor", VOIGroup));
 
         intensityLineGroup.add(btnInvisible[2]);
 
@@ -3713,7 +3730,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  event      MouseEvent
      */
     protected void handleZoomPopupMenu(Component component, MouseEvent event) {
-    	JPopupMenu popupMenu = new JPopupMenu();
+        JPopupMenu popupMenu = new JPopupMenu();
 
         JMenuItem menuItem = new JMenuItem("Use exponential zoom increment");
 
@@ -4105,7 +4122,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         scrollPane[AXIAL_A] = new JScrollPane(triImagePanel[AXIAL_A], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                               JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        
+
         scrollPane[AXIAL_A].setName("axialA");
         scrollPane[SAGITTAL_A] = new JScrollPane(triImagePanel[SAGITTAL_A], JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                  JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -4453,90 +4470,84 @@ public class ViewJFrameTriImage extends ViewJFrameBase
 
         volumeBounds = new CubeBounds(xBounds[1], xBounds[0], yBounds[1], yBounds[0], zBounds[1], zBounds[0]);
     }
-    
-    
-    
-    /** this method will zoom in a particular frame
-     * 
-     * @param int frame   the frame number
-     * 
-     **/
-    private void zoomInFrame(int frame) {
-    	float oldZoom = triImage[frame].getZoomX();
 
-    	float newZoom = 1;
+
+    /**
+     * this method will zoom in a particular frame.
+     *
+     * @param  frame  frame the frame number
+     */
+    private void zoomInFrame(int frame) {
+        float oldZoom = triImage[frame].getZoomX();
+
+        float newZoom = 1;
+
         if ((zoomMode == ViewJComponentEditImage.LINEAR) && (triImage[frame] != null)) {
-        	newZoom = triImage[frame].getZoomX() + 1.0f;
+            newZoom = triImage[frame].getZoomX() + 1.0f;
         } else if (triImage[frame] != null) // zoomMode == ViewJComponentEditImage.EXPONENTIAL
         {
-        	newZoom = 2.0f * triImage[frame].getZoomX();
+            newZoom = 2.0f * triImage[frame].getZoomX();
         }
 
-     
 
-            if (triImage[frame] != null) {
-                triImage[frame].setZoom(newZoom, newZoom);
+        if (triImage[frame] != null) {
+            triImage[frame].setZoom(newZoom, newZoom);
 
-                Point2Df oldCrosshairPoint = triImage[frame].getCrosshairPoint();
+            Point2Df oldCrosshairPoint = triImage[frame].getCrosshairPoint();
 
-                if (oldCrosshairPoint != null) {
-                    int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
-                    int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
+            if (oldCrosshairPoint != null) {
+                int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
+                int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
 
-                    triImage[frame].updateCrosshairPosition(newX, newY);
+                triImage[frame].updateCrosshairPosition(newX, newY);
 
-                    adjustScrollbars(newX, newY, scrollPane[frame]);
-                }
+                adjustScrollbars(newX, newY, scrollPane[frame]);
             }
-        
+        }
 
         validate();
         updateImages(true);
-    	
+
     }
-    
-    
-    
-    
-    /** this method will zoom out a particular frame
-     * 
-     * @param int frame   the frame number
-     * 
-     **/
+
+
+    /**
+     * this method will zoom out a particular frame.
+     *
+     * @param  frame  frame the frame number
+     */
     private void zoomOutFrame(int frame) {
-    	 float oldZoom = triImage[frame].getZoomX();
+        float oldZoom = triImage[frame].getZoomX();
 
-    	 float newZoom = 1;
-         if ((zoomMode == ViewJComponentEditImage.LINEAR) && (triImage[frame].getZoomX() > 1.0f)) {
+        float newZoom = 1;
 
-             // linear zoom is prevented if getZoomX() <= 1.0
-        	 newZoom = triImage[frame].getZoomX() - 1.0f;
-         } else {
-        	 newZoom = 0.5f * triImage[frame].getZoomX();
-         }
+        if ((zoomMode == ViewJComponentEditImage.LINEAR) && (triImage[frame].getZoomX() > 1.0f)) {
+
+            // linear zoom is prevented if getZoomX() <= 1.0
+            newZoom = triImage[frame].getZoomX() - 1.0f;
+        } else {
+            newZoom = 0.5f * triImage[frame].getZoomX();
+        }
 
 
+        if (triImage[frame] != null) {
+            triImage[frame].setZoom(newZoom, newZoom);
 
-             if (triImage[frame] != null) {
-                 triImage[frame].setZoom(newZoom, newZoom);
+            Point2Df oldCrosshairPoint = triImage[frame].getCrosshairPoint();
 
-                 Point2Df oldCrosshairPoint = triImage[frame].getCrosshairPoint();
+            if (oldCrosshairPoint != null) {
+                int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
+                int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
 
-                 if (oldCrosshairPoint != null) {
-                     int newX = MipavMath.round((oldCrosshairPoint.x * newZoom) / oldZoom);
-                     int newY = MipavMath.round((oldCrosshairPoint.y * newZoom) / oldZoom);
+                triImage[frame].updateCrosshairPosition(newX, newY);
 
-                     triImage[frame].updateCrosshairPosition(newX, newY);
+                adjustScrollbars(newX, newY, scrollPane[frame]);
+            }
+        }
 
-                     adjustScrollbars(newX, newY, scrollPane[frame]);
-                 }
-             }
-  
-
-         validate();
-         updateImages(true);
+        validate();
+        updateImages(true);
     }
-    
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
