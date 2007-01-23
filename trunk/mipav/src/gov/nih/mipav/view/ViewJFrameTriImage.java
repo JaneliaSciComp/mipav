@@ -3179,8 +3179,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         gbConstraints.gridy = 0;
         viewPanel.add(radiologicalView, gbConstraints);
         gbConstraints.gridx++;
-
-        // viewPanel.add( new JLabel( "Radiological View" ), gbConstraints );
+        viewPanel.add( new JLabel( "Radiological View" ), gbConstraints );
         displayGroup.add(radiologicalView);
 
         /* neurological radio button: */
