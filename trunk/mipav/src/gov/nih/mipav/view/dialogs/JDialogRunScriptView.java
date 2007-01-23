@@ -237,7 +237,7 @@ public class JDialogRunScriptView implements ActionListener {
                         // inserting into placeholder as new image node
                         // look for last image child and append after that
 
-                        //                      check to see if the image is currently open, if not, add to list of Images on right
+                        // check to see if the image is currently open, if not, add to list of Images on right
                         if (model.getScriptImage(imageName) == null) {
 
                             // not sure about the isMulti setting to true always...
@@ -307,6 +307,7 @@ public class JDialogRunScriptView implements ActionListener {
         tree.setDropTarget(new DropJTreeTarget());
         tree.setName("Script Tree");
         tree.setCellRenderer(new TreeRenderer());
+        tree.addMouseListener(new TreeMouseAdapter());
         tree.setRootVisible(false);
         treeScroll = new JScrollPane(tree, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED) {
