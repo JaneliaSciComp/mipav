@@ -4689,15 +4689,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     protected void handleZoomPopupMenu(Component component, MouseEvent event) {
         JPopupMenu popupMenu = new JPopupMenu();
 
-        JMenuItem menuItem = new JMenuItem("Use exponential zoom increment");
+        JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand("Zoom linearly");
+        popupMenu.add(menuItem);
+        
+        menuItem = new JMenuItem("Use exponential zoom increment");
 
         menuItem.addActionListener(this);
         menuItem.setActionCommand("Zoom exponentially");
-        popupMenu.add(menuItem);
-
-        menuItem = new JMenuItem("Use linear zoom increment");
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("Zoom linearly");
         popupMenu.add(menuItem);
 
         popupMenu.show(component, event.getX(), event.getY());

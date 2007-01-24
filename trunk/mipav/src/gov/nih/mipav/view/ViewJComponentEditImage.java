@@ -90,7 +90,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public int MAGR_WIDTH = 120;
 
     /** DOCUMENT ME! */
-    public int zoomMode = EXPONENTIAL;
+    public int zoomMode = LINEAR;
 
     /** Set to true when all contours of a VOI are active. */
     protected boolean allActive = false;
