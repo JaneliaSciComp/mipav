@@ -170,7 +170,7 @@ public class ViewJFrameTriImage extends ViewJFrameBase
     protected static final int NUM_INVISIBLE_BUTTONS = 4;
 
     /** DOCUMENT ME! */
-    public static int zoomMode = ViewJComponentEditImage.EXPONENTIAL;
+    public static int zoomMode = ViewJComponentEditImage.LINEAR;
 
     /** Maximum number of tri-images! */
     public static final int MAX_TRI_IMAGES = 9;
@@ -1634,10 +1634,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     int frame = (new Integer(((ViewJComponentTriImage) event.getSource()).getName())).intValue();
 
                     zoomInFrame(frame);
-
-                    triImage[0].setMode(ViewJComponentBase.DEFAULT);
-
-                    traverseButton.setSelected(true);
+                    
+                    if(event.isShiftDown()) {
+                    	//do nothing
+                    }
+                    else {
+                    	triImage[0].setMode(ViewJComponentBase.DEFAULT);
+                    	traverseButton.setSelected(true);
+                    }
 
 
                     // if after zooming a particular frame, all the frame are of the same zoom,
@@ -1652,9 +1656,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                             if (zoomX != triImage[i].getZoomX()) {
                                 test = false;
                             }
-
-                            // also..lets reset the mode for the others
-                            triImage[i].setMode(ViewJComponentBase.DEFAULT);
+                            if(event.isShiftDown()) {
+                            	//do nothing
+                            }
+                            else {
+                            	// also..lets reset the mode for the others
+                            	triImage[i].setMode(ViewJComponentBase.DEFAULT);
+                            }
                         }
                     }
 
@@ -1670,10 +1678,14 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                     int frame = (new Integer(((ViewJComponentTriImage) event.getSource()).getName())).intValue();
 
                     zoomOutFrame(frame);
-
-                    triImage[0].setMode(ViewJComponentBase.DEFAULT);
-
-                    traverseButton.setSelected(true);
+                    
+                    if(event.isShiftDown()) {
+                    	//do nothing
+                    }
+                    else {
+                    	triImage[0].setMode(ViewJComponentBase.DEFAULT);
+                    	traverseButton.setSelected(true);
+                    }
 
                     // if after zooming a particular frame, all the frame are of the same zoom,
                     // then we should enable the global  zooms...otherwise disable them
@@ -1687,9 +1699,13 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                             if (zoomX != triImage[i].getZoomX()) {
                                 test = false;
                             }
-
-                            // also..lets reset the mode for the others
-                            triImage[i].setMode(ViewJComponentBase.DEFAULT);
+                            if(event.isShiftDown()) {
+                            	//do nothing
+                            }
+                            else {
+                            	// also..lets reset the mode for the others
+                            	triImage[i].setMode(ViewJComponentBase.DEFAULT);
+                            }
                         }
                     }
 
@@ -3730,16 +3746,15 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      */
     protected void handleZoomPopupMenu(Component component, MouseEvent event) {
         JPopupMenu popupMenu = new JPopupMenu();
-
-        JMenuItem menuItem = new JMenuItem("Use exponential zoom increment");
-
-        menuItem.addActionListener(this);
-        menuItem.setActionCommand("Zoom exponentially");
-        popupMenu.add(menuItem);
-
-        menuItem = new JMenuItem("Use linear zoom increment");
+        
+        JMenuItem menuItem = new JMenuItem("Use linear zoom increment");
         menuItem.addActionListener(this);
         menuItem.setActionCommand("Zoom linearly");
+        popupMenu.add(menuItem);
+        
+        menuItem = new JMenuItem("Use exponential zoom increment");
+        menuItem.addActionListener(this);
+        menuItem.setActionCommand("Zoom exponentially");
         popupMenu.add(menuItem);
 
         popupMenu.show(component, event.getX(), event.getY());
