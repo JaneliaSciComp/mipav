@@ -2,7 +2,7 @@ package gov.nih.mipav.view.dialogs;
 
 
 import gov.nih.mipav.view.*;
-import com.ice.*;
+
 import com.ice.tar.*;
 
 import java.awt.*;
@@ -68,6 +68,65 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   tarFileName  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     *
+     * @throws  Exception  DOCUMENT ME!
+     */
+    public static InputStream getInputStream(String tarFileName) throws Exception {
+
+        if (tarFileName.substring(tarFileName.lastIndexOf(".") + 1, tarFileName.lastIndexOf(".") + 3).equalsIgnoreCase("gz")) {
+            System.out.println("Creating an GZIPInputStream for the file");
+
+            return new GZIPInputStream(new FileInputStream(new File(tarFileName)));
+        } else {
+            System.out.println("Creating an InputStream for the file");
+
+            return new FileInputStream(new File(tarFileName));
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   in        DOCUMENT ME!
+     * @param   untarDir  DOCUMENT ME!
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public static void readTar(InputStream in, String untarDir) throws IOException {
+        System.out.println("Reading TarInputStream... (using classes from http://www.trustice.com/java/tar/)");
+
+        TarInputStream tin = new TarInputStream(in);
+        TarEntry tarEntry = tin.getNextEntry();
+
+        if (new File(untarDir).exists()) {
+
+            while (tarEntry != null) {
+                File destPath = new File(untarDir + File.separatorChar + tarEntry.getName());
+                System.out.println("Processing " + destPath.getAbsoluteFile());
+
+                if (!tarEntry.isDirectory()) {
+                    FileOutputStream fout = new FileOutputStream(destPath);
+                    tin.copyEntryContents(fout);
+                    fout.close();
+                } else {
+                    destPath.mkdir();
+                }
+
+                tarEntry = tin.getNextEntry();
+            }
+
+            tin.close();
+        } else {
+            System.out.println("That destination directory doesn't exist! " + untarDir);
+        }
+    }
 
     // ************************************************************************
     // **************************** Action Events *****************************
@@ -204,8 +263,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                     }
                 }
                 // must be a .jar or .zip so extract files
-                else  if (currentFile.getName().endsWith(".zip") ||
-                		currentFile.getName().endsWith(".jar")){
+                else if (currentFile.getName().endsWith(".zip") || currentFile.getName().endsWith(".jar")) {
 
                     try {
                         zFile = new ZipFile(currentFile);
@@ -224,8 +282,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                             } else {
 
                                 try {
-                                    new File(pluginDir + File.separator + entry.getName()).getParentFile().
-                                            mkdirs();
+                                    new File(pluginDir + File.separator + entry.getName()).getParentFile().mkdirs();
                                 } catch (Exception ex) {
                                     // do nothing...no parent dir here
                                 }
@@ -262,12 +319,15 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                         }
                     }
 
-                } if (currentFile.getName().endsWith(".tar || tar.gz")) {
-                	try {
-                	readTar(getInputStream(currentFile.getPath()), pluginDir);
-                	} catch (Exception e) {
-                		e.printStackTrace();
-                	}
+                }
+
+                if (currentFile.getName().endsWith(".tar || tar.gz")) {
+
+                    try {
+                        readTar(getInputStream(currentFile.getPath()), pluginDir);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
                 }
             }
 
@@ -376,39 +436,5 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
         pack();
     }
 
-    public static InputStream getInputStream(String tarFileName) throws Exception{
-        if(tarFileName.substring(tarFileName.lastIndexOf(".") + 1, tarFileName.lastIndexOf(".") + 3).equalsIgnoreCase("gz")){
-           System.out.println("Creating an GZIPInputStream for the file");
-           return new GZIPInputStream(new FileInputStream(new File(tarFileName)));
-        }else{
-           System.out.println("Creating an InputStream for the file");
-           return new FileInputStream(new File(tarFileName));
-        }
-     }
-   
-     public static void readTar(InputStream in, String untarDir) throws IOException{
-        System.out.println("Reading TarInputStream... (using classes from http://www.trustice.com/java/tar/)");
-        TarInputStream tin = new TarInputStream(in);
-        TarEntry tarEntry = tin.getNextEntry();
-        if(new File(untarDir).exists()){
-  	      while (tarEntry != null){
-  	         File destPath = new File(untarDir + File.separatorChar + tarEntry.getName());
-  	         System.out.println("Processing " + destPath.getAbsoluteFile());
-  	         if(!tarEntry.isDirectory()){
-  	            FileOutputStream fout = new FileOutputStream(destPath);
-  	            tin.copyEntryContents(fout);
-  	            fout.close();
-  	         }else{
-  	            destPath.mkdir();
-  	         }
-  	         tarEntry = tin.getNextEntry();
-  	      }
-  	      tin.close();
-        }else{
-           System.out.println("That destination directory doesn't exist! " + untarDir);
-        }
-     }
 
-
-    
 }
