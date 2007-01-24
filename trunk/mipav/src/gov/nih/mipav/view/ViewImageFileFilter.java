@@ -72,7 +72,7 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
     /** Filter made up on-the-fly. */
     public static final int DYNAMIC = 18;
 
-    /** All plugin related files (.class, .jar, .zip). */
+    /** All plugin related files (.class, .jar, .zip, .tar, .tar.gz). */
     public static final int PLUGIN = 19;
 
     /** XCEDE schema file. */
@@ -376,7 +376,8 @@ public class ViewImageFileFilter extends javax.swing.filechooser.FileFilter {
         } else if ((filterType == NLT) && (extension.equals("nlt"))) {
             return true;
         } else if ((filterType == PLUGIN) &&
-                       ((extension.equals("class")) || (extension.equals("jar")) || (extension.equals("zip")))) {
+                       ((extension.equals("class")) || (extension.equals("jar")) || (extension.equals("zip"))
+                    		   || (extension.equals("tar")) || (extension.equals("gz")))) {
             return true;
         } else if (filterType == DYNAMIC) {
 
