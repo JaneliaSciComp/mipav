@@ -135,8 +135,9 @@ public class ViewJProgressBar extends JFrame
         pBar.setMinimum(min);
         pBar.setMaximum(max);
         pBar.setValue(0);
-        pBar.setPreferredSize(new Dimension(220, 20));
-        pBar.setAlignmentX(JComponent.LEFT_ALIGNMENT);
+        pBar.setPreferredSize(new Dimension(220, 15));
+        pBar.setMinimumSize(new Dimension(50, 10));
+        pBar.setAlignmentX(JComponent.CENTER_ALIGNMENT);
 
         messagePBar = new JLabel(msg);
         messagePBar.setForeground(Color.black);
@@ -147,7 +148,8 @@ public class ViewJProgressBar extends JFrame
         // label too small.
         percentage = new JLabel("1000%");
         percentage.setFont(MipavUtil.font12B);
-        percentage.setPreferredSize(new Dimension(50, 30));
+        percentage.setPreferredSize(new Dimension(30, 20));
+        percentage.setMinimumSize(new Dimension(30, 20));
 
         if (cancelFlag) {
             JPanel buttonPanel = new JPanel();
@@ -178,9 +180,20 @@ public class ViewJProgressBar extends JFrame
         getContentPane().add(labelPanel, BorderLayout.NORTH);
 
         JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        mainPanel.add(pBar);
-        mainPanel.add(percentage);
+        mainPanel.setLayout(new GridBagLayout());
+        gbc.fill = gbc.BOTH;
+        gbc.weightx = 1;
+        gbc.weighty = 1;
+        mainPanel.add(pBar, gbc);
+        
+        gbc.fill = gbc.NONE;
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+        mainPanel.add(percentage, gbc);
+        
+        //mainPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        //mainPanel.add(pBar);
+        //mainPanel.add(percentage);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -193,10 +206,12 @@ public class ViewJProgressBar extends JFrame
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         }
 
+        this.setMinimumSize(new Dimension(100,70));
+        
         pack();
         MipavUtil.centerOnScreen(this);
         percentage.setText("0%");
-
+        
         setVisible(isVisible && ViewUserInterface.getReference().isAppFrameVisible());
     }
 
@@ -444,6 +459,7 @@ public class ViewJProgressBar extends JFrame
         update(this.getGraphics());
     }
 
+    
     /**
      * Do nothing.
      *
