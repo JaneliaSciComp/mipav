@@ -1628,17 +1628,25 @@ public class ViewJFrameTriImage extends ViewJFrameBase
             // since we set the mode to xooming in to all frames...we just need to check one of the frames
             // to see what mode we are in
             if (triImage[0] != null) {
-
+            	//get coordinates of where user clicked..used for adjusting scrollbars
+            	int x = event.getX();
+            	int y = event.getY();
+            	
                 if (triImage[0].getMode() == ViewJComponentBase.ZOOMING_IN) {
-
+                	//get frame number
                     int frame = (new Integer(((ViewJComponentTriImage) event.getSource()).getName())).intValue();
-
+                    
+                    //zoom in
                     zoomInFrame(frame);
+                    
+                    //adjust scrollbars
+                    adjustScrollbars(frame, x ,y);
                     
                     if(event.isShiftDown()) {
                     	//do nothing
                     }
                     else {
+                    	//reset mode
                     	triImage[0].setMode(ViewJComponentBase.DEFAULT);
                     	traverseButton.setSelected(true);
                     }
@@ -1674,15 +1682,20 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                         minButton.setEnabled(false);
                     }
                 } else if (triImage[0].getMode() == ViewJComponentBase.ZOOMING_OUT) {
-
+                	//get frame number
                     int frame = (new Integer(((ViewJComponentTriImage) event.getSource()).getName())).intValue();
 
+                    //zoom out
                     zoomOutFrame(frame);
+                    
+                    //adjust scrollbars
+                    adjustScrollbars(frame, x ,y);
                     
                     if(event.isShiftDown()) {
                     	//do nothing
                     }
                     else {
+                    	//reset mode
                     	triImage[0].setMode(ViewJComponentBase.DEFAULT);
                     	traverseButton.setSelected(true);
                     }
@@ -4562,6 +4575,40 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         validate();
         updateImages(true);
     }
+    
+    
+    
+    
+    /**
+     * This method adjust the scrollbars to area where user clicked
+     * when doing individual frame zooming in and out
+     *
+     * @param  x  int
+     * @param  y  int
+     */
+    private void adjustScrollbars(int frame, int x, int y) {
+    	final int theFrame = frame;
+    	if (triImage[frame] != null) {
+	        final int xTemp = (int) (x * (triImage[frame].getZoomX() * triImage[frame].getResolutionX()));
+	        final int yTemp = (int) (y * (triImage[frame].getZoomY() * triImage[frame].getResolutionY()));
+	
+	        final int scrollPaneX = scrollPane[theFrame].getWidth() / 2;
+	        final int scrollPaneY = scrollPane[theFrame].getHeight() / 2;
+	
+	        Runnable adjustScrollbarsAWTEvent = new Runnable() {
+	            public void run() {
+	                scrollPane[theFrame].getHorizontalScrollBar().setValue(xTemp - scrollPaneX);
+	                scrollPane[theFrame].getVerticalScrollBar().setValue(yTemp - scrollPaneY);
+	            }
+	        };
+	        SwingUtilities.invokeLater(adjustScrollbarsAWTEvent);
+    	}
+    }
+    
+    
+    
+    
+    
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
