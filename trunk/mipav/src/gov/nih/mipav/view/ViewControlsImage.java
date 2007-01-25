@@ -532,6 +532,7 @@ public class ViewControlsImage extends JPanel implements ChangeListener, ActionL
         }
     }
 
+    
     /**
      * Directs the image to display a particular time slice.
      *
