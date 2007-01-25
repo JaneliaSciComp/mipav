@@ -1,13 +1,15 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
 import java.io.*;
 
 import javax.swing.*;
-import gov.nih.mipav.MipavMath;
+
 
 /**
  * Progress bar used everywhere for displaying to the user how long the current process is going to take. The progress
@@ -55,15 +57,15 @@ public class ViewJProgressBar extends JFrame
     /** Percentage label, puts a number next to the bar with the actual percent completed. */
     private JLabel percentage;
 
+    /** For users wanting to override the automatic closing option when progress reaches 100. */
+    private boolean readyToDispose = true;
+
     /** DOCUMENT ME! */
     private boolean separateThread;
 
     /** Title of the frame for the progress bar. */
     private String title;
 
-    /** For users wanting to override the automatic closing option when progress reaches 100*/
-    private boolean readyToDispose = true;
-    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -78,7 +80,7 @@ public class ViewJProgressBar extends JFrame
     public ViewJProgressBar(String _title, String msg, int min, int max, boolean cancelFlag) {
         this(_title, msg, min, max, cancelFlag, null, null);
     }
-    
+
     /**
      * Creates a new progress bar with the given title, message, and min and max. The percentage is initially set to
      * "0%". The <code>cancelFlag</code> indicates if there should be a cancel button - usually this is used for
@@ -111,8 +113,8 @@ public class ViewJProgressBar extends JFrame
      *                         button, and so the button should be added to the frame.
      * @param  actionListener  Listener to tie to cancel button.
      * @param  windowListener  Listener to tie to this frame.
-     * @param  isVisible       Whether to display the progress bar after it is first constructed.  Note that the 
-     *                         progress bar is never displayed if the -hide option was chosen by the user.
+     * @param  isVisible       Whether to display the progress bar after it is first constructed. Note that the progress
+     *                         bar is never displayed if the -hide option was chosen by the user.
      */
     public ViewJProgressBar(String _title, String msg, int min, int max, boolean cancelFlag,
                             ActionListener actionListener, WindowListener windowListener, boolean isVisible) {
@@ -185,15 +187,15 @@ public class ViewJProgressBar extends JFrame
         gbc.weightx = 1;
         gbc.weighty = 1;
         mainPanel.add(pBar, gbc);
-        
+
         gbc.fill = gbc.NONE;
         gbc.weightx = 0;
         gbc.weighty = 0;
         mainPanel.add(percentage, gbc);
-        
-        //mainPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-        //mainPanel.add(pBar);
-        //mainPanel.add(percentage);
+
+        // mainPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+        // mainPanel.add(pBar);
+        // mainPanel.add(percentage);
 
         getContentPane().add(mainPanel, BorderLayout.CENTER);
 
@@ -206,16 +208,40 @@ public class ViewJProgressBar extends JFrame
             setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         }
 
-        this.setMinimumSize(new Dimension(100,70));
-        
         pack();
         MipavUtil.centerOnScreen(this);
         percentage.setText("0%");
-        
+
         setVisible(isVisible && ViewUserInterface.getReference().isAppFrameVisible());
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   minProgressValue  DOCUMENT ME!
+     * @param   maxProgressValue  DOCUMENT ME!
+     * @param   percentage        DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static int getProgressFromFloat(int minProgressValue, int maxProgressValue, float percentage) {
+        return MipavMath.round(minProgressValue + (percentage * (maxProgressValue - minProgressValue)));
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   minProgressValue  DOCUMENT ME!
+     * @param   maxProgressValue  DOCUMENT ME!
+     * @param   percentage        DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    public static int getProgressFromInt(int minProgressValue, int maxProgressValue, int percentage) {
+        return MipavMath.round(minProgressValue + ((percentage / 100.0) * (maxProgressValue - minProgressValue)));
+    }
 
     /**
      * Closes this progress bar when the cancel button is clicked. This doesn't actually get called when the progress
@@ -297,15 +323,7 @@ public class ViewJProgressBar extends JFrame
         return (pBar.getPercentComplete() == 1);
     }
 
-    public static int getProgressFromInt(int minProgressValue, int maxProgressValue, int percentage) {
-        return MipavMath.round(minProgressValue + ((percentage / 100.0) * (maxProgressValue - minProgressValue)));
-    }
-    
-    public static int getProgressFromFloat(int minProgressValue, int maxProgressValue, float percentage) {
-        return MipavMath.round(minProgressValue + (percentage * (maxProgressValue - minProgressValue)));
-    }
 
-    
     /**
      * Implementation of the ProgressChangeListener interface.
      *
@@ -314,8 +332,7 @@ public class ViewJProgressBar extends JFrame
     public void progressStateChanged(ProgressChangeEvent e) {
         int value = e.getValue();
 
-        if (value == PROGRESS_WINDOW_CLOSING ||
-        		(value == 100 && readyToDispose)) {
+        if ((value == PROGRESS_WINDOW_CLOSING) || ((value == 100) && readyToDispose)) {
             dispose();
 
             return;
@@ -370,6 +387,15 @@ public class ViewJProgressBar extends JFrame
     }
 
     /**
+     * accessor to allow user to override the automatic closing (until they set this flag to true);
+     *
+     * @param  isReady  DOCUMENT ME!
+     */
+    public void setReadyToDispose(boolean isReady) {
+        this.readyToDispose = isReady;
+    }
+
+    /**
      * Changes whether the algorithm which is using this progress bar is running in its own thread.
      *
      * @param  flag  whether the progress bar's algorithm is running is a separate thread
@@ -387,14 +413,6 @@ public class ViewJProgressBar extends JFrame
         title = _title;
     }
 
-    /**
-     * accessor to allow user to override the automatic closing (until they set this flag to true);
-     * @param ready
-     */
-    public void setReadyToDispose(boolean isReady) {
-    	this.readyToDispose = isReady;
-    }
-    
     /**
      * DOCUMENT ME!
      *
@@ -459,7 +477,7 @@ public class ViewJProgressBar extends JFrame
         update(this.getGraphics());
     }
 
-    
+
     /**
      * Do nothing.
      *
