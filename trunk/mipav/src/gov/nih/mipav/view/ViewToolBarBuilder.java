@@ -50,6 +50,8 @@ public class ViewToolBarBuilder implements ItemListener {
      */
     protected JComboBox currentScriptComboBox = new JComboBox();
 
+    protected Hashtable scriptTable = new Hashtable();
+    
     /** The script currently selected in the scripting toolbar (null if no script is selected). */
     protected String currentSelectedScript = null;
 
@@ -701,12 +703,13 @@ public class ViewToolBarBuilder implements ItemListener {
         // to the one saved in the preferences.
         JPanel currentScriptPanel = new JPanel();
         JLabel currentScriptLabel = new JLabel("Current Script: ");
+        currentScriptLabel.setFont(MipavUtil.font12B);
 
         // get the current script directory --
         String dir = ((ViewJFrameBase) UI).getUserInterface().getDefaultScriptDirectory();
 
         this.updateScripts(dir);
-
+        currentScriptComboBox.setFont(MipavUtil.font12B);
         if (currentScriptComboBox.getItemCount() > 0) {
             currentScriptComboBox.addItemListener(this);
         }
@@ -975,8 +978,11 @@ public class ViewToolBarBuilder implements ItemListener {
         if ((source instanceof JComboBox) && ((JComboBox) source).equals(currentScriptComboBox)) {
 
             if (state == ItemEvent.SELECTED) {
-                currentSelectedScript = (String) currentScriptComboBox.getSelectedItem();
+                currentSelectedScript = (String)scriptTable.get((String) currentScriptComboBox.getSelectedItem());
                 ((ViewJFrameBase) UI).getUserInterface().setLastScript(currentSelectedScript);
+                
+                
+                
                 Preferences.debug("toolbar:\tCurrent selected script is: " + currentSelectedScript + "\n", Preferences.DEBUG_SCRIPTING);
             }
         } else if (source instanceof AbstractButton) {
@@ -990,6 +996,8 @@ public class ViewToolBarBuilder implements ItemListener {
     public void runCurrentScript() {
         try {
             String scriptFile = getSelectedScriptFileName();
+            
+            ((ViewJFrameBase) UI).getUserInterface().setLastScript(scriptFile);
             String[] imageVars = Parser.getImageVarsUsedInScript(scriptFile);
 
             if (imageVars.length == 0) {
@@ -1012,7 +1020,7 @@ public class ViewToolBarBuilder implements ItemListener {
      * @return The full path and file name of the currently selected script.
      */
     public String getSelectedScriptFileName() {
-        return (String) currentScriptComboBox.getSelectedItem();
+        return (String)scriptTable.get((String) currentScriptComboBox.getSelectedItem());
     }
 
     /**
@@ -1192,11 +1200,14 @@ public class ViewToolBarBuilder implements ItemListener {
      * @param  dirName  The name of the directory containing the scripts
      */
     public void updateScripts(String dirName) {
+    	    	
         File dirFile = new File(dirName);
 
         // clear the current script combo box
         currentScriptComboBox.removeAllItems();
 
+        scriptTable.clear();
+        
         // if directory doesn't exist, or isn't a directory
         // then return
         if (!dirFile.exists() || !dirFile.isDirectory()) {
@@ -1225,17 +1236,23 @@ public class ViewToolBarBuilder implements ItemListener {
             return;
         }
 
+        String name;
         // add the filenames to the script combo box
+        
+        Arrays.sort(filenames);
+        
         for (int i = 0; i < filenames.length; i++) {
-            currentScriptComboBox.addItem(filenames[i]);
+        	name = filenames[i].substring(filenames[i].lastIndexOf(File.separatorChar) + 1);
+        	scriptTable.put(name, filenames[i]);
+            currentScriptComboBox.addItem(name);
         }
 
-        if ((currentSelectedScript != null) && java.util.Arrays.asList(filenames).contains(currentSelectedScript)) {
-            currentScriptComboBox.setSelectedItem(currentSelectedScript);
-        } else {
-            currentScriptComboBox.setSelectedIndex(0);
+        if (currentSelectedScript != null) {
+        	name = currentSelectedScript.substring(currentSelectedScript.lastIndexOf(File.separatorChar) + 1);
+        	
+        	currentScriptComboBox.setSelectedItem(name);
         }
-
+        
         currentScriptComboBox.setEnabled(true);
 
     } // end updateScripts
