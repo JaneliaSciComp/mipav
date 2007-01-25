@@ -5402,15 +5402,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 		int activeImageNumSlices = 0;
 		if(activeImageNumDims == 3) {
 			activeImageNumSlices = activeImage.getExtents()[2];
-		}else if(activeImageNumDims ==4) {
-			activeImageNumSlices = activeImage.getExtents()[3];
 		}
-		//System.out.println(getActiveImage().getImageName());
 		//check if there is more than 1 regsitered framed image
 		if(ViewUserInterface.getReference().getRegisteredFramedImagesNum() > 1) {
 			//get all registered images
 			Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
-			//add the only the framed ones to a new list...also..dont include the active image
+			//add only the framed ones to a new list...also..dont include the active image
 			while(regImages.hasMoreElements()) {
 	    		ModelImage image = (ModelImage)regImages.nextElement();
 	    		//check if it is a framed image...and if its not the active image...also make sure its just imageA
