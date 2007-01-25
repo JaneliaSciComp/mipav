@@ -2547,6 +2547,56 @@ public class ModelStorageBase extends ModelSerialCloneable {
     }
 
     /**
+     * Get a value using tri-linear interpoloation. Note - DOES perform bounds checking (both that x,y,z are valid and
+     * that the interp indicies don't cause exceptions).
+     *
+     * @param   x  x coordinate
+     * @param   y  y coordinate
+     * @param   z  z coordinate
+     * @param   c  color-coordinate
+     *
+     * @return  interpolated value if in bounds, 0 if not.
+     */
+    public final float getFloatTriLinearBounds(float x, float y, float z, int c) {
+
+        int xDim = dimExtents[0];
+        int yDim = dimExtents[1];
+        int imageSize = xDim * yDim;
+        int position1, position2;
+        int intX, intY, intZ;
+        float dx, dy, dz;
+        float a1, a2;
+        float b1, b2;
+
+        intX = (int) x;
+        intY = (int) y;
+        intZ = (int) z;
+
+        dx = x - intX;
+        dy = y - intY;
+        dz = z - intZ;
+
+        position1 = (intZ * imageSize) + (intY * xDim) + intX;
+        position2 = position1 + imageSize;
+
+        if ((x >= 0) && (y >= 0) && (z >= 0) && (x < xDim) && (y < yDim) && (z < dimExtents[2]) && (position1 >= 0) &&
+                (position1 < (dataSize - (xDim * yDim) - 1)) && (position2 >= 0) &&
+                (position2 < (dataSize - (xDim * yDim) - 1))) {
+            a1 = ((1 - dx) * data.getFloat(c + (int)(4 * (position1)))) + (dx * data.getFloat(c + (int)(4 * (position1 + 1))));
+            a2 = ((1 - dx) * data.getFloat(c + (int)(4 * (position1 + xDim)))) + (dx * data.getFloat(c + (int)(4 * (position1 + xDim + 1))));
+            b1 = ((1 - dy) * a1) + (dy * a2);
+
+            a1 = ((1 - dx) * data.getFloat(c + (int)(4 * (position2)))) + (dx * data.getFloat(c + (int)(4 * (position2 + 1))));
+            a2 = ((1 - dx) * data.getFloat(c + (int)(4 * (position2 + xDim)))) + (dx * data.getFloat(c + (int)(4 * (position2 + xDim + 1))));
+            b2 = ((1 - dy) * a1) + (dy * a2);
+
+            return (float) (((1 - dz) * b1) + (dz * b2));
+        } else {
+            return 0;
+        }
+    }
+
+    /**
      * returns frequency 1 of filter.
      *
      * @return  freq1

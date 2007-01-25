@@ -10,7 +10,30 @@ import javax.swing.*;
 
 
 /**
- * Dialog to get the two parameters needed for surface smoothing, the iterations and the alpha.
+ * User-interface for smoothing the ModelTriangleMesh surfaces. When the
+ * JDialogSmoothMesh object is created the type of smooth dialog is
+ * specified. The smooth type may be SMOOTH1, SMOOTH2, or SMOOTH3. These
+ * correspond to the different smooth operations available for the
+ * ModelTriangleMesh object.
+ *
+ * The smooth type variable determines which components of the user-interface
+ * are displayed -- whichever components correspond to the parameters of the
+ * ModelTriangleMesh smooth operations.
+ *
+ * SMOOTH1 -- corresponds to ModelTriangleMesh.smoothMesh function. The
+ * interface components displayed are the Number of Iterations, Alpha, Volume
+ * Limit, and the Volume Percent Change.
+ *
+ * SMOOTH2 -- corresponds to ModelTriangleMesh.smoothTwo function. The
+ * interface components displayed are the Number of Iterations, Stiffness,
+ * Volume Limit, and Volume Percent Change.
+ * 
+ * SMOOTH3 -- corresponds to ModelTriangleMesh.smoothThree function. The
+ * interface components displayed are the Number of Iterations, Lambda, and
+ * Mu.
+ *
+ * @see ModelTriangleMesh.java
+ * @see JPanelSurfaces.java
  */
 public class JDialogSmoothMesh extends JDialogBase {
 
@@ -19,8 +42,11 @@ public class JDialogSmoothMesh extends JDialogBase {
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -4644401872827443236L;
 
+    /** Smooth type: SMOOTH1 corresponds to ModelTriangleMesh.smoothMesh() */
     public static final int SMOOTH1 = 1;
+    /** Smooth type: SMOOTH2 corresponds to ModelTriangleMesh.smoothTwo() */
     public static final int SMOOTH2 = 2;
+    /** Smooth type: SMOOTH3 corresponds to ModelTriangleMesh.smoothThree() */
     public static final int SMOOTH3 = 3;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -61,8 +87,8 @@ public class JDialogSmoothMesh extends JDialogBase {
     private JTextField iterationsText;
 
     /**
-     * If limitCheckBox is selected iterations stop when volume change from initial volume is greater than or equal to
-     * volumePercent.
+     * If limitCheckBox is selected iterations stop when volume change from
+     * initial volume is greater than or equal to volumePercent.
      */
     private JCheckBox limitCheckBox;
 
@@ -93,24 +119,29 @@ public class JDialogSmoothMesh extends JDialogBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Sets iterations and alpha when "OK" is pressed; disposes dialog when "Cancel" is pressed.
+     * Sets smoothing varaibles when "OK" is pressed; enables the volumeText
+     * box when the limitCheckBox is pressed, disposes dialog when "Cancel" is
+     * pressed.
      *
      * @param  e  Event that triggered function.
      */
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
 
+        /* Cancel and dispose: */
         if (source == cancelButton) {
             cancelFlag = true;
             dispose();
-        } else if (source == limitCheckBox) {
-
+        }
+        /* Enable volumeText: */
+        else if (source == limitCheckBox) {
             if (limitCheckBox.isSelected()) {
                 volumeText.setEnabled(true);
             } else {
                 volumeText.setEnabled(false);
             }
-        } // else if (source == limitCheckBox)
+        } 
+        /* set variables and dispose: */
         else if (source == OKButton) {
             setVariables();
             dispose();
@@ -118,9 +149,11 @@ public class JDialogSmoothMesh extends JDialogBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * returns the mainPanel so this interface can be displayed inside another
+     * panel.
      *
-     * @return  DOCUMENT ME!
+     * @return mainPanel, the main panel containing the user-interface for
+     * this object.
      */
     public JPanel getMainPanel() {
         return mainPanel;
@@ -138,7 +171,7 @@ public class JDialogSmoothMesh extends JDialogBase {
     /**
      * Accessor that returns the stiffness.
      *
-     * @return  stiffness .
+     * @return  stiffness.
      */
     public float getStiffness() {
         return stiffness;
@@ -147,7 +180,7 @@ public class JDialogSmoothMesh extends JDialogBase {
     /**
      * Accessor that returns the positive scale factor lambda.
      *
-     * @return  lambda .
+     * @return  lambda.
      */
     public float getLambda() {
         return lambda;
@@ -157,7 +190,7 @@ public class JDialogSmoothMesh extends JDialogBase {
     /**
      * Accessor that returns the negative scale factor mu.
      *
-     * @return  mu
+     * @return  mu.
      */
     public float getMu() {
         return mu;
@@ -173,24 +206,29 @@ public class JDialogSmoothMesh extends JDialogBase {
     }
 
     /**
-     * Accessor that returns whether or not iterations are stopped after the present volume is different from the
-     * initial volume by volumePercent or more.
+     * Accessor that returns whether or not iterations are stopped after the
+     * present volume is different from the initial volume by volumePercent or
+     * more.
      *
-     * @return  volumeLimit
+     * @return  volumeLimit.
      */
     public boolean getVolumeLimit() {
         return volumeLimit;
     }
 
     /**
-     * Accessor that returns the percentage difference from the initial volume at which iterations stop.
+     * Accessor that returns the percentage difference from the initial volume
+     * at which iterations stop.
      *
-     * @return  volumePercent
+     * @return  volumePercent.
      */
     public float getVolumePercent() {
         return volumePercent;
     }
 
+    /**
+     * sets the variables based on user-input.
+     */
     public void setVariables()
     {
         if (testParameter(alphaText.getText(), 0, 1)) {
@@ -245,7 +283,6 @@ public class JDialogSmoothMesh extends JDialogBase {
             return;
         }
         
-        
         if (limitCheckBox.isSelected()) {
             volumeLimit = true;
             
@@ -264,7 +301,13 @@ public class JDialogSmoothMesh extends JDialogBase {
 
 
     /**
-     * Initializes GUI components and displays dialog.
+     * Initializes GUI components based on the type parameter.. When show
+     * parameter is true the interface is displayed as a separate dialog box.
+     * @param show, when true display the interface as a separate dialog box.
+     * @param type, the type of smooth dialog to create (SMOOTH1, SMOOTH2,
+     * SMOOTH3). The type will determine which components of the
+     * user-interface are displayed to match the ModelTriangleMesh smooth type
+     * operation parameters.
      */
     private void init( boolean show, int type )
     {

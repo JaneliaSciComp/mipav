@@ -504,7 +504,10 @@ public class SurfacePaint
                             }
                         }
                         // updates the geometry all at once (faster):
-                        kMesh.setColorUpdate();
+                        if ( update )
+                        {
+                            kMesh.setColorUpdate();
+                        }
                     }
                 }
             }
@@ -569,33 +572,6 @@ public class SurfacePaint
             }
             if ( m_PaintMode == SurfacePaint.VERTEX )
             {
-                /* Get the coordinates of the picked point on the mesh. */
-                ModelTriangleMesh kMesh = (ModelTriangleMesh) kPickResult.getGeometryArray();
-
-                int[] indices = kPick.getPrimitiveCoordinateIndices();
-                
-                Point3f vert0 = new Point3f();
-                kMesh.getCoordinate( indices[0], vert0 );
-                Point3f vert1 = new Point3f();
-                kMesh.getCoordinate( indices[1], vert1 );
-                Point3f vert2 = new Point3f();
-                kMesh.getCoordinate( indices[2], vert2 );
-                
-                float dist0 = kPickPoint.distance( vert0 );
-                float dist1 = kPickPoint.distance( vert1 );
-                float dist2 = kPickPoint.distance( vert2 );
-                int closest = indices[0];
-                if ( dist1 < dist0 )
-                {
-                    closest = indices[1];
-                    dist0 = dist1;
-                }
-                if ( dist2 < dist0 )
-                {
-                    closest = indices[2];
-                    dist0 = dist2;
-                }
-                
                 /* Get the coordinates of the picked point on the mesh. */
                 Point3f modelPoint = m_kPanel.getSurfaceMask().getModelImagePoint( kPickPoint );
                 ModelImage kImage = m_kPanel.getTextureImage();
@@ -694,11 +670,11 @@ public class SurfacePaint
 
         /* Get the coordinates of the picked point on the mesh. */
         Point3f modelPoint = m_kPanel.getSurfaceMask().getModelImagePoint( kPickPoint );
-        Color4f modelColor =  m_kPanel.getSurfaceMask().getModelImageColorNonScaled( kImage, 1, modelPoint );
+        Color4f modelColor =  m_kPanel.getSurfaceMask().getModelImageColor( kImage, 1, modelPoint );
         mPaintGrowDialog.setPositionText("  X: " + String.valueOf(modelPoint.x) +
                                          " Y: " + String.valueOf(modelPoint.y) +
                                          " Z: " + String.valueOf(modelPoint.z) + "  Color:  " +
-                                         modelColor.x + " " + modelColor.y + " " + modelColor.z );
+                                         modelColor.x * 255.0f + " " + modelColor.y * 255.0f + " " + modelColor.z * 255.0f );
     }
 
 
@@ -724,7 +700,11 @@ public class SurfacePaint
 
             int[] imageExtents = kImage.getExtents();
             
-            Color4f modelColor =  m_kPanel.getSurfaceMask().getModelImageColorNonScaled( kImage, 1, kSeedPoint );
+            Color4f modelColor =  m_kPanel.getSurfaceMask().getModelImageColor( kImage, 1, kSeedPoint );
+            modelColor.x *= 255.0f;
+            modelColor.y *= 255.0f;
+            modelColor.z *= 255.0f;
+            modelColor.w *= 255.0f;
 
             Point3Ds seed = new Point3Ds( (short)kSeedPoint.x,
                                           (short)kSeedPoint.y,
@@ -735,7 +715,6 @@ public class SurfacePaint
 
             CubeBounds regionGrowBounds = new CubeBounds(imageExtents[0], 0, imageExtents[1], 0, imageExtents[2], 0);
 
-            int count = 0;
             if ( !kImage.isColorImage() )
             {
                 float less = mPaintGrowDialog.getLowerBound();
@@ -744,33 +723,33 @@ public class SurfacePaint
                     less = 0;
                     more = 0;
                 }
-                count = regionGrowAlgo.regionGrow3D( paintMask, seed,
-                                                     mPaintGrowDialog.getFuzzyThreshold(),
-                                                     false,
-                                                     mPaintGrowDialog.getDisplayFuzzy(),
-                                                     mPaintGrowDialog,
-                                                     modelColor.x - less, modelColor.x + more,
-                                                     mPaintGrowDialog.getMaxSize(),
-                                                     mPaintGrowDialog.getMaxDistance(),
-                                                     mPaintGrowDialog.getVariableThresholds(),
-                                                     0, regionGrowBounds);
+                regionGrowAlgo.regionGrow3D( paintMask, seed,
+                                             mPaintGrowDialog.getFuzzyThreshold(),
+                                             false,
+                                             mPaintGrowDialog.getDisplayFuzzy(),
+                                             mPaintGrowDialog,
+                                             modelColor.x - less, modelColor.x + more,
+                                             mPaintGrowDialog.getMaxSize(),
+                                             mPaintGrowDialog.getMaxDistance(),
+                                             mPaintGrowDialog.getVariableThresholds(),
+                                             0, regionGrowBounds);
             }
             else
             {
-                count = regionGrowAlgo.regionGrow3D( paintMask, seed,
-                                                     mPaintGrowDialog.getFuzzyThreshold(),
-                                                     false,
-                                                     mPaintGrowDialog.getDisplayFuzzy(),
-                                                     mPaintGrowDialog,
-                                                     modelColor.x - mPaintGrowDialog.getLowerBoundR(),
-                                                     modelColor.x + mPaintGrowDialog.getUpperBoundR(),
-                                                     modelColor.y - mPaintGrowDialog.getLowerBoundG(),
-                                                     modelColor.y + mPaintGrowDialog.getUpperBoundG(),
-                                                     modelColor.z - mPaintGrowDialog.getLowerBoundB(),
-                                                     modelColor.z + mPaintGrowDialog.getUpperBoundB(),
-                                                     mPaintGrowDialog.getMaxSize(),
-                                                     mPaintGrowDialog.getMaxDistance(),
-                                                     0, regionGrowBounds);
+                regionGrowAlgo.regionGrow3D( paintMask, seed,
+                                             mPaintGrowDialog.getFuzzyThreshold(),
+                                             false,
+                                             mPaintGrowDialog.getDisplayFuzzy(),
+                                             mPaintGrowDialog,
+                                             modelColor.x - mPaintGrowDialog.getLowerBoundR(),
+                                             modelColor.x + mPaintGrowDialog.getUpperBoundR(),
+                                             modelColor.y - mPaintGrowDialog.getLowerBoundG(),
+                                             modelColor.y + mPaintGrowDialog.getUpperBoundG(),
+                                             modelColor.z - mPaintGrowDialog.getLowerBoundB(),
+                                             modelColor.z + mPaintGrowDialog.getUpperBoundB(),
+                                             mPaintGrowDialog.getMaxSize(),
+                                             mPaintGrowDialog.getMaxDistance(),
+                                             0, regionGrowBounds);
             }
             m_kPanel.updateVolumeTexture( paintMask, mPaintColor );
         } catch (OutOfMemoryError error) {
