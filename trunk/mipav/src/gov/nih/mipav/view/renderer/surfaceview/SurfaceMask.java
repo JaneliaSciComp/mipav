@@ -53,11 +53,10 @@ public class SurfaceMask
      * @param kMesh ModelTriangleMesh[] surfaces
      * @param bHasVertexColor use per-vertex color from the ModelTriangleMesh,
      * otherwise use the surColor parameter
+     * @param bCreateVertexColor create the per-vertex color from the imageA ModleImage,
+     * @param bUseImageMask create the per-vertex color from the imageA ModleImage, with the ModelImage mask
      * @param fOpacity Mask opacity
      * @param surColor default Mask color
-     * @param xBox normalized SurfaceRender x-dimension
-     * @param yBox normalized SurfaceRender y-dimension
-     * @param zBox normalized SurfaceRender z-dimension
      */
     public void maskInsideVoxels(int index, ModelImage imageA,
                                  ModelTriangleMesh[] kMesh,
@@ -173,9 +172,7 @@ public class SurfaceMask
             Point3f kV0 = new Point3f();
             Point3f kV1 = new Point3f();
             Point3f kV2 = new Point3f();
-            
-            Color4f kC0, kC1, kC2;
-            
+                     
             for (int iT = 0; iT < iTQuantity; iT++) {
                 
                 // get the vertices of the triangle
@@ -277,158 +274,163 @@ public class SurfaceMask
                         kMesh[mIndex].setColorDelay( aiConnect[ (3 * iT) + 2], kTriColors[aiConnect[ (3 * iT) + 2]] );
                     }
                 }
-                kC0 = kTriColors[aiConnect[3 * iT]];
-                kC1 = kTriColors[aiConnect[ (3 * iT) + 1]];
-                kC2 = kTriColors[aiConnect[ (3 * iT) + 2]];
-
-                if ( (kC0 != null) && (kC1 != null) && (kC2 != null)) {
-                    kTriColor = new Color4f( (kC0.x + kC1.x + kC2.x) / 3.0f,
-                                             (kC0.y + kC1.y + kC2.y) / 3.0f,
-                                             (kC0.z + kC1.z + kC2.z) / 3.0f,
-                                             1 - fOpacity );
-                }
-
-                // compute the axis-aligned bounding box of the triangle
-                float fXMin = kV0.x, fXMax = fXMin;
-                float fYMin = kV0.y, fYMax = fYMin;
-                float fZMin = kV0.z, fZMax = fZMin;
-
-                if (kV1.x < fXMin) {
-                    fXMin = kV1.x;
-                }
-                else if (kV1.x > fXMax) {
-                    fXMax = kV1.x;
-                }
-
-                if (kV1.y < fYMin) {
-                    fYMin = kV1.y;
-                }
-                else if (kV1.y > fYMax) {
-                    fYMax = kV1.y;
-                }
-
-                if (kV1.z < fZMin) {
-                    fZMin = kV1.z;
-                }
-                else if (kV1.z > fZMax) {
-                    fZMax = kV1.z;
-                }
-
-                if (kV2.x < fXMin) {
-                    fXMin = kV2.x;
-                }
-                else if (kV2.x > fXMax) {
-                    fXMax = kV2.x;
-                }
-
-                if (kV2.y < fYMin) {
-                    fYMin = kV2.y;
-                }
-                else if (kV2.y > fYMax) {
-                    fYMax = kV2.y;
-                }
-
-                if (kV2.z < fZMin) {
-                    fZMin = kV2.z;
-                }
-                else if (kV2.z > fZMax) {
-                    fZMax = kV2.z;
-                }
-
-                // Rasterize the triangle.  The rasterization is repeated in all
-                // three coordinate directions to make sure that floating point
-                // round-off errors do not cause any holes in the rasterized
-                // surface.
-                float iXMin = fXMin, iXMax = fXMax;
-                float iYMin = fYMin, iYMax = fYMax;
-                float iZMin = fZMin, iZMax = fZMax;
-                int ptr;
-                int end = kMask.size();
-
-                for (iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
-
-                    for (iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
-                        iX = getIntersectX(kV0, kV1, kV2, iY, iZ);
-
-                        if (iX != -1) {
-                            ptr = getIndex( (int) Math.round(iX), (int) Math.round(iY),
-                                            (int) Math.round(iZ));
-
-                            if ( (ptr >= 0) && (ptr < end)) {
-                                kMask.set(ptr);
-                                akMaskColor[ptr] = kTriColor;
-                                mVolumeMask.set(ptr);
-                            }
-
-                        }
+                
+                if ( !bUseImageMask )
+                {
+                    Color4f kC0, kC1, kC2;
+                    kC0 = kTriColors[aiConnect[3 * iT]];
+                    kC1 = kTriColors[aiConnect[ (3 * iT) + 1]];
+                    kC2 = kTriColors[aiConnect[ (3 * iT) + 2]];
+                    
+                    if ( (kC0 != null) && (kC1 != null) && (kC2 != null)) {
+                        kTriColor = new Color4f( (kC0.x + kC1.x + kC2.x) / 3.0f,
+                                                 (kC0.y + kC1.y + kC2.y) / 3.0f,
+                                                 (kC0.z + kC1.z + kC2.z) / 3.0f,
+                                                 1 - fOpacity );
                     }
-                }
-
-                for (iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
-
-                    for (iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
-                        iY = getIntersectY(kV0, kV1, kV2, iX, iZ);
-
-                        if (iY != -1) {
-                            ptr = getIndex( (int) Math.round(iX), (int) Math.round(iY),
-                                            (int) Math.round(iZ));
-
-                            if ( (ptr >= 0) && (ptr < end)) {
-                                kMask.set(ptr);
-                                akMaskColor[ptr] = kTriColor;
-                                mVolumeMask.set(ptr);
-                            }
-                        }
+                    
+                    // compute the axis-aligned bounding box of the triangle
+                    float fXMin = kV0.x, fXMax = fXMin;
+                    float fYMin = kV0.y, fYMax = fYMin;
+                    float fZMin = kV0.z, fZMax = fZMin;
+                    
+                    if (kV1.x < fXMin) {
+                        fXMin = kV1.x;
                     }
-                }
+                    else if (kV1.x > fXMax) {
+                        fXMax = kV1.x;
+                    }
+                    
+                    if (kV1.y < fYMin) {
+                        fYMin = kV1.y;
+                    }
+                    else if (kV1.y > fYMax) {
+                        fYMax = kV1.y;
+                    }
+                    
+                    if (kV1.z < fZMin) {
+                        fZMin = kV1.z;
+                    }
+                    else if (kV1.z > fZMax) {
+                        fZMax = kV1.z;
+                    }
+                    
+                    if (kV2.x < fXMin) {
+                        fXMin = kV2.x;
+                    }
+                    else if (kV2.x > fXMax) {
+                        fXMax = kV2.x;
+                    }
+                    
+                    if (kV2.y < fYMin) {
+                        fYMin = kV2.y;
+                    }
+                    else if (kV2.y > fYMax) {
+                        fYMax = kV2.y;
+                    }
+                    
+                    if (kV2.z < fZMin) {
+                        fZMin = kV2.z;
+                    }
+                    else if (kV2.z > fZMax) {
+                        fZMax = kV2.z;
+                    }
 
-                for (iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
-
+                    // Rasterize the triangle.  The rasterization is repeated in all
+                    // three coordinate directions to make sure that floating point
+                    // round-off errors do not cause any holes in the rasterized
+                    // surface.
+                    float iXMin = fXMin, iXMax = fXMax;
+                    float iYMin = fYMin, iYMax = fYMax;
+                    float iZMin = fZMin, iZMax = fZMax;
+                    int ptr;
+                    int end = kMask.size();
+                    
                     for (iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
-                        iZ = getIntersectZ(kV0, kV1, kV2, iX, iY);
+                        
+                        for (iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
+                            iX = getIntersectX(kV0, kV1, kV2, iY, iZ);
+                            
+                            if (iX != -1) {
+                                ptr = getIndex( (int) Math.round(iX), (int) Math.round(iY),
+                                                (int) Math.round(iZ));
+                                
+                                if ( (ptr >= 0) && (ptr < end)) {
+                                    kMask.set(ptr);
+                                    akMaskColor[ptr] = kTriColor;
+                                    mVolumeMask.set(ptr);
+                                }
+                            }
+                        }
+                    }
+                    
+                    for (iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
+                        
+                        for (iZ = iZMin; iZ < iZMax; iZ = iZ + 0.1f) {
+                            iY = getIntersectY(kV0, kV1, kV2, iX, iZ);
+                            
+                            if (iY != -1) {
+                                ptr = getIndex( (int) Math.round(iX), (int) Math.round(iY),
+                                                (int) Math.round(iZ));
+                                
+                                if ( (ptr >= 0) && (ptr < end)) {
+                                    kMask.set(ptr);
+                                    akMaskColor[ptr] = kTriColor;
+                                    mVolumeMask.set(ptr);
+                                }
+                            }
+                        }
+                    }
 
-                        if (iZ != -1) {
-                            ptr = getIndex( (int) Math.round(iX), (int) Math.round(iY),
-                                            (int) Math.round(iZ));
-
-                            if ( (ptr >= 0) && (ptr < end)) {
-                                kMask.set(ptr);
-                                akMaskColor[ptr] = kTriColor;
-                                mVolumeMask.set(ptr);
+                    for (iX = iXMin; iX < iXMax; iX = iX + 0.1f) {
+                        
+                        for (iY = iYMin; iY < iYMax; iY = iY + 0.1f) {
+                            iZ = getIntersectZ(kV0, kV1, kV2, iX, iY);
+                            
+                            if (iZ != -1) {
+                                ptr = getIndex( (int) Math.round(iX), (int) Math.round(iY),
+                                                (int) Math.round(iZ));
+                                
+                                if ( (ptr >= 0) && (ptr < end)) {
+                                    kMask.set(ptr);
+                                    akMaskColor[ptr] = kTriColor;
+                                    mVolumeMask.set(ptr);
+                                }
                             }
                         }
                     }
                 }
             }
-
-            // compute centroid of the surface voxels to act as flood fill seed
-            float fXC = 0.0f, fYC = 0.0f, fZC = 0.0f;
-            int iCount = 0;
-
-            for (iZ = 1; iZ < (m_iZBound - 1); iZ++) {
-
-                for (iY = 1; iY < (m_iYBound - 1); iY++) {
-
-                    for (iX = 1; iX < (m_iXBound - 1); iX++) {
-
-                        if (kMask.get(getIndex( (int) iX, (int) iY, (int) iZ))) {
-                            fXC += (float) iX;
-                            fYC += (float) iY;
-                            fZC += (float) iZ;
-                            iCount++;
+            if ( !bUseImageMask )
+            {
+                // compute centroid of the surface voxels to act as flood fill seed
+                float fXC = 0.0f, fYC = 0.0f, fZC = 0.0f;
+                int iCount = 0;
+                
+                for (iZ = 1; iZ < (m_iZBound - 1); iZ++) {
+                    
+                    for (iY = 1; iY < (m_iYBound - 1); iY++) {
+                        
+                        for (iX = 1; iX < (m_iXBound - 1); iX++) {
+                            
+                            if (kMask.get(getIndex( (int) iX, (int) iY, (int) iZ))) {
+                                fXC += (float) iX;
+                                fYC += (float) iY;
+                                fZC += (float) iZ;
+                                iCount++;
+                            }
                         }
                     }
                 }
+
+                float fInvCount = 1.0f / iCount;
+                
+                fXC *= fInvCount;
+                fYC *= fInvCount;
+                fZC *= fInvCount;
+                
+                floodFill( (int) fXC, (int) fYC, (int) fZC);
             }
-
-            float fInvCount = 1.0f / iCount;
-
-            fXC *= fInvCount;
-            fYC *= fInvCount;
-            fZC *= fInvCount;
-
-            floodFill( (int) fXC, (int) fYC, (int) fZC);
-
             kMesh[mIndex].setTextureCoordinates( 0, 0, akTexCoords );
             kMesh[mIndex].setTextureCoordinateIndices( 0, 0, aiConnect );           
             if ( bCreateVertexColors && kMesh[mIndex].getCapability(GeometryArray.ALLOW_COLOR_WRITE) )
@@ -437,20 +439,18 @@ public class SurfaceMask
                 kMesh[mIndex].setColorUpdate();
             }
         }
-        int v = 0;
-
-        for (int i = 0; i < mVolumeMask.size(); i++) {
-
-            if (mVolumeMask.get(i)) {
-                v++;
-            }
-        }
-
-        System.err.println("voxels = " + v);
-        System.err.println("volume = " + (v * resols[0] * resols[1] * resols[2]));
 
         if ( !bUseImageMask )
         {
+            int v = 0;
+            for (int i = 0; i < mVolumeMask.size(); i++) {
+                if (mVolumeMask.get(i)) {
+                    v++;
+                }
+            }
+            System.err.println("voxels = " + v);
+            System.err.println("volume = " + (v * resols[0] * resols[1] * resols[2]));
+
             Color4f color = new Color4f( surColor.x, surColor.y, surColor.z, 1 - fOpacity );
             imageA.addSurfaceMask( index, kMask, akMaskColor, color );
         }
@@ -491,49 +491,25 @@ public class SurfaceMask
             float value = imageA.getFloatTriLinearBounds( kModelPoint.x,
                                                           kModelPoint.y,
                                                           kModelPoint.z ) / 255.0f;
-            kColor = new Color4f( value, value, value, fTransparency );
+            kColor.x = value;
+            kColor.y = value;
+            kColor.z = value;
+            kColor.w = fTransparency;
         }
         else
         {
-            int[] iterFactors = imageA.getVolumeIterationFactors( );
-            int index  =  (int)((iterFactors[0] * kModelPoint.x) +
-                                (iterFactors[1] * kModelPoint.y) +
-                                (iterFactors[2] * kModelPoint.z)   ) * 4;
-
-            kColor.w = imageA.getFloat( index + 0 ) / 255.0f;
-            kColor.x = imageA.getFloat( index + 1 ) / 255.0f;
-            kColor.y = imageA.getFloat( index + 2 ) / 255.0f;
-            kColor.z = imageA.getFloat( index + 3 ) / 255.0f;
-        }
-        return kColor;
-    }
-
-    /**
-     * Given a triangle vertex point from a ModelTriangleMesh, determines the
-     * corresponding ModelImage index point, and recreates the color that
-     * would have originally been assigned to the vertex.
-     * @param kTrianglePoint ModelTriangleMesh point in ModelImage coordinates
-     * @return original color of the triangle point.
-     */
-    public Color4f getModelImageColorNonScaled( ModelImage imageA, float fTransparency, Point3f kModelPoint )
-    {
-        Color4f kColor = new Color4f();
-        if ( !imageA.isColorImage() )
-        {
-            float value = imageA.getFloat( (int)kModelPoint.x, (int)kModelPoint.y, (int)kModelPoint.z );
-            kColor = new Color4f( value, value, value, fTransparency );
-        }
-        else
-        {
-            int[] iterFactors = imageA.getVolumeIterationFactors( );
-            int index  =  (int)((iterFactors[0] * kModelPoint.x) +
-                                (iterFactors[1] * kModelPoint.y) +
-                                (iterFactors[2] * kModelPoint.z)   ) * 4;
-
-            kColor.w = imageA.getFloat( index + 0 );
-            kColor.x = imageA.getFloat( index + 1 );
-            kColor.y = imageA.getFloat( index + 2 );
-            kColor.z = imageA.getFloat( index + 3 );
+            kColor.w = imageA.getFloatTriLinearBounds( kModelPoint.x,
+                                                       kModelPoint.y,
+                                                       kModelPoint.z, 0 ) / 255.0f;
+            kColor.x = imageA.getFloatTriLinearBounds( kModelPoint.x,
+                                                       kModelPoint.y,
+                                                       kModelPoint.z, 1 ) / 255.0f;
+            kColor.y = imageA.getFloatTriLinearBounds( kModelPoint.x,
+                                                       kModelPoint.y,
+                                                       kModelPoint.z, 2 ) / 255.0f;
+            kColor.z = imageA.getFloatTriLinearBounds( kModelPoint.x,
+                                                       kModelPoint.y,
+                                                       kModelPoint.z, 3 ) / 255.0f;
         }
         return kColor;
     }
@@ -557,7 +533,7 @@ public class SurfaceMask
      * @param  iY  the y-value of the seed point for the fill
      * @param  iZ  the z-value of the seed point for the fill
      */
-    protected void floodFill(int iX, int iY, int iZ) {
+    private void floodFill(int iX, int iY, int iZ) {
 
         // Allocate the maximum amount of space needed.   An empty stack has
         // iTop == -1.
@@ -684,7 +660,7 @@ public class SurfaceMask
      *
      * @return  the 1D array index corresponding to (iX,iY,iZ)
      */
-    protected final int getIndex(int iX, int iY, int iZ) {
+    private final int getIndex(int iX, int iY, int iZ) {
         return iX + (m_iXBound * (iY + (m_iYBound * iZ)));
 
     }
@@ -703,7 +679,7 @@ public class SurfaceMask
      *
      * @return  the x-value of the intersection
      */
-    protected float getIntersectX(Point3f kV0, Point3f kV1, Point3f kV2,
+    private float getIntersectX(Point3f kV0, Point3f kV1, Point3f kV2,
                                   float iY, float iZ) {
 
         // Compute the intersection, if any, by calculating barycentric
@@ -767,7 +743,7 @@ public class SurfaceMask
      *
      * @return  the y-value of the intersection
      */
-    protected float getIntersectY(Point3f kV0, Point3f kV1, Point3f kV2,
+    private float getIntersectY(Point3f kV0, Point3f kV1, Point3f kV2,
                                   float iX, float iZ) {
 
         // Compute the intersection, if any, by calculating barycentric
@@ -831,7 +807,7 @@ public class SurfaceMask
      *
      * @return  the z-value of the intersection
      */
-    protected float getIntersectZ(Point3f kV0, Point3f kV1, Point3f kV2,
+    private float getIntersectZ(Point3f kV0, Point3f kV1, Point3f kV2,
                                   float iX, float iY) {
 
         // Compute the intersection, if any, by calculating barycentric

@@ -56,9 +56,6 @@ public class SurfaceAttributes {
      */
     private boolean mIsClodMesh;
 
-    /** VOI point. */
-    private boolean mIsVOIPt = false;
-
     /** Name of surface displayed in list box. */
     private String mName;
 
@@ -70,9 +67,6 @@ public class SurfaceAttributes {
      * PolygonAttribute.POLYGON_LINE, or PolygonAttribute.POLYGON_POINT.
      */
     private int mPolygonMode;
-
-    /** Shininess of surface. */
-    private int mShininess;
 
     /** Surface subtree, holds all the Shape3D objects that make up the
      * surface. */
@@ -113,14 +107,12 @@ public class SurfaceAttributes {
         this.mSurfaceBranchGroup = null;
         this.mFullPath = fullPath;
         this.mName = name;
-        this.mShininess = 64;
         this.mLevelDetail = 100;
         this.mPolygonMode = PolygonAttributes.POLYGON_FILL;
         this.mNumberTriangles = triangles;
         this.mVolume = volume;
         this.mArea = area;
         this.mCenter = center;
-        this.mIsVOIPt = false;
         this.mIsClodMesh = false;
         this.mSurfaceMask = null;
         /* sets the default color */
@@ -268,15 +260,6 @@ public class SurfaceAttributes {
     public BitSet getMask()
     {
         return mSurfaceMask;
-    }
-
-    /**
-     * Returns true is the mesh described in the SurfaceAttributes is a VOI.
-     * @return mIsVOIPt, true when the mesh is a VOI, false otherwise.
-     */
-    public boolean getIsVOIPt()
-    {
-        return mIsVOIPt;
     }
 
     /**

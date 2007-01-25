@@ -62,131 +62,210 @@ public class JPanelSurface extends JPanelRendererBase
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** Record the current active index of light bulb, which is being picked. */
-    private int activeLightBulbIndex;
+    // Interface Components in lay-out order:
+    /** The scroll pane holding the panel content. Useful when the screen is
+     * small. */
+    private JScrollPane scroller;
 
-    /** The area label. */
-    private JLabel areaLabel;
-
-    /** Displays the area of triangle. */
-    private JTextField areaText;
-
-    /** The color button, which calls a color chooser. */
-    private JButton colorButton;
-
-    /** Color chooser for when the user wants to change the color of the surface. */
-    private ViewJColorChooser colorChooser;
-
-    /** The color button label. */
-    private JLabel colorLabel;
-
-    /** The polygon mode combo box label. */
-    private JLabel comboLabel;
-
-    /** Current surface index being highlighted. */
-    private int currentIndex;
-
+    // Top tool-bar surface smooth, decimate, and save surface options:
+    /** Smooth button. */
+    private JButton smooth1Button, smooth2Button, smooth3Button;
     /** Decimate button. */
     private JButton decimateButton;
-
-    /** The level of detail slider label. */
-    private JLabel detailLabel;
-
-    /** Level of detail slider. */
-    private JSlider detailSlider;
-
-    /** The labels below the detail slider. */
-    private JLabel[] detailSliderLabels;
-
-    /** flag indicates arbitrary clpping bounding frame being picked. */
-    private boolean findArbitraryClipping = false;
-
-    /** flag indicates the probe being picked. */
-    private boolean findProbe = false;
-
-    /**
-     * If only a single surface is selected in the list box, this member stores the index into the list for the selected
-     * item. If no items are selected or if multiple items are selected, the value is -1.
-     */
-    private int iSelect = -1;
-
     /** Save surface button. */
     private JButton levelSButton, levelVButton, levelWButton, levelXMLButton;
 
+    // Paint tool-bar (containted in the SurfacePaint class)
+
+    // Surface list:
+    /** The list box in the dialog for surfaces. */
+    private JList surfaceList;
+
+    /** The color button, which calls a color chooser. */
+    private JButton colorButton;
+    /** The color button label. */
+    private JLabel colorLabel;
+    /** Color chooser for when the user wants to change the color of the surface. */
+    private ViewJColorChooser colorChooser;
+    /** The material options button, which launches the material editor window. */
+    private JButton m_kAdvancedMaterialOptionsButton;
+    /** Stereo render button, launches the JStereoWindow for viewing the ModelTriangleMesh in stereo:. */
+    private JButton m_kStereoButton;
+    /** Opens SurfaceTexture dialog: */
+    private JButton m_kSurfaceTextureButton;
+
+    // Opacity labels/slider
+    /** The opacity slider label. */
+    private JLabel opacityLabel;
+    /** Opacity slider, not enabled yet. */
+    private JSlider opacitySlider;
+    /** The labels below the opacity slider. */
+    private JLabel[] opacitySliderLabels;
+
+    // Mesh statistics: Number of triangles, volume, surface area:
+    /** The number of triangles label. */
+    private JLabel triangleLabel;
+    /** Displays the number of triangles. */
+    private JTextField triangleText;
+    /** The volume label. */
+    private JLabel volumeLabel;
+    /** Displays the volume of triangle. */
+    private JTextField volumeText;
+    /** The area label. */
+    private JLabel areaLabel;
+    /** Displays the area of triangle. */
+    private JTextField areaText;
+
+    // Level of detail labels/slider:
+    /** The level of detail slider label. */
+    private JLabel detailLabel;
+    /** Level of detail slider. */
+    private JSlider detailSlider;
+    /** The labels below the detail slider. */
+    private JLabel[] detailSliderLabels;
+
+    // Polygon mode selection box:
+    /** The polygon mode combo box label. */
+    private JLabel comboLabel;
+    /** The combo box for the polygon mode to display. */
+    private JComboBox polygonModeCB;
+
+    // Rendering/Picking options check boxes:
+    /** Check Box for surface pickable. */
+    private JCheckBox surfacePickableCB;
+    /** Check Box for surface clpping of the volume render. */
+    private JCheckBox surfaceClipCB;
+    /** Check Box for surface back face culling. */
+    private JCheckBox surfaceBackFaceCB;
+    /** Check Box for surface transparency. */
+    private JCheckBox surfaceTransparencyCB;
+
+
+    // Light Interface:
+    /** Light dialog for when the user clicks the light button. */
+    private JPanelLights m_kLightsControl;
     /**
-     * An array of eight lights that can be used for illuminating the surfaces in the scene. The lights at indices 0 and
-     * 7 are initially enabled; the other lights are initially disabled. The default positions for the lights are at the
-     * 8 corners of the cube [0,1]^3. Light 0 is at (0,0,0) and light 7 is at (1,1,1), thereby providing suitable
-     * lighting for the visible surfaces in the scene. Other lights can be enabled as desired through the light
-     * attribute dialog.
+     * An array of eight lights that can be used for illuminating the surfaces
+     * in the scene. The lights at indices 0 and 7 are initially enabled; the
+     * other lights are initially disabled. The default positions for the
+     * lights are at the 8 corners of the cube [0,1]^3. Light 0 is at (0,0,0)
+     * and light 7 is at (1,1,1), thereby providing suitable lighting for the
+     * visible surfaces in the scene. Other lights can be enabled as desired
+     * through the light attribute dialog.
      */
     private Light[] lightArray;
-
     /** The branch groups to which the lights are attached. */
     private BranchGroup[] lightArrayBG;
-
     /** The structure for the light bulbs. */
     private ViewJComponentLightBulbs lightBulbs;
-
-    /** Surface list panel. */
-    private JPanel listPanel;
-
+    /** Record the current active index of light bulb, which is being picked. */
+    private int activeLightBulbIndex;
     /**
-     * The index of the lights in JPanelLights is different from the order maintained here. This array maps from our
-     * index to JPanelLights' index.
+     * The index of the lights in JPanelLights is different from the order
+     * maintained here. This array maps from our index to JPanelLights' index.
      */
     private final int[] m_aiMapIndexToJPanelLightsIndex;
-
     /**
-     * The index of the lights in JPanelLights is different from the order maintained here. This array maps from
-     * JPanelLights' index to our index.
+     * The index of the lights in JPanelLights is different from the order
+     * maintained here. This array maps from JPanelLights' index to our index.
      */
     private final int[] m_aiMapJPanelLightsIndexToIndex;
 
-    /** The description of the lights so they can be duplicated in the "Advanced Material Properties" dialog: */
+    /** The description of the lights so they can be duplicated in the
+     * "Advanced Material Properties" dialog: */
     private GeneralLight[] m_akLights;
 
-    /** The material options button, which launches the material editor window. */
-    private JButton m_kAdvancedMaterialOptionsButton;
 
-    /** Opens TexturePaint dialog: */
-    private JButton m_kTexturePaintButton;
+    // Scene Graph management:
+    /** The branch group that holds all the surfaces together. */
+    private BranchGroup surfaceRootBG;
+    /** The transform group to which the model lights are attached. */
+    private TransformGroup surfaceRootTG;
+    /** The parent object that holds necessary the structures to which the
+     * surfaces will be added and modified. */
+    private SurfaceRender parentScene;
+    /**
+     * The PickCanvas object that ties together the canvas and the surfaces
+     * branch group to allow pick operations on the scene.
+     */
+    private PickCanvas pickCanvas;
 
-    /** Opens SurfaceTexture dialog: */
-    private JButton m_kSurfaceTextureButton;
-    
     /** For drawing the geodesic lines on the triangle mesh:. */
     private BranchGroup m_kGeodesicGroup = null;
-
-    /** Light dialog for when the user clicks the light button. */
-    private JPanelLights m_kLightsControl;
 
     /** For drawing the flythru path in the triangle mesh:. */
     private TransformGroup m_kPathPositionTG = null;
 
-    /** Stereo render button, launches the JStereoWindow for viewing the ModelTriangleMesh in stereo:. */
-    private JButton m_kStereoButton;
+    /** Sphere showing where the user clicked in the surface. */
+    private Sphere sphere;
+    /** Branch group parent of the sphere. */
+    private BranchGroup sphereBranch;
+    /** Flag indicating if the sphere is currently showing. */
+    private boolean sphereShowing = false;
+    /** Transform group parent of the sphere. */
+    private TransformGroup sphereTransform;
 
-    /** DOCUMENT ME! */
-    private ModelTriangleMesh[] m_kSurface = null;
 
-    /** Scroll panel that holding the all the control components. */
-    private JPanel mainScrollPanel;
+    /** Static light hehavior branch group. */
+    private BranchGroup staticLightBehaviorBG;
+    /** The branch group that holds the static light bulb. */
+    private BranchGroup staticLightBG;
+    /** The structure for the static light bulb. */
+    private ViewJComponentLightBulbs staticLightBulb;
+    /** The transform group that holds the static light branch group. */
+    private TransformGroup staticLightTG;
+    /** Static light translate behavior. */
+    private MouseTranslate staticLightTranslate;
+    /** Static light zoom behavior. */
+    private MouseZoom staticLightZoom;
 
-    /** The largest of xBox, yBox, and zBox. */
+
+    // For Mouse Recording:
+    /** Indicator for the opacity slider moves. */
+    private boolean setSurfaceOpacityFlag;
+    /** Surface opacity changes event queue. */
+    private MouseEventVector surfaceOpacityEvents;
+    /** Surface volume opacity. */
+    private int surfaceOpacitySlice;
+    /** Counter for surface opacity slider moves. */
+    private int surfaceSliderCount;
+    /** Current surface index being highlighted. */
+    private int currentIndex;
+
+
+    // Picking Behavior:
+    /** flag indicates arbitrary clpping bounding frame being picked. */
+    private boolean findArbitraryClipping = false;
+    /** flag indicates the probe being picked. */
+    private boolean findProbe = false;
+
+
+    // Other Data members:
+
+    /** The directory where a surface file was last loaded/saved. Defaults to
+     * MIPAV default directory. */
+    private String surfaceDirectoryName;
+
+    /** A list of the surfaces. The elements are of type SurfaceAttributes. */
+    private Vector surfaceVector;
+
+    /**
+     * If only a single surface is selected in the list box, this member
+     * stores the index into the list for the selected item. If no items are
+     * selected or if multiple items are selected, the value is -1.
+     */
+    private int iSelect = -1;
+
+    /** Surface mask. */
+    private SurfaceMask mSurfaceMask = new SurfaceMask();
+
+    /** Paint interface/algorithm for allowing the user to interactively paint
+     * the vertices of the ModelTriangleMesh */
+    private SurfacePaint mSurfacePaint = null;
+
+    /** ModelImage max dimension: (Extents * resolutions) */
     private float maxBox;
 
-    /** The opacity slider label. */
-    private JLabel opacityLabel;
-
-    /** Opacity slider, not enabled yet. */
-    private JSlider opacitySlider;
-
-    /** The labels below the opacity slider. */
-    private JLabel[] opacitySliderLabels;
-
-    /** The parent object that holds necessary the structures to which the surfaces will be added and modified. */
-    private SurfaceRender parentScene;
 
     // TODO: intensity/attenuation vars not used right now, alexandra may use them in the future though
     /**
@@ -221,119 +300,6 @@ public class JPanelSurface extends JPanelRendererBase
      */
     // private float fMaxCAttenuate = 1.0f / minIntensity;
 
-    /**
-     * The PickCanvas object that ties together the canvas and the surfaces branch group to allow pick operations on the
-     * scene.
-     */
-    private PickCanvas pickCanvas;
-
-    /** The combo box for the polygon mode to display. */
-    private JComboBox polygonModeCB;
-
-    /** Control panel on the right. */
-    private JPanel rightPanel;
-
-    /** The scroll pane holding the panel content. Useful when the screen is small. */
-    private JScrollPane scroller;
-
-    /** Indicator for the opacity slider moves. */
-    private boolean setSurfaceOpacityFlag;
-
-    /** Smooth button. */
-    private JButton smooth1Button, smooth2Button, smooth3Button;
-
-    /** Sphere showing where the user clicked in the surface. */
-    private Sphere sphere;
-
-    /** Branch group parent of the sphere. */
-    private BranchGroup sphereBranch;
-
-    /** Flag indicating if the sphere is currently showing. */
-    private boolean sphereShowing = false;
-
-    /** Transform group parent of the sphere. */
-    private TransformGroup sphereTransform;
-
-    /** Static light hehavior branch group. */
-    private BranchGroup staticLightBehaviorBG;
-
-    /** The branch group that holds the static light bulb. */
-    private BranchGroup staticLightBG;
-
-    /** The structure for the static light bulb. */
-    private ViewJComponentLightBulbs staticLightBulb;
-
-    /** The transform group that holds the static light branch group. */
-    private TransformGroup staticLightTG;
-
-    /** Static light translate behavior. */
-    private MouseTranslate staticLightTranslate;
-
-    /** Static light zoom behavior. */
-    private MouseZoom staticLightZoom;
-
-    /** Surface color. */
-    private Color surColor;
-
-    /** Check Box for surface transparency. */
-    private JCheckBox surfaceTransparencyCB;
-
-    /** Check Box for surface back face culling. */
-    private JCheckBox surfaceBackFaceCB;
-
-    /** Check Box for surface clpping of the volume render. */
-    private JCheckBox surfaceClipCB;
-
-    /** The directory where a surface file was last loaded/saved. Defaults to MIPAV default directory. */
-    private String surfaceDirectoryName;
-
-    /** The list box in the dialog for surfaces. */
-    private JList surfaceList;
-
-    /** Surface mask. */
-    private SurfaceMask mSurfaceMask = new SurfaceMask();
-
-    /** Surface opacity changes event queue. */
-    private MouseEventVector surfaceOpacityEvents;
-
-    /** Surface volume opacity. */
-    private int surfaceOpacitySlice;
-
-    /** Check Box for surface pickable. */
-    private JCheckBox surfacePickableCB;
-
-    /** The branch group that holds all the surfaces together. */
-    private BranchGroup surfaceRootBG;
-
-    /** The transform group to which the model lights are attached. */
-    private TransformGroup surfaceRootTG;
-
-    /** Counter for surface opacity slider moves. */
-    private int surfaceSliderCount;
-
-    /** A list of the surfaces. The elements are of type SurfaceAttributes. */
-    private Vector surfaceVector;
-
-    /** Surface button toolbar. */
-    private JToolBar toolBar;
-
-    /** The number of triangles label. */
-    private JLabel triangleLabel;
-
-    /** Displays the number of triangles. */
-    private JTextField triangleText;
-
-    /** The volume label. */
-    private JLabel volumeLabel;
-
-    /** Displays the volume of triangle. */
-    private JTextField volumeText;
-
-    /** Paint interface/algorithm for allowing the user to interactively paint
-     * the vertices of the ModelTriangleMesh */
-    private SurfacePaint mSurfacePaint = null;
-
-
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -361,7 +327,12 @@ public class JPanelSurface extends JPanelRendererBase
 
         super(parent);
         parentScene = parent;
-        maxBox = Math.max(xBox, Math.max(yBox, zBox));
+        ModelImage imageA = parentScene.getImageA();
+        int[] extents = imageA.getExtents();
+        float[] resols = imageA.getFileInfo()[0].getResolutions();
+        maxBox = Math.max( extents[0] * resols[0], Math.max(extents[1] * resols[1], extents[2] * resols[2]));
+
+
         surfaceRootTG = surfaceRoot;
 
         surfaceRootBG = new BranchGroup();
@@ -459,56 +430,70 @@ public class JPanelSurface extends JPanelRendererBase
 
         // Set up the lights for the objects
         setupLights(surfaceRoot);
+
         canvas.addMouseListener(this);
         canvas.addMouseMotionListener(this);
 
         surfaceVector = new Vector();
-
-        Appearance app = new Appearance();
-        Material mat = new Material(new Color3f(Color.black), new Color3f(Color.white), new Color3f(Color.black),
-                                    new Color3f(Color.black), 80f);
-
-        mat.setCapability(Material.ALLOW_COMPONENT_WRITE);
-        app.setMaterial(mat);
-        app.setCapability(Appearance.ALLOW_MATERIAL_READ);
-        app.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
-        app.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
-        app.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
-        app.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
-        app.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
-
-        TransparencyAttributes tap = new TransparencyAttributes();
-        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
-        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-        app.setTransparencyAttributes(tap);
-
-        PolygonAttributes pAttr = new PolygonAttributes();
-        pAttr.setCullFace(PolygonAttributes.CULL_NONE);
-        pAttr.setPolygonMode(PolygonAttributes.POLYGON_LINE);
-        app.setPolygonAttributes(pAttr);
-
-        sphere = new Sphere(0.1f, Sphere.ENABLE_APPEARANCE_MODIFY, 8, app);
-        sphere.getShape().setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-        sphere.getShape().setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-        sphere.getShape().setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
-        sphere.getShape().setCapability(Shape3D.ALLOW_GEOMETRY_READ);
-        sphere.getShape().setCapability(Geometry.ALLOW_INTERSECT);
-        sphere.getShape().setPickable(false);
-        sphere.getShape().setAppearanceOverrideEnable(true);
-        sphereTransform = new TransformGroup();
-        sphereTransform.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
-        sphereTransform.setCapability(Group.ALLOW_CHILDREN_READ);
-        sphereTransform.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        sphereTransform.addChild(sphere);
-        sphereBranch = new BranchGroup();
-        sphereBranch.setCapability(Group.ALLOW_CHILDREN_READ);
-        sphereBranch.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        sphereBranch.setCapability(BranchGroup.ALLOW_DETACH);
-        sphereBranch.addChild(sphereTransform);
-
         mSurfacePaint = new SurfacePaint( this, parentScene );
+
+        initSphere();
         init();
     }
+
+    //~ Dispose --------------------------------------------------------------------------------------------------------
+    /**
+     * Dispose memory.
+     */
+    public void dispose() {
+        parentScene = null;
+        surfaceVector = null;
+        levelSButton = null;
+        levelVButton = null;
+        levelWButton = null;
+        decimateButton = null;
+        polygonModeCB = null;
+        surfaceList = null;
+        colorButton = null;
+        colorLabel = null;
+        m_kAdvancedMaterialOptionsButton = null;
+        m_kSurfaceTextureButton = null;
+        m_kStereoButton = null;
+        opacityLabel = null;
+        triangleLabel = null;
+        volumeLabel = null;
+        areaText = null;
+        detailLabel = null;
+        comboLabel = null;
+        detailSliderLabels = null;
+        opacitySliderLabels = null;
+        triangleText = null;
+        volumeText = null;
+        detailSlider = null;
+        opacitySlider = null;
+        colorChooser = null;
+        m_kLightsControl = null;
+        surfacePickableCB = null;
+        surfaceClipCB = null;
+        surfaceBackFaceCB = null;
+        surfaceTransparencyCB = null;
+        lightArray = null;
+        pickCanvas = null;
+        surfaceRootBG = null;
+        staticLightBG = null;
+        staticLightTG = null;
+        lightBulbs = null;
+        staticLightBulb = null;
+        sphere = null;
+        sphereTransform = null;
+        sphereBranch = null;
+        staticLightBehaviorBG = null;
+        staticLightTranslate = null;
+        staticLightZoom = null;
+        surfaceOpacityEvents = null;
+        surfaceDirectoryName = null;
+    }
+
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -537,13 +522,6 @@ public class JPanelSurface extends JPanelRendererBase
             displayImageAsTexture( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
         } else if (command.equals("AdvancedMaterialOptions")) {
             displayAdvancedMaterialOptions( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
-        } else if (command.equals("TexturePaint")) {
-            if ( m_kTexturePaintButton.isSelected() )
-            {
-                parentScene.getParentFrame().actionPerformed( new ActionEvent( m_kSurfaceTextureButton, 0, "SurfaceTexture" ) );
-            }
-            mSurfacePaint.setPickCanvas( pickCanvas );
-            mSurfacePaint.setPaintMode( SurfacePaint.TEXTURE );
         } else if (command.equals("SurfaceTexture")) {
             parentScene.getParentFrame().actionPerformed( new ActionEvent( m_kSurfaceTextureButton, 0, "SurfaceTexture" ) );
         } else if (command.equals("ChangeLight")) {
@@ -568,25 +546,11 @@ public class JPanelSurface extends JPanelRendererBase
                    command.equals("LevelS") ||
                    command.equals("LevelV") )
         {
-            FileSurface fileSurface = new FileSurface();
-            fileSurface.saveSurfaces( parentScene.getImageA(),
+            FileSurface.saveSurfaces( parentScene.getImageA(),
                                       getSelectedSurfaces( surfaceList.getSelectedIndices() ),
                                       command );
         }
-        else if (command.equals("saveSurface")) {
-
-            // save surface
-            int selected = surfaceList.getSelectedIndex();
-            ModelTriangleMesh[] meshes = ((SurfaceAttributes)surfaceVector.get(selected)).getMesh();
-            Color4f color = ((SurfaceAttributes)surfaceVector.get(selected)).getColor();
-            String fName = ((SurfaceAttributes) surfaceVector.get(selected)).getName();
-
-            FileSurface fileSurface = new FileSurface();
-            fileSurface.saveSingleMesh(fName, parentScene.getImageA(), meshes, command.equals("LevelS"), color);
-
-            // smooth surface
-            actionPerformed(new ActionEvent(this, 1, "Smooth3"));
-        } else if (command.equals("Smooth")) {
+        else if (command.equals("Smooth")) {
             smoothSurface( getSelectedSurfaces( surfaceList.getSelectedIndices() ), JDialogSmoothMesh.SMOOTH1 );
         } else if (command.equals("Smooth2")) {
             smoothSurface( getSelectedSurfaces( surfaceList.getSelectedIndices() ), JDialogSmoothMesh.SMOOTH2 );
@@ -598,6 +562,231 @@ public class JPanelSurface extends JPanelRendererBase
 
     }
 
+    /**
+     * The override necessary to be a ChangeListener for a JSlider. When a change occurs, the user has requested that
+     * the level of detail be changed for the currently active surface. The slider range is [0,100] and is treated as a
+     * percent of maximum level of detail. A change has no effect on ModelTriangleMesh objects, but it does change the
+     * level of detail for an ModelClodMesh object. The number of triangles is also updated.
+     *
+     * @param  event  The change event.
+     */
+    public void stateChanged(ChangeEvent event) {
+
+        if (event.getSource() == detailSlider) {
+
+            if (detailSlider.getValueIsAdjusting()) {
+                // Too many LOD changes occur if you always get the slider
+                // value.  Wait until the user stops dragging the slider.
+
+                // Maybe not. Comment out the next line to have the surface update quickly.
+                // If the CLOD mesh holds a surface over time one could view the surface evolution !!!!
+                return;
+            }
+
+            // value in [0,100], corresponds to percent of maximum LOD
+            int iValue = detailSlider.getValue();
+
+            // construct the lists of items whose LODs need to be changed
+            int[] aiSelected = surfaceList.getSelectedIndices();
+            for (int i = 0; i < aiSelected.length; i++) {
+
+                int numTriangles = 0;
+                float volume = 0;
+                float area = 0;
+                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).getBranch();
+
+                ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setLevelDetail( iValue );
+                
+                for (int j = 0; j < root.numChildren(); j++) {
+                    Shape3D shape = (Shape3D) root.getChild(j);
+                    ModelTriangleMesh kMesh = (ModelTriangleMesh) shape.getGeometry(0);
+                    
+                    if (kMesh.getGenerator() != null) {
+                        
+                        // clod mesh surface was selected for LOD changes
+                        ModelClodMesh kClod = (ModelClodMesh) kMesh.getGenerator();
+                        int iLOD = (int) (iValue * kClod.getMaximumLOD() / 100.0f);
+                        
+                        kClod.setLOD(iLOD);
+                        numTriangles += kClod.getMesh().getIndexCount();
+                        volume += kClod.getMesh().volume();
+                        area += kClod.getMesh().area();
+                        // update the Shape3D parent
+                        
+                        shape.insertGeometry(kClod.getMesh(), 0);
+                        shape.removeGeometry(1);
+                    } else {
+                        numTriangles += kMesh.getIndexCount();
+                        volume += kMesh.volume();
+                        area += kMesh.area();
+                    }
+                }
+                numTriangles /= 3;
+                triangleText.setText("" + numTriangles);
+                
+                // One length across the extracted surface changes from -1 to 1
+                // while one length across the actual volume changes by ((dim-1)*res)max
+                volumeText.setText("" + (volume * maxBox * maxBox * maxBox / 8.0f));
+                areaText.setText(String.valueOf(area * maxBox * maxBox));
+                ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setNumberTriangles( numTriangles );
+                ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setVolume( volume );
+                ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setArea( area );
+            }
+        }
+        else if (event.getSource() == opacitySlider) {
+             // change the opacity for the selected items
+            JPanelMouse myMouseDialog = ((SurfaceRender) parentScene).getMouseDialog();
+
+             surfaceOpacitySlice = opacitySlider.getValue();
+
+            if (myMouseDialog.isRecording() && setSurfaceOpacityFlag) {
+                surfaceOpacityEvents.setName("surfaceOpacitySlider" + currentIndex);
+                myMouseDialog.listModel.addElement("surfaceOpacitySlider" + currentIndex);
+                setSurfaceOpacityFlag = false;
+            }
+            if (myMouseDialog.isRecording()) {
+                surfaceOpacityEvents.add(event, parentScene.getSceneState());
+            }
+
+            int[] aiSelected = surfaceList.getSelectedIndices();
+            SurfaceAttributes[] surfaces = getSelectedSurfaces( aiSelected );
+            int iValue = opacitySlider.getValue();
+            for (int i = 0; i < surfaces.length; i++) {
+                surfaces[i].setOpacity(1 - (iValue / 100.0f));
+                Color4f newColor = new Color4f( surfaces[i].getColor().x,
+                                                surfaces[i].getColor().y,
+                                                surfaces[i].getColor().z,
+                                                1 - surfaces[i].getOpacity() );
+                /* Change the mask color: */
+                parentScene.getImageA().addSurfaceMask( aiSelected[i], null, null, newColor );
+                /* update the surface renderer: */
+                ((SurfaceRender) renderBase).updateData();
+
+                BranchGroup root = surfaces[i].getBranch();
+                Shape3D shape = (Shape3D) root.getChild(0);
+                Appearance appearance = shape.getAppearance();
+                appearance.getTransparencyAttributes().setTransparency(1 - (iValue / 100.0f)); // 0 = Opaque
+            }
+        }
+    }
+
+
+    /**
+     * The override necessary to be a ListSelectionListener. This callback is executed whenever the user selects a new
+     * item (or items) in the list box. If a single item is selected, then the selection index is remembered in <code>
+     * iSelect</code> and the color button, detail slider, and polygon mode are initialized with the appropriate values
+     * corresponding to the selected surface. If multiple items are selected, then the selection index is -1 and the
+     * color button is set to the background color and disabled. The slider and polygon mode are set to the values found
+     * in the minimum selected surface but are still enabled. The dialog does not support changing the color for
+     * multiple surfaces at one time but does support changing level of detail and polygon mode for multiple surfaces at
+     * one time (to the same value).
+     *
+     * @param  kEvent  The list selection event.
+     */
+    public void valueChanged(ListSelectionEvent kEvent) {
+
+        // Let getColorChange know that only the selection is changing,
+        // not the material colors for the selected surface.
+        iSelect = -1;
+
+        try {
+            JList kList = (JList) kEvent.getSource();
+            int[] indices = kList.getSelectedIndices();
+
+            int index = kList.getMinSelectionIndex();
+            SurfaceAttributes attributes;
+
+            if (index != -1) {
+                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(index)).getBranch();
+
+                surfacePickableCB.setSelected(root.getPickable());
+                surfaceBackFaceCB.setSelected(root.getCollidable());
+
+                Shape3D[] shapes = ((SurfaceAttributes) surfaceVector.get(index)).getShape();
+                for ( int j = 0; j < shapes.length; j++ )
+                {
+                    
+                    surfaceTransparencyCB.setSelected( shapes[j].getAppearance().getTransparencyAttributes().getTransparencyMode() == TransparencyAttributes.BLENDED );
+                }
+
+                if (((SurfaceRender) parentScene).getDisplayMode3D()) {
+                    surfaceClipCB.setSelected(root.getAlternateCollisionTarget());
+                }
+            }
+
+            if (indices.length > 0) {
+                attributes = (SurfaceAttributes) surfaceVector.get(index);
+
+                if (indices.length == 1) {
+                    iSelect = kList.getMinSelectionIndex();
+
+                    // a single surface was selected, set edit text to its color
+                    Color4f color = attributes.getColor();
+
+                    colorButton.setBackground(color.get());
+                    setElementsEnabled(true);
+                } else {
+
+                    // multiple surfaces were selected (not all colors the same)
+                    colorButton.setBackground(getBackground());
+                    colorButton.setEnabled(false);
+                    colorLabel.setEnabled(false);
+
+                }
+
+                if ( polygonIndexToMode( polygonModeCB.getSelectedIndex() ) !=
+                     ((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode())
+                {
+                    int mode = 0;
+
+                    switch (((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode()) {
+
+                    case PolygonAttributes.POLYGON_FILL:
+                        mode = 0;
+                        break;
+
+                    case PolygonAttributes.POLYGON_LINE:
+                        mode = 1;
+                        break;
+
+                    case PolygonAttributes.POLYGON_POINT:
+                        mode = 2;
+                        break;
+                    }
+
+                    polygonModeCB.setSelectedIndex(mode);
+                }
+
+                triangleText.setText("" + attributes.getNumberTriangles());
+                volumeText.setText("" + attributes.getVolume());
+                areaText.setText("" + attributes.getArea());
+                detailSlider.setValue(attributes.getLevelDetail());
+                opacitySlider.setValue((int) ( (1 - attributes.getOpacity()) * 100));
+
+                boolean enable = true;
+
+                for (int i = 0; i < indices.length; i++) {
+
+                    if (!((SurfaceAttributes) surfaceVector.get(indices[i])).getIsClodMesh()) {
+                        enable = false;
+                    }
+                }
+
+                detailSlider.setEnabled(enable);
+                detailLabel.setEnabled(enable);
+
+                for (int i = 0; i < detailSliderLabels.length; i++) {
+                    detailSliderLabels[i].setEnabled(enable);
+                }
+
+                decimateButton.setEnabled(!enable);
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return;
+        }
+    }
+
+
     /** Returns an array of SurfaceAttributes based on which surfaces are
      * selected by the user in the surfaceList combo-box. Only surfaces are
      * selected, VOI points are ignored.
@@ -607,26 +796,13 @@ public class JPanelSurface extends JPanelRendererBase
      */
     private SurfaceAttributes[] getSelectedSurfaces( int[] aiSelected )
     {
-        int surfaceCount = 0;
-        for (int i = 0; i < aiSelected.length; i++) {
-            int iIndex = aiSelected[i];
-            if (!((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt())
-            {
-                surfaceCount++;
-            }
-        }
-        if ( surfaceCount == 0 )
+        if ( aiSelected.length == 0 )
         {
             return null;
         }
-
-        SurfaceAttributes[] selectedSurfaces = new SurfaceAttributes[ surfaceCount ];
-        surfaceCount = 0;
+        SurfaceAttributes[] selectedSurfaces = new SurfaceAttributes[ aiSelected.length ];
         for (int i = 0; i < aiSelected.length; i++) {
-            int iIndex = aiSelected[i];
-            if (!((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
-                selectedSurfaces[ surfaceCount++ ] = (SurfaceAttributes) surfaceVector.get(iIndex);
-            }
+            selectedSurfaces[ i ] = (SurfaceAttributes) surfaceVector.get(aiSelected[i]);
         }
         return selectedSurfaces;
     }
@@ -637,24 +813,13 @@ public class JPanelSurface extends JPanelRendererBase
      */
     private SurfaceAttributes[] getAllSurfaces( )
     {
-        int surfaceCount = 0;
-        for (int i = 0; i < surfaceVector.size(); i++) {
-            if (!((SurfaceAttributes) surfaceVector.get(i)).getIsVOIPt())
-            {
-                surfaceCount++;
-            }
-        }
-        if ( surfaceCount == 0 )
+        if ( surfaceVector.size() <= 0 )
         {
             return null;
         }
-
-        SurfaceAttributes[] selectedSurfaces = new SurfaceAttributes[ surfaceCount ];
-        surfaceCount = 0;
+        SurfaceAttributes[] selectedSurfaces = new SurfaceAttributes[ surfaceVector.size() ];
         for (int i = 0; i < surfaceVector.size(); i++) {
-            if (!((SurfaceAttributes) surfaceVector.get(i)).getIsVOIPt()) {
-                selectedSurfaces[ surfaceCount++ ] = (SurfaceAttributes) surfaceVector.get(i);
-            }
+            selectedSurfaces[ i ] = (SurfaceAttributes) surfaceVector.get(i);
         }
         return selectedSurfaces;
     }
@@ -802,12 +967,13 @@ public class JPanelSurface extends JPanelRendererBase
     {
         if ( surfaces != null )
         {
+            int[] aiSelected = surfaceList.getSelectedIndices();
             for (int i = 0; i < surfaces.length; i++) {
                 Material material = surfaces[i].getMaterial();
                 float fOpacity = surfaces[i].getOpacity();
 
                 /* Launch the material editor: */
-                new JFrameSurfaceMaterialProperties(this, i, m_akLights, fOpacity, material);
+                new JFrameSurfaceMaterialProperties(this, aiSelected[i], m_akLights, fOpacity, material);
             }
         }
     }
@@ -909,14 +1075,15 @@ public class JPanelSurface extends JPanelRendererBase
 
 
     /**
-     * Adding the surface with specific directory and file name.
+     * Adding the surface with specific directory and file name. Called from
+     * the ViewJFrameVolumeView class from the JPanelEndoscopy loadingSurface function.
      *
      * @param   dir   directory name
      * @param   file  file name
      */
     public void addSurfaces(String dir, File surfaceFile)
     {
-        addSurfaces( dir, surfaceFile, 0.5f );
+        this.readSurface( dir, surfaceFile, 0.5f );
     }
 
     /**
@@ -926,18 +1093,14 @@ public class JPanelSurface extends JPanelRendererBase
      * @param   file  file name
      * @param   surfaceOpacity opacity
      */
-    public void addSurfaces(String dir, File surfaceFile, float surfaceOpacity ) {
+    private void readSurface(String dir, File surfaceFile, float surfaceOpacity ) {
 
         ViewUserInterface.getReference().setDefaultDirectory(dir);
         surfaceDirectoryName = dir;
 
-        String surfaceName = surfaceFile.getName();
-        int index = surfaceVector.size();
-        Color4f surfaceColor = getNewSurfaceColor( index );
-
-        FileSurface fileSurface = new FileSurface();
+        Color4f surfaceColor = getNewSurfaceColor( surfaceVector.size() );
         SurfaceAttributes[] surfaces = new SurfaceAttributes[1];
-        surfaces[0] = fileSurface.addSurface( parentScene.getImageA(), surfaceFile, surfaceColor, surfaceName, surfaceOpacity, -1, true);
+        surfaces[0] = FileSurface.readSurface( parentScene.getImageA(), surfaceFile, surfaceColor );
         addSurfaces( surfaces, false );
     }
 
@@ -983,7 +1146,7 @@ public class JPanelSurface extends JPanelRendererBase
 
                 if (!addedNames.contains(surfaceFile.getName())) {
                     addedNames.add( surfaceFile.getName() );
-                    addSurfaces( surfaceFile.getParent(), surfaceFile, fileInfo.getSurface(surfaceFileName).getOpacity() );
+                    this.readSurface( surfaceFile.getParent(), surfaceFile, fileInfo.getSurface(surfaceFileName).getOpacity() );
                 } else {
                     MipavUtil.displayError("Cannot add two surfaces with the same name.");
                 }
@@ -1035,8 +1198,6 @@ public class JPanelSurface extends JPanelRendererBase
         if (kMesh != null) {
             ModelTriangleMesh[] kSurface = new ModelTriangleMesh[1];
             kSurface[0] = kMesh;
-            surColor = Color.RED;
-
 
             /* Tell the surfaceRenderer to add the triangle mesh surface: */
             ((SurfaceRender) renderBase).updateData();
@@ -1204,9 +1365,7 @@ public class JPanelSurface extends JPanelRendererBase
      * add.
      */
     public void addSurface() {
-
-        FileSurface fileSurface = new FileSurface();
-        SurfaceAttributes[] surface = fileSurface.openSurfaces( parentScene.getImageA(), surfaceVector.size() );
+        SurfaceAttributes[] surface = FileSurface.openSurfaces( parentScene.getImageA(), surfaceVector.size() );
         addSurfaces( surface, false );
     }
 
@@ -1264,300 +1423,6 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
 
-    /**
-     * Dispose memory.
-     */
-    public void dispose() {
-        parentScene = null;
-        surfaceVector = null;
-        levelSButton = null;
-        levelVButton = null;
-        levelWButton = null;
-        decimateButton = null;
-        polygonModeCB = null;
-        surfaceList = null;
-        colorButton = null;
-        colorLabel = null;
-        m_kAdvancedMaterialOptionsButton = null;
-        m_kTexturePaintButton = null;
-        m_kSurfaceTextureButton = null;
-        m_kStereoButton = null;
-        opacityLabel = null;
-        triangleLabel = null;
-        volumeLabel = null;
-        areaText = null;
-        detailLabel = null;
-        comboLabel = null;
-        detailSliderLabels = null;
-        opacitySliderLabels = null;
-        triangleText = null;
-        volumeText = null;
-        detailSlider = null;
-        opacitySlider = null;
-        colorChooser = null;
-        m_kLightsControl = null;
-        surfacePickableCB = null;
-        surfaceClipCB = null;
-        surfaceBackFaceCB = null;
-        surfaceTransparencyCB = null;
-        listPanel = null;
-        rightPanel = null;
-        lightArray = null;
-        pickCanvas = null;
-        surfaceRootBG = null;
-        staticLightBG = null;
-        staticLightTG = null;
-        lightBulbs = null;
-        staticLightBulb = null;
-        sphere = null;
-        sphereTransform = null;
-        sphereBranch = null;
-        staticLightBehaviorBG = null;
-        staticLightTranslate = null;
-        staticLightZoom = null;
-        surfaceOpacityEvents = null;
-        surfaceDirectoryName = null;
-    }
-
-    /**
-     * Locate the surface that corresponds to a picking operation in the viewer window. This member is called via the
-     * mouse listener callback. If a surface is picked, the list box is updated to show that the surface is selected and
-     * the corresponding information is set for the color button, the detail slider, and the number of triangles.
-     *
-     * @param   kEvent  The mouse event generated by the picking operation.
-     *
-     * @return  The picked surface, or null if no surface is located at the pick location.
-     */
-    public PickResult doPick(MouseEvent kEvent) {
-        PickResult kResult;
-
-        try {
-            pickCanvas.setShapeLocation(kEvent);
-            kResult = pickCanvas.pickClosest();
-        } catch (NullPointerException e) {
-            return null;
-        }
-
-        if (kResult != null) {
-            return kResult;
-        } else {
-            return null;
-        }
-    }
-
-    /**
-     * One of the overrides necessary to be a MouseListener. The surface attribute dialog was added as a listener to the
-     * 3D canvas on which the scene is drawn. Whenever a picking operation occurs on the canvas, this member function is
-     * called. The pick operation returns the Shape3D object (null, if no object is situated at the pick location). The
-     * root of the subtree for the picked surface is looked up within the surfaces list. If found, the list box, color
-     * button, detail slider, triangle text, and polygon mode are updated to display the selected surface.<br>
-     * <br>
-     * <b>Note</b>. The use of Shape3D by the picker and BranchGroup by the surfaces list appears to be more complicated
-     * than necessary, and instead both should use Shape3D or BranchGroup. In fact it is necessary to structure the code
-     * as it currently is. The picker needs to locate actual geometry, so Shape3D objects must enable themselves to be
-     * picked with ray-triangle intersection testing. If the surfaces in the list were set up to be Shape3D instead of
-     * BranchGroup, then all add/remove operations would have to be based on Shape3D, not on BranchGroups. These
-     * operations are not allowed in compiled scene graphs.<br>
-     * <br>
-     * <b>Note.</b> The iteration over the surface list checking for the BranchGroup whose child is the picked surface
-     * is also necessary. Simpler would be to query the Shape3D object for its parent. Such a query is also not
-     * supported in a compiled scene graph.
-     *
-     * @param  kEvent  The mouse event.
-     */
-    public void findPickedObject(MouseEvent kEvent) {
-
-        if (!kEvent.isShiftDown() && parentScene.getParentFrame().isGeodesicEnable() ) {
-            return;
-        }
-        if ( mSurfacePaint.getEnabled() || m_kTexturePaintButton.isSelected() )
-        {
-            return;
-        }
-
-        // locate the surface that was picked
-        PickResult pickedObject;
-        int iPickedLight = -1;
-
-        sphereBranch.detach();
-        sphereShowing = false;
-
-        try {
-            pickedObject = doPick(kEvent);
-        } catch (CapabilityNotSetException error) {
-            return;
-        }
-
-        if (pickedObject == null) {
-            sphereBranch.detach();
-            sphereShowing = false;
-
-            return;
-        }
-
-        /* Pass the picked point to the brainsurfaceFlattenerRenderer: */
-        if (kEvent.isControlDown() && parentScene.getParentFrame().isBrainSurfaceFlattenerPickEnabled()) {
-
-            /* Pick the first intersection since we executed a pick
-             * closest. */
-            PickIntersection kPick = pickedObject.getIntersection(0);
-
-            /* Get the coordinates of the picked point on the mesh. */
-            Point3f kPickPoint = new Point3f(kPick.getPointCoordinates());
-
-            /* Get the triangle indices of the triangle that that
-             * pickPoint falls in:  */
-            int[] aiIndex = kPick.getPrimitiveCoordinateIndices();
-
-            parentScene.getParentFrame().drawBrainSurfaceFlattenerPoint(kPickPoint, aiIndex, 2);
-        }
-
-        Shape3D pickedShape = (Shape3D) pickedObject.getObject();
-        int iIndex;
-
-        findArbitraryClipping = false;
-
-        // Find ArbitraryClipping plane
-        if ((parentScene.getClipDialog() != null) && ((SurfaceRender) renderBase).getDisplayMode3D()) {
-            findArbitraryClipping = parentScene.getClipDialog().isArbitraryClipping(pickedShape);
-
-            if (findArbitraryClipping) {
-                return;
-            }
-        }
-
-        // Find picked surface
-        for (iIndex = 0; iIndex < surfaceVector.size(); iIndex++) {
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
-            boolean bRootFound = false;
-
-            for (int i = 0; i < root.numChildren(); i++) {
-
-                if (root.getChild(i) == pickedShape) {
-                    bRootFound = true;
-
-                    break;
-                }
-            }
-
-            if (bRootFound) {
-                break;
-            }
-        }
-
-        // Find picked light bulb
-        boolean foundLightBulb = false;
-
-        if (iIndex >= surfaceVector.size()) {
-            iPickedLight = lightBulbs.getPickedLight(pickedShape);
-
-            if (iPickedLight >= 0) {
-                foundLightBulb = true;
-            } else {
-                iPickedLight = staticLightBulb.getPickedLight(pickedShape);
-
-                if (iPickedLight >= 0) {
-                    iPickedLight = 9;
-                    foundLightBulb = true;
-                }
-            }
-        }
-
-        findProbe = false;
-
-        /** find probe */
-        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-            findProbe = ((SurfaceRender) renderBase).getProbeDialog().getProbeBase().findProbe(pickedShape);
-
-            if (findProbe) {
-                return;
-            }
-        }
-
-        // pick burn sphere
-
-        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-            BranchGroup burnRoot = ((SurfaceRender) renderBase).getProbeDialog().getBurnRootParentBG();
-
-            int findIndex = ((SurfaceRender) renderBase).getProbeDialog().getBurnBase().findBurnPoint(pickedShape);
-
-            if (findIndex != -1) {
-                ((SurfaceRender) renderBase).getProbeDialog().updateBurnList(findIndex);
-
-                PickIntersection pi = pickedObject.getClosestIntersection(pickCanvas.getStartPosition());
-                Point3d point = pi.getClosestVertexCoordinates();
-                Transform3D t = new Transform3D();
-
-                // Largest dimension goes from -1 to 1
-                t.set(0.1, new Vector3d(point.x, point.y, point.z));
-                sphereTransform.setTransform(t);
-
-                if (sphereShowing == false) {
-                    ((BranchGroup) ((BranchGroup) (burnRoot.getChild(findIndex))).getChild(0)).addChild(sphereBranch);
-                    sphereShowing = true;
-                }
-
-                return;
-            }
-
-        }
-
-        // select the surface file name in the list box
-        if (iIndex < surfaceVector.size()) {
-            iSelect = iIndex;
-            surfaceList.setSelectedIndex(iSelect);
-            surfaceList.ensureIndexIsVisible(iSelect);
-
-            PickIntersection pi = pickedObject.getClosestIntersection(pickCanvas.getStartPosition());
-            Point3d point = pi.getClosestVertexCoordinates();
-
-            // compute C0, C1, C2, and max{C0, C1, C2}
-            // these are the physical space voxel dimensions
-            float fC0 = parentScene.getImageA().getExtents()[0] *
-                            parentScene.getImageA().getFileInfo(0).getResolutions()[0];
-            float fC1 = parentScene.getImageA().getExtents()[1] *
-                            parentScene.getImageA().getFileInfo(0).getResolutions()[1];
-            float fC2 = parentScene.getImageA().getExtents()[2] *
-                            parentScene.getImageA().getFileInfo(0).getResolutions()[2];
-            float fMax;
-
-            // fMax is the largest of the three physical space dimensions
-            fMax = (fC0 < fC1) ? fC1 : fC0;
-            fMax = (fMax < fC2) ? fC2 : fMax;
-
-            // want y to be 0 at top of image and extents[1] - 1 at bottom of image.
-            // point.y = parentScene.getImageA().getExtents()[1] - point.y - 1;
-
-            Transform3D t = new Transform3D();
-
-            // Largest dimension goes from -1 to 1
-            t.set(0.1, new Vector3d(point.x, point.y, point.z));
-            sphereTransform.setTransform(t);
-
-            if (sphereShowing == false) {
-                surfaceRootBG.addChild(sphereBranch);
-                sphereShowing = true;
-            }
-
-            // map into *physical* space
-            // max{C0,C1,C2}*xk + Ck
-            // yk =    ---------------------
-            // 2
-            point.x = ((point.x * fMax) + fC0) / 2;
-            point.y = ((point.y * fMax) + fC1) / 2;
-            point.z = ((point.z * fMax) + fC2) / 2;
-
-            // now want to get into image space, so divide by resolutions
-            point.x = point.x / parentScene.getImageA().getFileInfo(0).getResolutions()[0];
-            point.y = point.y / parentScene.getImageA().getFileInfo(0).getResolutions()[1];
-            point.z = point.z / parentScene.getImageA().getFileInfo(0).getResolutions()[2];
-        }
-
-        if (foundLightBulb) {
-            m_kLightsControl.setSelectedIndex(m_aiMapIndexToJPanelLightsIndex[iPickedLight]);
-            activeLightBulbIndex = iPickedLight;
-        }
-    }
 
     /**
      * Return access to the Group data member m_kGeodesicGroup so Geodesic object can draw on the triangle mesh.
@@ -1635,18 +1500,11 @@ public class JPanelSurface extends JPanelRendererBase
      * @return  Material material reference.
      */
     public Material getMaterial(int iIndex) {
-
-        if (!((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
-            Shape3D shape = (Shape3D) root.getChild(0);
-
-            /* Set the new surface material values: */
-            Appearance kAppearance = shape.getAppearance();
-
-            return kAppearance.getMaterial();
-        }
-
-        return null;
+        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
+        Shape3D shape = (Shape3D) root.getChild(0);
+        /* Set the new surface material values: */
+        Appearance kAppearance = shape.getAppearance();
+        return kAppearance.getMaterial();
     }
 
     /**
@@ -1668,15 +1526,6 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * Return the triangle mesh m_kSurface.
-     *
-     * @return  the surface mesh
-     */
-    public ModelTriangleMesh[] getSurface() {
-        return m_kSurface;
-    }
-
-    /**
      * Get the back face culling check box.
      *
      * @return  surfaceBackFaceCB surface back face culling check box.
@@ -1692,15 +1541,6 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public JCheckBox getSurfaceClipCB() {
         return surfaceClipCB;
-    }
-
-    /**
-     * Get the surface color.
-     *
-     * @return  Color surface color
-     */
-    public Color getSurfaceColor() {
-        return surColor;
     }
 
     /**
@@ -1740,171 +1580,6 @@ public class JPanelSurface extends JPanelRendererBase
         return findProbe;
     }
 
-    /**
-     * One of the overrides necessary to be a MouseListener. This member only exists to satisfy the conditions of being
-     * a MouseListener. It does nothing when invoked.
-     *
-     * @param  kEvent  The mouse event.
-     */
-    public void mouseClicked(MouseEvent kEvent) { // updateSurface(kEvent);
-    }
-
-    /**
-     * One of the overrides necessary to be a MouseMotionListener. This member only exists to satisfy the conditions of
-     * being a MouseMotionListener. It does nothing when invoked.
-     *
-     * @param  kEvent  The mouse event.
-     */
-    public void mouseDragged(MouseEvent kEvent) { }
-
-    /**
-     * One of the overrides necessary to be a MouseListener. This member only exists to satisfy the conditions of being
-     * a MouseListener. It does nothing when invoked.
-     *
-     * @param  kEvent  The mouse event.
-     */
-    public void mouseEntered(MouseEvent kEvent) { /* stub */
-    }
-
-    /**
-     * One of the overrides necessary to be a MouseListener. This member only exists to satisfy the conditions of being
-     * a MouseListener. It does nothing when invoked.
-     *
-     * @param  kEvent  The mouse event.
-     */
-    public void mouseExited(MouseEvent kEvent) { /* stub */
-    }
-
-    /**
-     * One of the overrides necessary to be a MouseMotionListener. This member only exists to satisfy the conditions of
-     * being a MouseMotionListener. It does nothing when invoked.
-     *
-     * @param  kEvent  The mouse event.
-     */
-    public void mouseMoved(MouseEvent kEvent) { }
-
-    /**
-     * One of the overrides necessary to be a MouseListener. This member only exists to satisfy the conditions of being
-     * a MouseListener. It does nothing when invoked.
-     *
-     * @param  kEvent  The mouse event.
-     */
-    public synchronized void mousePressed(MouseEvent kEvent) { /* stub */
-
-        Object source = kEvent.getSource();
-        JPanelMouse myMouseDialog = ((SurfaceRender) parentScene).getMouseDialog();
-
-        if (myMouseDialog.isRecording() && (source == opacitySlider)) {
-            Transform3D t3D = new Transform3D();
-
-            parentScene.getSceneRootTG().getTransform(t3D);
-            surfaceOpacityEvents = new MouseEventVector("surfaceOpacitySlider" + surfaceSliderCount, t3D,
-                                                        myMouseDialog.first, parentScene.getSceneState(),
-                                                        parentScene.getMouseMode());
-            setSurfaceOpacityFlag = true;
-            myMouseDialog.events.add(surfaceOpacityEvents);
-            currentIndex = myMouseDialog.events.indexOf(surfaceOpacityEvents);
-        }
-
-        findPickedObject(kEvent);
-
-        if (findArbitraryClipping) {
-            ((SurfaceRender) renderBase).enableObjBehavior(false);
-            parentScene.getClipDialog().enableClipArbiBehavior(true);
-        } else if (isProbePicked()) {
-
-            if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-                ((SurfaceRender) renderBase).getProbeDialog().setProbeGreenColor(true);
-                ((SurfaceRender) renderBase).enableObjBehavior(false);
-                ((SurfaceRender) renderBase).getProbeDialog().enableProbeBehavior(true);
-                enableStaticLightBehavior(false);
-            }
-        } else if (isStaticPicked() && isStaticLightEnabled()) {
-            enableStaticLightBehavior(true);
-            ((SurfaceRender) parentScene).enableObjBehavior(false);
-        } else {
-            enableStaticLightBehavior(false);
-            ((SurfaceRender) parentScene).enableObjBehavior(true);
-
-            if (((SurfaceRender) parentScene).getProbeDialog() != null) {
-                ((SurfaceRender) parentScene).getProbeDialog().enableProbeBehavior(false);
-            }
-        }
-
-        if (!isProbePicked() && (((SurfaceRender) renderBase).getDisplayDialog() != null)) {
-            float coarseVal = ((SurfaceRender) renderBase).getDisplayDialog().getCoarseVal();
-
-            ((SurfaceRender) renderBase).setSliceSpacingCoarse(coarseVal);
-            ((SurfaceRender) renderBase).useSliceSpacingCoarse();
-        }
-
-        // mouse press in Canvas3D, remove the probing path, which indicates the tissues detected along the path.
-        ((SurfaceRender) parentScene).getProbeDialog().removeProbingPath();
-
-    }
-
-    /**
-     * One of the overrides necessary to be a MouseListener. This member only exists to satisfy the conditions of being
-     * a MouseListener. It does nothing when invoked.
-     *
-     * @param  kEvent  The mouse event.
-     */
-    public synchronized void mouseReleased(MouseEvent kEvent) { /* stub */
-
-        float fineVal = 0f;
-        Object source = kEvent.getSource();
-
-        // System.out.println("JPanelSurface mouseReleased");
-        if (isStaticPicked() && isStaticLightEnabled()) {
-            activeLightBulbIndex = -1;
-        }
-
-
-        if (findArbitraryClipping) {
-            ((SurfaceRender) renderBase).enableObjBehavior(true);
-            parentScene.getClipDialog().enableClipArbiBehavior(false);
-            findArbitraryClipping = false;
-        }
-
-        if (!isProbePicked() && (((SurfaceRender) renderBase).getDisplayDialog() != null)) {
-
-            // coarseVal = ( (SurfaceRender) renderBase ).getDisplayDialog().getCoarseVal();
-            // ( (SurfaceRender) renderBase ).setSliceSpacingCoarse( coarseVal );
-            fineVal = ((SurfaceRender) renderBase).getDisplayDialog().getFineVal();
-            ((SurfaceRender) renderBase).setSliceSpacingFine(fineVal);
-            ((SurfaceRender) renderBase).useSliceSpacingFine();
-        }
-
-        /* The probe was occaisionally not being un-selected when the mouse
-         * button was released, so the probe is always un-selected on
-         * mouseRelease */
-        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-
-            /* If the mouse release is the left mouse button, then the
-             * textures need to be updated one last time at the super-sampled
-             * high resolution: */
-            if (isProbePicked() && (kEvent.getButton() == MouseEvent.BUTTON1)) {
-                ((SurfaceRender) renderBase).updateProbe(true, true, false);
-            }
-
-            /* De-select the probe: */
-            findProbe = false;
-            ((SurfaceRender) renderBase).getProbeDialog().setProbeGreenColor(false);
-            ((SurfaceRender) renderBase).enableObjBehavior(true);
-            ((SurfaceRender) renderBase).getProbeDialog().enableProbeBehavior(false);
-            enableStaticLightBehavior(false);
-        }
-
-        JPanelMouse myMouseDialog = ((SurfaceRender) parentScene).getMouseDialog();
-
-        if (myMouseDialog.isRecording() && (source == opacitySlider)) {
-            surfaceSliderCount++;
-        }
-
-        // mouse release in Canvas3D, detecting tissues along the probe path.
-        ((SurfaceRender) parentScene).getProbeDialog().detectTissue();
-        ((SurfaceRender) parentScene).updateRaycastRender();
-    }
 
     /**
      * Removes a BranchGroup to the display.
@@ -2085,18 +1760,15 @@ public class JPanelSurface extends JPanelRendererBase
      * @param  iIndex     int material index
      */
     public void setMaterial(Material kMaterial, int iIndex) {
-
-        if (!((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
-            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
-            Shape3D shape = (Shape3D) root.getChild(0);
-            shape.getAppearance().setMaterial( kMaterial );
-            Color3f kDiffuse = new Color3f();
-            kMaterial.getDiffuseColor(kDiffuse);
-            Color4f kColor = new Color4f(kDiffuse.get());
-            colorButton.setBackground(kDiffuse.get());
-            ((SurfaceAttributes) surfaceVector.get(iIndex)).setMaterial( kMaterial );
-            kDiffuse = null;
-        }
+        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
+        Shape3D shape = (Shape3D) root.getChild(0);
+        shape.getAppearance().setMaterial( kMaterial );
+        Color3f kDiffuse = new Color3f();
+        kMaterial.getDiffuseColor(kDiffuse);
+        Color4f kColor = new Color4f(kDiffuse.get());
+        colorButton.setBackground(kDiffuse.get());
+        ((SurfaceAttributes) surfaceVector.get(iIndex)).setMaterial( kMaterial );
+        kDiffuse = null;
     }
 
     /**
@@ -2114,124 +1786,6 @@ public class JPanelSurface extends JPanelRendererBase
         }
     }
 
-    /**
-     * The override necessary to be a ChangeListener for a JSlider. When a change occurs, the user has requested that
-     * the level of detail be changed for the currently active surface. The slider range is [0,100] and is treated as a
-     * percent of maximum level of detail. A change has no effect on ModelTriangleMesh objects, but it does change the
-     * level of detail for an ModelClodMesh object. The number of triangles is also updated.
-     *
-     * @param  event  The change event.
-     */
-    public void stateChanged(ChangeEvent event) {
-
-        if (event.getSource() == detailSlider) {
-
-            if (detailSlider.getValueIsAdjusting()) {
-                // Too many LOD changes occur if you always get the slider
-                // value.  Wait until the user stops dragging the slider.
-
-                // Maybe not. Comment out the next line to have the surface update quickly.
-                // If the CLOD mesh holds a surface over time one could view the surface evolution !!!!
-                return;
-            }
-
-            ModelImage imageA = parentScene.getImageA();
-            int[] extents = imageA.getExtents();
-            float[] resols = imageA.getFileInfo()[0].getResolutions();
-            float xBox = extents[0] * resols[0];
-            float yBox = extents[1] * resols[1];
-            float zBox = extents[2] * resols[2];
-            float maxBox = Math.max(xBox, Math.max(yBox, zBox));
-
-            // value in [0,100], corresponds to percent of maximum LOD
-            int iValue = detailSlider.getValue();
-
-            // construct the lists of items whose LODs need to be changed
-            int[] aiSelected = surfaceList.getSelectedIndices();
-            for (int i = 0; i < aiSelected.length; i++) {
-
-                if (((SurfaceAttributes) surfaceVector.get(aiSelected[i])).getIsVOIPt() == false) {
-                    int numTriangles = 0;
-                    float volume = 0;
-                    float area = 0;
-                    BranchGroup root = ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).getBranch();
-
-                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setLevelDetail( iValue );
-
-                    for (int j = 0; j < root.numChildren(); j++) {
-                        Shape3D shape = (Shape3D) root.getChild(j);
-                        ModelTriangleMesh kMesh = (ModelTriangleMesh) shape.getGeometry(0);
-
-                        if (kMesh.getGenerator() != null) {
-
-                            // clod mesh surface was selected for LOD changes
-                            ModelClodMesh kClod = (ModelClodMesh) kMesh.getGenerator();
-                            int iLOD = (int) (iValue * kClod.getMaximumLOD() / 100.0f);
-
-                            kClod.setLOD(iLOD);
-                            numTriangles += kClod.getMesh().getIndexCount();
-                            volume += kClod.getMesh().volume();
-                            area += kClod.getMesh().area();
-                            // update the Shape3D parent
-
-                            shape.insertGeometry(kClod.getMesh(), 0);
-                            shape.removeGeometry(1);
-                        } else {
-                            numTriangles += kMesh.getIndexCount();
-                            volume += kMesh.volume();
-                            area += kMesh.area();
-                        }
-                    }
-
-                    numTriangles /= 3;
-                    triangleText.setText("" + numTriangles);
-
-                    // One length across the extracted surface changes from -1 to 1
-                    // while one length across the actual volume changes by ((dim-1)*res)max
-                    volumeText.setText("" + (volume * maxBox * maxBox * maxBox / 8.0f));
-                    areaText.setText(String.valueOf(area * maxBox * maxBox));
-                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setNumberTriangles( numTriangles );
-                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setVolume( volume );
-                    ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setArea( area );
-                }
-            }
-        }
-        else if (event.getSource() == opacitySlider) {
-             // change the opacity for the selected items
-            JPanelMouse myMouseDialog = ((SurfaceRender) parentScene).getMouseDialog();
-
-             surfaceOpacitySlice = opacitySlider.getValue();
-
-            if (myMouseDialog.isRecording() && setSurfaceOpacityFlag) {
-                surfaceOpacityEvents.setName("surfaceOpacitySlider" + currentIndex);
-                myMouseDialog.listModel.addElement("surfaceOpacitySlider" + currentIndex);
-                setSurfaceOpacityFlag = false;
-            }
-            if (myMouseDialog.isRecording()) {
-                surfaceOpacityEvents.add(event, parentScene.getSceneState());
-            }
-
-            int[] aiSelected = surfaceList.getSelectedIndices();
-            SurfaceAttributes[] surfaces = getSelectedSurfaces( aiSelected );
-            int iValue = opacitySlider.getValue();
-            for (int i = 0; i < surfaces.length; i++) {
-                surfaces[i].setOpacity(1 - (iValue / 100.0f));
-                Color4f newColor = new Color4f( surfaces[i].getColor().x,
-                                                surfaces[i].getColor().y,
-                                                surfaces[i].getColor().z,
-                                                1 - surfaces[i].getOpacity() );
-                /* Change the mask color: */
-                parentScene.getImageA().addSurfaceMask( aiSelected[i], null, null, newColor );
-                /* update the surface renderer: */
-                ((SurfaceRender) renderBase).updateData();
-
-                BranchGroup root = surfaces[i].getBranch();
-                Shape3D shape = (Shape3D) root.getChild(0);
-                Appearance appearance = shape.getAppearance();
-                appearance.getTransparencyAttributes().setTransparency(1 - (iValue / 100.0f)); // 0 = Opaque
-            }
-        }
-    }
 
     /**
      * Toggle between wireframe and filled polygon mode.
@@ -2251,121 +1805,6 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * The override necessary to be a ListSelectionListener. This callback is executed whenever the user selects a new
-     * item (or items) in the list box. If a single item is selected, then the selection index is remembered in <code>
-     * iSelect</code> and the color button, detail slider, and polygon mode are initialized with the appropriate values
-     * corresponding to the selected surface. If multiple items are selected, then the selection index is -1 and the
-     * color button is set to the background color and disabled. The slider and polygon mode are set to the values found
-     * in the minimum selected surface but are still enabled. The dialog does not support changing the color for
-     * multiple surfaces at one time but does support changing level of detail and polygon mode for multiple surfaces at
-     * one time (to the same value).
-     *
-     * @param  kEvent  The list selection event.
-     */
-    public void valueChanged(ListSelectionEvent kEvent) {
-
-        // Let getColorChange know that only the selection is changing,
-        // not the material colors for the selected surface.
-        iSelect = -1;
-
-        try {
-            JList kList = (JList) kEvent.getSource();
-            int[] indices = kList.getSelectedIndices();
-
-            int index = kList.getMinSelectionIndex();
-            SurfaceAttributes attributes;
-
-            if (index != -1) {
-                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(index)).getBranch();
-
-                surfacePickableCB.setSelected(root.getPickable());
-                surfaceBackFaceCB.setSelected(root.getCollidable());
-
-                Shape3D[] shapes = ((SurfaceAttributes) surfaceVector.get(index)).getShape();
-                for ( int j = 0; j < shapes.length; j++ )
-                {
-                    
-                    surfaceTransparencyCB.setSelected( shapes[j].getAppearance().getTransparencyAttributes().getTransparencyMode() == TransparencyAttributes.BLENDED );
-                }
-
-                if (((SurfaceRender) parentScene).getDisplayMode3D()) {
-                    surfaceClipCB.setSelected(root.getAlternateCollisionTarget());
-                }
-            }
-
-            if (indices.length > 0) {
-                attributes = (SurfaceAttributes) surfaceVector.get(index);
-
-                if (indices.length == 1) {
-                    iSelect = kList.getMinSelectionIndex();
-
-                    // a single surface was selected, set edit text to its color
-                    Color4f color = attributes.getColor();
-
-                    colorButton.setBackground(color.get());
-                    setElementsEnabled(true);
-                } else {
-
-                    // multiple surfaces were selected (not all colors the same)
-                    colorButton.setBackground(getBackground());
-                    colorButton.setEnabled(false);
-                    colorLabel.setEnabled(false);
-
-                }
-
-                if ( polygonIndexToMode( polygonModeCB.getSelectedIndex() ) !=
-                     ((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode())
-                {
-                    int mode = 0;
-
-                    switch (((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode()) {
-
-                    case PolygonAttributes.POLYGON_FILL:
-                        mode = 0;
-                        break;
-
-                    case PolygonAttributes.POLYGON_LINE:
-                        mode = 1;
-                        break;
-
-                    case PolygonAttributes.POLYGON_POINT:
-                        mode = 2;
-                        break;
-                    }
-
-                    polygonModeCB.setSelectedIndex(mode);
-                }
-
-                triangleText.setText("" + attributes.getNumberTriangles());
-                volumeText.setText("" + attributes.getVolume());
-                areaText.setText("" + attributes.getArea());
-                detailSlider.setValue(attributes.getLevelDetail());
-                opacitySlider.setValue((int) ( (1 - attributes.getOpacity()) * 100));
-
-                boolean enable = true;
-
-                for (int i = 0; i < indices.length; i++) {
-
-                    if (!((SurfaceAttributes) surfaceVector.get(indices[i])).getIsClodMesh()) {
-                        enable = false;
-                    }
-                }
-
-                detailSlider.setEnabled(enable);
-                detailLabel.setEnabled(enable);
-
-                for (int i = 0; i < detailSliderLabels.length; i++) {
-                    detailSliderLabels[i].setEnabled(enable);
-                }
-
-                decimateButton.setEnabled(!enable);
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            return;
-        }
-    }
-
-    /**
      * Overrides method in JDialogBase so dialog isn't disposed, just hidden.
      *
      * @param  event  Event that triggered this method.
@@ -2380,7 +1819,7 @@ public class JPanelSurface extends JPanelRendererBase
         Border etchedBorder = BorderFactory.createEtchedBorder();
         ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
 
-        toolBar = new JToolBar();
+        JToolBar toolBar = new JToolBar();
         toolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
         toolBar.setBorder(etchedBorder);
 
@@ -2464,151 +1903,6 @@ public class JPanelSurface extends JPanelRendererBase
         }
     }
 
-    /**
-     * Creates a label in the proper font and color.
-     *
-     * @param   title  The title of the label.
-     *
-     * @return  The new label.
-     */
-    private JLabel createLabel(String title) {
-        JLabel label = new JLabel(title);
-
-        label.setFont(serif12);
-        label.setForeground(Color.black);
-
-        return label;
-    }
-
-    /**
-     * Creates a surface in the scene graph from an array of triangle meshes.
-     *
-     * @param   meshes  Triangle meshes that make up surface
-     * @param   color   Color of surface
-     * @param   mode    The polygon drawing mode
-     *
-     * @return  Parent node of surface.
-     */
-    private void createSurface(SurfaceAttributes surface, boolean pickable )
-    {
-        ModelTriangleMesh[] meshes = surface.getMesh();
-        int mode = surface.getPolygonMode();
-        float opacity = surface.getOpacity();
-
-        // This Appearance Contains: 
-        // ColoringAttributes, PolygonAttributes, RenderingAttributes, TransparencyAttributes,
-        // Material, Texture, TextureAttributes, TextureUnitState
-        Appearance appearance = new Appearance();
-        appearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
-        appearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_WRITE);
-        appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
-        appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
-        appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
-        appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
-        appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
-        appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
-        appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
-        appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
-        appearance.setCapability( Appearance.ALLOW_TEXTURE_UNIT_STATE_READ );
-        appearance.setCapability( Appearance.ALLOW_TEXTURE_UNIT_STATE_WRITE );
-
-        // Coloring Attributes: for per-vertex color, set color interpolation to NICEST:
-        ColoringAttributes colorA = new ColoringAttributes( surface.getColor3(), ColoringAttributes.NICEST );
-        appearance.setColoringAttributes( colorA );
-
-        // Transparency Attributes:
-        TransparencyAttributes tap = new TransparencyAttributes();
-        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
-        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
-        tap.setCapability(TransparencyAttributes.ALLOW_MODE_READ);
-        tap.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
-        tap.setTransparencyMode(TransparencyAttributes.BLENDED);
-        tap.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
-        tap.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
-        tap.setTransparency( opacity );
-        appearance.setTransparencyAttributes(tap);
-
-        // Material
-        Material material = surface.getMaterial();
-        appearance.setMaterial(material);
-
-        //appearance.setTextureUnitState( textureState );
-
-        // Polygon Attributes:
-        // No back-face culling.  Supports double-sided meshes which can
-        // regularly occur for level surfaces (open surfaces).
-        PolygonAttributes kPAttr = new PolygonAttributes();
-        kPAttr.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
-        kPAttr.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
-        kPAttr.setCapability(PolygonAttributes.ALLOW_MODE_READ);
-        kPAttr.setCapability(PolygonAttributes.ALLOW_MODE_WRITE);
-        kPAttr.setCullFace(PolygonAttributes.CULL_BACK);
-        /* PolygonOffsetFactor is set so lines can be drawn ontop of the mesh
-         * without coplanar problems. */
-        kPAttr.setPolygonOffsetFactor(1.0f);
-        kPAttr.setPolygonMode(mode);
-        appearance.setPolygonAttributes(kPAttr);
-
-        // Rendering Attributes:
-        RenderingAttributes kRenderingAttr = new RenderingAttributes();
-        kRenderingAttr.setIgnoreVertexColors( false );
-        kRenderingAttr.setCapability( RenderingAttributes.ALLOW_IGNORE_VERTEX_COLORS_READ );
-        kRenderingAttr.setCapability( RenderingAttributes.ALLOW_IGNORE_VERTEX_COLORS_WRITE );
-        appearance.setRenderingAttributes( kRenderingAttr );
-
-        // Add surface to scene graph:
-        // Give the meshes a branch group parent.  This type of parent is
-        // necessary when working with a compiled scene graph to allow
-        // attaching/detaching nodes.
-        BranchGroup root = new BranchGroup();
-        root.setCapability(BranchGroup.ALLOW_DETACH);
-        root.setCapability(Group.ALLOW_CHILDREN_READ);
-        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-
-        // For culling and picking purposes, it is better to have a separate
-        // Shape3D parent for each mesh rather than a single Shape3D parent
-        // for all meshes.
-        Shape3D[] akSurfaceShape = new Shape3D[meshes.length];
-        for (int i = 0; i < meshes.length; i++) {
-            akSurfaceShape[i] = new Shape3D(meshes[i], appearance);
-
-            akSurfaceShape[i].setCapability(Shape3D.ALLOW_APPEARANCE_READ);
-            akSurfaceShape[i].setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
-            akSurfaceShape[i].setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
-            akSurfaceShape[i].setCapability(Shape3D.ALLOW_GEOMETRY_READ);
-            akSurfaceShape[i].setCapability(Geometry.ALLOW_INTERSECT);
-
-            try {
-
-                // pickCanvas.setCapabilities( shape, PickTool.INTERSECT_FULL );
-                PickCanvas.setCapabilities(akSurfaceShape[i], PickCanvas.INTERSECT_FULL);
-            } catch (RestrictedAccessException error) { }
-
-            root.addChild(akSurfaceShape[i]);
-        }
-        surface.setShape( akSurfaceShape );
-
-        m_kSurface = new ModelTriangleMesh[2];
-        m_kSurface = meshes;
-
-        root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
-        root.setCapability(Group.ALLOW_CHILDREN_READ);
-        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
-        root.setCapability(BranchGroup.ALLOW_DETACH);
-        root.setCapability(Node.ALLOW_PICKABLE_READ);
-        root.setCapability(Node.ALLOW_PICKABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
-        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
-        root.setPickable( pickable );
-        surfacePickableCB.setSelected( pickable );
-
-        // Allow Java to optimize subtree.  Attach to the scene graph.
-        root.compile();
-        surfaceRootBG.addChild(root);
-        surface.setBranch( root );
-    }
 
 
     /**
@@ -2735,16 +2029,6 @@ public class JPanelSurface extends JPanelRendererBase
             ModelTriangleMesh[] meshes = surfaces[i].getMesh();
             BranchGroup root = surfaces[i].getBranch();
             surfaceRootBG.removeChild(root);
-            //root.detach();
-            //             BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).getBranch();
-            //             ModelTriangleMesh[] meshes = new ModelTriangleMesh[root.numChildren()];
-            
-            //             for (int j = 0; j < root.numChildren(); j++) {
-            //                 Shape3D shape = (Shape3D) root.getChild(j);
-            
-            //                 meshes[j] = (ModelTriangleMesh) shape.getGeometry(0);
-            //             }
-            
             int iVMaxQuantity = 0, iTMaxQuantity = 0;
             
             for (int j = 0; j < meshes.length; j++) {
@@ -2818,51 +2102,753 @@ public class JPanelSurface extends JPanelRendererBase
         staticLightZoom.setEnable(flag);
     }
 
+
+
     /**
-     * This is called when the user chooses a new color for the surface. It changes the color of the surface.
+     * Check static light is enable or not.
      *
-     * @param  color  Color to change surface to.
+     * @return  staticLightEnable <code>true</code> means enable, <code>false</code> means disable.
      */
-    private void getColorChange(Color color) {
+    private boolean isStaticLightEnabled() {
+        return m_kLightsControl.getGeneralLight(JPanelLights.LIGHT_INDEX_STATIC).isEnabled();
+    }
 
-        // change the material colors for the selected items
-        int[] aiSelected = surfaceList.getSelectedIndices();
+    /**
+     * Indicates whether the static light bulb being picked by the mouse.
+     *
+     * @return  whether the static light bulb is being picked
+     */
+    private boolean isStaticPicked() {
 
-        Color3f black = new Color3f(Color.black);
-
-        for (int i = 0; i < aiSelected.length; i++) {
-            int iIndex = aiSelected[i];
-
-            /** when surface color changed, record it here. */
-            surColor = color;
-
-            Color4f newColor = new Color4f(color);
-
-            ((SurfaceAttributes) surfaceVector.get(iIndex)).setColor( newColor );
-            /* Change the mask color: */
-            parentScene.getImageA().addSurfaceMask( iIndex, null, null, newColor );
-            /* update the surface renderer: */
-            ((SurfaceRender) renderBase).updateData();
-
-            if (((SurfaceAttributes) surfaceVector.get(iIndex)).getIsVOIPt()) {
-                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
-
-                for (int k = 0; k < root.numChildren(); k++) {
-                    Shape3D shape = (Shape3D)
-                                        (((Sphere) (((TransformGroup) (root.getChild(k))).getChild(0))).getShape());
-                    Appearance appearance = shape.getAppearance();
-                    Material mat = new Material(black, new Color3f(color), black, black, 80f);
-
-                    mat.setDiffuseColor(newColor.x, newColor.y, newColor.z);
-                    mat.setSpecularColor(newColor.x, newColor.y, newColor.z);
-                    mat.setAmbientColor(newColor.x, newColor.y, newColor.z);
-                    mat.setEmissiveColor(newColor.x, newColor.y, newColor.z);
-                    mat.setCapability(Material.ALLOW_COMPONENT_WRITE);
-                    appearance.setMaterial(mat);
-                }
-            } 
+        if (activeLightBulbIndex == 8) {
+            return true;
+        } else {
+            return false;
         }
     }
+
+
+    /**
+     * Remove the surface from the volume render.
+     */
+    public void removeSurface() {
+        SurfaceAttributes[] surfaces = getSelectedSurfaces( surfaceList.getSelectedIndices() );
+        removeSurfaces( surfaces );
+
+        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
+            ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
+        }
+
+        if (surfaceVector.size() <= 0) {
+            ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(false);
+        }
+        ((SurfaceRender) renderBase).updateData();
+    }
+
+    /**
+     * Remove the specified surface subtree from the scene graph.
+     *
+     * @param  root  The root of the subtree to remove.
+     */
+    public void removeSurface(BranchGroup root) {
+
+        // remove the surface from the scene (if it exists)
+        for (int i = 0; i < surfaceRootBG.numChildren(); i++) {
+
+            if (surfaceRootBG.getChild(i) == root) {
+                surfaceRootBG.removeChild(i);
+            }
+        }
+
+        System.gc();
+    }
+
+    /**
+     * The action taken when the Remove button is clicked in the list box. All
+     * selected surfaces in the list box are removed from the scene graph.
+     * @param surfaces[] the selected surfaces (SurfaceAttributes[]) to be removed.
+     */
+    private void removeSurfaces( SurfaceAttributes[] surfaces ) {
+
+        // remove the items
+        for ( int i = 0; i < surfaces.length; i++) {
+            removeSurface( surfaces[i].getBranch() );
+
+            // remove the surface from the image's file info if it is XML (so
+            // that it won't be saved with it)
+            if (parentScene.getParentFrame().getImageOriginal().getFileInfo()[0] instanceof FileInfoImageXML) {
+                for (int s = 0; s < parentScene.getParentFrame().getImageOriginal().getExtents()[2]; s++) {
+                    ((FileInfoImageXML) parentScene.getParentFrame().getImageOriginal().getFileInfo()[s]).removeSurface(surfaces[i].getFullPath());
+                }
+            }
+
+            int removeIndex = surfaceVector.indexOf( surfaces[i] );
+            surfaceVector.removeElementAt(removeIndex);
+            parentScene.getImageA().removeSurfaceMask(removeIndex);
+        }
+        int[] selected = new int[1];
+        selected[0] = iSelect >= surfaceVector.size() ? surfaceVector.size() - 1 : iSelect;
+        updateSurfaceNameList( selected );
+
+        if ( surfaceVector.size() == 0 )
+        {
+            // clear out the color values if the list is empty
+            iSelect = -1;
+            setElementsEnabled(false);
+            colorButton.setBackground(getBackground());
+            triangleText.setText("");
+            volumeText.setText("");
+            areaText.setText("");
+        }
+    }
+
+    /**
+     * Called when surfaces are added or removed from the surfaceVector
+     * SurfaceAttributes list. Updates the surfaceList combo-box displayed in
+     * the user-interface.
+     * @param selected, array of names that are currently selected.
+     */
+    private void updateSurfaceNameList( int[] selected )
+    {
+        Vector surfaceNames = new Vector();
+        for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
+            surfaceNames.addElement(((SurfaceAttributes) en.nextElement()).getName());
+        }
+        surfaceList.setListData(surfaceNames);
+        surfaceList.setSelectedIndices(selected);
+    }
+
+
+
+    /**
+     * Create and initialize the nine lights in the scene graph. The first
+     * eight lights are positioned at the eight vertices of the cube
+     * [-1,1]^3. Light 0 is at (-1,-1,-1) and light 7 is at (1,1,1), both
+     * enabled by default. The default color for all lights is white. The
+     * default intensity is 1. All surfaces in the scene are illuminated by
+     * all enabled lights. The ninth light is ambient light, light that seems
+     * to come from all directions.
+     *
+     * @param  surfaceRoot  Transform group to attach lights to.
+     */
+    private void setupLights(TransformGroup surfaceRoot) {
+        GeneralLight kGeneralLight;
+
+        for (int i = 0; i < 8; i++) {
+            kGeneralLight = m_kLightsControl.getGeneralLight(m_aiMapIndexToJPanelLightsIndex[i]);
+
+            lightArray[i] = kGeneralLight.createJava3dLight();
+            m_akLights[i] = kGeneralLight;
+
+            // illuminate everything in voxel space
+            lightArray[i].setInfluencingBounds(parentScene.bounds);
+            lightArrayBG[i] = new BranchGroup();
+            lightArrayBG[i].setCapability(BranchGroup.ALLOW_DETACH);
+            lightArrayBG[i].addChild(lightArray[i]);
+            surfaceRoot.addChild(lightArrayBG[i]);
+        }
+
+        kGeneralLight = m_kLightsControl.getGeneralLight(m_aiMapIndexToJPanelLightsIndex[8]);
+        lightArray[8] = kGeneralLight.createJava3dLight();
+        m_akLights[8] = kGeneralLight;
+        lightArray[8].setInfluencingBounds(parentScene.bounds);
+        lightArrayBG[8] = new BranchGroup();
+        lightArrayBG[8].setCapability(BranchGroup.ALLOW_DETACH);
+        lightArrayBG[8].addChild(lightArray[8]);
+        surfaceRoot.addChild(lightArrayBG[8]);
+
+        kGeneralLight = m_kLightsControl.getGeneralLight(m_aiMapIndexToJPanelLightsIndex[9]);
+        lightArray[9] = kGeneralLight.createJava3dLight();
+        m_akLights[9] = kGeneralLight;
+        lightArray[9].setInfluencingBounds(parentScene.bounds);
+        lightArrayBG[9] = new BranchGroup();
+        lightArrayBG[9].setCapability(BranchGroup.ALLOW_DETACH);
+        lightArrayBG[9].addChild(lightArray[9]);
+        staticLightBG.addChild(lightArrayBG[9]);
+    }
+
+
+    /**
+     * Takes the image's default transformation and transforms the surface by
+     * that transformation. This can be changed in the future so that the user
+     * can have a better way of setting the transform.
+     */
+    private void transformSurface() {
+
+        double[][] transform = parentScene.getImageA().getMatrix().getArray();
+        int selected = surfaceList.getSelectedIndex();
+        if (selected == -1) {
+            return;
+        }
+
+        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).getBranch();
+        root.detach();
+
+        for (int j = 0; j < root.numChildren(); j++) {
+            Shape3D shape = (Shape3D) root.getChild(j);
+            ((ModelTriangleMesh) shape.getGeometry(0)).affineTransform(transform);
+        }
+
+        surfaceRootBG.addChild(root);
+    }
+
+    //~ MouseListener functions: --------------------------------------------------------------------------
+    /**
+     * One of the overrides necessary to be a MouseListener. This member only
+     * exists to satisfy the conditions of being a MouseListener. It does
+     * nothing when invoked.
+     *
+     * @param  kEvent  The mouse event.
+     */
+    public void mouseClicked(MouseEvent kEvent) {}
+
+    /**
+     * One of the overrides necessary to be a MouseMotionListener. This member
+     * only exists to satisfy the conditions of being a
+     * MouseMotionListener. It does nothing when invoked.
+     *
+     * @param  kEvent  The mouse event.
+     */
+    public void mouseDragged(MouseEvent kEvent) {}
+
+    /**
+     * One of the overrides necessary to be a MouseListener. This member only
+     * exists to satisfy the conditions of being a MouseListener. It does
+     * nothing when invoked.
+     *
+     * @param  kEvent  The mouse event.
+     */
+    public void mouseEntered(MouseEvent kEvent) {}
+
+    /**
+     * One of the overrides necessary to be a MouseListener. This member only
+     * exists to satisfy the conditions of being a MouseListener. It does
+     * nothing when invoked.
+     *
+     * @param  kEvent  The mouse event.
+     */
+    public void mouseExited(MouseEvent kEvent) {}
+
+    /**
+     * One of the overrides necessary to be a MouseMotionListener. This member
+     * only exists to satisfy the conditions of being a
+     * MouseMotionListener. It does nothing when invoked.
+     *
+     * @param  kEvent  The mouse event.
+     */
+    public void mouseMoved(MouseEvent kEvent) {}
+
+    /**
+     *
+     * @param  kEvent  The mouse event.
+     */
+    public synchronized void mousePressed(MouseEvent kEvent) {
+
+        Object source = kEvent.getSource();
+        JPanelMouse myMouseDialog = ((SurfaceRender) parentScene).getMouseDialog();
+
+        if (myMouseDialog.isRecording() && (source == opacitySlider)) {
+            Transform3D t3D = new Transform3D();
+
+            parentScene.getSceneRootTG().getTransform(t3D);
+            surfaceOpacityEvents = new MouseEventVector("surfaceOpacitySlider" + surfaceSliderCount, t3D,
+                                                        myMouseDialog.first, parentScene.getSceneState(),
+                                                        parentScene.getMouseMode());
+            setSurfaceOpacityFlag = true;
+            myMouseDialog.events.add(surfaceOpacityEvents);
+            currentIndex = myMouseDialog.events.indexOf(surfaceOpacityEvents);
+        }
+
+        findPickedObject(kEvent);
+
+        if (findArbitraryClipping) {
+            ((SurfaceRender) renderBase).enableObjBehavior(false);
+            parentScene.getClipDialog().enableClipArbiBehavior(true);
+        } else if (isProbePicked()) {
+
+            if (((SurfaceRender) renderBase).getProbeDialog() != null) {
+                ((SurfaceRender) renderBase).getProbeDialog().setProbeGreenColor(true);
+                ((SurfaceRender) renderBase).enableObjBehavior(false);
+                ((SurfaceRender) renderBase).getProbeDialog().enableProbeBehavior(true);
+                enableStaticLightBehavior(false);
+            }
+        } else if (isStaticPicked() && isStaticLightEnabled()) {
+            enableStaticLightBehavior(true);
+            ((SurfaceRender) parentScene).enableObjBehavior(false);
+        } else {
+            enableStaticLightBehavior(false);
+            ((SurfaceRender) parentScene).enableObjBehavior(true);
+
+            if (((SurfaceRender) parentScene).getProbeDialog() != null) {
+                ((SurfaceRender) parentScene).getProbeDialog().enableProbeBehavior(false);
+            }
+        }
+
+        if (!isProbePicked() && (((SurfaceRender) renderBase).getDisplayDialog() != null)) {
+            float coarseVal = ((SurfaceRender) renderBase).getDisplayDialog().getCoarseVal();
+
+            ((SurfaceRender) renderBase).setSliceSpacingCoarse(coarseVal);
+            ((SurfaceRender) renderBase).useSliceSpacingCoarse();
+        }
+
+        // mouse press in Canvas3D, remove the probing path, which indicates the tissues detected along the path.
+        ((SurfaceRender) parentScene).getProbeDialog().removeProbingPath();
+
+    }
+
+    /**
+     *
+     * @param  kEvent  The mouse event.
+     */
+    public synchronized void mouseReleased(MouseEvent kEvent) {
+
+        float fineVal = 0f;
+        Object source = kEvent.getSource();
+
+        // System.out.println("JPanelSurface mouseReleased");
+        if (isStaticPicked() && isStaticLightEnabled()) {
+            activeLightBulbIndex = -1;
+        }
+
+
+        if (findArbitraryClipping) {
+            ((SurfaceRender) renderBase).enableObjBehavior(true);
+            parentScene.getClipDialog().enableClipArbiBehavior(false);
+            findArbitraryClipping = false;
+        }
+
+        if (!isProbePicked() && (((SurfaceRender) renderBase).getDisplayDialog() != null)) {
+
+            // coarseVal = ( (SurfaceRender) renderBase ).getDisplayDialog().getCoarseVal();
+            // ( (SurfaceRender) renderBase ).setSliceSpacingCoarse( coarseVal );
+            fineVal = ((SurfaceRender) renderBase).getDisplayDialog().getFineVal();
+            ((SurfaceRender) renderBase).setSliceSpacingFine(fineVal);
+            ((SurfaceRender) renderBase).useSliceSpacingFine();
+        }
+
+        /* The probe was occaisionally not being un-selected when the mouse
+         * button was released, so the probe is always un-selected on
+         * mouseRelease */
+        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
+
+            /* If the mouse release is the left mouse button, then the
+             * textures need to be updated one last time at the super-sampled
+             * high resolution: */
+            if (isProbePicked() && (kEvent.getButton() == MouseEvent.BUTTON1)) {
+                ((SurfaceRender) renderBase).updateProbe(true, true, false);
+            }
+
+            /* De-select the probe: */
+            findProbe = false;
+            ((SurfaceRender) renderBase).getProbeDialog().setProbeGreenColor(false);
+            ((SurfaceRender) renderBase).enableObjBehavior(true);
+            ((SurfaceRender) renderBase).getProbeDialog().enableProbeBehavior(false);
+            enableStaticLightBehavior(false);
+        }
+
+        JPanelMouse myMouseDialog = ((SurfaceRender) parentScene).getMouseDialog();
+
+        if (myMouseDialog.isRecording() && (source == opacitySlider)) {
+            surfaceSliderCount++;
+        }
+
+        // mouse release in Canvas3D, detecting tissues along the probe path.
+        ((SurfaceRender) parentScene).getProbeDialog().detectTissue();
+        ((SurfaceRender) parentScene).updateRaycastRender();
+    }
+
+    //~ Picking Operations: -----------------------------------------------------------------------------------
+
+    /**
+     * Locate the surface that corresponds to a picking operation in the
+     * viewer window. This member is called via the mouse listener
+     * callback. If a surface is picked, the list box is updated to show that
+     * the surface is selected and the corresponding information is set for
+     * the color button, the detail slider, and the number of triangles.
+     *
+     * @param   kEvent  The mouse event generated by the picking operation.
+     *
+     * @return  The picked surface, or null if no surface is located at the pick location.
+     */
+    private PickResult doPick(MouseEvent kEvent)
+    {
+        PickResult kResult = null;
+
+        try {
+            pickCanvas.setShapeLocation(kEvent);
+            kResult = pickCanvas.pickClosest();
+        } catch (NullPointerException e) {
+            return null;
+        }
+        return kResult;
+    }
+
+    /**
+     * One of the overrides necessary to be a MouseListener. The surface attribute dialog was added as a listener to the
+     * 3D canvas on which the scene is drawn. Whenever a picking operation occurs on the canvas, this member function is
+     * called. The pick operation returns the Shape3D object (null, if no object is situated at the pick location). The
+     * root of the subtree for the picked surface is looked up within the surfaces list. If found, the list box, color
+     * button, detail slider, triangle text, and polygon mode are updated to display the selected surface.<br>
+     * <br>
+     * <b>Note</b>. The use of Shape3D by the picker and BranchGroup by the surfaces list appears to be more complicated
+     * than necessary, and instead both should use Shape3D or BranchGroup. In fact it is necessary to structure the code
+     * as it currently is. The picker needs to locate actual geometry, so Shape3D objects must enable themselves to be
+     * picked with ray-triangle intersection testing. If the surfaces in the list were set up to be Shape3D instead of
+     * BranchGroup, then all add/remove operations would have to be based on Shape3D, not on BranchGroups. These
+     * operations are not allowed in compiled scene graphs.<br>
+     * <br>
+     * <b>Note.</b> The iteration over the surface list checking for the BranchGroup whose child is the picked surface
+     * is also necessary. Simpler would be to query the Shape3D object for its parent. Such a query is also not
+     * supported in a compiled scene graph.
+     *
+     * @param  kEvent  The mouse event.
+     */
+    public void findPickedObject(MouseEvent kEvent) {
+
+        if (!kEvent.isShiftDown() && parentScene.getParentFrame().isGeodesicEnable() ) {
+            return;
+        }
+        if ( mSurfacePaint.getEnabled() )
+        {
+            return;
+        }
+
+        // locate the surface that was picked
+        PickResult pickedObject;
+        int iPickedLight = -1;
+
+        sphereBranch.detach();
+        sphereShowing = false;
+
+        try {
+            pickedObject = doPick(kEvent);
+        } catch (CapabilityNotSetException error) {
+            return;
+        }
+
+        if (pickedObject == null) {
+            sphereBranch.detach();
+            sphereShowing = false;
+
+            return;
+        }
+
+        /* Pass the picked point to the brainsurfaceFlattenerRenderer: */
+        if (kEvent.isControlDown() && parentScene.getParentFrame().isBrainSurfaceFlattenerPickEnabled()) {
+
+            /* Pick the first intersection since we executed a pick
+             * closest. */
+            PickIntersection kPick = pickedObject.getIntersection(0);
+
+            /* Get the coordinates of the picked point on the mesh. */
+            Point3f kPickPoint = new Point3f(kPick.getPointCoordinates());
+
+            /* Get the triangle indices of the triangle that that
+             * pickPoint falls in:  */
+            int[] aiIndex = kPick.getPrimitiveCoordinateIndices();
+
+            parentScene.getParentFrame().drawBrainSurfaceFlattenerPoint(kPickPoint, aiIndex, 2);
+        }
+
+        Shape3D pickedShape = (Shape3D) pickedObject.getObject();
+        int iIndex;
+
+        findArbitraryClipping = false;
+
+        // Find ArbitraryClipping plane
+        if ((parentScene.getClipDialog() != null) && ((SurfaceRender) renderBase).getDisplayMode3D()) {
+            findArbitraryClipping = parentScene.getClipDialog().isArbitraryClipping(pickedShape);
+
+            if (findArbitraryClipping) {
+                return;
+            }
+        }
+
+        // Find picked surface
+        for (iIndex = 0; iIndex < surfaceVector.size(); iIndex++) {
+            BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
+            boolean bRootFound = false;
+
+            for (int i = 0; i < root.numChildren(); i++) {
+
+                if (root.getChild(i) == pickedShape) {
+                    bRootFound = true;
+
+                    break;
+                }
+            }
+
+            if (bRootFound) {
+                break;
+            }
+        }
+
+        // Find picked light bulb
+        boolean foundLightBulb = false;
+
+        if (iIndex >= surfaceVector.size()) {
+            iPickedLight = lightBulbs.getPickedLight(pickedShape);
+
+            if (iPickedLight >= 0) {
+                foundLightBulb = true;
+            } else {
+                iPickedLight = staticLightBulb.getPickedLight(pickedShape);
+
+                if (iPickedLight >= 0) {
+                    iPickedLight = 9;
+                    foundLightBulb = true;
+                }
+            }
+        }
+
+        findProbe = false;
+
+        /** find probe */
+        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
+            findProbe = ((SurfaceRender) renderBase).getProbeDialog().getProbeBase().findProbe(pickedShape);
+
+            if (findProbe) {
+                return;
+            }
+        }
+
+        // pick burn sphere
+
+        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
+            BranchGroup burnRoot = ((SurfaceRender) renderBase).getProbeDialog().getBurnRootParentBG();
+
+            int findIndex = ((SurfaceRender) renderBase).getProbeDialog().getBurnBase().findBurnPoint(pickedShape);
+
+            if (findIndex != -1) {
+                ((SurfaceRender) renderBase).getProbeDialog().updateBurnList(findIndex);
+
+                PickIntersection pi = pickedObject.getClosestIntersection(pickCanvas.getStartPosition());
+                Point3d point = pi.getClosestVertexCoordinates();
+                Transform3D t = new Transform3D();
+
+                // Largest dimension goes from -1 to 1
+                t.set(0.1, new Vector3d(point.x, point.y, point.z));
+                sphereTransform.setTransform(t);
+
+                if (sphereShowing == false) {
+                    ((BranchGroup) ((BranchGroup) (burnRoot.getChild(findIndex))).getChild(0)).addChild(sphereBranch);
+                    sphereShowing = true;
+                }
+
+                return;
+            }
+
+        }
+
+        // select the surface file name in the list box
+        if (iIndex < surfaceVector.size()) {
+            iSelect = iIndex;
+            surfaceList.setSelectedIndex(iSelect);
+            surfaceList.ensureIndexIsVisible(iSelect);
+
+            PickIntersection kPick = pickedObject.getIntersection(0);
+            /* Get the coordinates of the picked point on the mesh. */
+            Point3f kPickPoint = new Point3f(kPick.getPointCoordinates());
+
+            /* Set the sphere location to the picked point: */
+            Transform3D t = new Transform3D();
+            t.set(0.1, new Vector3d(kPickPoint.x, kPickPoint.y, kPickPoint.z));
+            sphereTransform.setTransform(t);
+
+            if (sphereShowing == false) {
+                surfaceRootBG.addChild(sphereBranch);
+                sphereShowing = true;
+            }
+        }
+
+        if (foundLightBulb) {
+            m_kLightsControl.setSelectedIndex(m_aiMapIndexToJPanelLightsIndex[iPickedLight]);
+            activeLightBulbIndex = iPickedLight;
+        }
+    }
+
+    //~ SceneGraph initialization and functions: ----------------------------------------------
+
+    /** Initialize the sphere scene graph objects for the sphere showing where
+     * the user clicked in the surface. */
+    private void initSphere()
+    {
+        Appearance app = new Appearance();
+        Material mat = new Material(new Color3f(Color.black),
+                                    new Color3f(Color.white),
+                                    new Color3f(Color.black),
+                                    new Color3f(Color.black), 80f);
+
+        mat.setCapability(Material.ALLOW_COMPONENT_WRITE);
+        app.setMaterial(mat);
+        app.setCapability(Appearance.ALLOW_MATERIAL_READ);
+        app.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+        app.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
+        app.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
+        app.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
+        app.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
+
+        TransparencyAttributes tap = new TransparencyAttributes();
+        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
+        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
+        app.setTransparencyAttributes(tap);
+
+        PolygonAttributes pAttr = new PolygonAttributes();
+        pAttr.setCullFace(PolygonAttributes.CULL_NONE);
+        pAttr.setPolygonMode(PolygonAttributes.POLYGON_LINE);
+        app.setPolygonAttributes(pAttr);
+
+        sphere = new Sphere(0.1f, Sphere.ENABLE_APPEARANCE_MODIFY, 8, app);
+        sphere.getShape().setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+        sphere.getShape().setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+        sphere.getShape().setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+        sphere.getShape().setCapability(Shape3D.ALLOW_GEOMETRY_READ);
+        sphere.getShape().setCapability(Geometry.ALLOW_INTERSECT);
+        sphere.getShape().setPickable(false);
+        sphere.getShape().setAppearanceOverrideEnable(true);
+        sphereTransform = new TransformGroup();
+        sphereTransform.setCapability(TransformGroup.ALLOW_TRANSFORM_WRITE);
+        sphereTransform.setCapability(Group.ALLOW_CHILDREN_READ);
+        sphereTransform.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        sphereTransform.addChild(sphere);
+        sphereBranch = new BranchGroup();
+        sphereBranch.setCapability(Group.ALLOW_CHILDREN_READ);
+        sphereBranch.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        sphereBranch.setCapability(BranchGroup.ALLOW_DETACH);
+        sphereBranch.addChild(sphereTransform);
+    }
+
+
+    /**
+     * Creates a surface in the scene graph from an array of triangle meshes.
+     *
+     * @param   meshes  Triangle meshes that make up surface
+     * @param   color   Color of surface
+     * @param   mode    The polygon drawing mode
+     *
+     * @return  Parent node of surface.
+     */
+    private void createSurface(SurfaceAttributes surface, boolean pickable )
+    {
+        ModelTriangleMesh[] meshes = surface.getMesh();
+        int mode = surface.getPolygonMode();
+        float opacity = surface.getOpacity();
+
+        // This Appearance Contains: 
+        // ColoringAttributes, PolygonAttributes, RenderingAttributes, TransparencyAttributes,
+        // Material, Texture, TextureAttributes, TextureUnitState
+        Appearance appearance = new Appearance();
+        appearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_READ);
+        appearance.setCapability(Appearance.ALLOW_COLORING_ATTRIBUTES_WRITE);
+        appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_READ);
+        appearance.setCapability(Appearance.ALLOW_POLYGON_ATTRIBUTES_WRITE);
+        appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_READ);
+        appearance.setCapability(Appearance.ALLOW_RENDERING_ATTRIBUTES_WRITE);
+        appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_READ);
+        appearance.setCapability(Appearance.ALLOW_TRANSPARENCY_ATTRIBUTES_WRITE);
+        appearance.setCapability(Appearance.ALLOW_MATERIAL_READ);
+        appearance.setCapability(Appearance.ALLOW_MATERIAL_WRITE);
+        appearance.setCapability( Appearance.ALLOW_TEXTURE_UNIT_STATE_READ );
+        appearance.setCapability( Appearance.ALLOW_TEXTURE_UNIT_STATE_WRITE );
+
+        // Coloring Attributes: for per-vertex color, set color interpolation to NICEST:
+        ColoringAttributes colorA = new ColoringAttributes( surface.getColor3(), ColoringAttributes.NICEST );
+        appearance.setColoringAttributes( colorA );
+
+        // Transparency Attributes:
+        TransparencyAttributes tap = new TransparencyAttributes();
+        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_READ);
+        tap.setCapability(TransparencyAttributes.ALLOW_VALUE_WRITE);
+        tap.setCapability(TransparencyAttributes.ALLOW_MODE_READ);
+        tap.setCapability(TransparencyAttributes.ALLOW_MODE_WRITE);
+        tap.setTransparencyMode(TransparencyAttributes.BLENDED);
+        tap.setSrcBlendFunction(TransparencyAttributes.BLEND_SRC_ALPHA);
+        tap.setDstBlendFunction(TransparencyAttributes.BLEND_ONE_MINUS_SRC_ALPHA);
+        tap.setTransparency( opacity );
+        appearance.setTransparencyAttributes(tap);
+
+        // Material
+        Material material = surface.getMaterial();
+        appearance.setMaterial(material);
+
+        //appearance.setTextureUnitState( textureState );
+
+        // Polygon Attributes:
+        // No back-face culling.  Supports double-sided meshes which can
+        // regularly occur for level surfaces (open surfaces).
+        PolygonAttributes kPAttr = new PolygonAttributes();
+        kPAttr.setCapability(PolygonAttributes.ALLOW_CULL_FACE_WRITE);
+        kPAttr.setCapability(PolygonAttributes.ALLOW_CULL_FACE_READ);
+        kPAttr.setCapability(PolygonAttributes.ALLOW_MODE_READ);
+        kPAttr.setCapability(PolygonAttributes.ALLOW_MODE_WRITE);
+        kPAttr.setCullFace(PolygonAttributes.CULL_BACK);
+        /* PolygonOffsetFactor is set so lines can be drawn ontop of the mesh
+         * without coplanar problems. */
+        kPAttr.setPolygonOffsetFactor(1.0f);
+        kPAttr.setPolygonMode(mode);
+        appearance.setPolygonAttributes(kPAttr);
+
+        // Rendering Attributes:
+        RenderingAttributes kRenderingAttr = new RenderingAttributes();
+        kRenderingAttr.setIgnoreVertexColors( false );
+        kRenderingAttr.setCapability( RenderingAttributes.ALLOW_IGNORE_VERTEX_COLORS_READ );
+        kRenderingAttr.setCapability( RenderingAttributes.ALLOW_IGNORE_VERTEX_COLORS_WRITE );
+        appearance.setRenderingAttributes( kRenderingAttr );
+
+        // Add surface to scene graph:
+        // Give the meshes a branch group parent.  This type of parent is
+        // necessary when working with a compiled scene graph to allow
+        // attaching/detaching nodes.
+        BranchGroup root = new BranchGroup();
+        root.setCapability(BranchGroup.ALLOW_DETACH);
+        root.setCapability(Group.ALLOW_CHILDREN_READ);
+        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
+        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
+
+        // For culling and picking purposes, it is better to have a separate
+        // Shape3D parent for each mesh rather than a single Shape3D parent
+        // for all meshes.
+        Shape3D[] akSurfaceShape = new Shape3D[meshes.length];
+        for (int i = 0; i < meshes.length; i++) {
+            akSurfaceShape[i] = new Shape3D(meshes[i], appearance);
+
+            akSurfaceShape[i].setCapability(Shape3D.ALLOW_APPEARANCE_READ);
+            akSurfaceShape[i].setCapability(Shape3D.ALLOW_APPEARANCE_WRITE);
+            akSurfaceShape[i].setCapability(Shape3D.ALLOW_GEOMETRY_WRITE);
+            akSurfaceShape[i].setCapability(Shape3D.ALLOW_GEOMETRY_READ);
+            akSurfaceShape[i].setCapability(Geometry.ALLOW_INTERSECT);
+
+            try {
+
+                // pickCanvas.setCapabilities( shape, PickTool.INTERSECT_FULL );
+                PickCanvas.setCapabilities(akSurfaceShape[i], PickCanvas.INTERSECT_FULL);
+            } catch (RestrictedAccessException error) { }
+
+            root.addChild(akSurfaceShape[i]);
+        }
+        surface.setShape( akSurfaceShape );
+
+        root.setCapability(Group.ALLOW_CHILDREN_EXTEND);
+        root.setCapability(Group.ALLOW_CHILDREN_READ);
+        root.setCapability(Group.ALLOW_CHILDREN_WRITE);
+        root.setCapability(BranchGroup.ALLOW_DETACH);
+        root.setCapability(Node.ALLOW_PICKABLE_READ);
+        root.setCapability(Node.ALLOW_PICKABLE_WRITE);
+        root.setCapability(Node.ALLOW_COLLIDABLE_WRITE);
+        root.setCapability(Node.ALLOW_COLLIDABLE_READ);
+        root.setPickable( pickable );
+        surfacePickableCB.setSelected( pickable );
+
+        // Allow Java to optimize subtree.  Attach to the scene graph.
+        root.compile();
+        surfaceRootBG.addChild(root);
+        surface.setBranch( root );
+    }
+
+
+
+    //~ GUI Set-up and functions:--------------------------------------------------------------
 
     /**
      * Initializes the GUI components.
@@ -2871,7 +2857,7 @@ public class JPanelSurface extends JPanelRendererBase
         // setSize(400, 256);
 
         // Scroll panel that hold the control panel layout in order to use JScrollPane
-        mainScrollPanel = new JPanel();
+        JPanel mainScrollPanel = new JPanel();
         mainScrollPanel.setLayout(new BorderLayout());
 
         scroller = new JScrollPane(mainScrollPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -2931,7 +2917,7 @@ public class JPanelSurface extends JPanelRendererBase
         scrollPanel.add(kScrollPane);
         scrollPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        listPanel = new JPanel();
+        JPanel listPanel = new JPanel();
         listPanel.setLayout(new BorderLayout());
         listPanel.add(scrollPanel, BorderLayout.CENTER);
         listPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -2939,15 +2925,6 @@ public class JPanelSurface extends JPanelRendererBase
 
         JPanel paintTexturePanel = new JPanel();
         paintTexturePanel.setLayout(new FlowLayout(FlowLayout.LEFT));
-
-        /* Creates the surface paint button, which launches the surface
-         * dialog: */
-        m_kTexturePaintButton = new JButton("Texture Paint Dialog");
-        m_kTexturePaintButton.addActionListener(this);
-        m_kTexturePaintButton.setActionCommand("TexturePaint");
-        m_kTexturePaintButton.setSelected(false);
-        m_kTexturePaintButton.setEnabled(false);
-        //paintTexturePanel.add(m_kTexturePaintButton);
 
 
         /* Creates the surface paint button, which launches the surface
@@ -3153,7 +3130,6 @@ public class JPanelSurface extends JPanelRendererBase
 
 
         JPanel cbSurfacePanel = new JPanel();
-
         cbSurfacePanel.setLayout(new BoxLayout(cbSurfacePanel, BoxLayout.Y_AXIS));
         cbSurfacePanel.add(surfacePickableCB);
         cbSurfacePanel.add(surfaceClipCB);
@@ -3161,7 +3137,6 @@ public class JPanelSurface extends JPanelRendererBase
         cbSurfacePanel.add(surfaceTransparencyCB);
 
         JPanel cbPanel = new JPanel();
-
         cbPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
         cbPanel.add(comboLabel);
         cbPanel.add(polygonModeCB);
@@ -3176,7 +3151,6 @@ public class JPanelSurface extends JPanelRendererBase
         cbPanel.setAlignmentY(Component.TOP_ALIGNMENT);
 
         JPanel optionsPanel = new JPanel();
-
         optionsPanel.setLayout(new BoxLayout(optionsPanel, BoxLayout.Y_AXIS));
         optionsPanel.add(colorPanel);
         optionsPanel.add(paintTexturePanel);
@@ -3184,7 +3158,7 @@ public class JPanelSurface extends JPanelRendererBase
         optionsPanel.add(cbPanel);
         optionsPanel.setBorder(buildTitledBorder("Surface options"));
 
-        rightPanel = new JPanel();
+        JPanel rightPanel = new JPanel();
         rightPanel.setLayout(new BorderLayout());
         rightPanel.add(optionsPanel, BorderLayout.NORTH);
 
@@ -3205,123 +3179,24 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * Check static light is enable or not.
+     * Creates a label in the proper font and color.
      *
-     * @return  staticLightEnable <code>true</code> means enable, <code>false</code> means disable.
-     */
-    private boolean isStaticLightEnabled() {
-        return m_kLightsControl.getGeneralLight(JPanelLights.LIGHT_INDEX_STATIC).isEnabled();
-    }
-
-    /**
-     * Indicates whether the static light bulb being picked by the mouse.
+     * @param   title  The title of the label.
      *
-     * @return  whether the static light bulb is being picked
+     * @return  The new label.
      */
-    private boolean isStaticPicked() {
+    private JLabel createLabel(String title) {
+        JLabel label = new JLabel(title);
 
-        if (activeLightBulbIndex == 8) {
-            return true;
-        } else {
-            return false;
-        }
-    }
+        label.setFont(serif12);
+        label.setForeground(Color.black);
 
-
-    /**
-     * Remove the surface from the volume render.
-     */
-    public void removeSurface() {
-        SurfaceAttributes[] surfaces = getSelectedSurfaces( surfaceList.getSelectedIndices() );
-        removeSurfaces( surfaces );
-
-        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-            ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
-        }
-
-        if (surfaceVector.size() <= 0) {
-            ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(false);
-        }
-        ((SurfaceRender) renderBase).updateData();
+        return label;
     }
 
     /**
-     * Remove the specified surface subtree from the scene graph.
-     *
-     * @param  root  The root of the subtree to remove.
-     */
-    public void removeSurface(BranchGroup root) {
-
-        // remove the surface from the scene (if it exists)
-        for (int i = 0; i < surfaceRootBG.numChildren(); i++) {
-
-            if (surfaceRootBG.getChild(i) == root) {
-                surfaceRootBG.removeChild(i);
-            }
-        }
-
-        System.gc();
-    }
-
-    /**
-     * The action taken when the Remove button is clicked in the list box. All
-     * selected surfaces in the list box are removed from the scene graph.
-     * @param surfaces[] the selected surfaces (SurfaceAttributes[]) to be removed.
-     */
-    private void removeSurfaces( SurfaceAttributes[] surfaces ) {
-
-        // remove the items
-        for ( int i = 0; i < surfaces.length; i++) {
-            removeSurface( surfaces[i].getBranch() );
-
-            // remove the surface from the image's file info if it is XML (so
-            // that it won't be saved with it)
-            if (parentScene.getParentFrame().getImageOriginal().getFileInfo()[0] instanceof FileInfoImageXML) {
-                for (int s = 0; s < parentScene.getParentFrame().getImageOriginal().getExtents()[2]; s++) {
-                    ((FileInfoImageXML) parentScene.getParentFrame().getImageOriginal().getFileInfo()[s]).removeSurface(surfaces[i].getFullPath());
-                }
-            }
-
-            int removeIndex = surfaceVector.indexOf( surfaces[i] );
-            surfaceVector.removeElementAt(removeIndex);
-            parentScene.getImageA().removeSurfaceMask(removeIndex);
-        }
-        int[] selected = new int[1];
-        selected[0] = iSelect >= surfaceVector.size() ? surfaceVector.size() - 1 : iSelect;
-        updateSurfaceNameList( selected );
-
-        if ( surfaceVector.size() == 0 )
-        {
-            // clear out the color values if the list is empty
-            iSelect = -1;
-            setElementsEnabled(false);
-            colorButton.setBackground(getBackground());
-            triangleText.setText("");
-            volumeText.setText("");
-            areaText.setText("");
-        }
-    }
-
-    /**
-     * Called when surfaces are added or removed from the surfaceVector
-     * SurfaceAttributes list. Updates the surfaceList combo-box displayed in
-     * the user-interface.
-     * @param selected, array of names that are currently selected.
-     */
-    private void updateSurfaceNameList( int[] selected )
-    {
-        Vector surfaceNames = new Vector();
-        for (Enumeration en = surfaceVector.elements(); en.hasMoreElements();) {
-            surfaceNames.addElement(((SurfaceAttributes) en.nextElement()).getName());
-        }
-        surfaceList.setListData(surfaceNames);
-        surfaceList.setSelectedIndices(selected);
-    }
-
-
-    /**
-     * Sets the surface options GUI panel to enabled or disabled. If there are 0 or multiple surfaces selected, all the
-     * options should be disabled.
+     * Sets the surface options GUI panel to enabled or disabled. If there are
+     * 0 or multiple surfaces selected, all the options should be disabled.
      *
      * @param  flag  Enable or disable.
      */
@@ -3338,7 +3213,6 @@ public class JPanelSurface extends JPanelRendererBase
 
         colorLabel.setEnabled(flag);
         m_kAdvancedMaterialOptionsButton.setEnabled(flag);
-        m_kTexturePaintButton.setEnabled(flag);
         m_kSurfaceTextureButton.setEnabled(flag);
         m_kStereoButton.setEnabled(flag);
         detailLabel.setEnabled(flag);
@@ -3374,77 +3248,31 @@ public class JPanelSurface extends JPanelRendererBase
         }
     }
 
+
     /**
-     * Create and initialize the nine lights in the scene graph. The first eight lights are positioned at the eight
-     * vertices of the cube [-1,1]^3. Light 0 is at (-1,-1,-1) and light 7 is at (1,1,1), both enabled by default. The
-     * default color for all lights is white. The default intensity is 1. All surfaces in the scene are illuminated by
-     * all enabled lights. The ninth light is ambient light, light that seems to come from all directions.
+     * This is called when the user chooses a new color for the surface. It
+     * changes the color of the surface.
      *
-     * @param  surfaceRoot  Transform group to attach lights to.
+     * @param  color  Color to change surface to.
      */
-    private void setupLights(TransformGroup surfaceRoot) {
-        GeneralLight kGeneralLight;
+    private void getColorChange(Color color) {
 
-        for (int i = 0; i < 8; i++) {
-            kGeneralLight = m_kLightsControl.getGeneralLight(m_aiMapIndexToJPanelLightsIndex[i]);
+        // change the material colors for the selected items
+        int[] aiSelected = surfaceList.getSelectedIndices();
 
-            lightArray[i] = kGeneralLight.createJava3dLight();
-            m_akLights[i] = kGeneralLight;
+        Color3f black = new Color3f(Color.black);
 
-            // illuminate everything in voxel space
-            lightArray[i].setInfluencingBounds(parentScene.bounds);
-            lightArrayBG[i] = new BranchGroup();
-            lightArrayBG[i].setCapability(BranchGroup.ALLOW_DETACH);
-            lightArrayBG[i].addChild(lightArray[i]);
-            surfaceRoot.addChild(lightArrayBG[i]);
+        for (int i = 0; i < aiSelected.length; i++) {
+            int iIndex = aiSelected[i];
+
+            Color4f newColor = new Color4f(color);
+
+            ((SurfaceAttributes) surfaceVector.get(iIndex)).setColor( newColor );
+            /* Change the mask color: */
+            parentScene.getImageA().addSurfaceMask( iIndex, null, null, newColor );
+            /* update the surface renderer: */
+            ((SurfaceRender) renderBase).updateData();
         }
-
-        kGeneralLight = m_kLightsControl.getGeneralLight(m_aiMapIndexToJPanelLightsIndex[8]);
-        lightArray[8] = kGeneralLight.createJava3dLight();
-        m_akLights[8] = kGeneralLight;
-        lightArray[8].setInfluencingBounds(parentScene.bounds);
-        lightArrayBG[8] = new BranchGroup();
-        lightArrayBG[8].setCapability(BranchGroup.ALLOW_DETACH);
-        lightArrayBG[8].addChild(lightArray[8]);
-        surfaceRoot.addChild(lightArrayBG[8]);
-
-        kGeneralLight = m_kLightsControl.getGeneralLight(m_aiMapIndexToJPanelLightsIndex[9]);
-        lightArray[9] = kGeneralLight.createJava3dLight();
-        m_akLights[9] = kGeneralLight;
-        lightArray[9].setInfluencingBounds(parentScene.bounds);
-        lightArrayBG[9] = new BranchGroup();
-        lightArrayBG[9].setCapability(BranchGroup.ALLOW_DETACH);
-        lightArrayBG[9].addChild(lightArray[9]);
-        staticLightBG.addChild(lightArrayBG[9]);
-    }
-
-
-    /**
-     * Takes the image's default transformation and transforms the surface by that transformation. This can be changed
-     * in the future so that the user can have a better way of setting the transform.
-     */
-    private void transformSurface() {
-
-        double[][] transform;
-
-        transform = parentScene.getImageA().getMatrix().getArray();
-
-        int selected = surfaceList.getSelectedIndex();
-
-        if (selected == -1) {
-            return;
-        }
-
-        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).getBranch();
-
-        root.detach();
-
-        for (int j = 0; j < root.numChildren(); j++) {
-            Shape3D shape = (Shape3D) root.getChild(j);
-            ((ModelTriangleMesh) shape.getGeometry(0)).affineTransform(transform);
-        }
-
-        surfaceRootBG.addChild(root);
     }
 
 

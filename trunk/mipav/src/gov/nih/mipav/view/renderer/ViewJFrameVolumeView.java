@@ -757,14 +757,8 @@ public class ViewJFrameVolumeView extends ViewJFrameBase implements MouseListene
      * @param  file  surface file name
      */
     public void addSurface(String dir, File file) {
-
         if ((surRender != null) && (surRender.getSurfaceDialog() != null)) {
-
-            //try {
-                surRender.getSurfaceDialog().addSurfaces(dir, file);
-            //} catch (IOException e) {
-            //    e.printStackTrace();
-            //}
+            surRender.getSurfaceDialog().addSurfaces(dir, file);
         }
     }
 
