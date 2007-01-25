@@ -2184,6 +2184,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (wheelRotation < 0) {
 
                 if (imageActive.getNDims() > 2) {
+                	if(mouseWheelEvent.isShiftDown()) {
+                		if(((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                			((ViewJFrameImage) frame).setShiftDown(true);
+                			((ViewJFrameImage) frame).setRegisteredFramedImages();
+                		}
+                	}
                     ((ViewJFrameImage) frame).incSlice();
                 } else {
                     ((ViewJFrameImage) frame).updateFrame(getZoomX() * 2.0f, getZoomY() * 2.0f);
@@ -2191,6 +2197,12 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             } else {
 
                 if (imageActive.getNDims() > 2) {
+                	if(mouseWheelEvent.isShiftDown()) {
+                		if(((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
+                			((ViewJFrameImage) frame).setShiftDown(true);
+                			((ViewJFrameImage) frame).setRegisteredFramedImages();
+                		}
+                	}
                     ((ViewJFrameImage) frame).decSlice();
                 } else {
                     ((ViewJFrameImage) frame).updateFrame(getZoomX() / 2.0f, getZoomY() / 2.0f);

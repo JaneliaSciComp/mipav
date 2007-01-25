@@ -245,8 +245,10 @@ public class ViewToolBarBuilder implements ItemListener {
         tBar.add(buildButton("SaveUDLUT", "Save user defined LUT", "userlutsave"));
         tBar.add(makeSeparator());
 
-        JButton leftArrowButton = buildButton("PreviousImage", "Decrements image slice", "leftarrow");
-        JButton rightArrowButton = buildButton("NextImage", "Increments image slice", "rightarrow");
+        JButton leftArrowButton = buildButton("PreviousImage", "<html>" + "Decrements image slice" + "<br>" + "Hold SHIFT to sync other images" + "</html>", "leftarrow");
+        JButton rightArrowButton = buildButton("NextImage", "<html>" + "Increments image slice" + "<br>" + "Hold SHIFT to sync other images" + "</html>", "rightarrow");
+        leftArrowButton.addMouseListener((MouseListener) UI);
+        rightArrowButton.addMouseListener((MouseListener) UI);
 
         if (numberOfDimensions == 2) {
             leftArrowButton.setEnabled(false);
