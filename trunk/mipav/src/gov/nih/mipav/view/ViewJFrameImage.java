@@ -2873,6 +2873,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             			framedImg.decSlice();
             		}
             	}
+            	registeredFramedImages = null;
+            	setShiftDown(false);
             }
 
             if (linkFrame != null) {
@@ -3288,6 +3290,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             			framedImg.incSlice();
             		}
             	}
+            	registeredFramedImages = null;
+            	setShiftDown(false);
             }
             
             if (linkFrame != null) {
