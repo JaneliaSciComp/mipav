@@ -2869,6 +2869,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             	for(int i=0;i<registeredFramedImages.size();i++) {
             		ModelImage img = (ModelImage)registeredFramedImages.get(i);
             		ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
+            		framedImg.setSlice(zSlice+1);
             		if(framedImg != null) {
             			framedImg.decSlice();
             		}
@@ -3286,6 +3287,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             	for(int i=0;i<registeredFramedImages.size();i++) {
             		ModelImage img = (ModelImage)registeredFramedImages.get(i);
             		ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
+            		framedImg.setSlice(zSlice-1);
             		if(framedImg != null) {
             			framedImg.incSlice();
             		}
@@ -5436,19 +5438,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 	    			int regFramedNumDims = image.getNDims();
 	    			if(regFramedNumDims == activeImageNumDims) {
 	    				//it is the same dimensionality
-	    				//now check that z num is the same if 3d or time dim is same if 4d
-	    				if(regFramedNumDims == 3) {
-	    					if(image.getExtents()[2] == activeImageNumSlices) {
-	    						//get the z slice in sync first
-	    						ViewJFrameImage frImg = ViewUserInterface.getReference().getFrameContainingImage(image);
-	    						frImg.setSlice(zSlice);
-	    						//ok....now we put the image in the arraylist
-	    						//if(registeredFramedImages == null) {
-	    						//	registeredFramedImages = new Vector();
-	    						//}
-	    						registeredFramedImages.add(image);
-	    					}
-	    				}	
+	    				if(image.getExtents()[2] == activeImageNumSlices) {
+	    					//zdimensions are the same
+	    					//so....now we put the image in the arraylist
+	    					registeredFramedImages.add(image);
+	    				}
 	    			}	
 	    		}
 			}	
