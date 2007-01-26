@@ -2873,7 +2873,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             	for(int i=0;i<registeredFramedImages.size();i++) {
             		ModelImage img = (ModelImage)registeredFramedImages.get(i);
             		ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-            		framedImg.decSlice();
+            		if(framedImg != null) {
+            			framedImg.decSlice();
+            		}
             	}
             }
 
@@ -3285,7 +3287,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             	for(int i=0;i<registeredFramedImages.size();i++) {
             		ModelImage img = (ModelImage)registeredFramedImages.get(i);
             		ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-            		framedImg.incSlice();
+            		if(framedImg != null) {
+            			framedImg.incSlice();
+            		}
             	}
             }
             
