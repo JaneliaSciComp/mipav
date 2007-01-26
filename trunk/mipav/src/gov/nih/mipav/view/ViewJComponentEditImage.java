@@ -2187,7 +2187,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 	if(mouseWheelEvent.isShiftDown()) {
                 		if(((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
                 			((ViewJFrameImage) frame).setShiftDown(true);
-                			((ViewJFrameImage) frame).setRegisteredFramedImages();
                 		}
                 	}
                     ((ViewJFrameImage) frame).incSlice();
@@ -2200,7 +2199,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 	if(mouseWheelEvent.isShiftDown()) {
                 		if(((ViewJFrameImage) frame).getImageA().getNDims() == 3) {
                 			((ViewJFrameImage) frame).setShiftDown(true);
-                			((ViewJFrameImage) frame).setRegisteredFramedImages();
                 		}
                 	}
                     ((ViewJFrameImage) frame).decSlice();

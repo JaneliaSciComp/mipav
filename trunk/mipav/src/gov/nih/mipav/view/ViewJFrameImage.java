@@ -148,11 +148,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** boolean indicating if shift button is down */
     private boolean isShiftDown = false;
     
-    /** List of framed images that have same dimensionality as active image
-     *  Used for when user wants to sync multiple images
-     *  
-     *  **/
-    private ArrayList registeredFramedImages = null;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -2869,7 +2864,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             setTitle();
             
             //need to get all other images in sync if there are other matching images and if shift was down
-            if(isShiftDown && registeredFramedImages != null) {
+            if(isShiftDown && (getRegisteredFramedImagesSize() > 0)) {
+            	Vector registeredFramedImages = getRegisteredFramedImages();
             	for(int i=0;i<registeredFramedImages.size();i++) {
             		ModelImage img = (ModelImage)registeredFramedImages.get(i);
             		ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
@@ -2895,7 +2891,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             updateImages(true);
             
-            registeredFramedImages = null;
+            //registeredFramedImages = null;
         }
     }
 
@@ -3281,9 +3277,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // componentImage.deactivateAllVOI();
             setTitle();
-            
+           
             //need to get all other images in sync if there are other matching images and if shift was down
-            if(isShiftDown && registeredFramedImages != null) {
+            if(isShiftDown && (getRegisteredFramedImagesSize() > 0)) {
+            	Vector registeredFramedImages = getRegisteredFramedImages();
             	for(int i=0;i<registeredFramedImages.size();i++) {
             		ModelImage img = (ModelImage)registeredFramedImages.get(i);
             		ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
@@ -3307,7 +3304,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             updateImages(true);
             
-            registeredFramedImages = null;
+            //registeredFramedImages = null;
             
             
             
@@ -3541,12 +3538,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 	        		if(event.isShiftDown()) {
 	        			if(getImageA().getNDims() == 3) {
 	        				isShiftDown = true;
-	        				setRegisteredFramedImages();
+	        				//setRegisteredFramedImages();
 	        			}
 	        		}
 	        		else {
 	        			isShiftDown = false;
-	        			registeredFramedImages = null;
+	        			//registeredFramedImages = null;
 	        		}
 	        		incSlice();
 	        	}
@@ -3554,12 +3551,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 	        		if(event.isShiftDown()) {
 	        			if(getImageA().getNDims() == 3) {
 	        				isShiftDown = true;
-	        				setRegisteredFramedImages();
+	        				//setRegisteredFramedImages();
 	        			}
 	        		}
 	        		else {
 	        			isShiftDown = false;
-	        			registeredFramedImages = null;	
+	        			//registeredFramedImages = null;	
 	        		}
 	        		decSlice();
 	        	}	
@@ -5395,23 +5392,38 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     
     
     
+    
+    
     /**
-     * This populates the registeredFramedImages list with 
-     * framed images that are of the same dimensionality 
-     * as the active image
+     * Returns the size of the RegisteredFramedImages Vector
+     * 
+     * @return size of the Vector
      */
-    public void setRegisteredFramedImages() {
+    public int getRegisteredFramedImagesSize() {
+    	int size = getRegisteredFramedImages().size();
+    	return size;
+    }
+    
+    /**
+     * Returns the Vector of Registered Framed Images that are of the 
+     * same dimensionalty as the active image
+     * 
+     * @return Vector
+     */
+    public Vector getRegisteredFramedImages() {
     	ModelImage activeImage = getImageA();
     	int activeImageNumDims = activeImage.getNDims();
 		int activeImageNumSlices = 0;
 		if(activeImageNumDims == 3) {
 			activeImageNumSlices = activeImage.getExtents()[2];
 		}
+		Vector registeredFramedImages = new Vector();
 		//check if there is more than 1 regsitered framed image
 		if(ViewUserInterface.getReference().getRegisteredFramedImagesNum() > 1) {
 			//get all registered images
 			Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
 			//add only the framed ones to a new list...also..dont include the active image
+			
 			while(regImages.hasMoreElements()) {
 	    		ModelImage image = (ModelImage)regImages.nextElement();
 	    		//check if it is a framed image...and if its not the active image...also make sure its just imageA
@@ -5427,9 +5439,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 	    						ViewJFrameImage frImg = ViewUserInterface.getReference().getFrameContainingImage(image);
 	    						frImg.setSlice(zSlice);
 	    						//ok....now we put the image in the arraylist
-	    						if(registeredFramedImages == null) {
-	    							registeredFramedImages = new ArrayList();
-	    						}
+	    						//if(registeredFramedImages == null) {
+	    						//	registeredFramedImages = new Vector();
+	    						//}
 	    						registeredFramedImages.add(image);
 	    					}
 	    				}	
@@ -5437,6 +5449,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 	    		}
 			}	
 		}
+		return registeredFramedImages;
     }
     
     
