@@ -38,22 +38,22 @@ public class JFrameSurfaceMaterialProperties extends JFrame
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Before/After index values for the two displayed spheres, canvases, and display panels:. */
     private int AFTER = 1;
 
     /** Before/After index values for the two displayed spheres, canvases, and display panels:. */
     private int BEFORE = 0;
 
-    /** DOCUMENT ME! */
+    /** Pre-defined materials */
     private Material[] m_akMaterialPreset = null;
 
-    /** DOCUMENT ME! */
+    /** specular coefficient */
     private float m_fShininess;
 
     /** Preset Material's examples:. */
     private int m_iNumPreset = 6;
 
-    /** DOCUMENT ME! */
+    /** the index of the surface that is being changed in the JPanelSurface */
     private int m_iSurfaceIndex;
 
     /** Which button is pressed to activate the JColorChooser:. */
@@ -68,16 +68,16 @@ public class JFrameSurfaceMaterialProperties extends JFrame
     /** Color Chooser dialog:. */
     private JColorChooser m_kColorChooser;
 
-    /** DOCUMENT ME! */
+    /** diffuse color */
     private Color3f m_kDiffuse;
 
-    /** DOCUMENT ME! */
+    /** diffuse color button */
     private JButton m_kDiffuseColorButton;
 
-    /** DOCUMENT ME! */
+    /** emissive color */
     private Color3f m_kEmissive;
 
-    /** DOCUMENT ME! */
+    /** emissive color button */
     private JButton m_kEmissiveColorButton;
 
     /** Split pane for displaying the canvases side-by-side:. */
@@ -95,7 +95,7 @@ public class JFrameSurfaceMaterialProperties extends JFrame
     /** Window display panels: Material properties buttons/slider panel:. */
     private JPanel m_kMaterialPanel;
 
-    /** DOCUMENT ME! */
+    /** Saved Material for backup */
     private Material m_kMaterialSave;
 
     /** Parent class:. */
@@ -104,11 +104,15 @@ public class JFrameSurfaceMaterialProperties extends JFrame
     /** Shininess slider. */
     private JSlider m_kShininessSlider;
 
-    /** DOCUMENT ME! */
+    /** Specular color component */
     private Color3f m_kSpecular;
 
-    /** DOCUMENT ME! */
+    /** Specular color button */
     private JButton m_kSpecularColorButton;
+
+    /** keeps track of whether or not color has been applied to surface (for
+     * backup on cancel) */
+    private boolean m_bColorApplied = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -276,8 +280,6 @@ public class JFrameSurfaceMaterialProperties extends JFrame
      * Deletes all local data members.
      */
     public void dispose() {
-        System.err.println("JPanelSurfaceMaterialProperties: dispose()");
-
         m_kMaterialPanel.removeAll();
         m_kMaterialPanel = null;
         m_kImagePanel[BEFORE].removeAll();
@@ -383,13 +385,16 @@ public class JFrameSurfaceMaterialProperties extends JFrame
         m_kMaterialNew.getSpecularColor(m_kSpecular);
         m_fShininess = m_kMaterialNew.getShininess();
 
-        m_kParent.setMaterial(m_kMaterialNew, m_iSurfaceIndex);
+        Material kMaterial = new Material( m_kAmbient, m_kEmissive, m_kDiffuse, m_kSpecular, m_fShininess );
+        m_kParent.setMaterial( kMaterial, m_iSurfaceIndex );
+
+        m_bColorApplied = true;
     }
 
     /**
      * Builds the preset panel to display the preset images and buttons.
      *
-     * @return  DOCUMENT ME!
+     * @return  the preset panel to display the preset images and buttons.
      */
     private JPanel buildPresetPanel() {
         JPanel kPresetPanel = new JPanel(new GridLayout(2, m_iNumPreset));
@@ -411,7 +416,7 @@ public class JFrameSurfaceMaterialProperties extends JFrame
     /**
      * Creates the canvas.
      *
-     * @return  DOCUMENT ME!
+     * @return  Canvas3D
      */
     private Canvas3D createCanvas3D() {
         GraphicsConfiguration config = SimpleUniverse.getPreferredConfiguration();
@@ -423,10 +428,10 @@ public class JFrameSurfaceMaterialProperties extends JFrame
     /**
      * Creates the rendered spheres, setting the apprearance, material properties, and transparency.
      *
-     * @param   fOpacity   DOCUMENT ME!
-     * @param   kMaterial  DOCUMENT ME!
+     * @param   fOpacity   default opacity
+     * @param   kMaterial  initial Material
      *
-     * @return  DOCUMENT ME!
+     * @return  BranchGroup
      */
     private BranchGroup createSceneGraph(float fOpacity, Material kMaterial) {
 
@@ -514,17 +519,26 @@ public class JFrameSurfaceMaterialProperties extends JFrame
     }
 
     /**
-     * Reset the color changes for the Before sphere and the original surface, based on the original surface material
-     * properties, also update the user-interface buttons to the original values.
+     * Reset the color changes for the Before sphere and the original surface,
+     * based on the original surface material properties, also update the
+     * user-interface buttons to the original values.
      */
     private void resetColorChange() {
+        // if no color has been applied, do not need to restore.
+        if ( !m_bColorApplied )
+        {
+            return;
+        }
+
         m_kMaterialSave.getAmbientColor(m_kAmbient);
         m_kMaterialSave.getEmissiveColor(m_kEmissive);
         m_kMaterialSave.getDiffuseColor(m_kDiffuse);
         m_kMaterialSave.getSpecularColor(m_kSpecular);
         m_fShininess = m_kMaterialSave.getShininess();
 
-        m_kParent.setMaterial(m_kMaterialSave, m_iSurfaceIndex);
+        // restore the per-vertex color and the old Material, then restore the material
+        Material kMaterial = new Material( m_kAmbient, m_kEmissive, m_kDiffuse, m_kSpecular, m_fShininess );
+        m_kParent.restorePerVertexColor( kMaterial, m_iSurfaceIndex );
 
         m_kMaterialNew.setAmbientColor(m_kAmbient);
         m_kMaterialNew.setEmissiveColor(m_kEmissive);
@@ -744,6 +758,7 @@ public class JFrameSurfaceMaterialProperties extends JFrame
         /* Save the original: */
         m_kMaterialSave = new Material(m_kAmbient, m_kEmissive, m_kDiffuse, m_kSpecular, m_fShininess);
         m_kMaterialSave.setCapability(Material.ALLOW_COMPONENT_READ);
+        m_kMaterialSave.setCapability(Material.ALLOW_COMPONENT_WRITE);
 
         if (m_iNumPreset < 0) {
             m_iNumPreset = 0;

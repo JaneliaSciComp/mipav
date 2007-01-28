@@ -66,9 +66,9 @@ public class FileSurface
                 FileSurfaceXML kSurfaceXML = new FileSurfaceXML(ViewUserInterface.getReference(), kName, akFiles[i].getParent());
                 try {
                     FileInfoSurfaceXML kFileInfo =  kSurfaceXML.readSurfaceXML(kName, akFiles[i].getParent());
-                    kSurface[i] = new SurfaceAttributes( kFileInfo.getMesh(), akFiles[i].getPath(), kName, 0, 0f, 0f, new Point3f( 0, 0, 0 ) );
-                    kSurface[i].setMaterial( kFileInfo.getMaterial() );
+                    kSurface[i] = new SurfaceAttributes( kFileInfo.getMesh(), akFiles[i].getPath(), kName );
                     kSurface[i].setOpacity( kFileInfo.getOpacity() );
+                    kSurface[i].setMaterial( kFileInfo.getMaterial() );
                     kSurface[i].setLevelDetail( kFileInfo.getLevelDetail() );
                 } catch ( IOException e ) {
                     kSurface[i] = null;
@@ -190,14 +190,10 @@ public class FileSurface
     {
 
         int iType, iQuantity;
-        int numTriangles = 0;
-        float volume = 0;
-        float area = 0;
         boolean isSur = true;
         int[] direction;
         float[] startLocation;
         Point3f[] akVertex;
-        Point3f center = new Point3f();
         int[] aiConnect;
         Point3f[][] akTriangle;
         int[] extents = kImage.getExtents();
@@ -324,7 +320,6 @@ public class FileSurface
                     }
                 }
                 
-                float xSum = 0f, ySum = 0f, zSum = 0f;
                 for ( int j = 0; j < akVertex.length; j++ )
                 {
                     // The mesh files save the verticies as
@@ -337,24 +332,14 @@ public class FileSurface
                                      ((yDim - 1) * resols[1])) / maxBox;
                     akVertex[j].z = ((2.0f * (akVertex[j].z - startLocation[2]) / direction[2]) -
                                      ((zDim - 1) * resols[2])) / maxBox;
-                    
-                    xSum += akVertex[j].x;
-                    ySum += akVertex[j].y;
-                    zSum += akVertex[j].z;
                 }
-                center = new Point3f(xSum / akVertex.length, ySum / akVertex.length, zSum / akVertex.length);
                 
                 if (iType != 0)
                 {
                     kClod.setLOD(kClod.getMaximumLOD());
                     akComponent[i] = kClod.getMesh();
                 }
-                // Make sure the volume is calculated when in the original file units.
-                volume += akComponent[i].volume();
-                area += akComponent[i].area();
                 akComponent[i].setVerticies(akVertex);
-                numTriangles += akComponent[i].getIndexCount();
-                
                 if (iType != 0)
                 {
                     kClod.setVerticies(akVertex);
@@ -366,9 +351,7 @@ public class FileSurface
         }
 
         progress.dispose();
-        numTriangles = numTriangles / 3;
-        SurfaceAttributes surface = new SurfaceAttributes( akComponent, file.getPath(), file.getName(),
-                                                           numTriangles, volume, area, center );
+        SurfaceAttributes surface = new SurfaceAttributes( akComponent, file.getPath(), file.getName() );
         surface.setColor( color );
         return surface;
     }

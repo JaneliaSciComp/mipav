@@ -249,13 +249,6 @@ public class JPanelSurface extends JPanelRendererBase
     /** A list of the surfaces. The elements are of type SurfaceAttributes. */
     private Vector surfaceVector;
 
-    /**
-     * If only a single surface is selected in the list box, this member
-     * stores the index into the list for the selected item. If no items are
-     * selected or if multiple items are selected, the value is -1.
-     */
-    private int iSelect = -1;
-
     /** Surface mask. */
     private SurfaceMask mSurfaceMask = new SurfaceMask();
 
@@ -511,8 +504,6 @@ public class JPanelSurface extends JPanelRendererBase
             addSurface();
         } else if (command.equals("Remove")) {
             removeSurface();
-        } else if (command.equals("Transform")) {
-            transformSurface();
         } else if (command.equals("ChangeColor")) {
             colorChooser = new ViewJColorChooser(new Frame(), "Pick surface color", new OkColorListener(),
                                                  new CancelListener());
@@ -525,11 +516,6 @@ public class JPanelSurface extends JPanelRendererBase
         } else if (command.equals("SurfaceTexture")) {
             parentScene.getParentFrame().actionPerformed( new ActionEvent( m_kSurfaceTextureButton, 0, "SurfaceTexture" ) );
         } else if (command.equals("ChangeLight")) {
-
-            if (m_kLightsControl == null) {
-                m_kLightsControl = new JPanelLights(this, parentScene);
-            }
-
             m_kLightsControl.setVisible(true);
         } else if (command.equals("SurfacePickable")) {
             setPickable( getSelectedSurfaces( surfaceList.getSelectedIndices() ) );
@@ -563,17 +549,24 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * The override necessary to be a ChangeListener for a JSlider. When a change occurs, the user has requested that
-     * the level of detail be changed for the currently active surface. The slider range is [0,100] and is treated as a
-     * percent of maximum level of detail. A change has no effect on ModelTriangleMesh objects, but it does change the
-     * level of detail for an ModelClodMesh object. The number of triangles is also updated.
+     * The override necessary to be a ChangeListener for a JSlider. 
+     *
+     * When a change occurs to the detailSlider, the user has requested that
+     * the level of detail be changed for the currently active surface. The
+     * slider range is [0,100] and is treated as a percent of maximum level of
+     * detail. A change has no effect on ModelTriangleMesh objects, but it
+     * does change the level of detail for an ModelClodMesh object. The number
+     * of triangles is also updated.
+     *
+     * When a change occurs to the opacity slider, the surface transparency is
+     * updated.
      *
      * @param  event  The change event.
      */
     public void stateChanged(ChangeEvent event) {
 
-        if (event.getSource() == detailSlider) {
-
+        if (event.getSource() == detailSlider)
+        {
             if (detailSlider.getValueIsAdjusting()) {
                 // Too many LOD changes occur if you always get the slider
                 // value.  Wait until the user stops dragging the slider.
@@ -587,38 +580,36 @@ public class JPanelSurface extends JPanelRendererBase
             int iValue = detailSlider.getValue();
 
             // construct the lists of items whose LODs need to be changed
-            int[] aiSelected = surfaceList.getSelectedIndices();
-            for (int i = 0; i < aiSelected.length; i++) {
-
+            SurfaceAttributes[] surfaces = getSelectedSurfaces( surfaceList.getSelectedIndices() );
+            for ( int i = 0; i < surfaces.length; i++ )
+            {
                 int numTriangles = 0;
                 float volume = 0;
                 float area = 0;
-                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).getBranch();
-
-                ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setLevelDetail( iValue );
+                surfaces[i].setLevelDetail( iValue );
                 
-                for (int j = 0; j < root.numChildren(); j++) {
-                    Shape3D shape = (Shape3D) root.getChild(j);
-                    ModelTriangleMesh kMesh = (ModelTriangleMesh) shape.getGeometry(0);
-                    
-                    if (kMesh.getGenerator() != null) {
-                        
+                ModelTriangleMesh akMeshes[] = surfaces[i].getMesh();
+                Shape3D akShapes[] = surfaces[i].getShape();
+                for (int j = 0; j < akMeshes.length; j++ )
+                {
+                    if (akMeshes[j].getGenerator() != null)
+                    {
                         // clod mesh surface was selected for LOD changes
-                        ModelClodMesh kClod = (ModelClodMesh) kMesh.getGenerator();
+                        ModelClodMesh kClod = (ModelClodMesh) akMeshes[j].getGenerator();
                         int iLOD = (int) (iValue * kClod.getMaximumLOD() / 100.0f);
-                        
                         kClod.setLOD(iLOD);
                         numTriangles += kClod.getMesh().getIndexCount();
                         volume += kClod.getMesh().volume();
                         area += kClod.getMesh().area();
                         // update the Shape3D parent
-                        
-                        shape.insertGeometry(kClod.getMesh(), 0);
-                        shape.removeGeometry(1);
-                    } else {
-                        numTriangles += kMesh.getIndexCount();
-                        volume += kMesh.volume();
-                        area += kMesh.area();
+                        akShapes[j].insertGeometry(kClod.getMesh(), 0);
+                        akShapes[j].removeGeometry(1);
+                    }
+                    else
+                    {
+                        numTriangles += akMeshes[j].getIndexCount();
+                        volume += akMeshes[j].volume();
+                        area += akMeshes[j].area();
                     }
                 }
                 numTriangles /= 3;
@@ -628,12 +619,13 @@ public class JPanelSurface extends JPanelRendererBase
                 // while one length across the actual volume changes by ((dim-1)*res)max
                 volumeText.setText("" + (volume * maxBox * maxBox * maxBox / 8.0f));
                 areaText.setText(String.valueOf(area * maxBox * maxBox));
-                ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setNumberTriangles( numTriangles );
-                ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setVolume( volume );
-                ((SurfaceAttributes) surfaceVector.get(aiSelected[i])).setArea( area );
+                surfaces[i].setNumberTriangles( numTriangles );
+                surfaces[i].setVolume( volume );
+                surfaces[i].setArea( area );
             }
         }
-        else if (event.getSource() == opacitySlider) {
+        else if (event.getSource() == opacitySlider)
+        {
              // change the opacity for the selected items
             JPanelMouse myMouseDialog = ((SurfaceRender) parentScene).getMouseDialog();
 
@@ -660,91 +652,65 @@ public class JPanelSurface extends JPanelRendererBase
                 /* Change the mask color: */
                 parentScene.getImageA().addSurfaceMask( aiSelected[i], null, null, newColor );
                 /* update the surface renderer: */
-                ((SurfaceRender) renderBase).updateData();
-
-                BranchGroup root = surfaces[i].getBranch();
-                Shape3D shape = (Shape3D) root.getChild(0);
-                Appearance appearance = shape.getAppearance();
-                appearance.getTransparencyAttributes().setTransparency(1 - (iValue / 100.0f)); // 0 = Opaque
+                updateSurfaceRender( false );            
             }
         }
     }
 
 
     /**
-     * The override necessary to be a ListSelectionListener. This callback is executed whenever the user selects a new
-     * item (or items) in the list box. If a single item is selected, then the selection index is remembered in <code>
-     * iSelect</code> and the color button, detail slider, and polygon mode are initialized with the appropriate values
-     * corresponding to the selected surface. If multiple items are selected, then the selection index is -1 and the
-     * color button is set to the background color and disabled. The slider and polygon mode are set to the values found
-     * in the minimum selected surface but are still enabled. The dialog does not support changing the color for
-     * multiple surfaces at one time but does support changing level of detail and polygon mode for multiple surfaces at
-     * one time (to the same value).
+     * The override necessary to be a ListSelectionListener. This callback is
+     * executed whenever the user selects a new item (or items) in the list
+     * box. If a single item is selected, then the selection index is
+     * remembered in <code> iSelect</code> and the interface items are
+     * initialized with the appropriate values corresponding to the selected
+     * surface. If multiple items are selected, then the selection index is -1
+     * and the color button is set to the background color. The slider and
+     * polygon mode are set to the values found in the minimum selected
+     * surface.
      *
      * @param  kEvent  The list selection event.
      */
     public void valueChanged(ListSelectionEvent kEvent) {
-
-        // Let getColorChange know that only the selection is changing,
-        // not the material colors for the selected surface.
-        iSelect = -1;
-
         try {
             JList kList = (JList) kEvent.getSource();
-            int[] indices = kList.getSelectedIndices();
 
-            int index = kList.getMinSelectionIndex();
-            SurfaceAttributes attributes;
+            // No Surfaces Selected:
+            if ( kList.getMinSelectionIndex() == -1 )
+            {
+                return;
+            }
 
-            if (index != -1) {
-                BranchGroup root = ((SurfaceAttributes) surfaceVector.get(index)).getBranch();
-
+            SurfaceAttributes[] surfaces = getSelectedSurfaces( kList.getSelectedIndices() );
+            float area = 0;
+            int numberTriangles = 0;
+            float volume = 0;
+            boolean enableLevelOfDetail = true;
+            for ( int i = 0; i < surfaces.length; i++ )
+            {
+                // update user-interface components:
+                BranchGroup root = surfaces[i].getBranch();
                 surfacePickableCB.setSelected(root.getPickable());
                 surfaceBackFaceCB.setSelected(root.getCollidable());
-
-                Shape3D[] shapes = ((SurfaceAttributes) surfaceVector.get(index)).getShape();
-                for ( int j = 0; j < shapes.length; j++ )
-                {
-                    
-                    surfaceTransparencyCB.setSelected( shapes[j].getAppearance().getTransparencyAttributes().getTransparencyMode() == TransparencyAttributes.BLENDED );
-                }
-
+                
+                Shape3D[] shapes = surfaces[i].getShape();
+                surfaceTransparencyCB.setSelected( shapes[0].getAppearance().getTransparencyAttributes().getTransparencyMode() == TransparencyAttributes.BLENDED );
+                
                 if (((SurfaceRender) parentScene).getDisplayMode3D()) {
                     surfaceClipCB.setSelected(root.getAlternateCollisionTarget());
                 }
-            }
-
-            if (indices.length > 0) {
-                attributes = (SurfaceAttributes) surfaceVector.get(index);
-
-                if (indices.length == 1) {
-                    iSelect = kList.getMinSelectionIndex();
-
-                    // a single surface was selected, set edit text to its color
-                    Color4f color = attributes.getColor();
-
-                    colorButton.setBackground(color.get());
-                    setElementsEnabled(true);
-                } else {
-
-                    // multiple surfaces were selected (not all colors the same)
-                    colorButton.setBackground(getBackground());
-                    colorButton.setEnabled(false);
-                    colorLabel.setEnabled(false);
-
-                }
+                colorButton.setBackground( surfaces[i].getColor().get() );
 
                 if ( polygonIndexToMode( polygonModeCB.getSelectedIndex() ) !=
-                     ((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode())
+                     surfaces[i].getPolygonMode() )
                 {
                     int mode = 0;
-
-                    switch (((SurfaceAttributes) surfaceVector.get(index)).getPolygonMode()) {
-
+                    switch ( surfaces[i].getPolygonMode() )
+                    {
                     case PolygonAttributes.POLYGON_FILL:
                         mode = 0;
                         break;
-
+                        
                     case PolygonAttributes.POLYGON_LINE:
                         mode = 1;
                         break;
@@ -753,34 +719,33 @@ public class JPanelSurface extends JPanelRendererBase
                         mode = 2;
                         break;
                     }
-
+                    polygonModeCB.removeActionListener(this);
                     polygonModeCB.setSelectedIndex(mode);
+                    polygonModeCB.addActionListener(this);
+                }
+                if ( !surfaces[i].getIsClodMesh() )
+                {
+                    enableLevelOfDetail = false;
                 }
 
-                triangleText.setText("" + attributes.getNumberTriangles());
-                volumeText.setText("" + attributes.getVolume());
-                areaText.setText("" + attributes.getArea());
-                detailSlider.setValue(attributes.getLevelDetail());
-                opacitySlider.setValue((int) ( (1 - attributes.getOpacity()) * 100));
+                detailSlider.setValue( surfaces[i].getLevelDetail());
+                opacitySlider.setValue((int) ( (1 - surfaces[i].getOpacity()) * 100));
 
-                boolean enable = true;
-
-                for (int i = 0; i < indices.length; i++) {
-
-                    if (!((SurfaceAttributes) surfaceVector.get(indices[i])).getIsClodMesh()) {
-                        enable = false;
-                    }
-                }
-
-                detailSlider.setEnabled(enable);
-                detailLabel.setEnabled(enable);
-
-                for (int i = 0; i < detailSliderLabels.length; i++) {
-                    detailSliderLabels[i].setEnabled(enable);
-                }
-
-                decimateButton.setEnabled(!enable);
+                area += surfaces[i].getArea();
+                numberTriangles += surfaces[i].getNumberTriangles();
+                volume += surfaces[i].getVolume();
             }
+            areaText.setText( "" + (area * maxBox * maxBox) );
+            triangleText.setText( "" + numberTriangles );
+            volumeText.setText( "" + (volume * maxBox * maxBox * maxBox / 8.0f) );
+                
+            detailSlider.setEnabled( enableLevelOfDetail );
+            detailLabel.setEnabled( enableLevelOfDetail );
+                
+            for (int i = 0; i < detailSliderLabels.length; i++) {
+                detailSliderLabels[i].setEnabled( enableLevelOfDetail );
+            }
+            decimateButton.setEnabled( !enableLevelOfDetail );
         } catch (ArrayIndexOutOfBoundsException e) {
             return;
         }
@@ -803,23 +768,6 @@ public class JPanelSurface extends JPanelRendererBase
         SurfaceAttributes[] selectedSurfaces = new SurfaceAttributes[ aiSelected.length ];
         for (int i = 0; i < aiSelected.length; i++) {
             selectedSurfaces[ i ] = (SurfaceAttributes) surfaceVector.get(aiSelected[i]);
-        }
-        return selectedSurfaces;
-    }
-
-    /**
-     * Returns a list of all the surfaces loaded in the scene graph.
-     * @return a list of all the surfaces loaded in the scene graph.
-     */
-    private SurfaceAttributes[] getAllSurfaces( )
-    {
-        if ( surfaceVector.size() <= 0 )
-        {
-            return null;
-        }
-        SurfaceAttributes[] selectedSurfaces = new SurfaceAttributes[ surfaceVector.size() ];
-        for (int i = 0; i < surfaceVector.size(); i++) {
-            selectedSurfaces[ i ] = (SurfaceAttributes) surfaceVector.get(i);
         }
         return selectedSurfaces;
     }
@@ -973,7 +921,7 @@ public class JPanelSurface extends JPanelRendererBase
                 float fOpacity = surfaces[i].getOpacity();
 
                 /* Launch the material editor: */
-                new JFrameSurfaceMaterialProperties(this, aiSelected[i], m_akLights, fOpacity, material);
+                new JFrameSurfaceMaterialProperties(this, aiSelected[i], m_akLights, 1-fOpacity, material);
             }
         }
     }
@@ -1200,12 +1148,9 @@ public class JPanelSurface extends JPanelRendererBase
             kSurface[0] = kMesh;
 
             /* Tell the surfaceRenderer to add the triangle mesh surface: */
-            ((SurfaceRender) renderBase).updateData();
-
-            int numTriangles = kMesh.getIndexCount();
-            float volume = kMesh.volume();
-            float area = kMesh.area();
-            SurfaceAttributes surface = new SurfaceAttributes( kSurface, "", "branch", numTriangles, volume, area, kMesh.center());
+            updateSurfaceRender( false );
+            
+            SurfaceAttributes surface = new SurfaceAttributes( kSurface, "", "branch" );
             surface.setBranch( kBranch );
 
             /** mask the surface added. */
@@ -1214,9 +1159,9 @@ public class JPanelSurface extends JPanelRendererBase
             surface.setMask( mSurfaceMask.getVolumeMask() );
 
             surfaceVector.add(surface);
-            triangleText.setText(String.valueOf(numTriangles));
-            volumeText.setText(String.valueOf(volume));
-            areaText.setText(String.valueOf(area));
+            triangleText.setText(String.valueOf( surface.getNumberTriangles() ) );
+            volumeText.setText(String.valueOf( (surface.getVolume() * maxBox * maxBox * maxBox / 8.0f) ) );
+            areaText.setText(String.valueOf( (surface.getArea() * maxBox * maxBox) ) );
 
             /* Add to the surfaceList: */
             int iNameIndex = 0;
@@ -1299,9 +1244,8 @@ public class JPanelSurface extends JPanelRendererBase
         ModelTriangleMesh[] akComponent = new ModelTriangleMesh[1];
         akComponent[0] = kNew;
         /* Create a new SurfaceAttributes: */
-        int iNumTriangles = kNew.getIndexCount() / 3;
         SurfaceAttributes[] surfaces = new SurfaceAttributes[1];
-        surfaces[0] = new SurfaceAttributes( akComponent, "", kName, iNumTriangles, kNew.volume(), kNew.area(), kNew.center() );
+        surfaces[0] = new SurfaceAttributes( akComponent, "", kName );
         surfaces[0].setColor( surfaceColor );
         /* Add the new surface: */
         addSurfaces( surfaces, true );
@@ -1318,22 +1262,6 @@ public class JPanelSurface extends JPanelRendererBase
      */
     private SurfaceAttributes[] containsMesh( ModelTriangleMesh kOld )
     {
-        /*
-        SurfaceAttributes[] surfaces = getAllSurfaces();
-        for (int i = 0; i < surfaces.length; i++)
-        {
-            ModelTriangleMesh[] meshes = surfaces[i].getMesh();
-            for ( int j = 0; j < meshes.length; j++ )
-            {
-                if ( kOld == meshes[j] )
-                {
-                    SurfaceAttributes[] foundSurfaces = new SurfaceAttributes[1];
-                    foundSurfaces[0] = surfaces[i];
-                    return foundSurfaces;
-                }
-            }
-        }
-        */
         for (int i = 0; i < surfaceList.getModel().getSize(); i++) {
             BranchGroup kSurfaceBG = ((SurfaceAttributes) surfaceVector.get(i)).getBranch();
 
@@ -1414,12 +1342,7 @@ public class JPanelSurface extends JPanelRendererBase
 
         /* Tell the surfaceRenderer to add the triangle mesh
          * surface: */
-        ((SurfaceRender) renderBase).updateData();
-        ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(true);
-
-        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-            ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
-        }
+        updateSurfaceRender( true );
     }
 
 
@@ -1493,21 +1416,6 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * Get the surface material reference.
-     *
-     * @param   iIndex  material index.
-     *
-     * @return  Material material reference.
-     */
-    public Material getMaterial(int iIndex) {
-        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
-        Shape3D shape = (Shape3D) root.getChild(0);
-        /* Set the new surface material values: */
-        Appearance kAppearance = shape.getAppearance();
-        return kAppearance.getMaterial();
-    }
-
-    /**
      * Get the current surface opacity slider.
      *
      * @return  opacitySlider Surface opacity slider
@@ -1523,15 +1431,6 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public PickCanvas getPickCanvas() {
         return pickCanvas;
-    }
-
-    /**
-     * Get the back face culling check box.
-     *
-     * @return  surfaceBackFaceCB surface back face culling check box.
-     */
-    public JCheckBox getSurfaceBackFaceCB() {
-        return surfaceBackFaceCB;
     }
 
     /**
@@ -1600,8 +1499,7 @@ public class JPanelSurface extends JPanelRendererBase
                 break;
             }
         }
-
-        ((SurfaceRender) renderBase).updateData();
+        updateSurfaceRender( false );
     }
 
 
@@ -1742,16 +1640,6 @@ public class JPanelSurface extends JPanelRendererBase
     }
 
     /**
-     * Set the surface level of detail attribute.
-     * @param levelDetail level detail
-     * @param iIndex int surface index
-     */
-    public void setLevelDetail(int levelDetail, int iIndex) {
-      ( (SurfaceAttributes) surfaceVector.get(iIndex)).setLevelDetail( levelDetail );
-    }
-
-
-    /**
      * Called from the JPanelSurfaceMAterialProperties.java dialog when the dialog is used to change the material
      * properties of a surface. The surface is determined by the index iIndex. The color button is set to the Material
      * diffuse color.
@@ -1760,12 +1648,8 @@ public class JPanelSurface extends JPanelRendererBase
      * @param  iIndex     int material index
      */
     public void setMaterial(Material kMaterial, int iIndex) {
-        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(iIndex)).getBranch();
-        Shape3D shape = (Shape3D) root.getChild(0);
-        shape.getAppearance().setMaterial( kMaterial );
         Color3f kDiffuse = new Color3f();
         kMaterial.getDiffuseColor(kDiffuse);
-        Color4f kColor = new Color4f(kDiffuse.get());
         colorButton.setBackground(kDiffuse.get());
         ((SurfaceAttributes) surfaceVector.get(iIndex)).setMaterial( kMaterial );
         kDiffuse = null;
@@ -1876,30 +1760,9 @@ public class JPanelSurface extends JPanelRendererBase
      * @param  mode  The new polygon mode to set.
      */
     private void changePolyMode(int mode) {
-        int[] indices;
-        BranchGroup surface;
-
-        indices = surfaceList.getSelectedIndices();
-
-        for (int i = 0; i < indices.length; i++) {
-            surface = ((SurfaceAttributes) surfaceVector.get(indices[i])).getBranch();
-            ((SurfaceAttributes) surfaceVector.get(indices[i])).setPolygonMode( mode );
-
-            Object obj;
-            for (Enumeration e = surface.getAllChildren(); e.hasMoreElements();) {
-                obj = e.nextElement();
-                try {
-                    Shape3D shape = (Shape3D) obj;
-                    shape.getAppearance().getPolygonAttributes().setPolygonMode(mode);
-                } catch (ClassCastException error) { /* if (obj instanceof BranchGroup) {
-                                                      * Object obj2; // won't let me read these branch groups. for
-                                                      * (Enumeration e2 = ((BranchGroup)obj).getAllChildren();
-                                                      * e2.hasMoreElements();) { obj2 = e2.nextElement(); if (obj2
-                                                      * instanceof BranchGroup) { Object obj3; for (Enumeration e3 =
-                                                      * ((BranchGroup)obj2).getAllChildren(); e3.hasMoreElements();) {
-                                                      * obj3 = e3.nextElement(); } } }}*/
-                }
-            }
+        SurfaceAttributes[] surfaces = getSelectedSurfaces( surfaceList.getSelectedIndices() );
+        for (int i = 0; i < surfaces.length; i++) {
+            surfaces[i].setPolygonMode( mode );
         }
     }
 
@@ -1957,6 +1820,29 @@ public class JPanelSurface extends JPanelRendererBase
                 {
                     shapes[j].getAppearance().setTextureUnitState( null );
                 }
+            }
+        }
+    }
+
+    /**
+     * Restores the per-vertex colors for the surface at the index
+     * parameter. Called by the AdvancedMaterialProperties dialog.
+     * @param kMaterial, the original Material to restore
+     * @param index, the surface index
+     */
+    public void restorePerVertexColor( Material kMaterial, int index )
+    {
+        int[] aiSelected = new int[1];
+        aiSelected[0] = index;
+        SurfaceAttributes[] surfaces = getSelectedSurfaces( aiSelected );
+        for ( int i = 0; i < surfaces.length; i++ )
+        {
+            parentScene.getImageA().addSurfaceMask( aiSelected[i], null, null, surfaces[i].getColor() );
+            surfaces[i].restorePerVertexColors( kMaterial );
+            Shape3D[] shapes = surfaces[i].getShape();
+            for ( int j = 0; j < shapes.length; j++ )
+            {
+                shapes[j].getAppearance().setTextureUnitState( null );
             }
         }
     }
@@ -2127,6 +2013,29 @@ public class JPanelSurface extends JPanelRendererBase
         }
     }
 
+    /**
+     * Updates the SurfaceRenderer.
+     * @param bUpdateProbe, when true update the ProbeDialog.
+     */
+    private void updateSurfaceRender( boolean bUpdateProbe )
+    {
+        if ( bUpdateProbe && ((SurfaceRender) renderBase).getProbeDialog() != null)
+        {
+            ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
+        }
+        
+        if (surfaceVector.size() <= 0)
+        {
+            ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(false);
+        }
+        else
+        {
+            ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(true);
+        }
+        ((SurfaceRender) renderBase).updateData();
+
+    }
+
 
     /**
      * Remove the surface from the volume render.
@@ -2134,15 +2043,7 @@ public class JPanelSurface extends JPanelRendererBase
     public void removeSurface() {
         SurfaceAttributes[] surfaces = getSelectedSurfaces( surfaceList.getSelectedIndices() );
         removeSurfaces( surfaces );
-
-        if (((SurfaceRender) renderBase).getProbeDialog() != null) {
-            ((SurfaceRender) renderBase).getProbeDialog().updateTargetList();
-        }
-
-        if (surfaceVector.size() <= 0) {
-            ((SurfaceRender) renderBase).getGeodesicPanel().setEnabled(false);
-        }
-        ((SurfaceRender) renderBase).updateData();
+        updateSurfaceRender( true );
     }
 
     /**
@@ -2169,7 +2070,8 @@ public class JPanelSurface extends JPanelRendererBase
      * @param surfaces[] the selected surfaces (SurfaceAttributes[]) to be removed.
      */
     private void removeSurfaces( SurfaceAttributes[] surfaces ) {
-
+        // Save selected list so we can highlight the appropriate remaining surfaces:
+        int[] aiSelected = surfaceList.getSelectedIndices();
         // remove the items
         for ( int i = 0; i < surfaces.length; i++) {
             removeSurface( surfaces[i].getBranch() );
@@ -2186,20 +2088,28 @@ public class JPanelSurface extends JPanelRendererBase
             surfaceVector.removeElementAt(removeIndex);
             parentScene.getImageA().removeSurfaceMask(removeIndex);
         }
-        int[] selected = new int[1];
-        selected[0] = iSelect >= surfaceVector.size() ? surfaceVector.size() - 1 : iSelect;
-        updateSurfaceNameList( selected );
-
+        int[] iSelected = new int[]{0};
         if ( surfaceVector.size() == 0 )
         {
             // clear out the color values if the list is empty
-            iSelect = -1;
             setElementsEnabled(false);
             colorButton.setBackground(getBackground());
             triangleText.setText("");
             volumeText.setText("");
             areaText.setText("");
         }
+        else
+        {
+            for ( int i = aiSelected.length - 1; i >= 0; i-- )
+            {
+                if ( aiSelected[i] <= surfaceVector.size() )
+                {
+                    iSelected[0] = aiSelected[i];
+                    break;
+                }
+            }
+        }
+        updateSurfaceNameList( iSelected );
     }
 
     /**
@@ -2267,30 +2177,6 @@ public class JPanelSurface extends JPanelRendererBase
         staticLightBG.addChild(lightArrayBG[9]);
     }
 
-
-    /**
-     * Takes the image's default transformation and transforms the surface by
-     * that transformation. This can be changed in the future so that the user
-     * can have a better way of setting the transform.
-     */
-    private void transformSurface() {
-
-        double[][] transform = parentScene.getImageA().getMatrix().getArray();
-        int selected = surfaceList.getSelectedIndex();
-        if (selected == -1) {
-            return;
-        }
-
-        BranchGroup root = ((SurfaceAttributes) surfaceVector.get(selected)).getBranch();
-        root.detach();
-
-        for (int j = 0; j < root.numChildren(); j++) {
-            Shape3D shape = (Shape3D) root.getChild(j);
-            ((ModelTriangleMesh) shape.getGeometry(0)).affineTransform(transform);
-        }
-
-        surfaceRootBG.addChild(root);
-    }
 
     //~ MouseListener functions: --------------------------------------------------------------------------
     /**
@@ -2642,9 +2528,8 @@ public class JPanelSurface extends JPanelRendererBase
 
         // select the surface file name in the list box
         if (iIndex < surfaceVector.size()) {
-            iSelect = iIndex;
-            surfaceList.setSelectedIndex(iSelect);
-            surfaceList.ensureIndexIsVisible(iSelect);
+            surfaceList.setSelectedIndex(iIndex);
+            surfaceList.ensureIndexIsVisible(iIndex);
 
             PickIntersection kPick = pickedObject.getIntersection(0);
             /* Get the coordinates of the picked point on the mesh. */
@@ -2865,7 +2750,6 @@ public class JPanelSurface extends JPanelRendererBase
 
         mainPanel = new JPanel(new BorderLayout());
         buildToolBar();
-        iSelect = -1;
 
         // Layout
         //
@@ -2894,13 +2778,6 @@ public class JPanelSurface extends JPanelRendererBase
         removeButton.setActionCommand("Remove");
         removeButton.setFont(serif12B);
         removeButton.setPreferredSize(MipavUtil.defaultButtonSize);
-
-        JButton transButton = new JButton("Transform");
-
-        transButton.addActionListener(this);
-        transButton.setActionCommand("Transform");
-        transButton.setFont(serif12B);
-        transButton.setPreferredSize(MipavUtil.defaultButtonSize);
 
         buttonPanel.add(addButton);
         buttonPanel.add(removeButton);
@@ -3256,22 +3133,21 @@ public class JPanelSurface extends JPanelRendererBase
      * @param  color  Color to change surface to.
      */
     private void getColorChange(Color color) {
-
         // change the material colors for the selected items
         int[] aiSelected = surfaceList.getSelectedIndices();
-
-        Color3f black = new Color3f(Color.black);
-
-        for (int i = 0; i < aiSelected.length; i++) {
-            int iIndex = aiSelected[i];
-
+        SurfaceAttributes[] surfaces = getSelectedSurfaces( aiSelected ); 
+        for (int i = 0; i < surfaces.length; i++)
+        {
             Color4f newColor = new Color4f(color);
+            surfaces[i].setColor( newColor );
 
-            ((SurfaceAttributes) surfaceVector.get(iIndex)).setColor( newColor );
             /* Change the mask color: */
-            parentScene.getImageA().addSurfaceMask( iIndex, null, null, newColor );
+            parentScene.getImageA().addSurfaceMask( aiSelected[ i ], null, null, newColor );
+        }
+        if ( surfaces.length > 0 )
+        {
             /* update the surface renderer: */
-            ((SurfaceRender) renderBase).updateData();
+            updateSurfaceRender(false);
         }
     }
 

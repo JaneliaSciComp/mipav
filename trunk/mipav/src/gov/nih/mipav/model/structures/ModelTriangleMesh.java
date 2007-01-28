@@ -1882,6 +1882,19 @@ public class ModelTriangleMesh extends IndexedTriangleArray {
     }
 
     /**
+     * Gets the stored local color.
+     * @param index, the vertex index to get the color for.
+     * @param kColor, the stored local color.
+     */
+    public void getColorLocal( int index, Color4f kColor )
+    {
+        kColor.x = m_kColors[index].x;
+        kColor.y = m_kColors[index].y;
+        kColor.z = m_kColors[index].z;
+        kColor.w = m_kColors[index].w;
+    }
+
+    /**
      * Used for fast color update while painting. After paint operations, set
      * the color of the triangle mesh with the stored colors.
      */
