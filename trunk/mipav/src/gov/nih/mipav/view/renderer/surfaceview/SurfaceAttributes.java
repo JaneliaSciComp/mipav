@@ -8,46 +8,26 @@ import javax.vecmath.*;
 
 
 /**
- * Class that holds the information about each surface; the BranchGroup which
- * holds the surface subtree, the name of the surface in the dialog, the color
- * of the surface, the shininess of the surface, the level of detail (for clod
- * meshes), the number of triangles (changes with level of detail), the
- * polygon mode (fill, line, or point), and a flag indicating if this is a
- * clod mesh.
+ * Class that holds the information about each surface displayed in the
+ * SurfaceRenderer. It is the main surface data structure used in the
+ * JPanelSurface, FileSurface, and SurfaceMask classes.
+ *
+ * SurfaceAttributes contains one or more triangle-mesh objects. The
+ * triangle-meshes may be of type ClodMesh or of type ModelTriangleMesh. The
+ * mIsClodMesh data member, when true indicates that the meshes are of type
+ * ClodMesh and when false indicates that the meshes are of type
+ * ModelTriangleMesh.
+ *
+ * Each data member represents global properties of all triangle meshes
+ * contained in this class. For example the area and volume values are the
+ * sums of the volumes and areas of each mesh contained in the object.
+ *
  */
 public class SurfaceAttributes {
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
-
-    /** Area of triangle mesh displayed associated with the surface. Changes
-     * with level of detail. */
-    private float mArea;
-
-    /** Surface center. */
-    private Point3f mCenter;
-
     /** Clod mesh. */
     private ModelClodMesh mClodMesh;
-
-    /** ModelTriangleMesh. */
-    private ModelTriangleMesh[] mTriangleMesh;
-
-    /** Shape3D[] array */
-    private Shape3D[] mSurfaceShape;
-
-    /**
-     * Color of surface. The element type is Color4f, although currently the
-     * alpha channel does not appear to be supported by Java3D materials (even
-     * though the Material API allows the alpha channel to be set for diffuse
-     * colors).
-     */
-    private Color4f mColor;
-
-    /** Detail level of surface; only applies to clod meshes. */
-    private int mLevelDetail;
-
-    /** The full path to the surface file. */
-    private String mFullPath;
 
     /**
      * <code>true</code> indicates that this surface is a clod mesh,
@@ -56,11 +36,34 @@ public class SurfaceAttributes {
      */
     private boolean mIsClodMesh;
 
-    /** Name of surface displayed in list box. */
-    private String mName;
+    /** ModelTriangleMesh. */
+    private ModelTriangleMesh[] mTriangleMesh;
+
+    /** mSurfaceMask represents the intersection of the ModelImage volume data
+     * with the triangle-meshes. It is a filled-volume mask. */
+    private BitSet mSurfaceMask;
+
+    /** Surface subtree, holds all the Shape3D objects that make up the
+     * surface. */
+    private BranchGroup mSurfaceBranchGroup;
+
+    /** Shape3D[] array */
+    private Shape3D[] mSurfaceShape;
+
+    /** Color of surface. */
+    private Color4f mColor;
+
+    /** Color of surface. */
+    private Color4f[][] mPerVertexColors_Backup;
+
+    /** Surface Material. */
+    private Material mMaterial;
 
     /** opacity of surface. */
     private float mOpacity;
+
+    /** Detail level of surface; only applies to clod meshes. */
+    private int mLevelDetail;
 
     /**
      * Polygon mode of surface, one of PolygonAttribute.POLYGON_FILL,
@@ -68,23 +71,25 @@ public class SurfaceAttributes {
      */
     private int mPolygonMode;
 
-    /** Surface subtree, holds all the Shape3D objects that make up the
-     * surface. */
-    private BranchGroup mSurfaceBranchGroup;
+    /** The full path to the surface file. */
+    private String mFullPath;
 
-    /** Surface volume bit set mask. */
-    private BitSet mSurfaceMask;
+    /** Name of surface displayed in list box. */
+    private String mName;
 
-    /** Number of triangles displayed associated with the surface. Changes
-     * with level of detail. */
+    /** Total number of triangles in the meshes. Changes with level of
+     * detail. */
     private int mNumberTriangles;
 
-    /** Volume of triangle mesh displayed associated with the surface. Changes
-     * with level of detail. */
+    /** Total volume of triangle meshes. Changes with level of detail. */
     private float mVolume;
 
-    /** Surface Material object. */
-    private Material mMaterial;
+    /** Total area of triangle meshes. Changes with level of detail. */
+    private float mArea;
+
+    /** Surface center. */
+    private Point3f mCenter;
+
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -93,14 +98,9 @@ public class SurfaceAttributes {
      * @param mesh, array of ModelTriangleMesh objects the SurfaceAttributes describes
      * @param fullPath, directory/file name containing the triangle mesh
      * @param name, file name
-     * @param triangles, mesh triangle count 
-     * @param volume, volume enclosed in mesh
-     * @param area, mesh surface area
-     * @param center, 3D center point of mesh.
      */
     public SurfaceAttributes( ModelTriangleMesh[] mesh,
-                              String fullPath, String name,
-                              int triangles, float volume, float area, Point3f center )
+                              String fullPath, String name )
     {
         this.mTriangleMesh = mesh;
         this.mClodMesh = null;
@@ -109,14 +109,29 @@ public class SurfaceAttributes {
         this.mName = name;
         this.mLevelDetail = 100;
         this.mPolygonMode = PolygonAttributes.POLYGON_FILL;
-        this.mNumberTriangles = triangles;
-        this.mVolume = volume;
-        this.mArea = area;
-        this.mCenter = center;
         this.mIsClodMesh = false;
         this.mSurfaceMask = null;
         /* sets the default color */
         mColor = new Color4f( 1, 0, 0, 1 ); 
+
+        this.mNumberTriangles = 0;
+        this.mVolume = 0;
+        this.mArea = 0;
+        this.mCenter = new Point3f( 0f, 0f, 0f );
+        for ( int i = 0; i < mTriangleMesh.length; i++ )
+        {
+            this.mNumberTriangles += mTriangleMesh[i].getIndexCount() / 3;
+            this.mVolume += mTriangleMesh[i].volume();
+            this.mArea += mTriangleMesh[i].area();
+            this.mCenter.x += mTriangleMesh[i].center().x;
+            this.mCenter.y += mTriangleMesh[i].center().y;
+            this.mCenter.z += mTriangleMesh[i].center().z;
+        }
+        this.mCenter.x /= mTriangleMesh.length;
+        this.mCenter.y /= mTriangleMesh.length;
+        this.mCenter.z /= mTriangleMesh.length;
+
+        backupColors();
     }
 
     // Access functions: 
@@ -164,28 +179,69 @@ public class SurfaceAttributes {
      */
     public void setMaterial( Material material )
     {
-        mMaterial = material;
+        mMaterial = copyMaterial( material );
         if ( mMaterial != null )
         {
-            if ( mMaterial.getCapability( Material.ALLOW_COMPONENT_WRITE ) )
+            for ( int i = 0; i < mSurfaceShape.length; i++ )
             {
-                mMaterial.setColorTarget( Material.AMBIENT_AND_DIFFUSE );
+                mSurfaceShape[i].getAppearance().setMaterial( mMaterial );
             }
+
+            // first save per-vertex colors:
+            backupColors();
+
             Color3f diffuse = new Color3f();
             mMaterial.getDiffuseColor( diffuse );
             mColor.x = diffuse.x;
             mColor.y = diffuse.y;
             mColor.z = diffuse.z;
+            setColor( mColor );
         }
     }
 
     /**
-     * returns the Material.
-     * @return mMaterial, the surface Material.
+     * Stores the per-vertex colors when the material is set -- used to
+     * restore per-vertex color from the AdvancedMaterials dialog.
+     */
+    private void backupColors()
+    {
+        mPerVertexColors_Backup = new Color4f[ mTriangleMesh.length ][];
+        for ( int i = 0; i < mTriangleMesh.length; i++ )
+        {
+            mPerVertexColors_Backup[i] = new Color4f[mTriangleMesh[i].getVertexCount()];
+            for ( int j = 0; j < mTriangleMesh[i].getVertexCount(); j++ )
+            {
+                mPerVertexColors_Backup[i][j] = new Color4f();
+                mTriangleMesh[i].getColorLocal( j, mPerVertexColors_Backup[i][j] );
+            }
+        }
+    }
+
+    /**
+     * returns a new copy of the Material.
+     * @return mMaterial, a new copy of the surface Material.
      */
     public Material getMaterial()
     {
-        return mMaterial;
+        return copyMaterial( mMaterial );
+    }
+
+    private Material copyMaterial( Material material )
+    {
+        Color3f color = new Color3f();
+        Material newMaterial = new Material();
+        newMaterial.setCapability(Material.ALLOW_COMPONENT_READ);
+        newMaterial.setCapability(Material.ALLOW_COMPONENT_WRITE);
+        material.getEmissiveColor( color );
+        newMaterial.setEmissiveColor( color );
+        material.getSpecularColor( color );
+        newMaterial.setSpecularColor( color );
+        material.getAmbientColor( color );
+        newMaterial.setAmbientColor( color );
+        material.getDiffuseColor( color );
+        newMaterial.setDiffuseColor( color );
+        newMaterial.setShininess( material.getShininess() );
+        return newMaterial;
     }
 
     /**
@@ -196,6 +252,12 @@ public class SurfaceAttributes {
     {
         mOpacity = opacity;
         mColor.w = 1 - opacity;
+
+        for (int i = 0; i < mSurfaceShape.length; i++ )
+        {
+            // 0 = Opaque
+            mSurfaceShape[i].getAppearance().getTransparencyAttributes().setTransparency(opacity);
+        }
     }
 
     /**
@@ -311,6 +373,25 @@ public class SurfaceAttributes {
     }
 
     /**
+     * Restores the ModelTriangleMesh per-vertex colors to the saved per-vertex colors. 
+     * @param material, the material to restore.
+     */
+    public void restorePerVertexColors( Material material )
+    {
+        mMaterial = copyMaterial( material );
+        for ( int i = 0; i < mSurfaceShape.length; i++ )
+        {
+            mSurfaceShape[i].getAppearance().setMaterial( mMaterial );
+        }
+
+        // Sets the color, but does not update the geometry yet (faster):
+        for ( int i = 0; i < mTriangleMesh.length; i++ )
+        {
+            mTriangleMesh[i].setColors( 0,  mPerVertexColors_Backup[i] );
+        }
+    }
+
+    /**
      * Sets the surface color. Also sets the Material diffuse, specular, and
      * ambient colors.
      * @param color, the new surface Color.
@@ -324,11 +405,11 @@ public class SurfaceAttributes {
             mMaterial = new Material();
             mMaterial.setCapability(Material.ALLOW_COMPONENT_READ);
             mMaterial.setCapability(Material.ALLOW_COMPONENT_WRITE);
-            mMaterial.setColorTarget( Material.AMBIENT_AND_DIFFUSE );
+            //mMaterial.setColorTarget( Material.AMBIENT_AND_DIFFUSE );
             mMaterial.setEmissiveColor( 0f, 0f, 0f );
             mMaterial.setSpecularColor( 0f, 0f, 0f );
+            mMaterial.setAmbientColor( 0f, 0f, 0f );
         }
-        mMaterial.setAmbientColor( mColor.x, mColor.y, mColor.z);
         mMaterial.setDiffuseColor( mColor.x, mColor.y, mColor.z, mColor.w);
 
         for ( int i = 0; i < mTriangleMesh.length; i++ )
@@ -369,6 +450,11 @@ public class SurfaceAttributes {
     public void setPolygonMode( int mode )
     {
         mPolygonMode = mode;
+        for ( int i = 0; i < mSurfaceShape.length; i++ )
+        {
+            mSurfaceShape[i].getAppearance().getPolygonAttributes().setPolygonMode(mode);
+        }
+
     }
 
     /**
