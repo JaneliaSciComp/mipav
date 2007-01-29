@@ -3627,7 +3627,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public String[] setScannerPosition(int x, int y, int zSlice) {
         DecimalFormat nf = new DecimalFormat("#####0.0##");
         Point3Df kOut = new Point3Df();
-        MipavCoordinateSystems.getScannerCoordinates(new Point3Df(x, y, zSlice), kOut, imageActive);
+        MipavCoordinateSystems.FileToScanner(new Point3Df(x, y, zSlice), kOut, imageActive);
 
         float[] tCoord = new float[3];
         tCoord[0] = kOut.x;
