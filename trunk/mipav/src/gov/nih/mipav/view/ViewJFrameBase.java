@@ -3459,7 +3459,7 @@ public abstract class ViewJFrameBase extends JFrame
 
         DecimalFormat nf = new DecimalFormat("#####0.0##");
         Point3Df kOut = new Point3Df();
-        MipavCoordinateSystems.getScannerCoordinates(position, kOut, imageA);
+        MipavCoordinateSystems.FileToScanner(position, kOut, imageA);
 
         float[] tCoord = new float[3];
         tCoord[0] = kOut.x;
