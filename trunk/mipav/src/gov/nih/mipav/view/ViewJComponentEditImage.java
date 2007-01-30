@@ -4818,7 +4818,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     
     
     /**
-     * Repaints the paint brush cursor without repainting the entire image.
+     * Repaints the image intensity label
      *
      * @param  graphics2d  Graphics2D the graphics context to draw in
      */
@@ -4837,8 +4837,8 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         
         //positions needed to determine when label should be flipped over when getting too close to edge
         int wC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
-        int xC = MipavMath.round(xS * zoomX);
         int hC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
+        int xC = MipavMath.round(xS * zoomX);
         int yC = MipavMath.round(yS * zoomY);
         
         graphics2d.setColor(Color.yellow);
