@@ -22,7 +22,8 @@ import javax.swing.*;
 
 // JAXP packages
 import javax.xml.parsers.*;
-
+import gov.nih.mipav.MipavCoordinateSystems;
+import gov.nih.mipav.MipavMath;
 
 /**
  * VOI reader/writer. This classes incorporates the ability to write/read VOIs in three formats (MIPAV *.voi, Nuages,
@@ -219,8 +220,15 @@ public class FileVOI extends FileBase {
             }
 
             if (!readXML(voi[0])) {
-                Preferences.debug("XML did not read okay\n", Preferences.DEBUG_FILEIO);
+            	if (!readCoordXML(voi[0])) {
+            		System.err.println("ERROR in both reads");
+            	} else {
+            		System.err.println("success");
+            	}
             }
+            
+            
+           
         } else {
             raFile = new RandomAccessFile(file, "r");
             VOIStr = raFile.readLine();
@@ -600,6 +608,28 @@ public class FileVOI extends FileBase {
                       Integer.toString(voi.getColor().getGreen()) + "," +
                       Integer.toString(voi.getColor().getBlue()));
 
+            openTag(bw, "Coordinate-info", true);
+            
+            float [] resolutions = image.getResolutions(0);
+            closedTag(bw, "Resolutions", Float.toString(resolutions[0]));
+            closedTag(bw, "Resolutions", Float.toString(resolutions[1]));
+            if (resolutions.length > 2) {
+            	closedTag(bw, "Resolutions", Float.toString(resolutions[2]));
+            } else {
+            	closedTag(bw, "Resolutions", "1.0");
+            }
+            
+            int [] units = image.getUnitsOfMeasure();
+            closedTag(bw, "Units", Integer.toString(units[0]));
+            closedTag(bw, "Units", Integer.toString(units[0]));
+            if (units.length > 2) {
+            	closedTag(bw, "Units", Integer.toString(units[0]));
+            } else {
+            	closedTag(bw, "Units", "0.0");
+            }
+            openTag(bw, "Coordinate-info", false);
+            
+            
             if ((voi.getCurveType() == VOI.CONTOUR) ||
                 (voi.getCurveType() == VOI.POLYLINE) ||
                 (voi.getCurveType() == VOI.POINT)) {
@@ -652,7 +682,7 @@ public class FileVOI extends FileBase {
                     tempBase = tempVOIItem.getVOIBase();
 
                     openTag(bw, "Contour", true);
-                    closedTag(bw, "Slice-number", Integer.toString(tempVOIItem.getSlice()));
+                    //closedTag(bw, "Slice-number", Integer.toString(tempVOIItem.getSlice()));
 
                     nPts = tempBase.size();
                     if (nPts > x.length) {
@@ -663,10 +693,27 @@ public class FileVOI extends FileBase {
 
                     tempBase.exportArrays(x, y, z);
 
+                    Point3Df ptIn = new Point3Df();
+                    Point3Df ptOut = new Point3Df();
+                    int slice = tempVOIItem.getSlice();
                     for (m = 0; m < nPts; m++) {
+                    	ptIn.x = x[m];
+                    	ptIn.y = y[m];
+                    	ptIn.z = slice;
+                    	MipavCoordinateSystems.FileToScanner(ptIn, ptOut, image);
+                    	
+                    	Preferences.debug("File coords: " + ptIn + " Scanner coords: " + ptOut + "\n", Preferences.DEBUG_FILEIO);
+                    	
+                    	//System.err.println("Original coords: " + ptIn);
+                    	//System.err.println("Scanner coords: " + ptOut);
+                    	
+                    	//MipavCoordinateSystems.ScannerToFile(ptOut, ptIn, image);
+                    	//System.err.println("Scanner->File coords: " + ptIn + "\n");
+                    	
                         closedTag(bw, "Pt",
-                                  Float.toString(x[m]) + "," +
-                                  Float.toString(y[m]));
+                                  Float.toString(ptOut.x) + "," +
+                                  Float.toString(ptOut.y) + "," +
+                                  Float.toString(ptOut.z));
                     }
 
                     openTag(bw, "Contour", false);
@@ -1108,7 +1155,7 @@ public class FileVOI extends FileBase {
             // Tell the XMLReader to parse the XML document
             xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
         } catch (Exception error) {
-            MipavUtil.displayError("Error: " + error.getMessage());
+            //MipavUtil.displayError("Error: " + error.getMessage());
 
             return false;
         }
@@ -1116,6 +1163,59 @@ public class FileVOI extends FileBase {
         return true;
     }
 
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   voi  VOI
+     *
+     * @return  boolean
+     */
+    private boolean readCoordXML(VOI voi) {
+System.err.println("doing this one now");
+        SAXParserFactory spf = SAXParserFactory.newInstance();
+
+        spf.setNamespaceAware(true);
+        spf.setValidating(true);
+
+        try {
+
+            // Create a JAXP SAXParser
+            SAXParser saxParser = spf.newSAXParser();
+
+            // Validation part 2a: set the schema language if necessary
+            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+
+            URL xsdURL = getClass().getClassLoader().getResource("voi_coord.xsd");
+
+            if (xsdURL == null) {
+                MipavUtil.displayError("Unable to find VOI XML schema.");
+
+                return false;
+            }
+
+            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
+
+            // Get the encapsulated SAX XMLReader
+            XMLReader xmlReader = saxParser.getXMLReader();
+
+            // Set the ContentHandler of the XMLReader
+            xmlReader.setContentHandler(new XMLCoordHandler(voi));
+
+            // Set an ErrorHandler before parsing
+            xmlReader.setErrorHandler(new XMLErrorHandler());
+
+            // Tell the XMLReader to parse the XML document
+            xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
+        } catch (Exception error) {
+        	error.printStackTrace();
+            MipavUtil.displayError("Error: " + error.getMessage());
+
+            return false;
+        }
+
+        return true;
+    }
+    
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
@@ -1220,6 +1320,7 @@ public class FileVOI extends FileBase {
                 y = new float[contourVector.size()];
                 z = new float[contourVector.size()];
 
+                
                 for (index = 0; index < contourVector.size(); index++) {
                     x[index] = ((Point2Df) contourVector.elementAt(index)).x;
                     y[index] = ((Point2Df) contourVector.elementAt(index)).y;
@@ -1256,6 +1357,159 @@ public class FileVOI extends FileBase {
 
     }
 
+    /**
+     * Handle events generated while parsing the XML file.
+     */
+    private class XMLCoordHandler extends DefaultHandler {
+
+        /** The contours of the VOI we are building. */
+        private Vector contourVector;
+
+        /** The current XML tag we are parsing. */
+        private String currentKey;
+
+        /** The data for the current element being parsed. */
+        private String elementBuffer = new String();
+
+        /** The VOI that we are building from the XML. */
+        private VOI voi;
+
+        /**
+         * Construct our custom XML data handler.
+         *
+         * @param  voi  the VOI we should build from the XML file data
+         */
+        public XMLCoordHandler(VOI voi) {
+            this.voi = voi;
+            contourVector = new Vector();
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  ch      char[]
+         * @param  start   int
+         * @param  length  int
+         */
+        public void characters(char[] ch, int start, int length) {
+            String s = new String(ch, start, length);
+
+            // don't need to de-entity-ize the string because the parser does
+            // that automatically
+            if (s.trim().length() != 0) {
+                elementBuffer += s;
+            }
+        }
+
+        /**
+         * Parser calls this when the end tag of each element is reached. Data collected in the elementbuffer is
+         * generally saved to the image info.
+         *
+         * @param   namespaceURI  the namespace (not used)
+         * @param   localName     the current tag we are parsing
+         * @param   qName         ? (not used)
+         *
+         * @throws  SAXException  if there is a problem with the parser
+         */
+        public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+            currentKey = localName;
+
+            if (currentKey.equals("Unique-ID")) {
+                voi.setUID(Integer.parseInt(elementBuffer));
+            } else if (currentKey.equals("Curve-type")) {
+                voi.setCurveType(Integer.parseInt(elementBuffer));
+            } else if (currentKey.equals("Color")) {
+                int a = 0, r = 0, g = 0, b = 0;
+                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+
+                try {
+                    a = Integer.parseInt(st.nextToken());
+                    r = Integer.parseInt(st.nextToken());
+                    g = Integer.parseInt(st.nextToken());
+                    b = Integer.parseInt(st.nextToken());
+
+                    voi.setColor(new Color(r, g, b, a));
+                } catch (NumberFormatException ex) {
+                    Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
+                                      Preferences.DEBUG_FILEIO);
+                }
+            }  else if (currentKey.equals("Pt")) {
+                float x = 0f, y = 0f, z = 0f;
+                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+
+                try {
+                    x = Float.parseFloat(st.nextToken());
+                    y = Float.parseFloat(st.nextToken());
+                    z = Float.parseFloat(st.nextToken());
+                    contourVector.addElement(new Point3Df(x, y, z));
+                    //System.err.println("X: " + x + ", Y: " + y + ", Z: " + z);
+                } catch (NumberFormatException nfex) {
+                    Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
+                }
+            } else if (currentKey.equals("Resolutions")) {
+            	System.err.println("got resolutions: " + elementBuffer);
+            	
+            } else if (currentKey.equals("Units")) {
+            	System.err.println("got units: " + elementBuffer);
+            }else if (currentKey.equals("Contour")) {
+            
+           
+
+                // finished adding points to contour.. now add to VOI
+                int index;
+                float[] x, y, z;
+
+                x = new float[contourVector.size()];
+                y = new float[contourVector.size()];
+                z = new float[contourVector.size()];
+
+                Point3Df ptIn = new Point3Df();
+                Point3Df ptOut = new Point3Df();
+                
+                Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
+                for (index = 0; index < contourVector.size(); index++) {
+                	ptIn = (Point3Df) contourVector.elementAt(index);
+                	//System.err.println("\tScanner coord: " + ptIn);
+                	MipavCoordinateSystems.ScannerToFile(ptIn, ptOut, image);
+                	
+                	x[index] = MipavMath.round(ptOut.x);
+                	y[index] = MipavMath.round(ptOut.y);
+                	z[index] = MipavMath.round(ptOut.z);
+                	//System.err.println("POINT OUT (scanner to file): " + x[index] + ", " + y[index] + ", " + z[index]);
+                	Preferences.debug("\tScanner coord: " + ptIn + ", File coord: " +
+                			x[index] + ", " + y[index] + ", " + z[index] + "\n", Preferences.DEBUG_FILEIO);
+                	
+                }
+                voi.importCurve(x, y, z, (int)ptOut.z);
+            }
+
+        }
+
+        /**
+         * Parser calls this for each element in a document.
+         *
+         * @param   namespaceURI  the namespace (not used)
+         * @param   localName     the current tag we are parsing
+         * @param   qName         ? (not used)
+         * @param   atts          attributes for the current tag
+         *
+         * @throws  SAXException  if there is a problem with the parser
+         */
+        public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
+                throws SAXException {
+            currentKey = localName;
+            elementBuffer = "";
+
+            if (currentKey.equals("Contour")) {
+                contourVector.clear();
+            }
+            // else if (currentKey.equals("VOI")) {
+            // voi.setName(Integer.toString(voi.getUID()));
+            // }
+        }
+
+    }
+    
     private class VOISortItem {
 
         private VOIBase vBase;
