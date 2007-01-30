@@ -4841,8 +4841,22 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int xC = MipavMath.round(xS * zoomX);
         int yC = MipavMath.round(yS * zoomY);
         
-        graphics2d.setColor(Color.yellow);
+        
 
+        //set color of label text
+        if(Preferences.getProperty("IntensityLabelColor") != null) {
+        	Color color = null;
+        	float colorFloat = new Float(Preferences.getProperty("IntensityLabelColor")).floatValue();
+        	float selectedHue = (float) ((((colorFloat) * 35) % 360) / 360.0);
+        	color = Color.getHSBColor(selectedHue, (float) 1.0, (float) 1.0);
+        	graphics2d.setColor(color);
+        }
+        else {
+        	graphics2d.setColor(Color.yellow);
+        }
+
+        
+        
         if (imageActive.isColorImage()) {
         	 if((wC - xC > 120) && (hC - yC > 40)) {
         		 graphics2d.drawString((String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) + "," +
