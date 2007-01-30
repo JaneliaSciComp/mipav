@@ -346,6 +346,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
     /** DOCUMENT ME! */
     private int windowedRegionSize = 100;
+    
+    
+    /** Document Me **/
+    private boolean intensityLabel = false;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1746,6 +1750,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
 
+        
         if (frame instanceof ViewJFrameLightBox) {
 
             // on a double click, or a single click from the
@@ -1810,7 +1815,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return;
         }
 
-        processDefaultMouseDrag(mouseEvent, xS, yS);
+        //if((mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
+        	processDefaultMouseDrag(mouseEvent, xS, yS);
+        //}
+        
 
         if (mode == DROPPER_PAINT) {
 
@@ -1855,6 +1863,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             // repaint();
             paintComponent(getGraphics());
+        }
+        if(mode == DEFAULT) {
+        	intensityLabel = false;
+        	paintComponent(getGraphics());
         }
     }
 
@@ -1985,13 +1997,25 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     public void mousePressed(MouseEvent mouseEvent) {
         lastMouseX = mouseEvent.getX();
         lastMouseY = mouseEvent.getY();
-
+        int xS = getScaledX(mouseEvent.getX());
+        int yS = getScaledY(mouseEvent.getY());
+        
         if (modifyFlag == false) {
             return;
         }
-
+    
         // save the state of the shift button
         mousePressIsShiftDown = mouseEvent.isShiftDown();
+        
+        //shows intsnsity label upon mouse press
+        if(mode == DEFAULT) {
+        	setPixelInformationAtLocation(xS, yS);
+        	if(mouseEvent.getButton() == MouseEvent.BUTTON1) {
+        		intensityLabel = true;
+            	paintComponent(getGraphics());
+            }
+        }
+        
 
         if ((mode == DEFAULT) && mouseEvent.isControlDown()) { // center the image around cursor (no zooming)
 
@@ -2000,11 +2024,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
             ((ViewJFrameImage) frame).getScrollPane().getHorizontalScrollBar().setValue(mouseEvent.getX() - centerX);
             ((ViewJFrameImage) frame).getScrollPane().getVerticalScrollBar().setValue(mouseEvent.getY() - centerY);
+            
+            
         }
 
         if ((mode == ZOOMING_IN) || (mode == ZOOMING_OUT)) {
-            int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
-            int yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
+            //int xS = getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
+            //int yS = getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
 
             ((ViewJFrameImage) frame).updateFrame(getZoomMagnitudeX(mouseEvent.getButton() == MouseEvent.BUTTON3),
                                                   getZoomMagnitudeY(mouseEvent.getButton() == MouseEvent.BUTTON3), xS,
@@ -2162,6 +2188,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             if (!((mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
                 setMode(DEFAULT);
             }
+        }else if(mode == DEFAULT) {
+        	intensityLabel = false;
+        	paintComponent(getGraphics());
         }
 
         // reset mousePressIsShiftDown for next mouse click
@@ -2402,6 +2431,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 lastWinRegionSlice = slice;
             } else if ((mode == MAG_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
                 paintMagComponent(offscreenGraphics2d);
+            } else if (mode == DEFAULT){
+            	if(intensityLabel) {
+            		//display intensity values on screen
+            		repaintImageIntensityLabelFast(offscreenGraphics2d);
+            	}
             }
 
             if (onTop) {
@@ -4223,6 +4257,14 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                         winLevelSet = true;
                     }
                 } // if ((mouseEvent.getModifiers() & MouseEvent.BUTTON3_MASK) != 0)
+                
+                //check is left mouse button was pressed...if so...we need to show intensity values
+                if((mouseEvent.getModifiersEx() & InputEvent.BUTTON1_DOWN_MASK) == InputEvent.BUTTON1_DOWN_MASK) {
+                	intensityLabel = true;
+                	paintComponent(getGraphics());
+                }
+              
+                
             } // if (mode == DEFAULT))
 
             setPixelInformationAtLocation(xS, yS);
@@ -4772,9 +4814,71 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         graphics2d.setColor(Color.red.darker());
         graphics2d.drawRect(iMin, jMin, width - 1, height - 1);
     }
+    
+    
+    
+    /**
+     * Repaints the paint brush cursor without repainting the entire image.
+     *
+     * @param  graphics2d  Graphics2D the graphics context to draw in
+     */
+    private void repaintImageIntensityLabelFast(Graphics2D graphics2d) {
+        if ((graphics2d == null) || (lastMouseX == OUT_OF_BOUNDS) || (lastMouseY == OUT_OF_BOUNDS)) {
+            return;
+        }
+
+        int xS = getScaledX(lastMouseX); // zoomed x.  Used as cursor
+        int yS = getScaledY(lastMouseY); // zoomed y.  Used as cursor
+
+        //position where label should go
+        int x = (MipavMath.round(xS * zoomX) + 15);
+        int y = (MipavMath.round(yS * zoomY) + 35);
+        
+        
+        //positions needed to determine when label should be flipped over when getting too close to edge
+        int wC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().width;
+        int xC = MipavMath.round(xS * zoomX);
+        int hC = ((ViewJFrameImage) frame).getScrollPane().getViewport().getExtentSize().height;
+        int yC = MipavMath.round(yS * zoomY);
+        
+        graphics2d.setColor(Color.yellow);
+
+        if (imageActive.isColorImage()) {
+        	 if((wC - xC > 120) && (hC - yC > 40)) {
+        		 graphics2d.drawString((String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) + "," +
+        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) + "," +
+        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3])), x, y);
+        	 } else if((wC - xC <= 120) && (hC - yC > 40)){
+        		 graphics2d.drawString((String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) + "," +
+        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) + "," +
+        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3])), x - 110, y);
+        	 }else if((wC - xC <= 120) && (hC - yC <= 40)) {
+        		 graphics2d.drawString((String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) + "," +
+        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) + "," +
+        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3])), x - 110, y - 40);
+        	 }else if((wC - xC > 120) && (hC - yC <= 40)) {
+        		 graphics2d.drawString((String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) + "," +
+        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) + "," +
+        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3])), x, y - 40);
+        	 }
+        }
+        else {
+        	if((wC - xC > 50) && (hC - yC > 50)) {
+        		graphics2d.drawString(String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]), x, y);
+        	} else if((wC - xC <= 50) && (hC - yC > 50)){
+        		graphics2d.drawString(String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]), x - 40, y);
+        	}else if((wC - xC <= 50) && (hC - yC <= 50)) {
+        		graphics2d.drawString(String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]), x - 40, y - 40);
+        	}else if((wC - xC > 50) && (hC - yC <= 50)) {
+        		graphics2d.drawString(String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]), x, y - 40);
+        	}
+        }
+    }
+    
 
     /**
      * DOCUMENT ME!
+     *
      *
      * @param  LUT    DOCUMENT ME!
      * @param  image  DOCUMENT ME!
