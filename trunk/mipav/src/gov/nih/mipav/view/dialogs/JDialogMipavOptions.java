@@ -184,19 +184,19 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
     private ViewUserInterface userInterface;
 
     /** DOCUMENT ME! */
-    private JComboBox voiColorChoices, intensityLabelColorChoices;
+    private JComboBox voiColorChoices;
 
     /** DOCUMENT ME! */
-    private String[] voiColorNames, intensityLabelColorNames;
+    private String[] voiColorNames;
 
     /** DOCUMENT ME! */
-    private Color[] voiColors, intensityLabelColors;
+    private Color[] voiColors;
 
     /** DOCUMENT ME! */
-    private JButton voiDrawButton;
+    private JButton voiDrawButton, intensityLabelColorButton;
 
     /** DOCUMENT ME! */
-    private Color voiDrawColor;
+    private Color voiDrawColor, intensityLabelColor;
 
     // SRB panel contents
     private JPanel srbPanel;
@@ -253,10 +253,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
         makeVOILineAngleOptions(gbc, gbl);
         makeCrosshairOptions(gbc, gbl);
         makeActiveColorOptions(gbc, gbl);
+        makeIntensityLabelColorOptions(gbc, gbl);
         makeVOIDrawColorOptions(gbc, gbl);
         makeVOIColorOptions(gbc, gbl);
         makeVOIPointDrawTypeOptions(gbc, gbl);
-        makeIntensityLabelColorOptions(gbc, gbl);
+        
 
         // make the saving options
         fileSavePanel.setLayout(gbl);
@@ -330,8 +331,14 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             voiColorChoices.setBackground(voiColors[index]);
 
         }else if (command.equalsIgnoreCase("intensityLabelColor")) {
-        	int index = intensityLabelColorChoices.getSelectedIndex();
-        	intensityLabelColorChoices.setBackground(intensityLabelColors[index]);
+        	colorChooser = new ViewJColorChooser(null, "Pick Active Color", new ActionListener() { // OKAY listener
+                public void actionPerformed(ActionEvent ae) {
+                	intensityLabelColor = colorChooser.getColor();
+                	intensityLabelColorButton.setBackground(intensityLabelColor);
+                }
+            }, new ActionListener() { // CANCEL listener
+                public void actionPerformed(ActionEvent a) { }
+            });
         }
         else if (command.equalsIgnoreCase("VOIDrawColor")) {
             colorChooser = new ViewJColorChooser(null, "Pick Active Color", new ActionListener() { // OKAY listener
@@ -394,7 +401,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
             Preferences.setProperty("CloseFrameCheck", String.valueOf(checkOnFrameClose.isSelected()));
             Preferences.setProperty("PerformLaxCheck", String.valueOf(performLaxCheck.isSelected()));
             Preferences.setProperty("VOIColor", String.valueOf(voiColorChoices.getSelectedIndex()));
-            Preferences.setProperty("IntensityLabelColor", String.valueOf(intensityLabelColorChoices.getSelectedIndex()));
+            Preferences.setProperty("IntensityLabelColor", MipavUtil.makeColorString(intensityLabelColor));
             Preferences.setProperty("VOIDrawColor", MipavUtil.makeColorString(voiDrawColor));
             Preferences.setProperty("VOIPointDrawType", String.valueOf(pointVOIChoices.getSelectedIndex()));
             Preferences.setProperty(Preferences.PREF_CONTINUOUS_VOI_CONTOUR, String.valueOf(continuousVOIBox.isSelected()));
@@ -1590,78 +1597,37 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbc2  
      * @param  gbl   
      */
-    protected void makeIntensityLabelColorOptions(GridBagConstraints gbc2, GridBagLayout gbl) {
-        JLabel l1 = new JLabel("Intensity label color:");
+    protected void makeIntensityLabelColorOptions(GridBagConstraints gbc, GridBagLayout gbl) {
+    	JLabel l1 = new JLabel("Intensity label color:");
         l1.setFont(MipavUtil.font12);
         l1.setForeground(Color.black);
-        gbc2.insets = new Insets(0, 0, 0, 5);
-        gbc2.gridwidth = 1;
-        gbc2.anchor = GridBagConstraints.WEST;
-        displayColorPanel.add(l1, gbc2);
+        gbc.insets = new Insets(0, 0, 0, 5);
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(l1, gbc);
+        displayColorPanel.add(l1);
 
-        intensityLabelColorNames = new String[10];
-        intensityLabelColorNames[0] = new String("Red");
-        intensityLabelColorNames[1] = new String("Orange");
-        intensityLabelColorNames[2] = new String("Yellow");
-        intensityLabelColorNames[3] = new String("Light Green");
-        intensityLabelColorNames[4] = new String("Green");
-        intensityLabelColorNames[5] = new String("Cyan");
-        intensityLabelColorNames[6] = new String("Light Blue");
-        intensityLabelColorNames[7] = new String("Blue");
-        intensityLabelColorNames[8] = new String("Violet");
-        intensityLabelColorNames[9] = new String("Pink");
-
-        intensityLabelColors = new Color[intensityLabelColorNames.length];
-
-        float hue = 0.0f;
-
-        for (int i = 0; i < intensityLabelColors.length; i++) {
-            hue = (float) ((((i) * 35) % 360) / 360.0);
-            intensityLabelColors[i] = Color.getHSBColor(hue, (float) 1.0, (float) 1.0);
-        }
-
-        Integer[] intArray = new Integer[intensityLabelColorNames.length];
-
-        for (int i = 0; i < intArray.length; i++) {
-            intArray[i] = new Integer(i);
-        }
-
-        intensityLabelColorChoices = new JComboBox(intArray);
-        intensityLabelColorChoices.setRenderer(new ComboBoxRenderer2());
-        intensityLabelColorChoices.addActionListener(this);
-        intensityLabelColorChoices.setActionCommand("intensityLabelColor");
-        gbc2.insets = new Insets(0, 0, 0, 0);
-        gbc2.gridwidth = GridBagConstraints.REMAINDER;
-        gbc2.anchor = GridBagConstraints.WEST;
-        displayColorPanel.add(intensityLabelColorChoices, gbc2);
+        intensityLabelColorButton = new JButton();
+        intensityLabelColorButton.setActionCommand("intensityLabelColor");
+        intensityLabelColorButton.addActionListener(this);
+        gbc.insets = new Insets(0, 0, 0, 0);
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbl.setConstraints(intensityLabelColorButton, gbc);
+        displayColorPanel.add(intensityLabelColorButton);
 
         String prefColor = Preferences.getProperty("IntensityLabelColor");
 
-        if (prefColor == null) {
-            Preferences.setProperty("IntensityLabelColor", "2");
-            intensityLabelColorChoices.setBackground(Color.getHSBColor(2, (float) 1.0, (float) 1.0));
-            intensityLabelColorChoices.setSelectedIndex(2);
+        if (prefColor != null) {
+        	intensityLabelColor = MipavUtil.extractColor(prefColor);
+        	intensityLabelColorButton.setBackground(intensityLabelColor);
         } else {
+            Preferences.setProperty("IntensityLabelColor", MipavUtil.makeColorString(Color.yellow));
+            intensityLabelColorButton.setBackground(Color.yellow);
+            intensityLabelColor = Color.yellow;
 
-            try {
-                int index = Integer.parseInt(prefColor);
-
-                if ((index < 0) || (index > (intensityLabelColorNames.length - 1))) {
-                    Preferences.setProperty("IntensityLabelColor", "2");
-                    intensityLabelColorChoices.setBackground(Color.getHSBColor(2, (float) 1.0, (float) 1.0));
-                    intensityLabelColorChoices.setSelectedIndex(2);
-                } else {
-
-                    float selectedHue = (float) ((((index) * 35) % 360) / 360.0);
-                    intensityLabelColorChoices.setSelectedIndex(index);
-                    intensityLabelColorChoices.setBackground(Color.getHSBColor(selectedHue, (float) 1.0, (float) 1.0));
-                }
-            } catch (Exception ex) {
-                Preferences.setProperty("IntensityLabelColor", "2");
-                intensityLabelColorChoices.setBackground(Color.getHSBColor(2, (float) 1.0, (float) 1.0));
-                intensityLabelColorChoices.setSelectedIndex(2);
-            }
         }
+        
     }
     
     
@@ -1734,7 +1700,7 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  GridBagLayout
      */
     protected void makeVOIContinuousOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        continuousVOIBox = new JCheckBox("Draw continuous contours");
+        continuousVOIBox = new JCheckBox("Continuously draw contours");
         continuousVOIBox.setFont(MipavUtil.font12);
         continuousVOIBox.setForeground(Color.black);
         continuousVOIBox.addActionListener(this);
