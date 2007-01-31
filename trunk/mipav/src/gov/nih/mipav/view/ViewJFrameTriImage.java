@@ -2849,12 +2849,12 @@ public class ViewJFrameTriImage extends ViewJFrameBase
         imageToolBar.add(ViewToolBarBuilder.makeSeparator());
 
         // ButtonGroup indivMagGroup = new ButtonGroup();
-        indivMagButton = toolbarBuilder.buildToggleButton("IndivMagImage", "Magnify individual frame 2.0x", "trizoomin",
+        indivMagButton = toolbarBuilder.buildToggleButton("IndivMagImage","<html>" + "Magnify individual frame 2.0x" + "<br>" + "Hold SHIFT for multiple zooming" , "trizoomin",
                                                           VOIGroup);
         indivMagButton.addMouseListener(this);
         imageToolBar.add(indivMagButton);
 
-        indivMinButton = toolbarBuilder.buildToggleButton("IndivMinImage", "Magnify individual frame 0.5x",
+        indivMinButton = toolbarBuilder.buildToggleButton("IndivMinImage","<html>" + "Magnify individual frame 0.5x" + "<br>" + "Hold SHIFT for multiple zooming" ,
                                                           "trizoomout", VOIGroup);
         indivMinButton.addMouseListener(this);
         imageToolBar.add(indivMinButton);

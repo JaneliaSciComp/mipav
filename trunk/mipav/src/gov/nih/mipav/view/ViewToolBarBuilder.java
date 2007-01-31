@@ -260,8 +260,8 @@ public class ViewToolBarBuilder implements ItemListener {
 
         tBar.add(makeSeparator());
 
-        tBar.add(buildToggleButton("MagImage", "Magnify image 2.0x", "zoomin", VOIGroup));
-        tBar.add(buildToggleButton("UnMagImage", "Magnify image 0.5x", "zoomout", VOIGroup));
+        tBar.add(buildToggleButton("MagImage","<html>" + "Magnify image 2.0x" + "<br>" + "Hold SHIFT for multiple zooming" + "</html>", "zoomin", VOIGroup));
+        tBar.add(buildToggleButton("UnMagImage","<html>" + "Magnify image 0.5x" + "<br>" + "Hold SHIFT for multiple zooming" + "</html>", "zoomout", VOIGroup));
         tBar.add(buildToggleButton("MagRegion", "Magnify Region", "magregion", VOIGroup));
         regButton = buildToggleButton("WinRegion", "Window region of image B", "winregion", VOIGroup);
         regButton.setEnabled(false);
@@ -874,12 +874,12 @@ public class ViewToolBarBuilder implements ItemListener {
 
         VOIToolBar.add(buildToggleButton("Line", "Draw line VOI", "linear", VOIGroup));
         VOIToolBar.add(buildToggleButton("protractor", "Protractor tool", "protractor", VOIGroup));
-        VOIToolBar.add(buildToggleButton("RectVOI", "Draw rectangle VOI", "rect", VOIGroup));
-        VOIToolBar.add(buildToggleButton("EllipseVOI", "Draw ellipse VOI", "circle", VOIGroup));
+        VOIToolBar.add(buildToggleButton("RectVOI", "<html>" + "Draw rectangle VOI" + "<br>" + "Hold SHIFT for multiple drawing" + "</html>", "rect", VOIGroup));
+        VOIToolBar.add(buildToggleButton("EllipseVOI","<html>" + "Draw ellipse VOI" + "<br>" + "Hold SHIFT for multiple drawing" + "</html>", "circle", VOIGroup));
         VOIToolBar.add(buildToggleButton("Polyline", "Draw polygon/polyline VOI", "polygon", VOIGroup));
 
 
-        VOIToolBar.add(buildToggleButton("LevelSetVOI", "Draw levelset VOI", "contour", VOIGroup));
+        VOIToolBar.add(buildToggleButton("LevelSetVOI","<html>" + "Draw levelset VOI" + "<br>" + "Hold SHIFT for multiple drawing" + "</html>", "contour", VOIGroup));
         VOIToolBar.add(buildToggleButton("LiveWireVOI", KeyEvent.VK_L, "Live wire VOI", "livewire", VOIGroup));
 
         JToggleButton cubeVOIButton = buildToggleButton("Rect3DVOI", "3D rectangular VOI", "cube", VOIGroup);
