@@ -4846,45 +4846,43 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         //set color of label text
         if(Preferences.getProperty("IntensityLabelColor") != null) {
         	Color color = null;
-        	float colorFloat = new Float(Preferences.getProperty("IntensityLabelColor")).floatValue();
-        	float selectedHue = (float) ((((colorFloat) * 35) % 360) / 360.0);
-        	color = Color.getHSBColor(selectedHue, (float) 1.0, (float) 1.0);
+        	String prefColor = Preferences.getProperty("IntensityLabelColor");
+            color = MipavUtil.extractColor(prefColor);
         	graphics2d.setColor(color);
         }
         else {
         	graphics2d.setColor(Color.yellow);
         }
 
-        
+        //we will only display up to 3 decimal places
+        DecimalFormat df = new DecimalFormat("0.0##");
         
         if (imageActive.isColorImage()) {
-        	 if((wC - xC > 120) && (hC - yC > 40)) {
-        		 graphics2d.drawString((String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) + "," +
-        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) + "," +
-        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3])), x, y);
-        	 } else if((wC - xC <= 120) && (hC - yC > 40)){
-        		 graphics2d.drawString((String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) + "," +
-        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) + "," +
-        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3])), x - 110, y);
-        	 }else if((wC - xC <= 120) && (hC - yC <= 40)) {
-        		 graphics2d.drawString((String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) + "," +
-        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) + "," +
-        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3])), x - 110, y - 40);
-        	 }else if((wC - xC > 120) && (hC - yC <= 40)) {
-        		 graphics2d.drawString((String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]) + "," +
-        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) + "," +
-        				 String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3])), x, y - 40);
+        	String red = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]).doubleValue());
+        	String green = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]).doubleValue());
+        	String blue = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]).doubleValue());
+        	
+        	
+        	 if((wC - xC > 170) && (hC - yC > 40)) {
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y);
+        	 } else if((wC - xC <= 170) && (hC - yC > 40)){
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y);
+        	 }else if((wC - xC <= 170) && (hC - yC <= 40)) {
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y - 40);
+        	 }else if((wC - xC > 170) && (hC - yC <= 40)) {
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y - 40);
         	 }
         }
         else {
-        	if((wC - xC > 50) && (hC - yC > 50)) {
-        		graphics2d.drawString(String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]), x, y);
-        	} else if((wC - xC <= 50) && (hC - yC > 50)){
-        		graphics2d.drawString(String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]), x - 40, y);
-        	}else if((wC - xC <= 50) && (hC - yC <= 50)) {
-        		graphics2d.drawString(String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]), x - 40, y - 40);
-        	}else if((wC - xC > 50) && (hC - yC <= 50)) {
-        		graphics2d.drawString(String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]), x, y - 40);
+        	String intensity = df.format(new Float(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]).doubleValue());
+        	if((wC - xC > 100) && (hC - yC > 50)) {
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y);
+        	} else if((wC - xC <= 100) && (hC - yC > 50)){
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y);
+        	}else if((wC - xC <= 100) && (hC - yC <= 50)) {
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y - 40);
+        	}else if((wC - xC > 100) && (hC - yC <= 50)) {
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 40);
         	}
         }
     }
