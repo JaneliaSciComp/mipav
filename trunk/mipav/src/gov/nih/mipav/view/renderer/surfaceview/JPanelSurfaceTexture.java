@@ -159,6 +159,31 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
         return mTextureUnitState;
     }
 
+    /** Return the current ModelLUT: 
+     * @return the currently used ModelLUT
+     */
+    public ModelLUT getLUT()
+    {
+        if ( mModelLUTRadioButton.isSelected() )
+        {
+            return mLUTModel;
+        }
+        return mLUTSeparate;
+    }
+
+    /** Return the current ModelRGBT: 
+     * @return the currently used ModelRGBT
+     */
+    public ModelRGB getRGBT()
+    {
+        if ( mModelLUTRadioButton.isSelected() )
+        {
+            return mRGBModel;
+        }
+        return mRGBSeparate;
+    }
+
+
     /** Initializes the interface, and generates the first default texture.
      */
     private void init()
@@ -655,10 +680,16 @@ public class JPanelSurfaceTexture extends JPanelRendererBase
         {
             mSurfaceTextureImage = generateVolumeTexture();
             mTexture.setImage(0, mSurfaceTextureImage );
+
+            /* Report the update to JPanelSurface: */
+            ActionEvent event = new ActionEvent( (Object)this, 0, "ImageAsTexture" );
+            ((SurfaceRender)renderBase).getSurfaceDialog().actionPerformed( event );
         }
-        /* Report the update to JPanelSurface: */
-        ActionEvent event = new ActionEvent( (Object)this, 0, "ImageAsTexture" );
-        ((SurfaceRender)renderBase).getSurfaceDialog().actionPerformed( event );
+        /* Only update if the texture is displayed: */
+        else if ( mTextureStatus == VERTEX_COLOR )
+        {
+            ((SurfaceRender)renderBase).getSurfaceDialog().generateNewTextureCoords( mImageA, true, false );
+        }
     }
 
     /**

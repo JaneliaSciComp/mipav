@@ -405,12 +405,11 @@ public class SurfaceAttributes {
             mMaterial = new Material();
             mMaterial.setCapability(Material.ALLOW_COMPONENT_READ);
             mMaterial.setCapability(Material.ALLOW_COMPONENT_WRITE);
-            //mMaterial.setColorTarget( Material.AMBIENT_AND_DIFFUSE );
             mMaterial.setEmissiveColor( 0f, 0f, 0f );
             mMaterial.setSpecularColor( 0f, 0f, 0f );
-            mMaterial.setAmbientColor( 0f, 0f, 0f );
+            mMaterial.setAmbientColor( mColor.x, mColor.y, mColor.z );
         }
-        mMaterial.setDiffuseColor( mColor.x, mColor.y, mColor.z, mColor.w);
+        mMaterial.setDiffuseColor( mColor.x, mColor.y, mColor.z);
 
         for ( int i = 0; i < mTriangleMesh.length; i++ )
         {
