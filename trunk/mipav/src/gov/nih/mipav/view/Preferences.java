@@ -2650,6 +2650,7 @@ public class Preferences {
         defaultShortcutTable.put("EditImageInfo", KeyStroke.getKeyStroke('E', Event.CTRL_MASK, false));
         defaultShortcutTable.put("MemoryUsage", KeyStroke.getKeyStroke('M', Event.CTRL_MASK, false));
         defaultShortcutTable.put("ToggleImageIntensities", KeyStroke.getKeyStroke('T', 0, false));
+        defaultShortcutTable.put("quickLUT", KeyStroke.getKeyStroke('Q', 0, false));
 
         for (int i = 0; i < 9; i++) {
             defaultShortcutTable.put("LastImage " + i,
