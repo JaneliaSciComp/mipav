@@ -42,6 +42,12 @@ public class SurfaceMask
     /** ModelImage image array dimensions: */
     private int xDim, yDim, zDim;
 
+    /** ModelLUT for getModelImageColor w/LUT changes: */
+    private ModelLUT m_kLUT = null;
+
+    /** ModelRGB for getModelImageColor w/RGB LUT changes:  */
+    private ModelRGB m_kRGBT = null;
+
     /** Default Constructor: */
     SurfaceMask() {}
 
@@ -60,7 +66,9 @@ public class SurfaceMask
      */
     public void maskInsideVoxels(int index, ModelImage imageA,
                                  ModelTriangleMesh[] kMesh,
-                                 boolean bHasVertexColor, boolean bCreateVertexColors, boolean bUseImageMask,
+                                 boolean bHasVertexColor,
+                                 boolean bCreateVertexColors,
+                                 boolean bUseImageMask,
                                  float fOpacity, Color4f surColor )
     {
 
@@ -476,6 +484,87 @@ public class SurfaceMask
         return kV0;
     }
 
+    public void setRGBT( ModelRGB kRGBT )
+    {
+        m_kRGBT = kRGBT;
+    }
+
+    public void setLUT( ModelLUT kLUT )
+    {
+        m_kLUT = kLUT;
+    }
+
+    /** Get the color from the RGB lookup table:
+     * @param RGBIndexBuffer the color lookup table index buffer
+     * @param kOffset, the color offset
+     * @param fNorm, the color normalization
+     * @param currentColor, the current color (changed)
+     */
+    private void getColorMapped( int[] RGBIndexBuffer, Color3f kOffset, float fNorm,
+                                 Color4f currentColor )
+    {
+        if ( m_kRGBT.getROn() )
+        {
+            currentColor.x =
+                (RGBIndexBuffer[(int)((currentColor.x + kOffset.x) * fNorm)] & 0x00ff0000) >> 16;
+        }
+        if ( m_kRGBT.getGOn() )
+        {
+            currentColor.y =
+                (RGBIndexBuffer[(int)((currentColor.y + kOffset.y) * fNorm)] &  0x0000ff00) >> 8;
+        }
+        if ( m_kRGBT.getBOn() )
+        {
+            currentColor.z =
+                (RGBIndexBuffer[(int)((currentColor.z + kOffset.z) * fNorm)] & 0x000000ff);
+        }
+    }
+
+
+    /**
+     * calculates the color normalization factors
+     * @param kImage, the model image from which the normalization factors are
+     * calculated
+     * @param kOffset, the calculated color offset
+     * @return the color normalization factor.
+     */
+    private float calcMaxNormColors( ModelImage kImage, Color3f kOffset )
+    {
+        float fMaxColor = 255;
+        if (kImage.getType() == ModelStorageBase.ARGB_USHORT) {
+            fMaxColor = (float) kImage.getMaxR();
+            fMaxColor = Math.max((float) kImage.getMaxG(), fMaxColor);
+            fMaxColor = Math.max((float) kImage.getMaxB(), fMaxColor);
+        } else if (kImage.getType() == ModelStorageBase.ARGB_FLOAT) {
+
+            if (kImage.getMinR() < 0.0) {
+                fMaxColor = (float) (kImage.getMaxR() - kImage.getMinR());
+                kOffset.x = (float) (-kImage.getMinR());
+            } else {
+                fMaxColor = (float) kImage.getMaxR();
+            }
+
+            if (kImage.getMinG() < 0.0) {
+                fMaxColor = Math.max((float)(kImage.getMaxG() - kImage.getMinG()),
+                                     fMaxColor);
+                kOffset.y= (float) (-kImage.getMinG());
+            } else {
+                fMaxColor = Math.max((float) kImage.getMaxG(), fMaxColor);
+            }
+
+            if (kImage.getMinB() < 0.0) {
+                fMaxColor = Math.max((float)(kImage.getMaxB() - kImage.getMinB()),
+                                     fMaxColor);
+                kOffset.z = (float) (-kImage.getMinB());
+            } else {
+                fMaxColor = Math.max((float) kImage.getMaxB(), fMaxColor);
+            }
+        }
+
+        return 255 / fMaxColor;
+    }
+
+
     /**
      * Given a triangle vertex point from a ModelTriangleMesh, determines the
      * corresponding ModelImage index point, and recreates the color that
@@ -490,26 +579,50 @@ public class SurfaceMask
         {
             float value = imageA.getFloatTriLinearBounds( kModelPoint.x,
                                                           kModelPoint.y,
-                                                          kModelPoint.z ) / 255.0f;
+                                                          kModelPoint.z );
+
+            value /= 255.0f;
             kColor.x = value;
             kColor.y = value;
             kColor.z = value;
             kColor.w = fTransparency;
+
+            if ( m_kLUT != null )
+            {
+                float[][] RGB_LUT = m_kLUT.exportRGB_LUT(true);
+                TransferFunction tf_imgA = m_kLUT.getTransferFunction();
+                int index = (int)(tf_imgA.getRemappedValue(value * 255.0f, 256) + 0.5f);
+                kColor.x = RGB_LUT[0][index]/255.0f;
+                kColor.y = RGB_LUT[1][index]/255.0f;
+                kColor.z = RGB_LUT[2][index]/255.0f;
+            }
         }
         else
         {
-            kColor.w = imageA.getFloatTriLinearBounds( kModelPoint.x,
-                                                       kModelPoint.y,
-                                                       kModelPoint.z, 0 ) / 255.0f;
+                                        
+            kColor.w = fTransparency;
+
             kColor.x = imageA.getFloatTriLinearBounds( kModelPoint.x,
                                                        kModelPoint.y,
-                                                       kModelPoint.z, 1 ) / 255.0f;
+                                                       kModelPoint.z, 1 );
             kColor.y = imageA.getFloatTriLinearBounds( kModelPoint.x,
                                                        kModelPoint.y,
-                                                       kModelPoint.z, 2 ) / 255.0f;
+                                                       kModelPoint.z, 2 );
             kColor.z = imageA.getFloatTriLinearBounds( kModelPoint.x,
                                                        kModelPoint.y,
-                                                       kModelPoint.z, 3 ) / 255.0f;
+                                                       kModelPoint.z, 3 );
+
+            if ( m_kRGBT != null )
+            {
+                int[] aiRGBIndexBuffer = m_kRGBT.exportIndexedRGB();
+                Color3f kOffset = new Color3f();
+                float fNorm = calcMaxNormColors( imageA, kOffset );
+                getColorMapped( aiRGBIndexBuffer, kOffset, fNorm, kColor );
+            }
+            kColor.x /= 255.0f;
+            kColor.y /= 255.0f;
+            kColor.z /= 255.0f;
+
         }
         return kColor;
     }

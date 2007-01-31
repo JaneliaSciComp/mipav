@@ -946,6 +946,10 @@ public class JPanelSurface extends JPanelRendererBase
         if (dialog.isCancelled()) {
             return;
         }
+        JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
+        mSurfaceMask.setLUT( surfaceTexturePanel.getLUT() );
+        mSurfaceMask.setRGBT( surfaceTexturePanel.getRGBT() );
+
         for ( int i = 0; i < surfaces.length; i++ )
         {
             ModelTriangleMesh[] meshes = surfaces[i].getMesh();
@@ -1154,6 +1158,9 @@ public class JPanelSurface extends JPanelRendererBase
             surface.setBranch( kBranch );
 
             /** mask the surface added. */
+            JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
+            mSurfaceMask.setLUT( surfaceTexturePanel.getLUT() );
+            mSurfaceMask.setRGBT( surfaceTexturePanel.getRGBT() );
             mSurfaceMask.maskInsideVoxels( surfaceVector.size(), parentScene.getImageA(),
                                            surface.getMesh(), true, false, false, 1.0f, surface.getColor() );
             surface.setMask( mSurfaceMask.getVolumeMask() );
@@ -1309,6 +1316,10 @@ public class JPanelSurface extends JPanelRendererBase
         {
             return;
         }
+        JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
+        mSurfaceMask.setLUT( surfaceTexturePanel.getLUT() );
+        mSurfaceMask.setRGBT( surfaceTexturePanel.getRGBT() );
+
         int[] selected = new int[ surfaces.length ];
         for ( int i = 0; i < surfaces.length; i++ )
         {
@@ -1858,6 +1869,10 @@ public class JPanelSurface extends JPanelRendererBase
      */
     public void generateNewTextureCoords( ModelImage kImage, boolean bVertexColors, boolean bUseImageMask ) 
     {
+        JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
+        mSurfaceMask.setLUT( surfaceTexturePanel.getLUT() );
+        mSurfaceMask.setRGBT( surfaceTexturePanel.getRGBT() );
+
         int[] aiSelected = surfaceList.getSelectedIndices();
         SurfaceAttributes[] surfaces = getSelectedSurfaces( aiSelected );
         for ( int i = 0; i < surfaces.length; i++ )
@@ -1910,6 +1925,10 @@ public class JPanelSurface extends JPanelRendererBase
      */
     private void decimate( SurfaceAttributes[] surfaces )
     {
+        JPanelSurfaceTexture surfaceTexturePanel = ((SurfaceRender)parentScene).getSurfaceTexture();
+        mSurfaceMask.setLUT( surfaceTexturePanel.getLUT() );
+        mSurfaceMask.setRGBT( surfaceTexturePanel.getRGBT() );
+
         for ( int i = 0; i < surfaces.length; i++ )
         {
             ModelTriangleMesh[] meshes = surfaces[i].getMesh();
