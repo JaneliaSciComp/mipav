@@ -3567,11 +3567,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
                               "  B:  " +
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]) +
-                              " Position: " + values[0] + " " + values[1] + " " + values[2];
+                              " Position: " + values[1] + " " + values[0] + " " + values[2];
                     } else {
                         str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  " +
                               String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]) +
-                              " Position: " + values[0] + " " + values[1] + " " + values[2];
+                              " Position: " + values[1] + " " + values[0] + " " + values[2];
                     }
 
                     frame.setMessageText(str);
