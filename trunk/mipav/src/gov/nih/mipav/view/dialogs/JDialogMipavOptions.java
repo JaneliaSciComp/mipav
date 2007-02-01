@@ -1700,10 +1700,11 @@ public class JDialogMipavOptions extends JDialogBase implements KeyListener {
      * @param  gbl  GridBagLayout
      */
     protected void makeVOIContinuousOptions(GridBagConstraints gbc, GridBagLayout gbl) {
-        continuousVOIBox = new JCheckBox("Continuously draw contours");
+    	continuousVOIBox = new JCheckBox("Draw new contours without holding [SHIFT]");
         continuousVOIBox.setFont(MipavUtil.font12);
         continuousVOIBox.setForeground(Color.black);
         continuousVOIBox.addActionListener(this);
+        continuousVOIBox.setToolTipText("If selected, new contours can be drawn in the same VOI without holding down the [SHIFT] key");
         gbc.insets = new Insets(0, 0, 0, 0);
         gbc.gridwidth = GridBagConstraints.REMAINDER;
         gbc.anchor = GridBagConstraints.WEST;
