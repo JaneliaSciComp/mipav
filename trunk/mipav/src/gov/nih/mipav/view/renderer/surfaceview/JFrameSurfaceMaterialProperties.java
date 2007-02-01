@@ -758,7 +758,6 @@ public class JFrameSurfaceMaterialProperties extends JFrame
         /* Save the original: */
         m_kMaterialSave = new Material(m_kAmbient, m_kEmissive, m_kDiffuse, m_kSpecular, m_fShininess);
         m_kMaterialSave.setCapability(Material.ALLOW_COMPONENT_READ);
-        m_kMaterialSave.setCapability(Material.ALLOW_COMPONENT_WRITE);
 
         if (m_iNumPreset < 0) {
             m_iNumPreset = 0;
