@@ -130,8 +130,6 @@ public class SurfaceAttributes {
         this.mCenter.x /= mTriangleMesh.length;
         this.mCenter.y /= mTriangleMesh.length;
         this.mCenter.z /= mTriangleMesh.length;
-
-        backupColors();
     }
 
     // Access functions: 
@@ -186,10 +184,6 @@ public class SurfaceAttributes {
             {
                 mSurfaceShape[i].getAppearance().setMaterial( mMaterial );
             }
-
-            // first save per-vertex colors:
-            backupColors();
-
             Color3f diffuse = new Color3f();
             mMaterial.getDiffuseColor( diffuse );
             mColor.x = diffuse.x;
@@ -223,6 +217,9 @@ public class SurfaceAttributes {
      */
     public Material getMaterial()
     {
+        // first save per-vertex colors:
+        backupColors();
+
         return copyMaterial( mMaterial );
     }
 
@@ -378,16 +375,17 @@ public class SurfaceAttributes {
      */
     public void restorePerVertexColors( Material material )
     {
-        mMaterial = copyMaterial( material );
-        for ( int i = 0; i < mSurfaceShape.length; i++ )
-        {
-            mSurfaceShape[i].getAppearance().setMaterial( mMaterial );
-        }
+        this.setMaterial( material );
 
         // Sets the color, but does not update the geometry yet (faster):
         for ( int i = 0; i < mTriangleMesh.length; i++ )
         {
-            mTriangleMesh[i].setColors( 0,  mPerVertexColors_Backup[i] );
+            for ( int j = 0; j < mPerVertexColors_Backup[i].length; j++ )
+            {
+                mTriangleMesh[i].setColorDelay( j,  mPerVertexColors_Backup[i][j] );
+            }
+            // updates the geometry all at once (faster):
+            mTriangleMesh[i].setColorUpdate( );
         }
     }
 
