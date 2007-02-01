@@ -1,11 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.*;
+
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
-import gov.nih.mipav.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.*;
 
@@ -99,6 +100,9 @@ public class AlgorithmTransform extends AlgorithmBase {
     private boolean canPad = true;
 
     /** DOCUMENT ME! */
+    private Point3Df center = null;
+
+    /** DOCUMENT ME! */
     private boolean clip = true;
 
     /** DOCUMENT ME! */
@@ -109,6 +113,9 @@ public class AlgorithmTransform extends AlgorithmBase {
 
     /** DOCUMENT ME! */
     private boolean do25D;
+
+    /** DOCUMENT ME! */
+    private boolean doCenter = false;
 
     /** DOCUMENT ME! */
     private float[] imgBuf = null;
@@ -149,10 +156,6 @@ public class AlgorithmTransform extends AlgorithmBase {
     /** DOCUMENT ME! */
     private TransMatrix transMatrix;
 
-    private boolean doCenter = false;
-
-    private Point3Df center = null;
-
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -187,7 +190,7 @@ public class AlgorithmTransform extends AlgorithmBase {
         int type = srcImage.getType();
 
         /* Read the direction vector from the MipavCoordinateSystems class: */
-        direct = MipavCoordinateSystems.getModelDirections( srcImage );
+        direct = MipavCoordinateSystems.getModelDirections(srcImage);
         DIM = srcImage.getNDims();
 
         if (pad) {
@@ -343,7 +346,8 @@ public class AlgorithmTransform extends AlgorithmBase {
         iZdim = srcImage.getExtents()[2];
 
         /* Read the direction vector from the MipavCoordinateSystems class: */
-        direct = MipavCoordinateSystems.getModelDirections( srcImage );
+        direct = MipavCoordinateSystems.getModelDirections(srcImage);
+
         // System.out.println("Directions are " +direct[0] +", " +direct[1] +" and " +direct[2]);
         if (pad) {
 
@@ -437,24 +441,6 @@ public class AlgorithmTransform extends AlgorithmBase {
         destImage = new ModelImage(type, extents, name);
         updateFileInfo(srcImage, destImage, destResolutions);
     }
-
-    /**
-     *
-     * @param doCenter
-     */
-    public void setDoCenter(boolean doCenter) {
-        this.doCenter = doCenter;
-    }
-
-    /**
-     *
-     * @param center
-     */
-    public void setCenter(Point3Df center) {
-        this.center = center;
-    }
-
-
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -3441,76 +3427,6 @@ public class AlgorithmTransform extends AlgorithmBase {
     }
 
     /**
-     * Copy important file information to resultant image structure.
-     *
-     * @param  image        Source image.
-     * @param  resultImage  Resultant image.
-     * @param  resolutions  DOCUMENT ME!
-     */
-    private static void updateFileInfo(ModelImage image, ModelImage resultImage, float[] resolutions) {
-        FileInfoBase[] fileInfo = resultImage.getFileInfo();
-
-        if (resultImage.getNDims() == 2) {
-            fileInfo[0].setModality(image.getFileInfo()[0].getModality());
-            fileInfo[0].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
-            fileInfo[0].setDataType(resultImage.getType());
-            fileInfo[0].setEndianess(image.getFileInfo()[0].getEndianess());
-            fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
-            fileInfo[0].setResolutions(resolutions);
-            fileInfo[0].setExtents(resultImage.getExtents());
-            fileInfo[0].setMax(resultImage.getMax());
-            fileInfo[0].setMin(resultImage.getMin());
-            fileInfo[0].setImageOrientation(imgOrient);
-            fileInfo[0].setAxisOrientation(axisOrient);
-            fileInfo[0].setOrigin(imgOrigin);
-            fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
-            fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
-        } else if (resultImage.getNDims() == 3) {
-
-            // System.out.println("direction " + direct[2]);
-            for (int i = 0; i < resultImage.getExtents()[2]; i++) {
-                fileInfo[i].setModality(image.getFileInfo()[0].getModality());
-                fileInfo[i].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
-                fileInfo[i].setDataType(resultImage.getType());
-                fileInfo[i].setEndianess(image.getFileInfo()[0].getEndianess());
-                fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
-                fileInfo[i].setResolutions(resolutions);
-                fileInfo[i].setSliceThickness(resolutions[2]);
-                fileInfo[i].setExtents(resultImage.getExtents());
-                fileInfo[i].setMax(resultImage.getMax());
-                fileInfo[i].setMin(resultImage.getMin());
-                fileInfo[i].setImageOrientation(imgOrient);
-                fileInfo[i].setAxisOrientation(axisOrient);
-                imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
-                fileInfo[i].setOrigin(imgOrigin);
-                fileInfo[i].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
-                fileInfo[i].setPhotometric(image.getFileInfo()[0].getPhotometric());
-            }
-        } else if (resultImage.getNDims() == 4) {
-            fileInfo = resultImage.getFileInfo();
-
-            for (int i = 0; i < (resultImage.getExtents()[2] * resultImage.getExtents()[3]); i++) {
-                fileInfo[i].setModality(image.getFileInfo()[0].getModality());
-                fileInfo[i].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
-                fileInfo[i].setDataType(resultImage.getType());
-                fileInfo[i].setEndianess(image.getFileInfo()[0].getEndianess());
-                fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
-                fileInfo[i].setResolutions(resolutions);
-                fileInfo[i].setSliceThickness(resolutions[2]);
-                fileInfo[i].setExtents(resultImage.getExtents());
-                fileInfo[i].setMax(resultImage.getMax());
-                fileInfo[i].setMin(resultImage.getMin());
-                fileInfo[i].setImageOrientation(imgOrient);
-                fileInfo[i].setAxisOrientation(axisOrient);
-                imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
-                fileInfo[i].setOrigin(imgOrigin);
-                fileInfo[i].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
-                fileInfo[i].setPhotometric(image.getFileInfo()[0].getPhotometric());
-            }
-        }
-    }
-
-    /**
      * Dispose of local variables that may be taking up lots of room.
      */
     public void disposeLocal() {
@@ -3667,6 +3583,7 @@ public class AlgorithmTransform extends AlgorithmBase {
                 destImage.setMatrix(transMatrix);
                 destImage.getFileInfo(0).setTransformID(srcImage.getFileInfo(0).getTransformID());
             } else {
+
                 // srcImage Matrix * transMatrix invert * [x y z]transpose
                 // since (transMatrix invert * [x y z]transpose) takes the
                 // destination image to the source image and srcImage Matrix
@@ -3676,17 +3593,20 @@ public class AlgorithmTransform extends AlgorithmBase {
                 // the transformation matrix in AlgorithmTransform.transform()
                 // when rotation around the center is specified in JDialogTransform.
                 transMatrix.invert();
+
                 if (srcImage.getNDims() > 2) {
+
                     if (transMatrix.getNCols() == 4) {
                         newMatrix = new Matrix(4, 4);
                         newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
                         newMatrix.timesEquals(transMatrix);
-                    }
-                    else { // 2.5D processing
+                    } else { // 2.5D processing
                         newMatrix = new Matrix(4, 4);
                         newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
-                        double array2D[][];
+
+                        double[][] array2D;
                         array2D = transMatrix.getMatrix();
+
                         Matrix mat3D = new Matrix(4, 4);
                         mat3D.set(0, 0, array2D[0][0]);
                         mat3D.set(0, 1, array2D[0][1]);
@@ -3704,18 +3624,18 @@ public class AlgorithmTransform extends AlgorithmBase {
                     }
 
                     newTMatrix = new TransMatrix(4);
-                }
-                else { // srcImage.getNDims() == 2
+                } else { // srcImage.getNDims() == 2
                     newMatrix = new Matrix(3, 3);
+
                     // There is the posibility the for 2D DICOM that the matrix might  be 4x4
                     // If 3 x3 OK to load else the newMatrix is identity
                     if (srcImage.getMatrix().getColumnDimension() == 3) {
                         newMatrix.setMatrix(srcImage.getMatrix().getMatrix());
                     }
+
                     newMatrix.timesEquals(transMatrix);
                     newTMatrix = new TransMatrix(3);
                 }
-
 
                 newTMatrix.setMatrix(newMatrix.getArray());
 
@@ -3723,6 +3643,24 @@ public class AlgorithmTransform extends AlgorithmBase {
                 destImage.getFileInfo(0).setTransformID(srcImage.getFileInfo(0).getTransformID());
             }
         }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  center  DOCUMENT ME!
+     */
+    public void setCenter(Point3Df center) {
+        this.center = center;
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  doCenter  DOCUMENT ME!
+     */
+    public void setDoCenter(boolean doCenter) {
+        this.doCenter = doCenter;
     }
 
     /**
@@ -3742,6 +3680,76 @@ public class AlgorithmTransform extends AlgorithmBase {
      */
     public void setUpdateOriginFlag(boolean originFlag) {
         updateOrigin = originFlag;
+    }
+
+    /**
+     * Copy important file information to resultant image structure.
+     *
+     * @param  image        Source image.
+     * @param  resultImage  Resultant image.
+     * @param  resolutions  DOCUMENT ME!
+     */
+    private static void updateFileInfo(ModelImage image, ModelImage resultImage, float[] resolutions) {
+        FileInfoBase[] fileInfo = resultImage.getFileInfo();
+
+        if (resultImage.getNDims() == 2) {
+            fileInfo[0].setModality(image.getFileInfo()[0].getModality());
+            fileInfo[0].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
+            fileInfo[0].setDataType(resultImage.getType());
+            fileInfo[0].setEndianess(image.getFileInfo()[0].getEndianess());
+            fileInfo[0].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
+            fileInfo[0].setResolutions(resolutions);
+            fileInfo[0].setExtents(resultImage.getExtents());
+            fileInfo[0].setMax(resultImage.getMax());
+            fileInfo[0].setMin(resultImage.getMin());
+            fileInfo[0].setImageOrientation(imgOrient);
+            fileInfo[0].setAxisOrientation(axisOrient);
+            fileInfo[0].setOrigin(imgOrigin);
+            fileInfo[0].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
+            fileInfo[0].setPhotometric(image.getFileInfo()[0].getPhotometric());
+        } else if (resultImage.getNDims() == 3) {
+
+            // System.out.println("direction " + direct[2]);
+            for (int i = 0; i < resultImage.getExtents()[2]; i++) {
+                fileInfo[i].setModality(image.getFileInfo()[0].getModality());
+                fileInfo[i].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
+                fileInfo[i].setDataType(resultImage.getType());
+                fileInfo[i].setEndianess(image.getFileInfo()[0].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(resolutions);
+                fileInfo[i].setSliceThickness(resolutions[2]);
+                fileInfo[i].setExtents(resultImage.getExtents());
+                fileInfo[i].setMax(resultImage.getMax());
+                fileInfo[i].setMin(resultImage.getMin());
+                fileInfo[i].setImageOrientation(imgOrient);
+                fileInfo[i].setAxisOrientation(axisOrient);
+                imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
+                fileInfo[i].setOrigin(imgOrigin);
+                fileInfo[i].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
+                fileInfo[i].setPhotometric(image.getFileInfo()[0].getPhotometric());
+            }
+        } else if (resultImage.getNDims() == 4) {
+            fileInfo = resultImage.getFileInfo();
+
+            for (int i = 0; i < (resultImage.getExtents()[2] * resultImage.getExtents()[3]); i++) {
+                fileInfo[i].setModality(image.getFileInfo()[0].getModality());
+                fileInfo[i].setFileDirectory(image.getFileInfo()[0].getFileDirectory());
+                fileInfo[i].setDataType(resultImage.getType());
+                fileInfo[i].setEndianess(image.getFileInfo()[0].getEndianess());
+                fileInfo[i].setUnitsOfMeasure(image.getFileInfo()[0].getUnitsOfMeasure());
+                fileInfo[i].setResolutions(resolutions);
+                fileInfo[i].setSliceThickness(resolutions[2]);
+                fileInfo[i].setExtents(resultImage.getExtents());
+                fileInfo[i].setMax(resultImage.getMax());
+                fileInfo[i].setMin(resultImage.getMin());
+                fileInfo[i].setImageOrientation(imgOrient);
+                fileInfo[i].setAxisOrientation(axisOrient);
+                imgOrigin[2] = startPos + (direct[2] * i * resolutions[2]);
+                fileInfo[i].setOrigin(imgOrigin);
+                fileInfo[i].setPixelPadValue(image.getFileInfo()[0].getPixelPadValue());
+                fileInfo[i].setPhotometric(image.getFileInfo()[0].getPhotometric());
+            }
+        }
     }
 
     /**
@@ -3804,31 +3812,40 @@ public class AlgorithmTransform extends AlgorithmBase {
         }
 
         try {
+
             if ((do25D) || (DIM == 2)) {
                 trans = new TransMatrix(3);
             } else { // (DIM >= 3) && (!do25D)
                 trans = new TransMatrix(4);
             }
+
             trans.setMatrix(transMatrix.getArray());
+
             if (doCenter) {
+
                 if ((do25D) || (DIM == 2)) {
                     xfrmC = new TransMatrix(3);
                 } else { // (DIM >= 3) && (!do25D)
                     xfrmC = new TransMatrix(4);
                 }
+
                 xfrmC.identity();
+
                 if ((DIM >= 3) && (!do25D)) {
                     xfrmC.setTranslate(center.x, center.y, center.z);
                 } else { // (DIM == 2) || do25D
                     xfrmC.setTranslate(center.x, center.y);
                 }
+
                 trans.setMatrix((xfrmC.times(transMatrix)).getArray());
+
                 if ((DIM >= 3) && (!do25D)) {
                     trans.setTranslate(-center.x, -center.y, -center.z);
                 } else { // (DIM == 2) || do25D
                     trans.setTranslate(-center.x, -center.y);
                 }
             } // if (doCenter)
+
             xfrm = matrixtoInverseArray(trans);
 
             bufferFactor = 1;
@@ -3937,49 +3954,49 @@ public class AlgorithmTransform extends AlgorithmBase {
                 if (interp == TRILINEAR) {
                     transformTrilinear(imgBuf, xfrm);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BSPLINE3) {
                     transformBspline3D(imgBuf, xfrm, 3);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BSPLINE4) {
                     transformBspline3D(imgBuf, xfrm, 4);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == NEAREST_NEIGHBOR) {
                     transformNearestNeighbor3D(imgBuf, xfrm);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian3D(imgBuf, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == QUINTIC_LAGRANGIAN) {
                     transformQuinticLagrangian3D(imgBuf, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == HEPTIC_LAGRANGIAN) {
                     transformHepticLagrangian3D(imgBuf, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == WSINC) {
                     transformWSinc3D(imgBuf, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BILINEAR) {
@@ -3992,49 +4009,49 @@ public class AlgorithmTransform extends AlgorithmBase {
                 if (interp == BILINEAR) {
                     transformBilinear(imgBuf, xfrm);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == NEAREST_NEIGHBOR) {
                     transformNearestNeighbor2D(imgBuf, xfrm);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BSPLINE3) {
                     transformBspline2D(imgBuf, xfrm, 3);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BSPLINE4) {
                     transformBspline2D(imgBuf, xfrm, 4);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian2D(imgBuf, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == QUINTIC_LAGRANGIAN) {
                     transformQuinticLagrangian2D(imgBuf, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == HEPTIC_LAGRANGIAN) {
                     transformHepticLagrangian2D(imgBuf, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == WSINC) {
                     transformWSinc2D(imgBuf, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == TRILINEAR) {
@@ -4091,49 +4108,49 @@ public class AlgorithmTransform extends AlgorithmBase {
                 if (interp == TRILINEAR) {
                     transformTrilinearC(imgBuf, imgBuf2, xfrm);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BSPLINE3) {
                     transformBspline3DC(imgBuf, xfrm, 3);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BSPLINE4) {
                     transformBspline3DC(imgBuf, xfrm, 4);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == NEAREST_NEIGHBOR) {
                     transformNearestNeighbor3DC(imgBuf, imgBuf2, xfrm);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian3DC(imgBuf, imgBuf2, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == QUINTIC_LAGRANGIAN) {
                     transformQuinticLagrangian3DC(imgBuf, imgBuf2, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == HEPTIC_LAGRANGIAN) {
                     transformHepticLagrangian3DC(imgBuf, imgBuf2, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == WSINC) {
                     transformWSinc3DC(imgBuf, imgBuf2, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform3DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BILINEAR) {
@@ -4146,49 +4163,49 @@ public class AlgorithmTransform extends AlgorithmBase {
                 if (interp == BILINEAR) {
                     transformBilinearC(imgBuf, imgBuf2, xfrm);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == NEAREST_NEIGHBOR) {
                     transformNearestNeighbor2DC(imgBuf, imgBuf2, xfrm);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BSPLINE3) {
                     transformBspline2DC(imgBuf, xfrm, 3);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == BSPLINE4) {
                     transformBspline2DC(imgBuf, xfrm, 4);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == CUBIC_LAGRANGIAN) {
                     transformCubicLagrangian2DC(imgBuf, imgBuf2, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == QUINTIC_LAGRANGIAN) {
                     transformQuinticLagrangian2DC(imgBuf, imgBuf2, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == HEPTIC_LAGRANGIAN) {
                     transformHepticLagrangian2DC(imgBuf, imgBuf2, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == WSINC) {
                     transformWSinc2DC(imgBuf, imgBuf2, xfrm, clip);
 
-                    if (transformVOI == true) {
+                    if ((transformVOI == true) && (srcImage.getVOIs().size() != 0)) {
                         transform2DVOI(srcImage, imgBuf, xfrm);
                     }
                 } else if (interp == TRILINEAR) {
@@ -5816,22 +5833,21 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (j = 0; (j < oYdim) && !threadStopped; j++) {
      *
-     *   if (((j % mod) == 0)) {         fireProgressStateChanged((int) (((float) j / oYdim *
-     * 100) + 0.5f));     }
+     * if (((j % mod) == 0)) {         fireProgressStateChanged((int) (((float) j / oYdim * 100) + 0.5f));     }
      *
-     *   jmm = j * oYres;     j1 = (jmm * T01) + T02;     j2 = (jmm * T11) + T12;
+     * jmm = j * oYres;     j1 = (jmm * T01) + T02;     j2 = (jmm * T11) + T12;
      *
-     *   for (i = 0; (i < oXdim) && !threadStopped; i++) {
+     * for (i = 0; (i < oXdim) && !threadStopped; i++) {
      *
-     *       // transform i,j,k         value = (float) srcImage.getMin(); // remains zero if voxel is transformed out
-     * of bounds         imm = i * oXres;         X = (j1 + (imm * T00)) * invXRes;
+     *    // transform i,j,k         value = (float) srcImage.getMin(); // remains zero if voxel is transformed out of
+     * bounds         imm = i * oXres;         X = (j1 + (imm * T00)) * invXRes;
      *
-     *       if ((X > -0.5f) && (X < (iXdim - 0.5f))) {             Y = (j2 + (imm * T10)) * invYRes;
+     *    if ((X > -0.5f) && (X < (iXdim - 0.5f))) {             Y = (j2 + (imm * T10)) * invYRes;
      *
-     *           if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {                 value = Bspline.bSpline2D(0, 0, X, Y);
-     *       }         }
+     *        if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {                 value = Bspline.bSpline2D(0, 0, X, Y);      }
+     *       }
      *
-     *       destImage.set(index++, value);     } }
+     *    destImage.set(index++, value);     } }
      *
      * Bspline.finalize(); Preferences.debug("finished Bspline");
      *
@@ -5856,27 +5872,25 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (i = 0; (i < oXdim) && !threadStopped; i++) {
      *
-     *   if (((i % mod) == 0)) {         fireProgressStateChanged((int) (((float) i / oXdim *
-     * 100) + 0.5));     }
+     * if (((i % mod) == 0)) {         fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));     }
      *
-     *   imm = (float) i * oXres;     temp1 = (imm * T00) + T02;     temp2 = (imm * T10) + T12;
+     * imm = (float) i * oXres;     temp1 = (imm * T00) + T02;     temp2 = (imm * T10) + T12;
      *
-     *   for (j = 0; (j < oYdim) && !threadStopped; j++) {
+     * for (j = 0; (j < oYdim) && !threadStopped; j++) {
      *
-     *       // convert to mm         value[0] = 0; // will remain zero if boundary conditions not met         value[1]
-     * = 0;         value[2] = 0;         value[3] = 0;
+     *    // convert to mm         value[0] = 0; // will remain zero if boundary conditions not met         value[1] =
+     * 0;         value[2] = 0;         value[3] = 0;
      *
-     *       jmm = (float) j * oYres;
+     *    jmm = (float) j * oYres;
      *
-     *       // transform i,j         X = (temp1 + (jmm * T01)) / iXres;
+     *    // transform i,j         X = (temp1 + (jmm * T01)) / iXres;
      *
-     *       if ((X >= 0) && (X < iXdim)) { // check bounds             Y = (temp2 + (jmm * T11)) / iYres;
+     *    if ((X >= 0) && (X < iXdim)) { // check bounds             Y = (temp2 + (jmm * T11)) / iYres;
      *
-     *           if ((Y >= 0) && (Y < iYdim)) {                 value = Bspline.bSpline2DC(0, 0, X, Y);             }
-     *      }
+     *        if ((Y >= 0) && (Y < iYdim)) {                 value = Bspline.bSpline2DC(0, 0, X, Y);             }     }
      *
-     *       temp3 = 4 * (i + (j * oXdim));         imgBuf2[temp3] = value[0];         imgBuf2[temp3 + 1] = value[1];
-     *      imgBuf2[temp3 + 2] = value[2];         imgBuf2[temp3 + 3] = value[3];         counter++;     } }
+     *    temp3 = 4 * (i + (j * oXdim));         imgBuf2[temp3] = value[0];         imgBuf2[temp3 + 1] = value[1];
+     * imgBuf2[temp3 + 2] = value[2];         imgBuf2[temp3 + 3] = value[3];         counter++;     } }
      *
      * if (threadStopped) {     return; }
      *
@@ -5916,27 +5930,26 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (k = 0; (k < oZdim) && !threadStopped; k++) {
      *
-     *   if (((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim *
-     * 100) + 0.5f));     }
+     * if (((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5f));     }
      *
-     *   kmm = k * oZres;     k1 = (kmm * T02) + T03;     k2 = (kmm * T12) + T13;     k3 = (kmm * T22) + T23;
+     * kmm = k * oZres;     k1 = (kmm * T02) + T03;     k2 = (kmm * T12) + T13;     k3 = (kmm * T22) + T23;
      *
-     *   for (j = 0; (j < oYdim) && !threadStopped; j++) {         jmm = j * oYres;         j1 = (jmm * T01) + k1;
-     *   j2 = (jmm * T11) + k2;         j3 = (jmm * T21) + k3;
+     * for (j = 0; (j < oYdim) && !threadStopped; j++) {         jmm = j * oYres;         j1 = (jmm * T01) + k1;  j2 =
+     * (jmm * T11) + k2;         j3 = (jmm * T21) + k3;
      *
-     *       for (i = 0; (i < oXdim) && !threadStopped; i++) {
+     *    for (i = 0; (i < oXdim) && !threadStopped; i++) {
      *
-     *           // transform i,j,k             value = (float) srcImage.getMin(); // remains zero if voxel is
-     * transformed out of bounds             imm = i * oXres;             X = (j1 + (imm * T00)) * invXRes;
+     *        // transform i,j,k             value = (float) srcImage.getMin(); // remains zero if voxel is transformed
+     * out of bounds             imm = i * oXres;             X = (j1 + (imm * T00)) * invXRes;
      *
-     *           if ((X > -0.5f) && (X < (iXdim - 0.5f))) {                 Y = (j2 + (imm * T10)) * invYRes;
+     *        if ((X > -0.5f) && (X < (iXdim - 0.5f))) {                 Y = (j2 + (imm * T10)) * invYRes;
      *
-     *               if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {                     Z = (j3 + (imm * T20)) * invZRes;
+     *            if ((Y > -0.5f) && (Y < (iYdim - 0.5f))) {                     Z = (j3 + (imm * T20)) * invZRes;
      *
-     *                   if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {                         value = Bspline.bSpline3D(0,
-     * 0, 0, X, Y, Z);                     }                 }             }
+     *                if ((Z > -0.5f) && (Z < (iZdim - 0.5f))) {                         value = Bspline.bSpline3D(0, 0,
+     * 0, X, Y, Z);                     }                 }             }
      *
-     *           destImage.set(index++, value);         }     } }
+     *        destImage.set(index++, value);         }     } }
      *
      * Bspline.finalize(); Preferences.debug("finished Bspline");
      *
@@ -5965,33 +5978,31 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (i = 0; (i < oXdim) && !threadStopped; i++) {
      *
-     *   if (((i % mod) == 0)) {         fireProgressStateChanged((int) (((float) i / oXdim *
-     * 100) + 0.5));     }
+     * if (((i % mod) == 0)) {         fireProgressStateChanged((int) (((float) i / oXdim * 100) + 0.5));     }
      *
-     *   imm = (float) i * oXres;     i1 = (imm * T00) + T03;     i2 = (imm * T10) + T13;     i3 = (imm * T20) + T23;
+     * imm = (float) i * oXres;     i1 = (imm * T00) + T03;     i2 = (imm * T10) + T13;     i3 = (imm * T20) + T23;
      *
-     *   for (j = 0; (j < oYdim) && !threadStopped; j++) {         jmm = (float) j * oYres;         j1 = jmm * T01;
-     *    j2 = jmm * T11;         j3 = jmm * T21;         temp1 = i3 + j3;         temp2 = i2 + j2;         temp3 = i1 +
-     * j1;
+     * for (j = 0; (j < oYdim) && !threadStopped; j++) {         jmm = (float) j * oYres;         j1 = jmm * T01;   j2 =
+     * jmm * T11;         j3 = jmm * T21;         temp1 = i3 + j3;         temp2 = i2 + j2;         temp3 = i1 + j1;
      *
-     *       for (k = 0; (k < oZdim) && !threadStopped; k++) {
+     *    for (k = 0; (k < oZdim) && !threadStopped; k++) {
      *
-     *           // convert to mm             value[0] = 0; // will remain zero if boundary conditions not met
-     *   value[1] = 0;             value[2] = 0;             value[3] = 0;             kmm = (float) k * oZres;
+     *        // convert to mm             value[0] = 0; // will remain zero if boundary conditions not met  value[1] =
+     * 0;             value[2] = 0;             value[3] = 0;             kmm = (float) k * oZres;
      *
-     *           // transform i,j,k             X = (temp3 + (kmm * T02)) / iXres;
+     *        // transform i,j,k             X = (temp3 + (kmm * T02)) / iXres;
      *
-     *           // convert back to pixels             if ((X >= 0) && (X < iXdim)) { // check bounds                 Y
-     * = (temp2 + (kmm * T12)) / iYres;
+     *        // convert back to pixels             if ((X >= 0) && (X < iXdim)) { // check bounds                 Y =
+     * (temp2 + (kmm * T12)) / iYres;
      *
-     *               if ((Y >= 0) && (Y < iYdim)) {                     Z = (temp1 + (kmm * T22)) / iZres;
+     *            if ((Y >= 0) && (Y < iYdim)) {                     Z = (temp1 + (kmm * T22)) / iZres;
      *
-     *                   if ((Z >= 0) && (Z < iZdim)) {                         value = Bspline.bSpline3DC(0, 0, 0, X,
-     * Y, Z);                     }                 }             }
+     *                if ((Z >= 0) && (Z < iZdim)) {                         value = Bspline.bSpline3DC(0, 0, 0, X, Y,
+     * Z);                     }                 }             }
      *
-     *           temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));             imgBuf2[temp4] = value[0];
-     * imgBuf2[temp4 + 1] = value[1];             imgBuf2[temp4 + 2] = value[2];             imgBuf2[temp4 + 3] =
-     * value[3];             counter++;         }     } }
+     *        temp4 = 4 * (i + (j * oXdim) + (k * osliceSize));             imgBuf2[temp4] = value[0]; imgBuf2[temp4 +
+     * 1] = value[1];             imgBuf2[temp4 + 2] = value[2];             imgBuf2[temp4 + 3] = value[3];
+     * counter++;         }     } }
      *
      * if (threadStopped) {     return; }
      *
@@ -6023,35 +6034,34 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * // System.out.println("oZdim = "); for (k = 0; (k < oZdim) && !threadStopped; k++) {
      *
-     *   if (((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim *
-     * 100) + 0.5));     }
+     * if (((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));     }
      *
-     *   Bspline.setup2DBSpline(imgBuf, inVolExtents, degree);
+     * Bspline.setup2DBSpline(imgBuf, inVolExtents, degree);
      *
-     *   for (i = 0; (i < oXdim) && !threadStopped; i++) {         imm = (float) i * oXres;         temp1 = (imm * T00)
-     * + T02;         temp2 = (imm * T10) + T12;
+     * for (i = 0; (i < oXdim) && !threadStopped; i++) {         imm = (float) i * oXres;         temp1 = (imm * T00) +
+     * T02;         temp2 = (imm * T10) + T12;
      *
-     *       for (j = 0; (j < oYdim) && !threadStopped; j++) {
+     *    for (j = 0; (j < oYdim) && !threadStopped; j++) {
      *
-     *           // convert to mm             value = (float) srcImage.getMin(); // will remain zero if boundary
-     * conditions not met             jmm = (float) j * oYres;
+     *        // convert to mm             value = (float) srcImage.getMin(); // will remain zero if boundary conditions
+     * not met             jmm = (float) j * oYres;
      *
-     *           // transform i,j             X = (temp1 + (jmm * T01)) / iXres;
+     *        // transform i,j             X = (temp1 + (jmm * T01)) / iXres;
      *
-     *           if ((X >= 0) && (X < iXdim)) { // check bounds                 Y = (temp2 + (jmm * T11)) / iYres;
+     *        if ((X >= 0) && (X < iXdim)) { // check bounds                 Y = (temp2 + (jmm * T11)) / iYres;
      *
-     *               if ((Y >= 0) && (Y < iYdim)) {                     value = Bspline.bSpline2D(0, 0, X, Y);
-     *       }             }
+     *            if ((Y >= 0) && (Y < iYdim)) {                     value = Bspline.bSpline2D(0, 0, X, Y);      }
+     *       }
      *
-     *           destImage.set(i, j, k, value);             counter++;         }     }
+     *        destImage.set(i, j, k, value);             counter++;         }     }
      *
-     *   if (k < (oZdim - 1)) {
+     * if (k < (oZdim - 1)) {
      *
-     *       try {             srcImage.exportData((k + 1) * imgLength, imgLength, imgBuf);         } catch (IOException
+     *    try {             srcImage.exportData((k + 1) * imgLength, imgLength, imgBuf);         } catch (IOException
      * error) {             displayError("Algorithm Transform: Image(s) locked");             setCompleted(false);
      *
      *
-     *           return;         }     } // end if (k < (oZdim - 1)) } // end for k
+     *        return;         }     } // end if (k < (oZdim - 1)) } // end for k
      *
      * Bspline.finalize(); Preferences.debug("finished Bspline");}*/
 
@@ -6077,42 +6087,40 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (k = 0; (k < oZdim) && !threadStopped; k++) {
      *
-     *   if (((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim *
-     * 100) + 0.5));     }
+     * if (((k % mod) == 0)) {         fireProgressStateChanged((int) (((float) k / oZdim * 100) + 0.5));     }
      *
-     *   Bspline.setup2DBSplineC(imgBuf, inVolExtents, degree);
+     * Bspline.setup2DBSplineC(imgBuf, inVolExtents, degree);
      *
-     *   for (i = 0; (i < oXdim) && !threadStopped; i++) {         imm = (float) i * oXres;         temp1 = (imm * T00)
-     * + T02;         temp2 = (imm * T10) + T12;
+     * for (i = 0; (i < oXdim) && !threadStopped; i++) {         imm = (float) i * oXres;         temp1 = (imm * T00) +
+     * T02;         temp2 = (imm * T10) + T12;
      *
-     *       for (j = 0; (j < oYdim) && !threadStopped; j++) {
+     *    for (j = 0; (j < oYdim) && !threadStopped; j++) {
      *
-     *           // convert to mm             value[0] = 0; // will remain zero if boundary conditions not met
-     *   value[1] = 0;             value[2] = 0;             value[3] = 0;
+     *        // convert to mm             value[0] = 0; // will remain zero if boundary conditions not met  value[1] =
+     * 0;             value[2] = 0;             value[3] = 0;
      *
-     *           jmm = (float) j * oYres;
+     *        jmm = (float) j * oYres;
      *
-     *           // transform i,j             X = (temp1 + (jmm * T01)) / iXres;
+     *        // transform i,j             X = (temp1 + (jmm * T01)) / iXres;
      *
-     *           if ((X >= 0) && (X < iXdim)) { // check bounds                 Y = (temp2 + (jmm * T11)) / iYres;
+     *        if ((X >= 0) && (X < iXdim)) { // check bounds                 Y = (temp2 + (jmm * T11)) / iYres;
      *
-     *               if ((Y >= 0) && (Y < iYdim)) {                     value = Bspline.bSpline2DC(0, 0, X, Y);
-     *        }             }
+     *            if ((Y >= 0) && (Y < iYdim)) {                     value = Bspline.bSpline2DC(0, 0, X, Y);       }
+     *         }
      *
-     *           temp3 = 4 * (i + (j * oXdim));             imgBuf2[temp3] = value[0];             imgBuf2[temp3 + 1] =
-     * value[1];             imgBuf2[temp3 + 2] = value[2];             imgBuf2[temp3 + 3] = value[3];
-     * counter++;         } // for i     } // for j
+     *        temp3 = 4 * (i + (j * oXdim));             imgBuf2[temp3] = value[0];             imgBuf2[temp3 + 1] =
+     * value[1];             imgBuf2[temp3 + 2] = value[2];             imgBuf2[temp3 + 3] = value[3]; counter++;
+     *  } // for i     } // for j
      *
-     *   try {         destImage.importData(4 * k * oXdim * oYdim, imgBuf2, true);     } catch (IOException error) {
-     *     MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");     }
+     * try {         destImage.importData(4 * k * oXdim * oYdim, imgBuf2, true);     } catch (IOException error) {
+     * MipavUtil.displayError("AlgorithmTransform: IOException Error on importData");     }
      *
-     *   if (k < (oZdim - 1)) {
+     * if (k < (oZdim - 1)) {
      *
-     *       try {             srcImage.exportData((k + 1) * imgLength, imgLength, imgBuf);         } catch (IOException
-     * error) {             displayError("Algorithm Transform: IOException Error on exportData");
-     * setCompleted(false);
+     *    try {             srcImage.exportData((k + 1) * imgLength, imgLength, imgBuf);         } catch (IOException
+     * error) {             displayError("Algorithm Transform: IOException Error on exportData"); setCompleted(false);
      *
-     *           return;         }     } // end if (k < (oZdim - 1)) } // end for k
+     *        return;         }     } // end if (k < (oZdim - 1)) } // end for k
      *
      * Bspline.finalize(); Preferences.debug("finished Bspline");}*/
 
@@ -6137,42 +6145,40 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (l = 0; (l < oTdim) && !threadStopped; l++) {
      *
-     *   if (((l % mod) == 0)) {         fireProgressStateChanged((int) (((float) l / oTdim *
-     * 100) + .5));     }
+     * if (((l % mod) == 0)) {         fireProgressStateChanged((int) (((float) l / oTdim * 100) + .5));     }
      *
-     *   Bspline.setup3DBSpline(imgBuf, inVolExtents, degree);
+     * Bspline.setup3DBSpline(imgBuf, inVolExtents, degree);
      *
-     *   for (i = 0; (i < oXdim) && !threadStopped; i++) {         imm = (float) i * oXres;         i1 = (imm * T00) +
-     * T03;         i2 = (imm * T10) + T13;         i3 = (imm * T20) + T23;
+     * for (i = 0; (i < oXdim) && !threadStopped; i++) {         imm = (float) i * oXres;         i1 = (imm * T00) + T03;
+     *         i2 = (imm * T10) + T13;         i3 = (imm * T20) + T23;
      *
-     *       for (j = 0; (j < oYdim) && !threadStopped; j++) {             jmm = (float) j * oYres;             j1 = jmm
+     *    for (j = 0; (j < oYdim) && !threadStopped; j++) {             jmm = (float) j * oYres;             j1 = jmm
      * T01;             j2 = jmm * T11;             j3 = jmm * T21;             temp1 = i3 + j3;             temp2 = i2
      * + j2;             temp3 = i1 + j1;
      *
-     *           for (k = 0; (k < oZdim) && !threadStopped; k++) {
+     *        for (k = 0; (k < oZdim) && !threadStopped; k++) {
      *
-     *               // convert to mm                 value = (float) srcImage.getMin(); // will remain zero if boundary
+     *            // convert to mm                 value = (float) srcImage.getMin(); // will remain zero if boundary
      * conditions not met                 kmm = (float) k * oZres;
      *
-     *               // transform i,j,k                 X = (temp3 + (kmm * T02)) / iXres;
+     *            // transform i,j,k                 X = (temp3 + (kmm * T02)) / iXres;
      *
-     *               if ((X >= 0) && (X < iXdim)) { // check bounds                     Y = (temp2 + (kmm * T12)) /
-     * iYres;
+     *            if ((X >= 0) && (X < iXdim)) { // check bounds                     Y = (temp2 + (kmm * T12)) / iYres;
      *
-     *                   if ((Y >= 0) && (Y < iYdim)) {                         Z = (temp1 + (kmm * T22)) / iZres;
+     *                if ((Y >= 0) && (Y < iYdim)) {                         Z = (temp1 + (kmm * T22)) / iZres;
      *
-     *                       if ((Z >= 0) && (Z < iZdim)) {                             value = Bspline.bSpline3D(0, 0,
-     * 0, X, Y, Z);                         }                     }                 }
+     *                    if ((Z >= 0) && (Z < iZdim)) {                             value = Bspline.bSpline3D(0, 0, 0,
+     * X, Y, Z);                         }                     }                 }
      *
-     *               destImage.set(i, j, k, l, value);                 counter++;             }         }     }
+     *            destImage.set(i, j, k, l, value);                 counter++;             }         }     }
      *
-     *   if (l < (oTdim - 1)) {
+     * if (l < (oTdim - 1)) {
      *
-     *       try {             srcImage.exportData((l + 1) * imgLength, imgLength, imgBuf);         } catch (IOException
+     *    try {             srcImage.exportData((l + 1) * imgLength, imgLength, imgBuf);         } catch (IOException
      * error) {             displayError("Algorithm Transform: Image(s) locked");             setCompleted(false);
      *
      *
-     *           return;         }     } // end if (l < (oTdim - 1)) } // for l
+     *        return;         }     } // end if (l < (oTdim - 1)) } // for l
      *
      * Bspline.finalize(); Preferences.debug("finished Bspline");}*/
 
@@ -6198,36 +6204,35 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (l = 0; (l < oTdim) && !threadStopped; l++) {
      *
-     *   if (isProgressBarVisible()) {         fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));     }
+     * if (isProgressBarVisible()) {         fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));     }
      *
-     *   for (k = 0; (k < oZdim) && !threadStopped; k++) {         Bspline.setup2DBSpline(imgBuf, inVolExtents, degree);
+     * for (k = 0; (k < oZdim) && !threadStopped; k++) {         Bspline.setup2DBSpline(imgBuf, inVolExtents, degree);
      *
-     *       for (i = 0; (i < oXdim) && !threadStopped; i++) {             imm = (float) i * oXres;             temp1 =
+     *    for (i = 0; (i < oXdim) && !threadStopped; i++) {             imm = (float) i * oXres;             temp1 =
      * (imm * T00) + T02;             temp2 = (imm * T10) + T12;
      *
-     *           for (j = 0; (j < oYdim) && !threadStopped; j++) {
+     *        for (j = 0; (j < oYdim) && !threadStopped; j++) {
      *
-     *               // convert to mm                 value = (float) srcImage.getMin(); // will remain zero if boundary
+     *            // convert to mm                 value = (float) srcImage.getMin(); // will remain zero if boundary
      * conditions not met                 jmm = (float) j * oYres;
      *
-     *               // transform i,j                 X = (temp1 + (jmm * T01)) / iXres;
+     *            // transform i,j                 X = (temp1 + (jmm * T01)) / iXres;
      *
-     *               if ((X >= 0) && (X < iXdim)) { // check bounds                     Y = (temp2 + (jmm * T11)) /
-     * iYres;
+     *            if ((X >= 0) && (X < iXdim)) { // check bounds                     Y = (temp2 + (jmm * T11)) / iYres;
      *
-     *                   if ((Y >= 0) && (Y < iYdim)) {                         value = Bspline.bSpline2D(0, 0, X, Y);
-     *                   }                 }
+     *                if ((Y >= 0) && (Y < iYdim)) {                         value = Bspline.bSpline2D(0, 0, X, Y);
+     *             }                 }
      *
-     *               destImage.set(i, j, k, l, value);                 counter++;             }         }
+     *            destImage.set(i, j, k, l, value);                 counter++;             }         }
      *
-     *       if ((k < (oZdim - 1)) || (l < (oTdim - 1))) {
+     *    if ((k < (oZdim - 1)) || (l < (oTdim - 1))) {
      *
-     *           try {                 srcImage.exportData((l * oZdim * imgLength) + ((k + 1) * imgLength), imgLength,
+     *        try {                 srcImage.exportData((l * oZdim * imgLength) + ((k + 1) * imgLength), imgLength,
      * imgBuf);             } catch (IOException error) {                 displayError("Algorithm Transform: Image(s)
      * locked");                 setCompleted(false);
      *
-     *               return;             }         } // end if ((k < (oZdim - 1))|| (l < (oTdim - 1)))     } // end for
-     * k } // end for l
+     *            return;             }         } // end if ((k < (oZdim - 1))|| (l < (oTdim - 1)))     } // end for k }
+     * // end for l
      *
      * Bspline.finalize(); Preferences.debug("finished Bspline");}*/
 
@@ -6253,45 +6258,43 @@ public class AlgorithmTransform extends AlgorithmBase {
      *
      * for (l = 0; (l < oTdim) && !threadStopped; l++) {
      *
-     *   if (isProgressBarVisible()) {         fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));     }
+     * if (isProgressBarVisible()) {         fireProgressStateChanged((int) (((float) l / oTdim * 100) + 0.5));     }
      *
-     *   for (k = 0; (k < oZdim) && !threadStopped; k++) {         Bspline.setup2DBSplineC(imgBuf, inVolExtents,
-     * degree);
+     * for (k = 0; (k < oZdim) && !threadStopped; k++) {         Bspline.setup2DBSplineC(imgBuf, inVolExtents, degree);
      *
-     *       for (i = 0; (i < oXdim) && !threadStopped; i++) {             imm = (float) i * oXres;             temp1 =
+     *    for (i = 0; (i < oXdim) && !threadStopped; i++) {             imm = (float) i * oXres;             temp1 =
      * (imm * T00) + T02;             temp2 = (imm * T10) + T12;
      *
-     *           for (j = 0; (j < oYdim) && !threadStopped; j++) {
+     *        for (j = 0; (j < oYdim) && !threadStopped; j++) {
      *
-     *               // convert to mm                 value[0] = 0; // will remain zero if boundary conditions not met
-     *               value[1] = 0;                 value[2] = 0;                 value[3] = 0;
+     *            // convert to mm                 value[0] = 0; // will remain zero if boundary conditions not met
+     *         value[1] = 0;                 value[2] = 0;                 value[3] = 0;
      *
-     *               jmm = (float) j * oYres;
+     *            jmm = (float) j * oYres;
      *
-     *               // transform i,j                 X = (temp1 + (jmm * T01)) / iXres;
+     *            // transform i,j                 X = (temp1 + (jmm * T01)) / iXres;
      *
-     *               if ((X >= 0) && (X < iXdim)) { // check bounds                     Y = (temp2 + (jmm * T11)) /
-     * iYres;
+     *            if ((X >= 0) && (X < iXdim)) { // check bounds                     Y = (temp2 + (jmm * T11)) / iYres;
      *
-     *                   if ((Y >= 0) && (Y < iYdim)) {                         value = Bspline.bSpline2DC(0, 0, X, Y);
-     *                    }                 }
+     *                if ((Y >= 0) && (Y < iYdim)) {                         value = Bspline.bSpline2DC(0, 0, X, Y);
+     *               }                 }
      *
-     *               temp3 = 4 * (i + (j * oXdim));                 imgBuf2[temp3] = value[0];
-     * imgBuf2[temp3 + 1] = value[1];                 imgBuf2[temp3 + 2] = value[2];                 imgBuf2[temp3 + 3]
-     * = value[3];                 counter++;             } // for j         } // for i
+     *            temp3 = 4 * (i + (j * oXdim));                 imgBuf2[temp3] = value[0]; imgBuf2[temp3 + 1] =
+     * value[1];                 imgBuf2[temp3 + 2] = value[2];                 imgBuf2[temp3 + 3] = value[3];
+     *       counter++;             } // for j         } // for i
      *
-     *       try {             destImage.importData((4 * l * oXdim * oYdim * oZdim) + (4 * k * oXdim * oYdim), imgBuf2,
+     *    try {             destImage.importData((4 * l * oXdim * oYdim * oZdim) + (4 * k * oXdim * oYdim), imgBuf2,
      * true);         } catch (IOException error) {             MipavUtil.displayError("AlgorithmTransform: IOException
      * Error on importData");         }
      *
-     *       if ((k < (oZdim - 1)) || (l < (oTdim - 1))) {
+     *    if ((k < (oZdim - 1)) || (l < (oTdim - 1))) {
      *
-     *           try {                 srcImage.exportData((l * oZdim * imgLength) + ((k + 1) * imgLength), imgLength,
+     *        try {                 srcImage.exportData((l * oZdim * imgLength) + ((k + 1) * imgLength), imgLength,
      * imgBuf);             } catch (IOException error) {                 displayError("Algorithm Transform: IOException
      * Error on exportData");                 setCompleted(false);
      *
-     *               return;             }         } // end if ((k < (oZdim - 1))|| (l < (oTdim - 1)))     } // end for
-     * k } // end for l
+     *            return;             }         } // end if ((k < (oZdim - 1))|| (l < (oTdim - 1)))     } // end for k }
+     * // end for l
      *
      * Bspline.finalize(); Preferences.debug("finished Bspline");}*/
 
