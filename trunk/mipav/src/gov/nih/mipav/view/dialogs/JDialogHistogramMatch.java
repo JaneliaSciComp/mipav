@@ -72,7 +72,7 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
      * @param  im              Source image
      */
     public JDialogHistogramMatch(Frame theParentFrame, ModelImage im) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
         matchImage = im;
         userInterface = ViewUserInterface.getReference();
         init();
@@ -96,7 +96,7 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
         } else if (command.equals("Cancel")) {
             dispose();
         }else if (command.equals("Help")) {
-            //MipavUtil.showHelp("");
+            MipavUtil.showHelp("19010");
         }
     }
 
@@ -404,8 +404,8 @@ public class JDialogHistogramMatch extends JDialogScriptableBase implements Algo
         destinationGroup.add(replaceImage); // add the button to the grouping
         destinationPanel.add(replaceImage); // add the button to the component
 
-        buildOKButton();
-        buildCancelButton();
+        //buildOKButton();
+       // buildCancelButton();
 
         //JPanel buttonPanel = new JPanel();
         //buttonPanel.add(OKButton);
