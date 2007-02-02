@@ -1711,12 +1711,11 @@ public class JPanelSurface extends JPanelRendererBase
      */
     private void buildToolBar() {
 
-        Border etchedBorder = BorderFactory.createEtchedBorder();
         ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
 
         JToolBar toolBar = new JToolBar();
         toolBar.putClientProperty("JToolBar.isRollover", Boolean.TRUE);
-        toolBar.setBorder(etchedBorder);
+        toolBar.setFloatable(false);
 
         smooth1Button = toolbarBuilder.buildButton("Smooth", "Smooth level 1", "sm1");
         smooth2Button = toolbarBuilder.buildButton("Smooth2", "Smooth level 2", "sm2");
@@ -3144,6 +3143,13 @@ public class JPanelSurface extends JPanelRendererBase
         }
     }
 
+    /**
+     * Check if the surface pickable checkbox be selected or not.
+     * @return  isSelected  Surface pickable check box selected or not.
+     */
+    public boolean isSurfacePickableSelected() {
+    	return surfacePickableCB.isSelected();
+    }
 
     /**
      * This is called when the user chooses a new color for the surface. It
