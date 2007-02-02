@@ -217,6 +217,12 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         super(theParentFrame, false);
         userInterface = ViewUserInterface.getReference();
         image = im;
+        
+        //first lets refresh the image
+    	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+    	ModelImage imgB = image.getParentFrame().getImageB();
+        refreshImagePaint(image, obj);
+        
         init();
         if (theParentFrame instanceof ViewJFrameImage) {
             ViewJFrameImage vjfi = (ViewJFrameImage) theParentFrame;
