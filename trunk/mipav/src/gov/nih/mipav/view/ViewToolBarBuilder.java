@@ -863,7 +863,7 @@ public class ViewToolBarBuilder implements ItemListener {
         VOIToolBar.add(buildToggleButton("TextVOI", "Annotation tool", "text", VOIGroup));
         VOIToolBar.add(makeSeparator());
 
-        VOIToolBar.add(buildToggleButton("Point", "Draw point VOI", "pointROI", VOIGroup));
+        VOIToolBar.add(buildToggleButton("Point", "<html>" + "Draw point VOI" + "<br>" + "Hold SHIFT for multiple drawing" + "</html>", "pointROI", VOIGroup));
 
         JToggleButton polysliceButton = buildToggleButton( "Polyslice", "Draw inter-slice polyline", "polyframe", VOIGroup );
         //polysliceButton.setEnabled(false);
