@@ -82,6 +82,114 @@ public class FileAnalyze extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Flips image. Analyze stores its data "upside down".
+     *
+     * @param   image  Image to flip.
+     *
+     * @throws  IOException  DOCUMENT ME!
+     */
+    public static final void flipTopBottom(ModelImage image) throws IOException {
+
+        try {
+            int nBuffers;
+            int bufferSize;
+            float[] buffer = null;
+            float[] resultBuffer = null;
+
+            if (image.getNDims() > 1) {
+                bufferSize = image.getSliceSize();
+            } else {
+                bufferSize = image.getExtents()[0];
+            }
+
+            if (image.getNDims() == 5) {
+                nBuffers = image.getExtents()[4] * image.getExtents()[3] * image.getExtents()[2];
+
+            } else if (image.getNDims() == 4) {
+                nBuffers = image.getExtents()[3] * image.getExtents()[2];
+            } else if (image.getNDims() == 3) {
+                nBuffers = image.getExtents()[2];
+            } else {
+                nBuffers = 1;
+            }
+
+            if (image.isColorImage()) {
+
+                buffer = new float[bufferSize * 4];
+                resultBuffer = new float[bufferSize * 4];
+                bufferSize = bufferSize * 4;
+
+                int i, j, k;
+                int xDim = image.getExtents()[0] * 4;
+                int yDim = image.getExtents()[1];
+
+                for (k = 0; k < nBuffers; k++) {
+                    image.exportData(k * bufferSize, bufferSize, buffer);
+
+                    for (j = 0; j < yDim; j++) {
+
+                        for (i = 0; i < xDim; i += 4) {
+                            resultBuffer[(j * xDim) + i] = 255;
+                            resultBuffer[(j * xDim) + i + 1] = buffer[((yDim - 1 - j) * xDim) + i + 1];
+                            resultBuffer[(j * xDim) + i + 2] = buffer[((yDim - 1 - j) * xDim) + i + 2];
+                            resultBuffer[(j * xDim) + i + 3] = buffer[((yDim - 1 - j) * xDim) + i + 3];
+                        }
+                    }
+
+                    image.importData(k * bufferSize, resultBuffer, false);
+                }
+            } else if (image.getType() == ModelStorageBase.COMPLEX) {
+
+                buffer = new float[bufferSize * 2];
+                resultBuffer = new float[bufferSize * 2];
+                bufferSize = bufferSize * 2;
+
+                int i, j, k;
+                int xDim = image.getExtents()[0] * 2;
+                int yDim = image.getExtents()[1];
+
+                for (k = 0; k < nBuffers; k++) {
+                    image.exportData(k * bufferSize, bufferSize, buffer);
+
+                    for (j = 0; j < yDim; j++) {
+
+                        for (i = 0; i < xDim; i += 2) {
+                            resultBuffer[(j * xDim) + i] = buffer[((yDim - 1 - j) * xDim) + i];
+                            resultBuffer[(j * xDim) + i + 1] = buffer[((yDim - 1 - j) * xDim) + i + 1];
+                        }
+                    }
+
+                    image.importData(k * bufferSize, resultBuffer, false);
+                }
+            } else {
+                buffer = new float[bufferSize];
+                resultBuffer = new float[bufferSize];
+
+                int i, j, k;
+                int xDim = image.getExtents()[0];
+                int yDim = image.getExtents()[1];
+
+                for (k = 0; k < nBuffers; k++) {
+                    image.exportData(k * bufferSize, bufferSize, buffer);
+
+                    for (j = 0; j < yDim; j++) {
+
+                        for (i = 0; i < xDim; i++) {
+                            resultBuffer[(j * xDim) + i] = buffer[((yDim - 1 - j) * xDim) + i];
+                        }
+                    }
+
+                    image.importData(k * bufferSize, resultBuffer, false);
+                }
+            }
+        } catch (IOException error) {
+            throw new IOException("FileAnalyze.flipTopBottom: " + error);
+        } catch (OutOfMemoryError error) {
+            throw (error);
+        }
+    }
+
+    /**
      * Returns the complete list of file names according to given file name.
      *
      * @param   absolutePath  one file name of ANALYZE.
@@ -93,10 +201,12 @@ public class FileAnalyze extends FileBase {
 
         if (isHeaderFile(absolutePath)) {
             completeFileNameList[0] = absolutePath;
+
             // completeFileNameList[1] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[1];
             completeFileNameList[1] = absolutePath + EXTENSIONS[1];
         } else if (isImageFile(absolutePath)) {
             completeFileNameList[1] = absolutePath;
+
             // completeFileNameList[0] = absolutePath.substring(0, absolutePath.lastIndexOf(".")) + EXTENSIONS[0];
             completeFileNameList[0] = absolutePath + EXTENSIONS[0];
         } else {
@@ -223,9 +333,11 @@ public class FileAnalyze extends FileBase {
         if (regular == 'r') {
             return true;
         }
+
         raFile.close();
+
         return false;
-        
+
     }
 
     /**
@@ -241,7 +353,7 @@ public class FileAnalyze extends FileBase {
 
         if (extension.equalsIgnoreCase(EXTENSIONS[0])) {
             return true;
-        } 
+        }
 
         return false;
     }
@@ -259,8 +371,8 @@ public class FileAnalyze extends FileBase {
 
         if (extension.equalsIgnoreCase(EXTENSIONS[1])) {
             return true;
-        } else if(extension.length() == 0 ) { //Support for image file with no extension.
-        	return true;
+        } else if (extension.length() == 0) { // Support for image file with no extension.
+            return true;
         }
 
         return false;
@@ -383,114 +495,6 @@ public class FileAnalyze extends FileBase {
         }
 
         return image;
-    }
-
-    /**
-     * Flips image. Analyze stores its data "upside down".
-     *
-     * @param   image  Image to flip.
-     *
-     * @throws  IOException  DOCUMENT ME!
-     */
-    public void flipTopBottom(ModelImage image) throws IOException {
-
-        try {
-            int nBuffers;
-            int bufferSize;
-            float[] buffer = null;
-            float[] resultBuffer = null;
-
-            if (image.getNDims() > 1) {
-                bufferSize = image.getSliceSize();
-            } else {
-                bufferSize = image.getExtents()[0];
-            }
-
-            if (image.getNDims() == 5) {
-                nBuffers = image.getExtents()[4] * image.getExtents()[3] * image.getExtents()[2];
-
-            } else if (image.getNDims() == 4) {
-                nBuffers = image.getExtents()[3] * image.getExtents()[2];
-            } else if (image.getNDims() == 3) {
-                nBuffers = image.getExtents()[2];
-            } else {
-                nBuffers = 1;
-            }
-
-            if (image.isColorImage()) {
-
-                buffer = new float[bufferSize * 4];
-                resultBuffer = new float[bufferSize * 4];
-                bufferSize = bufferSize * 4;
-
-                int i, j, k;
-                int xDim = image.getExtents()[0] * 4;
-                int yDim = image.getExtents()[1];
-
-                for (k = 0; k < nBuffers; k++) {
-                    image.exportData(k * bufferSize, bufferSize, buffer);
-
-                    for (j = 0; j < yDim; j++) {
-
-                        for (i = 0; i < xDim; i += 4) {
-                            resultBuffer[(j * xDim) + i] = 255;
-                            resultBuffer[(j * xDim) + i + 1] = buffer[((yDim - 1 - j) * xDim) + i + 1];
-                            resultBuffer[(j * xDim) + i + 2] = buffer[((yDim - 1 - j) * xDim) + i + 2];
-                            resultBuffer[(j * xDim) + i + 3] = buffer[((yDim - 1 - j) * xDim) + i + 3];
-                        }
-                    }
-
-                    image.importData(k * bufferSize, resultBuffer, false);
-                }
-            } else if (image.getType() == ModelStorageBase.COMPLEX) {
-
-                buffer = new float[bufferSize * 2];
-                resultBuffer = new float[bufferSize * 2];
-                bufferSize = bufferSize * 2;
-
-                int i, j, k;
-                int xDim = image.getExtents()[0] * 2;
-                int yDim = image.getExtents()[1];
-
-                for (k = 0; k < nBuffers; k++) {
-                    image.exportData(k * bufferSize, bufferSize, buffer);
-
-                    for (j = 0; j < yDim; j++) {
-
-                        for (i = 0; i < xDim; i += 2) {
-                            resultBuffer[(j * xDim) + i] = buffer[((yDim - 1 - j) * xDim) + i];
-                            resultBuffer[(j * xDim) + i + 1] = buffer[((yDim - 1 - j) * xDim) + i + 1];
-                        }
-                    }
-
-                    image.importData(k * bufferSize, resultBuffer, false);
-                }
-            } else {
-                buffer = new float[bufferSize];
-                resultBuffer = new float[bufferSize];
-
-                int i, j, k;
-                int xDim = image.getExtents()[0];
-                int yDim = image.getExtents()[1];
-
-                for (k = 0; k < nBuffers; k++) {
-                    image.exportData(k * bufferSize, bufferSize, buffer);
-
-                    for (j = 0; j < yDim; j++) {
-
-                        for (i = 0; i < xDim; i++) {
-                            resultBuffer[(j * xDim) + i] = buffer[((yDim - 1 - j) * xDim) + i];
-                        }
-                    }
-
-                    image.importData(k * bufferSize, resultBuffer, false);
-                }
-            }
-        } catch (IOException error) {
-            throw new IOException("FileAnalyze.flipTopBottom: " + error);
-        } catch (OutOfMemoryError error) {
-            throw (error);
-        }
     }
 
 
@@ -977,7 +981,7 @@ public class FileAnalyze extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo, FileBase.READ);
             linkProgress(rawFile);
-            
+
             int offset = (int) Math.abs(vox_offset);
 
             if (one) {
@@ -1059,7 +1063,8 @@ public class FileAnalyze extends FileBase {
             }
 
             flipTopBottom(buffer, fileInfo);
-        } catch (IOException error) { error.printStackTrace();
+        } catch (IOException error) {
+            error.printStackTrace();
             throw new IOException("FileAnalyz: " + error);
         } catch (OutOfMemoryError e) {
             throw (e);
@@ -1171,7 +1176,7 @@ public class FileAnalyze extends FileBase {
                 FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
                 linkProgress(rawFile);
-                
+
                 flipTopBottom(image);
                 rawFile.writeImage(image, options);
                 nImagesSaved = rawFile.getNImages();
@@ -1191,7 +1196,7 @@ public class FileAnalyze extends FileBase {
 
     }
 
-    
+
     /**
      * Helper method to calculate the offset for getting only the middle analyze image slice from the 3D file.
      *
@@ -1586,7 +1591,8 @@ public class FileAnalyze extends FileBase {
             fileInfo.setEndianess(endianess);
 
             setBufferInt(bufferImageHeader, fileInfo.getSizeOfHeader(), 0, endianess);
-            setBufferString(bufferImageHeader, "         \n", 4);
+            fileInfo.setDataType("         \n");
+            setBufferString(bufferImageHeader, fileInfo.getDataTypeName(), 4);
             setBufferString(bufferImageHeader, fileName + "\n", 14);
             setBufferInt(bufferImageHeader, fileInfo.getFileExtents(), 32, endianess);
             setBufferShort(bufferImageHeader, (short) 0, 36, endianess);

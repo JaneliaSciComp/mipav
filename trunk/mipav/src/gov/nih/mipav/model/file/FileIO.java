@@ -3151,59 +3151,14 @@ public class FileIO {
 
             case FileUtility.ANALYZE:
                 success = writeAnalyze(image, options);
-                if (success) {
-
-                    if (image.getFileInfo(0) instanceof FileInfoImageXML) {
-                        FileInfoAnalyze[] info = new FileInfoAnalyze[image.getFileInfo().length];
-
-                        for (int i = 0; i < info.length; i++) {
-                            info[i] = new FileInfoAnalyze(image.getFileInfo(0).getFileName(),
-                                                          image.getFileInfo(0).getFileDirectory(), FileUtility.ANALYZE);
-                        }
-
-                        FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
-                        image.setFileInfo(info);
-                    }
-                }
-
                 break;
 
             case FileUtility.NIFTI:
                 success = writeNIFTI(image, options);
-                if (success) {
-
-                    if (image.getFileInfo(0) instanceof FileInfoImageXML) {
-                        FileInfoNIFTI[] info = new FileInfoNIFTI[image.getFileInfo().length];
-
-                        for (int i = 0; i < info.length; i++) {
-                            info[i] = new FileInfoNIFTI(image.getFileInfo(0).getFileName(),
-                                                        image.getFileInfo(0).getFileDirectory(), FileUtility.NIFTI);
-                        }
-
-                        FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
-                        image.setFileInfo(info);
-                    }
-                }
-
                 break;
 
             case FileUtility.SPM:
                 success = writeSPM(image, options);
-                if (success) {
-
-                    if (image.getFileInfo(0) instanceof FileInfoImageXML) {
-                        FileInfoSPM[] info = new FileInfoSPM[image.getFileInfo().length];
-
-                        for (int i = 0; i < info.length; i++) {
-                            info[i] = new FileInfoSPM(image.getFileInfo(0).getFileName(),
-                                                      image.getFileInfo(0).getFileDirectory(), FileUtility.SPM);
-                        }
-
-                        FileInfoBase.copyCoreInfo(image.getFileInfo(), info);
-                        image.setFileInfo(info);
-                    }
-                }
-
                 break;
 
             case FileUtility.TIFF:
