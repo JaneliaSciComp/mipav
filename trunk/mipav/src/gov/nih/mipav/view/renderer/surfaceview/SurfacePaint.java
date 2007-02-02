@@ -116,51 +116,33 @@ public class SurfacePaint
 
     private void init()
     {
+    	
+    	ViewToolBarBuilder toolbarBuilder = new ViewToolBarBuilder(this);
         mPaintToolBar = ViewToolBarBuilder.initToolBar();
         mPaintToolBar.setSize(320, 30);
         mPaintToolBar.setBounds(0, 0, 340, 30);
 
         mButtonGroup = new ButtonGroup();
 
-        mPaintBrushButton = new JToggleButton( MipavUtil.getIcon( "brush.gif" ) );
-        mPaintBrushButton.addActionListener( this );
-        mPaintBrushButton.setActionCommand( "PaintBrush" );
-        mPaintBrushButton.setToolTipText( "Draw using a brush." );
-        mPaintBrushButton.setEnabled( false );
+        mPaintBrushButton = toolbarBuilder.buildToggleButton("PaintBrush", "Draw using a brush.", "brush", mButtonGroup);
         mPaintToolBar.add( mPaintBrushButton );
         mButtonGroup.add( mPaintBrushButton );
 
-        mDropperButton = new JToggleButton( MipavUtil.getIcon( "dropper.gif" ) );
-        mDropperButton.addActionListener( this );
-        mDropperButton.setActionCommand( "Dropper" );
-        mDropperButton.setToolTipText( "Picks up a color from the image." );
-        mDropperButton.setEnabled( false );
+        mDropperButton = toolbarBuilder.buildToggleButton("Dropper", "Picks up a color from the image.", "dropper", mButtonGroup);
         mPaintToolBar.add( mDropperButton );
         mButtonGroup.add( mDropperButton );
 
-        mPaintCanButton = new JToggleButton( MipavUtil.getIcon( "paintcan.gif" ) );
-        mPaintCanButton.addActionListener( this );
-        mPaintCanButton.setActionCommand( "PaintCan" );
-        mPaintCanButton.setToolTipText( "Fills an area with desired color." );
-        mPaintCanButton.setEnabled( false );
+        mPaintCanButton = toolbarBuilder.buildToggleButton("PaintCan", "Fills an area with desired color.", "paintcan", mButtonGroup);
         mPaintToolBar.add( mPaintCanButton );
         mButtonGroup.add( mPaintCanButton );
-
-        mEraserButton = new JToggleButton( MipavUtil.getIcon( "eraser.gif" ) );
-        mEraserButton.addActionListener( this );
-        mEraserButton.setActionCommand( "Eraser" );
-        mEraserButton.setToolTipText( "Erases paint." );
-        mEraserButton.setEnabled( false );
-        mPaintToolBar.add( mEraserButton );
-        mButtonGroup.add( mEraserButton );
         
-        mEraseAllButton = new JButton( MipavUtil.getIcon( "clear.gif" ) );
-        mEraseAllButton.addActionListener( this );
-        mEraseAllButton.setActionCommand( "EraseAll" );
-        mEraseAllButton.setToolTipText( "Erases all paint." );
-        mEraseAllButton.setEnabled( false );
+        mEraserButton = toolbarBuilder.buildToggleButton("Eraser", "Erases paint.", "eraser", mButtonGroup);
+        mPaintToolBar.add( mEraserButton );
+        mButtonGroup.add( mEraserButton );        
+        
+        mEraseAllButton = toolbarBuilder.buildButton("EraseAll", "Erases all paint.", "clear");
         mPaintToolBar.add( mEraseAllButton );
-
+        
         mPaintToolBar.add( ViewToolBarBuilder.makeSeparator() );
 
         JLabel brushSizeLabel = new JLabel("Brush size:");
@@ -265,9 +247,19 @@ public class SurfacePaint
         String command = event.getActionCommand();
         if ( command.equals( "PaintBrush" ) )
         {
-            mPaintColor.set( mColorChooser.getColor() );
-            mPaintColor.w = mOpacity;
-            setPaintMode( SurfacePaint.VERTEX );
+	        if ( !m_kPanel.isSurfacePickableSelected() ) {
+		        String[] possibilities = {"OK" };
+		        int result = JOptionPane.showOptionDialog(null,
+		                      "Please, enable Surface Pickable.\nAnd, Ctrl + Mouse to paint.",
+		                      null, JOptionPane.YES_NO_OPTION,
+		                      JOptionPane.INFORMATION_MESSAGE, null, possibilities,
+		                      new Integer(0));
+	        }
+		       
+	        mPaintColor.set( mColorChooser.getColor() );
+	        mPaintColor.w = mOpacity;
+	        setPaintMode( SurfacePaint.VERTEX );
+	        
         }
         else if ( command.equals( "PaintCan" ) )
         {
