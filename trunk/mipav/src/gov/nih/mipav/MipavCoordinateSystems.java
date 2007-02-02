@@ -614,7 +614,7 @@ public class MipavCoordinateSystems
              (Math.abs( kInput.y - test.y ) > 0.0001) ||
              (Math.abs( kInput.z - test.z ) > 0.0001)    )
         {
-            System.err.println( "ScannerToFile failed! " + kInput + " ==> " + kOutput + " ==> " + test );
+            //System.err.println( "ScannerToFile failed! " + kInput + " ==> " + kOutput + " ==> " + test );
         }
     }
 
