@@ -1192,7 +1192,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // TODO: the script action is recorded regardless of the conversion success
             ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
-        } else if (command.equals("PaintToVOI")) {
+        } else if(command.equals("CollapseAllToSinglePaint")) {
+        	collapseAlltoSinglePaint(false);
+        }
+        else if (command.equals("PaintToVOI")) {
 
             // new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
             int xDim = 0, yDim = 0, zDim = 0;
@@ -3257,6 +3260,138 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             MipavUtil.displayError("Cannot complete the operation due to an internal error.");
         }
     }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    /**
+    * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
+    * that were masked with the intensity value that is currently active.
+    *
+    * @param  showProgressBar  DOCUMENT ME!
+    */
+   public void collapseAlltoSinglePaint(boolean showProgressBar) {
+
+       if (componentImage != null) {
+           if (imageB != null) {
+           	float[] intensityMapB;
+           	if(imageB.isColorImage()) {
+           		intensityMapB = new float[(imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make intensity map
+           	}else {
+           		intensityMapB = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
+           	}
+           	
+               // same size as image
+               // dimensions
+           	BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
+               ViewJProgressBar progressBar = null;
+
+               if (showProgressBar) {
+                   progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true, this,
+                                                      this);
+                   MipavUtil.centerOnScreen(progressBar);
+                   progressBar.setVisible(showProgressBar);
+               }
+               
+               
+
+               try {
+                   int numSlices = ((imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
+
+                   // iterate through slices
+                   for (int currentSlice = 0; currentSlice < numSlices; currentSlice++) {
+
+                       // here is where we get the slice
+                       imageB.exportData(currentSlice * intensityMapB.length, intensityMapB.length, intensityMapB);
+
+                       // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
+                       // selected intensity
+                       
+                       
+                      Color activeColor = getControls().getTools().getPaintColor();
+                	   //int activeRed = activeColor.getRed();
+                	   //int activeGreen = activeColor.getGreen();
+                	   //int activeBlue = activeColor.getBlue();
+                	   
+                      if(imageB.isColorImage()) {
+                   	   for (int k = 0; k <= (intensityMapB.length - 4); k=k+4) {
+                   		   int r,g,b;
+                   		   r = (new Float(intensityMapB[k+1])).intValue();
+                   		   g = (new Float(intensityMapB[k+2])).intValue();
+                   		   b = (new Float(intensityMapB[k+3])).intValue();
+                   		   if(!(r==0 && g==0 && b==0)) {
+                   			   bitSet.set((currentSlice * intensityMapB.length) + (k/4)); // turn the paint bit set index to ON
+                   			   intensityMapB[k+1] = 0; // erase the painted mask from this index
+                   			   intensityMapB[k+2] = 0; // erase the painted mask from this index
+                   			   intensityMapB[k+3] = 0; // erase the painted mask from this index
+                   		   }
+                   	   }  
+                      }else {
+                   	   for (int i = 0; i < intensityMapB.length; i++) {
+                              if (intensityMapB[i] != 0) {
+                                  bitSet.set((currentSlice * intensityMapB.length) + i); // turn the paint bit set index to ON
+                                  intensityMapB[i] = 0; // erase the painted mask from this index
+                             }
+                          }
+                      }
+                       
+                       // put the modified slice back into image
+                       imageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
+
+                       if (progressBar != null) {
+                           progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
+                       }
+                   }
+
+                   updateImages(true);
+               } catch (Exception ex) {
+                   // do nothing. the error will be displayed when this if block exits
+               	ex.printStackTrace();
+                   MipavUtil.displayError("Cannot complete the operation due to an internal error.");
+               } finally {
+
+                   if (progressBar != null) {
+                       progressBar.dispose();
+                   }
+               }
+           } else {
+           	
+               // if we get here, there is no mask on the image.
+               MipavUtil.displayError("This function is only useful when the image has a mask. To use this feature, please add a mask.");
+           }
+       } else {
+
+           // should never get to this point. big trouble.
+           MipavUtil.displayError("Cannot complete the operation due to an internal error.");
+       }
+   }
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     /**
      * Increases the slice to be displayed by one and updates title frame.
