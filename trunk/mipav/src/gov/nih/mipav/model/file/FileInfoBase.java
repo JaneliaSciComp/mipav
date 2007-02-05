@@ -390,8 +390,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     protected int modality = UNKNOWN_MODALITY;
 
     /**
-     * the origin to support image locations (ie. DICOM, MINC ...) it is relative to the image origin. the positive axis
-     * are (right hand rule.
+     * The origin to support image locations (ie. DICOM, MINC ...) it is relative to the image origin. the positive axis
+     * are right hand rule.
      *
      * <p>x - left to right y - top to botton z - into the screen</p>
      */
@@ -404,8 +404,8 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     private int dataType;
 
     /**
-     * Pixel or voxel resolutions for each dimension - default = 1.0.  The z-dim resolution should be the spacing 
-     * between the centers of adjacent slices;  sometimes this will match the slice thickness, but not always.
+     * Pixel or voxel resolutions for each dimension - default = 1.0. The z-dim resolution should be the spacing between
+     * the centers of adjacent slices; sometimes this will match the slice thickness, but not always.
      */
     private float[] dimResolutions = { (float) 1.0, (float) 1.0, (float) 1.0, (float) 1.0, (float) 1.0 };
 
@@ -469,10 +469,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
     /** DICOM images have a rescale slope value that we have also kept in the base. */
     private double rescaleSlope = 1.0;
-    
+
     /**
-     * The thickness of individual slices in the image volume.  Stored in dicom tag 0018,0050 and various 
-     * other places in other file formats.
+     * The thickness of individual slices in the image volume. Stored in dicom tag 0018,0050 and various other places in
+     * other file formats.
      */
     private float sliceThickness = 0;
 
@@ -600,7 +600,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < axisOrientationStr.length; i++) {
 
                 if (FileInfoBase.getAxisOrientationStr(i).regionMatches(true, 0, s, 0,
-                                                                        FileInfoBase.getAxisOrientationStr(i).length())) {
+                                                                            FileInfoBase.getAxisOrientationStr(i).length())) {
                     return i;
                 }
             }
@@ -681,7 +681,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < 3; i++) {
 
                 if (FileInfoBase.getImageOrientationStr(i).regionMatches(true, 0, s, 0,
-                                                                         FileInfoBase.getImageOrientationStr(i).length())) {
+                                                                             FileInfoBase.getImageOrientationStr(i).length())) {
                     return i;
                 }
             }
@@ -725,7 +725,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < modalityStr.length; i++) {
 
                 if (FileInfoBase.getModalityStr(i).regionMatches(true, 0, s, 0,
-                                                                 FileInfoBase.getModalityStr(i).length())) {
+                                                                     FileInfoBase.getModalityStr(i).length())) {
                     return i;
                 }
             }
@@ -835,7 +835,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < transformIDStr.length; i++) {
 
                 if (FileInfoBase.getTransformIDStr(i).regionMatches(true, 0, s, 0,
-                                                                    FileInfoBase.getTransformIDStr(i).length())) {
+                                                                        FileInfoBase.getTransformIDStr(i).length())) {
                     return i;
                 }
             }
@@ -917,10 +917,10 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
             for (int i = 0; i < allUnits.length; i++) {
 
                 if (FileInfoBase.getUnitsOfMeasureStr(i).regionMatches(true, 0, s, 0,
-                                                                       FileInfoBase.getUnitsOfMeasureStr(i).length())) {
+                                                                           FileInfoBase.getUnitsOfMeasureStr(i).length())) {
                     return i;
                 } else if (FileInfoBase.getUnitsOfMeasureAbbrevStr(i).regionMatches(true, 0, s, 0,
-                                                                                    FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
+                                                                                        FileInfoBase.getUnitsOfMeasureAbbrevStr(i).length())) {
                     return i;
                 }
             }
@@ -1807,23 +1807,23 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     }
 
     /**
+     * Returns the resolution of the requested dimension.
+     *
+     * @param   dim  The dimension to return the resolution of.
+     *
+     * @return  The resolution of one of the image dimensions.
+     */
+    public final float getResolution(int dim) {
+        return dimResolutions[dim];
+    }
+
+    /**
      * Returns each dimension's resolution.
      *
      * @return  float[] dimension resolutions
      */
     public final float[] getResolutions() {
         return dimResolutions;
-    }
-    
-    /**
-     * Returns the resolution of the requested dimension.
-     * 
-     * @param  dim  The dimension to return the resolution of.
-     * 
-     * @return  The resolution of one of the image dimensions.
-     */
-    public final float getResolution(int dim) {
-        return dimResolutions[dim];
     }
 
     /**
@@ -1842,7 +1842,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
 
         return extents[0] * extents[1] * getNumOfBytesPerPixel(getDataType());
     }
-    
+
     /**
      * Returns the thickness of the image slices.
      *
@@ -1924,6 +1924,21 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         }
 
         return mStr;
+    }
+
+    /**
+     * isDicomOrdered() returns true if the file is in dicom order, false otherwise.
+     *
+     * @return  true if the file is in dicom order, false otherwise
+     */
+    public boolean isDicomOrdered() {
+
+        if ((axisOrientation[0] == FileInfoBase.ORI_R2L_TYPE) && (axisOrientation[1] == FileInfoBase.ORI_A2P_TYPE) &&
+                (axisOrientation[2] == FileInfoBase.ORI_I2S_TYPE)) {
+            return true;
+        }
+
+        return false;
     }
 
     /**
@@ -2290,7 +2305,7 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
     public final void setResolutions(float resolution, int dim) {
         dimResolutions[dim] = resolution;
     }
-    
+
     /**
      * Sets the thickness of the image slices.
      *
@@ -2393,21 +2408,6 @@ public abstract class FileInfoBase extends ModelSerialCloneable {
         s += "\nMin: " + min + "\nMax: " + max + "\n";
 
         return s;
-    }
-
-    /**
-     * isDicomOrdered() returns true if the file is in dicom order, false otherwise
-     * @return true if the file is in dicom order, false otherwise
-     */
-    public boolean isDicomOrdered()
-    {
-        if ((axisOrientation[0] == FileInfoBase.ORI_R2L_TYPE) &&
-            (axisOrientation[1] == FileInfoBase.ORI_A2P_TYPE) &&
-            (axisOrientation[2] == FileInfoBase.ORI_I2S_TYPE))
-        {
-            return true;
-        }
-        return false;
     }
 
 
