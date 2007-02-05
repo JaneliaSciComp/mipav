@@ -192,6 +192,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     
     /** This is the scroll pane for the label list panel **/
     private JScrollPane scrollPane;
+    
+    /** Button that allows user to collapse masks/paint to single value **/
+    private JButton collapseButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -275,6 +278,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
             if(changeMaskNumberDialog != null) {
             	changeMaskNumberDialog.dispose();
             }
+            image.getParentFrame().getControls().getTools().setPointerSelected();
+            image.getParentFrame().getComponentImage().setMode(ViewJComponentEditImage.DEFAULT);
             dispose();
         } else if (command.equals("Help")) {
             // MipavUtil.showHelp("10027");
@@ -440,6 +445,20 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 			image.setVOIs(voi);
 			deselectMask();
             selectedMaskToPaint(num);
+        }
+        else if(command.equals("Collapse")) {
+            //go through image b and find all mask values
+        	ModelImage imageB = image.getParentFrame().getImageB();
+            TreeSet vals = getMaskTreeSet(imageB);
+            
+            image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "CollapseAllToSinglePaint"));
+        	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+        	ModelImage imgB = image.getParentFrame().getImageB();
+        	image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
+            image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+            image.getParentFrame().getComponentImage().setModifyFlag(true);
+            image.notifyImageDisplayListeners();
+            refreshImagePaint(image, obj); 
         }
     }
 
@@ -890,6 +909,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         displayMasksButton.setActionCommand("HideMasks");
         displayMasksButton.setFont(serif12);
         displayMasksButton.setToolTipText("Hide inactive masks for visualization");
+        
+        collapseButton = new JButton("Collapse masks/paint");
+        collapseButton.addActionListener(this);
+        collapseButton.setActionCommand("Collapse");
+        collapseButton.setFont(serif12);
+        collapseButton.setToolTipText("Collapse masks and paint to single value");
+
 
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridwidth = 1;
@@ -1004,6 +1030,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         displayPanel.add(displayPaintButton, gbc);
         gbc.gridx = 2;
         displayPanel.add(displayMasksButton, gbc);
+        gbc.gridx = 3;
+        displayPanel.add(collapseButton, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1066,17 +1094,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     public void imageBInit() {
     	//getting image b size
         ModelImage imgB = image.getParentFrame().getImageB();
-        int numDims = imgB.getNDims();
+        
 
-        xDim = imgB.getExtents()[0];
-        yDim = imgB.getExtents()[1];
-        if(numDims == 2) {
-        	imgBSize = xDim * yDim;
-        }
-        else {
-        	zDim = imgB.getExtents()[2];
-        	imgBSize = xDim * yDim * zDim;
-        }
+        
     	
         TreeSet vals = getMaskTreeSet(imgB);
         
@@ -1218,6 +1238,19 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     private TreeSet getMaskTreeSet(ModelImage imgB) {
     	boolean blankImage = true;
     	TreeSet vals = new TreeSet();
+    	
+    	xDim = imgB.getExtents()[0];
+        yDim = imgB.getExtents()[1];
+        int numDims = imgB.getNDims();
+        if(numDims == 2) {
+        	imgBSize = xDim * yDim;
+        }
+        else {
+        	zDim = imgB.getExtents()[2];
+        	imgBSize = xDim * yDim * zDim;
+        }
+        
+        
         if(!image.isColorImage()) {
 	        for (int i = 0;i < imgBSize; i++) {
 	        	if(imgB.getUByte(i) != 0) {
@@ -2082,6 +2115,8 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         if(changeMaskNumberDialog != null) {
         	changeMaskNumberDialog.dispose();
         }
+        image.getParentFrame().getControls().getTools().setPointerSelected();
+        image.getParentFrame().getComponentImage().setMode(ViewJComponentEditImage.DEFAULT);
         dispose();
 	}
 	
