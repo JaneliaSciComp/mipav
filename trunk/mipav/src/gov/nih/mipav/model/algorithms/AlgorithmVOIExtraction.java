@@ -233,10 +233,7 @@ public class AlgorithmVOIExtraction extends AlgorithmBase {
 
             return;
         }
-
-        // fireProgressStateChanged(srcImage.getImageName(), "VOIExtraction ...");
-        // initProgressBar();
-
+      
         try {
             srcImage.setLock(ModelStorageBase.W_LOCKED);
         } catch (IOException error) {

@@ -1994,9 +1994,8 @@ public class FileImageXML extends FileXML {
             for (int i = 0; i < image.getExtents()[2]; i++) {
                 xmlInfo[i].setOrigin(origin);
                 axisOrient = xmlInfo[i].getAxisOrientation(2);
-
                 if ((axisOrient == FileInfoBase.ORI_R2L_TYPE) || (axisOrient == FileInfoBase.ORI_P2A_TYPE) ||
-                        (axisOrient == FileInfoBase.ORI_I2S_TYPE)) {
+                        (axisOrient == FileInfoBase.ORI_I2S_TYPE) || (axisOrient == FileInfoBase.ORI_UNKNOWN_TYPE)) {
                     origin[2] += resolutions[2];
                 } else { // ORI_L2R_TYPE, ORI_A2P_TYPE, ORI_S2I_TYPE
                     origin[2] -= resolutions[2];
