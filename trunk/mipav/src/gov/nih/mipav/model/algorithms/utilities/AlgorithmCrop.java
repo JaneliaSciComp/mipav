@@ -5,6 +5,7 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
+import gov.nih.mipav.MipavCoordinateSystems;
 
 import gov.nih.mipav.view.*;
 
@@ -117,7 +118,6 @@ public class AlgorithmCrop extends AlgorithmBase {
         constructLog();
 
         if (destImage != null) {
-
             if (srcImage.getNDims() == 2) {
                 calcStoreInDest2D();
             } else if (srcImage.getNDims() == 3) {
@@ -271,7 +271,6 @@ public class AlgorithmCrop extends AlgorithmBase {
      * This function produces a new image that has been cropped.
      */
     private void calcStoreInDest3D() {
-
         int i;
         int length;
         int croppedLength;
@@ -1422,7 +1421,6 @@ public class AlgorithmCrop extends AlgorithmBase {
     private void updateDICOM() {
         int n;
         float startPos;
-        float[] imgOriginLPS;
         float[] originImgOrd = new float[3];
         float[] newImgOriginLPS = new float[3];
         float[] resols;
@@ -1435,11 +1433,30 @@ public class AlgorithmCrop extends AlgorithmBase {
         dicomInfoBuffer = (FileInfoDicom) destImage.getFileInfo(0);
         destImage.setMatrix(srcImage.getMatrix());
 
-        imgOriginLPS = dicomInfoBuffer.getOrigin();
-        originImgOrd = originLPS2Img(imgOriginLPS, destImage);
+        
+        float [] origins = new float[3];
+        
+        
+        originImgOrd = dicomInfoBuffer.getOrigin();
 
+        for (int i = 0; i < originImgOrd.length; i++) {
+        	origins[i] = originImgOrd[i];
+        }
+        
         resols = srcImage.getFileInfo(0).getResolutions();
 
+        int nDims = destImage.getNDims();
+        int [] axisOrient = destImage.getFileInfo()[0].getAxisOrientation();
+        for (int i = 0; i < nDims; i++) {
+
+            if ((axisOrient[i] == 1) || (axisOrient[i] == 4) || (axisOrient[i] == 5)) {
+                direct[i] = 1;
+            } else {
+                direct[i] = -1;
+            }
+        }
+        
+        
         if ((destImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             if ((destImage.getNDims() == 2) || (z[0] == z[1])) {
@@ -1454,11 +1471,11 @@ public class AlgorithmCrop extends AlgorithmBase {
                 ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0020,0013", Short.toString((short) (1)),
                                                                       Short.toString((short) (1)).length()); // instance number
 
-                int imgOrient = ((FileInfoDicom) (destImage.getFileInfo(0))).getImageOrientation();
+                //int imgOrient = ((FileInfoDicom) (destImage.getFileInfo(0))).getImageOrientation();
 
-                startPos = originImgOrd[2];
-                originImgOrd[2] = startPos + (direct[2] * z[0] * resols[2]);
-                newImgOriginLPS = originImg2LPS(originImgOrd, destImage);
+                startPos = origins[2];
+                origins[2] = startPos + (direct[2] * z[0] * resols[2]);
+                newImgOriginLPS = originImg2LPS(origins, destImage);
                 value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
                         Float.toString(newImgOriginLPS[2]);
 
@@ -1467,8 +1484,9 @@ public class AlgorithmCrop extends AlgorithmBase {
                 value = String.valueOf(originImgOrd[2]);
                 ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0020,1041", value, value.length());
             } else if (destImage.getNDims() == 3) {
-                int imgOrient = dicomInfoBuffer.getImageOrientation();
-
+                //int imgOrient = dicomInfoBuffer.getImageOrientation();
+            
+            	startPos = origins[2];
                 for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
                     ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
@@ -1483,7 +1501,7 @@ public class AlgorithmCrop extends AlgorithmBase {
                                                                           new Short((short) destExtents[1]), 2); // rows
                     ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0020,0013", Short.toString((short) (n + 1)),
                                                                           Short.toString((short) (n + 1)).length()); // instance number
-                    dicomInfoBuffer = (FileInfoDicom) destImage.getFileInfo(slc - z[0]);
+                    dicomInfoBuffer = (FileInfoDicom) destImage.getFileInfo(n);
 
                     // change the slice number ("0020,0013"):
                     // Image slice numbers start at 1; index starts at 0, so compensate by adding 1
@@ -1491,9 +1509,11 @@ public class AlgorithmCrop extends AlgorithmBase {
                     dicomInfoBuffer.setValue("0020,0013", value, value.length());
 
                     // change the image start position ("0020, 0032")
-                    startPos = originImgOrd[2];
-                    originImgOrd[2] = startPos + (direct[2] * z[0] * resols[2]);
-                    newImgOriginLPS = originImg2LPS(originImgOrd, destImage);
+                    origins[2] = startPos + (direct[2] * n * resols[2]);
+                    //System.err.println("N: " + n + ", origin[2]: " + origins[2] + " res2: " + resols[2] + ", " + direct[2]);
+                                                                 
+                    newImgOriginLPS = originImg2LPS(origins, destImage);
+                                        
                     value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
                             Float.toString(newImgOriginLPS[2]);
                     dicomInfoBuffer.setValue("0020,0032", value, value.length());
@@ -1563,10 +1583,12 @@ public class AlgorithmCrop extends AlgorithmBase {
             }
 
             imgOriginLPS = fileInfoBuffer.getOrigin();
+            
             originImgOrd = originLPS2Img(imgOriginLPS, destImage);
-            originImgOrd[0] = originImgOrd[0] + (direct[0] * (x[0] - cushion) * resols[0]);
-            originImgOrd[1] = originImgOrd[1] + (direct[1] * (y[0] - cushion) * resols[1]);
+            originImgOrd[0] = originImgOrd[0] - (direct[0] * (x[0] - cushion) * resols[0]);
+            originImgOrd[1] = originImgOrd[1] - (direct[1] * (y[0] - cushion) * resols[1]);
             newImgOriginLPS = originImg2LPS(originImgOrd, destImage);
+            
             fileInfoBuffer.setOrigin(newImgOriginLPS);
 
             if (srcImage.getNDims() == 3) {
@@ -1610,24 +1632,27 @@ public class AlgorithmCrop extends AlgorithmBase {
 
             for (i = 0; i < nDims; i++) {
 
-                if ((axisOrient[i] == 1) || (axisOrient[i] == 4) || (axisOrient[i] == 5)) {
+                if ((axisOrient[i] == FileInfoBase.ORI_R2L_TYPE) || 
+                		(axisOrient[i] == FileInfoBase.ORI_A2P_TYPE) || 
+                		(axisOrient[i] == FileInfoBase.ORI_I2S_TYPE) || 
+                		(axisOrient[i] == FileInfoBase.ORI_UNKNOWN_TYPE)) {
                     direct[i] = 1;
                 } else {
                     direct[i] = -1;
                 }
             }
 
+                        
             for (int s = 0; s < destImage.getExtents()[2]; s++) { // for each slice
                 fileInfoBuffer = destImage.getFileInfo(s);
 
-                imgOriginLPS = fileInfoBuffer.getOrigin();
-                originImgOrd = originLPS2Img(imgOriginLPS, destImage);
+                originImgOrd = fileInfoBuffer.getOrigin();
+                
                 originImgOrd[0] = originImgOrd[0] + (direct[0] * (x[0] - cushion) * resols[0]);
                 originImgOrd[1] = originImgOrd[1] + (direct[1] * (y[0] - cushion) * resols[1]);
-                newImgOriginLPS = originImg2LPS(originImgOrd, destImage);
-
+                
                 destImage.getFileInfo(s).setExtents(extentsTmp);
-                fileInfoBuffer.setOrigin(newImgOriginLPS);
+                fileInfoBuffer.setOrigin(originImgOrd);
             }
         } else {
             destImage.setMatrix(srcImage.getMatrix());
