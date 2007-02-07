@@ -604,6 +604,8 @@ public class MipavCoordinateSystems
         }
         /* Returned point represents the current position in coronal,
          * sagittal, axial order (A/P, L/R, I/S axis space): */
+        
+        
         kOutput.x += afCoronalOrigin[2];
         kOutput.y += afSagittalOrigin[2];
         kOutput.z += afAxialOrigin[2];
@@ -616,6 +618,19 @@ public class MipavCoordinateSystems
         {
             //System.err.println( "ScannerToFile failed! " + kInput + " ==> " + kOutput + " ==> " + test );
         }
+        
+        
+        //switch this to LPS
+        test.x = kOutput.y;
+        test.y = kOutput.x;
+        test.z = kOutput.z;
+      //  System.err.println("TEST POINT: " + test + "\n, original output: " + kOutput);
+        
+        kOutput.x = test.x;
+        kOutput.y = test.y;
+        kOutput.z = test.z;
+        
+      //  System.err.println("Result: " + kOutput + "\n\n");
     }
 
     /** Translates the input point into FileCoordinates, based on the input
