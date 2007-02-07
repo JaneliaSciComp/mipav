@@ -363,6 +363,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             return;
         }
 
+        if (command.equals("Coloc")) {
+        	ModelImage imageClone = (ModelImage)imageA.clone(imageA.getImageFileName() + "coloc");
+        	new ViewJFrameColocalization(imageClone, LUTa, null, false);
+        }
         if (command.equals("PropagatePaintPrev")) {
             propagatePaintToPreviousSlice();
         } else if (command.equals("PropagatePaintNext")) {

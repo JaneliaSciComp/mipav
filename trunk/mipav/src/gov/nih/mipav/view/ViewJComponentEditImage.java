@@ -3567,11 +3567,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]) +
                               "  B:  " +
                               String.valueOf(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]) +
-                              " Position: " + values[1] + " " + values[0] + " " + values[2];
+                              " Position: " + values[0] + " " + values[1] + " " + values[2];
                     } else {
                         str = "  X: " + String.valueOf(xS + 1) + " Y: " + String.valueOf(yS + 1) + "  Intensity:  " +
                               String.valueOf(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]) +
-                              " Position: " + values[1] + " " + values[0] + " " + values[2];
+                              " Position: " + values[0] + " " + values[1] + " " + values[2];
                     }
 
                     frame.setMessageText(str);
@@ -3668,11 +3668,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         tCoord[1] = kOut.y;
         tCoord[2] = kOut.z;
 
-        String[] labels = { "A-P: ", "R-L: ", "I-S: " };
+        String[] labels = { "R-L: ", "A-P: ", "I-S: " };
 
         if (!imageActive.getRadiologicalView()) {
-            tCoord[1] *= -1;
-            labels[1] = new String("L-R: ");
+            tCoord[0] *= -1;
+            labels[0] = new String("L-R: ");
         }
 
         String[] strs = new String[3];
