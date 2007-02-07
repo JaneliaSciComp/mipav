@@ -221,14 +221,16 @@ public class JDialogSaveDicom extends JDialogBase {
 
     /** DOCUMENT ME! */
     private JTabbedPane tabPane;
+    
+    
 
     /**
      * DICOM tags extracted from the image we want to save. Example: dicom_0xNNNN el_0xNNNN tags stored in MINC headers.
      */
     private Hashtable tagsImportedFromNonDicomImage;
 
-    /** DOCUMENT ME! */
-    private Hashtable tagsList;
+    /** The additional tags list is a list of tags the DTI group has requested */
+    private Hashtable tagsList, additionalTagsList;
 
     /** DOCUMENT ME! */
     private ViewUserInterface UI;
@@ -466,7 +468,78 @@ public class JDialogSaveDicom extends JDialogBase {
                 dicomFileInfo.setValue("0018,1030", seriesProtocol.getText(), seriesProtocol.getText().length());
                 dicomFileInfo.setValue("0008,103E", seriesDescrip.getText(), seriesDescrip.getText().length());
                 dicomFileInfo.setValue("0008,1070", seriesOp.getText(), seriesOp.getText().length());
+                
+                //additional tags that DTI folk requested...importing from another DICOM
+                if(additionalTagsList != null) {
+	                if(additionalTagsList.get("(0008,0008)") != null) {
+	                	String value = (String)additionalTagsList.get("(0008,0008)");
+	                	dicomFileInfo.setValue("0008,0008", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0008,0032)") != null) {
+	                	String value = (String)additionalTagsList.get("(0008,0032)");
+	                	dicomFileInfo.setValue("0008,0032", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0008,0070)") != null) {
+	                	String value = (String)additionalTagsList.get("(0008,0070)");
+	                	dicomFileInfo.setValue("0008,0070", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0008,1090)") != null) {
+	                	String value = (String)additionalTagsList.get("(0008,1090)");
+	                	dicomFileInfo.setValue("0008,1090", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0018,0080)") != null) {
+	                	String value = (String)additionalTagsList.get("(0018,0080)");
+	                	dicomFileInfo.setValue("0018,0080", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0018,0081)") != null) {
+	                	String value = (String)additionalTagsList.get("(0018,0081)");
+	                	dicomFileInfo.setValue("0018,0081", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0018,0082)") != null) {
+	                	String value = (String)additionalTagsList.get("(0018,0082)");
+	                	dicomFileInfo.setValue("0018,0082", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0018,0087)") != null) {
+	                	String value = (String)additionalTagsList.get("(0018,0087)");
+	                	dicomFileInfo.setValue("0018,0087", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0018,1100)") != null) {
+	                	String value = (String)additionalTagsList.get("(0018,1100)");
+	                	dicomFileInfo.setValue("0018,1100", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0018,1310)") != null) {
+	                	boolean test = true;
+	                	String value = (String)additionalTagsList.get("(0018,1310)");
+	                	Object[] valueArray;
+	                	String[] vals = value.split(", ");
+	                	valueArray = new Short[vals.length];
+	                	for (int i = 0; i < vals.length; i++) {
+	                		try {
+	                			valueArray[i] = Short.decode(vals[i]);
+	                		} catch (NumberFormatException nfe) {
+	                			test = false;
+	                			MipavUtil.displayError("Error parsing short values from dicom tag (0018,1310): " + vals[i]);
+	                			break;
+	                		}
 
+	                	}
+	                	if(test) {
+	                		dicomFileInfo.setValue("0018,1310", valueArray);
+	                	}
+	                }
+	                if(additionalTagsList.get("(0018,1312)") != null) {
+	                	String value = (String)additionalTagsList.get("(0018,1312)");
+	                	dicomFileInfo.setValue("0018,1312", value, value.length());
+	                }
+	                if(additionalTagsList.get("(0018,1314)") != null) {
+	                	String value = (String)additionalTagsList.get("(0018,1314)");
+	                	dicomFileInfo.setValue("0018,1314", value, value.length());
+	                }
+                }
+                
+                
+
+                
                 if (seriesSmall.getText().length() > 0) {
                     dicomFileInfo.setValue("0028,0108", Short.valueOf(seriesSmall.getText()), 2);
                 }
@@ -1528,6 +1601,8 @@ public class JDialogSaveDicom extends JDialogBase {
         studyOcc = setTextField("", studyPanel, 1, 6, 1, 1);
         createLabel("Additional Patient's History (0010,21B0):", studyPanel, 2, 6, 1, 1);
         studyHist = setTextField("", studyPanel, 3, 6, 1, 1);
+       
+        
     }
 
     /**
@@ -1541,6 +1616,7 @@ public class JDialogSaveDicom extends JDialogBase {
         File file;
         RandomAccessFile raFile;
         JFileChooser chooser;
+        additionalTagsList = new Hashtable();
 
         // Open file dialog.
         chooser = new JFileChooser();
@@ -1687,7 +1763,45 @@ public class JDialogSaveDicom extends JDialogBase {
                         ((JTextField) (tagsList.get(tag))).setText(s);
                         resetSize((JTextField) (tagsList.get(tag)));
                     }
-                } else if (tagsList.get(tag) != null) {
+                } 
+                //dti tags
+                else if (tag.equals("(0008,0008)")) {
+                	additionalTagsList.put("(0008,0008)", value);	
+                }
+                else if (tag.equals("(0008,0032)")) {
+                	additionalTagsList.put("(0008,0032)", value);	
+                }
+                else if (tag.equals("(0008,0070)")) {
+                	additionalTagsList.put("(0008,0070)", value);	
+                }
+                else if (tag.equals("(0008,1090)")) {
+                	additionalTagsList.put("(0008,1090)", value);	
+                }
+                else if (tag.equals("(0018,0080)")) {
+                	additionalTagsList.put("(0018,0080)", value);	
+                }
+                else if (tag.equals("(0018,0081)")) {
+                	additionalTagsList.put("(0018,0081)", value);	
+                }
+                else if (tag.equals("(0018,0082)")) {
+                	additionalTagsList.put("(0018,0082)", value);	
+                }
+                else if (tag.equals("(0018,0087)")) {
+                	additionalTagsList.put("(0018,0087)", value);	
+                }
+                else if (tag.equals("(0018,1100)")) {
+                	additionalTagsList.put("(0018,1100)", value);	
+                }
+                else if (tag.equals("(0018,1310)")) {
+                	additionalTagsList.put("(0018,1310)", value);	
+                }
+                else if (tag.equals("(0018,1312)")) {
+                	additionalTagsList.put("(0018,1312)", value);	
+                }
+                else if (tag.equals("(0018,1314)")) {
+                	additionalTagsList.put("(0018,1314)", value);	
+                }
+                else if (tagsList.get(tag) != null) {
                     ((JTextField) (tagsList.get(tag))).setText(value);
                     resetSize((JTextField) (tagsList.get(tag)));
                 }
