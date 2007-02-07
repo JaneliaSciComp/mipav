@@ -3467,13 +3467,13 @@ public abstract class ViewJFrameBase extends JFrame
         tCoord[2] = kOut.z;
 
         String[] labels = new String[3];
-        labels[0] = new String("A-P: ");
+        labels[1] = new String("A-P: ");
 
         if (imageA.getRadiologicalView()) {
-            labels[1] = new String("R-L: ");
+            labels[0] = new String("R-L: ");
         } else {
-            tCoord[1] *= -1;
-            labels[1] = new String("L-R: ");
+            tCoord[0] *= -1;
+            labels[0] = new String("L-R: ");
         }
 
         labels[2] = new String("I-S: ");
