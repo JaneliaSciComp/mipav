@@ -1457,6 +1457,7 @@ public class AlgorithmCrop extends AlgorithmBase {
         }
         
         
+        
         if ((destImage.getFileInfo()[0]).getFileFormat() == FileUtility.DICOM) {
 
             if ((destImage.getNDims() == 2) || (z[0] == z[1])) {
@@ -1485,8 +1486,13 @@ public class AlgorithmCrop extends AlgorithmBase {
                 ((FileInfoDicom) (destImage.getFileInfo(0))).setValue("0020,1041", value, value.length());
             } else if (destImage.getNDims() == 3) {
                 //int imgOrient = dicomInfoBuffer.getImageOrientation();
-            
+                     
+            	Point3Df originVOI = new Point3Df(x[0], y[0], z[0]);
+            	Point3Df originLPS = new Point3Df();
+            	
             	startPos = origins[2];
+            	             
+            	System.err.println("Original file origin: " + originVOI);
                 for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
                     ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
@@ -1509,13 +1515,22 @@ public class AlgorithmCrop extends AlgorithmBase {
                     dicomInfoBuffer.setValue("0020,0013", value, value.length());
 
                     // change the image start position ("0020, 0032")
-                    origins[2] = startPos + (direct[2] * n * resols[2]);
+                    
+                    originVOI.z = slc;
+                    //System.err.println("File origin for slice: " + slc + ": " + originVOI);
+                    MipavCoordinateSystems.FileToScanner(originVOI, originLPS, srcImage );
+                 
+                    //System.err.println("NEW ORIGIN: " + originLPS + "\n");
+                    //origins[2] = startPos + (direct[2] * n * resols[2]);
                     //System.err.println("N: " + n + ", origin[2]: " + origins[2] + " res2: " + resols[2] + ", " + direct[2]);
-                                                                 
-                    newImgOriginLPS = originImg2LPS(origins, destImage);
+                                
+                    //newImgOriginLPS = originImg2LPS(origins, destImage);
                                         
-                    value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
-                            Float.toString(newImgOriginLPS[2]);
+                    value = Float.toString(originLPS.x) + "\\" + Float.toString(originLPS.y) + "\\" +
+                    Float.toString(originLPS.z);
+                    
+                 //   value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
+                 //           Float.toString(newImgOriginLPS[2]);
                     dicomInfoBuffer.setValue("0020,0032", value, value.length());
 
                     // readjust the slice location ("0020,1041")
@@ -1607,6 +1622,9 @@ public class AlgorithmCrop extends AlgorithmBase {
         } else if (nDims == 3) {
             destImage.setMatrix(srcImage.getMatrix());
 
+            
+           
+            
             for (int m = 0; m <= Math.abs(z[1] - z[0]); m++) {
                 destImage.setFileInfo((FileInfoBase) (srcImage.getFileInfo()[start + m].clone()), m);
             }
@@ -1615,6 +1633,8 @@ public class AlgorithmCrop extends AlgorithmBase {
             resols = fileInfoBuffer.getResolutions();
             axisOrient = fileInfoBuffer.getAxisOrientation();
 
+            
+            
             if (srcImage.getNDims() == 4) { // Reallocate resolutions since we are going from 4D to 3D
                 resolsTmp = new float[3];
                 resolsTmp[0] = resols[0];
@@ -1642,15 +1662,33 @@ public class AlgorithmCrop extends AlgorithmBase {
                 }
             }
 
-                        
+            Point3Df fileOriginVOI = new Point3Df(x[0], y[0], z[0]);
+            Point3Df lpsOriginVOI = new Point3Df();
+            MipavCoordinateSystems.FileToScanner(fileOriginVOI, lpsOriginVOI, destImage);
+            
+            //System.err.println("Out origin (using xmin, ymin, zmin filetoscanner: " + lpsOriginVOI);
+           
+            int orientation = destImage.getImageOrientation();
+            if (orientation == FileInfoBase.AXIAL ||
+            		orientation == FileInfoBase.UNKNOWN_ORIENT) {
+            	originImgOrd[0] = lpsOriginVOI.x;
+                originImgOrd[1] = lpsOriginVOI.y;
+                originImgOrd[2] = lpsOriginVOI.z;
+            } else if (orientation == FileInfoBase.SAGITTAL) {
+            	originImgOrd[0] = lpsOriginVOI.y;
+                originImgOrd[1] = lpsOriginVOI.z;
+                originImgOrd[2] = lpsOriginVOI.x;
+            } else if (orientation == FileInfoBase.CORONAL) {
+            	
+            	originImgOrd[0] = lpsOriginVOI.x;
+                originImgOrd[1] = lpsOriginVOI.z;
+                originImgOrd[2] = lpsOriginVOI.y;
+            } 
+            
+            
             for (int s = 0; s < destImage.getExtents()[2]; s++) { // for each slice
                 fileInfoBuffer = destImage.getFileInfo(s);
 
-                originImgOrd = fileInfoBuffer.getOrigin();
-                
-                originImgOrd[0] = originImgOrd[0] + (direct[0] * (x[0] - cushion) * resols[0]);
-                originImgOrd[1] = originImgOrd[1] + (direct[1] * (y[0] - cushion) * resols[1]);
-                
                 destImage.getFileInfo(s).setExtents(extentsTmp);
                 fileInfoBuffer.setOrigin(originImgOrd);
             }
@@ -1681,15 +1719,33 @@ public class AlgorithmCrop extends AlgorithmBase {
                 }
             }
 
+            Point3Df fileOriginVOI = new Point3Df(x[0], y[0], z[0]);
+            Point3Df lpsOriginVOI = new Point3Df();
+            MipavCoordinateSystems.FileToScanner(fileOriginVOI, lpsOriginVOI, destImage);
+                        
+            int orientation = destImage.getImageOrientation();
+            if (orientation == FileInfoBase.AXIAL ||
+            		orientation == FileInfoBase.UNKNOWN_ORIENT) {
+            	originImgOrd[0] = lpsOriginVOI.x;
+                originImgOrd[1] = lpsOriginVOI.y;
+                originImgOrd[2] = lpsOriginVOI.z;
+            } else if (orientation == FileInfoBase.SAGITTAL) {
+            	originImgOrd[0] = lpsOriginVOI.x;
+                originImgOrd[1] = lpsOriginVOI.z;
+                originImgOrd[2] = lpsOriginVOI.y;
+            } else if (orientation == FileInfoBase.CORONAL) {
+            	
+            	originImgOrd[0] = lpsOriginVOI.y;
+                originImgOrd[1] = lpsOriginVOI.z;
+                originImgOrd[2] = lpsOriginVOI.x;
+            } 
+            
             for (int s = 0; s < (destImage.getExtents()[2] * destImage.getExtents()[3]); s++) {
                 fileInfoBuffer = destImage.getFileInfo(s);
-                imgOriginLPS = fileInfoBuffer.getOrigin();
-                originImgOrd = originLPS2Img(imgOriginLPS, destImage);
+                
                 destImage.getFileInfo(s).setExtents(destImage.getExtents());
-                originImgOrd[0] = originImgOrd[0] + (direct[0] * (x[0] - cushion) * resols[0]);
-                originImgOrd[1] = originImgOrd[1] + (direct[1] * (y[0] - cushion) * resols[1]);
-                newImgOriginLPS = originImg2LPS(originImgOrd, destImage);
-                fileInfoBuffer.setOrigin(newImgOriginLPS);
+               
+                fileInfoBuffer.setOrigin(originImgOrd);
             }
         }
 
