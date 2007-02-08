@@ -5,7 +5,11 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
+import java.awt.Polygon;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.TreeMap;
 
 
 /**
@@ -27,11 +31,20 @@ public class AlgorithmFlip extends AlgorithmBase {
 
     /** Flip along Z axis. */
     public static final int Z_AXIS = 2;
+    
+    /** Denotes image should be flipped */
+    public static final int IMAGE = 0;
+    
+    /** Denotes all VOIs should be flipped */
+    public static final int VOI = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** Axis to flip along. */
     private int flipAxis = Y_AXIS;
+    
+    /** Type of object to flip */
+    private int flipObject;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -41,9 +54,9 @@ public class AlgorithmFlip extends AlgorithmBase {
      * @param  srcImg    source image model
      * @param  flipMode  flip about which axis
      */
-    public AlgorithmFlip(ModelImage srcImg, int flipMode) {
+    public AlgorithmFlip(ModelImage srcImg, int flipMode, int flipObject) {
         super(null, srcImg);
-
+        this.flipObject = flipObject;
         if ((flipMode == Y_AXIS) || (flipMode == X_AXIS) || (flipMode == Z_AXIS)) {
             flipAxis = flipMode;
         } else {
@@ -58,8 +71,8 @@ public class AlgorithmFlip extends AlgorithmBase {
      * @param  flipMode  flip about which axis
      * @param  progress  mode of progress bar (see AlgorithmBase)
      */
-    public AlgorithmFlip(ModelImage srcImg, int flipMode, int progress) {
-        this(srcImg, flipMode);
+    public AlgorithmFlip(ModelImage srcImg, int flipMode, int progress, int flipObject) {
+        this(srcImg, flipMode, flipObject);
       //  progressMode = progress;
     }
 
@@ -135,7 +148,7 @@ public class AlgorithmFlip extends AlgorithmBase {
             // since % mod gives a divide by zero error for mod = 0
             mod = 1;
         }
-
+        
         /* axisOrder is always the default: (no coordinate axis remapping) */
         int[] axisOrder = { 0, 1, 2 };
         /* axisFlip depends on flipAxis: */
@@ -147,79 +160,150 @@ public class AlgorithmFlip extends AlgorithmBase {
             index = 1;
         }
         axisFlip[index] = true;
-
         int tDim = 1;
         int volume = 1;
         int zDim = 1;
+        int xDim = 1;
+        int yDim = 1;
+        if(srcImage.getNDims() > 1) {
+            xDim = srcImage.getExtents()[0];
+            yDim = srcImage.getExtents()[1];
+        }
         if (srcImage.getNDims() == 4) {
             zDim = srcImage.getExtents()[2];
             tDim = srcImage.getExtents()[3];
             volume = slice * zDim;
         }
-        else if (srcImage.getNDims() == 3) {
+        else if (srcImage.getNDims() == 3) {            
             zDim = srcImage.getExtents()[2];
         }
-
-        /* If flipping the z-axis, then loop 1/2 the times and swap the z slices... */
-        if ( index == 2 )
+        if(flipObject == AlgorithmFlip.IMAGE)
         {
-            zDim /= 2;
-            sliceBufferTemp = new float[slice];
-        }
-
-        /* For each slice: */
-        for (int t = 0; (t < tDim) && !threadStopped; t++) {
-            for (int z = 0; (z < zDim) && !threadStopped; z++) {
-                if ((nImages > 1) && (((t * zDim + z) % mod) == 0)) {
-                    fireProgressStateChanged(Math.round((float) (t * zDim + z) / (nImages - 1) * 100));
-                }
-
-                try {
-                    srcImage.export( axisOrder, axisFlip, t, z, sliceBuffer);
-                    if ( index == 2 )
-                    {
-                        int zTemp = (srcImage.getExtents()[2] - 1 - z);
-                        srcImage.export( axisOrder, axisFlip, t, zTemp, sliceBufferTemp);
-                        srcImage.importData(t * volume + zTemp * slice, sliceBufferTemp, false);
+            
+    
+            /* If flipping the z-axis, then loop 1/2 the times and swap the z slices... */
+            if ( index == 2 )
+            {
+                zDim /= 2;
+                sliceBufferTemp = new float[slice];
+            }
+    
+            /* For each slice: */
+            for (int t = 0; (t < tDim) && !threadStopped; t++) {
+                for (int z = 0; (z < zDim) && !threadStopped; z++) {
+                    if ((nImages > 1) && (((t * zDim + z) % mod) == 0)) {
+                        fireProgressStateChanged(Math.round((float) (t * zDim + z) / (nImages - 1) * 100));
                     }
-                    srcImage.importData(t * volume + z * slice, sliceBuffer, false);
-                } catch (IOException error) {
-                    displayError("AlgorithmSubset reports: Destination image already locked.");
-                    setCompleted(false);
-                    return;
+    
+                    try {
+                        srcImage.export( axisOrder, axisFlip, t, z, sliceBuffer);
+                        if ( index == 2 )
+                        {
+                            int zTemp = (srcImage.getExtents()[2] - 1 - z);
+                            srcImage.export( axisOrder, axisFlip, t, zTemp, sliceBufferTemp);
+                            srcImage.importData(t * volume + zTemp * slice, sliceBufferTemp, false);
+                        }
+                        srcImage.importData(t * volume + z * slice, sliceBuffer, false);
+                    } catch (IOException error) {
+                        displayError("AlgorithmSubset reports: Destination image already locked.");
+                        setCompleted(false);
+                        return;
+                    }
+                }
+            }
+    
+            if (threadStopped) {
+                sliceBuffer = null;
+                sliceBufferTemp = null;
+                finalize();
+                return;
+            }
+    
+            if (buffFactor == 2) {
+                srcImage.setLogMagDisplay(logMagDisplay);
+                srcImage.calcMinMaxMag(logMagDisplay);
+            }
+    
+            /* Update FileInfo for mapping into DICOM space: */
+            FileInfoBase[] fileInfo = srcImage.getFileInfo();
+            float loc = fileInfo[0].getOrigin(index);
+            int orient = fileInfo[0].getAxisOrientation(index);
+    
+            if ( loc > 0.0f ) {
+                loc = loc - ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
+            } else {
+                loc = loc + ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
+            }
+            orient = FileInfoBase.oppositeOrient(orient);
+            for (int i = 0; i < fileInfo.length; i++) {
+                fileInfo[i].setAxisOrientation(orient, index);
+                fileInfo[i].setOrigin(loc, index);
+                if ( index == 2 )
+                {
+                    fileInfo[i].setOrigin( loc + (fileInfo[0].getResolutions()[index] * i), index);
                 }
             }
         }
-
-        if (threadStopped) {
-            sliceBuffer = null;
-            sliceBufferTemp = null;
-            finalize();
-            return;
-        }
-
-        if (buffFactor == 2) {
-            srcImage.setLogMagDisplay(logMagDisplay);
-            srcImage.calcMinMaxMag(logMagDisplay);
-        }
-
-        /* Update FileInfo for mapping into DICOM space: */
-        FileInfoBase[] fileInfo = srcImage.getFileInfo();
-        float loc = fileInfo[0].getOrigin(index);
-        int orient = fileInfo[0].getAxisOrientation(index);
-
-        if ( loc > 0.0f ) {
-            loc = loc - ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
-        } else {
-            loc = loc + ((fileInfo[0].getExtents()[index] - 1) * fileInfo[0].getResolutions()[index]);
-        }
-        orient = FileInfoBase.oppositeOrient(orient);
-        for (int i = 0; i < fileInfo.length; i++) {
-            fileInfo[i].setAxisOrientation(orient, index);
-            fileInfo[i].setOrigin(loc, index);
-            if ( index == 2 )
+        else if(flipObject == AlgorithmFlip.VOI)
+        {
+            VOIVector vec = srcImage.getVOIs();
+            Iterator vecIter = vec.iterator();
+            if(flipAxis == X_AXIS) {
+                while(vecIter.hasNext()) {              
+                    VOI nextVoi = (VOI)vecIter.next();
+                    for(int i=0; i<zDim; i++) {
+                        Polygon[] polyList = nextVoi.exportPolygons(i);
+                        nextVoi.removeCurves(i);
+                        for(int j=0; j<polyList.length; j++) {
+                            Polygon poly = polyList[j];
+                            int[] points = poly.ypoints;
+                            for(int k=0; k<points.length; k++) {
+                                points[k] = -points[k] + yDim;                                
+                            }
+                            nextVoi.importPolygon(poly, i); 
+                        }
+                    }
+                }
+            }
+            if(flipAxis == Y_AXIS) {
+                while(vecIter.hasNext()) {              
+                    VOI nextVoi = (VOI)vecIter.next();
+                    for(int i=0; i<zDim; i++) {
+                        Polygon[] polyList = nextVoi.exportPolygons(i);
+                        nextVoi.removeCurves(i);
+                        for(int j=0; j<polyList.length; j++) {
+                            Polygon poly = polyList[j];
+                            int[] points = poly.xpoints;
+                            for(int k=0; k<points.length; k++) {
+                                points[k] = -points[k] + xDim;                                
+                            }
+                            nextVoi.importPolygon(poly, i); 
+                        }
+                    }
+                }
+            }
+            if(flipAxis == Z_AXIS && srcImage.getNDims() > 2)
             {
-                fileInfo[i].setOrigin( loc + (fileInfo[0].getResolutions()[index] * i), index);
+                while(vecIter.hasNext()) {              
+                    VOI nextVoi = (VOI)vecIter.next();
+                    ArrayList[] polyArray = new ArrayList[zDim];
+                    for(int i=0; i<zDim; i++)
+                        polyArray[i] = new ArrayList();
+                    for(int i=0; i<zDim; i++) {
+                        Polygon[] polyList = nextVoi.exportPolygons(i);
+                        nextVoi.removeCurves(i);
+                        for(int j=0; j<polyList.length; j++) {
+                            Polygon poly = polyList[j];  
+                            polyArray[-i + zDim].add(poly);   
+                        }    
+                    }
+                    for(int i=0; i<zDim; i++) {
+                        ArrayList tempArray = polyArray[i];
+                        for(int j=0; j<tempArray.size(); j++) {
+                            nextVoi.importPolygon((Polygon)tempArray.get(j), i);
+                        }
+                    }
+                }
             }
         }
         setCompleted(true);
@@ -238,6 +322,11 @@ public class AlgorithmFlip extends AlgorithmBase {
         } else {
             historyString = new String("Flip(Z_AXIS)\n");
         }
+        if(flipObject == IMAGE) {
+        	historyString = historyString+"Object(IMAGE)\n";
+       	} else if(flipObject == VOI) {
+       		historyString = historyString+"Object(VOI)\n";
+       	}
     }
 
 }

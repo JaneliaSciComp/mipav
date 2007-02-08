@@ -137,7 +137,7 @@ public class AlgorithmMidsagittal extends AlgorithmBase {
         fireProgressStateChanged("Flipping image ...");
 
         // flip
-        AlgorithmFlip flipAlgo = new AlgorithmFlip(flipImage, AlgorithmFlip.Y_AXIS);
+        AlgorithmFlip flipAlgo = new AlgorithmFlip(flipImage, AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE);
         flipAlgo.setRunningInSeparateThread(false);
         fireProgressStateChanged(10);
 

@@ -1429,19 +1429,32 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                                                                                                             getActiveImage());
             rBlankWithAvg.callAlgorithm();
 
-        } else if (command.equals("FlipY")) {
-            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS);
+        } else if (command.equals("ImageFlipY")) {
+            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE);
 
             flip.callAlgorithm();
-        } else if (command.equals("FlipX")) {
-            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS);
+        } else if (command.equals("ImageFlipX")) {
+            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
 
             flip.callAlgorithm();
-        } else if (command.equals("FlipZ")) {
-            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS);
+        } else if (command.equals("ImageFlipZ")) {
+            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
+            
+            flip.callAlgorithm();
+        } else if (command.equals("VOIFlipY")) {
+            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI);
 
             flip.callAlgorithm();
-        } else if (command.equals("RotateX180")) {
+        } else if (command.equals("VOIFlipX")) {
+            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI);
+
+            flip.callAlgorithm();
+        } else if (command.equals("VOIFlipZ")) {
+            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI);
+
+            flip.callAlgorithm();
+        } 
+        else if (command.equals("RotateX180")) {
             JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.X_AXIS_180);
 
             rotate.callAlgorithm();
