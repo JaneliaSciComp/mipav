@@ -136,6 +136,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** When loading an image into B slot, should origins and orients be matched? */
     private boolean doOrigins = false;
 
+    /** boolean indicating if shift button is down. */
+    private boolean isShiftDown = false;
+
     /** DOCUMENT ME! */
     private int lastVOI_UID = -1;
 
@@ -144,10 +147,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
     /** Reference to the magnification tool. */
     private JDialogZoom zoomDialog = null;
-    
-    /** boolean indicating if shift button is down */
-    private boolean isShiftDown = false;
-    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -359,14 +358,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.setShortcutRecording(false);
             Preferences.addShortcut(command);
             userInterface.showShortcutEditor(true);
-    
+
             return;
         }
 
-        if (command.equals("Coloc")) {
-        	ModelImage imageClone = (ModelImage)imageA.clone(imageA.getImageFileName() + "coloc");
-        	new ViewJFrameColocalization(imageClone, LUTa, null, false);
-        }
         if (command.equals("PropagatePaintPrev")) {
             propagatePaintToPreviousSlice();
         } else if (command.equals("PropagatePaintNext")) {
@@ -1196,10 +1191,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // TODO: the script action is recorded regardless of the conversion success
             ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
-        } else if(command.equals("CollapseAllToSinglePaint")) {
-        	collapseAlltoSinglePaint(false);
-        }
-        else if (command.equals("PaintToVOI")) {
+        } else if (command.equals("CollapseAllToSinglePaint")) {
+            collapseAlltoSinglePaint(false);
+        } else if (command.equals("PaintToVOI")) {
 
             // new JDialogVOIExtraction(this, getActiveImage()).callAlgorithm();
             int xDim = 0, yDim = 0, zDim = 0;
@@ -1347,6 +1341,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("OpacityPaint")) {
             new JDialogOpacityControls(this, controls);
         } else if (command.equals("CommitPaint")) {
+
             if (getActiveImage() == imageA) {
                 componentImage.commitMask(ViewJComponentBase.IMAGE_A, true, true, null);
             } else {
@@ -2135,9 +2130,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.setSlice(zSlice);
             updateImages(true);
         } else if (command.equals("NextImage")) {
-            //incSlice();
+            // incSlice();
         } else if (command.equals("PreviousImage")) {
-            //decSlice();
+            // decSlice();
         } else if (command.equals("MagImage")) {
             componentImage.setMode(ViewJComponentEditImage.ZOOMING_IN);
         } else if (command.equals("UnMagImage")) {
@@ -2755,6 +2750,116 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         System.gc();
     }
 
+
+    /**
+     * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
+     * that were masked with the intensity value that is currently active.
+     *
+     * @param  showProgressBar  DOCUMENT ME!
+     */
+    public void collapseAlltoSinglePaint(boolean showProgressBar) {
+
+        if (componentImage != null) {
+
+            if (imageB != null) {
+                float[] intensityMapB;
+
+                if (imageB.isColorImage()) {
+                    intensityMapB = new float[(imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make intensity map
+                } else {
+                    intensityMapB = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
+                }
+
+                // same size as image
+                // dimensions
+                BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
+                ViewJProgressBar progressBar = null;
+
+                if (showProgressBar) {
+                    progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true, this,
+                                                       this);
+                    MipavUtil.centerOnScreen(progressBar);
+                    progressBar.setVisible(showProgressBar);
+                }
+
+
+                try {
+                    int numSlices = ((imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
+
+                    // iterate through slices
+                    for (int currentSlice = 0; currentSlice < numSlices; currentSlice++) {
+
+                        // here is where we get the slice
+                        imageB.exportData(currentSlice * intensityMapB.length, intensityMapB.length, intensityMapB);
+
+                        // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
+                        // selected intensity
+
+
+                        Color activeColor = getControls().getTools().getPaintColor();
+                        // int activeRed = activeColor.getRed(); int activeGreen = activeColor.getGreen(); int
+                        // activeBlue = activeColor.getBlue();
+
+                        if (imageB.isColorImage()) {
+
+                            for (int k = 0; k <= (intensityMapB.length - 4); k = k + 4) {
+                                int r, g, b;
+                                r = (new Float(intensityMapB[k + 1])).intValue();
+                                g = (new Float(intensityMapB[k + 2])).intValue();
+                                b = (new Float(intensityMapB[k + 3])).intValue();
+
+                                if (!((r == 0) && (g == 0) && (b == 0))) {
+                                    bitSet.set((currentSlice * intensityMapB.length) + (k / 4)); // turn the paint bit
+                                                                                                 // set index to ON
+                                    intensityMapB[k + 1] = 0; // erase the painted mask from this index
+                                    intensityMapB[k + 2] = 0; // erase the painted mask from this index
+                                    intensityMapB[k + 3] = 0; // erase the painted mask from this index
+                                }
+                            }
+                        } else {
+
+                            for (int i = 0; i < intensityMapB.length; i++) {
+
+                                if (intensityMapB[i] != 0) {
+                                    bitSet.set((currentSlice * intensityMapB.length) + i); // turn the paint bit set
+                                                                                           // index to ON
+                                    intensityMapB[i] = 0; // erase the painted mask from this index
+                                }
+                            }
+                        }
+
+                        // put the modified slice back into image
+                        imageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
+
+                        if (progressBar != null) {
+                            progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
+                        }
+                    }
+
+                    updateImages(true);
+                } catch (Exception ex) {
+
+                    // do nothing. the error will be displayed when this if block exits
+                    ex.printStackTrace();
+                    MipavUtil.displayError("Cannot complete the operation due to an internal error.");
+                } finally {
+
+                    if (progressBar != null) {
+                        progressBar.dispose();
+                    }
+                }
+            } else {
+
+                // if we get here, there is no mask on the image.
+                MipavUtil.displayError("This function is only useful when the image has a mask. To use this feature, please add a mask.");
+            }
+        } else {
+
+            // should never get to this point. big trouble.
+            MipavUtil.displayError("Cannot complete the operation due to an internal error.");
+        }
+    }
+
     /**
      * Resizes frame and all components.
      *
@@ -2869,20 +2974,23 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // componentImage.deactivateAllVOI();
             setTitle();
-            
-            //need to get all other images in sync if there are other matching images and if shift was down
-            if(isShiftDown && (getRegisteredFramedImagesSize() > 0)) {
-            	Vector registeredFramedImages = getRegisteredFramedImages();
-            	for(int i=0;i<registeredFramedImages.size();i++) {
-            		ModelImage img = (ModelImage)registeredFramedImages.get(i);
-            		ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-            		framedImg.setSlice(zSlice+1);
-            		if(framedImg != null) {
-            			framedImg.decSlice();
-            		}
-            	}
-            	registeredFramedImages = null;
-            	setShiftDown(false);
+
+            // need to get all other images in sync if there are other matching images and if shift was down
+            if (isShiftDown && (getRegisteredFramedImagesSize() > 0)) {
+                Vector registeredFramedImages = getRegisteredFramedImages();
+
+                for (int i = 0; i < registeredFramedImages.size(); i++) {
+                    ModelImage img = (ModelImage) registeredFramedImages.get(i);
+                    ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
+                    framedImg.setSlice(zSlice + 1);
+
+                    if (framedImg != null) {
+                        framedImg.decSlice();
+                    }
+                }
+
+                registeredFramedImages = null;
+                setShiftDown(false);
             }
 
             if (linkFrame != null) {
@@ -2900,8 +3008,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             updateImages(true);
-            
-            //registeredFramedImages = null;
+
+            // registeredFramedImages = null;
         }
     }
 
@@ -3091,6 +3199,68 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         }
     }
 
+    /**
+     * Returns the Vector of Registered Framed Images that are of the same dimensionalty as the active image.
+     *
+     * @return  Vector
+     */
+    public Vector getRegisteredFramedImages() {
+        ModelImage activeImage = getImageA();
+        int activeImageNumDims = activeImage.getNDims();
+        int activeImageNumSlices = 0;
+
+        if (activeImageNumDims == 3) {
+            activeImageNumSlices = activeImage.getExtents()[2];
+        }
+
+        Vector registeredFramedImages = new Vector();
+
+        // check if there is more than 1 regsitered framed image
+        if (ViewUserInterface.getReference().getRegisteredFramedImagesNum() > 1) {
+
+            // get all registered images
+            Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
+            // add only the framed ones to a new list...also..dont include the active image
+
+            while (regImages.hasMoreElements()) {
+                ModelImage image = (ModelImage) regImages.nextElement();
+
+                // check if it is a framed image...and if its not the active image...also make sure its just imageA
+                if ((image.getParentFrame() != null) && (!image.getImageName().equals(activeImage.getImageName())) &&
+                        (((ViewJFrameImage) (image.getParentFrame())).getImageA() == image)) {
+
+                    // now check the dimensionality to see if it matches with the active image
+                    int regFramedNumDims = image.getNDims();
+
+                    if (regFramedNumDims == activeImageNumDims) {
+
+                        // it is the same dimensionality
+                        if (image.getExtents()[2] == activeImageNumSlices) {
+
+                            // zdimensions are the same
+                            // so....now we put the image in the arraylist
+                            registeredFramedImages.add(image);
+                        }
+                    }
+                }
+            }
+        }
+
+        return registeredFramedImages;
+    }
+
+
+    /**
+     * Returns the size of the RegisteredFramedImages Vector.
+     *
+     * @return  size of the Vector
+     */
+    public int getRegisteredFramedImagesSize() {
+        int size = getRegisteredFramedImages().size();
+
+        return size;
+    }
+
     // The following 4 functions get and set the RGB tables for ARGB images A and B.
     /**
      * Gets the RGB LUT table for ARGB image A.
@@ -3154,12 +3324,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public int getViewableTimeSlice() {
         return tSlice;
     }
-    
-    
-    /** DOCUMENT ME**/
-    public void setShiftDown(boolean isShiftDown) {
-		this.isShiftDown = isShiftDown;
-	}
 
 
     /**
@@ -3171,17 +3335,19 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     public void handleMaskToPaint(boolean showProgressBar) {
 
         if (componentImage != null) {
+
             if (imageB != null) {
-            	float[] intensityMapB;
-            	if(imageB.isColorImage()) {
-            		intensityMapB = new float[(imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make intensity map
-            	}else {
-            		intensityMapB = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
-            	}
-            	
+                float[] intensityMapB;
+
+                if (imageB.isColorImage()) {
+                    intensityMapB = new float[(imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make intensity map
+                } else {
+                    intensityMapB = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
+                }
+
                 // same size as image
                 // dimensions
-            	BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
+                BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
                 ViewJProgressBar progressBar = null;
 
                 if (showProgressBar) {
@@ -3190,8 +3356,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     MipavUtil.centerOnScreen(progressBar);
                     progressBar.setVisible(showProgressBar);
                 }
-                
-                
+
 
                 try {
                     int numSlices = ((imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
@@ -3204,36 +3369,41 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
                         // selected intensity
-                        
-                        
-                       Color activeColor = getControls().getTools().getPaintColor();
-                 	   int activeRed = activeColor.getRed();
-                 	   int activeGreen = activeColor.getGreen();
-                 	   int activeBlue = activeColor.getBlue();
-                 	   
-                       if(imageB.isColorImage()) {
-                    	   for (int k = 0; k <= (intensityMapB.length - 4); k=k+4) {
-                    		   int r,g,b;
-                    		   r = (new Float(intensityMapB[k+1])).intValue();
-                    		   g = (new Float(intensityMapB[k+2])).intValue();
-                    		   b = (new Float(intensityMapB[k+3])).intValue();
 
-                    		   if(r==activeRed && g==activeGreen && b==activeBlue) {
-                    			   bitSet.set((currentSlice * intensityMapB.length) + (k/4)); // turn the paint bit set index to ON
-                    			   intensityMapB[k+1] = 0; // erase the painted mask from this index
-                    			   intensityMapB[k+2] = 0; // erase the painted mask from this index
-                    			   intensityMapB[k+3] = 0; // erase the painted mask from this index
-                    		   }
-                    	   }  
-                       }else {
-                    	   for (int i = 0; i < intensityMapB.length; i++) {
-                               if (intensityMapB[i] == componentImage.intensityDropper) {
-                                   bitSet.set((currentSlice * intensityMapB.length) + i); // turn the paint bit set index to ON
-                                   intensityMapB[i] = 0; // erase the painted mask from this index
-                               }
-                           }
-                       }
-                        
+
+                        Color activeColor = getControls().getTools().getPaintColor();
+                        int activeRed = activeColor.getRed();
+                        int activeGreen = activeColor.getGreen();
+                        int activeBlue = activeColor.getBlue();
+
+                        if (imageB.isColorImage()) {
+
+                            for (int k = 0; k <= (intensityMapB.length - 4); k = k + 4) {
+                                int r, g, b;
+                                r = (new Float(intensityMapB[k + 1])).intValue();
+                                g = (new Float(intensityMapB[k + 2])).intValue();
+                                b = (new Float(intensityMapB[k + 3])).intValue();
+
+                                if ((r == activeRed) && (g == activeGreen) && (b == activeBlue)) {
+                                    bitSet.set((currentSlice * intensityMapB.length) + (k / 4)); // turn the paint bit
+                                                                                                 // set index to ON
+                                    intensityMapB[k + 1] = 0; // erase the painted mask from this index
+                                    intensityMapB[k + 2] = 0; // erase the painted mask from this index
+                                    intensityMapB[k + 3] = 0; // erase the painted mask from this index
+                                }
+                            }
+                        } else {
+
+                            for (int i = 0; i < intensityMapB.length; i++) {
+
+                                if (intensityMapB[i] == componentImage.intensityDropper) {
+                                    bitSet.set((currentSlice * intensityMapB.length) + i); // turn the paint bit set
+                                                                                           // index to ON
+                                    intensityMapB[i] = 0; // erase the painted mask from this index
+                                }
+                            }
+                        }
+
                         // put the modified slice back into image
                         imageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
 
@@ -3244,8 +3414,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                     updateImages(true);
                 } catch (Exception ex) {
+
                     // do nothing. the error will be displayed when this if block exits
-                	ex.printStackTrace();
+                    ex.printStackTrace();
                     MipavUtil.displayError("Cannot complete the operation due to an internal error.");
                 } finally {
 
@@ -3254,7 +3425,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     }
                 }
             } else {
-            	
+
                 // if we get here, there is no mask on the image.
                 MipavUtil.displayError("This function is only useful when the image has a mask. To use this feature, please add a mask.");
             }
@@ -3264,138 +3435,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             MipavUtil.displayError("Cannot complete the operation due to an internal error.");
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    /**
-    * This method is provided for the user to convert a masked area back to a painted area. It only affects those areas
-    * that were masked with the intensity value that is currently active.
-    *
-    * @param  showProgressBar  DOCUMENT ME!
-    */
-   public void collapseAlltoSinglePaint(boolean showProgressBar) {
 
-       if (componentImage != null) {
-           if (imageB != null) {
-           	float[] intensityMapB;
-           	if(imageB.isColorImage()) {
-           		intensityMapB = new float[(imageA.getExtents()[0] * imageA.getExtents()[1]) * 4]; // make intensity map
-           	}else {
-           		intensityMapB = new float[imageA.getExtents()[0] * imageA.getExtents()[1]]; // make intensity map
-           	}
-           	
-               // same size as image
-               // dimensions
-           	BitSet bitSet = componentImage.getPaintMask(); // bitSet is for entire image volume
-               ViewJProgressBar progressBar = null;
-
-               if (showProgressBar) {
-                   progressBar = new ViewJProgressBar("Converting", "Converting mask to paint...", 0, 100, true, this,
-                                                      this);
-                   MipavUtil.centerOnScreen(progressBar);
-                   progressBar.setVisible(showProgressBar);
-               }
-               
-               
-
-               try {
-                   int numSlices = ((imageA.getNDims() > 2) ? imageA.getExtents()[2] : 1);
-
-                   // iterate through slices
-                   for (int currentSlice = 0; currentSlice < numSlices; currentSlice++) {
-
-                       // here is where we get the slice
-                       imageB.exportData(currentSlice * intensityMapB.length, intensityMapB.length, intensityMapB);
-
-                       // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
-                       // selected intensity
-                       
-                       
-                      Color activeColor = getControls().getTools().getPaintColor();
-                	   //int activeRed = activeColor.getRed();
-                	   //int activeGreen = activeColor.getGreen();
-                	   //int activeBlue = activeColor.getBlue();
-                	   
-                      if(imageB.isColorImage()) {
-                   	   for (int k = 0; k <= (intensityMapB.length - 4); k=k+4) {
-                   		   int r,g,b;
-                   		   r = (new Float(intensityMapB[k+1])).intValue();
-                   		   g = (new Float(intensityMapB[k+2])).intValue();
-                   		   b = (new Float(intensityMapB[k+3])).intValue();
-                   		   if(!(r==0 && g==0 && b==0)) {
-                   			   bitSet.set((currentSlice * intensityMapB.length) + (k/4)); // turn the paint bit set index to ON
-                   			   intensityMapB[k+1] = 0; // erase the painted mask from this index
-                   			   intensityMapB[k+2] = 0; // erase the painted mask from this index
-                   			   intensityMapB[k+3] = 0; // erase the painted mask from this index
-                   		   }
-                   	   }  
-                      }else {
-                   	   for (int i = 0; i < intensityMapB.length; i++) {
-                              if (intensityMapB[i] != 0) {
-                                  bitSet.set((currentSlice * intensityMapB.length) + i); // turn the paint bit set index to ON
-                                  intensityMapB[i] = 0; // erase the painted mask from this index
-                             }
-                          }
-                      }
-                       
-                       // put the modified slice back into image
-                       imageB.importData(currentSlice * intensityMapB.length, intensityMapB, false);
-
-                       if (progressBar != null) {
-                           progressBar.updateValueImmed((int) ((float) (currentSlice + 1) / (float) numSlices * 100));
-                       }
-                   }
-
-                   updateImages(true);
-               } catch (Exception ex) {
-                   // do nothing. the error will be displayed when this if block exits
-               	ex.printStackTrace();
-                   MipavUtil.displayError("Cannot complete the operation due to an internal error.");
-               } finally {
-
-                   if (progressBar != null) {
-                       progressBar.dispose();
-                   }
-               }
-           } else {
-           	
-               // if we get here, there is no mask on the image.
-               MipavUtil.displayError("This function is only useful when the image has a mask. To use this feature, please add a mask.");
-           }
-       } else {
-
-           // should never get to this point. big trouble.
-           MipavUtil.displayError("Cannot complete the operation due to an internal error.");
-       }
-   }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 
     /**
      * Increases the slice to be displayed by one and updates title frame.
@@ -3419,22 +3459,25 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             // componentImage.deactivateAllVOI();
             setTitle();
-           
-            //need to get all other images in sync if there are other matching images and if shift was down
-            if(isShiftDown && (getRegisteredFramedImagesSize() > 0)) {
-            	Vector registeredFramedImages = getRegisteredFramedImages();
-            	for(int i=0;i<registeredFramedImages.size();i++) {
-            		ModelImage img = (ModelImage)registeredFramedImages.get(i);
-            		ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
-            		framedImg.setSlice(zSlice-1);
-            		if(framedImg != null) {
-            			framedImg.incSlice();
-            		}
-            	}
-            	registeredFramedImages = null;
-            	setShiftDown(false);
+
+            // need to get all other images in sync if there are other matching images and if shift was down
+            if (isShiftDown && (getRegisteredFramedImagesSize() > 0)) {
+                Vector registeredFramedImages = getRegisteredFramedImages();
+
+                for (int i = 0; i < registeredFramedImages.size(); i++) {
+                    ModelImage img = (ModelImage) registeredFramedImages.get(i);
+                    ViewJFrameImage framedImg = ViewUserInterface.getReference().getFrameContainingImage(img);
+                    framedImg.setSlice(zSlice - 1);
+
+                    if (framedImg != null) {
+                        framedImg.incSlice();
+                    }
+                }
+
+                registeredFramedImages = null;
+                setShiftDown(false);
             }
-            
+
             if (linkFrame != null) {
                 linkFrame.incSlice();
             }
@@ -3448,11 +3491,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
             updateImages(true);
-            
-            //registeredFramedImages = null;
-            
-            
-            
+
+            // registeredFramedImages = null;
+
+
         }
     }
 
@@ -3676,43 +3718,45 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
             }
         }
+
         if (event.getButton() == MouseEvent.BUTTON1) {
-	        if(event.getSource() instanceof JButton) {
-	        	JButton buttonSource = (JButton)event.getSource();
-	        	if(buttonSource.getActionCommand().equals("NextImage")) {
-	        		if(event.isShiftDown()) {
-	        			if(getImageA().getNDims() == 3) {
-	        				isShiftDown = true;
-	        				//setRegisteredFramedImages();
-	        			}
-	        		}
-	        		else {
-	        			isShiftDown = false;
-	        			//registeredFramedImages = null;
-	        		}
-	        		incSlice();
-	        	}
-	        	else if(buttonSource.getActionCommand().equals("PreviousImage")) {
-	        		if(event.isShiftDown()) {
-	        			if(getImageA().getNDims() == 3) {
-	        				isShiftDown = true;
-	        				//setRegisteredFramedImages();
-	        			}
-	        		}
-	        		else {
-	        			isShiftDown = false;
-	        			//registeredFramedImages = null;	
-	        		}
-	        		decSlice();
-	        	}	
-	        }
+
+            if (event.getSource() instanceof JButton) {
+                JButton buttonSource = (JButton) event.getSource();
+
+                if (buttonSource.getActionCommand().equals("NextImage")) {
+
+                    if (event.isShiftDown()) {
+
+                        if (getImageA().getNDims() == 3) {
+                            isShiftDown = true;
+                            // setRegisteredFramedImages();
+                        }
+                    } else {
+                        isShiftDown = false;
+                        // registeredFramedImages = null;
+                    }
+
+                    incSlice();
+                } else if (buttonSource.getActionCommand().equals("PreviousImage")) {
+
+                    if (event.isShiftDown()) {
+
+                        if (getImageA().getNDims() == 3) {
+                            isShiftDown = true;
+                            // setRegisteredFramedImages();
+                        }
+                    } else {
+                        isShiftDown = false;
+                        // registeredFramedImages = null;
+                    }
+
+                    decSlice();
+                }
+            }
         }
     }
-    
-    
-    
-    
-    
+
 
     /**
      * DOCUMENT ME!
@@ -4130,6 +4174,16 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (componentImage != null) {
             componentImage.setRGBTB(RGBT);
         }
+    }
+
+
+    /**
+     * DOCUMENT ME.*
+     *
+     * @param  isShiftDown  DOCUMENT ME!
+     */
+    public void setShiftDown(boolean isShiftDown) {
+        this.isShiftDown = isShiftDown;
     }
 
     /**
@@ -4915,7 +4969,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         menuItem.addActionListener(this);
         menuItem.setActionCommand("Zoom linearly");
         popupMenu.add(menuItem);
-        
+
         menuItem = new JMenuItem("Use exponential zoom increment");
 
         menuItem.addActionListener(this);
@@ -5532,65 +5586,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             decSlice();
         }
     }
-    
-    
-    
-    
-    
-    
-    
-    /**
-     * Returns the size of the RegisteredFramedImages Vector
-     * 
-     * @return size of the Vector
-     */
-    public int getRegisteredFramedImagesSize() {
-    	int size = getRegisteredFramedImages().size();
-    	return size;
-    }
-    
-    /**
-     * Returns the Vector of Registered Framed Images that are of the 
-     * same dimensionalty as the active image
-     * 
-     * @return Vector
-     */
-    public Vector getRegisteredFramedImages() {
-    	ModelImage activeImage = getImageA();
-    	int activeImageNumDims = activeImage.getNDims();
-		int activeImageNumSlices = 0;
-		if(activeImageNumDims == 3) {
-			activeImageNumSlices = activeImage.getExtents()[2];
-		}
-		Vector registeredFramedImages = new Vector();
-		//check if there is more than 1 regsitered framed image
-		if(ViewUserInterface.getReference().getRegisteredFramedImagesNum() > 1) {
-			//get all registered images
-			Enumeration regImages = ViewUserInterface.getReference().getRegisteredImages();
-			//add only the framed ones to a new list...also..dont include the active image
-			
-			while(regImages.hasMoreElements()) {
-	    		ModelImage image = (ModelImage)regImages.nextElement();
-	    		//check if it is a framed image...and if its not the active image...also make sure its just imageA
-	    		if(image.getParentFrame() != null && (!image.getImageName().equals(activeImage.getImageName())) && (((ViewJFrameImage) (image.getParentFrame())).getImageA() == image)) {
-	    			//now check the dimensionality to see if it matches with the active image
-	    			int regFramedNumDims = image.getNDims();
-	    			if(regFramedNumDims == activeImageNumDims) {
-	    				//it is the same dimensionality
-	    				if(image.getExtents()[2] == activeImageNumSlices) {
-	    					//zdimensions are the same
-	    					//so....now we put the image in the arraylist
-	    					registeredFramedImages.add(image);
-	    				}
-	    			}	
-	    		}
-			}	
-		}
-		return registeredFramedImages;
-    }
-    
-    
-    
 
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
@@ -5616,8 +5611,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             getActiveImage().notifyImageDisplayListeners(null, false);
         }
     }
-
-	
 
 
 }
