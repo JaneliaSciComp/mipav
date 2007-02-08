@@ -11,14 +11,6 @@
 				<xs:element name="Unique-ID" type="xs:int"/>
 				<xs:element name="Curve-type" type="xs:int"/>
 				<xs:element name="Color" type="xs:string"/>
-				<xs:element name="Coordinate-info">
-					<xs:complexType>
-						<xs:sequence>
-							<xs:element name="Resolutions" type="xs:string" minOccurs="3" maxOccurs="3"/>
-							<xs:element name="Units" type="xs:int" minOccurs="3" maxOccurs="3"/>
-						</xs:sequence>
-					</xs:complexType>
-				</xs:element>
 				<xs:element name="Contour" maxOccurs="unbounded">
 					<xs:complexType>
 						<xs:sequence>
