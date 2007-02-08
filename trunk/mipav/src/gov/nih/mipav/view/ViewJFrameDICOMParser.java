@@ -1,8 +1,6 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.*;
-
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 
@@ -83,14 +81,11 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
     /** DOCUMENT ME! */
     private boolean disregardSeries;
 
-    /** 
-     * fileInfoVector represents images in image table but imageTableVector was needed
-     * also becasue this handles multiple series in the same dir.
-     * fileInfoVector is all the images in the dir but 
-     * imageTableVector represents all the images that are in the image table 
-     * at a particular instance or series
-     * 
-     * */
+    /**
+     * fileInfoVector represents images in image table but imageTableVector was needed also becasue this handles
+     * multiple series in the same dir. fileInfoVector is all the images in the dir but imageTableVector represents all
+     * the images that are in the image table at a particular instance or series
+     */
     private Vector fileInfoVector, imageTableVector;
 
     /** DOCUMENT ME! */
@@ -134,17 +129,15 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
     /** DOCUMENT ME! */
     private TableSorter studyTableSorter;
-    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
      * Creates new frame. Tables contain no data but the tree is initialized to the appropriate directory.
      *
-     * @param  ui   User interface.
      * @param  dir  Directory.
      */
-    public ViewJFrameDICOMParser(ViewUserInterface ui, String dir) {
+    public ViewJFrameDICOMParser(String dir) {
         super(dir, new ViewImageFileFilter(new String[] { "dcm", "DCM", "ima", "IMA" }));
 
         addWindowListener(this);
@@ -252,6 +245,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             FileIO io = new FileIO();
             io.setQuiet(true);
             io.setFileDir(fileInfoDICOM.getFileDirectory() + File.separatorChar);
+
             ModelImage image = io.readDicom(fileNames[0], fileNames, false);
 
             if (image == null) {
@@ -330,6 +324,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             io.setQuiet(true);
             io.setFileDir(fileInfoDICOM.getFileDirectory() + File.separatorChar);
             System.err.println("HERE2");
+
             ModelImage image = io.readDicom(fileNames[0], fileNames, false);
 
             if (image == null) {
@@ -550,8 +545,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 // set the progess background color to dark gray
                 // System.err.println("setting to dark gray");
-             //   progressPanel.setValueImmed(0);
-             //   progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
+                // progressPanel.setValueImmed(0);
+                // progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
 
                 // progressPanel.repaint();
                 // this.repaint();
@@ -568,14 +563,15 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 // fileInfoVector.size() is the number of rows in the table.
 
                 imageTableVector = new Vector();
+
                 for (int i = 0; i < fileInfoVector.size(); i++) {
                     FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
 
                     if ((seriesNumber == null) || seriesNumber.equals("") ||
                             (seriesNumberEqual(seriesNumber, fileInfoDICOM) == true)) {
                         Vector newRow = new Vector();
-                        
-                        imageTableVector.addElement((FileInfoDicom)fileInfoVector.elementAt(i));
+
+                        imageTableVector.addElement((FileInfoDicom) fileInfoVector.elementAt(i));
 
                         // tableHeader.size() is the number of columns in the table
                         for (int j = 0; j < tableHeaderVector.size(); j++) {
@@ -654,8 +650,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                                          */
                                         try {
                                             Integer integer = new Integer(Integer.parseInt(((String)
-                                                                                                ((FileDicomTag) dicomTag)
-                                                                                                    .getValue(true))));
+                                                                                            ((FileDicomTag) dicomTag)
+                                                                                                .getValue(true))));
                                             imageTableModel.setColumnClass(integer.getClass(), j); // set numerical
                                                                                                    // sorting
                                             newRow.addElement(integer);
@@ -671,9 +667,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                                         try {
                                             Double doubleObj = new Double(Double.parseDouble(((String)
-                                                                                                  ((FileDicomTag)
-                                                                                                       dicomTag)
-                                                                                                      .getValue(true))));
+                                                                                              ((FileDicomTag) dicomTag)
+                                                                                                  .getValue(true))));
                                             imageTableModel.setColumnClass(doubleObj.getClass(), j); // set numerical sorting
                                             newRow.addElement(doubleObj);
 
@@ -696,22 +691,22 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                         }
 
-                       // if ((i % mod) == 0) {
-                       //     progressPanel.setValueImmed(100 * (i + 1) / (fileInfoVector.size()));
-                            // System.err.println("pbar val to: " + (100 * (i + 1) / (fileInfoVector.size())));
-                      //  }
+                        // if ((i % mod) == 0) {
+                        // progressPanel.setValueImmed(100 * (i + 1) / (fileInfoVector.size()));
+                        // System.err.println("pbar val to: " + (100 * (i + 1) / (fileInfoVector.size())));
+                        // }
 
                         imageTableModel.addRow(newRow); // the new row, after all column values have been added, is
                                                         // added to the table
                     }
                 }
 
-               
+
                 // imageTableSorter.fireTableDataChanged();
                 // this.repaint();
-            //    progressPanel.getProgressBar().setBorderPainted(false);
-            //    progressPanel.getProgressBar().setBackground(this.getBackground());
-            //    progressPanel.getProgressBar().setForeground(this.getBackground());
+                // progressPanel.getProgressBar().setBorderPainted(false);
+                // progressPanel.getProgressBar().setBackground(this.getBackground());
+                // progressPanel.getProgressBar().setForeground(this.getBackground());
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1133,12 +1128,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
      *
      * <p>For the brightnessSlider the slider values and the brightness values are identical. brightness is an offset
      * going from -255 to 255. This is enough to change all 0 values to 255 and all 255 values to 0. brightness is added
-     * to all contrast scaled red, green, and blue.
+     * to all contrast scaled red, green, and blue.</p>
      *
      * <p>However, for the constrastSlider the slider values are different from the contrast values. The contrast values
      * go from 0.1 to 10.0 while the slider values go from -200 to 200. contrast =
      * (float)Math.pow(10.0,contrastSlider.getValue()/200.0) The original red, green, and blue are mutliplied by
-     * contrast.
+     * contrast.</p>
      */
     private void buildBrightnessContrastPanel() {
         brightnessSlider = new JSlider(JSlider.HORIZONTAL, -255, 255, origBrightness);
@@ -1271,13 +1266,13 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         gbc2.gridheight = 1;
         gbc2.gridy = 4;
 
-        //progressPanel = new JPanelProgressBar(0, 100);
-        //centerPanel.add(progressPanel, gbc2);
+        // progressPanel = new JPanelProgressBar(0, 100);
+        // centerPanel.add(progressPanel, gbc2);
 
-        //progressPanel.getProgressBar().setBackground(this.getBackground());
-        //progressPanel.getProgressBar().setForeground(this.getBackground());
-        //progressPanel.getProgressBar().setBorderPainted(false);
-        //progressPanel.getProgressBar().setIndeterminate(true);
+        // progressPanel.getProgressBar().setBackground(this.getBackground());
+        // progressPanel.getProgressBar().setForeground(this.getBackground());
+        // progressPanel.getProgressBar().setBorderPainted(false);
+        // progressPanel.getProgressBar().setIndeterminate(true);
 
         brightnessContrastPanel = new JPanel(new BorderLayout());
         brightnessContrastPanel.add(centerPanel);
@@ -1423,7 +1418,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         imageTableModel.removeAllRows();
 
         fileInfoVector = new Vector();
-        
+
 
         long time = System.currentTimeMillis();
 
@@ -1488,8 +1483,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
 
             // set the progressPanel (bar) to dark gray
-          //  progressPanel.setValueImmed(0);
-          //  progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
+            // progressPanel.setValueImmed(0);
+            // progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
             // progressPanel.repaint();
             // this.repaint();
 
@@ -1573,8 +1568,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                     addSeries = false;
 
                     // System.err.println("updating to: " + (100 * (j + 1) / (grandparent.length)));
-                    //progressPanel.updateValueImmed(100 * (j + 1) / (grandparent.length));
-                    //                    progressBar.updateValue(100 * (j + 1) / (grandparent.length), false);
+                    // progressPanel.updateValueImmed(100 * (j + 1) / (grandparent.length));
+                    // progressBar.updateValue(100 * (j + 1) / (grandparent.length), false);
                 }
 
                 if (addStudy) {
@@ -1632,7 +1627,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                     }
 
                     // System.err.println("updating to: " + (100 * (i + 1) / (children.length)));
-                  //  progressPanel.updateValueImmed(100 * (i + 1) / (children.length));
+                    // progressPanel.updateValueImmed(100 * (i + 1) / (children.length));
                 }
 
                 if (fileInfoRef != null) {
@@ -1654,9 +1649,9 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 }
             }
 
-           // progressPanel.getProgressBar().setBorderPainted(false);
-          //  progressPanel.getProgressBar().setBackground(this.getBackground());
-           // progressPanel.getProgressBar().setForeground(this.getBackground());
+            // progressPanel.getProgressBar().setBorderPainted(false);
+            // progressPanel.getProgressBar().setBackground(this.getBackground());
+            // progressPanel.getProgressBar().setForeground(this.getBackground());
 
             imageTableSorter.fireTableDataChanged();
         } catch (Exception err) {
