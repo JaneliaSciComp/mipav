@@ -219,13 +219,21 @@ public class FileVOI extends FileBase {
                 voi[0] = new VOI(numVOIs, trimmedFileName, 1);
             }
 
-            if (!readXML(voi[0])) {
-            	if (!readCoordXML(voi[0])) {
-            		System.err.println("ERROR in both reads");
-            	} else {
-            		System.err.println("success");
+            if (image.getNDims() == 2) {
+            	if (!readXML(voi[0])) {
+            		throw (new IOException("Open VOI failed"));
             	}
+            } else {
+            	if (!readXML(voi[0])) {
+                	if (!readCoordXML(voi[0])) {
+                		throw (new IOException("Open VOI failed"));
+                	} else {
+                	//	System.err.println("success");
+                	}
+                }
             }
+            
+            
             
             
            
@@ -607,28 +615,7 @@ public class FileVOI extends FileBase {
                       Integer.toString(voi.getColor().getRed()) + "," +
                       Integer.toString(voi.getColor().getGreen()) + "," +
                       Integer.toString(voi.getColor().getBlue()));
-
-            openTag(bw, "Coordinate-info", true);
-            
-            float [] resolutions = image.getResolutions(0);
-            closedTag(bw, "Resolutions", Float.toString(resolutions[0]));
-            closedTag(bw, "Resolutions", Float.toString(resolutions[1]));
-            if (resolutions.length > 2) {
-            	closedTag(bw, "Resolutions", Float.toString(resolutions[2]));
-            } else {
-            	closedTag(bw, "Resolutions", "1.0");
-            }
-            
-            int [] units = image.getUnitsOfMeasure();
-            closedTag(bw, "Units", Integer.toString(units[0]));
-            closedTag(bw, "Units", Integer.toString(units[0]));
-            if (units.length > 2) {
-            	closedTag(bw, "Units", Integer.toString(units[0]));
-            } else {
-            	closedTag(bw, "Units", "0.0");
-            }
-            openTag(bw, "Coordinate-info", false);
-            
+                     
             
             if ((voi.getCurveType() == VOI.CONTOUR) ||
                 (voi.getCurveType() == VOI.POLYLINE) ||
@@ -682,8 +669,11 @@ public class FileVOI extends FileBase {
                     tempBase = tempVOIItem.getVOIBase();
 
                     openTag(bw, "Contour", true);
-                    //closedTag(bw, "Slice-number", Integer.toString(tempVOIItem.getSlice()));
-
+                    
+                    //save old format if image dim is 2
+                    if (image.getNDims() == 2) {
+                    	closedTag(bw, "Slice-number", Integer.toString(tempVOIItem.getSlice()));
+                    }
                     nPts = tempBase.size();
                     if (nPts > x.length) {
                         x = new float[nPts];
@@ -693,27 +683,30 @@ public class FileVOI extends FileBase {
 
                     tempBase.exportArrays(x, y, z);
 
-                    Point3Df ptIn = new Point3Df();
-                    Point3Df ptOut = new Point3Df();
-                    int slice = tempVOIItem.getSlice();
-                    for (m = 0; m < nPts; m++) {
-                    	ptIn.x = x[m];
-                    	ptIn.y = y[m];
-                    	ptIn.z = slice;
-                    	MipavCoordinateSystems.FileToScanner(ptIn, ptOut, image);
+                    if (image.getNDims() > 2) {
+                    	Point3Df ptIn = new Point3Df();
+                    	Point3Df ptOut = new Point3Df();
+                    	int slice = tempVOIItem.getSlice();
+                    	for (m = 0; m < nPts; m++) {
+                    		ptIn.x = x[m];
+                    		ptIn.y = y[m];
+                    		ptIn.z = slice;
+                    		MipavCoordinateSystems.FileToScanner(ptIn, ptOut, image);
+                    		//System.err.println("Pt in: " + ptIn + ", Pt out: " + ptOut);
+                    		closedTag(bw, "Pt",
+                    				Float.toString(ptOut.x) + "," +
+                    				Float.toString(ptOut.y) + "," +
+                    				Float.toString(ptOut.z));
+                    	}
+                    } else {
+                    	//image dim is 2.... save to old format
                     	
-                    	Preferences.debug("File coords: " + ptIn + " Scanner coords: " + ptOut + "\n", Preferences.DEBUG_FILEIO);
-                    	
-                    	//System.err.println("Original coords: " + ptIn);
-                    	//System.err.println("Scanner coords: " + ptOut);
-                    	
-                    	//MipavCoordinateSystems.ScannerToFile(ptOut, ptIn, image);
-                    	//System.err.println("Scanner->File coords: " + ptIn + "\n");
-                    	
-                        closedTag(bw, "Pt",
-                                  Float.toString(ptOut.x) + "," +
-                                  Float.toString(ptOut.y) + "," +
-                                  Float.toString(ptOut.z));
+                    	for (m = 0; m < nPts; m++) {
+                            closedTag(bw, "Pt",
+                                      Float.toString(x[m]) + "," +
+                                      Float.toString(y[m]));
+                        }
+
                     }
 
                     openTag(bw, "Contour", false);
@@ -746,8 +739,11 @@ public class FileVOI extends FileBase {
                                 ((VOIBase) contours[i].elementAt(j)).isActive()) {
                                 openTag(bw, "Contour", true);
 
-                                closedTag(bw, "Slice-number", Integer.toString(i));
-
+                                // save old format if image dim is 2
+                                if (image.getNDims() == 2) {
+                                	closedTag(bw, "Slice-number", Integer.toString(i));
+                                }
+                                
                                 nPts = ((Vector) (contours[i].elementAt(j))).size();
 
                                 if (x.length < nPts) {
@@ -760,11 +756,32 @@ public class FileVOI extends FileBase {
                                 ((VOIBase) (contours[i].elementAt(j))).exportArrays(x,
                                         y, z);
 
-                                for (k = 0; k < nPts; k++) {
-                                    closedTag(bw, "Pt",
-                                              Float.toString(x[k]) + "," +
-                                              Float.toString(y[k]));
+                                if (image.getNDims() > 2) {
+                                	Point3Df ptIn = new Point3Df();
+                                	Point3Df ptOut = new Point3Df();
+                                	int slice = i;
+                                	for (m = 0; m < nPts; m++) {
+                                		ptIn.x = x[m];
+                                		ptIn.y = y[m];
+                                		ptIn.z = slice;
+                                		MipavCoordinateSystems.FileToScanner(ptIn, ptOut, image);
+                                		closedTag(bw, "Pt",
+                                				Float.toString(ptOut.x) + "," +
+                                				Float.toString(ptOut.y) + "," +
+                                				Float.toString(ptOut.z));
+                                	}
+                                } else {
+                                	//image is 2d
+                                	
+                                	 for (k = 0; k < nPts; k++) {
+                                         closedTag(bw, "Pt",
+                                                   Float.toString(x[k]) + "," +
+                                                   Float.toString(y[k]));
+                                     }
                                 }
+                                
+                                
+                               
 
                                 openTag(bw, "Contour", false);
                             }
@@ -1171,7 +1188,6 @@ public class FileVOI extends FileBase {
      * @return  boolean
      */
     private boolean readCoordXML(VOI voi) {
-System.err.println("doing this one now");
         SAXParserFactory spf = SAXParserFactory.newInstance();
 
         spf.setNamespaceAware(true);
@@ -1446,15 +1462,7 @@ System.err.println("doing this one now");
                 } catch (NumberFormatException nfex) {
                     Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
                 }
-            } else if (currentKey.equals("Resolutions")) {
-            	//System.err.println("got resolutions: " + elementBuffer);
-            	
-            } else if (currentKey.equals("Units")) {
-            	//System.err.println("got units: " + elementBuffer);
-            }else if (currentKey.equals("Contour")) {
-            
-           
-
+            } else if (currentKey.equals("Contour")) {
                 // finished adding points to contour.. now add to VOI
                 int index;
                 float[] x, y, z;
@@ -1465,6 +1473,10 @@ System.err.println("doing this one now");
 
                 Point3Df ptIn = new Point3Df();
                 Point3Df ptOut = new Point3Df();
+                
+                int xDim = image.getExtents()[0];
+                int yDim = image.getExtents()[1];
+                int zDim = image.getExtents()[2];
                 
                 Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
                 for (index = 0; index < contourVector.size(); index++) {
@@ -1479,6 +1491,10 @@ System.err.println("doing this one now");
                 	Preferences.debug("\tScanner coord: " + ptIn + ", File coord: " +
                 			x[index] + ", " + y[index] + ", " + z[index] + "\n", Preferences.DEBUG_FILEIO);
                 	
+                	if (ptOut.x > xDim || ptOut.y > yDim || ptOut.z >= zDim) {
+                		MipavUtil.displayWarning("VOI on file out of image bounds:  Open VOI aborted");
+                		return;
+                	}
                 }
                 voi.importCurve(x, y, z, (int)ptOut.z);
             }

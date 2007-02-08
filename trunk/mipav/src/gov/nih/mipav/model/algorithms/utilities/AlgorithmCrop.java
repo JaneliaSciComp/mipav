@@ -1492,7 +1492,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             	
             	startPos = origins[2];
             	             
-            	System.err.println("Original file origin: " + originVOI);
+            	//System.err.println("Original file origin: " + originVOI);
                 for (n = 0, slc = z[0]; slc <= z[1]; n++, slc++) {
 
                     ((FileInfoDicom) (destImage.getFileInfo(n))).setValue("0002,0002", "1.2.840.10008.5.1.4.1.1.7 ",
@@ -1517,20 +1517,11 @@ public class AlgorithmCrop extends AlgorithmBase {
                     // change the image start position ("0020, 0032")
                     
                     originVOI.z = slc;
-                    //System.err.println("File origin for slice: " + slc + ": " + originVOI);
                     MipavCoordinateSystems.FileToScanner(originVOI, originLPS, srcImage );
                  
-                    //System.err.println("NEW ORIGIN: " + originLPS + "\n");
-                    //origins[2] = startPos + (direct[2] * n * resols[2]);
-                    //System.err.println("N: " + n + ", origin[2]: " + origins[2] + " res2: " + resols[2] + ", " + direct[2]);
-                                
-                    //newImgOriginLPS = originImg2LPS(origins, destImage);
-                                        
                     value = Float.toString(originLPS.x) + "\\" + Float.toString(originLPS.y) + "\\" +
                     Float.toString(originLPS.z);
                     
-                 //   value = Float.toString(newImgOriginLPS[0]) + "\\" + Float.toString(newImgOriginLPS[1]) + "\\" +
-                 //           Float.toString(newImgOriginLPS[2]);
                     dicomInfoBuffer.setValue("0020,0032", value, value.length());
 
                     // readjust the slice location ("0020,1041")
@@ -1679,7 +1670,6 @@ public class AlgorithmCrop extends AlgorithmBase {
                 originImgOrd[1] = lpsOriginVOI.z;
                 originImgOrd[2] = lpsOriginVOI.x;
             } else if (orientation == FileInfoBase.CORONAL) {
-            	
             	originImgOrd[0] = lpsOriginVOI.x;
                 originImgOrd[1] = lpsOriginVOI.z;
                 originImgOrd[2] = lpsOriginVOI.y;
@@ -1722,7 +1712,7 @@ public class AlgorithmCrop extends AlgorithmBase {
             Point3Df fileOriginVOI = new Point3Df(x[0], y[0], z[0]);
             Point3Df lpsOriginVOI = new Point3Df();
             MipavCoordinateSystems.FileToScanner(fileOriginVOI, lpsOriginVOI, destImage);
-                        
+            
             int orientation = destImage.getImageOrientation();
             if (orientation == FileInfoBase.AXIAL ||
             		orientation == FileInfoBase.UNKNOWN_ORIENT) {
