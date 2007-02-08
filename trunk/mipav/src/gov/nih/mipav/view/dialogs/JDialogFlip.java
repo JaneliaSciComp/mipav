@@ -37,6 +37,9 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
 
     /** DOCUMENT ME! */
     private int flipAxis;
+    
+    /** The object to be flipped */
+    private int flipObject;
 
     /** DOCUMENT ME! */
     private ModelImage image = null; // source image
@@ -62,11 +65,12 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
      * @param  im              Source image.
      * @param  flipAxis        Axis which image is to be flipped.
      */
-    public JDialogFlip(Frame theParentFrame, ModelImage im, int flipAxis) {
+    public JDialogFlip(Frame theParentFrame, ModelImage im, int flipAxis, int flipObject) {
         super(theParentFrame, true);
 
         setForeground(Color.black);
         this.flipAxis = flipAxis;
+        this.flipObject = flipObject;
         image = im;
         userInterface = ViewUserInterface.getReference();
     }
@@ -133,7 +137,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             System.gc();
 
             // Make algorithm
-            flipAlgo = new AlgorithmFlip(image, flipAxis);
+            flipAlgo = new AlgorithmFlip(image, flipAxis, flipObject);
 
             // This is very important. Adding this object as a listener allows the algorithm to
             // notify this object when it has completed of failed. See algorithm performed event.
@@ -190,6 +194,12 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         } else if (flipAxis == AlgorithmFlip.Z_AXIS) {
         	scriptParameters.getParams().put(ParameterFactory.newParameter("flip_axis", "Z"));
         }
+        
+        if(flipObject == AlgorithmFlip.IMAGE) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("flip_object", "image"));
+        } else if(flipObject == AlgorithmFlip.VOI) {
+            scriptParameters.getParams().put(ParameterFactory.newParameter("flip_object", "voi"));
+        }
     }
     
     /**
@@ -209,6 +219,14 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         	flipAxis = AlgorithmFlip.Z_AXIS;
         } else {
             throw new ParameterException("flip_axis", "Illegal axis parameter: " + axisn);
+        }
+        
+        axisn = scriptParameters.getParams().getString("flip_object");
+        if(axisn.equals("image")) {
+            flipObject = AlgorithmFlip.IMAGE;
+        }
+        if(axisn.equals("voi")) {
+            flipObject = AlgorithmFlip.VOI;
         }
     }
 }

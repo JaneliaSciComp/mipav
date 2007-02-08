@@ -872,13 +872,22 @@ public class ViewMenuBar {
 
         // menuBuilder.buildMenuItem("Dicom order", "DicomOrder", 0, null, false),
                                         menuBuilder.buildMenuItem("Fill image", null, 0, null, false),
-                                        menuBuilder.makeMenu("Flip", false,
+                                        menuBuilder.makeMenu("Flip image", false,
                                                              new JMenuItem[] {
-                                                                 menuBuilder.buildMenuItem("Horizontal", "FlipY", 0,
+                                                                 menuBuilder.buildMenuItem("Horizontal", "ImageFlipY", 0,
                                                                                            "fliphoriz.gif", true),
-                                                                 menuBuilder.buildMenuItem("Vertical", "FlipX", 0,
+                                                                 menuBuilder.buildMenuItem("Vertical", "ImageFlipX", 0,
                                                                                            "flipvert.gif", true),
-                                                                 menuBuilder.buildMenuItem("Depth", "FlipZ", 0,
+                                                                 menuBuilder.buildMenuItem("Depth", "ImageFlipZ", 0,
+                                                                                           "flipvert.gif", true)
+                                                             }),
+                                         menuBuilder.makeMenu("Flip VOI", false,
+                                                             new JMenuItem[] {
+                                                                 menuBuilder.buildMenuItem("Horizontal", "VOIFlipY", 0,
+                                                                                           "fliphoriz.gif", true),
+                                                                 menuBuilder.buildMenuItem("Vertical", "VOIFlipX", 0,
+                                                                                           "flipvert.gif", true),
+                                                                 menuBuilder.buildMenuItem("Depth", "VOIFlipZ", 0,
                                                                                            "flipvert.gif", true)
                                                              }),
                                         menuBuilder.buildMenuItem("Image calculator", "Calculator", 0, null, false),
