@@ -45,9 +45,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                                File.separator;
 
     /** DOCUMENT ME! */
-    private String docsDir = pluginDir + File.separator + "docs";
-
-    /** DOCUMENT ME! */
     private JTextField textName;
 
     /** DOCUMENT ME! */
@@ -76,16 +73,16 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
      *
      * @return  DOCUMENT ME!
      *
-     * @throws  Exception  DOCUMENT ME!
+     * @throws  IOException  DOCUMENT ME!
      */
-    public static InputStream getInputStream(String tarFileName) throws Exception {
+    public static InputStream getInputStream(String tarFileName) throws IOException {
 
         if (tarFileName.substring(tarFileName.lastIndexOf(".") + 1, tarFileName.lastIndexOf(".") + 3).equalsIgnoreCase("gz")) {
-            System.out.println("Creating an GZIPInputStream for the file");
+            Preferences.debug("Creating an GZIPInputStream for the file\n", Preferences.DEBUG_MINOR);
 
             return new GZIPInputStream(new FileInputStream(new File(tarFileName)));
         } else {
-            System.out.println("Creating an InputStream for the file");
+            Preferences.debug("Creating an InputStream for the file\n", Preferences.DEBUG_MINOR);
 
             return new FileInputStream(new File(tarFileName));
         }
@@ -100,7 +97,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
      * @throws  IOException  DOCUMENT ME!
      */
     public static void readTar(InputStream in, String untarDir) throws IOException {
-        System.out.println("Reading TarInputStream... (using classes from http://www.trustice.com/java/tar/)");
+        Preferences.debug("Reading TarInputStream... (using classes from http://www.trustice.com/java/tar/)\n",
+                          Preferences.DEBUG_MINOR);
 
         TarInputStream tin = new TarInputStream(in);
         TarEntry tarEntry = tin.getNextEntry();
@@ -109,7 +107,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
             while (tarEntry != null) {
                 File destPath = new File(untarDir + File.separatorChar + tarEntry.getName());
-                System.out.println("Processing " + destPath.getAbsoluteFile());
+                Preferences.debug("Processing " + destPath.getAbsoluteFile() + "\n", Preferences.DEBUG_MINOR);
 
                 if (!tarEntry.isDirectory()) {
                     FileOutputStream fout = new FileOutputStream(destPath);
@@ -124,7 +122,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
             tin.close();
         } else {
-            System.out.println("That destination directory doesn't exist! " + untarDir);
+            Preferences.debug("That destination directory doesn't exist! " + untarDir + "\n", Preferences.DEBUG_MINOR);
         }
     }
 
@@ -186,7 +184,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             }
 
         } else if (source == OKButton) {
-            String userHome;
             int i;
 
             if (files.size() == 0) {
@@ -204,7 +201,6 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
             FileInputStream fr = null; // for inputting the source plugin file
             BufferedInputStream br = null; // buffers are used to speed up the process
             BufferedOutputStream bw = null;
-            ZipFile zFile = null;
             ZipEntry entry = null;
             ZipInputStream zIn = null;
 
@@ -266,11 +262,8 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                 else if (currentFile.getName().endsWith(".zip") || currentFile.getName().endsWith(".jar")) {
 
                     try {
-                        zFile = new ZipFile(currentFile);
                         zIn = new ZipInputStream(new FileInputStream(currentFile));
                         entry = null;
-
-                        int numEntries = zFile.size();
 
                         // if the entry is a directory of is a class file, extract it
                         while ((entry = zIn.getNextEntry()) != null) {
@@ -319,9 +312,7 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
                         }
                     }
 
-                }
-
-                if (currentFile.getName().endsWith(".tar || tar.gz")) {
+                } else if (currentFile.getName().endsWith(".tar") || currentFile.getName().endsWith(".tar.gz")) {
 
                     try {
                         readTar(getInputStream(currentFile.getPath()), pluginDir);
@@ -435,6 +426,4 @@ public class JDialogInstallPlugin extends JDialogBase implements ActionListener 
 
         pack();
     }
-
-
 }
