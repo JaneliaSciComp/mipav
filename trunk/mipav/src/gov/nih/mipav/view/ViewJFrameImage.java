@@ -1431,16 +1431,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
         } else if (command.equals("ImageFlipY")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE);
-
-            flip.callAlgorithm();
         } else if (command.equals("ImageFlipX")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
-
-            flip.callAlgorithm();
-        } else if (command.equals("ImageFlipZ")) {
+        } else if (command.equals("ImageFlipZ")) {  
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
-            
-            flip.callAlgorithm();
         } else if (command.equals("VOIFlipY")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI);
 
@@ -1451,7 +1445,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             flip.callAlgorithm();
         } else if (command.equals("VOIFlipZ")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI);
-
+            
             flip.callAlgorithm();
         } 
         else if (command.equals("RotateX180")) {

@@ -13,6 +13,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import java.util.*;
+import javax.swing.*;
 
 
 /**
@@ -32,16 +33,16 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** Algorithm used by the dialog. */
     private AlgorithmFlip flipAlgo;
 
-    /** DOCUMENT ME! */
+    /** Axis to flip around. */
     private int flipAxis;
     
     /** The object to be flipped */
     private int flipObject;
 
-    /** DOCUMENT ME! */
+    /** Source image. */
     private ModelImage image = null; // source image
 
     /** DOCUMENT ME! */
@@ -49,6 +50,18 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
 
     /** DOCUMENT ME! */
     private ViewUserInterface userInterface;
+    
+    /** When checked, VOIs are flipped when image is flipped. */
+    private JCheckBox flipVoiCheckbox;
+    
+    /** Image is flipped by depth when selected */
+    private JRadioButton flipAxisZRadioButton;
+    
+    /** Image is flipped horizontally when selected */
+    private JRadioButton flipAxisYRadioButton;
+    
+    /** Image is flipped vertically when selected */
+    private JRadioButton flipAxisXRadioButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -58,31 +71,53 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     public JDialogFlip() { }
 
     /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is not
-     * necessary at present.
+     * Sets the appropriate variables. Creates a dialog if flipObject is equal to AlgorithmFlip.IMAGE.  User
+     * is required to input whether all VOIs should be flipped.
      *
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
      * @param  flipAxis        Axis which image is to be flipped.
      */
     public JDialogFlip(Frame theParentFrame, ModelImage im, int flipAxis, int flipObject) {
-        super(theParentFrame, true);
+        super(theParentFrame, false);
 
         setForeground(Color.black);
+        userInterface = ViewUserInterface.getReference();
         this.flipAxis = flipAxis;
         this.flipObject = flipObject;
-        image = im;
-        userInterface = ViewUserInterface.getReference();
+        this.image =im;
+        if(flipObject == AlgorithmFlip.IMAGE || flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
+            init();
+            //loadDefaults();
+            setVariables();
+        }
+        setForeground(Color.black);
+        
+        
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
-     * Does nothing.
+     * Processes button events.
      *
      * @param  event  event that triggers function
      */
-    public void actionPerformed(ActionEvent event) {}
+    public void actionPerformed(ActionEvent event) 
+    {
+        String command = event.getActionCommand();
+
+        if (command.equals("OK")) {
+
+            if (setVariables()) {
+                callAlgorithm();
+            }
+        } else if (command.equals("Cancel")) {
+            dispose();
+        } else if (command.equals("Help")) {
+            MipavUtil.showHelp("0");
+        }
+    }
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -199,6 +234,8 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             scriptParameters.getParams().put(ParameterFactory.newParameter("flip_object", "image"));
         } else if(flipObject == AlgorithmFlip.VOI) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("flip_object", "voi"));
+        } else if(flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
+        	scriptParameters.getParams().put(ParameterFactory.newParameter("flip_object", "image_and_voi"));
         }
     }
     
@@ -228,5 +265,86 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         if(axisn.equals("voi")) {
             flipObject = AlgorithmFlip.VOI;
         }
+        if(axisn.equals("image_and_voi")) {
+        	flipObject = AlgorithmFlip.IMAGE_AND_VOI;
+        }
+    }
+    
+    private void init() {
+        setTitle("Flip Image");
+        getContentPane().setLayout(new BorderLayout());
+
+        JPanel optionsPanel = new JPanel(new GridLayout(1, 2));
+
+        optionsPanel.setForeground(Color.black);
+        optionsPanel.setBorder(buildTitledBorder("Options"));
+
+        flipVoiCheckbox = new JCheckBox("Flip all VOIs.");
+        flipVoiCheckbox.setFont(serif12);
+        flipVoiCheckbox.setSelected(true);
+        flipVoiCheckbox.addItemListener(this);
+        optionsPanel.add(flipVoiCheckbox);
+        
+        JPanel flipAxisPanel = new JPanel(new GridLayout(1, 3));
+        
+        flipAxisPanel.setForeground(Color.black);
+        flipAxisPanel.setBorder(buildTitledBorder("Flip Axis"));
+        
+        flipAxisXRadioButton = new JRadioButton("X axis");
+        flipAxisXRadioButton.setFont(serif12);
+        
+        if(flipAxis == AlgorithmFlip.X_AXIS) {
+            flipAxisXRadioButton.setSelected(true);
+        }
+        
+        flipAxisYRadioButton = new JRadioButton("Y axis");
+        flipAxisYRadioButton.setFont(serif12);
+        
+        if(flipAxis == AlgorithmFlip.Y_AXIS) {
+            flipAxisYRadioButton.setSelected(true);
+        }
+        
+        flipAxisZRadioButton = new JRadioButton("Z axis");
+        flipAxisZRadioButton.setFont(serif12);
+        
+        if(flipAxis == AlgorithmFlip.Z_AXIS) {
+            flipAxisZRadioButton.setSelected(true);
+        }
+        
+        ButtonGroup axisGroup = new ButtonGroup();
+        axisGroup.add(flipAxisXRadioButton);
+        axisGroup.add(flipAxisYRadioButton);
+        axisGroup.add(flipAxisZRadioButton);
+        
+        flipAxisPanel.add(flipAxisXRadioButton);
+        flipAxisPanel.add(flipAxisYRadioButton);
+        flipAxisPanel.add(flipAxisZRadioButton);
+
+        getContentPane().add(optionsPanel, BorderLayout.NORTH);
+        getContentPane().add(flipAxisPanel, BorderLayout.CENTER);
+        getContentPane().add(buildButtons(), BorderLayout.SOUTH);
+        pack();
+        setResizable(false);
+        setVisible(true);
+    }
+    
+    private boolean setVariables()
+    {
+        if(flipVoiCheckbox.isSelected()) {
+            flipObject = AlgorithmFlip.IMAGE_AND_VOI;
+        }
+        else {
+            flipObject = AlgorithmFlip.IMAGE;
+        }
+        if(flipAxisXRadioButton.isSelected()) {
+            flipAxis = AlgorithmFlip.X_AXIS;
+        }
+        else if(flipAxisYRadioButton.isSelected()) {
+            flipAxis = AlgorithmFlip.Y_AXIS;
+        }
+        else {
+            flipAxis = AlgorithmFlip.Z_AXIS;
+        }
+        return true;
     }
 }
