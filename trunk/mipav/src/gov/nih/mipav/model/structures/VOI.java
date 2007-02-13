@@ -1896,7 +1896,7 @@ public class VOI extends ModelSerialCloneable {
      *
      * @param   slice  indicates slice where active Contour can be found.
      *
-     * @return  Contour that is active or null if not contour is active in the indicated slice.
+     * @return  Contour that is active or null if no contour is active in the indicated slice.
      */
     public VOIBase getActiveContour(int slice) {
         int i;

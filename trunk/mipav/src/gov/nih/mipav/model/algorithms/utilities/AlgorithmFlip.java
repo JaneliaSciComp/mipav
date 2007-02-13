@@ -13,7 +13,9 @@ import java.util.TreeMap;
 
 
 /**
- * Flips 2D, 3D or 4D grays scale or color dataset about X or Y axis.
+ * Flips 2D, 3D or 4D grays scale or color dataset about X, Y, or Z axis (when applicable) when AlgorithmFlip.IMAGE is passed to
+ * the constructor.  An option is given to flip all VOIs at this time.  When 
+ * AlgorithmFlip.VOI is passed, only the selected VOI is flipped about the specified axis.
  *
  * @version  1.0 July 14, 2000
  * @author   Matthew J. McAuliffe, Ph.D.
@@ -32,10 +34,13 @@ public class AlgorithmFlip extends AlgorithmBase {
     /** Flip along Z axis. */
     public static final int Z_AXIS = 2;
     
-    /** Denotes image should be flipped */
+    /** Image and all VOIs should be flipped */
+    public static final int IMAGE_AND_VOI = 2;
+    
+    /** Denotes image should be flipped without VOI */
     public static final int IMAGE = 0;
     
-    /** Denotes all VOIs should be flipped */
+    /** Denotes selected VOI should be flipped */
     public static final int VOI = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -45,9 +50,14 @@ public class AlgorithmFlip extends AlgorithmBase {
     
     /** Type of object to flip */
     private int flipObject;
+    
+    /** Whether all VOIs shouold be flipped when the image is flipped */
+    
+    private boolean flipVoiWithImage;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
+    
     /**
      * Flips 2D, 3D or 4D grays scale or color dataset about X or Y axis.
      *
@@ -62,6 +72,7 @@ public class AlgorithmFlip extends AlgorithmBase {
         } else {
             flipAxis = Y_AXIS;
         }
+        flipVoiWithImage = false;
     }
 
     /**
@@ -75,6 +86,8 @@ public class AlgorithmFlip extends AlgorithmBase {
         this(srcImg, flipMode, flipObject);
       //  progressMode = progress;
     }
+    
+    
 
     //~ Methods --------------------------------------------------------------------------------------------------------
 
@@ -177,7 +190,7 @@ public class AlgorithmFlip extends AlgorithmBase {
         else if (srcImage.getNDims() == 3) {            
             zDim = srcImage.getExtents()[2];
         }
-        if(flipObject == AlgorithmFlip.IMAGE)
+        if(flipObject == AlgorithmFlip.IMAGE || flipObject == AlgorithmFlip.IMAGE_AND_VOI)
         {
             
     
@@ -243,6 +256,67 @@ public class AlgorithmFlip extends AlgorithmBase {
                     fileInfo[i].setOrigin( loc + (fileInfo[0].getResolutions()[index] * i), index);
                 }
             }
+            if(flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
+                VOIVector vec = srcImage.getVOIs();
+                Iterator vecIter = vec.iterator();
+                if(flipAxis == X_AXIS) {
+                    while(vecIter.hasNext()) {              
+                        VOI nextVoi = (VOI)vecIter.next();
+                        for(int i=0; i<zDim; i++) {
+                            Polygon[] polyList = nextVoi.exportPolygons(i);
+                            nextVoi.removeCurves(i);
+                            for(int j=0; j<polyList.length; j++) {
+                                Polygon poly = polyList[j];
+                                int[] points = poly.ypoints;
+                                for(int k=0; k<points.length; k++) {
+                                    points[k] = -points[k] + yDim;                                
+                                }
+                                nextVoi.importPolygon(poly, i); 
+                            }
+                        }
+                    }
+                }
+                if(flipAxis == Y_AXIS) {
+                    while(vecIter.hasNext()) {              
+                        VOI nextVoi = (VOI)vecIter.next();
+                        for(int i=0; i<zDim; i++) {
+                            Polygon[] polyList = nextVoi.exportPolygons(i);
+                            nextVoi.removeCurves(i);
+                            for(int j=0; j<polyList.length; j++) {
+                                Polygon poly = polyList[j];
+                                int[] points = poly.xpoints;
+                                for(int k=0; k<points.length; k++) {
+                                    points[k] = -points[k] + xDim;                                
+                                }
+                                nextVoi.importPolygon(poly, i); 
+                            }
+                        }
+                    }
+                }
+                if(flipAxis == Z_AXIS && srcImage.getNDims() > 2)
+                {
+                    while(vecIter.hasNext()) {              
+                        VOI nextVoi = (VOI)vecIter.next();
+                        ArrayList[] polyArray = new ArrayList[zDim];
+                        for(int i=0; i<zDim; i++)
+                            polyArray[i] = new ArrayList();
+                        for(int i=0; i<zDim; i++) {
+                            Polygon[] polyList = nextVoi.exportPolygons(i);
+                            nextVoi.removeCurves(i);
+                            for(int j=0; j<polyList.length; j++) {
+                                Polygon poly = polyList[j];  
+                                polyArray[-i + zDim].add(poly);   
+                            }    
+                        }
+                        for(int i=0; i<zDim; i++) {
+                            ArrayList tempArray = polyArray[i];
+                            for(int j=0; j<tempArray.size(); j++) {
+                                nextVoi.importPolygon((Polygon)tempArray.get(j), i);
+                            }
+                        }
+                    }
+                }
+            }
         }
         else if(flipObject == AlgorithmFlip.VOI)
         {
@@ -251,16 +325,19 @@ public class AlgorithmFlip extends AlgorithmBase {
             if(flipAxis == X_AXIS) {
                 while(vecIter.hasNext()) {              
                     VOI nextVoi = (VOI)vecIter.next();
-                    for(int i=0; i<zDim; i++) {
-                        Polygon[] polyList = nextVoi.exportPolygons(i);
-                        nextVoi.removeCurves(i);
-                        for(int j=0; j<polyList.length; j++) {
-                            Polygon poly = polyList[j];
-                            int[] points = poly.ypoints;
-                            for(int k=0; k<points.length; k++) {
-                                points[k] = -points[k] + yDim;                                
+                    if(nextVoi.isActive())
+                    {
+                        for(int i=0; i<zDim; i++) {
+                            VOIBase base = nextVoi.getActiveContour(i);
+                            if(base != null)
+                            {
+                                Iterator itr = base.iterator();
+                                while(itr.hasNext())
+                                {
+                                    Point3Df point = (Point3Df)itr.next();
+                                    point.y = -point.y + yDim;
+                                }
                             }
-                            nextVoi.importPolygon(poly, i); 
                         }
                     }
                 }
@@ -268,16 +345,19 @@ public class AlgorithmFlip extends AlgorithmBase {
             if(flipAxis == Y_AXIS) {
                 while(vecIter.hasNext()) {              
                     VOI nextVoi = (VOI)vecIter.next();
-                    for(int i=0; i<zDim; i++) {
-                        Polygon[] polyList = nextVoi.exportPolygons(i);
-                        nextVoi.removeCurves(i);
-                        for(int j=0; j<polyList.length; j++) {
-                            Polygon poly = polyList[j];
-                            int[] points = poly.xpoints;
-                            for(int k=0; k<points.length; k++) {
-                                points[k] = -points[k] + xDim;                                
+                    if(nextVoi.isActive())
+                    {
+                        for(int i=0; i<zDim; i++) {
+                            VOIBase base = nextVoi.getActiveContour(i);
+                            if(base != null)
+                            {
+                                Iterator itr = base.iterator();
+                                while(itr.hasNext())
+                                {
+                                    Point3Df point = (Point3Df)itr.next();
+                                    point.x = -point.x + xDim;
+                                }
                             }
-                            nextVoi.importPolygon(poly, i); 
                         }
                     }
                 }
@@ -286,21 +366,19 @@ public class AlgorithmFlip extends AlgorithmBase {
             {
                 while(vecIter.hasNext()) {              
                     VOI nextVoi = (VOI)vecIter.next();
-                    ArrayList[] polyArray = new ArrayList[zDim];
-                    for(int i=0; i<zDim; i++)
-                        polyArray[i] = new ArrayList();
-                    for(int i=0; i<zDim; i++) {
-                        Polygon[] polyList = nextVoi.exportPolygons(i);
-                        nextVoi.removeCurves(i);
-                        for(int j=0; j<polyList.length; j++) {
-                            Polygon poly = polyList[j];  
-                            polyArray[-i + zDim].add(poly);   
-                        }    
-                    }
-                    for(int i=0; i<zDim; i++) {
-                        ArrayList tempArray = polyArray[i];
-                        for(int j=0; j<tempArray.size(); j++) {
-                            nextVoi.importPolygon((Polygon)tempArray.get(j), i);
+                    if(nextVoi.isActive())
+                    {
+                        for(int i=0; i<zDim; i++) {
+                            VOIBase base = nextVoi.getActiveContour(i);
+                            if(base != null)
+                            {
+                                Iterator itr = base.iterator();
+                                while(itr.hasNext())
+                                {
+                                    Point3Df point = (Point3Df)itr.next();
+                                    point.z = -point.z + zDim;
+                                }
+                            }
                         }
                     }
                 }
@@ -325,7 +403,9 @@ public class AlgorithmFlip extends AlgorithmBase {
         if(flipObject == IMAGE) {
         	historyString = historyString+"Object(IMAGE)\n";
        	} else if(flipObject == VOI) {
-       		historyString = historyString+"Object(VOI)\n";
+       		historyString = historyString+"Object(VOI)\n";			
+       	} else {
+       		historyString = historyString+"Object(IMAGE_AND_VOI)\n";
        	}
     }
 
