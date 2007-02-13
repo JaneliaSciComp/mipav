@@ -982,7 +982,6 @@ public class FileIO {
             fileType = FileUtility.UNDEFINED;
         }
 
-
         return fileType;
     }
 
@@ -2103,8 +2102,8 @@ public class FileIO {
                     (((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088") != null)) {
 
                 if ((String)
-                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050")).getValue(true) !=
-                        null) {
+                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
+                            .getValue(true) != null) {
                     sliceThickness = Float.parseFloat((String)
                                                       ((FileDicomTag)
                                                            ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0050"))
@@ -2114,8 +2113,8 @@ public class FileIO {
                 // 0018,0088 = Spacing Between Slices
                 // 0018,0050 = Slice Thickness
                 if ((String)
-                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088")).getValue(true) !=
-                        null) {
+                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
+                            .getValue(true) != null) {
                     sliceSpacing = Float.parseFloat((String)
                                                     ((FileDicomTag)
                                                          ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0018,0088"))
@@ -2187,8 +2186,8 @@ public class FileIO {
                     (sliceThickness == -1)) {
 
                 if ((String)
-                        ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041")).getValue(true) !=
-                        null) {
+                            ((FileDicomTag) ((FileInfoDicom) image.getFileInfo(0)).getTagsList().get("0020,1041"))
+                            .getValue(true) != null) {
 
                     sliceDifference = Float.parseFloat((String)
                                                        ((FileDicomTag)
@@ -2386,7 +2385,6 @@ public class FileIO {
         }
 
         fileType = chkMultiFile(fileType, multiFile); // for multifile support...
-
 
         try {
 
@@ -7621,14 +7619,23 @@ public class FileIO {
         FileTiff imageFile;
         ModelImage image = null;
 
-        int nImages;
+        int nFiles;
 
         try {
             fileList = getFileList(fileDir, fileName); // get series of files in the chosen dir
-            nImages = fileList.length;
+            nFiles = fileList.length;
             imageFile = new FileTiff(fileName, fileDir); // read in files
             imageFile.setFileName(fileList[0]);
-            imageFile.readImage(true, false);
+
+            if (nFiles == 1) { // The multiFile flag is true but there is only one image in the
+                               // directory with the prefix name so read and return image as a single file.
+                image = imageFile.readImage(false, false);
+                LUT = imageFile.getModelLUT();
+
+                return image;
+            } else {
+                imageFile.readImage(true, false);
+            }
         } catch (IOException error) {
 
             if (!quiet) {
@@ -7647,28 +7654,30 @@ public class FileIO {
 
         myFileInfo = imageFile.getFileInfo();
 
-        length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
-
-
         try {
             resols = new float[5];
 
-            if (nImages > 1) {
+            if (myFileInfo.getExtents().length == 3) {
+                extents = new int[4];
+                extents[2] = myFileInfo.getExtents()[2];
+                extents[3] = nFiles;
+                length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1] * myFileInfo.getExtents()[2];
+            } else if ((myFileInfo.getExtents().length == 2) && (nFiles > 1)) {
                 extents = new int[3];
-                extents[2] = nImages;
+                extents[2] = nFiles;
+                length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
             } else {
                 extents = new int[2];
+                length = myFileInfo.getExtents()[0] * myFileInfo.getExtents()[1];
             }
 
             extents[0] = myFileInfo.getExtents()[0]; // copy out current [0,1] coords
             extents[1] = myFileInfo.getExtents()[1]; // so all 3 ([0,1,2]) may be added
 
-            resols = myFileInfo.getResolutions(); // ??
+            resols = myFileInfo.getResolutions();
+            myFileInfo.setExtents(extents);
 
-            myFileInfo.setExtents(extents); //
-            myFileInfo.setResolutions(resols); // ??
             image = new ModelImage(myFileInfo.getDataType(), extents, myFileInfo.getFileName(), UI);
-
             createProgressBar(null, trim(fileName) + getSuffixFrom(fileName), FILE_READ);
 
         } catch (OutOfMemoryError error) {
@@ -7693,7 +7702,6 @@ public class FileIO {
             imageFile = new FileTiff(fileList[0], fileDir);
         } catch (IOException error) {
 
-
             if (!quiet) {
                 MipavUtil.displayError("FileIO: " + error);
             }
@@ -7709,11 +7717,11 @@ public class FileIO {
         }
 
         // loop through image and store data in image model
-        for (i = 0; i < nImages; i++) {
+        for (i = 0; i < nFiles; i++) {
 
             try {
                 progressBar.setTitle(UI.getProgressBarPrefix() + "image " + fileList[i]);
-                progressBar.updateValueImmed(Math.round((float) i / (nImages - 1) * 100));
+                progressBar.updateValueImmed(Math.round((float) i / (nFiles - 1) * 100));
                 ((FileTiff) imageFile).setFileName(fileList[i]);
 
                 // fileTIFF.testme(i);
@@ -7722,7 +7730,7 @@ public class FileIO {
                 myFileInfo.setExtents(extents);
                 myFileInfo.setResolutions(resols);
 
-                if (nImages > 1) {
+                if (nFiles > 1) {
                     myFileInfo.setMultiFile(true);
                 }
 
@@ -7735,7 +7743,6 @@ public class FileIO {
                     image.importData(i * length, ((FileTiff) imageFile).getImageBuffer(), false);
                 }
             } catch (IOException error) {
-
 
                 if (!quiet) {
                     MipavUtil.displayError("FileIO: " + error);
@@ -7750,7 +7757,6 @@ public class FileIO {
 
                 return null;
             } catch (ArrayIndexOutOfBoundsException error) {
-
 
                 if (!quiet) {
                     MipavUtil.displayError("Unable to read images: the image\n" + "number in the file " +
@@ -7767,13 +7773,11 @@ public class FileIO {
                 return null;
             } catch (OutOfMemoryError error) {
 
-
                 if (!quiet) {
                     MipavUtil.displayError("Out of memory: " + error);
                 }
 
                 if (image != null) {
-
                     image.disposeLocal();
                     image = null;
                 }
@@ -7784,9 +7788,7 @@ public class FileIO {
             }
         }
 
-
         return image;
-
     }
 
 
@@ -8433,9 +8435,9 @@ public class FileIO {
             aviFile.setCompressionQuality(options.getMJPEGQuality());
 
             if (!aviFile.writeImage(image, options.getImageB(), options.getLUTa(), options.getLUTb(),
-                                    options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
-                                    options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
-                                    options.getPaintBitmap(), options.getAVICompression())) {
+                                        options.getRGBTa(), options.getRGBTb(), options.getRed(), options.getGreen(),
+                                        options.getBlue(), options.getOpacity(), options.getAlphaBlend(),
+                                        options.getPaintBitmap(), options.getAVICompression())) {
                 System.err.println("AVI write cancelled");
             }
 

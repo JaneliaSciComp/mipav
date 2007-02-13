@@ -269,7 +269,6 @@ public class ViewOpenFileUI extends ViewFileChooserBase {
                 }
 
                 chooser.setDialogTitle("Open Image");
-System.err.println("viewopenfileui");
                 int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
