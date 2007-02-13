@@ -370,6 +370,9 @@ public class FileTiff extends FileBase {
      */
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         int[] imgExtents;
+        float[] sliceBufferFloat = null;
+        double[] sliceBufferDouble = null;
+
 
         try {
             file = new File(fileDir + fileName);
@@ -542,13 +545,18 @@ public class FileTiff extends FileBase {
             }
 
             int bufferSize;
+            int sliceSize = imgExtents[0] * imgExtents[1];
 
-            if (ModelImage.isColorImage(fileInfo.getDataType())) {
-                bufferSize = xDim * yDim * 4;
+            if (imgExtents.length == 3) {
+                bufferSize = imgExtents[0] * imgExtents[1] * imgExtents[2];
             } else {
-                bufferSize = xDim * yDim;
+                bufferSize = imgExtents[0] * imgExtents[1];
             }
 
+            if (ModelImage.isColorImage(fileInfo.getDataType())) {
+                bufferSize *= 4;
+                sliceSize *= 4;
+            }
 
             // long secondTime = System.currentTimeMillis();
             // System.err.println("Time elapsed reading IFDs: " + ((secondTime - firstTime) / 1000));
@@ -558,6 +566,8 @@ public class FileTiff extends FileBase {
                 if (doubleBuffer == null) {
                     doubleBuffer = new double[bufferSize];
                 }
+
+                sliceBufferDouble = new double[sliceSize];
 
                 for (i = 0; i < imageSlice; i++) {
 
@@ -570,7 +580,7 @@ public class FileTiff extends FileBase {
                             }
                         }
 
-                        readDoubleBuffer(i, doubleBuffer);
+                        readDoubleBuffer(i, sliceBufferDouble);
 
                         if (one) {
                             i = 0;
@@ -579,8 +589,10 @@ public class FileTiff extends FileBase {
                         throw new IOException("FileTiff: Read: " + error);
                     }
 
+                    System.arraycopy(sliceBufferDouble, 0, doubleBuffer, i * sliceSize, sliceSize);
+
                     if (multiFile == false) {
-                        image.importData(i * bufferSize, doubleBuffer, false);
+                        image.importData(i * sliceSize, sliceBufferDouble, false);
                     }
                 }
             } else { // not ModelStorageBase.DOUBLE
@@ -590,12 +602,14 @@ public class FileTiff extends FileBase {
                     imgBuffer = new float[bufferSize];
                 }
 
+                sliceBufferFloat = new float[sliceSize];
+
                 for (i = 0; i < imageSlice; i++) {
 
                     try {
 
                         if (doTile || lzwCompression) {
-                            readTileBuffer(i, imgBuffer);
+                            readTileBuffer(i, sliceBufferFloat);
                         } else {
 
                             if (one) {
@@ -605,7 +619,7 @@ public class FileTiff extends FileBase {
                                 }
                             }
 
-                            readBuffer(i, imgBuffer); // Slice a time;
+                            readBuffer(i, sliceBufferFloat); // Slice a time;
 
                             if (one) {
                                 i = 0;
@@ -615,8 +629,10 @@ public class FileTiff extends FileBase {
                         throw new IOException("FileTiff: read: " + error);
                     }
 
+                    System.arraycopy(sliceBufferFloat, 0, imgBuffer, i * sliceSize, sliceSize);
+
                     if (multiFile == false) {
-                        image.importData(i * bufferSize, imgBuffer, false);
+                        image.importData(i * sliceSize, sliceBufferFloat, false);
                         // System.err.println("Imported image data");
                     }
                 }
