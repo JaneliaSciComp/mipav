@@ -6,8 +6,6 @@ import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.*;
 import gov.nih.mipav.view.dialogs.JDialogLoadLeica.*;
 
-import java.awt.*;
-
 import java.io.*;
 
 import java.util.*;
@@ -843,7 +841,6 @@ public class FileTiff extends FileBase {
 
         // int offset = 0;
         String prefix, fileSuffix;
-        ViewJProgressBar progressBar = null;
         int stripCount, totStripCount;
 
         if ((LUT != null) && !image.isColorImage()) {
@@ -881,11 +878,6 @@ public class FileTiff extends FileBase {
                     timeOffset = options.getTimeSlice() * image.getExtents()[2] * bufferSize;
                 }
             }
-
-            progressBar = new ViewJProgressBar("Saving TIFF image", "Saving Image " + fileName, 0, 100, false, null,
-                                               null);
-            progressBar.setLocation((int) Toolkit.getDefaultToolkit().getScreenSize().getWidth() / 2, 50);
-
 
             index = fileName.indexOf(".");
             prefix = fileName.substring(0, index); // Used for setting file name
@@ -1081,7 +1073,6 @@ public class FileTiff extends FileBase {
                         fireProgressStateChanged(Math.round((float) (k - options.getBeginSlice() + 1) /
                                                                 (options.getEndSlice() - options.getBeginSlice() + 1) *
                                                                 100));
-                        progressBar.setTitle("Saving image " + k);
 
                         if (options.isWritePackBit()) {
                             stripCount = filePB.getStripSize(image, timeOffset + (k * bufferSize),
@@ -1135,7 +1126,6 @@ public class FileTiff extends FileBase {
                     }
                 } else {
                     fireProgressStateChanged(Math.round((float) s / (options.getEndSlice()) * 100));
-                    progressBar.setTitle("Saving image " + seq);
 
                     if (options.isWritePackBit()) {
                         stripCount = filePB.getStripSize(image, s * bufferSize, (s * bufferSize) + bufferSize);
