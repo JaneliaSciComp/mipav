@@ -254,6 +254,12 @@ public class FileTiff extends FileBase {
     private int samplesPerPixel = 1;
 
     /** DOCUMENT ME! */
+    private double[] sliceBufferDouble = null;
+
+    /** DOCUMENT ME! */
+    private float[] sliceBufferFloat = null;
+
+    /** DOCUMENT ME! */
     private byte[] software;
 
     /** DOCUMENT ME! */
@@ -329,6 +335,23 @@ public class FileTiff extends FileBase {
     //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
+     * Prepares this class for cleanup. Calls the <code>finalize</code> method for existing elements, closes any open
+     * files and sets other elements to <code>null</code>.
+     */
+    public void finalize() {
+
+        imgBuffer = null;
+
+        sliceBufferFloat = null;
+
+        sliceBufferDouble = null;
+
+        try {
+            super.finalize();
+        } catch (Throwable er) { }
+    }
+
+    /**
      * Accessor that returns the file info.
      *
      * @return  FileInfoBase containing the file info
@@ -370,8 +393,6 @@ public class FileTiff extends FileBase {
      */
     public ModelImage readImage(boolean multiFile, boolean one) throws IOException {
         int[] imgExtents;
-        float[] sliceBufferFloat = null;
-        double[] sliceBufferDouble = null;
 
 
         try {
@@ -567,7 +588,9 @@ public class FileTiff extends FileBase {
                     doubleBuffer = new double[bufferSize];
                 }
 
-                sliceBufferDouble = new double[sliceSize];
+                if (sliceBufferDouble == null) {
+                    sliceBufferDouble = new double[sliceSize];
+                }
 
                 for (i = 0; i < imageSlice; i++) {
 
@@ -602,7 +625,10 @@ public class FileTiff extends FileBase {
                     imgBuffer = new float[bufferSize];
                 }
 
-                sliceBufferFloat = new float[sliceSize];
+                if (sliceBufferFloat == null) {
+                    sliceBufferFloat = new float[sliceSize];
+                }
+
 
                 for (i = 0; i < imageSlice; i++) {
 
