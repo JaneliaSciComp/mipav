@@ -1601,12 +1601,12 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 
                 //we need to display the number of images in the series table
                 //first init the counters to 0
+                if(seriesNumberCounters == null) {
+                	seriesNumberCounters = new HashMap();
+                }
                 for (int i = 0; i < seriesTableModel.getRowCount(); i++) {
                     String seriesNo = (String) (seriesTableModel.getValueAt(i, 0));
-                    if(seriesNumberCounters == null) {
-                    	seriesNumberCounters = new HashMap();
-                    }
-                    	seriesNumberCounters.put(seriesNo, new Integer(0));
+                    seriesNumberCounters.put(seriesNo, new Integer(0));
                     
                 }
                 //go through the vector and increment the appropriate counter
