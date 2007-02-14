@@ -1962,7 +1962,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  _imageB  image to set the frame to
      */
     public void setImageB(ModelImage _imageB) {
-
         if (imageB != null) {
             imageB.disposeLocal();
         } // Dispose of the memory of the old image
@@ -2041,6 +2040,11 @@ public class ViewJFrameTriImage extends ViewJFrameBase
                 triImage[i].setZoom(zoom, zoom);
             }
         }
+        
+        
+        /* set the center after the triImage[].setResolutions and
+         * triImage[].setZoom calls have been made: */
+        setCenter((extents[0] - 1) / 2, (extents[1] - 1) / 2, (extents[2] - 1) / 2);
 
         updateLayout();
     }
@@ -2051,7 +2055,6 @@ public class ViewJFrameTriImage extends ViewJFrameBase
      * @param  visible  DOCUMENT ME!
      */
     public void setImageSelectorPanelVisible(boolean visible) {
-
         if (visible == true) {
 
             if (imageB != null) // do not show if we don't have a mask
