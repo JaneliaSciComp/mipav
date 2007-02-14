@@ -223,7 +223,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         
         //first lets refresh the image
     	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-    	ModelImage imgB = image.getParentFrame().getImageB();
+    	//ModelImage imgB = image.getParentFrame().getImageB();
         refreshImagePaint(image, obj);
         
         init();
@@ -1118,6 +1118,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     		listButton[1].setSelected(true);
     		image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
 			image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
+			if (image.getTriImageFrame() != null) {
+	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+	        	image.getTriImageFrame().setPaintColor(color[1]);
+	        	
+	        }
 			((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
         }
         while(iter.hasNext()) {
@@ -1187,6 +1192,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     			//listButton[1].setSelected(false);
     			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
     			image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
+    			if (image.getTriImageFrame() != null) {
+    	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+    	        	image.getTriImageFrame().setPaintColor(color[1]);
+    	        	
+    	        }
     			((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
     		}
         	else {
@@ -1200,6 +1210,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 			        			listButton[1].setSelected(true);
 			        			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
 			        			image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
+			        			if (image.getTriImageFrame() != null) {
+			        	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+			        	        	image.getTriImageFrame().setPaintColor(color[1]);
+			        	        	
+			        	        }
 			        			test = true;
 			        			break;
 		        			}
@@ -1215,6 +1230,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 	        			listButton[1].setSelected(false);
 	        			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[n].getText()).intValue()));
 	        			image.getParentFrame().getControls().getTools().setPaintColor(color[n]);
+	        			if (image.getTriImageFrame() != null) {
+	        	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[n].getText()).intValue()));
+	        	        	image.getTriImageFrame().setPaintColor(color[n]);
+	        	        	
+	        	        }
 	        			test = true;
 	        			break;
 	        		}
@@ -1339,6 +1359,14 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         image.getParentFrame().getComponentImage().setIntensityDropper((float) num);
         image.getParentFrame().getControls().getTools().setPaintColor(color[num]);
 
+        //nish
+        if (image.getTriImageFrame() != null) {
+        	image.getTriImageFrame().setIntensityDropper((float) num);
+        	image.getTriImageFrame().setPaintColor(color[num]);
+        	
+        }
+        
+        
         // reset the active image and intensity label
         if (!active.equals(image.getParentFrame().getActiveImage())) {
             image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_A);
@@ -1472,7 +1500,6 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
      * @param  obj  DOCUMENT ME!
      */
     private void refreshImagePaint(ModelImage img, BitSet obj) {
-
         // replace it by previous
         img.getParentFrame().getComponentImage().setPaintMask(obj);
         img.setMask(obj);
@@ -1844,6 +1871,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         // call the paint to mask program for exiting mask
         image.getParentFrame().getComponentImage().setIntensityDropper((float) num);
         image.getParentFrame().getControls().getTools().setPaintColor(color[num]);
+        if (image.getTriImageFrame() != null) {
+        	image.getTriImageFrame().setIntensityDropper((float) num);
+        	image.getTriImageFrame().setPaintColor(color[num]);
+        	
+        }
         image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "MaskToPaint"));
 
         // reset the active image and intensity label
@@ -1934,6 +1966,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
                 }
                 image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[_to].getText()).intValue()));
                 image.getParentFrame().getControls().getTools().setPaintColor(color[_to]);
+                if (image.getTriImageFrame() != null) {
+    	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[_to].getText()).intValue()));
+    	        	image.getTriImageFrame().setPaintColor(color[_to]);
+    	        	
+    	        }
                 ((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
 
                 if (indeterminateProgressBar != null) {
