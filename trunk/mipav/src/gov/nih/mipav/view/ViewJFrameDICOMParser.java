@@ -129,6 +129,15 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
     /** DOCUMENT ME! */
     private TableSorter studyTableSorter;
+    
+    /** 
+     * This is a hashmasp of series numbers and corresponding
+     * counter for the number of images in each series
+     * **/
+    private HashMap seriesNumberCounters;
+    
+   
+    
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -542,14 +551,6 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         {
 
             try {
-
-                // set the progess background color to dark gray
-                // System.err.println("setting to dark gray");
-                // progressPanel.setValueImmed(0);
-                // progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
-
-                // progressPanel.repaint();
-                // this.repaint();
                 Vector tableHeaderVector = imageTableModel.getColumnNames(); // Vector holding the names of the columns
 
                 int mod = (fileInfoVector.size() / 100);
@@ -557,10 +558,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 // System.err.println("mod is: " + mod);
                 if (mod == 0) {
                     mod = 1;
-                    // progressPanel.setValueImmed(100 * (i + 1) / (fileInfoVector.size()));
                 }
-
-                // fileInfoVector.size() is the number of rows in the table.
 
                 imageTableVector = new Vector();
 
@@ -691,22 +689,10 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                         }
 
-                        // if ((i % mod) == 0) {
-                        // progressPanel.setValueImmed(100 * (i + 1) / (fileInfoVector.size()));
-                        // System.err.println("pbar val to: " + (100 * (i + 1) / (fileInfoVector.size())));
-                        // }
-
                         imageTableModel.addRow(newRow); // the new row, after all column values have been added, is
                                                         // added to the table
                     }
                 }
-
-
-                // imageTableSorter.fireTableDataChanged();
-                // this.repaint();
-                // progressPanel.getProgressBar().setBorderPainted(false);
-                // progressPanel.getProgressBar().setBackground(this.getBackground());
-                // progressPanel.getProgressBar().setForeground(this.getBackground());
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -999,17 +985,23 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
         for (int i = 0; i < seriesTableModel.getRowCount(); i++) {
             String seriesNo = (String) (seriesTableModel.getValueAt(i, 0));
-
+            
+            
             if (seriesNo.equals(data)) {
                 return;
             }
+           
+            
         }
+        
 
         if (data != null) {
             seriesData[0] = data;
         } else {
             seriesData[0] = "";
         }
+        
+        
 
         // Series Type (PET) - why ?
         data = (String) fileInfo.getValue("0054,1000");
@@ -1019,7 +1011,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         } else {
             seriesData[1] = "";
         }
-
+        
+    
         seriesData[2] = String.valueOf(length);
 
         // Series Time
@@ -1050,6 +1043,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         }
 
         seriesData[6] = fileInfo;
+        
         seriesTableModel.addRow(seriesData);
     }
 
@@ -1266,13 +1260,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         gbc2.gridheight = 1;
         gbc2.gridy = 4;
 
-        // progressPanel = new JPanelProgressBar(0, 100);
-        // centerPanel.add(progressPanel, gbc2);
-
-        // progressPanel.getProgressBar().setBackground(this.getBackground());
-        // progressPanel.getProgressBar().setForeground(this.getBackground());
-        // progressPanel.getProgressBar().setBorderPainted(false);
-        // progressPanel.getProgressBar().setIndeterminate(true);
+        
 
         brightnessContrastPanel = new JPanel(new BorderLayout());
         brightnessContrastPanel.add(centerPanel);
@@ -1436,7 +1424,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         boolean imageLevel = true;
 
         test = null;
-
+        
         if (addSeries == true) {
 
             for (n = 0; n < children.length; n++) {
@@ -1452,8 +1440,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 test = children[0].listFiles(); // Looking for directory -- if so then not at image level
             }
         }
-
-        // ViewJProgressBar progressBar = null;
+        
         boolean once = false;
 
         try {
@@ -1481,18 +1468,9 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             // parent should be series level.
             boolean success = false;
 
-
-            // set the progressPanel (bar) to dark gray
-            // progressPanel.setValueImmed(0);
-            // progressPanel.getProgressBar().setBackground(Color.DARK_GRAY);
-            // progressPanel.repaint();
-            // this.repaint();
-
             if (!imageLevel) {
-                // progressBar = new ViewJProgressBar("Reading directory information", "Loading...", 0, 100, false,
-                // this, this); MipavUtil.centerOnScreen(progressBar); progressBar.setVisible(true);
 
-
+      
                 for (int j = 0; j < grandparent.length; j++) {
                     parent = grandparent[j].listFiles();
                     first = true;
@@ -1567,21 +1545,13 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                     addSeries = false;
 
-                    // System.err.println("updating to: " + (100 * (j + 1) / (grandparent.length)));
-                    // progressPanel.updateValueImmed(100 * (j + 1) / (grandparent.length));
-                    // progressBar.updateValue(100 * (j + 1) / (grandparent.length), false);
                 }
 
                 if (addStudy) {
                     studyTable.setRowSelectionInterval(0, 0);
                 }
             } else {
-                //    progressBar = new ViewJProgressBar("Reading directory information", "Loading...", 0, 100, false,
-                // this, this);    MipavUtil.centerOnScreen(progressBar);   progressBar.setVisible(true);
-
-                // image level
-
-
+                // image level         
                 for (int i = 0; i < children.length; i++) {
 
                     if (!children[i].isDirectory()) {
@@ -1610,6 +1580,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                         }
 
                         FileInfoDicom fileInfo = (FileInfoDicom) imageFile.getFileInfo();
+                        
                         fileInfoVector.addElement(fileInfo);
 
                         if (success) {
@@ -1619,17 +1590,46 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                             }
 
                             int count = 0;
-
+                            
                             if (addSeries) {
+                            
                                 addSeriesData(fileInfo, fileInfoRef, count);
                             }
                         }
                     }
-
-                    // System.err.println("updating to: " + (100 * (i + 1) / (children.length)));
-                    // progressPanel.updateValueImmed(100 * (i + 1) / (children.length));
                 }
-
+                
+                //we need to display the number of images in the series table
+                //first init the counters to 0
+                for (int i = 0; i < seriesTableModel.getRowCount(); i++) {
+                    String seriesNo = (String) (seriesTableModel.getValueAt(i, 0));
+                    if(seriesNumberCounters == null) {
+                    	seriesNumberCounters = new HashMap();
+                    }
+                    	seriesNumberCounters.put(seriesNo, new Integer(0));
+                    
+                }
+                //go through the vector and increment the appropriate counter
+                for (int i = 0; i < fileInfoVector.size(); i++) {
+                    FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
+                    String ser = (String)fileInfoDICOM.getValue("0020,0011");
+                    if(ser != null) {
+	                    if(seriesNumberCounters.get(ser) != null) {
+	                    	Integer I = (Integer)seriesNumberCounters.get(ser);
+	                    	int k = I.intValue();
+	                    	int j = ++k;
+	                    	seriesNumberCounters.put(ser, new Integer(j));
+	                    }
+                    }
+                }
+                //now update the series table
+                for (int i = 0; i < seriesTableModel.getRowCount(); i++) {
+                	String seriesNo = (String) (seriesTableModel.getValueAt(i, 0));
+                	seriesTableModel.setValueAt((Integer)seriesNumberCounters.get(seriesNo), i, 2);
+                }
+                //set counter hasmap back to null
+                seriesNumberCounters = null;
+                
                 if (fileInfoRef != null) {
 
                     // do something
@@ -1648,11 +1648,6 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                     reloadRows();
                 }
             }
-
-            // progressPanel.getProgressBar().setBorderPainted(false);
-            // progressPanel.getProgressBar().setBackground(this.getBackground());
-            // progressPanel.getProgressBar().setForeground(this.getBackground());
-
             imageTableSorter.fireTableDataChanged();
         } catch (Exception err) {
             err.printStackTrace();
@@ -1766,8 +1761,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
                 parse(new File(fileInfo.getFileDirectory()), true, false, fileInfo);
             } else if (source.equals(imageTable)) {
-
-
+            	setCursor(new Cursor(Cursor.WAIT_CURSOR));
+            	
                 int modelRow = imageTableSorter.modelIndex(imageTable.getSelectedRow());
 
                 FileInfoDicom fileInfoDICOM = (FileInfoDicom) imageTableVector.elementAt(modelRow);
@@ -1775,6 +1770,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 buildImage(fileInfoDICOM.getFileName(), fileInfoDICOM.getFileDirectory() + File.separatorChar);
                 componentImageDicom = img;
                 componentImageDicom.setSliceBrightness(brightness, contrast);
+                
+                setCursor(Cursor.getDefaultCursor());
             }
         }
 
