@@ -27,7 +27,7 @@ import javax.swing.*;
  * @see      JDialogBase
  * @see      AlgorithmInterface
  */
-public class JDialogMultiPaint extends JDialogBase implements MouseListener{
+public class JDialogMultiPaint extends JDialogBase implements MouseListener, KeyListener {
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
 
@@ -57,7 +57,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
     /** DOCUMENT ME! */
     private JToggleButton displayPaintButton;
 
-    /** DOCUMENT ME! */
+	/** DOCUMENT ME! */
+    private JToggleButton buttonShortkeys;
+    
+	/** DOCUMENT ME! */
     private JPanel displayPanel;
 
     /** DOCUMENT ME! */
@@ -65,6 +68,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 
     /** DOCUMENT ME! */
     private JPanel filePanel;
+
+    /** DOCUMENT ME! */
+    private JPanel miscPanel;
 
     /** DOCUMENT ME! */
     private JPanel voiPanel;
@@ -460,6 +466,20 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
             image.notifyImageDisplayListeners();
             refreshImagePaint(image, obj); 
         }
+		else if (command.equals("Shortkeys")) {
+			if (buttonShortkeys.isSelected()) {
+				setFocusable(true);
+				addKeyListener(this);
+				requestFocusInWindow();
+				image.getParentFrame().getComponentImage().setFocusable(true);
+				image.getParentFrame().getComponentImage().addKeyListener(this);
+				image.getParentFrame().getComponentImage().requestFocusInWindow();
+			} else {
+				removeKeyListener(this);
+				image.getParentFrame().getComponentImage().removeKeyListener(this);
+			}
+		}
+
     }
 
     /**
@@ -871,7 +891,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         exportVoiButton.setFont(serif12);
         exportVoiButton.setToolTipText("Convert the masks into VOIs");
 
-        // customize the mask palette
+        buttonShortkeys = new JToggleButton("Use hotkeys");
+        buttonShortkeys.addActionListener(this);
+        buttonShortkeys.setActionCommand("Shortkeys");
+        buttonShortkeys.setFont(serif12);
+        buttonShortkeys.setToolTipText("Use hotkeys for commands: \n 1-9: change to mask #1-9 \n t: show/hide label text \n c: show/hide current paint mask \n v: show/hide validated masks \n s: save masks");
+
+		// customize the mask palette
         numberLabel = new JLabel("Number of masks: ");
         numberLabel.setForeground(Color.black);
         numberLabel.setFont(serif12);
@@ -1025,13 +1051,16 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         displayPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
-        displayPanel.add(displayModeButton, gbc);
-        gbc.gridx = 1;
         displayPanel.add(displayPaintButton, gbc);
-        gbc.gridx = 2;
+        gbc.gridx = 1;
         displayPanel.add(displayMasksButton, gbc);
-        gbc.gridx = 3;
-        displayPanel.add(collapseButton, gbc);
+        
+        miscPanel = new JPanel(new GridBagLayout());
+        gbc.gridx = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        miscPanel.add(displayModeButton, gbc);
+        gbc.gridx = 1;
+        miscPanel.add(collapseButton, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -1044,6 +1073,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
         optionPanel.add(voiPanel, gbc);
         gbc.gridy = 4;
         optionPanel.add(displayPanel, gbc);
+		gbc.gridy = 5;
+        optionPanel.add(miscPanel, gbc);
+		gbc.gridy = 6;
+        optionPanel.add(buttonShortkeys, gbc);
 
         mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setName("mainPanel");
@@ -2135,6 +2168,48 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener{
 		// TODO Auto-generated method stub
 		
 	}
+
+	/** Handle the key typed event */
+    public void keyTyped(KeyEvent e) {
+		String key = Character.toString(e.getKeyChar());
+		System.out.println("key: "+key);
+		if (key.equals("1")) {
+			
+			actionPerformed(new ActionEvent(this, 0, "PaintMask 1"));
+		}
+		else if (key.equals("2")) actionPerformed(new ActionEvent(this, 0, "PaintMask 2"));
+		else if (key.equals("3")) actionPerformed(new ActionEvent(this, 0, "PaintMask 3"));
+		else if (key.equals("4")) actionPerformed(new ActionEvent(this, 0, "PaintMask 4"));
+		else if (key.equals("5")) actionPerformed(new ActionEvent(this, 0, "PaintMask 5"));
+		else if (key.equals("6")) actionPerformed(new ActionEvent(this, 0, "PaintMask 6"));
+		else if (key.equals("7")) actionPerformed(new ActionEvent(this, 0, "PaintMask 7"));
+		else if (key.equals("8")) actionPerformed(new ActionEvent(this, 0, "PaintMask 8"));
+		else if (key.equals("9")) actionPerformed(new ActionEvent(this, 0, "PaintMask 9"));
+		else if (key.equals("t")) {
+			displayModeButton.setSelected(!displayModeButton.isSelected());
+			actionPerformed(new ActionEvent(this, 0, "SwitchMode"));
+		} 
+		else if (key.equals("c")) {
+			displayPaintButton.setSelected(!displayPaintButton.isSelected());
+			actionPerformed(new ActionEvent(this, 0, "HidePaint"));
+		}
+		else if (key.equals("v")) {
+			displayMasksButton.setSelected(!displayMasksButton.isSelected());
+			actionPerformed(new ActionEvent(this, 0, "HideMasks"));
+		}
+		else if (key.equals("s")) {
+			actionPerformed(new ActionEvent(this, 0, "Save"));
+		}
+    }
+
+    /** Handle the key pressed event */
+    public void keyPressed(KeyEvent e) {
+    }
+
+    /** Handle the key released event */
+    public void keyReleased(KeyEvent e) {
+    }
+
 
 	/**
 	 * windowclosing...override of WindowListener interface
