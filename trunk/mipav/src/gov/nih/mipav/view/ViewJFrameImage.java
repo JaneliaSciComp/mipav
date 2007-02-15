@@ -1063,6 +1063,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.getVOIHandler().graph25VOI_CalcInten(true, false, 0);
         } else if (command.equals("avgIntensity")) {
             componentImage.getVOIHandler().graph25VOI_CalcInten(false, false, 0);
+        } else if (command.equals("totalIntensityThreshold")) {
+            new JDialogIntensityThreshold(this, userInterface, componentImage, false);
+        } else if (command.equals("avgIntensityThreshold")) {
+            new JDialogIntensityThreshold(this, userInterface, componentImage, true);
         } else if (command.equals("GroupVOIs")) {
 
             if (displayMode == IMAGE_A) {
@@ -1433,7 +1437,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE);
         } else if (command.equals("ImageFlipX")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
-        } else if (command.equals("ImageFlipZ")) {  
+        } else if (command.equals("ImageFlipZ")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
         } else if (command.equals("VOIFlipY")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI);
@@ -1445,10 +1449,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             flip.callAlgorithm();
         } else if (command.equals("VOIFlipZ")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI);
-            
+
             flip.callAlgorithm();
-        } 
-        else if (command.equals("RotateX180")) {
+        } else if (command.equals("RotateX180")) {
             JDialogRotate rotate = new JDialogRotate(this, getActiveImage(), AlgorithmRotate.X_AXIS_180);
 
             rotate.callAlgorithm();
