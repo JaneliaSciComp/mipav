@@ -38,9 +38,6 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
     private JMenuItem itemShowPAAIDialog;
 
     /** DOCUMENT ME! */
-    private JCheckBoxMenuItem itemShowVOIName;
-
-    /** DOCUMENT ME! */
     private JMenu propSubMenu;
 
     /** DOCUMENT ME! */
@@ -63,8 +60,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
                                                                this, null, false);
           //  itemBuildPolyline = ViewMenuBuilder.buildMenuItem("Convert to poly-line slice VOI", "BuildPoly", 0, this, null,
          //                                                     false);
-            itemShowVOIName = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName", this,
-                                                                    Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
+           
             itemProps = ViewMenuBuilder.buildMenuItem("Properties", "Properties", 0, this, null, true);
             voiHandler = handler;
         } catch (OutOfMemoryError error) {
@@ -85,8 +81,6 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
         ptPopup.add(itemShowGraph);
         ptPopup.add(itemShowPAAIDialog);
         ptPopup.addSeparator();
-        ptPopup.add(itemShowVOIName);
-
        // ptPopup.add(itemBuildPolyline);
 
 
@@ -120,10 +114,7 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
                 voiHandler.propVOIAll();
             } else if (event.getActionCommand().equals("PAAI")) {
                 voiHandler.setPAAIGraphVisible();
-            } else if (event.getActionCommand().equals("ShowName")) {
-                Preferences.setProperty(Preferences.PREF_SHOW_VOI_NAME, Boolean.toString(itemShowVOIName.isSelected()));
-                voiHandler.getComponentImage().getFrame().updateImages();
-            } else if (event.getActionCommand().equals("Properties")) {
+            }  else if (event.getActionCommand().equals("Properties")) {
                 voiHandler.showVOIProperties(false);
             } else if (event.getActionCommand().equals("BuildPoly")) {
                 voiHandler.convertPointToPoly();
@@ -231,7 +222,6 @@ public class ViewJPopupPt extends JPanel implements ActionListener, PopupMenuLis
     private void checkPopup(MouseEvent event) {
 
         if (event.isPopupTrigger()) {
-            itemShowVOIName.setSelected(Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
             ptPopup.show(voiHandler.getComponentImage(), event.getX(), event.getY());
         }
     }
