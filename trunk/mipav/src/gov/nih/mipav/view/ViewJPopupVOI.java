@@ -1,6 +1,7 @@
 package gov.nih.mipav.view;
 
 
+import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.dialogs.*;
@@ -34,6 +35,9 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
     /** DOCUMENT ME! */
     private JMenu editSubMenu;
+
+    /** DOCUMENT ME! */
+    private JMenu flipSubMenu;
 
     /** DOCUMENT ME! */
     private JMenu graphSubMenu;
@@ -113,6 +117,11 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         propSubMenu.add(ViewMenuBuilder.buildMenuItem("To Previous Slice", "PropVOIDown", 0, this, "voipropd.gif",
                                                       true));
         propSubMenu.add(ViewMenuBuilder.buildMenuItem("To All Slices", "PropVOIAll", 0, this, "voipropall.gif", true));
+
+        flipSubMenu = ViewMenuBuilder.buildMenu("Flip VOI", 0, true);
+        flipSubMenu.add(ViewMenuBuilder.buildMenuItem("Horizontal", "VOIFlipY", 0, this, "fliphoriz.gif", true));
+        flipSubMenu.add(ViewMenuBuilder.buildMenuItem("Vertical", "VOIFlipX", 0, this, "flipvert.gif", true));
+        flipSubMenu.add(ViewMenuBuilder.buildMenuItem("Depth", "VOIFlipZ", 0, this, "flipvert.gif", true));
 
         graphSubMenu = ViewMenuBuilder.buildMenu("Graph", 0, true);
         graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Boundary intensity", "boundaryIntensity", 0, this, null,
@@ -271,6 +280,24 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                 voiHandler.selectAllVOIs(false);
             } else if (event.getActionCommand().equals("contourSelectAll")) {
                 voiHandler.selectAllContours();
+            } else if (event.getActionCommand().equals("VOIFlipY")) {
+                JDialogFlip flip = new JDialogFlip(voiHandler.getComponentImage().getFrame(),
+                                                   voiHandler.getComponentImage().getActiveImage(),
+                                                   AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI);
+
+                flip.callAlgorithm();
+            } else if (event.getActionCommand().equals("VOIFlipX")) {
+                JDialogFlip flip = new JDialogFlip(voiHandler.getComponentImage().getFrame(),
+                                                   voiHandler.getComponentImage().getActiveImage(),
+                                                   AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI);
+
+                flip.callAlgorithm();
+            } else if (event.getActionCommand().equals("VOIFlipZ")) {
+                JDialogFlip flip = new JDialogFlip(voiHandler.getComponentImage().getFrame(),
+                                                   voiHandler.getComponentImage().getActiveImage(),
+                                                   AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI);
+
+                flip.callAlgorithm();
             }
 
         } catch (OutOfMemoryError error) {
@@ -402,6 +429,7 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
                 popup.addSeparator();
                 popup.add(propSubMenu);
+                popup.add(flipSubMenu);
                 popup.add(graphSubMenu);
 
                 if (isVOIOpen()) {
