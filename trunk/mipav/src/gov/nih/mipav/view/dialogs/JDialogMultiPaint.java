@@ -895,7 +895,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         buttonShortkeys.addActionListener(this);
         buttonShortkeys.setActionCommand("Shortkeys");
         buttonShortkeys.setFont(serif12);
-        buttonShortkeys.setToolTipText("Use hotkeys for commands: \n 1-9: change to mask #1-9 \n t: show/hide label text \n c: show/hide current paint mask \n v: show/hide validated masks \n s: save masks");
+        buttonShortkeys.setToolTipText("<html>" + "Use hotkeys for commands:"  + "<br>" +  "1-9: change to mask #1-9 "  + "<br>" +  " t: show/hide label text "  + "<br>" +  " c: show/hide current paint mask "  + "<br>" +  " v: show/hide validated masks "  + "<br>" +  " s: save masks" + "</html>");
 
 		// customize the mask palette
         numberLabel = new JLabel("Number of masks: ");
@@ -1392,7 +1392,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         image.getParentFrame().getComponentImage().setIntensityDropper((float) num);
         image.getParentFrame().getControls().getTools().setPaintColor(color[num]);
 
-        //nish
+        //tri-image
         if (image.getTriImageFrame() != null) {
         	image.getTriImageFrame().setIntensityDropper((float) num);
         	image.getTriImageFrame().setPaintColor(color[num]);
