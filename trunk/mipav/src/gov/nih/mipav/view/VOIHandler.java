@@ -1710,6 +1710,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  mouseEvent  MouseEvent
      */
     public void mouseClicked(MouseEvent mouseEvent) {
+    	if (compImage instanceof ViewJComponentSingleRegistration) {
+    		//return;
+    	}
         int xS, yS;
         xS = compImage.getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
         yS = compImage.getScaledY(mouseEvent.getY()); // zoomed y.  Used as cursor
@@ -1735,6 +1738,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  mouseEvent  MouseEvent the mouse event
      */
     public void mouseDragged(MouseEvent mouseEvent) {
+    	if (compImage instanceof ViewJComponentSingleRegistration) {
+    	//	return;
+    	}
+    	
         int mouseMods = mouseEvent.getModifiers();
         int i, j, m;
         int nVOI;
@@ -2539,9 +2546,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             return;
         } else if ((mode == ViewJComponentEditImage.PAINT_VOI) || (mode == ViewJComponentEditImage.ERASER_PAINT)) {
-
+        	
             // repaint();
-            // System.err.println("calling compImage.paintComponent from VOIHandler mouseMoved");
+            System.err.println("calling compImage.paintComponent from VOIHandler mouseMoved");
             compImage.paintComponent(g);
 
             return;
@@ -2554,9 +2561,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 (mode == ViewJComponentEditImage.DROPPER_PAINT) || (mode == ViewJComponentEditImage.ERASER_PAINT) ||
                 (mode == ViewJComponentEditImage.QUICK_LUT) || (mode == ViewJComponentEditImage.PROTRACTOR) ||
                 (mode == ViewJComponentEditImage.LIVEWIRE) || (mode == ViewJComponentEditImage.ANNOTATION) ||
-                (mode == ViewJComponentEditImage.POLYLINE_SLICE_VOI) || (mode == ViewJComponentEditImage.PAINT_CAN)) {
+                (mode == ViewJComponentEditImage.POLYLINE_SLICE_VOI) || (mode == ViewJComponentEditImage.PAINT_CAN) ||
+                (mode == ViewJComponentBase.TRANSLATE) || (mode == ViewJComponentBase.ROTATE)) {
             compImage.getGraphics().dispose();
-
             // System.err.println("returning from mouseMoved() with rectangle of VOIHandler");
             // System.err.println("returning from mouseMoved with mode of: " + mode);
             return;
@@ -2810,6 +2817,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  mouseEvent  MouseEvent the mouse event
      */
     public void mousePressed(MouseEvent mouseEvent) {
+    	if (compImage instanceof ViewJComponentSingleRegistration) {
+    		//return;
+    	}
         int xS, yS;
         int x, y;
 
@@ -3012,6 +3022,11 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  mouseEvent  event that triggered function
      */
     public void mouseReleased(MouseEvent mouseEvent) {
+    	
+    	if (compImage instanceof ViewJComponentSingleRegistration) {
+    		return;
+    	}
+    	
         int i, j, k;
         int nVOI;
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
@@ -4517,6 +4532,37 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         for (i = 0; i < nVOI; i++) {
 
             VOIs.VOIAt(i).setAllActive(doSelect);
+        }
+
+        compImage.getActiveImage().notifyImageDisplayListeners(null, true);
+    }
+    
+    /**
+     * Selects all contours of the currently active VOI (like holding down Shift and clicking on a VOI)
+     *
+     */
+    public void selectAllContours() {
+    	int i, j;
+        int nVOI;
+        int zDim = 1;
+        if (compImage.getActiveImage().getNDims() > 2) {
+        	zDim = compImage.getActiveImage().getExtents()[2];
+        }
+        ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
+
+        Vector [] curves;
+        nVOI = VOIs.size();
+
+        for (i = 0; i < nVOI; i++) {
+        	if (VOIs.VOIAt(i).isActive()) {
+        		for (j = 0; j < zDim; j++) {
+        			curves = VOIs.VOIAt(i).getCurves();
+                    for (i = 0; i < curves[j].size(); i++) {
+                        ((VOIBase) (curves[j].elementAt(i))).setActive(true);
+                    }
+                }
+        		return;
+        	}
         }
 
         compImage.getActiveImage().notifyImageDisplayListeners(null, true);

@@ -39,6 +39,7 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
     private JCheckBox checkboxAdditiveOrSubtractive;
     private JCheckBox checkboxIncludeForProcessing;
     private JCheckBox checkboxBoundary;
+    private JCheckBox checkboxVOIName;
     private JPanel statsPanel;
 
     private JCheckBox checkboxExclude;
@@ -168,11 +169,16 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
         checkboxBoundary.setFont(serif12);
         checkboxBoundary.addItemListener(this);
 
+        checkboxVOIName = new JCheckBox("Show VOI name");
+        checkboxVOIName.setFont(serif12);
+        checkboxVOIName.setSelected(Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
+        
         JPanel checkboxPanel = new JPanel();
         checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
         checkboxPanel.add(checkboxBoundingBox);
         checkboxPanel.add(checkboxAdditiveOrSubtractive);
         checkboxPanel.add(checkboxIncludeForProcessing);
+        checkboxPanel.add(checkboxVOIName);
         checkboxPanel.add(checkboxBoundary);
 
         opacitySlider = new JSlider(JSlider.HORIZONTAL, 0, 100, 30);
@@ -465,8 +471,10 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
                 currentY = (int)currentPt.y;
                 currentZ = (int)currentPt.z;
 
-                positions = ((ViewJFrameImage) parentFrame).getComponentImage().
-                            setScannerPosition((int)currentPt.x, (int)currentPt.z, (int)currentPt.z);
+                if (((ViewJFrameImage) parentFrame).getComponentImage().getImageA().getNDims() > 2) {
+                	positions = ((ViewJFrameImage) parentFrame).getComponentImage().
+                	setScannerPosition((int)currentPt.x, (int)currentPt.z, (int)currentPt.z);
+                }
 
                 if (positions != null) {
                     for (i = 0; i < size; i++) {
@@ -666,7 +674,8 @@ public class JDialogVOIStats extends JDialogBase implements ItemListener,
             } else {
                 checkboxBoundingBox.setSelected(false);
             }
-
+            ViewUserInterface.getReference().setUseVOIName(checkboxVOIName.isSelected());
+            
             if (voi.getPolarity() == voi.ADDITIVE) {
                 checkboxAdditiveOrSubtractive.setSelected(true);
             } else {

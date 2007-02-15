@@ -23,10 +23,11 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
     private JMenu editSubMenu;
     private JMenu graphSubMenu;
     private JMenu propSubMenu;
+    private JMenu selectionMenu;
+    private JMenu deselectionMenu;
     private VOIHandler voiHandler;
     private JMenuItem itemProps;
     private JMenuItem itemClose;
-    private JMenuItem itemShowVOIName;
     private JMenuItem itemOutputDistance;
     private JMenuItem itemCrop;
 
@@ -34,18 +35,26 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
         voiHandler = handler;
 
         popup           = new JPopupMenu();
+        selectionMenu   = ViewMenuBuilder.buildMenu("Select", 0, true);
+        deselectionMenu   = ViewMenuBuilder.buildMenu("Deselect", 0, true);
         graphSubMenu    = ViewMenuBuilder.buildMenu("Graph", 0, true);
         orderSubMenu    = ViewMenuBuilder.buildMenu("VOI Order", 0, true);
         contourOrderSubMenu = ViewMenuBuilder.buildMenu("Contour Order", 0, true);
         editSubMenu     = ViewMenuBuilder.buildMenu("Edit", 0, true);
         propSubMenu     = ViewMenuBuilder.buildMenu("Propagate", 0, true);
-        itemShowVOIName      = ViewMenuBuilder.buildCheckBoxMenuItem("Show VOI name", "ShowName", this,
-            Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
-
-
+       
         itemProps = ViewMenuBuilder.buildMenuItem("Properties","Properties",0,this,null, true);
         popup.add(itemProps);
 
+        popup.addSeparator();
+        
+        selectionMenu.add(ViewMenuBuilder.buildMenuItem("Select all VOIs","voiSelectAll", 0, this, null, false));
+        selectionMenu.add(ViewMenuBuilder.buildMenuItem("Select all contours of VOI","contourSelectAll", 0, this, null, false));
+        selectionMenu.add(ViewMenuBuilder.buildMenuItem("Select none","voiSelectNone", 0, this, null, false));
+        
+        popup.add(selectionMenu);
+        //popup.addSeparator();
+        
         graphSubMenu.add(ViewMenuBuilder.buildMenuItem("Contour boundary intensity","boundaryIntensity", 0, this, null, false));
 
         if(handler.getComponentImage().getActiveImage().getNDims() == 3 || handler.getComponentImage().getActiveImage().getNDims() == 4) {
@@ -88,7 +97,6 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
 
         itemCrop = ViewMenuBuilder.buildMenuItem("Crop image","cropImage",0,this, null, true);
         popup.add(itemCrop);
-        popup.add(itemShowVOIName);
 
         itemOutputDistance = ViewMenuBuilder.buildMenuItem("Calculate distances -> Output Window", "calcDistances", 0, this, null, true);
 
@@ -121,7 +129,6 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                 popup.remove(graphSubMenu);
                 popup.remove(contourOrderSubMenu);
                 popup.remove(propSubMenu);
-                popup.remove(itemShowVOIName);
                 popup.remove(itemCrop);
                 popup.remove(itemClose);
             } else {
@@ -131,7 +138,6 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                 popup.add(graphSubMenu);
                 popup.add(contourOrderSubMenu);
                 popup.add(propSubMenu);
-                popup.add(itemShowVOIName);
                 popup.add(itemCrop);
 
                 if (isVOIOpen()) {
@@ -142,8 +148,6 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                 popup.remove(itemOutputDistance);
             }
 
-
-            itemShowVOIName.setSelected(Preferences.is(Preferences.PREF_SHOW_VOI_NAME));
             popup.show(voiHandler.getComponentImage(), event.getX(), event.getY());
        }
     }
@@ -279,11 +283,14 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
                 new JDialogCrop( voiHandler.getComponentImage().getActiveImage().getParentFrame(),
                                  voiHandler.getComponentImage().getActiveImage() );
             }
-            else if (event.getActionCommand().equals("ShowName")) {
-                ViewUserInterface.getReference().setUseVOIName(itemShowVOIName.isSelected());
-            }
             else if (event.getActionCommand().equals("calcDistances")) {
                 voiHandler.calcPLineSliceDistances();
+            } else if (event.getActionCommand().equals("voiSelectAll")) {
+            	voiHandler.selectAllVOIs(true);
+            } else if (event.getActionCommand().equals("voiSelectNone")) {
+            	voiHandler.selectAllVOIs(false);
+            } else if (event.getActionCommand().equals("contourSelectAll")) {
+            	voiHandler.selectAllContours();
             }
 
         }
