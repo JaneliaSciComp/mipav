@@ -4,6 +4,7 @@ package gov.nih.mipav.model.algorithms.utilities;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
+import gov.nih.mipav.view.MipavUtil;
 
 import java.awt.Polygon;
 import java.io.*;
@@ -320,6 +321,7 @@ public class AlgorithmFlip extends AlgorithmBase {
         }
         else if(flipObject == AlgorithmFlip.VOI)
         {
+            boolean activeVoi = false;
             VOIVector vec = srcImage.getVOIs();
             Iterator vecIter = vec.iterator();
             if(flipAxis == X_AXIS) {
@@ -327,6 +329,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                     VOI nextVoi = (VOI)vecIter.next();
                     if(nextVoi.isActive())
                     {
+                        activeVoi = true;
                         for(int i=0; i<zDim; i++) {
                             VOIBase base = nextVoi.getActiveContour(i);
                             if(base != null)
@@ -343,10 +346,11 @@ public class AlgorithmFlip extends AlgorithmBase {
                 }
             }
             if(flipAxis == Y_AXIS) {
-                while(vecIter.hasNext()) {              
+                while(vecIter.hasNext()) { 
                     VOI nextVoi = (VOI)vecIter.next();
                     if(nextVoi.isActive())
                     {
+                        activeVoi = true;
                         for(int i=0; i<zDim; i++) {
                             VOIBase base = nextVoi.getActiveContour(i);
                             if(base != null)
@@ -368,6 +372,7 @@ public class AlgorithmFlip extends AlgorithmBase {
                     VOI nextVoi = (VOI)vecIter.next();
                     if(nextVoi.isActive())
                     {
+                        activeVoi = true;
                         for(int i=0; i<zDim; i++) {
                             VOIBase base = nextVoi.getActiveContour(i);
                             if(base != null)
@@ -382,6 +387,9 @@ public class AlgorithmFlip extends AlgorithmBase {
                         }
                     }
                 }
+            }
+            if(!activeVoi) {
+                MipavUtil.displayError("Select a VOI to flip.");
             }
         }
         setCompleted(true);
