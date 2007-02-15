@@ -106,10 +106,12 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
     public void actionPerformed(ActionEvent event) 
     {
         String command = event.getActionCommand();
-
+             
         if (command.equals("OK")) {
-
-            if (setVariables()) {
+            if(flipVoiCheckbox.isSelected() && image.getVOIs().size() == 0) {
+                MipavUtil.displayError("No VOIs exist in this image, cannot flip VOIs.");
+            }
+            else if (setVariables()) {
                 callAlgorithm();
             }
         } else if (command.equals("Cancel")) {
@@ -281,30 +283,38 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
 
         flipVoiCheckbox = new JCheckBox("Flip all VOIs.");
         flipVoiCheckbox.setFont(serif12);
-        flipVoiCheckbox.setSelected(true);
+        VOIVector vec = image.getVOIs();
+        if(vec.size() > 0) {
+            flipVoiCheckbox.setSelected(true);
+        }
         flipVoiCheckbox.addItemListener(this);
         optionsPanel.add(flipVoiCheckbox);
         
-        JPanel flipAxisPanel = new JPanel(new GridLayout(1, 3));
+        JPanel flipAxisPanel = new JPanel(new GridBagLayout());
+
+        flipAxisPanel.setForeground(Color.black);
+        flipAxisPanel.setBorder(buildTitledBorder("Flip Axis"));
+
+        
         
         flipAxisPanel.setForeground(Color.black);
         flipAxisPanel.setBorder(buildTitledBorder("Flip Axis"));
         
-        flipAxisXRadioButton = new JRadioButton("X axis");
+        flipAxisXRadioButton = new JRadioButton("Vertical (X Axis)");
         flipAxisXRadioButton.setFont(serif12);
         
         if(flipAxis == AlgorithmFlip.X_AXIS) {
             flipAxisXRadioButton.setSelected(true);
         }
         
-        flipAxisYRadioButton = new JRadioButton("Y axis");
+        flipAxisYRadioButton = new JRadioButton("Horizontal (Y Axis)");
         flipAxisYRadioButton.setFont(serif12);
         
         if(flipAxis == AlgorithmFlip.Y_AXIS) {
             flipAxisYRadioButton.setSelected(true);
         }
         
-        flipAxisZRadioButton = new JRadioButton("Z axis");
+        flipAxisZRadioButton = new JRadioButton("Depth (Z axis)");
         flipAxisZRadioButton.setFont(serif12);
         
         if(flipAxis == AlgorithmFlip.Z_AXIS) {
@@ -316,10 +326,32 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         axisGroup.add(flipAxisYRadioButton);
         axisGroup.add(flipAxisZRadioButton);
         
-        flipAxisPanel.add(flipAxisXRadioButton);
-        flipAxisPanel.add(flipAxisYRadioButton);
-        flipAxisPanel.add(flipAxisZRadioButton);
-
+        JLabel orientIconLabel = new JLabel("Note: Image origin is in the upper left hand corner. Righthand coordinate system.",
+                MipavUtil.getIcon("orient.gif"), JLabel.LEFT);
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = 1;
+        gbc.gridheight = 1;
+        gbc.anchor = GridBagConstraints.WEST;
+        gbc.weightx = 1;
+        gbc.insets = new Insets(3, 3, 3, 3);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.VERTICAL;
+        
+        
+        
+        flipAxisPanel.add(flipAxisXRadioButton, gbc);
+        gbc.gridx = 1;
+        flipAxisPanel.add(flipAxisYRadioButton, gbc);
+        gbc.gridx = 2;
+        flipAxisPanel.add(flipAxisZRadioButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        flipAxisPanel.add(orientIconLabel, gbc);
+        
+        
         getContentPane().add(optionsPanel, BorderLayout.NORTH);
         getContentPane().add(flipAxisPanel, BorderLayout.CENTER);
         getContentPane().add(buildButtons(), BorderLayout.SOUTH);
