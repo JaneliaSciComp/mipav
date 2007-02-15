@@ -34,118 +34,126 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
+    /** The factor above which second stage edge erosion occurs. */
     private float aboveMedian;
 
-    /** DOCUMENT ME! */
+    /** The volume's center of mass computed from <code>computeCenter(ModelImage, int, boolean)</code> */
     private Point3f centerOfMass;
 
-    /** DOCUMENT ME! */
+    /** The maximum depth within the brain's surface to sample image intensities, by default set to 5. */
     private int depth = 5;
 
-    /** DOCUMENT ME! */
+    /** Field for entering the maximum depth.  The dialog box suggests a value between 3 - 19 and requires a value from 3 - 33. */
     private JTextField depthTF;
 
-    /** DOCUMENT ME! */
+    /** Label for the percentage entered for second stage edge erosion. */
     private JLabel erosionLabel;
 
-    /** DOCUMENT ME! */
+    /** Defines the allowable percentage for edge intensity values ub second stage edge erosion, default is 50 percent. */
     private JTextField erosionTF;
 
-    /** DOCUMENT ME! */
+    /** Algorithm used for brain extraction. */
     private AlgorithmBrainExtractor extractBrainAlgo;
 
-    /** DOCUMENT ME! */
+    /** When true, mask of extracted brain is painted over the source image. */
     private boolean extractToPaint;
 
-    /** DOCUMENT ME! */
+    /** When checked, mask of extracted brain is painted over the source image. */
     private JCheckBox extractToPaintCheckBox;
 
-    /** DOCUMENT ME! */
-    private ModelImage image = null; // source image
+    /** Source image for extracting brain, default image is <code>null</code>. */
+    private ModelImage image = null; 
 
-    /** DOCUMENT ME! */
+    /** Image influence ratio for controlling the sampling depth used to calculate intensity extrema, by default set to .1. */
     private float imageRatio = 0.1f;
 
-    /** DOCUMENT ME! */
+    /** Field for entering the image influence ratio.  The dialog box requires that a value from .01 - .51 be entered. */
     private JTextField imageRatioTF;
 
-    /** DOCUMENT ME! */
+    /** Either the volume's center of mass or a user indicated point depending on the value of <code>useCenterOfMass</code>. */
     private Point3f initCenterPoint;
 
-    /** DOCUMENT ME! */
+    /** Used to denote the brain's center of mass y-coordinate.  By default set to zero. */
     private float initCenterX = 0;
 
-    /** DOCUMENT ME! */
+    /** Label for the x-coordinate of the user-defined center. */
     private JLabel initCenterXLabel;
 
-    /** DOCUMENT ME! */
+    /** An optional field for denoting a desired initial x-corrdinate for the mesh.
+     *  Editable if and only if <code>useCenterOfMass</code> is set to <code>false</code>
+     **/
     private JTextField initCenterXTF;
 
-    /** DOCUMENT ME! */
+    /** Used to denote the brain's center of mass y-coordinate.  By default set to zero. */
     private float initCenterY = 0;
 
-    /** DOCUMENT ME! */
+    /** Label for the y-coordinate of the user-defined center. */
     private JLabel initCenterYLabel;
 
-    /** DOCUMENT ME! */
+    /** An optional field for denoting a desired initial y-corrdinate for the mesh.
+     *  Editable if and only if <code>useCenterOfMass</code> is set to <code>false</code>
+     **/
     private JTextField initCenterYTF;
 
-    /** DOCUMENT ME! */
+    /** Used to denote the brain's center of mass y-coordinate.  By default set to zero. */
     private float initCenterZ = 0;
 
-    /** DOCUMENT ME! */
+    /** Label for the z-coordinate of the user-defined center. */
     private JLabel initCenterZLabel;
 
-    /** DOCUMENT ME! */
+    /** An optional field for denoting a desired initial z-corrdinate for the mesh.
+     *  Editable if and only if <code>useCenterOfMass</code> is set to <code>false</code>
+     **/
     private JTextField initCenterZTF;
 
-    /** DOCUMENT ME! */
+    /** When true, image mask is set to the initial ellipsoid approximation of the brain calculated from the volume's center of mass. */
     private boolean justEllipse;
 
-    /** DOCUMENT ME! */
+    /** When checked, <code>justEllipse</code> is set to true. */
     private JCheckBox justInitEllipsoidCheckbox;
 
-    /** DOCUMENT ME! */
+    /** Number of surface evolutions to perform, by default set to 500. */
     private int nIterations = 500;
 
-    /** DOCUMENT ME! */
+    /** Field for inputting the number of surface evolutions to perform.  This requests, but does not require, a value from 100 - 2000 */
     private JTextField nIterationsTF;
 
-    /** DOCUMENT ME! */
+    /** Orientation value corresponding to not the value of <code>AlgorithmBrainExtractor.SAT_COR</code> */
     private int orientation;
 
-    /** DOCUMENT ME! */
+    /** When checked, denotes that the images orientation does not correspond to <code>AlgorithmBrainExtractor.SAT_COR</code> */
     private JCheckBox orientCheckbox;
 
-    /** DOCUMENT ME! */
+    /** Initially unchecked, determined whether this algorithm performs <code>secondStageErosion</code> */
     private JCheckBox secondStageCheckBox;
 
-    /** DOCUMENT ME! */
+    /** When true, sets edge values which are greater than the median intensity by a user-defined factor of <code>aboveMedian</code> to zero. */
     private boolean secondStageErosion;
 
-    /** DOCUMENT ME! */
+    /** Allows for variable motion of the mesh in the surface normal direction, default value of .15 */
     private float stiffness = 0.15f;
 
-    /** DOCUMENT ME! */
+    /** Field for specifing stiffness of the mesh.  The dialog box suggests, but does not require that a value between .01 and .5 entered. */
     private JTextField stiffnessTF;
 
     /** DOCUMENT ME! */
     private String[] titles;
 
-    /** DOCUMENT ME! */
+    /** By default true, parameter indicates that the center position of the brain should be calculated 
+     *  using <code>JDialogExtractBrain.computeCenter(ModelImage, int, boolean)</code> 
+     */
     private boolean useCenterOfMass = true;
 
-    /** DOCUMENT ME! */
+    /** By default checked, yields a <code>true</code> value for <code>useCenterOfMass</code> */
     private JCheckBox useCenterOfMassCheckBox;
 
-    /** DOCUMENT ME! */
+    /** The user interface for this dialog box. */
     private ViewUserInterface userInterface;
 
-    /** DOCUMENT ME! */
+    /** When true estimates that boundary of the VOI by a sphere. */
     private boolean useSphere;
 
-    /** DOCUMENT ME! */
+    /** Initially not checked, estimates the boundary by a sphere rather than an ellipse. */
     private JCheckBox useSphereCheckbox;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -729,7 +737,7 @@ public class JDialogExtractBrain extends JDialogScriptableBase implements Algori
     }
 
     /**
-     * Sets the number of iterations.
+     * Sets the image influence ratio.
      *
      * @param  ratio  the image influence ratio
      */
