@@ -121,33 +121,33 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
     protected int voiIDb = -1;
 
     /** Whether all counters of the currently selected VOI are active. */
-    private boolean allActive; // ?
+    protected boolean allActive; // ?
 
     /** Anchor point used in calculated VOI movement distances. */
-    private Point anchorPt = new Point(0, 0);
+    protected Point anchorPt = new Point(0, 0);
 
     /** The component image that owns this class. */
-    private ViewJComponentEditImage compImage;
+    protected ViewJComponentEditImage compImage;
 
     /**
      * created to handle VOI updates. Must fireVOIUpdate(...) to get listeners to handle the update. Perhaps better
      * location for the VOIupdate is in <code>ViewJCompoenentEditImage</code>, but this listenerlist will handle
      * listeners of more than one type.
      */
-    private EventListenerList listenerList = new EventListenerList();
+    protected EventListenerList listenerList = new EventListenerList();
 
 
     /** Current mode for mouse behavior (VOI manipulation). */
-    private int mode;
+    protected int mode;
 
     /** The preset hue for the livewire VOI rubberband. */
-    private float presetHue = -1.0f;
+    protected float presetHue = -1.0f;
 
     /** an update event for the VOI. */
-    private UpdateVOIEvent voiUpdate = null;
+    protected UpdateVOIEvent voiUpdate = null;
 
     /** Whether the VOI was being dragged. */
-    private boolean wasDragging;
+    protected boolean wasDragging;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -1710,8 +1710,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  mouseEvent  MouseEvent
      */
     public void mouseClicked(MouseEvent mouseEvent) {
-    	if (compImage instanceof ViewJComponentSingleRegistration) {
-    		//return;
+    	if (compImage instanceof ViewJComponentRegistration) {
+    		return;
     	}
         int xS, yS;
         xS = compImage.getScaledX(mouseEvent.getX()); // zoomed x.  Used as cursor
@@ -1738,8 +1738,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  mouseEvent  MouseEvent the mouse event
      */
     public void mouseDragged(MouseEvent mouseEvent) {
-    	if (compImage instanceof ViewJComponentSingleRegistration) {
-    	//	return;
+    	if (compImage instanceof ViewJComponentRegistration) {
+    		return;
     	}
     	
         int mouseMods = mouseEvent.getModifiers();
@@ -2808,6 +2808,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         }
 
         compImage.setMode(ViewJComponentEditImage.DEFAULT);
+        
     } // end mouseMoved
 
 
@@ -2817,8 +2818,8 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  mouseEvent  MouseEvent the mouse event
      */
     public void mousePressed(MouseEvent mouseEvent) {
-    	if (compImage instanceof ViewJComponentSingleRegistration) {
-    		//return;
+    	if (compImage instanceof ViewJComponentRegistration) {
+    		return;
     	}
         int xS, yS;
         int x, y;
@@ -3022,11 +3023,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
      * @param  mouseEvent  event that triggered function
      */
     public void mouseReleased(MouseEvent mouseEvent) {
-    	
-    	if (compImage instanceof ViewJComponentSingleRegistration) {
+    	if (compImage instanceof ViewJComponentRegistration) {
     		return;
     	}
-    	
         int i, j, k;
         int nVOI;
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
@@ -3872,9 +3871,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             int nVOI = VOIs.size();
 
             if (compImage.getSlice() != -99) {
-
                 for (int i = nVOI - 1; i >= 0; i--) {
-
                     VOIs.VOIAt(i).drawBlendSelf(1, 1, 1, 1, compImage.getSlice(), compImage.getPaintBuffer(), graphics,
                                                 compImage.getActiveImage().getExtents()[0],
                                                 compImage.getActiveImage().getExtents()[1]);
