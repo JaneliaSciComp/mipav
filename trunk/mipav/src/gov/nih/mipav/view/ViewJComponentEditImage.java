@@ -351,6 +351,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
     /** Document Me **/
     private boolean intensityLabel = false;
 
+    /** Flag used ONLY by ViewJComponentRegistration to prohibit VOI drawing */
+    protected boolean drawVOIs = true;
+    
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -448,8 +452,13 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
         super.setZoom(zoom, zoom);
 
-        voiHandler = new VOIHandler(this);
-
+        
+        if (this instanceof ViewJComponentSingleRegistration) {
+        	voiHandler = new VOIRegistrationHandler(this);
+        } else {        
+        	voiHandler = new VOIHandler(this);
+        }
+        
         if (imageA.isDicomImage()) {
             voiHandler.setOverlay(Preferences.is(Preferences.PREF_SHOW_DICOM_OVERLAYS));
         } else {
@@ -1894,7 +1903,7 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                        (mode == DROPPER_PAINT) || (mode == ERASER_PAINT) || (mode == QUICK_LUT) ||
                        (mode == PROTRACTOR) || (mode == LIVEWIRE) || (mode == ANNOTATION) ||
                        (mode == POLYLINE_SLICE_VOI) || (mode == MOVE) || (mode == MOVE_POINT) || (mode == NEW_POINT) ||
-                       (mode == RETRACE) || (mode == DELETE_POINT)) {
+                       (mode == RETRACE) || (mode == DELETE_POINT) || (mode == TRANSLATE)) {
             g.dispose();
 
             return;
@@ -2267,6 +2276,10 @@ public class ViewJComponentEditImage extends ViewJComponentBase
      */
     public void paintComponent(Graphics graphics) {
 
+    	if (this instanceof ViewJComponentRegistration) {
+    	//	System.err.println("Paint component ViewJComponent Registration in EditImage");
+    	}
+    	
         try {
 
             if (modifyFlag == false) {
@@ -2323,7 +2336,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 makePaintBitmapBorder(paintImageBuffer, paintBitmap, slice, frame);
             }
 
-            voiHandler.paintSolidVOIinImage(offscreenGraphics2d);
+            if (!(this instanceof ViewJComponentRegistration)) {
+            	voiHandler.paintSolidVOIinImage(offscreenGraphics2d);
+            }
 
 
             if (memImageA == null) { // create imageA if it hasn't already been created
@@ -2405,7 +2420,9 @@ public class ViewJComponentEditImage extends ViewJComponentBase
                 repaintPaintBrushCursorFast(offscreenGraphics2d);
             }
 
-            voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
+            if (!(this instanceof ViewJComponentRegistration)) {
+            	voiHandler.drawVOIs(offscreenGraphics2d); // draw all VOI regions
+            }
             drawImageText(offscreenGraphics2d); // draw image text, i.e. slice number
 
             if ((mode == WIN_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS)) &&
@@ -2424,7 +2441,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
 
                     cleanImageB = createImage(memImageSource);
                 }
-
                 super.paintWindowComponent(offscreenGraphics2d, lastMouseX, lastMouseY, windowedRegionSize,
                                            windowedRegionSize, getZoomX(), cleanImageB);
 
@@ -2432,9 +2448,11 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             } else if ((mode == MAG_REGION) && ((lastMouseX != OUT_OF_BOUNDS) || (lastMouseY != OUT_OF_BOUNDS))) {
                 paintMagComponent(offscreenGraphics2d);
             } else if (mode == DEFAULT){
+            	if (!(this instanceof ViewJComponentSingleRegistration)) {
             	if(intensityLabel) {
             		//display intensity values on screen
             		repaintImageIntensityLabelFast(offscreenGraphics2d);
+            	}
             	}
             }
 

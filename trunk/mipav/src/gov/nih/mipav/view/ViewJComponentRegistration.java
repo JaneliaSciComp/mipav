@@ -818,7 +818,6 @@ public class ViewJComponentRegistration
      * @param  mouseEvent  event that triggered function
      */
     public void mouseDragged(MouseEvent mouseEvent) {
-
         // int             mouseMods = mouseEvent.getModifiers();
         Graphics g;
         int i;
@@ -931,76 +930,7 @@ public class ViewJComponentRegistration
         g.dispose();
     }
 
-    /**
-     * If the mode is level set, draws level sets as user moves
-     * mouse. Otherwise, changes the cursor depending on where the mouse is in
-     * relation to the VOI.
-     *
-     * @param  mouseEvent  event that triggered the function
-     */
-    public void mouseMoved(MouseEvent mouseEvent) {
-        int i;
-        int x, y;
-        int xS, yS;
-        int nVOI;
-        ViewVOIVector VOIs;
-        Graphics g = getGraphics();
-
-        if ((g == null) || (modifyFlag == false) || (slice == -99)) {
-            return;
-        }
-
-        if ((pixBuffer == null) || (imageBufferActive == null)) {
-            g.dispose();
-
-            return;
-        }
-
-        xS = Math.round((mouseEvent.getX() / (getZoomX() * resolutionX)) - 0.5f);
-        yS = Math.round((mouseEvent.getY() / (getZoomY() * resolutionY)) - 0.5f);
-        x = mouseEvent.getX();
-        y = mouseEvent.getY();
-
-        if ((xS < 0) || (xS >= imageActive.getExtents()[0]) || // Check to ensure point is within
-                (yS < 0) || (yS >= imageActive.getExtents()[1])) { // the image bounds
-            g.dispose();
-
-            return;
-        }
-
-        if (mode == WIN_REGION) {
-            paintWindowComponent(g, mouseEvent);
-            g.dispose();
-
-            return;
-        }
-
-        if ((mode == POINT_VOI) || (mode == TRANSLATE) || (mode == ROTATE)) {
-            g.dispose();
-
-            return;
-        }
-
-        VOIs = imageActive.getVOIs(); // Get the VOIs from the active image.
-        nVOI = VOIs.size();
-
-        for (i = 0; i < nVOI; i++) {
-
-            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-
-                if (VOIs.VOIAt(i).isVisible() &&
-                        VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
-                    setMode(MOVE);
-                    g.dispose();
-
-                    return;
-                }
-            }
-        }
-
-        setMode(DEFAULT);
-        // setCursor(crosshairCursor);
-    }
+   
 
     /**
      * Sets the mode of the program depending on the cursor mode. If the mode
@@ -1143,13 +1073,84 @@ public class ViewJComponentRegistration
     }
 
     /**
+     * If the mode is level set, draws level sets as user moves
+     * mouse. Otherwise, changes the cursor depending on where the mouse is in
+     * relation to the VOI.
+     *
+     * @param  mouseEvent  event that triggered the function
+     */
+    public void mouseMoved(MouseEvent mouseEvent) {
+        int i;
+        int x, y;
+        int xS, yS;
+        int nVOI;
+        ViewVOIVector VOIs;
+        Graphics g = getGraphics();
+
+        if ((g == null) || (modifyFlag == false) || (slice == -99)) {
+            return;
+        }
+
+        if ((pixBuffer == null) || (imageBufferActive == null)) {
+            g.dispose();
+
+            return;
+        }
+
+        xS = Math.round((mouseEvent.getX() / (getZoomX() * resolutionX)) - 0.5f);
+        yS = Math.round((mouseEvent.getY() / (getZoomY() * resolutionY)) - 0.5f);
+        x = mouseEvent.getX();
+        y = mouseEvent.getY();
+
+        if ((xS < 0) || (xS >= imageActive.getExtents()[0]) || // Check to ensure point is within
+                (yS < 0) || (yS >= imageActive.getExtents()[1])) { // the image bounds
+            g.dispose();
+
+            return;
+        }
+
+        if (mode == WIN_REGION) {
+            super.mouseMoved(mouseEvent);
+            g.dispose();
+
+            return;
+        }
+
+        if ((mode == POINT_VOI) || (mode == TRANSLATE) || (mode == ROTATE)) {
+            g.dispose();
+
+            return;
+        }
+
+        VOIs = imageActive.getVOIs(); // Get the VOIs from the active image.
+        nVOI = VOIs.size();
+
+        for (i = 0; i < nVOI; i++) {
+
+            if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
+
+                if (VOIs.VOIAt(i).isVisible() &&
+                        VOIs.VOIAt(i).nearPoint(x, y, slice, getZoomX(), resolutionX, resolutionY)) {
+                    setMode(MOVE);
+                    g.dispose();
+
+                    return;
+                }
+            }
+        }
+
+        setMode(DEFAULT);
+        // setCursor(crosshairCursor);
+    }
+
+    
+    /**
      * This function sets up and draws the VOI according to the mode.
      *
      * @param  mouseEvent  event that triggered function
      */
     public void mouseReleased(MouseEvent mouseEvent) {
         int xS, yS, xDim, yDim;
-
         if (modifyFlag == false) {
             return;
         }
@@ -1350,12 +1351,10 @@ public class ViewJComponentRegistration
 
                 return;
             }
-
             super.paintComponent(g);
 
             // Draw VOIs (unless told not to by showVOIs = false)
             if (showVOIs) {
-
                 if (useDualVOIs) {
 
                     if (orientation == FileInfoBase.UNKNOWN_ORIENT) {
@@ -1427,7 +1426,7 @@ public class ViewJComponentRegistration
                         } // end if slice != -99
                     }
                 }
-            }
+            } 
         } catch (OutOfMemoryError error) {
             System.gc();
             MipavUtil.displayError("Out of memory: ComponentRegistration.paintComponent.");
@@ -1452,7 +1451,8 @@ public class ViewJComponentRegistration
         }
 
         if (mouseEvent.isShiftDown() == false) {
-            super.paintWindowComponent(g, x, y, 100, 100, getZoomX());
+        	
+            //super.paintWindowComponent(g, x, y, 100, 100, getZoomX());
         } else if (mouseEvent.isShiftDown() == true) {
 
             // super.paintMagComponent(g, x, y, MAGR_WIDTH, MAGR_HEIGHT, getZoomX(),
@@ -1579,9 +1579,8 @@ public class ViewJComponentRegistration
      * @param  mode  the integer mode
      */
     public void setMode(int mode) {
-
         this.mode = mode;
-
+        voiHandler.setMode(mode);
         switch (mode) {
 
             case DEFAULT:
@@ -1611,6 +1610,7 @@ public class ViewJComponentRegistration
                 break;
 
             case WIN_REGION:
+            	super.setMode(WIN_REGION);
                 setCursor(magRegionCursor);
                 break;
         }
