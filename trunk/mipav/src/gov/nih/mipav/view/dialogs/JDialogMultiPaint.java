@@ -34,6 +34,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** Use serialVersionUID for interoperability. */
     private static final long serialVersionUID = -7497259210728078264L;
 
+    /** DOCUMENT ME! */
+    private static ModelLUT lutB;
+
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** DOCUMENT ME! */
@@ -42,13 +45,25 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** DOCUMENT ME! */
     private JPanel bottomPanel;
 
-    /** array of colors to use for the labels */
+    /** DOCUMENT ME! */
+    private JToggleButton buttonShortkeys;
+
+    /** this is the array list of texts for the mask number buttons. */
+    private ArrayList buttonTextArrayList;
+
+    /** Ref to JDialogChangeMaskNumber.* */
+    private JDialogChangeMaskNumber changeMaskNumberDialog;
+
+    /** Button that allows user to collapse masks/paint to single value.* */
+    private JButton collapseButton;
+
+    /** array of colors to use for the labels. */
     private Color[] color;
 
     /** private String title; private boolean useTriplanar=false;. */
     private BitSet currentMask;
 
-    /** display masks toggle button */
+    /** display masks toggle button. */
     private JToggleButton displayMasksButton;
 
     /** DOCUMENT ME! */
@@ -57,26 +72,26 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** DOCUMENT ME! */
     private JToggleButton displayPaintButton;
 
-	/** DOCUMENT ME! */
-    private JToggleButton buttonShortkeys;
-    
-	/** DOCUMENT ME! */
+    /** DOCUMENT ME! */
     private JPanel displayPanel;
 
     /** DOCUMENT ME! */
     private JCheckBox editBox;
 
+    /** button VOI export. */
+    private JButton exportVoiButton;
+
     /** DOCUMENT ME! */
     private JPanel filePanel;
 
-    /** DOCUMENT ME! */
-    private JPanel miscPanel;
-
-    /** DOCUMENT ME! */
-    private JPanel voiPanel;
-
-    /** source image */
+    /** source image. */
     private ModelImage image;
+
+    /** The size, in voxels, of the mask. */
+    private int imgBSize;
+
+    /** button VOI import. */
+    private JButton importVoiButton;
 
     /** DOCUMENT ME! */
     private JProgressBar indeterminateProgressBar = new JProgressBar();
@@ -84,7 +99,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** DOCUMENT ME! */
     private Vector intensityLockVector = new Vector();
 
-    /** labels for the painted objects */
+    /** labels for the painted objects. */
     private String[] label;
 
     /** DOCUMENT ME! */
@@ -112,19 +127,25 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     private JPanel maskPanel;
 
     /** DOCUMENT ME! */
+    private JPanel miscPanel;
+
+    /** DOCUMENT ME! */
     private BorderedButton[] multiButton;
 
     /** DOCUMENT ME! */
     private JPanel multiPanel;
 
-    /** number of paint masks initially */
+    /** number of paint masks initially. */
     private int nbx = 4, nby = 6;
+
+    /** This represents the button the user selects to..initally at 1.* */
+    private int newSelection = 1;
 
     /**
      * private boolean displayMask,displayPaint; // check whether the mask and paint are displayed private boolean
      * editable; // wether or not you can edit the object names.
      */
-    //private Color nullColor = Color.gray;
+    // private Color nullColor = Color.gray;
 
     /** DOCUMENT ME! */
     private JLabel numberLabel;
@@ -132,10 +153,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** DOCUMENT ME! */
     private JPanel numberPanel;
 
-    /** resize x value */
+    /** resize x value. */
     private JTextField numberXField;
 
-    /** resize y value */
+    /** resize y value. */
     private JTextField numberYField;
 
     /** DOCUMENT ME! */
@@ -144,63 +165,42 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     /** DOCUMENT ME! */
     private JCheckBox[] preserveBox;
 
-    /** check whether the mask can be affected by new paint or not */
-    private boolean[] preserved; 
+    /** check whether the mask can be affected by new paint or not. */
+    private boolean[] preserved;
 
-    /** resize button */
+    /** resize button. */
     private JButton resizeButton;
 
     /** DOCUMENT ME! */
     private JFileChooser saveDialog;
 
-    /** save labels button */
+    /** save labels button. */
     private JButton saveLabelsButton;
 
-    /** save mask button */
+    /** save mask button. */
     private JButton saveMaskButton;
 
-    /** id for the selected paint mask */
+    /** This is the scroll pane for the label list panel.* */
+    private JScrollPane scrollPane;
+
+    /** id for the selected paint mask. */
     private int selected = 1;
 
     /** private int destExtents[];. */
     private ViewUserInterface userInterface;
-    
-    /** this is the array list of texts for the mask number buttons */
-    private ArrayList buttonTextArrayList;
-    
-    
+
+    /** DOCUMENT ME! */
+    private JPanel voiPanel;
+
+
     /** The mask size in the x dimension. */
     private int xDim;
-    
+
     /** The mask size in the y dimension. */
     private int yDim;
-    
+
     /** The mask size in the z dimension. */
     private int zDim;
-    
-    /** The size, in voxels, of the mask. */
-    private int imgBSize;
-    
-    /** */
-    private static ModelLUT lutB;
-    
-	/** button VOI import */
-    private JButton importVoiButton;
-
-    /** button VOI export */
-    private JButton exportVoiButton;
-    
-    /** Ref to  JDialogChangeMaskNumber**/
-    private JDialogChangeMaskNumber changeMaskNumberDialog;
-    
-    /** This represents the button the user selects to..initally at 1 **/
-    private int newSelection = 1;
-    
-    /** This is the scroll pane for the label list panel **/
-    private JScrollPane scrollPane;
-    
-    /** Button that allows user to collapse masks/paint to single value **/
-    private JButton collapseButton;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -226,13 +226,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         super(theParentFrame, false);
         userInterface = ViewUserInterface.getReference();
         image = im;
-        
-        //first lets refresh the image
-    	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-    	//ModelImage imgB = image.getParentFrame().getImageB();
+
+        // first lets refresh the image
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+
+        // ModelImage imgB = image.getParentFrame().getImageB();
         refreshImagePaint(image, obj);
-        
+
         init();
+
         if (theParentFrame instanceof ViewJFrameImage) {
             ViewJFrameImage vjfi = (ViewJFrameImage) theParentFrame;
 
@@ -273,17 +275,20 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         String command = event.getActionCommand();
 
         if (command.equals("Close")) {
-        	//we need to commit the paint to mask
-        	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        	ModelImage imgB = image.getParentFrame().getImageB();
-        	image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
+
+            // we need to commit the paint to mask
+            BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+            ModelImage imgB = image.getParentFrame().getImageB();
+            image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
             image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
             image.getParentFrame().getComponentImage().setModifyFlag(true);
             image.notifyImageDisplayListeners();
             refreshImagePaint(image, obj);
-            if(changeMaskNumberDialog != null) {
-            	changeMaskNumberDialog.dispose();
+
+            if (changeMaskNumberDialog != null) {
+                changeMaskNumberDialog.dispose();
             }
+
             image.getParentFrame().getControls().getTools().setPointerSelected();
             image.getParentFrame().getComponentImage().setMode(ViewJComponentEditImage.DEFAULT);
             dispose();
@@ -291,9 +296,10 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             // MipavUtil.showHelp("10027");
         } else if (command.startsWith("PaintMask")) {
 
-            
+
             int num = Integer.valueOf(command.substring(command.indexOf(" ") + 1)).intValue();
             newSelection = num;
+
             // convert the paint to previous selection
             // and the newly selected mask to paint
             switchPaintAndMask(selected, num);
@@ -354,7 +360,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             int Nbx = Integer.valueOf(numberXField.getText()).intValue();
             int Nby = Integer.valueOf(numberYField.getText()).intValue();
 
-            //we need to commit paint to mask
+            // we need to commit paint to mask
             BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
             ModelImage imgB = image.getParentFrame().getImageB();
             image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
@@ -362,14 +368,14 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             image.getParentFrame().getComponentImage().setModifyFlag(true);
             image.notifyImageDisplayListeners();
             refreshImagePaint(image, obj);
-            if (getMaskTreeSet(imgB).size() > Nbx * Nby) {
-            	MipavUtil.displayError("Number of masks exceed resize number");
-            	selectedMaskToPaint(selected);
-            }
-            else {
+
+            if (getMaskTreeSet(imgB).size() > (Nbx * Nby)) {
+                MipavUtil.displayError("Number of masks exceed resize number");
+                selectedMaskToPaint(selected);
+            } else {
                 refreshImagePaint(image, obj);
-            	newLabelList(Nbx, Nby);
-            	refreshLabelDisplay();
+                newLabelList(Nbx, Nby);
+                refreshLabelDisplay();
             }
 
         } else if (command.equals("HidePaint")) {
@@ -407,78 +413,92 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             deselectMask();
             image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "OpenMask"));
             imageBInit();
-            //selectedMaskToPaint(1);
+            // selectedMaskToPaint(1);
         } else if (command.equals("ImportVOI")) {
             deselectMask();
+
             /** I changed this to onlyActive is false... you can switch*/
             image.getParentFrame().setImageB(image.generateUnsignedByteImage(1, false, false));
-			image.getParentFrame().getLUTb().makeStripedLUT();
-			// import the VOI labels as well
-			VOIVector voi = image.getVOIs();
-			int Nlabel = voi.size();
-			for (int n=0;n<Nlabel ;n++) {
-				label[n+1] = voi.VOIAt(n).getName();
-			}
-			selectedMaskToPaint(1);
+            image.getParentFrame().getLUTb().makeStripedLUT();
+
+            // import the VOI labels as well
+            VOIVector voi = image.getVOIs();
+            int Nlabel = voi.size();
+
+            for (int n = 0; n < Nlabel; n++) {
+                label[n + 1] = voi.VOIAt(n).getName();
+            }
+
+            selectedMaskToPaint(1);
         } else if (command.equals("ExportVOI")) {
             int num = selected;
             commitPaintToMask(num);
+
             // empty VOI set to start
-			image.getParentFrame().getImageB().resetVOIs();
-			
+            image.getParentFrame().getImageB().resetVOIs();
+
             AlgorithmVOIExtraction VOIExtractionAlgo = new AlgorithmVOIExtraction(image.getParentFrame().getImageB());
-            progressBar = new ViewJProgressBar(image.getParentFrame().getImageB().getImageName(), "Extracting VOI ...", 0, 100, true);
+            progressBar = new ViewJProgressBar(image.getParentFrame().getImageB().getImageName(), "Extracting VOI ...",
+                                               0, 100, true);
             progressBar.setSeparateThread(false);
             VOIExtractionAlgo.addProgressChangeListener(progressBar);
             VOIExtractionAlgo.setProgressValues(0, 100);
-            
-            
-			// in case there are labels not accounted for
-			int Nlabel = countMaskLabels();
-            String [] correctedLabels = new String[Nlabel];
+
+
+            // in case there are labels not accounted for
+            int Nlabel = countMaskLabels();
+            String[] correctedLabels = new String[Nlabel];
+
             for (int i = 0; i < Nlabel; i++) {
-				if (i<label.length-1)
-					correctedLabels[i] = new String(label[i+1]);
-				else
-					correctedLabels[i] = ("VOI"+i);
+
+                if (i < (label.length - 1)) {
+                    correctedLabels[i] = new String(label[i + 1]);
+                } else {
+                    correctedLabels[i] = ("VOI" + i);
+                }
             }
-            
+
             VOIExtractionAlgo.setNameTable(correctedLabels);
             VOIExtractionAlgo.run();
-			// transfer the VOIs to the original image (and keep in the mask)
-			VOIVector voi = image.getParentFrame().getImageB().getVOIs();
-			image.resetVOIs();
-			image.setVOIs(voi);
-			deselectMask();
+
+            // transfer the VOIs to the original image (and keep in the mask)
+            VOIVector voi = image.getParentFrame().getImageB().getVOIs();
+            image.resetVOIs();
+            image.setVOIs(voi);
+            deselectMask();
             selectedMaskToPaint(num);
-        }
-        else if(command.equals("Collapse")) {
-            //go through image b and find all mask values
-        	ModelImage imageB = image.getParentFrame().getImageB();
+        } else if (command.equals("Collapse")) {
+
+            // go through image b and find all mask values
+            ModelImage imageB = image.getParentFrame().getImageB();
             TreeSet vals = getMaskTreeSet(imageB);
-            
-            image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "CollapseAllToSinglePaint"));
-        	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-        	ModelImage imgB = image.getParentFrame().getImageB();
-        	image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
+
+            image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST,
+                                                                   "CollapseAllToSinglePaint"));
+
+            BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+            ModelImage imgB = image.getParentFrame().getImageB();
+            image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
             image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
             image.getParentFrame().getComponentImage().setModifyFlag(true);
             image.notifyImageDisplayListeners();
-            refreshImagePaint(image, obj); 
+            refreshImagePaint(image, obj);
+        } else if (command.equals("Shortkeys")) {
+
+            if (buttonShortkeys.isSelected()) {
+                setFocusable(true);
+                addKeyListener(this);
+                requestFocusInWindow();
+                image.getParentFrame().getComponentImage().setFocusable(true);
+                image.getParentFrame().getComponentImage().addKeyListener(this);
+                image.getParentFrame().getComponentImage().requestFocusInWindow();
+            } else {
+                removeKeyListener(this);
+                setFocusable(false);
+                image.getParentFrame().getComponentImage().removeKeyListener(this);
+                image.getParentFrame().getComponentImage().setFocusable(false);
+            }
         }
-		else if (command.equals("Shortkeys")) {
-			if (buttonShortkeys.isSelected()) {
-				setFocusable(true);
-				addKeyListener(this);
-				requestFocusInWindow();
-				image.getParentFrame().getComponentImage().setFocusable(true);
-				image.getParentFrame().getComponentImage().addKeyListener(this);
-				image.getParentFrame().getComponentImage().requestFocusInWindow();
-			} else {
-				removeKeyListener(this);
-				image.getParentFrame().getComponentImage().removeKeyListener(this);
-			}
-		}
 
     }
 
@@ -515,57 +535,458 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         intensityLockVector.add(intensityLockInteger);
     }
 
-	/**
-	 *	Procedure that counts the number of labels in the mask image
-	 */
-	public int countMaskLabels() {
-		float [] buffer;
-		int Nlabel = 0;
-		int MAX_LABEL = 256;
-		try {
-			int length = 1;
-			for (int n=0;n<image.getExtents().length;n++) {
-				length *= image.getExtents()[n];
-			}
+    /**
+     * Procedure that counts the number of labels in the mask image.
+     *
+     * @return  DOCUMENT ME!
+     */
+    public int countMaskLabels() {
+        float[] buffer;
+        int Nlabel = 0;
+        int MAX_LABEL = 256;
+
+        try {
+            int length = 1;
+
+            for (int n = 0; n < image.getExtents().length; n++) {
+                length *= image.getExtents()[n];
+            }
+
             buffer = new float[length];
-            image.exportData(0,length, buffer); // locks and releases lock
-		} catch (IOException error) {
-			buffer = null;
-			MipavUtil.displayError("source image locked");
-			return 0;
-		} catch (OutOfMemoryError e){
-			buffer = null;
-			MipavUtil.displayError("out of memory");
-			return 0;
-		}
-		float[] labelList = new float[MAX_LABEL];
-		Nlabel=0;
-		for (int n=0;n<buffer.length && Nlabel<MAX_LABEL;n++) if (buffer[n] != 0) {
-			boolean isNew = true;
-			for (int l=0;l<Nlabel;l++)
-				if (labelList[l]==buffer[n]) isNew = false;
-			
-			if (isNew) {
-				labelList[Nlabel] = buffer[n];
-				Nlabel++;
-			}
-		}
-        //userInterface.setMessageText("labels: "+Nlabel);
-		if (Nlabel > MAX_LABEL) {
-			buffer = null;
-			labelList = null;
-			MipavUtil.displayError("too many labels");
-			return 0;
-		}		
-		return Nlabel;
-	}
-	
+            image.exportData(0, length, buffer); // locks and releases lock
+        } catch (IOException error) {
+            buffer = null;
+            MipavUtil.displayError("source image locked");
+
+            return 0;
+        } catch (OutOfMemoryError e) {
+            buffer = null;
+            MipavUtil.displayError("out of memory");
+
+            return 0;
+        }
+
+        float[] labelList = new float[MAX_LABEL];
+        Nlabel = 0;
+
+        for (int n = 0; (n < buffer.length) && (Nlabel < MAX_LABEL); n++) {
+
+            if (buffer[n] != 0) {
+                boolean isNew = true;
+
+                for (int l = 0; l < Nlabel; l++) {
+
+                    if (labelList[l] == buffer[n]) {
+                        isNew = false;
+                    }
+                }
+
+                if (isNew) {
+                    labelList[Nlabel] = buffer[n];
+                    Nlabel++;
+                }
+            }
+        }
+
+        // userInterface.setMessageText("labels: "+Nlabel);
+        if (Nlabel > MAX_LABEL) {
+            buffer = null;
+            labelList = null;
+            MipavUtil.displayError("too many labels");
+
+            return 0;
+        }
+
+        return Nlabel;
+    }
+
+
+    /**
+     * DOCUMENT ME!
+     */
+    public void imageBInit() {
+
+        // getting image b size
+        ModelImage imgB = image.getParentFrame().getImageB();
+
+
+        TreeSet vals = getMaskTreeSet(imgB);
+
+
+        // iterate over TreeSet and set color[] and backgrounds
+        Iterator iter = vals.iterator();
+        boolean match = false;
+        int k = 1;
+
+        // this boolean is needed to test if image b has a color of 1 in it
+        boolean hasOne = false;
+
+        if (vals.size() == 0) {
+            color[1] = lutB.getColor(1);
+            multiButton[1].setBackground(color[1]);
+            listButton[1].setBackground(color[1]);
+            multiButton[1].setText(String.valueOf(1));
+            listButton[1].setText(String.valueOf(1));
+            buttonTextArrayList.set(0, new Integer(1));
+            multiButton[1].setSelected(true);
+            listButton[1].setSelected(true);
+            image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+            image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
+
+            if (image.getTriImageFrame() != null) {
+                image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+                image.getTriImageFrame().setPaintColor(color[1]);
+
+            }
+
+            ((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
+        }
+
+        while (iter.hasNext()) {
+            Integer maskVal = (Integer) iter.next();
+            int maskVal_int = maskVal.intValue();
+
+            if (maskVal_int == 1) {
+                hasOne = true;
+            }
+
+            for (k = 1; k <= buttonTextArrayList.size(); k++) {
+
+                if (maskVal_int == ((Integer) buttonTextArrayList.get(k - 1)).intValue()) {
+                    match = true;
+
+                    break;
+                }
+            }
+
+            // since treeset is ordered, this will work
+            if (match) {
+                color[k] = lutB.getColor(maskVal_int);
+                multiButton[k].setBackground(color[k]);
+                listButton[k].setBackground(color[k]);
+                multiButton[k].setText(String.valueOf(maskVal_int));
+                listButton[k].setText(String.valueOf(maskVal_int));
+                buttonTextArrayList.set(k - 1, new Integer(maskVal_int));
+            } else {
+
+                for (int n = 1; n <= (nbx * nby); n++) {
+
+                    if (!hasOne) {
+
+                        if (color[1].getRGB() == lutB.getColor(1).getRGB()) {
+                            color[1] = lutB.getColor(maskVal_int);
+                            multiButton[1].setBackground(color[1]);
+                            listButton[1].setBackground(color[1]);
+                            multiButton[1].setText(String.valueOf(maskVal_int));
+                            listButton[1].setText(String.valueOf(maskVal_int));
+                            buttonTextArrayList.set(0, new Integer(maskVal_int));
+
+                            break;
+                        }
+                    }
+
+                    if (color[n] == null) {
+                        color[n] = lutB.getColor(maskVal_int);
+                        multiButton[n].setBackground(color[n]);
+                        listButton[n].setBackground(color[n]);
+                        multiButton[n].setText(String.valueOf(maskVal_int));
+                        listButton[n].setText(String.valueOf(maskVal_int));
+                        buttonTextArrayList.set(n - 1, new Integer(maskVal_int));
+
+                        break;
+                    }
+                }
+
+
+            }
+
+            match = false;
+        }
+
+        // since the image b is not blank, we need to figure out which button should be selected
+        boolean test = false;
+
+        if (vals.size() > 0) {
+            int n;
+
+
+            if (vals.size() >= (nbx * nby)) {
+                selected = 1;
+
+                // color[n] = lutB.getColor(n);
+                multiButton[1].setBackground(color[1]);
+                multiButton[1].setSelected(true);
+
+                // multiButton[1].setSelected(false);
+                listButton[1].setBackground(color[1]);
+                listButton[1].setSelected(true);
+
+                // listButton[1].setSelected(false);
+                image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+                image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
+
+                if (image.getTriImageFrame() != null) {
+                    image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+                    image.getTriImageFrame().setPaintColor(color[1]);
+
+                }
+
+                ((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
+            } else {
+
+                for (n = 1; n <= (nbx * nby); n++) {
+
+                    if (!hasOne) {
+
+                        if (color[1].getRGB() == lutB.getColor(1).getRGB()) {
+                            selected = 1;
+                            multiButton[1].setBackground(color[1]);
+                            multiButton[1].setSelected(true);
+                            listButton[1].setBackground(color[1]);
+                            listButton[1].setSelected(true);
+                            image.getParentFrame().getComponentImage().setIntensityDropper((float)
+                                                                                           (new Integer(multiButton[1].getText()).intValue()));
+                            image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
+
+                            if (image.getTriImageFrame() != null) {
+                                image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
+                                image.getTriImageFrame().setPaintColor(color[1]);
+
+                            }
+
+                            test = true;
+
+                            break;
+                        }
+                    }
+
+                    if (color[n] == null) {
+                        selected = n;
+                        color[n] = lutB.getColor(n);
+                        multiButton[n].setBackground(color[n]);
+                        multiButton[n].setSelected(true);
+                        multiButton[1].setSelected(false);
+                        listButton[n].setBackground(color[n]);
+                        listButton[n].setSelected(true);
+                        listButton[1].setSelected(false);
+                        image.getParentFrame().getComponentImage().setIntensityDropper((float)
+                                                                                       (new Integer(multiButton[n].getText()).intValue()));
+                        image.getParentFrame().getControls().getTools().setPaintColor(color[n]);
+
+                        if (image.getTriImageFrame() != null) {
+                            image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[n].getText()).intValue()));
+                            image.getTriImageFrame().setPaintColor(color[n]);
+
+                        }
+
+                        test = true;
+
+                        break;
+                    }
+                }
+            }
+
+
+        }
+    }
+
+    /**
+     * Handle the key pressed event.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void keyPressed(KeyEvent e) { }
+
+    /**
+     * Handle the key released event.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void keyReleased(KeyEvent e) { }
+
+    /**
+     * Handle the key typed event.
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void keyTyped(KeyEvent e) {
+        String key = Character.toString(e.getKeyChar());
+        System.out.println("key: " + key);
+
+        if (key.equals("1")) {
+
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 1"));
+        } else if (key.equals("2")) {
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 2"));
+        } else if (key.equals("3")) {
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 3"));
+        } else if (key.equals("4")) {
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 4"));
+        } else if (key.equals("5")) {
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 5"));
+        } else if (key.equals("6")) {
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 6"));
+        } else if (key.equals("7")) {
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 7"));
+        } else if (key.equals("8")) {
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 8"));
+        } else if (key.equals("9")) {
+            actionPerformed(new ActionEvent(this, 0, "PaintMask 9"));
+        } else if (key.equals("t")) {
+            displayModeButton.setSelected(!displayModeButton.isSelected());
+            actionPerformed(new ActionEvent(this, 0, "SwitchMode"));
+        } else if (key.equals("c")) {
+            displayPaintButton.setSelected(!displayPaintButton.isSelected());
+            actionPerformed(new ActionEvent(this, 0, "HidePaint"));
+        } else if (key.equals("v")) {
+            displayMasksButton.setSelected(!displayMasksButton.isSelected());
+            actionPerformed(new ActionEvent(this, 0, "HideMasks"));
+        } else if (key.equals("s")) {
+            actionPerformed(new ActionEvent(this, 0, "Save"));
+        }
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void mouseClicked(MouseEvent e) {
+
+        if (e.getButton() == MouseEvent.BUTTON3) {
+
+            if (e.getSource() instanceof JButton) {
+                JPanel correspondingPanel = null;
+                String correspondingButtonName = "";
+                JButton correspondingButton = null;
+                JPanel muPanel = null;
+                JPanel liPanel = null;
+                JScrollPane scPane = null;
+
+                // get Source Button and Source Panel
+                JButton sourceButton = (JButton) e.getSource();
+                JPanel srcPanel = (JPanel) sourceButton.getParent();
+                String srcPanelName = srcPanel.getName();
+
+
+                // get ContentPane
+                Container contentPane = this.getContentPane();
+
+                // get Main Panel
+                JPanel mPanel = (JPanel) contentPane.getComponents()[0];
+
+                // get Correponding Panel
+                for (int k = 0; k < mPanel.getComponentCount(); k++) {
+
+                    if (mPanel.getComponents()[k].getName() != null) {
+
+                        if (mPanel.getComponents()[k].getName().equals("multiPanel")) {
+                            muPanel = (JPanel) mPanel.getComponents()[k];
+                        } else if (mPanel.getComponents()[k].getName().equals("scrollPane")) {
+                            scPane = (JScrollPane) mPanel.getComponents()[k];
+                        }
+                    }
+                }
+
+                if (srcPanelName.equals("multiPanel")) {
+                    JViewport vPort = scPane.getViewport();
+
+                    for (int k = 0; k < vPort.getComponentCount(); k++) {
+
+                        if (vPort.getComponents()[k].getName().equals("listPanel")) {
+                            liPanel = (JPanel) vPort.getComponents()[k];
+                        }
+                    }
+
+                    correspondingPanel = liPanel;
+                } else if (srcPanelName.equals("listPanel")) {
+                    correspondingPanel = muPanel;
+                }
+
+                // get Corresponding Button Name
+                String sourceButtonName = sourceButton.getName();
+
+                if (sourceButtonName.split(":")[0].equals("multiButton")) {
+                    correspondingButtonName = "listButton:" + sourceButtonName.split(":")[1];
+                } else {
+                    correspondingButtonName = "multiButton:" + sourceButtonName.split(":")[1];
+                }
+
+                // get Corresponding Button
+                for (int i = 0; i < correspondingPanel.getComponentCount(); i++) {
+
+                    if (correspondingPanel.getComponents()[i].getName() != null) {
+
+                        if (correspondingPanel.getComponents()[i].getName().equals(correspondingButtonName)) {
+                            correspondingButton = (JButton) correspondingPanel.getComponents()[i];
+                        }
+                    }
+                }
+
+
+                int sourceId = (new Integer(sourceButtonName.split(":")[1])).intValue();
+
+                // only allowing this dialog to pop up if the button is actually selected
+                if (sourceId == selected) {
+                    changeMaskNumberDialog = new JDialogChangeMaskNumber(sourceButton, correspondingButton,
+                                                                         buttonTextArrayList, color, lutB, image,
+                                                                         newSelection);
+                    changeMaskNumberDialog.pack();
+                    MipavUtil.centerInComponent(this, changeMaskNumberDialog);
+                    changeMaskNumberDialog.setVisible();
+                }
+            }
+        }
+
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void mouseEntered(MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void mouseExited(MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void mousePressed(MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    /**
+     * DOCUMENT ME!
+     *
+     * @param  e  DOCUMENT ME!
+     */
+    public void mouseReleased(MouseEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
     /**
      * Reads the 'labels' file from disk.
      *
      * @param  filename  DOCUMENT ME!
      */
     public void readLabelsFromFile(String filename) {
+
         try {
             File f = new File(filename);
             FileReader fr = new FileReader(f);
@@ -601,46 +1022,46 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
                 for (int n = 1; n < ((nbx * nby) + 1); n++) {
                     line = br.readLine();
-                    /*
-                    num = Integer.valueOf(line.substring(0, line.indexOf("|") - 1)).intValue();
 
-                    if (num == n) {
-                        label[n] = line.substring(line.indexOf("|") + 2, line.lastIndexOf("|") - 1);
-                        color[n] = new Color(Integer.valueOf(line.substring(line.lastIndexOf("|") + 2)).intValue());
-                        
-                    }
-                    */
+                    /*
+                     * num = Integer.valueOf(line.substring(0, line.indexOf("|") - 1)).intValue();
+                     *
+                     * if (num == n) { label[n] = line.substring(line.indexOf("|") + 2, line.lastIndexOf("|") - 1);
+                     * color[n] = new Color(Integer.valueOf(line.substring(line.lastIndexOf("|") + 2)).intValue()); }
+                     */
                     String[] maskLabelInfo = line.split(":");
-                    if(maskLabelInfo.length == 4) {
-                    	num = new Integer(maskLabelInfo[0].trim()).intValue();
-                    }
-                    else {
+
+                    if (maskLabelInfo.length == 4) {
+                        num = new Integer(maskLabelInfo[0].trim()).intValue();
+                    } else {
                         num = Integer.valueOf(line.substring(0, line.indexOf("|") - 1)).intValue();
                     }
+
                     if (num == n) {
-                    	if (maskLabelInfo.length == 4) {
-                    		buttonTextArrayList.set(n-1, new Integer(maskLabelInfo[1].trim()));
-                    		label[n] =  maskLabelInfo[2].trim();
-                    		if (maskLabelInfo[3].trim().equals("null")) {
-                    			color[n] = null;
-                    		}
-                    		else {
-                    			color[n] = new Color(new Integer(maskLabelInfo[3].trim()).intValue());
-                    		}
-                    	}
-                    	//need to handle the old labels files also since i added another column for button text
-                    	else {
-                    		buttonTextArrayList.set(n-1, new Integer(n));
+
+                        if (maskLabelInfo.length == 4) {
+                            buttonTextArrayList.set(n - 1, new Integer(maskLabelInfo[1].trim()));
+                            label[n] = maskLabelInfo[2].trim();
+
+                            if (maskLabelInfo[3].trim().equals("null")) {
+                                color[n] = null;
+                            } else {
+                                color[n] = new Color(new Integer(maskLabelInfo[3].trim()).intValue());
+                            }
+                        }
+                        // need to handle the old labels files also since i added another column for button text
+                        else {
+                            buttonTextArrayList.set(n - 1, new Integer(n));
                             label[n] = line.substring(line.indexOf("|") + 2, line.lastIndexOf("|") - 1);
-                            //since the old files were saving the grey value of the button, we need to check b/c we dont
-                            //want the buttons grey
+
+                            // since the old files were saving the grey value of the button, we need to check b/c we
+                            // dont want the buttons grey
                             if (Integer.valueOf(line.substring(line.lastIndexOf("|") + 2)).intValue() == -8355712) {
-                            	color[n] = null;
+                                color[n] = null;
+                            } else {
+                                color[n] = new Color(Integer.valueOf(line.substring(line.lastIndexOf("|") + 2)).intValue());
                             }
-                            else {
-                            	color[n] = new Color(Integer.valueOf(line.substring(line.lastIndexOf("|") + 2)).intValue());
-                            }
-                    	}
+                        }
                     }
                 }
 
@@ -679,6 +1100,32 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 continue;
             }
         }
+    }
+
+
+    /**
+     * windowclosing...override of WindowListener interface.
+     *
+     * @param  event  DOCUMENT ME!
+     */
+    public void windowClosing(WindowEvent event) {
+
+        // we need to commit the paint to mask
+        BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
+        ModelImage imgB = image.getParentFrame().getImageB();
+        image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
+        image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
+        image.getParentFrame().getComponentImage().setModifyFlag(true);
+        image.notifyImageDisplayListeners();
+        refreshImagePaint(image, obj);
+
+        if (changeMaskNumberDialog != null) {
+            changeMaskNumberDialog.dispose();
+        }
+
+        image.getParentFrame().getControls().getTools().setPointerSelected();
+        image.getParentFrame().getComponentImage().setMode(ViewJComponentEditImage.DEFAULT);
+        dispose();
     }
 
     /**
@@ -754,9 +1201,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
 
         // create new color
-        if(color[num] == null) {
-        	color[num] = lutB.getColor(num);
-        	
+        if (color[num] == null) {
+            color[num] = lutB.getColor(num);
+
         }
 
         multiButton[num].setBackground(color[num]);
@@ -775,13 +1222,83 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      * Sets buttons to deselected, then calls refreshImagePaint to reset paint as mask.
      */
     private void deselectMask() {
-        if (selected>0) {
-			multiButton[selected].setSelected(false);
-			listButton[selected].setSelected(false);
-		}
+
+        if (selected > 0) {
+            multiButton[selected].setSelected(false);
+            listButton[selected].setSelected(false);
+        }
+
         selected = 0;
         refreshImagePaint(image, new BitSet());
 
+    }
+
+
+    /**
+     * Determines the intensities of image B.....populates the treeset and returns it.
+     *
+     * @param   imgB  DOCUMENT ME!
+     *
+     * @return  DOCUMENT ME!
+     */
+    private TreeSet getMaskTreeSet(ModelImage imgB) {
+        boolean blankImage = true;
+        TreeSet vals = new TreeSet();
+
+        xDim = imgB.getExtents()[0];
+        yDim = imgB.getExtents()[1];
+
+        int numDims = imgB.getNDims();
+
+        if (numDims == 2) {
+            imgBSize = xDim * yDim;
+        } else {
+            zDim = imgB.getExtents()[2];
+            imgBSize = xDim * yDim * zDim;
+        }
+
+
+        if (!image.isColorImage()) {
+
+            for (int i = 0; i < imgBSize; i++) {
+
+                if (imgB.getUByte(i) != 0) {
+
+                    // there is at least some mask...so set blank image to flase
+                    blankImage = false;
+
+                    int val = imgB.getUByte(i);
+                    vals.add(new Integer(val));
+                }
+            }
+        } else {
+
+            for (int i = 1; i < (imgBSize * 4); i = i + 4) {
+                short r, g, b;
+                int k;
+                r = imgB.getUByte(i);
+                g = imgB.getUByte(i + 1);
+                b = imgB.getUByte(i + 2);
+
+                if ((r != 0) || (g != 0) || (b != 0)) {
+
+                    // there is at least some mask...so set blank image to flase
+                    blankImage = false;
+
+                    for (k = 1; k < (lutB.getExtents()[1] * 4); k = k + 4) {
+
+                        if ((lutB.getUByte(k) == r) && (lutB.getUByte(k + 1) == g) && (lutB.getUByte(k + 2) == b)) {
+                            break;
+                        }
+                    }
+
+                    int val = k / 4;
+                    vals.add(new Integer(val));
+                }
+            }
+        }
+
+        return vals;
     }
 
     /**
@@ -790,8 +1307,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     private void init() {
         setForeground(Color.black);
         setTitle("Multiple Paint Tools");
-        
-        
+
 
         // multiple masks/paint
         label = new String[(nbx * nby) + 1];
@@ -820,7 +1336,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             multiButton[n].setSelected(false);
             multiButton[n].setMaximumSize(new Dimension(48, 20));
             multiButton[n].setPreferredSize(new Dimension(48, 20));
-            //multiButton[n].setToolTipText(label[n]);
+            // multiButton[n].setToolTipText(label[n]);
 
             listButton[n] = new BorderedButton(String.valueOf(n));
             listButton[n].setName("listButton:" + n);
@@ -831,9 +1347,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             listButton[n].setSelected(false);
             listButton[n].setMaximumSize(new Dimension(50, 18));
             listButton[n].setPreferredSize(new Dimension(50, 18));
-            //listButton[n].setBackground(nullColor);
+            // listButton[n].setBackground(nullColor);
 
-            //color[n] = nullColor;
+            // color[n] = nullColor;
             color[n] = null;
 
             preserved[n] = false;
@@ -841,7 +1357,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             preserveBox[n].addActionListener(this);
             preserveBox[n].setActionCommand("Preserve " + n);
             preserveBox[n].setToolTipText("Lock the paint mask");
-            
+
             buttonTextArrayList.add(new Integer(n));
         }
 
@@ -895,9 +1411,14 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         buttonShortkeys.addActionListener(this);
         buttonShortkeys.setActionCommand("Shortkeys");
         buttonShortkeys.setFont(serif12);
-        buttonShortkeys.setToolTipText("<html>" + "Use hotkeys for commands:"  + "<br>" +  "1-9: change to mask #1-9 "  + "<br>" +  " t: show/hide label text "  + "<br>" +  " c: show/hide current paint mask "  + "<br>" +  " v: show/hide validated masks "  + "<br>" +  " s: save masks" + "</html>");
+        buttonShortkeys.setToolTipText("<html>" + "&nbsp;<u>Use hotkeys for commands:</u>" + "<br>" +
+                                       "&nbsp;<b>1-9:</b> change to mask #1-9 " + "<br>" +
+                                       "&nbsp;<b>t:</b> show/hide label text " + "<br>" +
+                                       "&nbsp;<b>c:</b> show/hide current paint mask&nbsp;" + "<br>" +
+                                       "&nbsp;<b>v:</b> show/hide validated masks " + "<br>" +
+                                       "&nbsp;<b>s:</b> save masks" + "</html>");
 
-		// customize the mask palette
+        // customize the mask palette
         numberLabel = new JLabel("Number of masks: ");
         numberLabel.setForeground(Color.black);
         numberLabel.setFont(serif12);
@@ -935,7 +1456,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         displayMasksButton.setActionCommand("HideMasks");
         displayMasksButton.setFont(serif12);
         displayMasksButton.setToolTipText("Hide inactive masks for visualization");
-        
+
         collapseButton = new JButton("Collapse masks/paint");
         collapseButton.addActionListener(this);
         collapseButton.setActionCommand("Collapse");
@@ -991,11 +1512,12 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             }
         }
 
-        //listPanel.setPreferredSize(new Dimension(400,580));
-        //listPanel.setVisible(false);
-        
-        scrollPane = new JScrollPane(listPanel,ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER  );
-        scrollPane.setPreferredSize(new Dimension(400,560));
+        // listPanel.setPreferredSize(new Dimension(400,580));
+        // listPanel.setVisible(false);
+
+        scrollPane = new JScrollPane(listPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(400, 560));
         scrollPane.setName("scrollPane");
         scrollPane.setVisible(false);
 
@@ -1054,7 +1576,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         displayPanel.add(displayPaintButton, gbc);
         gbc.gridx = 1;
         displayPanel.add(displayMasksButton, gbc);
-        
+
         miscPanel = new JPanel(new GridBagLayout());
         gbc.gridx = 0;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -1073,9 +1595,9 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         optionPanel.add(voiPanel, gbc);
         gbc.gridy = 4;
         optionPanel.add(displayPanel, gbc);
-		gbc.gridy = 5;
+        gbc.gridy = 5;
         optionPanel.add(miscPanel, gbc);
-		gbc.gridy = 6;
+        gbc.gridy = 6;
         optionPanel.add(buttonShortkeys, gbc);
 
         mainPanel = new JPanel(new GridBagLayout());
@@ -1112,232 +1634,15 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         getContentPane().add(bottomPanel, BorderLayout.SOUTH);
 
         initBlankPaint(1);
-        
+
         imageBInit();
 
         pack();
         setVisible(true);
         setResizable(true);
         System.gc();
-       
-    } // end init()
-    
-    
-    
-    public void imageBInit() {
-    	//getting image b size
-        ModelImage imgB = image.getParentFrame().getImageB();
-        
 
-        
-    	
-        TreeSet vals = getMaskTreeSet(imgB);
-        
-        
-        //iterate over TreeSet and set color[] and backgrounds
-        Iterator iter = vals.iterator();
-        boolean match = false;
-        int k=1;
-        //this boolean is needed to test if image b has a color of 1 in it
-        boolean hasOne = false;
-        if(vals.size() == 0) {
-        	color[1] = lutB.getColor(1);
-        	multiButton[1].setBackground(color[1]);
-    		listButton[1].setBackground(color[1]);
-    		multiButton[1].setText(String.valueOf(1));
-    		listButton[1].setText(String.valueOf(1));
-    		buttonTextArrayList.set(0, new Integer(1));	
-    		multiButton[1].setSelected(true);
-    		listButton[1].setSelected(true);
-    		image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
-			image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
-			if (image.getTriImageFrame() != null) {
-	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
-	        	image.getTriImageFrame().setPaintColor(color[1]);
-	        	
-	        }
-			((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
-        }
-        while(iter.hasNext()) {
-        	Integer maskVal = (Integer)iter.next();
-        	int maskVal_int = maskVal.intValue();
-        	if(maskVal_int == 1) {
-        		hasOne = true;
-        	}
-        	for(k=1;k<=buttonTextArrayList.size();k++) {
-        		if(maskVal_int == ((Integer)buttonTextArrayList.get(k-1)).intValue()) {
-        			match = true;
-        			break;
-        		}
-        	}
-        	//since treeset is ordered, this will work
-        	if(match) {
-        		color[k] = lutB.getColor(maskVal_int);
-	        	multiButton[k].setBackground(color[k]);
-	    		listButton[k].setBackground(color[k]);
-	    		multiButton[k].setText(String.valueOf(maskVal_int));
-	    		listButton[k].setText(String.valueOf(maskVal_int));
-	    		buttonTextArrayList.set(k-1, new Integer(maskVal_int));	
-        	}
-        	else {
-        		for (int n = 1; n <= (nbx * nby); n++) {
-        			if(!hasOne) {
-        				if(color[1].getRGB() == lutB.getColor(1).getRGB()) {
-	        				color[1] = lutB.getColor(maskVal_int);
-	        	        	multiButton[1].setBackground(color[1]);
-	        	    		listButton[1].setBackground(color[1]);
-	        	    		multiButton[1].setText(String.valueOf(maskVal_int));
-	        	    		listButton[1].setText(String.valueOf(maskVal_int));
-	        	    		buttonTextArrayList.set(0, new Integer(maskVal_int));
-	        				break;
-        				}
-        			}
-        			if(color[n] == null) {
-        				color[n] = lutB.getColor(maskVal_int);
-        	        	multiButton[n].setBackground(color[n]);
-        	    		listButton[n].setBackground(color[n]);
-        	    		multiButton[n].setText(String.valueOf(maskVal_int));
-        	    		listButton[n].setText(String.valueOf(maskVal_int));
-        	    		buttonTextArrayList.set(n - 1, new Integer(maskVal_int));
-        	    		break;
-        			}
-        		}
-	        	
-	    		
-        	}
-        	match = false;
-        }
-        
-        //since the image b is not blank, we need to figure out which button should be selected
-        boolean test = false;
-        if(vals.size() > 0) {
-        	int n;
-        	
-        	
-        	if(vals.size() >= nbx * nby) {
-    			selected = 1;
-    			//color[n] = lutB.getColor(n);
-    			multiButton[1].setBackground(color[1]);
-    			multiButton[1].setSelected(true);
-    			//multiButton[1].setSelected(false);
-    			listButton[1].setBackground(color[1]);
-    			listButton[1].setSelected(true);
-    			//listButton[1].setSelected(false);
-    			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
-    			image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
-    			if (image.getTriImageFrame() != null) {
-    	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
-    	        	image.getTriImageFrame().setPaintColor(color[1]);
-    	        	
-    	        }
-    			((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
-    		}
-        	else {
-	        	for (n = 1; n <= (nbx * nby); n++) {
-		        		if(!hasOne) {
-		        			if(color[1].getRGB() == lutB.getColor(1).getRGB()) {
-			        			selected = 1;
-			        			multiButton[1].setBackground(color[1]);
-			        			multiButton[1].setSelected(true);
-			        			listButton[1].setBackground(color[1]);
-			        			listButton[1].setSelected(true);
-			        			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
-			        			image.getParentFrame().getControls().getTools().setPaintColor(color[1]);
-			        			if (image.getTriImageFrame() != null) {
-			        	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[1].getText()).intValue()));
-			        	        	image.getTriImageFrame().setPaintColor(color[1]);
-			        	        	
-			        	        }
-			        			test = true;
-			        			break;
-		        			}
-	        		}
-	        		if(color[n] == null) {
-	        			selected = n;
-	        			color[n] = lutB.getColor(n);
-	        			multiButton[n].setBackground(color[n]);
-	        			multiButton[n].setSelected(true);
-	        			multiButton[1].setSelected(false);
-	        			listButton[n].setBackground(color[n]);
-	        			listButton[n].setSelected(true);
-	        			listButton[1].setSelected(false);
-	        			image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[n].getText()).intValue()));
-	        			image.getParentFrame().getControls().getTools().setPaintColor(color[n]);
-	        			if (image.getTriImageFrame() != null) {
-	        	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[n].getText()).intValue()));
-	        	        	image.getTriImageFrame().setPaintColor(color[n]);
-	        	        	
-	        	        }
-	        			test = true;
-	        			break;
-	        		}
-	        	}
-        	}
-    		
-	                
-        }
-    }
-    
-    
-    
-    
-    /**
-     * Determines the intensities of image B.....populates
-     * the treeset and returns it
-     * 
-     * @param imgB
-     * @return
-     */
-    private TreeSet getMaskTreeSet(ModelImage imgB) {
-    	boolean blankImage = true;
-    	TreeSet vals = new TreeSet();
-    	
-    	xDim = imgB.getExtents()[0];
-        yDim = imgB.getExtents()[1];
-        int numDims = imgB.getNDims();
-        if(numDims == 2) {
-        	imgBSize = xDim * yDim;
-        }
-        else {
-        	zDim = imgB.getExtents()[2];
-        	imgBSize = xDim * yDim * zDim;
-        }
-        
-        
-        if(!image.isColorImage()) {
-	        for (int i = 0;i < imgBSize; i++) {
-	        	if(imgB.getUByte(i) != 0) {
-	        		//there is at least some mask...so set blank image to flase
-	        		blankImage = false;
-	        		int val = imgB.getUByte(i);
-	        		vals.add(new Integer(val));    	
-	        	}
-	        }
-        }
-        else {
-        	for (int i = 1;i < imgBSize*4; i= i+4) {
-        		short r,g,b;
-        		int k;
-        		r = imgB.getUByte(i);
-        		g = imgB.getUByte(i+1);
-        		b = imgB.getUByte(i+2) ;
-      
-	        	if(r != 0 || g != 0 || b != 0) {
-	        		//there is at least some mask...so set blank image to flase
-	        		blankImage = false;
-	        		
-	        		for(k=1;k<lutB.getExtents()[1]*4;k=k+4) {
-	        			if(lutB.getUByte(k) == r && lutB.getUByte(k+1) == g && lutB.getUByte(k+2) == b) {
-	        				break;
-	        			}
-	        		}
-	        		int val = k/4;
-	        		vals.add(new Integer(val));
-	        	}
-	        }
-        }
-        return vals;
-    }
+    } // end init()
 
     /**
      * Initializes a new blank paint mask to the color indexed by the parameter 'num'
@@ -1372,34 +1677,34 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         // record selected image; set to image B
         ModelImage active = image.getParentFrame().getActiveImage();
         image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
-        
-        //set up LUTb
-        if(image.isColorImage()) {
-        	//need to instantiate a LUTb
-        	lutB = new ModelLUT(ModelLUT.STRIPED, 256, new int[] { 4, 256 });
-        }
-        else {
-        	lutB = image.getParentFrame().getLUTb();
+
+        // set up LUTb
+        if (image.isColorImage()) {
+
+            // need to instantiate a LUTb
+            lutB = new ModelLUT(ModelLUT.STRIPED, 256, new int[] { 4, 256 });
+        } else {
+            lutB = image.getParentFrame().getLUTb();
         }
 
         // create new color
         color[num] = lutB.getColor(num);
         multiButton[num].setBackground(color[num]);
         listButton[num].setBackground(color[num]);
-        	
+
 
         // call the paint to mask program for exiting mask
         image.getParentFrame().getComponentImage().setIntensityDropper((float) num);
         image.getParentFrame().getControls().getTools().setPaintColor(color[num]);
 
-        //tri-image
+        // tri-image
         if (image.getTriImageFrame() != null) {
-        	image.getTriImageFrame().setIntensityDropper((float) num);
-        	image.getTriImageFrame().setPaintColor(color[num]);
-        	
+            image.getTriImageFrame().setIntensityDropper((float) num);
+            image.getTriImageFrame().setPaintColor(color[num]);
+
         }
-        
-        
+
+
         // reset the active image and intensity label
         if (!active.equals(image.getParentFrame().getActiveImage())) {
             image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_A);
@@ -1440,21 +1745,19 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         boolean[] newpreserved = new boolean[(Nbx * Nby) + 1];
         Color[] newcolor = new Color[(Nbx * Nby) + 1];
 
-        
-        
-        
-        
-        
-        if((Nbx * Nby) < (nbx * nby)) {
-        	ArrayList newArr = new ArrayList();
-        	for(int k=0;k<(Nbx * Nby + 1);k++) {
-        		
-        		Integer i = (Integer)buttonTextArrayList.get(k);
-        		newArr.add(i);
-        	}
-        	buttonTextArrayList = newArr;
+
+        if ((Nbx * Nby) < (nbx * nby)) {
+            ArrayList newArr = new ArrayList();
+
+            for (int k = 0; k < ((Nbx * Nby) + 1); k++) {
+
+                Integer i = (Integer) buttonTextArrayList.get(k);
+                newArr.add(i);
+            }
+
+            buttonTextArrayList = newArr;
         }
-        
+
         for (int n = 1; n < ((Nbx * Nby) + 1); n++) {
 
             if (n < ((nbx * nby) + 1)) {
@@ -1463,12 +1766,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 newcolor[n] = color[n];
             } else {
 
-            	buttonTextArrayList.add(new Integer(n + 1));
+                buttonTextArrayList.add(new Integer(n + 1));
                 newlabel[n] = new String("Label " + n);
-                //newcolor[n] = nullColor;
+
+                // newcolor[n] = nullColor;
                 newcolor[n] = null;
                 newpreserved[n] = false;
-                
+
             }
         }
 
@@ -1477,51 +1781,57 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         label = newlabel;
         preserved = newpreserved;
         color = newcolor;
-        
-        
-        
-        //for resizing, we have to set the selected button color to null if there is no paint of it
+
+
+        // for resizing, we have to set the selected button color to null if there is no paint of it
         ModelImage imgB = image.getParentFrame().getImageB();
         boolean test = false;
-        if(!image.isColorImage()) {
-	        for (int i = 0;i < imgBSize; i++) {
-	        	if(imgB.getUByte(i) == selected) {
-	        		test = true;
-	        		break;
-	        	}
-	        }
+
+        if (!image.isColorImage()) {
+
+            for (int i = 0; i < imgBSize; i++) {
+
+                if (imgB.getUByte(i) == selected) {
+                    test = true;
+
+                    break;
+                }
+            }
+        } else {
+
+            for (int i = 1; i < (imgBSize * 4); i = i + 4) {
+                short r, g, b;
+                int k;
+                r = imgB.getUByte(i);
+                g = imgB.getUByte(i + 1);
+                b = imgB.getUByte(i + 2);
+
+                if ((r != 0) || (g != 0) || (b != 0)) {
+
+
+                    for (k = 1; k < (lutB.getExtents()[1] * 4); k = k + 4) {
+
+                        if ((lutB.getUByte(k) == r) && (lutB.getUByte(k + 1) == g) && (lutB.getUByte(k + 2) == b)) {
+                            break;
+                        }
+                    }
+
+                    int val = k / 4;
+
+                    if (val == selected) {
+                        test = true;
+
+                        break;
+                    }
+                }
+            }
         }
-        else {
-        	for (int i = 1;i < imgBSize*4; i= i+4) {
-        		short r,g,b;
-        		int k;
-        		r = imgB.getUByte(i);
-        		g = imgB.getUByte(i+1);
-        		b = imgB.getUByte(i+2) ;
-      
-	        	if(r != 0 || g != 0 || b != 0) {
-	        		
-	        		
-	        		for(k=1;k<lutB.getExtents()[1]*4;k=k+4) {
-	        			if(lutB.getUByte(k) == r && lutB.getUByte(k+1) == g && lutB.getUByte(k+2) == b) {
-	        				break;
-	        			}
-	        		}
-	        		int val = k/4;
-	        		if(val == selected) {
-	        			test = true;
-	        			break;
-	        		}
-	        	}
-	        }
-        }
-        if(!test) {
-        	try {
-        		color[selected] = null;
-        	}
-        	catch(ArrayIndexOutOfBoundsException e) {
-        		
-        	}
+
+        if (!test) {
+
+            try {
+                color[selected] = null;
+            } catch (ArrayIndexOutOfBoundsException e) { }
         }
 
     }
@@ -1533,6 +1843,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      * @param  obj  DOCUMENT ME!
      */
     private void refreshImagePaint(ModelImage img, BitSet obj) {
+
         // replace it by previous
         img.getParentFrame().getComponentImage().setPaintMask(obj);
         img.setMask(obj);
@@ -1552,8 +1863,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
      * Reinstantiates the labels for redisplay. Purpose: unknown
      */
     private void refreshLabelDisplay() {
-    	
-    	
+
 
         multiButton = new BorderedButton[(nbx * nby) + 1];
         listButton = new BorderedButton[(nbx * nby) + 1];
@@ -1566,51 +1876,53 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             labelField[n].setFont(serif12);
             labelField[n].addActionListener(this);
             labelField[n].setActionCommand("Label " + n);
-            if(n < buttonTextArrayList.size()) {
-            	multiButton[n] = new BorderedButton(((Integer)buttonTextArrayList.get(n-1)).toString());
+
+            if (n < buttonTextArrayList.size()) {
+                multiButton[n] = new BorderedButton(((Integer) buttonTextArrayList.get(n - 1)).toString());
+            } else {
+                multiButton[n] = new BorderedButton(String.valueOf(n));
             }
-            else {
-            	multiButton[n] = new BorderedButton(String.valueOf(n));
-            }
+
             multiButton[n].setName("multiButton:" + n);
             multiButton[n].addActionListener(this);
             multiButton[n].addMouseListener(this);
             multiButton[n].setActionCommand("PaintMask " + n);
             multiButton[n].setFont(MipavUtil.font10);
-            //multiButton[n].setSelected(false);
+
+            // multiButton[n].setSelected(false);
             multiButton[n].setMaximumSize(new Dimension(48, 20));
             multiButton[n].setPreferredSize(new Dimension(48, 20));
-            //multiButton[n].setToolTipText(label[n]);
-            //multiButton[n].setBackground(color[n]);
+            // multiButton[n].setToolTipText(label[n]);
+            // multiButton[n].setBackground(color[n]);
 
 
-            if(n < buttonTextArrayList.size()) {
-            	listButton[n] = new BorderedButton(((Integer)buttonTextArrayList.get(n-1)).toString());
+            if (n < buttonTextArrayList.size()) {
+                listButton[n] = new BorderedButton(((Integer) buttonTextArrayList.get(n - 1)).toString());
+            } else {
+                listButton[n] = new BorderedButton(String.valueOf(n));
             }
-            else {
-            	listButton[n] = new BorderedButton(String.valueOf(n));
-            }
+
             listButton[n].setName("listButton:" + n);
             listButton[n].addActionListener(this);
             listButton[n].addMouseListener(this);
             listButton[n].setActionCommand("PaintMask " + n);
             listButton[n].setFont(MipavUtil.font10);
-            //listButton[n].setSelected(false);
+
+            // listButton[n].setSelected(false);
             listButton[n].setMaximumSize(new Dimension(50, 18));
             listButton[n].setPreferredSize(new Dimension(50, 18));
-            //listButton[n].setBackground(color[n]);
+            // listButton[n].setBackground(color[n]);
 
 
             preserveBox[n] = new JCheckBox("");
             preserveBox[n].addActionListener(this);
             preserveBox[n].setActionCommand("Preserve " + n);
             preserveBox[n].setToolTipText("Lock the paint mask");
-            
-            if(n <= buttonTextArrayList.size()) {
-            	buttonTextArrayList.set(n-1, new Integer(multiButton[n].getText()));
-            }
-            else {
-            	buttonTextArrayList.add(new Integer(multiButton[n].getText()));
+
+            if (n <= buttonTextArrayList.size()) {
+                buttonTextArrayList.set(n - 1, new Integer(multiButton[n].getText()));
+            } else {
+                buttonTextArrayList.add(new Integer(multiButton[n].getText()));
             }
         }
 
@@ -1643,7 +1955,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         listPanel.setName("listPanel");
         listPanel.setBorder(buildTitledBorder("Label list"));
 
- 
+
         for (int i = 0; i < nbx; i++) {
 
             for (int j = 0; j < nby; j++) {
@@ -1663,9 +1975,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 listPanel.add(preserveBox[i + (nbx * j) + 1], gbc);
             }
         }
-        //listPanel.setPreferredSize(new Dimension(400,580));
-        scrollPane = new JScrollPane(listPanel,ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER  );
-        scrollPane.setPreferredSize(new Dimension(400,560));
+
+        // listPanel.setPreferredSize(new Dimension(400,580));
+        scrollPane = new JScrollPane(listPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(400, 560));
         scrollPane.setName("scrollPane");
         scrollPane.setVisible(false);
 
@@ -1688,13 +2002,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         }
 
         // reselect the same object
-        //if (selected < ((nbx * nby) + 1)) {
-        //    multiButton[selected].setSelected(true);
-        //    listButton[selected].setSelected(true);
-        //} else {
-        //    selectedMaskToPaint(1);
-       // }
-        
+        // if (selected < ((nbx * nby) + 1)) {
+        // multiButton[selected].setSelected(true);
+        // listButton[selected].setSelected(true);
+        // } else {
+        // selectedMaskToPaint(1);
+        // }
+
         imageBInit();
 
         pack();
@@ -1751,7 +2065,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 newlistButton[n].setMaximumSize(new Dimension(50, 18));
                 newlistButton[n].setPreferredSize(new Dimension(50, 18));
 
-                //newcolor[n] = nullColor;
+                // newcolor[n] = nullColor;
                 newcolor[n] = null;
 
                 newpreserved[n] = false;
@@ -1817,9 +2131,11 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 listPanel.add(preserveBox[i + (nbx * j) + 1], gbc);
             }
         }
-        //listPanel.setPreferredSize(new Dimension(400,580));
-        scrollPane = new JScrollPane(listPanel,ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER  );
-        scrollPane.setPreferredSize(new Dimension(400,560));
+
+        // listPanel.setPreferredSize(new Dimension(400,580));
+        scrollPane = new JScrollPane(listPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane.setPreferredSize(new Dimension(400, 560));
         scrollPane.setName("scrollPane");
         scrollPane.setVisible(false);
 
@@ -1837,7 +2153,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
             multiPanel.setVisible(false);
             scrollPane.setVisible(true);
         } else {
-        	scrollPane.setVisible(false);
+            scrollPane.setVisible(false);
             multiPanel.setVisible(true);
         }
 
@@ -1904,11 +2220,13 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         // call the paint to mask program for exiting mask
         image.getParentFrame().getComponentImage().setIntensityDropper((float) num);
         image.getParentFrame().getControls().getTools().setPaintColor(color[num]);
+
         if (image.getTriImageFrame() != null) {
-        	image.getTriImageFrame().setIntensityDropper((float) num);
-        	image.getTriImageFrame().setPaintColor(color[num]);
-        	
+            image.getTriImageFrame().setIntensityDropper((float) num);
+            image.getTriImageFrame().setPaintColor(color[num]);
+
         }
+
         image.getParentFrame().actionPerformed(new ActionEvent(this, ActionEvent.ACTION_FIRST, "MaskToPaint"));
 
         // reset the active image and intensity label
@@ -1922,7 +2240,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
         refreshImagePaint(image, obj);
     }
-    
+
 
     // ************************************************************************
     // ************************** Algorithm Events ****************************
@@ -1937,7 +2255,7 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
     private void switchPaintAndMask(int from, int to) {
         multiButton[from].setSelected(false);
         listButton[from].setSelected(false);
-        
+
         if (image == null) {
             System.gc();
             MipavUtil.displayError("Error: image not found");
@@ -1965,13 +2283,12 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
         ModelImage active = image.getParentFrame().getActiveImage();
         image.getParentFrame().setActiveImage(ViewJFrameBase.IMAGE_B);
 
-        //set the color of the button being switched to
-        
-        if(color[to] == null) {
-        	color[to] = lutB.getColor(to);
+        // set the color of the button being switched to
+
+        if (color[to] == null) {
+            color[to] = lutB.getColor(to);
         }
 
-        
         multiButton[to].setBackground(color[to]);
         listButton[to].setBackground(color[to]);
 
@@ -1994,16 +2311,19 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
                 image.getParentFrame().getComponentImage().commitMask(imageB, true, true, intensityLockVector, false);
 
                 // call the mask to paint program for starting mask
-                if(color[_to] == null) {
-                	color[_to] = lutB.getColor(_to);
+                if (color[_to] == null) {
+                    color[_to] = lutB.getColor(_to);
                 }
+
                 image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[_to].getText()).intValue()));
                 image.getParentFrame().getControls().getTools().setPaintColor(color[_to]);
+
                 if (image.getTriImageFrame() != null) {
-    	        	image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[_to].getText()).intValue()));
-    	        	image.getTriImageFrame().setPaintColor(color[_to]);
-    	        	
-    	        }
+                    image.getTriImageFrame().setIntensityDropper((float) (new Integer(multiButton[_to].getText()).intValue()));
+                    image.getTriImageFrame().setPaintColor(color[_to]);
+
+                }
+
                 ((ViewJFrameImage) image.getParentFrame()).handleMaskToPaint(false);
 
                 if (indeterminateProgressBar != null) {
@@ -2053,12 +2373,14 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
                 // make sure the labels are consistent with the display
                 label[n] = labelField[n].getText();
+
                 int maskNum = new Integer(listButton[n].getText()).intValue();
-                //I wanted to use  "|" as a separator but the split() did not like to split it using that so i used ":"
+
+                // I wanted to use  "|" as a separator but the split() did not like to split it using that so i used ":"
                 if (color[n] == null) {
-                	pw.println("" + n + ":" + maskNum + ":" + label[n] + ":null");
-                }else {
-                	pw.println("" + n + ":" + maskNum + ":" + label[n] + ":" + color[n].getRGB());
+                    pw.println("" + n + ":" + maskNum + ":" + label[n] + ":null");
+                } else {
+                    pw.println("" + n + ":" + maskNum + ":" + label[n] + ":" + color[n].getRGB());
                 }
             }
 
@@ -2070,171 +2392,5 @@ public class JDialogMultiPaint extends JDialogBase implements MouseListener, Key
 
     }
 
-	public void mouseClicked(MouseEvent e) {
-		if (e.getButton() == MouseEvent.BUTTON3) {
-			if (e.getSource() instanceof JButton) {
-				JPanel correspondingPanel = null;
-				String correspondingButtonName = "";
-				JButton correspondingButton = null;
-				JPanel muPanel = null;
-				JPanel liPanel = null;
-				JScrollPane scPane = null;
-				
-				//get Source Button and Source Panel
-				JButton sourceButton = (JButton) e.getSource();
-				JPanel srcPanel = (JPanel)sourceButton.getParent();
-				String srcPanelName = srcPanel.getName();
 
-
-				//get ContentPane
-				Container contentPane = this.getContentPane();
-				
-				//get Main Panel
-				JPanel mPanel = (JPanel)contentPane.getComponents()[0];
-
-				//get Correponding Panel 
-				for(int k=0;k<mPanel.getComponentCount();k++) {
-					if(mPanel.getComponents()[k].getName() != null) {
-						if(mPanel.getComponents()[k].getName().equals("multiPanel")) {
-							muPanel = (JPanel)mPanel.getComponents()[k];
-						}
-						else if(mPanel.getComponents()[k].getName().equals("scrollPane")) {
-							scPane = (JScrollPane)mPanel.getComponents()[k];
-						}
-					}
-				}
-				if (srcPanelName.equals("multiPanel")) {
-					JViewport vPort = scPane.getViewport();
-					for(int k=0;k<vPort.getComponentCount();k++) {
-						if(vPort.getComponents()[k].getName().equals("listPanel")) {
-							liPanel = (JPanel)vPort.getComponents()[k];	
-						}
-					}
-					correspondingPanel = liPanel;
-				}
-				else if(srcPanelName.equals("listPanel")) {
-					correspondingPanel = muPanel;
-				}
-				
-				//get Corresponding Button Name
-				String sourceButtonName = sourceButton.getName();
-				if (sourceButtonName.split(":")[0].equals("multiButton")) {
-					correspondingButtonName = "listButton:" + sourceButtonName.split(":")[1];
-				}
-				else {
-					correspondingButtonName = "multiButton:" + sourceButtonName.split(":")[1];
-				}
-				
-				//get Corresponding Button
-				for(int i=0;i<correspondingPanel.getComponentCount();i++) {
-					if (correspondingPanel.getComponents()[i].getName() != null) {
-						if (correspondingPanel.getComponents()[i].getName().equals(correspondingButtonName)) {
-							correspondingButton = (JButton)correspondingPanel.getComponents()[i];
-						}
-					}
-				}
-				
-				
-				int sourceId = (new Integer(sourceButtonName.split(":")[1])).intValue();
-				
-				//only allowing this dialog to pop up if the button is actually selected
-				if(sourceId == selected) {
-					changeMaskNumberDialog = new JDialogChangeMaskNumber(sourceButton, correspondingButton, buttonTextArrayList,color,lutB,image,newSelection);
-					changeMaskNumberDialog.pack();
-					MipavUtil.centerInComponent(this,changeMaskNumberDialog);
-					changeMaskNumberDialog.setVisible();
-				}
-			}
-		}
-		
-	}
-
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	/** Handle the key typed event */
-    public void keyTyped(KeyEvent e) {
-		String key = Character.toString(e.getKeyChar());
-		System.out.println("key: "+key);
-		if (key.equals("1")) {
-			
-			actionPerformed(new ActionEvent(this, 0, "PaintMask 1"));
-		}
-		else if (key.equals("2")) actionPerformed(new ActionEvent(this, 0, "PaintMask 2"));
-		else if (key.equals("3")) actionPerformed(new ActionEvent(this, 0, "PaintMask 3"));
-		else if (key.equals("4")) actionPerformed(new ActionEvent(this, 0, "PaintMask 4"));
-		else if (key.equals("5")) actionPerformed(new ActionEvent(this, 0, "PaintMask 5"));
-		else if (key.equals("6")) actionPerformed(new ActionEvent(this, 0, "PaintMask 6"));
-		else if (key.equals("7")) actionPerformed(new ActionEvent(this, 0, "PaintMask 7"));
-		else if (key.equals("8")) actionPerformed(new ActionEvent(this, 0, "PaintMask 8"));
-		else if (key.equals("9")) actionPerformed(new ActionEvent(this, 0, "PaintMask 9"));
-		else if (key.equals("t")) {
-			displayModeButton.setSelected(!displayModeButton.isSelected());
-			actionPerformed(new ActionEvent(this, 0, "SwitchMode"));
-		} 
-		else if (key.equals("c")) {
-			displayPaintButton.setSelected(!displayPaintButton.isSelected());
-			actionPerformed(new ActionEvent(this, 0, "HidePaint"));
-		}
-		else if (key.equals("v")) {
-			displayMasksButton.setSelected(!displayMasksButton.isSelected());
-			actionPerformed(new ActionEvent(this, 0, "HideMasks"));
-		}
-		else if (key.equals("s")) {
-			actionPerformed(new ActionEvent(this, 0, "Save"));
-		}
-    }
-
-    /** Handle the key pressed event */
-    public void keyPressed(KeyEvent e) {
-    }
-
-    /** Handle the key released event */
-    public void keyReleased(KeyEvent e) {
-    }
-
-
-	/**
-	 * windowclosing...override of WindowListener interface
-	 * 
-	 */
-	public void windowClosing(WindowEvent event) {
-		//we need to commit the paint to mask
-    	BitSet obj = image.getParentFrame().getComponentImage().getPaintMask();
-    	ModelImage imgB = image.getParentFrame().getImageB();
-    	image.getParentFrame().getComponentImage().setIntensityDropper((float) (new Integer(multiButton[selected].getText()).intValue()));
-        image.getParentFrame().getComponentImage().commitMask(imgB, true, true, intensityLockVector, false);
-        image.getParentFrame().getComponentImage().setModifyFlag(true);
-        image.notifyImageDisplayListeners();
-        refreshImagePaint(image, obj);
-        if(changeMaskNumberDialog != null) {
-        	changeMaskNumberDialog.dispose();
-        }
-        image.getParentFrame().getControls().getTools().setPointerSelected();
-        image.getParentFrame().getComponentImage().setMode(ViewJComponentEditImage.DEFAULT);
-        dispose();
-	}
-	
-	
-    
-    
-    
-    
 }
