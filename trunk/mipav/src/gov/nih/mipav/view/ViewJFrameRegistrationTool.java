@@ -2645,7 +2645,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         bothPanel.add(topPanel, gbc);
 
         toolBarSep = buildRegistrationToolBar(this, false);
-
+        this.setMinimumSize(new Dimension(toolBarSep.getWidth(), 0));
+        
         toolBar.setMinimumSize(toolBarSep.getPreferredSize());
         
         gbc.gridwidth = 2;
@@ -2714,6 +2715,7 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         tabbedPane.addChangeListener(this);
         getContentPane().add(tabbedPane, BorderLayout.CENTER);
         setTitle();
+        pack();
         setVisible(true);
     }
 
