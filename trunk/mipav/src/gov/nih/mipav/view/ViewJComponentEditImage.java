@@ -1062,8 +1062,6 @@ public class ViewJComponentEditImage extends ViewJComponentBase
             return; // No VOI to delete
         }
 
-        System.err.println("VOI is selectled, index: " + i);
-
         if (imageActive.getNDims() == 2) {
             getVOIHandler().deleteContour(VOIs.VOIAt(i), 0);
         } else if (imageActive.getNDims() >= 3) {
