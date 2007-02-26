@@ -2719,6 +2719,10 @@ public class VOI extends ModelSerialCloneable {
         ((VOICardiology) (curves[0].lastElement())).setLabel(String.valueOf(elementLabel++));
     }
 
+    public void importCurve(VOIText curve, int slice) {
+    	curves[slice].addElement(curve);
+    }
+    
     /**
      * Imports the curve into the VOI.
      *
@@ -3650,7 +3654,7 @@ public class VOI extends ModelSerialCloneable {
                 }
             } else if (curveType == VOI.ANNOTATION) {
 
-                if (((VOIText) (curves[slice].elementAt(i))).nearPoint(x, y, zoom, resolutionX, resolutionY)) {
+                if (((VOIText) (curves[slice].elementAt(i))).nearMarkerPoint(x, y)) {
                     polygonIndex = i;
 
                     return true;
@@ -4141,6 +4145,8 @@ public class VOI extends ModelSerialCloneable {
             } else if (curveType == POLYLINE_SLICE) {
                 ((VOIPoint) (curves[slice].elementAt(polygonIndex))).movePt(x, y);
                 this.markPSlicePt(slice);
+            } else if (curveType == ANNOTATION) {
+                ((VOIText) (curves[slice].elementAt(polygonIndex))).moveMarkerPoint(x, y, slice, xDim, yDim, zDim);
             }
         } else if ((resizeIndex >= 0) && (resizeIndex < curves[slice].size())) {
 
@@ -4412,6 +4418,11 @@ public class VOI extends ModelSerialCloneable {
         this.curveType = curveType;
     }
 
+    public void setCurves(Vector [] newCurves) {
+    	this.curves = newCurves;
+    	this.zDim = newCurves.length;
+    }
+    
     /**
      * Accessor that sets the display mode to the parameter.
      *
@@ -4974,7 +4985,8 @@ public class VOI extends ModelSerialCloneable {
         offsetZ = slice * xDim * yDim;
 
         if ((process == true) && (curveType == CONTOUR)) {
-
+//System.err.println("XOR is " + XOR);
+//System.err.println("polarity additive?: " + (polarity == ADDITIVE));
             for (i = 0; i < nGons; i++) {
 
                 if (!onlyActive || ((VOIContour) (curves[slice].elementAt(i))).isActive()) {

@@ -1236,8 +1236,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
             ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage,
                                                                         ActionPaintToMask.MASK_SHORT));
+        } else if (command.equals("Open labels")) { 
+        	boolean success = openVOI(false, true);
+        	
         } else if (command.equals("Open VOI")) {
-            boolean success = openVOI(false);
+            boolean success = openVOI(false, false);
 
             if (success) {
                 ScriptRecorder.getReference().addLine(new ActionOpenVOI(getActiveImage()));
@@ -1274,6 +1277,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 voiDir = new String(directory + fileName + File.separator);
                 loadAllVOIsFrom(voiDir, false);
             }
+        } else if (command.equals("SaveAllAnnotations")) {
+            saveLabels(true);
+        } else if (command.equals("SaveSelectedAnnotation")) {
+            saveLabels(false);
         } else if (command.equals("SaveSelectedContours")) {
             saveVOI(false);
         } else if (command.equals("SaveSelectedContoursAs")) {

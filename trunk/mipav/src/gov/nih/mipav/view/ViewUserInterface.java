@@ -87,12 +87,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** Initial menubar for MIPAV. */
     protected JMenuBar openingMenuBar;
 
-    /** Vector to hold the clipped Polygons arrays (is this actually used??). */
-    private Vector clippedPolygons = new Vector();
-
     /** Vector to hold the clipped slice numbers. */
     private Vector clippedSlices = new Vector();
 
+    private Vector clippedScannerVectors = new Vector();
+    
     /** Vector to hold clipped VOIs (multiple). */
     private ViewVOIVector clippedVOIs = new ViewVOIVector();
 
@@ -167,6 +166,8 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     /** DOCUMENT ME! */
     private JXCEDEExplorer xcedeExplorer;
 
+    private boolean isClippedVOI2D = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -641,17 +642,46 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     }
 
     /**
-     * DOCUMENT ME!
+     * Whether or not the VOI is a 2D (true = 2d, false = 3d+)
+     * @return
+     */
+    public boolean isClippedVOI2D() {
+    	return this.isClippedVOI2D;
+    }
+    
+    /**
+     * Adds a clipped 2D VOI to the clipboard
      *
      * @param  voi    VOI
      * @param  slice  int
      */
-    public void addClippedVOI(VOI voi, int slice) {
+    public void addClipped2DVOI(VOI voi, int slice) {
+    	
+    	if (isClippedVOI2D == false) {
+    		clearClippedVOIs();
+    		isClippedVOI2D = true;
+    	}
+    	
         this.clippedVOIs.add(voi);
         this.clippedSlices.add(new Integer(slice));
-        this.clippedPolygons.add(voi.exportPolygons(slice));
     }
 
+    /**
+     * Adds a clipped VOI from a 3D image to the clipboard.
+     * @param voi the voi
+     * @param slice slice number
+     * @param scannerPts a vector of all the VOI's points pre-converted to scanner coordinates
+     */
+    public void addClippedScannerVOI(VOI voi, int slice, Vector scannerPts) {
+    	if (isClippedVOI2D == true) {
+    		clearClippedVOIs();
+    		isClippedVOI2D = false;
+    	}
+    	this.clippedVOIs.add(voi);
+        this.clippedSlices.add(new Integer(slice));
+        this.clippedScannerVectors.add(scannerPts);
+    }
+    
     /**
      * Builds the anonymize directory dialog and displays it.
      */
@@ -935,7 +965,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
     public void clearClippedVOIs() {
         this.clippedVOIs.removeAllElements();
         this.clippedSlices.removeAllElements();
-        this.clippedPolygons.removeAllElements();
+        this.clippedScannerVectors.removeAllElements();
     }
 
     /**
@@ -1058,15 +1088,6 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
      *
      * @return  Vector
      */
-    public Vector getClippedPolygons() {
-        return this.clippedPolygons;
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
-     * @return  Vector
-     */
     public Vector getClippedSlices() {
         return this.clippedSlices;
     }
@@ -1080,6 +1101,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
         return this.clippedVOIs;
     }
 
+    public Vector getClippedScannerVectors() {
+    	return this.clippedScannerVectors;
+    }
+    
     /**
      * Accessor to get directory location of last file access.
      *
@@ -3218,7 +3243,7 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         String directory = fileNameIn.substring(0, index + 1);
                         String voiFileName = fileNameIn.substring(index + 1, fileNameIn.length());
                         fileVOI = new FileVOI(voiFileName, directory, image);
-                        voi = fileVOI.readVOI();
+                        voi = fileVOI.readVOI(false);
 
                         for (int y = 0; y < voi.length; y++) {
                             image.registerVOI(voi[y]);

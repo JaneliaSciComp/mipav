@@ -9,7 +9,7 @@ import java.awt.*;
 import java.awt.event.*;
 
 import javax.swing.*;
-
+import gov.nih.mipav.view.components.*;
 
 /**
  * Dialog for creating new/editing existing on-screen annotations. This allows writing text and choosing the font style,
@@ -57,6 +57,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** combobox to hold the names of all available fonts. */
     private JComboBox fontTypeBox;
 
+    private JCheckBox useMarkerBox;
+    
     /** whether this is an existing or new VOIText (isRegistered = existing). */
     private boolean isRegistered;
 
@@ -178,8 +180,8 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         } else if (event.getSource() == fontTypeBox) {
             textField.setFont(new Font((String) fontTypeBox.getSelectedItem(), fontDescriptors,
                                        Integer.parseInt(fontSizeField.getText())));
-        }
-
+        } 
+        
         pack();
     }
 
@@ -332,12 +334,23 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             textField.setText("Enter text here");
         }
 
+        JPanel markerPanel = new JPanel();
+        markerPanel.setBorder(buildTitledBorder("Marker options"));
+        
+        useMarkerBox = WidgetFactory.buildCheckBox("Use arrow marker", false, this);
+          
+        markerPanel.add(useMarkerBox);
+        
+        boolean useMarker = vt.useMarker();
+        useMarkerBox.setSelected(useMarker);
+        
         mainDialogPanel.setLayout(layout);
 
         JPanel centerPanel = new JPanel(new BorderLayout());
 
         centerPanel.add(buildFontPanel(), BorderLayout.NORTH);
         centerPanel.add(scrollPanel, BorderLayout.CENTER);
+        centerPanel.add(markerPanel, BorderLayout.SOUTH);
 
         mainDialogPanel.add(centerPanel, BorderLayout.CENTER);
         mainDialogPanel.add(buttonPanel, BorderLayout.SOUTH);
@@ -365,6 +378,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             vt.setFontName((String) fontTypeBox.getSelectedItem());
             vt.setColor(colorButton.getForeground());
             textVOI.setColor(colorButton.getForeground());
+            
+            vt.setUseMarker(useMarkerBox.isSelected());
+            
         } catch (Exception ex) {
             return false;
         }

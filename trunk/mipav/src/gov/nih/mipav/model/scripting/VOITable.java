@@ -76,7 +76,7 @@ public class VOITable {
         }
         
         FileVOI fileVOI = new FileVOI(voiFileName, voiDirectory, image);
-        VOI[] voi = fileVOI.readVOI();
+        VOI[] voi = fileVOI.readVOI(false);
         for (int i = 0; i < voi.length; i++) {
             image.registerVOI(voi[i]);
         }

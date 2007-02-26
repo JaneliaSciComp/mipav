@@ -1,7 +1,9 @@
 package gov.nih.mipav.model.structures;
 
 
+import gov.nih.mipav.MipavMath;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.view.Preferences;
 
 import java.awt.*;
 
@@ -54,7 +56,9 @@ public class VOIText extends VOIBase {
 
     /** The String to be displayed. */
     private String textString = new String();
-
+    
+    private boolean useMarker = true;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -91,11 +95,16 @@ public class VOIText extends VOIBase {
      */
     public boolean contains(int _x, int _y, float zoomX, float zoomY, float[] resols, Graphics g) {
 
-        int x, y;
+        int x, y, x2, y2;
+        float xC, yC, dist;
 
         x = Math.round(((Point3Df) (elementAt(0))).x);
         y = Math.round(((Point3Df) (elementAt(0))).y);
 
+        if (nearMarkerPoint(_x, _y)) {
+        	return true;
+        }
+        
         // the width tells us the width of the font as it has been drawn on screen (not the width of the font's
         // unzoomed size)
         int width = (int) (g.getFontMetrics(textFont).stringWidth(textString) / (zoomX * resols[0]));
@@ -112,6 +121,25 @@ public class VOIText extends VOIBase {
         return true;
     }
 
+    public boolean nearMarkerPoint(int _x, int _y) {
+    	int x, y;
+    	float dist;
+    	
+    	if (!useMarker) {
+    		return false;
+    	}
+//    	check the marker point
+        x = Math.round(((Point3Df) (elementAt(1))).x);
+        y = Math.round(((Point3Df) (elementAt(1))).y);
+        
+        dist = (float) MipavMath.distance(_x, x, _y, y);
+        if (dist < 3) {
+        	return true;
+        }
+    	
+    	return false;
+    }
+    
     /**
      * DOCUMENT ME!
      *
@@ -138,8 +166,8 @@ public class VOIText extends VOIBase {
                          float[] resols, int[] unitsOfMeasure, int orientation, Graphics g, boolean boundingBox) {
         int j;
 
-        int xS, yS;
-        int x, y;
+        int xS, yS, xS2, yS2;
+        int x, y, x2, y2;
 
 
         x = Math.round(((Point3Df) (elementAt(0))).x);
@@ -147,6 +175,39 @@ public class VOIText extends VOIBase {
         xS = Math.round(((Point3Df) (elementAt(0))).x * zoomX * resolutionX);
         yS = Math.round(((Point3Df) (elementAt(0))).y * zoomY * resolutionY);
 
+        x2 = Math.round(((Point3Df) (elementAt(1))).x);
+        y2 = Math.round(((Point3Df) (elementAt(1))).y);
+        xS2 = Math.round(((Point3Df) (elementAt(1))).x * zoomX * resolutionX);
+        yS2 = Math.round(((Point3Df) (elementAt(1))).y * zoomY * resolutionY);
+     
+        
+        if (useMarker) {
+        // determine the width/height of the TEXT (for marker line location)
+        int width = (int) (g.getFontMetrics(textFont).stringWidth(textString) / (zoomX * resols[0]));
+        int ascentValue = (int) (g.getFontMetrics(textFont).getStringBounds(textString, g).getHeight() /
+                                     (2 * zoomY * resols[1]));
+        
+        int markerX = x;
+        int markerY = y;
+        
+        if (xS2 > (x + width)) {
+        	markerX = x + width;
+        } else if (xS2 <= x) {
+        	markerX = x - 2;
+        } else {
+        	markerX = x + width/2;
+        }
+        
+        if (yS2 > y) {
+        	markerY = y + 3;
+        } else if (yS2 <= (y - ascentValue)) {
+        	markerY = y - ascentValue - 5;
+        } else {
+        	markerY = y - ascentValue/2;
+        }
+        
+        this.drawArrow((Graphics2D)g, markerX, markerY, xS2, yS2, .1f);
+        } //arrow not off
         if ((textFont != null) && (textFont.getName() == fontName) && (textFont.getStyle() == fontDescriptors)) {
             textFont = textFont.deriveFont(fontSize * zoomX);
 
@@ -418,6 +479,32 @@ public class VOIText extends VOIBase {
         pt.x = pt.x + xM;
         pt.y = pt.y + yM;
         pt.z = pt.z + zM;
+        
+        //move the marker point
+        Point3Df pt2 = (Point3Df)elementAt(1);
+        pt2.x = pt2.x + xM;
+        pt2.y = pt2.y + yM;
+        pt2.z = pt2.z + zM;     
+    }
+    
+    /**
+     * Moves the point to the new location. NO bounds checking is performed
+     *
+     * @param  xM    amount in pixels to move the line in the x direction
+     * @param  yM    amount in pixels to move the line in the y direction
+     * @param  zM    amount in pixels to move the line in the z direction
+     * @param  xDim  x dimension maximum
+     * @param  yDim  y dimension maximum
+     * @param  zDim  z dimension maximum
+     */
+    public void moveMarkerPoint(int xM, int yM, int zM, int xDim, int yDim, int zDim) {
+
+        //move the marker point
+        Point3Df pt2 = (Point3Df)elementAt(1);
+        pt2.x = xM;
+        pt2.y = yM;
+       // pt2.z = pt2.z + zM;      
+        
     }
 
     /**
@@ -456,6 +543,14 @@ public class VOIText extends VOIBase {
         this.fontSize = fontSize;
     }
 
+    public void setUseMarker(boolean mark) {
+    	this.useMarker = mark;
+    }
+    
+    public boolean useMarker() {
+    	return this.useMarker;
+    }
+    
     /**
      * Sets the displayed text.
      *
@@ -480,4 +575,24 @@ public class VOIText extends VOIBase {
             ((Point3Df) (elementAt(i))).y += yT;
         }
     }
+    
+    private void drawArrow(Graphics2D g2d, int xCenter, int yCenter, int x, int y, float stroke) {
+        double aDir=Math.atan2(xCenter-x,yCenter-y);
+        g2d.drawLine(x,y,xCenter,yCenter);
+        g2d.setStroke(new BasicStroke(1f));					// make the arrow head solid even if dash pattern has been specified
+        Polygon tmpPoly=new Polygon();
+        int i1=12+(int)(stroke*2);
+        int i2=6+(int)stroke;							// make the arrow head the same size regardless of the length length
+        tmpPoly.addPoint(x,y);							// arrow tip
+        tmpPoly.addPoint(x+xCor(i1,aDir+.5),y+yCor(i1,aDir+.5));
+        tmpPoly.addPoint(x+xCor(i2,aDir),y+yCor(i2,aDir));
+        tmpPoly.addPoint(x+xCor(i1,aDir-.5),y+yCor(i1,aDir-.5));
+        tmpPoly.addPoint(x,y);							// arrow tip
+        g2d.drawPolygon(tmpPoly);
+        g2d.fillPolygon(tmpPoly);						// remove this line to leave arrow head unpainted
+     }
+     private static int yCor(int len, double dir) {return (int)(len * Math.cos(dir));}
+     private static int xCor(int len, double dir) {return (int)(len * Math.sin(dir));}
+
+    
 }
