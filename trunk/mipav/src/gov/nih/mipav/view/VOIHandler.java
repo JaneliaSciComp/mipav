@@ -469,36 +469,94 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
             return false;
         }
 
-        for (i = 0; i < nVOI; i++) {
+        
+        if (compImage.getActiveImage().getNDims() == 2) {
+        	for (i = 0; i < nVOI; i++) {
 
-            if (VOIs.VOIAt(i).isActive() == true) {
-                voi = (VOI) ((VOI) VOIs.elementAt(i)).clone();
-                voi.setUID(voi.hashCode());
-                this.undoVOI = (VOI) (voi.clone());
+        		if (VOIs.VOIAt(i).isActive() == true) {
+        			voi = (VOI) ((VOI) VOIs.elementAt(i)).clone();
+        			voi.setUID(voi.hashCode());
+        			this.undoVOI = (VOI) (voi.clone());
 
-                curves = voi.getCurves();
+        			curves = voi.getCurves();
+	                int numCurves = 0;
 
-                if (compImage.getActiveImage().getNDims() >= 3) {
-                    zDim = compImage.getActiveImage().getExtents()[2];
-                }
+	                for (int s = 0; s < zDim; s++) {
+	                	numCurves = curves[s].size();
 
-                int numCurves = 0;
+	                	for (int j = numCurves - 1; j >= 0; j--) {
 
-                for (int s = 0; s < zDim; s++) {
-                    numCurves = curves[s].size();
+ 	                       if (!((VOIBase) (curves[s].elementAt(j))).isActive()) {
+ 	                    	   curves[s].removeElementAt(j);
+ 	                       }
+	                	}
+	                }
 
-                    for (int j = numCurves - 1; j >= 0; j--) {
+	                // add the voi to the clipboard
+	                ViewUserInterface.getReference().addClipped2DVOI(voi, compImage.getSlice());
+	                didCopy = true;
+        		}
+        	}
+        } else {
+        	//image is 3+ dims... so copy the VOIs in scanner coordinate mode instead
+        	for (i = 0; i < nVOI; i++) {
 
-                        if (!((VOIBase) (curves[s].elementAt(j))).isActive()) {
-                            curves[s].removeElementAt(j);
-                        }
-                    }
-                }
+        		if (VOIs.VOIAt(i).isActive() == true) {
+        			voi = (VOI) ((VOI) VOIs.elementAt(i)).clone();
+        			voi.setUID(voi.hashCode());
+        			this.undoVOI = (VOI) (voi.clone());
 
-                // add the voi to the clipboard
-                ViewUserInterface.getReference().addClippedVOI(voi, compImage.getSlice());
-                didCopy = true;
-            }
+        			curves = voi.getCurves();
+
+        			zDim = compImage.getActiveImage().getExtents()[2];
+
+	                int numCurves = 0;
+
+	                for (int s = 0; s < zDim; s++) {
+	                	numCurves = curves[s].size();
+
+	                	for (int j = numCurves - 1; j >= 0; j--) {
+
+ 	                       if (!((VOIBase) (curves[s].elementAt(j))).isActive()) {
+ 	                    	   curves[s].removeElementAt(j);
+ 	                       }
+	                	}
+	                }
+
+	                //convert this VOI over to scanner coords and pass on to UI
+	                Vector scannerVector = new Vector();
+	                VOIBase tempBase = null;
+	                int numPoints = 0;
+	                Point3Df inPoint = new Point3Df();
+	                Point3Df outPoint = null;
+	                for (int s = 0; s < zDim; s++) {
+	                	numCurves = curves[s].size();
+
+	                	for (int j = 0; j < numCurves; j++) {
+	                		tempBase = (VOIBase)curves[s].elementAt(j);
+	                		numPoints = tempBase.size();
+	                		for (int k = 0; k < numPoints; k++) {
+	                			outPoint = new Point3Df();
+	                			inPoint.x = ((Point3Df)tempBase.elementAt(k)).x;
+	                			inPoint.y = ((Point3Df)tempBase.elementAt(k)).y;
+	                			inPoint.z = s;
+	                			
+	                //			System.err.println("Initial point: " + inPoint);
+	                			//convert to scanner and add to vector
+	                			MipavCoordinateSystems.FileToScanner(inPoint, outPoint, compImage.getActiveImage());
+	                			scannerVector.add(outPoint);
+	                //			System.err.println("Scanner point: " + outPoint);
+	                		}
+	                	}
+	                }
+	                
+	                
+	                // add the voi to the clipboard
+	                ViewUserInterface.getReference().addClippedScannerVOI(voi, compImage.getSlice(), scannerVector);
+	                didCopy = true;
+	          //      System.err.println("DID COPY");
+        		}
+        	}
         }
 
         if (!didCopy) {
@@ -2052,7 +2110,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     } else if ((VOIs.VOIAt(i).getCurveType() == VOI.POINT) ||
                                    (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION)) {
                         compImage.setCursor(compImage.crosshairCursor);
-
+//asdf
                         if (allActive) {
                             VOIs.VOIAt(i).moveVOI(-1, xDim, yDim, zDim, distX, distY, 0);
                         } else {
@@ -2168,7 +2226,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
             return;
         } else if (mode == ViewJComponentEditImage.MOVE_POINT) { // rubberband a point
-
             // System.err.println("move point");
             xS = compImage.getScaledX(mouseEvent.getX());
             yS = compImage.getScaledY(mouseEvent.getY());
@@ -2201,7 +2258,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
 
                                 break;
                             }
-                        }
+                        } 
                     } // if( VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).getCurveType() != VOI.POINT)
                 } // for (i = 0; i < nVOI; i++)
 
@@ -2622,7 +2679,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     } else if (VOIs.VOIAt(i).nearPoint(x, y, compImage.getSlice(), compImage.getZoomX(),
                                                            compImage.getResolutionX(), compImage.getResolutionY()) &&
                                    (VOIs.VOIAt(i).getCurveType() != VOI.POINT) &&
-                                   (VOIs.VOIAt(i).getCurveType() != VOI.ANNOTATION) &&
                                    (VOIs.VOIAt(i).getCurveType() != VOI.PROTRACTOR) &&
                                    (mouseEvent.isShiftDown() == false) && (mouseEvent.isAltDown() == false)) {
 
@@ -2633,7 +2689,12 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                             compImage.getGraphics().dispose();
 
                             return;
-                        } else {
+                        } else if (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
+                        	compImage.setMode(ViewJComponentEditImage.MOVE_POINT);
+                            compImage.getGraphics().dispose();
+                            return;
+                        }
+                        else {
 
                             // System.err.println("gotta be a line eh?");
                             for (j = 0; j < nCurves; j++) {
@@ -3320,9 +3381,9 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                     newTextVOI = new VOI((short) colorID, "annotation2d.voi", 1, VOI.ANNOTATION, -1.0f);
                 }
 
-                float[] x = new float[1];
-                float[] y = new float[1];
-                float[] z = new float[1];
+                float[] x = new float[2];
+                float[] y = new float[2];
+                float[] z = new float[2];
 
                 voiID = compImage.getActiveImage().getVOIs().size();
 
@@ -3336,6 +3397,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 y[0] = yS;
                 z[0] = sliceNum;
 
+                x[1] = xS + 15;
+                y[1] = yS + 15;
+                z[1] = sliceNum;
+                
                 newTextVOI.importCurve(x, y, z, sliceNum);
                 newTextVOI.setUID(newTextVOI.hashCode());
                 newTextVOI.setColor(Color.WHITE);
@@ -3889,11 +3954,25 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         VOI newVOI, outVOI;
         int newSlice;
 
+        boolean isFrom2D = ViewUserInterface.getReference().isClippedVOI2D();
+        
+        if ((compImage.getActiveImage().getNDims() > 2 && isFrom2D) ||
+        		(compImage.getActiveImage().getNDims() == 2 && !isFrom2D)) {
+        	//display an error here
+        	MipavUtil.displayInfo("Can not copy/paste VOIs between 2D and 2.5D/3D images.");
+        	return;
+        }
+        
         boolean isAnnotation = false;
 
         ViewVOIVector clippedVOIs = ViewUserInterface.getReference().getClippedVOIs();
         Vector clippedSlices = ViewUserInterface.getReference().getClippedSlices();
         int numClipped = clippedVOIs.size();
+        
+        Vector scannerVectors = null;
+        if (!isFrom2D) {
+        	scannerVectors = ViewUserInterface.getReference().getClippedScannerVectors();
+        }
 
         for (int k = 0; k < numClipped; k++) {
 
@@ -3904,30 +3983,88 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 imageXExt = compImage.getActiveImage().getExtents()[0];
                 imageYExt = compImage.getActiveImage().getExtents()[1];
                 newVOI = (VOI) clippedVOIs.VOIAt(k).clone();
-                outVOI = (VOI) clippedVOIs.VOIAt(k).clone();
+                
+                //if the VOI was from a 3D image, process accordingly (using scanner conversion)
+                if (isFrom2D == false) {
+                	Vector [] curves = newVOI.getCurves();
+                	Vector [] newCurves = new Vector[compImage.getActiveImage().getExtents()[2]];
+                	for (int n = 0; n < newCurves.length; n++){
+                		newCurves[n] = new Vector();
+                	}
+                	VOIBase tempBase;
+                	int numCurves = 0;
+                	Vector scannerVector = (Vector)scannerVectors.elementAt(k);
+                	int scannerIndex = 0;
+                	Point3Df inPoint = null;
+                	Point3Df outPoint = new Point3Df();
+                	
+                	int slice = -1;
+                	for (int s = 0; s < curves.length; s++) {
+                		numCurves = curves[s].size();
+                		int numPoints = 0;
+                		for (int j = 0; j < numCurves; j++) {
+                			tempBase = (VOIBase)curves[s].elementAt(j);
+                			numPoints = tempBase.size();
+                		//	System.err.println("number of points: " + numPoints);
+                			slice = -1;
+                			for (int c = 0; c < numPoints; c++, scannerIndex++) {
+                				inPoint = (Point3Df)scannerVector.elementAt(scannerIndex);
+    	                		
+                			//	System.err.println("In point (scanner): " + inPoint);
+                				
+                				//convert from scanner
+                				MipavCoordinateSystems.ScannerToFile(inPoint, outPoint, compImage.getActiveImage());
+                				((Point3Df)tempBase.elementAt(c)).x = outPoint.x;
+                				((Point3Df)tempBase.elementAt(c)).y = outPoint.y;
+                				((Point3Df)tempBase.elementAt(c)).z = outPoint.z;
+                				
+                				//System.err.println("Out point is: " + outPoint);
+                				
+                				if (slice != -1 && slice != MipavMath.round(outPoint.z)) {
+                					//error...shouldnt be different slices
+                				//	System.err.println("ERROR: slice is " + slice + ", while outPoint.z is " + MipavMath.round(outPoint.z));
+                					MipavUtil.displayError("VOI's contour points do not fall on the same slices: aborting");
+                					return;
+                				}
+                				slice = MipavMath.round(outPoint.z);
+    	                	}
+                			newCurves[slice].addElement(tempBase);
+                		}
+                	}
+                	newVOI.setCurves(newCurves);
+                }
+                
+                
+                outVOI = (VOI) newVOI.clone();
                 newSlice = ((Integer) clippedSlices.elementAt(k)).intValue();
             } catch (OutOfMemoryError e) {
                 MipavUtil.displayError("Out of memory in pasteVOI.");
 
                 return;
             } catch (NullPointerException e) {
+            	e.printStackTrace();
                 MipavUtil.displayInfo("The clipboard is empty, so there is nothing to paste.");
 
                 return;
+            } catch (ArrayIndexOutOfBoundsException e) {
+            	MipavUtil.displayError("VOI bounds do not match those of current image: aborting.");
+            	return;
             }
 
+            
+            
             newVOI.getBounds(x, y, z);
 
             for (int i = 0; i < x.length; i++) {
-                System.err.println("x-" + i + ": " + x[i]);
+          //      System.err.println("x-" + i + ": " + x[i]);
             }
 
             for (int i = 0; i < y.length; i++) {
-                System.err.println("y-" + i + ": " + y[i]);
+           //     System.err.println("y-" + i + ": " + y[i]);
             }
 
             for (int i = 0; i < z.length; i++) {
-                System.err.println("z-" + i + ": " + z[i]);
+           //     System.err.println("z-" + i + ": " + z[i]);
             }
 
 
@@ -3976,7 +4113,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 zExt = 1;
             }
 
-            if ((newVOI.getCurveType() == VOI.POLYLINE_SLICE) && (newVOI.getCurveType() == VOI.POINT)) {
+            if ((newVOI.getCurveType() == VOI.POLYLINE_SLICE) || (newVOI.getCurveType() == VOI.POINT)) {
 
                 for (int i = 0; i < outVOI.getCurves().length; i++) {
                     outVOI.removeCurves(i);

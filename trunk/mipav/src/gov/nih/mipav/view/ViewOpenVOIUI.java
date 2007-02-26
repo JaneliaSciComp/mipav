@@ -23,6 +23,8 @@ public class ViewOpenVOIUI {
     /** The main user interface. */
     private ViewUserInterface UI;
 
+    private boolean doLabel = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -35,7 +37,7 @@ public class ViewOpenVOIUI {
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
-
+    
     /**
      * Open a VOI array based on the suffix of the file.
      *
@@ -43,7 +45,7 @@ public class ViewOpenVOIUI {
      *
      * @return  the opened VOIs
      */
-    public VOI[] open(ModelImage image) {
+    public VOI[] open(ModelImage image, boolean doLabel) {
         VOI[] voi;
         FileCheshireVOI fileCheshireVOI;
         FileVOI fileVOI;
@@ -68,8 +70,11 @@ public class ViewOpenVOIUI {
             chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
         }
 
-        chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
-
+        if (doLabel) {
+        	chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
+        } else {
+        	chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "xml", "voi" }));
+        }
         int returnValue = chooser.showOpenDialog(UI.getMainFrame());
 
         if (returnValue == JFileChooser.APPROVE_OPTION) {
@@ -92,10 +97,15 @@ public class ViewOpenVOIUI {
                 voi = fileCheshireVOI.readVOI();
             } else {
                 fileVOI = new FileVOI(fileName, directory, image);
-                voi = fileVOI.readVOI();
+                if (doLabel) {
+                	voi = fileVOI.readVOI(true);
+                }
+                else {
+                	voi = fileVOI.readVOI(false);
+                }
             }
         } catch (IOException error) {
-            MipavUtil.displayError("VOI IO: " + error);
+            MipavUtil.displayError(error.getMessage());
 
             return null;
         }
@@ -107,6 +117,7 @@ public class ViewOpenVOIUI {
         }
 
         // UI.getController().registerModel(voi);
+        //System.err.println("registering VOIS");
         for (i = 0; i < voi.length; i++) {
             image.registerVOI(voi[i]);
         }

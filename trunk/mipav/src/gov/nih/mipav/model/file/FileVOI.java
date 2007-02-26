@@ -24,6 +24,7 @@ import javax.swing.*;
 import javax.xml.parsers.*;
 import gov.nih.mipav.MipavCoordinateSystems;
 import gov.nih.mipav.MipavMath;
+import gov.nih.mipav.model.structures.*;
 
 /**
  * VOI reader/writer. This classes incorporates the ability to write/read VOIs in three formats (MIPAV *.voi, Nuages,
@@ -204,15 +205,24 @@ public class FileVOI extends FileBase {
      *
      * @exception  IOException  if there is an error reading the file
      */
-    public VOI[] readVOI() throws IOException {
+    public VOI[] readVOI(boolean doLabel) throws IOException {
 
         String VOIStr;
-        VOI[] voi = new VOI[1];
+        VOI[] voi = null;
 
-        voi[0] = null;
-
-        if (isXML) {
-
+        if (doLabel) {
+        	VOIVector voiVector = new VOIVector();
+        	if (!readAnnotationXML(voiVector)) {
+        		throw new IOException("Open label(s) failed.");
+        	} else {
+        		voi = new VOI[voiVector.size()];
+        		for (int i = 0; i < voi.length; i++) {
+        			voi[i] = voiVector.VOIAt(i);
+        		}
+        	}
+        	
+        } else if (isXML) {
+        	voi = new VOI[1];
             if (image.getNDims() > 2) {
                 voi[0] = new VOI(numVOIs, trimmedFileName, image.getExtents()[2]);
             } else {
@@ -221,23 +231,19 @@ public class FileVOI extends FileBase {
 
             if (image.getNDims() == 2) {
             	if (!readXML(voi[0])) {
-            		throw (new IOException("Open VOI failed"));
+            		throw (new IOException("Open VOI failed."));
             	}
             } else {
             	if (!readXML(voi[0])) {
                 	if (!readCoordXML(voi[0])) {
-                		throw (new IOException("Open VOI failed"));
+                		throw (new IOException("Open VOI failed."));
                 	} else {
                 	//	System.err.println("success");
                 	}
                 }
             }
-            
-            
-            
-            
-           
         } else {
+        	voi = new VOI[1];
             raFile = new RandomAccessFile(file, "r");
             VOIStr = raFile.readLine();
 
@@ -545,6 +551,145 @@ public class FileVOI extends FileBase {
         raFile.close();
     }
 
+    public void writeAnnotationXML(boolean writeAll) throws IOException {
+    	FileWriter fw;
+        BufferedWriter bw;
+
+        while (file.exists() == true) {
+            int response = JOptionPane.showConfirmDialog(null, file.getName() + " exists. Overwrite?", "File exists",
+                                                         JOptionPane.YES_NO_OPTION);
+
+            if (response == JOptionPane.YES_OPTION) {
+                file.delete();
+                file = new File(fileDir + fileName);
+
+                break;
+            } else {
+                JFileChooser chooser = new JFileChooser();
+                chooser.setDialogTitle("Save label(s) as");
+                chooser.setCurrentDirectory(file);
+
+                chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
+
+                int returnVal = chooser.showSaveDialog(null);
+
+                if (returnVal == JFileChooser.APPROVE_OPTION) {
+                    fileName = chooser.getSelectedFile().getName();
+                    fileDir = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                    file = new File(fileDir + fileName);
+                } else {
+                    return;
+                }
+            } 
+        }
+        try {
+            fw = new FileWriter(file);
+            bw = new BufferedWriter(fw);
+
+            bw.write(XML_HEADER);
+            bw.newLine();
+            bw.write(MIPAV_HEADER);
+            bw.newLine();
+
+            openTag(bw, "Annotation xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
+            
+            VOIVector VOIs = image.getVOIs();
+            
+            int numVOIs = VOIs.size();
+            
+            VOI currentVOI = null;
+            Vector [] curves = null;
+            VOIText vText = null;
+            
+            Point3Df arrowPt, textPt, arrowPtScanner, textPtScanner;
+            int fontSize, fontDescriptors;
+            boolean useMarker;
+            String fontName;
+            Color voiColor;
+            String voiString;
+            
+            arrowPtScanner = new Point3Df();
+            textPtScanner = new Point3Df();
+            
+            for (int i = 0; i < numVOIs; i++) {
+            	currentVOI = VOIs.VOIAt(i);
+            	if (currentVOI.getCurveType() == VOI.ANNOTATION &&
+            			(writeAll || currentVOI.isActive())) {
+            		
+            		curves = currentVOI.getCurves();
+            		for (int j = 0; j < curves.length; j++) {
+            			for (int k = 0; k < curves[j].size(); k++) {
+            				
+            				openTag(bw, "Label", true);
+            				
+            				//there's only one per VOI
+            				vText = (VOIText)curves[j].elementAt(k);
+            				voiString = vText.getText();
+            				voiColor = vText.getColor();
+            				textPt = (Point3Df)vText.elementAt(0);
+            				arrowPt = (Point3Df)vText.elementAt(1);
+            				useMarker = vText.useMarker();
+            				fontSize = vText.getFontSize();
+            				fontName = vText.getFontName();
+            				fontDescriptors = vText.getFontDescriptors();
+            				
+            				closedTag(bw, "Text", voiString);
+            				if (image.getNDims() > 2) {
+            					MipavCoordinateSystems.FileToScanner(textPt, textPtScanner, image);
+            					MipavCoordinateSystems.FileToScanner(arrowPt, arrowPtScanner, image);
+            					closedTag(bw, "TextLocation", Float.toString(textPtScanner.x) + "," +
+                        				Float.toString(textPtScanner.y) + "," +
+                        				Float.toString(textPtScanner.z));
+            					closedTag(bw, "ArrowLocation", Float.toString(arrowPtScanner.x) + "," +
+                        				Float.toString(arrowPtScanner.y) + "," +
+                        				Float.toString(arrowPtScanner.z));
+            					//System.err.println("Text location: " + textPtScanner + ", arrow location: " + arrowPtScanner);
+            				} else {
+            					textPt.z = j;
+            					arrowPt.z = j;
+            					closedTag(bw, "TextLocation", Float.toString(textPt.x) + "," +
+                        				Float.toString(textPt.y) + "," +
+                        				Float.toString(textPt.z));
+            					closedTag(bw, "ArrowLocation", Float.toString(arrowPt.x) + "," +
+                        				Float.toString(arrowPt.y) + "," +
+                        				Float.toString(arrowPt.z));
+            				}
+            				closedTag(bw, "UseMarker", Boolean.toString(useMarker));
+            				
+            				closedTag(bw, "Color",
+            	                      Integer.toString(voiColor.getAlpha()) + "," +
+            	                      Integer.toString(voiColor.getRed()) + "," +
+            	                      Integer.toString(voiColor.getGreen()) + "," +
+            	                      Integer.toString(voiColor.getBlue()));
+            				
+            				closedTag(bw, "FontName", fontName);
+            				closedTag(bw, "FontSize", Integer.toString(fontSize));
+            				
+            				if (fontDescriptors == Font.BOLD) {
+            					closedTag(bw, "FontStyle", "BOLD");
+            		        } else if (fontDescriptors == Font.ITALIC) {
+            		        	closedTag(bw, "FontStyle", "ITALIC");
+            		        } else if (fontDescriptors == (Font.BOLD + Font.ITALIC)) {
+            		        	closedTag(bw, "FontStyle", "BOLDITALIC");
+            		        } else {
+            		        	closedTag(bw, "FontStyle", "");
+            		        }
+            				
+            				openTag(bw, "Label", false);
+            			}
+            		}
+            		
+            		
+            	}
+            }
+            openTag(bw, "Annotation", false);
+            bw.close();
+            
+        } catch (Exception e) {
+        	
+        }
+    }
+    
     /**
      * Writes VOI to an XML formatted file.
      *
@@ -1232,6 +1377,59 @@ public class FileVOI extends FileBase {
         return true;
     }
     
+    /**
+     * DOCUMENT ME!
+     *
+     * @param   voi  VOI
+     *
+     * @return  boolean
+     */
+    private boolean readAnnotationXML(VOIVector voiVector) {
+
+        SAXParserFactory spf = SAXParserFactory.newInstance();
+
+        spf.setNamespaceAware(true);
+        spf.setValidating(true);
+
+        try {
+
+            // Create a JAXP SAXParser
+            SAXParser saxParser = spf.newSAXParser();
+
+            // Validation part 2a: set the schema language if necessary
+            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_LANGUAGE, W3C_XML_SCHEMA);
+
+            URL xsdURL = getClass().getClassLoader().getResource("text.xsd");
+
+            if (xsdURL == null) {
+                MipavUtil.displayError("Unable to find VOI XML schema.");
+
+                return false;
+            }
+
+            saxParser.setProperty(SAXParserImpl.JAXP_SCHEMA_SOURCE, xsdURL.toExternalForm());
+
+            // Get the encapsulated SAX XMLReader
+            XMLReader xmlReader = saxParser.getXMLReader();
+
+            // Set the ContentHandler of the XMLReader
+            xmlReader.setContentHandler(new XMLAnnotationHandler(voiVector));
+
+            // Set an ErrorHandler before parsing
+            xmlReader.setErrorHandler(new XMLErrorHandler());
+
+            // Tell the XMLReader to parse the XML document
+            xmlReader.parse(MipavUtil.convertToFileURL(fileDir + fileName));
+        } catch (Exception error) {
+        	error.printStackTrace();
+        	MipavUtil.displayError("Error: " + error.getMessage());
+
+            return false;
+        }
+
+        return true;
+    }
+    
     //~ Inner Classes --------------------------------------------------------------------------------------------------
 
     /**
@@ -1522,6 +1720,185 @@ public class FileVOI extends FileBase {
             // else if (currentKey.equals("VOI")) {
             // voi.setName(Integer.toString(voi.getUID()));
             // }
+        }
+
+    }
+    
+    /**
+     * Handle events generated while parsing the XML file.
+     */
+    private class XMLAnnotationHandler extends DefaultHandler {
+
+        /** The current XML tag we are parsing. */
+        private String currentKey;
+
+        /** The data for the current element being parsed. */
+        private String elementBuffer = new String();
+
+        /** The VOI that we are building from the XML. */
+        private VOI voi;
+
+        private VOIVector voiVector;
+        
+        private short id = -1;
+        
+        private int zDim = 1;
+        private int slice = 0;
+        
+        private VOIText voiText = null;
+
+        private String fontName = null;
+        private int fontSize = 0;
+        private int fontStyle = 0;
+        
+        
+        /**
+         * Construct our custom XML data handler.
+         *
+         * @param  voi  the VOI we should build from the XML file data
+         */
+        public XMLAnnotationHandler(VOIVector voiVector) {
+            this.voiVector = voiVector;
+            if (image.getNDims() > 2) {
+            	zDim = image.getExtents()[2];
+            }
+        }
+
+        /**
+         * DOCUMENT ME!
+         *
+         * @param  ch      char[]
+         * @param  start   int
+         * @param  length  int
+         */
+        public void characters(char[] ch, int start, int length) {
+            String s = new String(ch, start, length);
+
+            // don't need to de-entity-ize the string because the parser does
+            // that automatically
+            if (s.trim().length() != 0) {
+                elementBuffer += s;
+            }
+        }
+
+        /**
+         * Parser calls this when the end tag of each element is reached. Data collected in the elementbuffer is
+         * generally saved to the image info.
+         *
+         * @param   namespaceURI  the namespace (not used)
+         * @param   localName     the current tag we are parsing
+         * @param   qName         ? (not used)
+         *
+         * @throws  SAXException  if there is a problem with the parser
+         */
+        public void endElement(String namespaceURI, String localName, String qName) throws SAXException {
+            currentKey = localName;
+
+            if (currentKey.equals("Label")) {
+            	voiText.setFontName(fontName);
+            	voiText.setFontSize(fontSize);
+            	voiText.setFontDescriptors(fontStyle);
+            	
+                voi.importCurve(voiText, slice);
+                voiVector.addVOI(voi);
+            }
+            if (currentKey.equals("Unique-ID")) {
+                voi.setUID(Integer.parseInt(elementBuffer));
+            } else if (currentKey.equals("Text")) {
+            	voiText.setText(elementBuffer);
+            } else if (currentKey.equals("TextLocation") ||
+            		currentKey.equals("ArrowLocation")) {
+            	float x = 0f, y = 0f, z = 0f;
+                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+
+                try {
+                    x = Float.parseFloat(st.nextToken());
+                    y = Float.parseFloat(st.nextToken());
+                    z = Float.parseFloat(st.nextToken());
+                    //System.err.println("X: " + x + ", Y: " + y + ", Z: " + z);
+                } catch (NumberFormatException nfex) {
+                    Preferences.debug("Error reading pt: " + nfex.toString() + "\n", Preferences.DEBUG_FILEIO);
+                }
+                
+                Point3Df ptIn = new Point3Df(x,y,z);
+                Point3Df ptOut = new Point3Df();
+                if (image.getNDims() > 2) {
+                int xDim = image.getExtents()[0];
+                int yDim = image.getExtents()[1];
+                int zDim = image.getExtents()[2];
+                
+                Preferences.debug("New contour: " + "\n", Preferences.DEBUG_FILEIO);
+              
+                MipavCoordinateSystems.ScannerToFile(ptIn, ptOut, image);
+                	
+               
+                if (ptOut.x > xDim || ptOut.y > yDim || ptOut.z >= zDim ||
+                		ptOut.x < 0 || ptOut.y < 0 || ptOut.z < 0) {
+                	MipavUtil.displayWarning("VOI on file out of image bounds:  Open VOI aborted");
+                	return;
+                }
+                slice = (int)ptOut.z;
+                
+                voiText.addElement(ptOut);
+                } else {
+                	voiText.addElement(ptIn);
+                }
+                
+            } else if (currentKey.equals("UseMarker")) {
+            	voiText.setUseMarker(Boolean.parseBoolean(elementBuffer));
+            } else if (currentKey.equals("Color")) {
+            
+                int a = 0, r = 0, g = 0, b = 0;
+                StringTokenizer st = new StringTokenizer(elementBuffer, ",");
+
+                try {
+                    a = Integer.parseInt(st.nextToken());
+                    r = Integer.parseInt(st.nextToken());
+                    g = Integer.parseInt(st.nextToken());
+                    b = Integer.parseInt(st.nextToken());
+
+                    voi.setColor(new Color(r, g, b, a));
+                    voiText.setColor(new Color(r, g, b, a));
+                } catch (NumberFormatException ex) {
+                    Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
+                                      Preferences.DEBUG_FILEIO);
+                }
+            } else if (currentKey.equals("FontName")) {
+            	fontName = new String(elementBuffer);
+            } else if (currentKey.equals("FontSize")) {
+            	fontSize = Integer.parseInt(elementBuffer);
+            } else if (currentKey.equals("FontStyle")) {
+            	if (elementBuffer.contains("BOLD")){
+            		fontStyle += Font.BOLD;
+            	}
+            	if (elementBuffer.contains("ITALIC")) {
+            		fontStyle += Font.ITALIC;
+            	}
+            	
+            }
+
+        }
+
+        /**
+         * Parser calls this for each element in a document.
+         *
+         * @param   namespaceURI  the namespace (not used)
+         * @param   localName     the current tag we are parsing
+         * @param   qName         ? (not used)
+         * @param   atts          attributes for the current tag
+         *
+         * @throws  SAXException  if there is a problem with the parser
+         */
+        public void startElement(String namespaceURI, String localName, String qName, Attributes atts)
+                throws SAXException {
+            currentKey = localName;
+            elementBuffer = "";
+
+            if (currentKey.equals("Label")) {
+            	voi = new VOI(id, "Label_" + id, zDim, VOI.ANNOTATION, 0f);
+            	voiText = new VOIText();
+                
+            }
         }
 
     }

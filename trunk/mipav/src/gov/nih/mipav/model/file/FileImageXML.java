@@ -1461,50 +1461,7 @@ public class FileImageXML extends FileXML {
         if (additionalSets != null) {
             writeSet(bw, additionalSets);
         }
-
-
-        // check to see if there are any annotations to be saved into the XML header
-        ViewVOIVector VOIs = img.getVOIs();
-        Vector[] curves;
-
-        for (i = 0; i < VOIs.size(); i++) {
-
-            if (VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
-                curves = VOIs.VOIAt(i).getCurves();
-
-                int numIndex = 1;
-
-                if (nDims > 2) {
-                    numIndex *= extents[2];
-
-                    if (nDims == 4) {
-                        numIndex *= extents[3];
-                    }
-                }
-
-                for (int h = 0; h < numIndex; h++) {
-
-                    if ((curves[h].size() > 0) && (curves[h].elementAt(0) instanceof VOIText)) {
-
-                        // write it out
-                        VOIText vt = (VOIText) curves[h].elementAt(0);
-                        openTag(bw, "Annotation", true);
-                        closedTag(bw, "Text-location", vt.getLocationString() + "," + h);
-                        closedTag(bw, "Text", vt.getText());
-                        closedTag(bw, "Font-color", vt.getColorString());
-                        closedTag(bw, "Font-descriptor", Integer.toString(vt.getFontDescriptors()));
-                        closedTag(bw, "Font-size", Integer.toString(vt.getFontSize()));
-                        closedTag(bw, "Font-type", vt.getFontName());
-                        openTag(bw, "Annotation", false);
-
-                        break;
-                    }
-
-                }
-            }
-
-            // nCurves = curves[zSlice].size();
-        }
+     
 
         // if the Talairach Transform Info is not null, write it
         // into the XML header

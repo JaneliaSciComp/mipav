@@ -971,7 +971,10 @@ public class ViewMenuBar {
                                                                                            "open.gif", true),
                                                                  menuBuilder.buildMenuItem("Open all VOIs from...",
                                                                                            "Open all VOIs from...", 0,
-                                                                                           "open.gif", true)
+                                                                                           "open.gif", true),
+                                                                 menuBuilder.buildMenuItem("Open label(s)...",
+                                                                                            "Open labels", 0,
+                                                                                            "open.gif", true)
                                                              }), separator,
                                         menuBuilder.makeMenu("Save VOI", true,
                                                              new JMenuItem[] {
@@ -990,7 +993,13 @@ public class ViewMenuBar {
                                                                                            "save.gif", true),
                                                                  menuBuilder.buildMenuItem("Save all VOIs to...",
                                                                                            "Save all VOIs to...", 0,
-                                                                                           "save.gif", true)
+                                                                                           "save.gif", true),
+                                                                 menuBuilder.buildMenuItem("Save selected label to...",
+                                                                                                   "SaveSelectedAnnotation", 0,
+                                                                                                   	"save.gif", true),
+                                                                 menuBuilder.buildMenuItem("Save all labels to...",
+                                                                                            "SaveAllAnnotations", 0,
+                                                                                            	"save.gif", true)
                                                              }), separator,
                                         menuBuilder.makeMenu("VOI grouping", true,
                                                              new JMenuItem[] {

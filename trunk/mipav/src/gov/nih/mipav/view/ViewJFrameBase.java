@@ -854,7 +854,7 @@ public abstract class ViewJFrameBase extends JFrame
 
                 fileVOI = new FileVOI((String) (filenames.elementAt(i)), voiDir, currentImage);
 
-                VOIs = fileVOI.readVOI();
+                VOIs = fileVOI.readVOI(false);
 
                 for (j = 0; j < VOIs.length; j++) {
                     currentImage.registerVOI(VOIs[j]);
@@ -1296,7 +1296,7 @@ public abstract class ViewJFrameBase extends JFrame
      *
      * @return  whether a VOI was successfully opened (ie - the dialog wasn't cancelled)
      */
-    public boolean openVOI(boolean quietMode) {
+    public boolean openVOI(boolean quietMode, boolean doLabels) {
         ViewOpenVOIUI openVOI = null;
 
         try {
@@ -1304,12 +1304,12 @@ public abstract class ViewJFrameBase extends JFrame
 
             if (displayMode == IMAGE_A) {
 
-                if (openVOI.open(imageA) == null) {
+                if (openVOI.open(imageA, doLabels) == null) {
                     return false;
                 }
             } else if (displayMode == IMAGE_B) {
 
-                if (openVOI.open(imageB) == null) {
+                if (openVOI.open(imageB, doLabels) == null) {
                     return false;
                 }
             } else {
@@ -1346,7 +1346,7 @@ public abstract class ViewJFrameBase extends JFrame
 
         try {
             openVOI = new ViewOpenVOIUI(userInterface);
-            voi = openVOI.open(image);
+            voi = openVOI.open(image, false);
         } catch (OutOfMemoryError error) {
 
             if (!quietMode) {
@@ -2950,6 +2950,136 @@ public abstract class ViewJFrameBase extends JFrame
 
     }
 
+    public void saveLabels(boolean saveAll) {
+    	String fileName;
+        String directory;
+        JFileChooser chooser;
+
+        int nVOI;
+        int i;
+        ViewVOIVector VOIs;
+        boolean foundLabel = false;
+
+        if (displayMode == IMAGE_A) {
+
+            VOIs = (ViewVOIVector) imageA.getVOIs();
+            nVOI = VOIs.size();
+
+            for (i = 0; i < nVOI; i++) {
+
+                if ((VOIs.VOIAt(i).isActive() || saveAll) && 
+                		VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
+                    foundLabel = true;
+                }
+            }
+            if (!foundLabel) {
+            	MipavUtil.displayWarning("There are no labels on the image.");
+            	return;
+            }
+            chooser = new JFileChooser();
+            chooser.setDialogTitle("Save label(s) as");
+
+            if (userInterface.getDefaultDirectory() != null) {
+                File file = new File(userInterface.getDefaultDirectory());
+
+                if (file != null) {
+                    chooser.setCurrentDirectory(file);
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            }
+
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
+
+            int returnVal = chooser.showSaveDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                userInterface.setDefaultDirectory(directory);
+
+                this.voiSavedFileName = directory + fileName;
+
+
+            } else {
+                return;
+            }
+
+            try {
+
+                FileVOI fileVOI = new FileVOI(fileName, directory, imageA);
+
+                fileVOI.writeAnnotationXML(saveAll);
+                
+            } catch (IOException error) {
+                MipavUtil.displayError("Error writing labels");
+            }
+
+        } else if (displayMode == IMAGE_B) {
+
+            VOIs = (ViewVOIVector) imageB.getVOIs();
+            nVOI = VOIs.size();
+
+            for (i = 0; i < nVOI; i++) {
+
+            	if ((VOIs.VOIAt(i).isActive() || saveAll) && 
+                		VOIs.VOIAt(i).getCurveType() == VOI.ANNOTATION) {
+                    foundLabel = true;
+                }
+            }
+
+            if (i == nVOI) {
+                MipavUtil.displayError("Please select a VOI.");
+
+                return;
+            }
+
+            if (!foundLabel) {
+            	MipavUtil.displayWarning("There are no labels on the image.");
+            	return;
+            }
+            chooser = new JFileChooser();
+            chooser.setDialogTitle("Save label(s) as");
+
+            if (userInterface.getDefaultDirectory() != null) {
+                File file = new File(userInterface.getDefaultDirectory());
+
+                if (file != null) {
+                    chooser.setCurrentDirectory(file);
+                } else {
+                    chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                }
+            } else {
+                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+            }
+
+            chooser.addChoosableFileFilter(new ViewImageFileFilter(new String[] { "lbl" }));
+
+            int returnVal = chooser.showSaveDialog(this);
+
+            if (returnVal == JFileChooser.APPROVE_OPTION) {
+                fileName = chooser.getSelectedFile().getName();
+                directory = String.valueOf(chooser.getCurrentDirectory()) + File.separatorChar;
+                userInterface.setDefaultDirectory(directory);
+            } else {
+                return;
+            }
+
+            try {
+
+                FileVOI fileVOI = new FileVOI(fileName, directory, imageB);
+                fileVOI.writeAnnotationXML(true);
+             
+            } catch (IOException error) {
+                MipavUtil.displayError("Error writing label(s)");
+            }
+        } else {
+            MipavUtil.displayError(" Cannot save images when viewing both images.");
+        }
+    }
+    
     /**
      * This method saves a selected VOI - should this be in VOI structure ??!!!
      *
