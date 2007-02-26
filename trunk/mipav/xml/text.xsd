@@ -16,8 +16,8 @@
 							<xs:element name="ArrowLocation" type="xs:string"/>
 							<xs:element name="MarkerPosition" type="xs:int"/>
 							<xs:element name="Color" type="xs:string"/>
-							<xs:element name="FontName" type="xs:int"/>
-							<xs:element name="FontType" type="xs:string"/>
+							<xs:element name="FontName" type="xs:string"/>
+							<xs:element name="FontSize" type="xs:int"/>
 							<xs:element name="FontStyle" type="xs:string"/>
 						</xs:sequence>
 					</xs:complexType>
