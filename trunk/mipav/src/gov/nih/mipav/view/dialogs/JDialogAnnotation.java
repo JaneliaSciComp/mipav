@@ -39,6 +39,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** button to bring up color chooser. */
     private JButton colorButton;
 
+    /** button to bring up the background color chooser */
+    private JButton backgroundColorButton;
+    
     /** color chooser to select text color. */
     private ViewJColorChooser colorChooser;
 
@@ -83,6 +86,9 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
     /** the user interface. */
     private ViewUserInterface userInterface;
 
+    /** toggle between background and text color changing*/
+    private boolean isBackground = false;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -143,12 +149,18 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
                 }
             }
         } else if (command.equals("ChooseColor")) {
-
+        	isBackground = false;
             // open up a color chooser dialog
-            colorChooser = new ViewJColorChooser(this.parentFrame, "Pick VOI color", new OkColorListener(),
+            colorChooser = new ViewJColorChooser(this.parentFrame, "Pick text color", new OkColorListener(),
                                                  new CancelListener());
 
-        } else if (command.equals("Cancel")) {
+        } else if (command.equals("ChooseBackgroundColor")) {
+        	isBackground = true;
+            // open up a color chooser dialog
+            colorChooser = new ViewJColorChooser(this.parentFrame, "Pick background color", new OkColorListener(),
+                                                 new CancelListener());
+
+        }else if (command.equals("Cancel")) {
             windowClosing(null);
         } else if (command.equals("Help")) {
             MipavUtil.showHelp("102572");
@@ -262,6 +274,18 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         colorButton.setSize(24, 24);
         colorButton.setMaximumSize(new Dimension(24, 24));
 
+        backgroundColorButton = new JButton(MipavUtil.getIcon("transparent.gif"));
+
+        backgroundColorButton.setBackground(vt.getBackgroundColor());
+        backgroundColorButton.setForeground(vt.getBackgroundColor());
+        backgroundColorButton.setToolTipText("Click to change background color");
+
+        backgroundColorButton.addActionListener(this);
+        backgroundColorButton.setActionCommand("ChooseBackgroundColor");
+        backgroundColorButton.setSize(24, 24);
+        backgroundColorButton.setMaximumSize(new Dimension(24, 24));
+        
+        
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.WEST;
@@ -296,7 +320,10 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         gbc.gridwidth = 1;
         gbc.weightx = 0;
         fontPanel.add(colorButton, gbc);
-
+        
+        gbc.gridx = 7;
+        fontPanel.add(backgroundColorButton, gbc);
+        
         fontPanel.setBorder(buildTitledBorder("Font options"));
 
         return fontPanel;
@@ -378,6 +405,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
             vt.setFontName((String) fontTypeBox.getSelectedItem());
             vt.setColor(colorButton.getForeground());
             textVOI.setColor(colorButton.getForeground());
+            vt.setBackgroundColor(backgroundColorButton.getForeground());
             
             vt.setUseMarker(useMarkerBox.isSelected());
             
@@ -439,9 +467,14 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
          */
         public void actionPerformed(ActionEvent e) {
             Color color = colorChooser.getColor();
+            if (isBackground) {
+            	backgroundColorButton.setBackground(color);
+            	backgroundColorButton.setForeground(color);
+            } else {
             colorButton.setBackground(color);
             colorButton.setForeground(color);
             textField.setForeground(color);
+            }
         }
     }
 }

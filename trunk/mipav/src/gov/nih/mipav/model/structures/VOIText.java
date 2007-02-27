@@ -48,6 +48,8 @@ public class VOIText extends VOIBase {
     /** This must be kept separate (but parallel) to the VOI color. */
     private Color textColor = Color.WHITE;
 
+    private Color backgroundColor = Color.BLACK;
+    
     /**
      * The font is stored here so that it does not have to be reallocated on each redraw. It is only new'd at the
      * beginning or if the fontDescriptors variable changes
@@ -101,9 +103,11 @@ public class VOIText extends VOIBase {
         x = Math.round(((Point3Df) (elementAt(0))).x);
         y = Math.round(((Point3Df) (elementAt(0))).y);
 
-        if (nearMarkerPoint(_x, _y)) {
-        	return true;
-        }
+                
+    //    if (nearMarkerPoint(_x, _y, zoomX, resols[0], resols[1])) {
+   //     	System.err.println("near marker from contains()");
+   //     	return true;
+    //    }
         
         // the width tells us the width of the font as it has been drawn on screen (not the width of the font's
         // unzoomed size)
@@ -121,18 +125,18 @@ public class VOIText extends VOIBase {
         return true;
     }
 
-    public boolean nearMarkerPoint(int _x, int _y) {
-    	int x, y;
-    	float dist;
+    public boolean nearMarkerPoint(int _x, int _y, float zoomX, float resolutionX, float resolutionY) {
+    	int xS, yS;
     	
     	if (!useMarker) {
     		return false;
     	}
-//    	check the marker point
-        x = Math.round(((Point3Df) (elementAt(1))).x);
-        y = Math.round(((Point3Df) (elementAt(1))).y);
+    	
+    	xS = Math.round(((Point3Df) (elementAt(1))).x * zoomX * resolutionX);
+        yS = Math.round(((Point3Df) (elementAt(1))).y * zoomX * resolutionY);
         
-        dist = (float) MipavMath.distance(_x, x, _y, y);
+    	float dist;       
+        dist = (float) MipavMath.distance(xS, _x, yS, _y);
         if (dist < 3) {
         	return true;
         }
@@ -187,23 +191,23 @@ public class VOIText extends VOIBase {
         int ascentValue = (int) (g.getFontMetrics(textFont).getStringBounds(textString, g).getHeight() /
                                      (2 * zoomY * resols[1]));
         
-        int markerX = x;
-        int markerY = y;
+        int markerX = xS;
+        int markerY = yS;
         
-        if (xS2 > (x + width)) {
-        	markerX = x + width;
-        } else if (xS2 <= x) {
-        	markerX = x - 2;
+        if (xS2 > (xS + width)) {
+        	markerX = xS + width;
+        } else if (xS2 <= xS) {
+        	markerX = xS - 2;
         } else {
-        	markerX = x + width/2;
+        	markerX = xS + width/2;
         }
         
-        if (yS2 > y) {
-        	markerY = y + 3;
-        } else if (yS2 <= (y - ascentValue)) {
-        	markerY = y - ascentValue - 5;
+        if (yS2 > yS) {
+        	markerY = yS + 3;
+        } else if (yS2 <= (yS - ascentValue)) {
+        	markerY = yS - ascentValue - 5;
         } else {
-        	markerY = y - ascentValue/2;
+        	markerY = yS - ascentValue/2;
         }
         
         this.drawArrow((Graphics2D)g, markerX, markerY, xS2, yS2, .1f);
@@ -220,12 +224,18 @@ public class VOIText extends VOIBase {
         g.setFont(textFont);
 
         if (active == true) {
-            g.setColor(Color.RED);
+            g.setColor(Color.RED);            
             g.drawString(textString, xS, yS + 1);
             g.drawString(textString, xS + 1, yS);
-
+        } else {
+        	g.setColor(backgroundColor);
+        	g.drawString(textString, xS + 1, yS + 1);
+            g.drawString(textString, xS - 1, yS + 1);
+            g.drawString(textString, xS - 1, yS - 1);
+            g.drawString(textString, xS + 1, yS - 1);
         }
 
+        
         g.setColor(textColor);
         g.drawString(textString, xS, yS);
         g.setFont(previousFont);
@@ -516,6 +526,14 @@ public class VOIText extends VOIBase {
         this.textColor = color;
     }
 
+    public void setBackgroundColor(Color color) {
+    	this.backgroundColor = color;
+    }
+    
+    public Color getBackgroundColor() {
+    	return this.backgroundColor;
+    }
+    
     /**
      * Sets the font's descriptors.
      *
