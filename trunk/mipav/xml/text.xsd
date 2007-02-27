@@ -16,6 +16,7 @@
 							<xs:element name="ArrowLocation" type="xs:string"/>
 							<xs:element name="UseMarker" type="xs:boolean"/>
 							<xs:element name="Color" type="xs:string"/>
+							<xs:element name="BackgroundColor" type="xs:string"/>
 							<xs:element name="FontName" type="xs:string"/>
 							<xs:element name="FontSize" type="xs:int"/>
 							<xs:element name="FontStyle" type="xs:string"/>
