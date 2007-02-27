@@ -102,12 +102,6 @@ public class VOIText extends VOIBase {
 
         x = Math.round(((Point3Df) (elementAt(0))).x);
         y = Math.round(((Point3Df) (elementAt(0))).y);
-
-                
-    //    if (nearMarkerPoint(_x, _y, zoomX, resols[0], resols[1])) {
-   //     	System.err.println("near marker from contains()");
-   //     	return true;
-    //    }
         
         // the width tells us the width of the font as it has been drawn on screen (not the width of the font's
         // unzoomed size)
@@ -187,9 +181,8 @@ public class VOIText extends VOIBase {
         
         if (useMarker) {
         // determine the width/height of the TEXT (for marker line location)
-        int width = (int) (g.getFontMetrics(textFont).stringWidth(textString) / (zoomX * resols[0]));
-        int ascentValue = (int) (g.getFontMetrics(textFont).getStringBounds(textString, g).getHeight() /
-                                     (2 * zoomY * resols[1]));
+        int width = (int) (g.getFontMetrics(textFont).stringWidth(textString));
+        int ascentValue = (int) (g.getFontMetrics(textFont).getStringBounds(textString, g).getHeight() / 2);
         
         int markerX = xS;
         int markerY = yS;
