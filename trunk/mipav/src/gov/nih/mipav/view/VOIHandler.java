@@ -4090,7 +4090,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 test = 1;
 
                 for (int i = 0; i < compImage.getActiveImage().getVOIs().size(); i++) {
-
                     if (ID == ((VOI) compImage.getActiveImage().getVOIs().elementAt(i)).getID()) {
                         ID++;
                         test = 0;
@@ -4098,6 +4097,10 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 }
             } while (test == 0);
 
+            outVOI.setID((short)ID);
+            float hue = (float) ((((ID) * 35) % 360) / 360.0);
+            outVOI.setColor(Color.getHSBColor(hue, (float) 1.0, (float) 1.0));
+            
             // check to see if a VOI with this name exists, if not, keep same name
             // otherwise append "_pasted_#" to the name
             for (int i = 0; i < compImage.getActiveImage().getVOIs().size(); i++) {

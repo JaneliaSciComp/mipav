@@ -3654,9 +3654,8 @@ public class VOI extends ModelSerialCloneable {
                 }
             } else if (curveType == VOI.ANNOTATION) {
 
-                if (((VOIText) (curves[slice].elementAt(i))).nearMarkerPoint(x, y)) {
+                if (((VOIText) (curves[slice].elementAt(i))).nearMarkerPoint(x, y, zoom, resolutionX, resolutionY)) {
                     polygonIndex = i;
-
                     return true;
                 }
             }

@@ -606,6 +606,7 @@ public class FileVOI extends FileBase {
             boolean useMarker;
             String fontName;
             Color voiColor;
+            Color voiBackgroundColor;
             String voiString;
             
             arrowPtScanner = new Point3Df();
@@ -626,6 +627,7 @@ public class FileVOI extends FileBase {
             				vText = (VOIText)curves[j].elementAt(k);
             				voiString = vText.getText();
             				voiColor = vText.getColor();
+            				voiBackgroundColor = vText.getBackgroundColor();
             				textPt = (Point3Df)vText.elementAt(0);
             				arrowPt = (Point3Df)vText.elementAt(1);
             				useMarker = vText.useMarker();
@@ -661,7 +663,11 @@ public class FileVOI extends FileBase {
             	                      Integer.toString(voiColor.getRed()) + "," +
             	                      Integer.toString(voiColor.getGreen()) + "," +
             	                      Integer.toString(voiColor.getBlue()));
-            				
+            				closedTag(bw, "BackgroundColor",
+          	                      Integer.toString(voiBackgroundColor.getAlpha()) + "," +
+          	                      Integer.toString(voiBackgroundColor.getRed()) + "," +
+          	                      Integer.toString(voiBackgroundColor.getGreen()) + "," +
+          	                      Integer.toString(voiBackgroundColor.getBlue()));
             				closedTag(bw, "FontName", fontName);
             				closedTag(bw, "FontSize", Integer.toString(fontSize));
             				
@@ -1846,7 +1852,8 @@ public class FileVOI extends FileBase {
                 
             } else if (currentKey.equals("UseMarker")) {
             	voiText.setUseMarker(Boolean.parseBoolean(elementBuffer));
-            } else if (currentKey.equals("Color")) {
+            } else if (currentKey.equals("Color") ||
+            		currentKey.equals("BackgroundColor")) {
             
                 int a = 0, r = 0, g = 0, b = 0;
                 StringTokenizer st = new StringTokenizer(elementBuffer, ",");
@@ -1857,8 +1864,13 @@ public class FileVOI extends FileBase {
                     g = Integer.parseInt(st.nextToken());
                     b = Integer.parseInt(st.nextToken());
 
-                    voi.setColor(new Color(r, g, b, a));
-                    voiText.setColor(new Color(r, g, b, a));
+                    if (currentKey.equals("Color")) {
+                    	voi.setColor(new Color(r, g, b, a));
+                    	voiText.setColor(new Color(r, g, b, a));
+                    } else {
+                    	voiText.setBackgroundColor(new Color(r, g, b, a));
+                    }
+                    
                 } catch (NumberFormatException ex) {
                     Preferences.debug("Point is incorrectly formatted: " + ex.toString() + "\n",
                                       Preferences.DEBUG_FILEIO);
