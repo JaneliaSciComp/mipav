@@ -124,6 +124,10 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
 
     /** DOCUMENT ME! */
     private JRadioButton m_kRadioSliceReference; // only for 2.5D
+    
+    
+    /** DOCUMENT ME **/
+    String kStringDimension;
 
     /**
      * Reference to concrete implementation of the RegistrationMeasure abstract class which defines the particular
@@ -157,7 +161,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
      */
     public JDialogRegistrationBSpline(Frame kParentFrame, ModelImage kImageSrc,
                                       String[] akNamesCompatibleTargetImages) {
-        super(kParentFrame, true);
+        super(kParentFrame, false);
         m_kImageSrc = kImageSrc;
         m_kUI = kImageSrc.getUserInterface();
         m_akNamesCompatibleTargetImages = akNamesCompatibleTargetImages;
@@ -258,6 +262,20 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
             aiExtentsReg = null;
         } else if (source == cancelButton) {
             dispose();
+        }else if (source == helpButton) {
+        	if(kStringDimension.equals("3")) {
+        		if(m_kCheckMultiPass.isSelected()) {
+        			MipavUtil.showHelp("19018");
+        		}else {
+        			MipavUtil.showHelp("19016");
+        		}
+        	}else if (kStringDimension.equals("2.5")) {
+        		if(m_kCheckMultiPass.isSelected()) {
+        			MipavUtil.showHelp("19022");
+        		}else {
+        			MipavUtil.showHelp("19020");
+        		}
+        	}
         }
     }
 
@@ -558,7 +576,7 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
     private void initControls() {
 
         // What is the image dimension?
-        String kStringDimension = isRefImageSourceSlice() ? "2.5" : String.valueOf(m_kImageSrc.getNDims());
+        kStringDimension = isRefImageSourceSlice() ? "2.5" : String.valueOf(m_kImageSrc.getNDims());
 
         setForeground(Color.black);
         setTitle("B-Spline Automatic Registration - " + kStringDimension + "D " +
@@ -910,8 +928,10 @@ public class JDialogRegistrationBSpline extends JDialogScriptableBase implements
         JPanel kPanelButton = new JPanel();
         buildOKButton();
         buildCancelButton();
+        buildHelpButton();
         kPanelButton.add(OKButton);
         kPanelButton.add(cancelButton);
+        kPanelButton.add(helpButton);
 
         getContentPane().setLayout(new GridBagLayout());
         kGBC.gridx = 0;

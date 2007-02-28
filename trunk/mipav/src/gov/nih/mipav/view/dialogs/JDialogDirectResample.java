@@ -188,6 +188,9 @@ public class JDialogDirectResample extends JDialogScriptableBase implements Algo
             z = dimPowerOfTwo(z);
             extZOutput.setText(Integer.toString(z));
         }
+        else if (command.equals("Help")) {
+        	MipavUtil.showHelp("19040");
+        }
     }
 
     /**
