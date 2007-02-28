@@ -1057,7 +1057,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         Object[] studyData = new Object[6];
         String data = "";
 
-        // Patients name
+        //Study ID
         data = (String) fileInfo.getValue("0020,0010");
 
         for (int i = 0; i < studyTableModel.getRowCount(); i++) {
@@ -1066,10 +1066,11 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             if (studyNo.equals(data)) {
                 return;
             } else {
-                break;
+                //break;
             }
         }
-
+        
+        //Patients name
         data = (String) fileInfo.getValue("0010,0010");
 
         if (data != null) {
