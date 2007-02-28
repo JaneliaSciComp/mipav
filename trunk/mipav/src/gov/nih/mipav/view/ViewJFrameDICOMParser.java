@@ -219,7 +219,10 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             if (node.isDirectory()) {
                 studyTableModel.setRowCount(0);
                 seriesTableModel.setRowCount(0);
+                fileInfoVector = new Vector();
                 parse(node.getFile(), true, true, null);
+                //set counter hasmap back to null
+                seriesNumberCounters = null;
             }
         } else if (command.equals("New")) {
             ViewDirectoryChooser chooser = new ViewDirectoryChooser(this);
@@ -549,7 +552,6 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         if ((node != null) && (fileInfoVector != null)) // fileInfoVector is the Vector of DICOM headers associated
                                                         // with the selected file
         {
-
             try {
                 Vector tableHeaderVector = imageTableModel.getColumnNames(); // Vector holding the names of the columns
 
@@ -688,7 +690,6 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
 
                         }
-
                         imageTableModel.addRow(newRow); // the new row, after all column values have been added, is
                                                         // added to the table
                     }
@@ -1403,9 +1404,9 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
      * @param  fileInfoRef  DOCUMENT ME!
      */
     private void parse(File file, boolean addStudy, boolean addSeries, FileInfoDicom fileInfoRef) {
-        imageTableModel.removeAllRows();
+    	imageTableModel.removeAllRows();
 
-        fileInfoVector = new Vector();
+        //fileInfoVector = new Vector();
 
 
         long time = System.currentTimeMillis();
@@ -1470,86 +1471,17 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
 
             if (!imageLevel) {
 
-      
+            	
                 for (int j = 0; j < grandparent.length; j++) {
                     parent = grandparent[j].listFiles();
                     first = true;
 
                     for (int i = 0; (parent != null) && (i < parent.length); i++) {
-                        test = parent[i].listFiles();
-
-                        if ((test != null) && (test.length == 0)) {
-                            test = null;
-                        }
-
-                        if (test != null) {
-
-                            for (n = 0; n < test.length; n++) {
-
-                                if (!test[n].isDirectory()) {
-                                    break;
-                                }
-                            }
-                        }
-
-                        if ((test != null) && !test[n].isDirectory()) {
-
-                            try {
-
-                                if (first) {
-                                    imageFile = new FileDicom(test[n].getName(),
-                                                              test[n].getParent() + File.separatorChar);
-                                } else {
-                                    imageFile.setFileName(test[n]);
-                                }
-
-                                if (imageFilter.accept(test[n])) {
-                                    success = imageFile.readParserHeader();
-                                } else if (imageFile.isDICOM()) {
-                                    success = imageFile.readParserHeader();
-                                } else {
-                                    continue;
-                                }
-
-                            } catch (IOException error) {
-                                MipavUtil.displayError("Unable to read file to parse.");
-
-                                return;
-                            }
-
-                            FileInfoDicom fileInfo = (FileInfoDicom) imageFile.getFileInfo();
-
-                            if (first && addStudy && success) {
-                                addStudyData(fileInfo);
-                                first = false;
-                            }
-
-                            if (first && success) {
-                                first = false;
-                            }
-
-                            if (addSeries && success) {
-                                int count = 0;
-
-                                for (int ii = 0; ii < test.length; ii++) {
-
-                                    if (imageFilter.accept(test[ii]) && !test[ii].isDirectory()) {
-                                        count++;
-                                    }
-                                }
-
-                                addSeriesData(fileInfo, null, count);
-                            }
-                        }
+                    	parse(parent[i], true, true, null);
                     }
 
-                    addSeries = false;
-
                 }
 
-                if (addStudy) {
-                    studyTable.setRowSelectionInterval(0, 0);
-                }
             } else {
                 // image level         
                 for (int i = 0; i < children.length; i++) {
@@ -1605,30 +1537,30 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 	seriesNumberCounters = new HashMap();
                 }
                 for (int i = 0; i < seriesTableModel.getRowCount(); i++) {
-                    String seriesNo = (String) (seriesTableModel.getValueAt(i, 0));
-                    seriesNumberCounters.put(seriesNo, new Integer(0));
-                    
+                	String seriesNo = (String) (seriesTableModel.getValueAt(i, 0));
+                	seriesNumberCounters.put(seriesNo, new Integer(0));
+
                 }
                 //go through the vector and increment the appropriate counter
                 for (int i = 0; i < fileInfoVector.size(); i++) {
-                    FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
-                    String ser = (String)fileInfoDICOM.getValue("0020,0011");
-                    if(ser != null) {
-	                    if(seriesNumberCounters.get(ser) != null) {
-	                    	Integer I = (Integer)seriesNumberCounters.get(ser);
-	                    	int k = I.intValue();
-	                    	int j = ++k;
-	                    	seriesNumberCounters.put(ser, new Integer(j));
-	                    }
-                    }
+                	FileInfoDicom fileInfoDICOM = (FileInfoDicom) fileInfoVector.elementAt(i);
+                	String ser = (String)fileInfoDICOM.getValue("0020,0011");
+                	if(ser != null) {
+                		if(seriesNumberCounters.get(ser) != null) {
+                			Integer I = (Integer)seriesNumberCounters.get(ser);
+                			int k = I.intValue();
+                			int j = ++k;
+                			seriesNumberCounters.put(ser, new Integer(j));
+                		}
+                	}
                 }
                 //now update the series table
                 for (int i = 0; i < seriesTableModel.getRowCount(); i++) {
                 	String seriesNo = (String) (seriesTableModel.getValueAt(i, 0));
                 	seriesTableModel.setValueAt((Integer)seriesNumberCounters.get(seriesNo), i, 2);
                 }
-                //set counter hasmap back to null
-                seriesNumberCounters = null;
+	                
+  
                 
                 if (fileInfoRef != null) {
 
@@ -1756,10 +1688,15 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                  * true, fileInfo);
                  */
             } else if (source.equals(seriesTable)) {
-                FileInfoDicom fileInfo = (FileInfoDicom) seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()),
-                                                                                     6);
-
-                parse(new File(fileInfo.getFileDirectory()), true, false, fileInfo);
+                String seriesNumber = (String)seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()),
+                        0);
+                if(seriesNumber != null) {
+                	if(!(seriesNumber.trim().equals(""))) {
+                		imageTableModel.removeAllRows();
+                		reloadRows((String) seriesNumber);
+                	}
+                }
+                
             } else if (source.equals(imageTable)) {
             	setCursor(new Cursor(Cursor.WAIT_CURSOR));
             	
