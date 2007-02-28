@@ -195,6 +195,8 @@ public class JDialogRunScriptController implements ActionListener {
             scriptContentsDialog.setVisible(true);
         } else if (command.equalsIgnoreCase("Close")) {
             view.getFrame().dispose();
+        } else if (command.equalsIgnoreCase("Scripting help")) {
+            MipavUtil.showHelp("10715");
         }
     }
 
