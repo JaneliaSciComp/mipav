@@ -627,26 +627,6 @@ public class JDialogRunScriptView implements ActionListener {
     /**
      * DOCUMENT ME!
      *
-     * @param  menuItems  DOCUMENT ME!
-     */
-    private void addMenu(String[] menuItems) {
-        JMenuBar menuBar = new JMenuBar();
-        JMenu menu = new JMenu(menuItems[0]);
-        menuBar.add(menu);
-
-        for (int i = 1; i < menuItems.length; i++) {
-            JMenuItem item = new JMenuItem(menuItems[i]);
-            item.setActionCommand(menuItems[i]);
-            item.addActionListener(this);
-            menu.add(item);
-        }
-
-        frame.setJMenuBar(menuBar);
-    }
-
-    /**
-     * DOCUMENT ME!
-     *
      * @param  name  DOCUMENT ME!
      */
     private void addScrollList(String name) {
@@ -748,16 +728,35 @@ public class JDialogRunScriptView implements ActionListener {
             addButton(buttonNames[c]);
         }
 
-        // String[] menuItems = {
-        // "File", "View current script contents", "Close"
-        // };
-
-        String[] menuItems = {
+        String[] fileMenuItems = {
             "File", "Open saved image and VOI selections", "Save current image and VOI selections",
             "View current script contents", "Close"
         };
 
-        addMenu(menuItems);
+        JMenuBar menuBar = new JMenuBar();
+        JMenu menu = new JMenu(fileMenuItems[0]);
+        menuBar.add(menu);
+
+        for (int i = 1; i < fileMenuItems.length; i++) {
+            JMenuItem item = new JMenuItem(fileMenuItems[i]);
+            item.setActionCommand(fileMenuItems[i]);
+            item.addActionListener(this);
+            menu.add(item);
+        }
+
+        String[] helpMenuItems = { "Help", "Scripting help" };
+
+        menu = new JMenu(helpMenuItems[0]);
+        menuBar.add(menu);
+
+        for (int i = 1; i < helpMenuItems.length; i++) {
+            JMenuItem item = new JMenuItem(helpMenuItems[i]);
+            item.setActionCommand(helpMenuItems[i]);
+            item.addActionListener(this);
+            menu.add(item);
+        }
+
+        frame.setJMenuBar(menuBar);
 
         for (int i = 0; i < frame.getContentPane().getComponents().length; i++) {
             setLayoutConstraints(frame.getContentPane().getComponents()[i]);
