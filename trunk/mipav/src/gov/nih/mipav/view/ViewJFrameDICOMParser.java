@@ -229,7 +229,16 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 	if (studyNo == null) {
                 		studyNo = "";
                 	}
+                	//if there is just 1 row in the study table, lets select it
+                	studyTable.setRowSelectionInterval(0, 0);
+                	
+                	//add series data
                 	addSeriesData(studyNo);
+                }
+                
+                //if there is just 1 row in the series table, lets select it
+                if(seriesTableModel.getRowCount() == 1) {
+                	seriesTable.setRowSelectionInterval(0, 0);
                 }
                 
                 //if there is 1 or less rows in series table and study table, populate the image table
@@ -242,10 +251,16 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 seriesNumberCounters = null;
             }
         } else if (command.equals("New")) {
+
             ViewDirectoryChooser chooser = new ViewDirectoryChooser(this);
             String dir = chooser.getImageDirectory();
 
             if (dir != null) {
+            	studyTableModel.removeAllRows();
+            	seriesTableModel.removeAllRows();
+            	imageTableModel.removeAllRows();
+            	imagePanel.removeAll();
+            	imagePanel.repaint();
                 Preferences.setProperty("ImageDirectory", dir);
                 directory = dir;
                 treePanel.removeAll();
@@ -1398,6 +1413,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         }
 
         setSeriesTableMinMax();
+        
+        seriesTable.setRowSelectionAllowed(true);
 
         seriesTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         seriesTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -1426,6 +1443,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
         setStudyTableMinMax();
 
         studyTable.setColumnSelectionAllowed(false);
+        studyTable.setRowSelectionAllowed(true);
 
         studyTable.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         studyTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -1595,32 +1613,41 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             Object source = e.getSource();
 
             if (source.equals(studyTable)) {
-            	if(studyTableModel.getRowCount() > 1) {
-	            	String studyNo = (String)studyTableModel.getValueAt(studyTable.getSelectedRow(), 2);
-	            	imagePanel.removeAll();
-	            	imagePanel.repaint();
-	            	addSeriesData(studyNo);
+            	//we dont want to clear out the image panelthumbnail and reload series table 
+            	//if user clicks on the same one...so...
+            	String seriesTableStudyNo = (String)seriesTableModel.getValueAt(0, 7);
+            	String studyNo = (String)studyTableModel.getValueAt(studyTable.getSelectedRow(), 2);
+            	if(seriesTableStudyNo != null) {
+            		if(seriesTableStudyNo.equals(studyNo)) {
+            			return;
+            		}
             	}
-            	
+            	imageTableModel.removeAllRows();
+            	imagePanel.removeAll();
+            	imagePanel.repaint();
+            	addSeriesData(studyNo);
             } else if (source.equals(seriesTable)) {
-            	if(seriesTableModel.getRowCount() > 1) {
-	                String seriesNumber = (String)seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()),
-	                        0);
-	                String studyNo = (String)seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()), 7);
-	                if(studyNo == null) {
-	                	studyNo = "";
-	                }
-	                if(seriesNumber != null) {
-	                	if(!(seriesNumber.trim().equals(""))) {
-	                		imageTableModel.removeAllRows();
-	                		imagePanel.removeAll();
-	                    	imagePanel.repaint();
-	                		reloadRows((String) seriesNumber, studyNo);
-	                	}
-	                }
-	            
+            	//we dont want to clear out the image panelthumbnail and reload image table 
+            	//if user clicks on the same one...so...
+            	String seriesNumber = (String)seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()),
+            			0);
+            	if(imageTableVector != null) {
+	            	FileInfoDicom fileInfoDICOM = (FileInfoDicom) imageTableVector.elementAt(0);
+	            	if(fileInfoDICOM != null) {
+	            		String imageTableSeriesNumber = (String)fileInfoDICOM.getValue("0020,0011");
+	            		if(imageTableSeriesNumber.equals(seriesNumber)) {
+	            			return;
+	            		}
+	            	}
             	}
-                
+            	String studyNo = (String)seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()), 7);
+            	if(studyNo == null) {
+            		studyNo = "";
+            	}
+            	imageTableModel.removeAllRows();
+            	imagePanel.removeAll();
+            	imagePanel.repaint();
+            	reloadRows((String) seriesNumber, studyNo); 
             } else if (source.equals(imageTable)) {
             	setCursor(new Cursor(Cursor.WAIT_CURSOR));
             	
