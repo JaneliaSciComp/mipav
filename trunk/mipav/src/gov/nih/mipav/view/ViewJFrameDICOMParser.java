@@ -1649,7 +1649,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             	imageTableModel.removeAllRows();
             	imagePanel.removeAll();
             	imagePanel.repaint();
-            	reloadRows((String) seriesNumber, studyNo); 
+            	reloadRows(seriesNumber, studyNo); 
             } else if (source.equals(imageTable)) {
             	setCursor(new Cursor(Cursor.WAIT_CURSOR));
             	
