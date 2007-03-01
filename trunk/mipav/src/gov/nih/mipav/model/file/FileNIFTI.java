@@ -1778,7 +1778,7 @@ public class FileNIFTI extends FileBase {
                     offset = offset + getOffset(fileInfo);
                 }
             }
-
+            linkProgress(rawFile);
             rawFile.readImage(image, offset);
 
             if (vox_offset < 0.0f) {
@@ -1864,6 +1864,7 @@ public class FileNIFTI extends FileBase {
             if (one) {
                 fileInfo.setExtents(extents);
             }
+            fireProgressStateChanged(100);
         } catch (IOException error) {
             throw new IOException("FileNIFTI: " + error);
         } catch (OutOfMemoryError e) {
@@ -1901,7 +1902,8 @@ public class FileNIFTI extends FileBase {
             FileRaw rawFile;
             rawFile = new FileRaw(fileInfo.getFileName(), fileInfo.getFileDirectory(), fileInfo,
                                   FileBase.READ);
-
+            linkProgress(rawFile);
+            
             if (oneFileStorage) {
                 offset = (int) Math.abs(vox_offset);
 
@@ -1930,6 +1932,7 @@ public class FileNIFTI extends FileBase {
 
             flipTopBottom(buffer, fileInfo);
             rawFile.raFile.close();
+            fireProgressStateChanged(100);
         } catch (IOException error) {
             throw new IOException("FileNIFTI: " + error);
         } catch (OutOfMemoryError e) {
@@ -2069,6 +2072,7 @@ public class FileNIFTI extends FileBase {
         if (options.isMultiFile()) {
             FileRaw rawFile;
             rawFile = new FileRaw(image.getFileInfo(0));
+            linkProgress(rawFile);
             flipTopBottom(image);
 
             if (oneFile) {
@@ -2100,6 +2104,7 @@ public class FileNIFTI extends FileBase {
             try {
                 FileRaw rawFile;
                 rawFile = new FileRaw(fileName, fileDir, image.getFileInfo(0), FileBase.READ_WRITE);
+                linkProgress(rawFile);
                 flipTopBottom(image);
 
                 if (oneFile) {
@@ -2123,6 +2128,7 @@ public class FileNIFTI extends FileBase {
                 throw (error);
             }
         }
+        fireProgressStateChanged(100);
 
         // With extents from rawFile
     }
