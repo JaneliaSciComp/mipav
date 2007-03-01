@@ -1,30 +1,15 @@
 package gov.nih.mipav.view;
 
 
-import gov.nih.mipav.*;
-
-import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
-
-import gov.nih.mipav.view.dialogs.*;
-
-import java.awt.*;
 import java.awt.event.*;
 
-import java.io.*;
-
-import java.util.*;
-
-import javax.swing.*;
-import javax.swing.event.*;
-
-
 /**
- * VOIHandler class is used to handle all aspects of VOI movement from the ViewJComponentEditImage. It functions as a
- * mouse listener and also handles Popup-menus and VOI graph displays.
+ * VOIRegistrationHandler:  class to handle the VOI actions for the ViewJFrameRegistrationTool (and in turn
+ * ViewJComponentSingleRegistration), which requires that there are two different types of 
+ * VOIPoints for registration:  reference and adjusted
+ * @author linkb
  *
- * @author   not attributable
- * @version  1.0
  */
 public class VOIRegistrationHandler extends VOIHandler implements MouseListener, MouseMotionListener {
   
@@ -38,9 +23,6 @@ public class VOIRegistrationHandler extends VOIHandler implements MouseListener,
      */
     public VOIRegistrationHandler(ViewJComponentEditImage comp) {
     	super(comp);
-    	
-    	
-    	
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -58,17 +40,13 @@ public class VOIRegistrationHandler extends VOIHandler implements MouseListener,
      * @param  mouseEvent  event that triggered function
      */
     public void mouseDragged(MouseEvent mouseEvent) {
-        Graphics g = getGraphics();
-        int i, j, m;
+        int i, j;
         int nVOI;
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
         int xS, yS;
         int distX, distY;
         int xDim, yDim;
         int zDim = 1;
-
-        float[] position;
-        float[] intensity;
 
         int sliceNum;
         
@@ -89,16 +67,12 @@ public class VOIRegistrationHandler extends VOIHandler implements MouseListener,
         distX = xS - getAnchorPt().x; // distance from original to cursor
         distY = yS - getAnchorPt().y;
 
-        int end = 1;
 
         nVOI = VOIs.size();
 
         if (mode == ViewJComponentEditImage.MOVE) {
 
-            // System.out.println(" ViewJComponentEditImage.mouseDragged: nVOIs = " + nVOI);
             for (i = 0; i < nVOI; i++) {
-                int curveType = VOIs.VOIAt(i).getCurveType();
-
                 if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
 
                     if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
@@ -106,7 +80,6 @@ public class VOIRegistrationHandler extends VOIHandler implements MouseListener,
 
                         if (allActive) {
                             VOIs.VOIAt(i).moveVOI(-1, xDim, yDim, zDim, distX, distY, 0);
-                            // System.err.println("Doing point shift down");
                         } else {
 
                             // System.err.println("Not doing point shift down");
@@ -114,89 +87,6 @@ public class VOIRegistrationHandler extends VOIHandler implements MouseListener,
                         }
 
                         compImage.getActiveImage().notifyImageDisplayListeners();
-
-                        if (VOIs.VOIAt(i).getCurveType() == VOI.POINT) {
-                            Point3Df pt;
-
-                            for (j = 0; j < VOIs.VOIAt(i).getCurves()[compImage.getSlice()].size(); j++) {
-
-                                if (((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j))).isActive()) {
-
-                                    if (compImage.getActiveImage().getNDims() == 3) {
-
-                                        if (compImage.getActiveImage().isColorImage() == true) {
-
-                                            for (int s = 0; s < compImage.getActiveImage().getExtents()[2]; s++) {
-                                                pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
-                                                         .exportPoint();
-
-                                                for (int c = 0; c < 3; c++) {
-
-                                                    if ((getPointRGBPositions() != null) && (getPointRGBIntensities() != null)) {
-                                                        getPointRGBPositions()[c][s] = s;
-                                                        getPointRGBIntensities()[c][s] = compImage.getActiveImage().getFloat((int) ((4 *
-                                                                                                                  ((s *
-                                                                                                                        compImage.getActiveImage().getExtents()[0] *
-                                                                                                                        compImage.getActiveImage().getExtents()[1]) +
-                                                                                                                       (pt.y *
-                                                                                                                            compImage.getActiveImage().getExtents()[0]) +
-                                                                                                                       pt.x)) +
-                                                                                                             c + 1));
-                                                    }
-                                                }
-                                            }
-
-                                            if (VOIs.VOIAt(i).getContourGraph() != null) {
-                                                VOIs.VOIAt(i).getContourGraph().update(getPointRGBPositions(), getPointRGBIntensities(),
-                                                                                       j);
-                                                VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                            }
-                                        } else {
-
-                                            for (int s = 0; s < compImage.getActiveImage().getExtents()[2]; s++) {
-
-                                                pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
-                                                         .exportPoint();
-
-                                                if ((getPointPositions() != null) && (getPointIntensities() != null)) {
-                                                    getPointPositions()[s] = s;
-                                                    getPointIntensities()[s] = compImage.getActiveImage().getFloat((int) ((s *
-                                                                                                      compImage.getActiveImage().getExtents()[0] *
-                                                                                                      compImage.getActiveImage().getExtents()[1]) +
-                                                                                                 (pt.y *
-                                                                                                      compImage.getActiveImage().getExtents()[0]) +
-                                                                                                 pt.x));
-                                                }
-                                            }
-
-                                            if (VOIs.VOIAt(i).getContourGraph() != null) {
-                                                VOIs.VOIAt(i).getContourGraph().update(getPointPositions(), getPointIntensities(), j);
-                                                VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                            }
-                                        }
-                                    } else if (compImage.getActiveImage().getNDims() == 4) {
-
-                                        for (int t = 0; t < compImage.getActiveImage().getExtents()[3]; t++) {
-                                            pt = ((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(j)))
-                                                     .exportPoint();
-
-                                            if ((getPointPositions() != null) && (getPointIntensities() != null)) {
-                                                getPointPositions()[t] = t;
-                                                getPointIntensities()[t] = compImage.getActiveImage().getFloat((int) ((t * xDim * yDim * zDim) +
-                                                                                             (pt.z * xDim * yDim) +
-                                                                                             (pt.y * xDim) + pt.x));
-                                            }
-                                        }
-
-                                        if (VOIs.VOIAt(i).getContourGraph() != null) {
-                                            VOIs.VOIAt(i).getContourGraph().update(getPointPositions(), getPointIntensities(), j);
-                                            VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
                         break;
                     }
                 }
@@ -247,201 +137,6 @@ public class VOIRegistrationHandler extends VOIHandler implements MouseListener,
             } // end of else for shift key is depressed
 
             compImage.getActiveImage().notifyImageDisplayListeners();
-
-            for (i = 0; i < nVOI; i++) {
-
-                if (VOIs.VOIAt(i).isActive() && VOIs.VOIAt(i).isVisible()) {
-
-                    if (((VOIs.VOIAt(i).getCurveType() == VOI.CONTOUR) ||
-                             (VOIs.VOIAt(i).getCurveType() == VOI.POLYLINE)) && (mouseEvent.isControlDown() == false) &&
-                            (mouseEvent.getModifiers() != MouseEvent.BUTTON3_MASK)) {
-
-                        if ((VOIs.VOIAt(i).getContourGraph() != null) && VOIs.VOIAt(i).getContourGraph().isVisible()) {
-                            VOI v;
-                            float intensitySum;
-                            int length = compImage.getActiveImage().getSliceSize();
-                            int s;
-                            int numPixels;
-                            boolean foundCurve;
-
-                            position = VOIs.VOIAt(i).getPosition();
-                            intensity = VOIs.VOIAt(i).getIntensity();
-
-                            float[][] rgbPositions = VOIs.VOIAt(i).getRGBPositions();
-                            float[][] rgbIntensities = VOIs.VOIAt(i).getRGBIntensities();
-
-                            if (compImage.getActiveImage().getNDims() == 3) {
-
-                                if (compImage.getActiveImage().isColorImage() == true) {
-
-                                    try {
-                                        v = VOIs.VOIAt(i);
-
-                                        for (s = 0, foundCurve = false; s < compImage.getActiveImage().getExtents()[2]; s++) {
-
-                                            try {
-
-                                                for (int c = 0; c < 3; c++) {
-                                                    numPixels = 0;
-
-                                                    for (j = 0, intensitySum = 0;
-                                                             j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
-
-                                                        if (((VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j))
-                                                                .isActive() || foundCurve) {
-
-                                                            if (!foundCurve) {
-                                                                compImage.getActiveImage().exportData(s * length * 4, length * 4,
-                                                                                       getImageGraphBuffer());
-                                                            } // locks and releases lock
-
-                                                            intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                                .calcRGBIntensity(getImageGraphBuffer(),
-                                                                                                      compImage.getActiveImage().getExtents()[0],
-                                                                                                      c);
-                                                            numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                             .getLastNumPixels();
-                                                            foundCurve = true;
-                                                        }
-                                                    }
-
-                                                    if (foundCurve) {
-                                                        rgbPositions[c][s] = s;
-
-                                                        if (v.getTotalIntensity() || (numPixels == 0)) {
-                                                            rgbIntensities[c][s] = intensitySum;
-                                                        } else {
-                                                            rgbIntensities[c][s] = intensitySum / numPixels;
-                                                        }
-                                                    }
-                                                }
-                                            } catch (IOException error) {
-                                                MipavUtil.displayError("Image(s) locked");
-
-                                                return;
-                                            }
-
-                                            foundCurve = false;
-                                        }
-
-                                        VOIs.VOIAt(i).getContourGraph().update(rgbPositions, rgbIntensities, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-
-                                    } catch (OutOfMemoryError error) {
-                                        System.gc();
-                                        MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
-                                        return;
-                                    }
-                                } else {
-
-                                    try {
-                                        v = VOIs.VOIAt(i);
-
-                                        for (s = 0, foundCurve = false; s < compImage.getActiveImage().getExtents()[2]; s++) {
-
-                                            try {
-                                                numPixels = 0;
-
-                                                for (j = 0, intensitySum = 0; j < VOIs.VOIAt(i).getCurves()[s].size();
-                                                         j++) {
-
-                                                    if (((VOIContour) VOIs.VOIAt(i).getCurves()[s].elementAt(j))
-                                                            .isActive() || foundCurve) {
-
-                                                        if (!foundCurve) {
-                                                            compImage.getActiveImage().exportData(s * length, length, getImageGraphBuffer());
-                                                        } // locks and releases lock
-
-                                                        intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                            .calcIntensity(getImageGraphBuffer(),
-                                                                                               compImage.getActiveImage().getExtents()[0]);
-                                                        numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                         .getLastNumPixels();
-                                                        foundCurve = true;
-                                                    }
-                                                }
-
-                                                if (foundCurve) {
-                                                    position[s] = s;
-
-                                                    if (v.getTotalIntensity() || (numPixels == 0)) {
-                                                        intensity[s] = intensitySum;
-                                                    } else {
-                                                        intensity[s] = intensitySum / numPixels;
-                                                    }
-
-                                                    foundCurve = false;
-                                                }
-                                            } catch (IOException error) {
-                                                MipavUtil.displayError("Image(s) locked");
-
-                                                return;
-                                            }
-                                        }
-
-                                        VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                        VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-
-                                    } catch (OutOfMemoryError error) {
-                                        System.gc();
-                                        MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
-                                        return;
-                                    }
-                                }
-                            } else if (compImage.getActiveImage().getNDims() == 4) {
-
-                                try {
-                                    v = VOIs.VOIAt(i);
-
-                                    for (int t = 0; t < compImage.getActiveImage().getExtents()[3]; t++) {
-
-                                        try {
-                                            numPixels = 0;
-
-                                            for (s = 0, intensitySum = 0; s < compImage.getActiveImage().getExtents()[2]; s++) {
-                                                compImage.getActiveImage().exportData((t * xDim * yDim * zDim) + (s * xDim * yDim),
-                                                                       length, getImageGraphBuffer()); // locks and releases lock
-
-                                                for (j = 0; j < VOIs.VOIAt(i).getCurves()[s].size(); j++) {
-                                                    intensitySum += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                        .calcIntensity(getImageGraphBuffer(),
-                                                                                           compImage.getActiveImage().getExtents()[0]);
-                                                    numPixels += ((VOIContour) (VOIs.VOIAt(i).getCurves()[s].elementAt(j)))
-                                                                     .getLastNumPixels();
-
-                                                }
-                                            }
-
-                                            position[t] = t;
-
-                                            if (v.getTotalIntensity() || (numPixels == 0)) {
-                                                intensity[t] = intensitySum;
-                                            } else {
-                                                intensity[t] = intensitySum / numPixels;
-                                            }
-                                        } catch (IOException error) {
-                                            MipavUtil.displayError("Image(s) locked");
-
-                                            return;
-                                        }
-                                    }
-
-                                    VOIs.VOIAt(i).getContourGraph().update(position, intensity, 0);
-                                    VOIs.VOIAt(i).getContourGraph().setUnitsInLabel(FileInfoBase.getUnitsOfMeasureAbbrevStr(compImage.getActiveImage().getFileInfo(0).getUnitsOfMeasure(0)));
-                                } catch (OutOfMemoryError error) {
-                                    System.gc();
-                                    MipavUtil.displayError("Out of memory: ComponentEditImage.graphVOI");
-
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
             return;
         }
 
@@ -459,7 +154,6 @@ public class VOIRegistrationHandler extends VOIHandler implements MouseListener,
         int nVOI;
         int xS, yS;
         ViewVOIVector VOIs = compImage.getActiveImage().getVOIs();
-        Graphics g = getGraphics();
 
         xS = (int) (mouseEvent.getX() / (compImage.getZoomX() * compImage.getResolutionX())); // zoomed x.  Used as cursor
         yS = (int) (mouseEvent.getY() / (compImage.getZoomY() * compImage.getResolutionY())); // zoomed y.  Used as cursor
@@ -527,8 +221,6 @@ public class VOIRegistrationHandler extends VOIHandler implements MouseListener,
 
                     compImage.getActiveImage().notifyImageDisplayListeners();
 
-                    graphPointVOI(newPtVOI, ((VOIPoint) (VOIs.VOIAt(getVOI_ID()).getCurves()[compImage.getSlice()].elementAt(0))), 0);
-
                 } // end of if (voiID == -1)
                 else { // voiID != -1 add point to existing VOI
 
@@ -583,12 +275,6 @@ public class VOIRegistrationHandler extends VOIHandler implements MouseListener,
                     ((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(index - 1))).setActive(true);
 
                     compImage.getActiveImage().notifyImageDisplayListeners();
-
-                    if (!((VOIs.VOIAt(i).getContourGraph() != null) && (compImage.getActiveImage().isColorImage() == true))) {
-                        graphPointVOI(VOIs.VOIAt(i),
-                                      ((VOIPoint) (VOIs.VOIAt(i).getCurves()[compImage.getSlice()].elementAt(index - 1))), index - 1);
-                    }
-
                     return;
                 } // end of else for if voiID != -1 add point to existing VOI
             } // end of if ((mouseEvent.getModifiers() & mouseEvent.BUTTON1_MASK) != 0)
