@@ -221,7 +221,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                 seriesTableModel.setRowCount(0);
                 fileInfoVector = new Vector();
                 //first we pares the directories and populate the fileInfoVecot list
-                parse(node.getFile(), true, true, null);
+                parse(node.getFile());
 
                 //if there is 1 or less rows in study table, populate the series table
                 if(studyTableModel.getRowCount() <= 1) {
@@ -1437,19 +1437,15 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
     }
 
     /**
-     * Parses the files in the directory. Looks for DICOM files within several subdirectories of the file. Most DICOM
-     * directory-sets are stored in a three-directory tree structure, where the base-directory (the Study level
-     * directory), contains sets of subdirectories (the series level) which are themselves containers of directories for
-     * images.
+     * Parses the files in the directory. Looks for DICOM files within several subdirectories of the file. 
+     * Populates the FileInfoVector
      *
      * @param  file         File to start parse at.
-     * @param  addStudy     Whether or not to update study info in table.
-     * @param  addSeries    Whether or not to update series info in table.
-     * @param  fileInfoRef  DOCUMENT ME!
      */
-    private void parse(File file, boolean addStudy, boolean addSeries, FileInfoDicom fileInfoRef) {
+    private void parse(File file) {
     	imageTableModel.removeAllRows();
-
+    	imagePanel.removeAll();
+    	imagePanel.repaint();
         long time = System.currentTimeMillis();
 
         setCursor(new Cursor(Cursor.WAIT_CURSOR));
@@ -1462,8 +1458,8 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
    
         	boolean success = false;
                 for (int i = 0; i < children.length; i++) {
-                	if(children[1].isDirectory()) {
-                		parse(children[i], true, true, null);
+                	if(children[i].isDirectory()) {
+                		parse(children[i]);
                 	}
                 	else if (!children[i].isDirectory()) {
 
@@ -1495,9 +1491,7 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
                         fileInfoVector.addElement(fileInfo);
 
                         if (success) {
-                            if (addStudy) {
-                                addStudyData(fileInfo);
-                            }
+                        	addStudyData(fileInfo);
                         }
                     }
                 }
@@ -1601,22 +1595,31 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             Object source = e.getSource();
 
             if (source.equals(studyTable)) {
-            	String studyNo = (String)studyTableModel.getValueAt(studyTable.getSelectedRow(), 2);
-            	addSeriesData(studyNo);
+            	if(studyTableModel.getRowCount() > 1) {
+	            	String studyNo = (String)studyTableModel.getValueAt(studyTable.getSelectedRow(), 2);
+	            	imagePanel.removeAll();
+	            	imagePanel.repaint();
+	            	addSeriesData(studyNo);
+            	}
             	
             } else if (source.equals(seriesTable)) {
-                String seriesNumber = (String)seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()),
-                        0);
-                String studyNo = (String)seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()), 7);
-                if(studyNo == null) {
-                	studyNo = "";
-                }
-                if(seriesNumber != null) {
-                	if(!(seriesNumber.trim().equals(""))) {
-                		imageTableModel.removeAllRows();	
-                		reloadRows((String) seriesNumber, studyNo);
-                	}
-                }
+            	if(seriesTableModel.getRowCount() > 1) {
+	                String seriesNumber = (String)seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()),
+	                        0);
+	                String studyNo = (String)seriesTableModel.getValueAt(seriesTableSorter.modelIndex(seriesTable.getSelectedRow()), 7);
+	                if(studyNo == null) {
+	                	studyNo = "";
+	                }
+	                if(seriesNumber != null) {
+	                	if(!(seriesNumber.trim().equals(""))) {
+	                		imageTableModel.removeAllRows();
+	                		imagePanel.removeAll();
+	                    	imagePanel.repaint();
+	                		reloadRows((String) seriesNumber, studyNo);
+	                	}
+	                }
+	            
+            	}
                 
             } else if (source.equals(imageTable)) {
             	setCursor(new Cursor(Cursor.WAIT_CURSOR));
