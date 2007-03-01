@@ -174,7 +174,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            // MipavUtil.showHelp( "10045" );
+            MipavUtil.showHelp( "19014" );
         }
     }
 
