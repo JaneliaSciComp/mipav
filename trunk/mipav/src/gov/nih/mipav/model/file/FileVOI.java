@@ -56,8 +56,10 @@ public class FileVOI extends FileBase {
     private static final String XML_HEADER = "<?xml version=\"1.0\" encoding=\"" + XML_ENCODING + "\"?>";
 
     /** The MIPAV XML header comment. */
-    private static final String MIPAV_HEADER = "<!-- MIPAV VOI file -->";
+    private static final String VOI_HEADER = "<!-- MIPAV VOI file -->";
 
+    private static final String TEXT_HEADER = "<!-- MIPAV Annotation file -->";
+    
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
     /** File reference. */
@@ -200,7 +202,7 @@ public class FileVOI extends FileBase {
     /**
      * This method read a VOI file that has been saved in the MIPAV VOI format.
      *
-     * @param      doLabel  DOCUMENT ME!
+     * @param      doLabel  boolean telling to read the files as VOITexts (labels)
      *
      * @return     the VOI read off the disk
      *
@@ -288,11 +290,11 @@ public class FileVOI extends FileBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Writes VOIText(s) to a .lbl file (XML based)
      *
-     * @param   writeAll  DOCUMENT ME!
+     * @param   writeAll  whether or not to write all VOITexts into the same file, or only the selected VOIText
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  exception thrown if there is an error writing the file
      */
     public void writeAnnotationXML(boolean writeAll) throws IOException {
         FileWriter fw;
@@ -332,7 +334,7 @@ public class FileVOI extends FileBase {
 
             bw.write(XML_HEADER);
             bw.newLine();
-            bw.write(MIPAV_HEADER);
+            bw.write(TEXT_HEADER);
             bw.newLine();
 
             openTag(bw, "Annotation xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
@@ -722,7 +724,7 @@ public class FileVOI extends FileBase {
      * @param   voi              VOI to be saved
      * @param   saveAllContours  if true save all contours, not just the active ones
      *
-     * @throws  IOException  DOCUMENT ME!
+     * @throws  IOException  exception thrown if there is an error writing the file
      */
     public void writeXML(VOI voi, boolean saveAllContours) throws IOException {
         int i, j, k, m;
@@ -775,7 +777,7 @@ public class FileVOI extends FileBase {
 
             bw.write(XML_HEADER);
             bw.newLine();
-            bw.write(MIPAV_HEADER);
+            bw.write(VOI_HEADER);
             bw.newLine();
 
             openTag(bw, "VOI xmlns:xsi=\"" + W3C_XML_SCHEMA + "-instance\"", true);
@@ -983,9 +985,9 @@ public class FileVOI extends FileBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Reads in an annotation xml (.lbl) file and puts all VOITexts into a VOIVector (to be added to the image)
      *
-     * @param   voiVector  VOI
+     * @param   voiVector  a VOIVector for holding the VOIs before they are transferred to the image
      *
      * @return  boolean
      */
@@ -1128,11 +1130,11 @@ public class FileVOI extends FileBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Reads in a VOI from a file using the new VOI schema based on Scanner coordinates rather than pixel space
      *
-     * @param   voi  VOI
+     * @param   voi  VOI to be read in
      *
-     * @return  boolean
+     * @return  boolean whether or not the VOI read in successfully
      */
     private boolean readCoordXML(VOI voi) {
         SAXParserFactory spf = SAXParserFactory.newInstance();
@@ -1400,7 +1402,7 @@ public class FileVOI extends FileBase {
     }
 
     /**
-     * DOCUMENT ME!
+     * Reads in the older VOI XML schema (using pixel coordinates)
      *
      * @param   voi  VOI
      *
@@ -1678,7 +1680,7 @@ public class FileVOI extends FileBase {
     }
 
     /**
-     * Handle events generated while parsing the XML file.
+     * Handle events generated while parsing the Annotation XML file.
      */
     private class XMLAnnotationHandler extends DefaultHandler {
 
@@ -1688,31 +1690,31 @@ public class FileVOI extends FileBase {
         /** The data for the current element being parsed. */
         private String elementBuffer = new String();
 
-        /** DOCUMENT ME! */
+        /** name of the font */
         private String fontName = null;
 
-        /** DOCUMENT ME! */
+        /** size of the font */
         private int fontSize = 0;
 
-        /** DOCUMENT ME! */
+        /** style of the font (bold/italic etc) */
         private int fontStyle = 0;
 
-        /** DOCUMENT ME! */
+        /** id for the VOI */
         private short id = -1;
 
-        /** DOCUMENT ME! */
+        /** the slice where the VOI will be located */
         private int slice = 0;
 
         /** The VOI that we are building from the XML. */
         private VOI voi;
 
-        /** DOCUMENT ME! */
+        /** a temporary VOIText holder which will be added to the VOIVector */
         private VOIText voiText = null;
 
-        /** DOCUMENT ME! */
+        /** Holds all the VOITexts read in */
         private VOIVector voiVector;
 
-        /** DOCUMENT ME! */
+        /** the Z dimension of the image*/
         private int zDim = 1;
 
 
@@ -1869,6 +1871,7 @@ public class FileVOI extends FileBase {
             elementBuffer = "";
 
             if (currentKey.equals("Label")) {
+            	id++;
                 voi = new VOI(id, "Label_" + id, zDim, VOI.ANNOTATION, 0f);
                 voiText = new VOIText();
 
