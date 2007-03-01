@@ -1,35 +1,42 @@
 package gov.nih.mipav.model.srb;
 
-import java.io.File;
-import java.util.List;
-import java.util.Vector;
 
-import edu.sdsc.grid.io.FileFactory;
-import edu.sdsc.grid.io.GeneralFile;
-import edu.sdsc.grid.io.GeneralFileSystem;
-import edu.sdsc.grid.io.local.LocalFile;
-import edu.sdsc.grid.io.local.LocalFileSystem;
-import edu.sdsc.grid.io.srb.SRBFile;
-import gov.nih.mipav.model.file.FileBase;
-import gov.nih.mipav.model.file.FileInfoBase;
-import gov.nih.mipav.model.file.FileUtility;
-import gov.nih.mipav.model.file.FileWriteOptions;
-import gov.nih.mipav.model.structures.ModelImage;
-import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.structures.*;
 
+import gov.nih.mipav.view.*;
+
+import edu.sdsc.grid.io.*;
+import edu.sdsc.grid.io.local.*;
+import edu.sdsc.grid.io.srb.*;
+
+import java.io.*;
+
+import java.util.*;
+
+
+/**
+ * DOCUMENT ME!
+ */
 public class SRBUtility {
+
+    //~ Methods --------------------------------------------------------------------------------------------------------
 
     /**
      * Converts the comma separated file names string into the file name list.
-     * @param fileNames  the comma separated file names string. 
-     * @return           the list of the file names.
+     *
+     * @param   fileNames  the comma separated file names string.
+     *
+     * @return  the list of the file names.
      */
-    public static List converToFileNameList(String fileNames){
-        if(fileNames == null || fileNames.length() == 0){
+    public static List converToFileNameList(String fileNames) {
+
+        if ((fileNames == null) || (fileNames.length() == 0)) {
             return null;
         }
-        
+
         Vector newFileNameList = null;
+
         if (fileNames.indexOf(",") >= 0) {
             String[] fns = fileNames.split(",");
 
@@ -42,49 +49,59 @@ public class SRBUtility {
             for (int i = 0; i < fns.length; i++) {
                 newFileNameList.add(fns[i]);
             }
-            
+
         } else {
             newFileNameList = new Vector(1);
             newFileNameList.add(fileNames);
         }
+
         return newFileNameList;
     }
 
     /**
-     * Converts the source path seperator to the target path seperator. If 
-     * the first character is path separator, then just remove this path
-     * separator.
+     * Parses the string to extract the file informations.
      *
-     * @param   s                the string which includes source path seperator need to be replaced.
-     * @param   sourceSeparator  the source path seperator.
-     * @param   targetSeparator  the target path seperator.
+     * @param   fileSystem  the file system that the file reside.
+     * @param   fileName    the file names string separated by comma.
      *
-     * @return  the new path.
+     * @return  the GeneralFile object array.
      */
-    public static String replacePathSeparator(String s, String sourceSeparator, String targetSeparator) {
+    public static GeneralFile[] converToFiles(GeneralFileSystem fileSystem, String fileName) {
+        GeneralFile[] selectedFiles = null;
 
-        if ((s == null) || (s.length() == 0) || (sourceSeparator == null) || (targetSeparator == null)) {
-            return s;
-        }
+        if (fileName.indexOf(",") >= 0) {
+            String[] fileNames = fileName.split(",");
 
-        if(sourceSeparator.equals(targetSeparator)){
-            return s;
-        }
-        int index = s.indexOf(sourceSeparator);
-
-        while (index >= 0) {
-
-            if (index == 0) {
-                s = s.substring(index + sourceSeparator.length());
-            } else {
-                s = s.substring(0, index) + targetSeparator + s.substring(index + sourceSeparator.length());
+            if ((fileNames == null) || (fileNames.length == 0)) {
+                return null;
             }
 
-            index = s.indexOf(sourceSeparator);
+            selectedFiles = new GeneralFile[fileNames.length];
+
+            for (int i = 0; i < fileNames.length; i++) {
+                GeneralFile newFile = FileFactory.newFile(fileSystem, fileNames[i]);
+
+                if (newFile == null) {
+                    return null;
+                }
+
+                selectedFiles[i] = newFile;
+            }
+        } else {
+            selectedFiles = new GeneralFile[1];
+
+            GeneralFile newFile = FileFactory.newFile(fileSystem, fileName);
+
+            if (newFile == null) {
+                return null;
+            }
+
+            selectedFiles[0] = newFile;
         }
 
-        return s;
+        return selectedFiles;
     }
+
     /**
      * Converts the list of GeneralFile into the string separated by comma.
      *
@@ -140,47 +157,169 @@ public class SRBUtility {
     }
 
     /**
-     * A helper function to obtain the parent directory based on the given file name and
-     * the path separator string.
-     * 
-     * @param fileName        the file name.
-     * @param pathSeparator   the path separator string.
-     * @return                the parent directory string of this file name.
+     * Creates the complete file list based on the partial file list.
+     *
+     * @param   sourceFiles  the partial file list.
+     *
+     * @return  the complete file list.
      */
-    public static String getParentDirectory(String fileName, String pathSeparator){
-        if(fileName == null || fileName.length() == 0 || pathSeparator == null){
+    public static GeneralFile[] createCompleteFileList(GeneralFile[] sourceFiles) {
+
+        if (sourceFiles == null) {
             return null;
         }
-        
-        if(fileName.endsWith(pathSeparator) && !fileName.equals(pathSeparator)){
-            fileName = fileName.substring(0, fileName.length()-pathSeparator.length());
-        }
-        if(fileName.indexOf(pathSeparator) >= 0){
-            int index = fileName.lastIndexOf(pathSeparator);
-            if(index == 0){
-                return fileName.substring(0, pathSeparator.length());
-            }else{
-                return fileName.substring(0, index);
+
+        Vector completeFileList = new Vector(sourceFiles.length);
+
+        for (int i = 0; i < sourceFiles.length; i++) {
+            completeFileList.add(sourceFiles[i]);
+
+            GeneralFile partnerFile = getPartnerFile(sourceFiles[i]);
+
+            if (partnerFile != null) {
+                completeFileList.add(partnerFile);
             }
         }
-        return fileName;
+
+        GeneralFile[] completeFiles = new GeneralFile[completeFileList.size()];
+
+        for (int i = 0; i < completeFiles.length; i++) {
+            completeFiles[i] = (GeneralFile) completeFileList.get(i);
+        }
+
+        return completeFiles;
     }
-    
+
     /**
-     * A helper function to create a random subdirectory under the parent directoy localDirBase.
-     * @param localDirBase  the local parent directory.
-     * @return              the created random diretory.
+     * A helper function which is used to create GeneralFile array based on the file system and file name list.
+     *
+     * @param   fileSystem    the file system
+     * @param   fileNameList  the file name list.
+     *
+     * @return  an array of the GeneralFile.
      */
-    public static File createRandomLocalDir(File localDirBase){
-        if(localDirBase == null){
+    public static GeneralFile[] createFiles(GeneralFileSystem fileSystem, Vector fileNameList) {
+
+        if ((fileSystem == null) || (fileNameList == null)) {
             return null;
         }
+
+        int n = fileNameList.size();
+        GeneralFile[] newFiles = new GeneralFile[n];
+
+        for (int i = 0; i < n; i++) {
+            newFiles[i] = FileFactory.newFile(fileSystem, (String) fileNameList.get(i));
+        }
+
+        return newFiles;
+    }
+
+    /**
+     * A helper function to create a LocalFile object based on the file name.
+     *
+     * @param   fileName  a file name
+     *
+     * @return  a LocalFile object.
+     */
+    public static LocalFile createLocalFile(String fileName) {
+
+        if ((fileName == null) || (fileName.length() == 0)) {
+            return null;
+        }
+
+        File file = new File(fileName);
+
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+
+        return new LocalFile(file);
+    }
+
+    /**
+     * A helper function to create a random subdirectory under the parent directoy localDirBase.
+     *
+     * @param   localDirBase  the local parent directory.
+     *
+     * @return  the created random diretory.
+     */
+    public static File createRandomLocalDir(File localDirBase) {
+
+        if (localDirBase == null) {
+            return null;
+        }
+
         long currentTime = System.currentTimeMillis();
         File newLocalDir = new File(localDirBase, Long.toString(currentTime));
-        if(!newLocalDir.exists()){
+
+        if (!newLocalDir.exists()) {
             newLocalDir.mkdirs();
         }
+
         return newLocalDir;
+    }
+
+    /**
+     * A helper function to create the target file based on the target directory, the source base directory and the
+     * source file.
+     *
+     * @param   targetDir       the target directory.
+     * @param   baseSourceFile  the source base directory.
+     * @param   sourceFile      the source file.
+     *
+     * @return  the target file.
+     */
+    public static GeneralFile createTargetFile(GeneralFile targetDir, GeneralFile baseSourceFile,
+                                               GeneralFile sourceFile) {
+
+        if ((targetDir == null) || (baseSourceFile == null) || (sourceFile == null)) {
+            return null;
+        }
+
+        String baseSourceFileName = baseSourceFile.getAbsolutePath();
+        String sourceFileName = sourceFile.getAbsolutePath();
+
+        if (sourceFileName.indexOf(baseSourceFileName) == 0) {
+            String sourcePathSeperator = (baseSourceFile instanceof SRBFile) ? SRBFile.PATH_SEPARATOR : File.separator;
+            String targetPathSeperator = (targetDir instanceof SRBFile) ? SRBFile.PATH_SEPARATOR : File.pathSeparator;
+            String targetFileName = sourceFileName.substring(baseSourceFileName.length() +
+                                                             sourcePathSeperator.length());
+
+            if (!sourcePathSeperator.equals(targetPathSeperator)) {
+                targetFileName = SRBUtility.replacePathSeparator(targetFileName, sourcePathSeperator,
+                                                                 targetPathSeperator);
+            }
+
+            return FileFactory.newFile(targetDir, targetFileName);
+        }
+
+        return null;
+    }
+
+    /**
+     * A helper function to create the target file list based on the given source file list, the target directory, and
+     * the source base directory.
+     *
+     * @param   targetDir       the target directory.
+     * @param   baseSourceFile  the source base directory.
+     * @param   sourceFiles     the source file list.
+     *
+     * @return  the target file list.
+     */
+    public static GeneralFile[] createTargetFiles(GeneralFile targetDir, GeneralFile baseSourceFile,
+                                                  GeneralFile[] sourceFiles) {
+
+        if ((targetDir == null) || (baseSourceFile == null) || (sourceFiles == null)) {
+            return null;
+        }
+
+        GeneralFile[] targetFiles = new GeneralFile[sourceFiles.length];
+
+        for (int i = 0; i < sourceFiles.length; i++) {
+            targetFiles[i] = createTargetFile(targetDir, baseSourceFile, sourceFiles[i]);
+        }
+
+        return targetFiles;
     }
 
     /**
@@ -191,222 +330,128 @@ public class SRBUtility {
      * @return  the extension of the file name/
      */
     public static String getExtension(String fileName) {
-        if(fileName == null || fileName.length() == 0){
+
+        if ((fileName == null) || (fileName.length() == 0)) {
             return null;
         }
+
         int index = fileName.lastIndexOf(".");
 
         if (index == -1) {
             return new String("");
         }
 
-        return fileName.substring(index+1);
-    }
-    
-    /**
-     * A helper function to obtain the path separator based on the different file system.
-     * @param fs  the file system
-     * @return    the path separator used by the file system.
-     */
-    public static String getPathSeparator(GeneralFileSystem fs){
-        if(fs == null){
-            return null;
-        }
-        
-        if(fs instanceof LocalFileSystem){
-            return File.separator;
-        }else{
-            return SRBFile.PATH_SEPARATOR;
-        }
+        return fileName.substring(index + 1);
     }
 
     /**
-     * A helper function to create directory recursively instead of using mkdirs().
-     * Notes:
-     *     The function makeDirs() of File works fine, but SRBFile's doesn't work
-     * very well, that's why i write this functions.
-     * 
-     * @param newDir the new directory need to be created.
+     * Saves the memory image to the local temporary files and returns the LocalFile object list.
+     *
+     * @param   image    the memory image.
+     * @param   tempDir  the local directory that the memory image will saved to
+     *
+     * @return  the saved LocalFile object list of this memory image.
      */
-    public static void recursivelyMakeDir(GeneralFile newDir){
-        if(newDir == null){
-            return;
-        }
-        if(!newDir.exists()){
-            GeneralFile parentDir = newDir.getParentFile();
-            if(!parentDir.exists()){
-                recursivelyMakeDir(parentDir);
-            }
-            newDir.mkdir();
-        }
-    }
-    
-    /**
-     * Deletes the file or directory denoted by this abstract pathname recurively.
-     * 
-     * @param file  the file or directory denoted by this abstract pathname.
-     */
-    public static void recursivelyDeleteDir(GeneralFile file){
-        if(file == null){
-            return;
-        }
-        if(!file.delete()){
-            GeneralFile[] children = file.listFiles();
-            if (children == null) {
-                return;
-            }
-            for (int i = 0; i < children.length; i++) {
-                recursivelyDeleteDir(children[i]);
-            }
-            file.delete();
-        }
-    }
+    public static GeneralFile[] getFileList(ModelImage image, String tempDir) {
 
-    /**
-     * Returns the primary file which was recognized by the mipav.
-     * 
-     * @param sourceFiles  the file list which contains the whole file list of some format image.
-     * 
-     * @return the primary file list.
-     */
-    public static GeneralFile[] getPrimaryFiles(GeneralFile[] sourceFiles){
-        if(sourceFiles == null){
+        if (image == null) {
             return null;
         }
-        
-        Vector primaryFileList = new Vector();
-        boolean dicomAdded = false;
-        for(int i = 0; i < sourceFiles.length; i++){
-            String extension = getExtension(sourceFiles[i].getName());
-            if (extension.equalsIgnoreCase("xml")
-                    || extension.equalsIgnoreCase("img")
-                    || extension.equalsIgnoreCase("head")
-                    || extension.equalsIgnoreCase("mnc")) {
-                primaryFileList.add(sourceFiles[i]);
-            }else if(extension.equals("dcm") && !dicomAdded){
-                primaryFileList.add(sourceFiles[i]);
-                dicomAdded = true;
-            }
-        }
-        GeneralFile[] primaryFiles = new GeneralFile[primaryFileList.size()];
-        for(int i = 0; i < primaryFiles.length; i++){
-            primaryFiles[i] = (GeneralFile)primaryFileList.get(i);
-        }
-        return primaryFiles;
-    }
-    
-    /**
-     * Returns the partner file of the specified file. Because some format image file can
-     * contains several files, otherwise it can not be opened.
-     * 
-     * @param sourceFile  the specified file
-     * @return            the partner file of the specified file.
-     */
-    public static GeneralFile getPartnerFile(GeneralFile sourceFile){
-        if(sourceFile == null){
+
+        if ((tempDir == null) || (tempDir.length() == 0)) {
             return null;
         }
-        
-        /**
-         * Gets the extension of the selected file.
-         */
-        String extension = getExtension(sourceFile.getName());
+
+        LocalFile localTempDir = createLocalFile(tempDir);
+
+        if (localTempDir == null) {
+            return null;
+        }
 
         /**
-         * According to the file type, determines what other files should be
-         * added into the file list.
+         * Gets the file informations for the current opened images.
          */
-        GeneralFile partnerFile = null;
-        if (extension.equals("xml")) {
-            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
-                    sourceFile.getName().replaceFirst("xml", "raw"));
-            if (!partnerFile.exists()) {
-                MipavUtil.displayError("The file "
-                        + partnerFile.getAbsolutePath() + " doesn't exist!");
-                partnerFile = null;
-            }
-        } else if (extension.equals("XML")) {
-            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
-                    sourceFile.getName().replaceFirst("XML", "RAW"));
-            if (!partnerFile.exists()) {
-                MipavUtil.displayError("The file "
-                        + partnerFile.getAbsolutePath() + " doesn't exist!");
-                partnerFile = null;
-            }
-        } else if (extension.equals("img")) {
-            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
-                    sourceFile.getName().replaceFirst("img", "hdr"));
-            if (!partnerFile.exists()) {
-                MipavUtil.displayError("The file "
-                        + partnerFile.getAbsolutePath() + " doesn't exist!");
-                partnerFile = null;
-            }
-        } else if (extension.equals("IMG")) {
-            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
-                    sourceFile.getName().replaceFirst("IMG", "HDR"));
-            if (!partnerFile.exists()) {
-                MipavUtil.displayError("The file "
-                        + partnerFile.getAbsolutePath() + " doesn't exist!");
-                partnerFile = null;
-            }
-        } else if (extension.equals("head")) {
-            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
-                    sourceFile.getName().replaceFirst("head", "brik"));
-            if (!partnerFile.exists()) {
-                MipavUtil.displayError("The file "
-                        + partnerFile.getAbsolutePath() + " doesn't exist!");
-                partnerFile = null;
-            }
-        } else if (extension.equals("HEAD")) {
-            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
-                    sourceFile.getName().replaceFirst("HEAD", "BRIK"));
-            if (!partnerFile.exists()) {
-                MipavUtil.displayError("The file "
-                        + partnerFile.getAbsolutePath() + " doesn't exist!");
-                partnerFile = null;
-            }
-        }
-        return partnerFile;
-    }
+        FileInfoBase[] currentFileInfoList = image.getFileInfo();
 
-    /**
-     * Creates the complete file list based on the partial file list.
-     * @param sourceFiles  the partial file list.
-     * @return             the complete file list.
-     */
-    public static GeneralFile[] createCompleteFileList(GeneralFile[] sourceFiles){
-        if(sourceFiles == null){
+        if (currentFileInfoList == null) {
             return null;
         }
-        
-        Vector completeFileList = new Vector(sourceFiles.length);
-        
-        for(int i = 0; i < sourceFiles.length; i++){
-            completeFileList.add(sourceFiles[i]);
-            GeneralFile partnerFile = getPartnerFile(sourceFiles[i]);
-            if(partnerFile != null){
-                completeFileList.add(partnerFile);
-            }
+
+        /**
+         * Saves the current directory for recovery at the end of function.
+         *
+         * The idea is try to use the save function save the files to different directory.
+         */
+        String savedDir = currentFileInfoList[0].getFileDirectory();
+
+        /**
+         * Sets the new directory which we want the files saved to.
+         */
+        for (int i = 0; i < currentFileInfoList.length; i++) {
+            currentFileInfoList[i].setFileDirectory(localTempDir.getPath() + File.separator);
         }
-        GeneralFile[] completeFiles = new GeneralFile[completeFileList.size()];
-        for(int i = 0; i < completeFiles.length; i++){
-            completeFiles[i] = (GeneralFile)completeFileList.get(i);
+
+        /**
+         * Creates the local temporary file list.
+         */
+        List fileNameList = getFileNameList(image);
+
+        Vector sourceFileList = new Vector();
+
+        for (int i = 0; i < fileNameList.size(); i++) {
+            sourceFileList.add(FileFactory.newFile(localTempDir, (String) fileNameList.get(i)));
         }
-        return completeFiles;
+
+        /**
+         * Constructs the FileWriteOptions to prepare the file name for save.
+         */
+        FileWriteOptions opts = new FileWriteOptions(((LocalFile) sourceFileList.get(0)).getName(),
+                                                     localTempDir.getPath() + "//", false);
+
+
+        if (image.getNDims() == 3) {
+            opts.setBeginSlice(0);
+            opts.setEndSlice(image.getExtents()[2] - 1);
+        }
+
+        opts.setOptionsSet(true);
+
+        /**
+         * Saves the opened images to the local temporary directory.
+         */
+        image.getParentFrame().saveSRB(opts, -1);
+
+        /**
+         * Recovers the original directory which these files belong to.
+         */
+        for (int i = 0; i < currentFileInfoList.length; i++) {
+            currentFileInfoList[i].setFileDirectory(savedDir);
+        }
+
+        GeneralFile[] sourceFiles = new GeneralFile[sourceFileList.size()];
+
+        for (int i = 0; i < sourceFiles.length; i++) {
+            sourceFiles[i] = (GeneralFile) sourceFileList.get(i);
+        }
+
+        return sourceFiles;
     }
-    
+
     /**
      * Gets the file name list from which this ModelImage is opened.
      *
-     * @param  image the ModelImage object.
+     * @param   image  the ModelImage object.
      *
      * @return  the actual file name list.
      */
     public static List getFileNameList(ModelImage image) {
-        if(image == null){
+
+        if (image == null) {
             return null;
         }
+
         FileInfoBase[] fileInfoList = image.getFileInfo();
+
         if ((fileInfoList == null) || (fileInfoList.length == 0)) {
             return null;
         }
@@ -576,8 +621,8 @@ public class SRBUtility {
             case FileUtility.XML:
                 fileNameList = new Vector();
 
-                String rawFileName = fileInfo.getFileName();
-                String xmlFileName = rawFileName.replaceFirst(".raw", ".xml");
+                String xmlFileName = fileInfo.getFileName();
+                String rawFileName = ((FileInfoXML) fileInfo).getImageDataFileName();
                 fileNameList.add(xmlFileName);
                 fileNameList.add(rawFileName);
 
@@ -621,266 +666,306 @@ public class SRBUtility {
         }
 
         return null;
-    }    
-
-    /**
-     * A helper function to create the target file based on the target directory,
-     * the source base directory and the source file.
-     * 
-     * @param targetDir        the target directory.
-     * @param baseSourceFile   the source base directory.
-     * @param sourceFile       the source file.
-     * @return                 the target file.
-     */
-    public static GeneralFile createTargetFile(GeneralFile targetDir,
-            GeneralFile baseSourceFile, GeneralFile sourceFile) {
-        
-        if(targetDir == null || baseSourceFile == null || sourceFile == null){
-            return null;
-        }
-        
-        String baseSourceFileName = baseSourceFile.getAbsolutePath();
-        String sourceFileName = sourceFile.getAbsolutePath();
-        if(sourceFileName.indexOf(baseSourceFileName) == 0){
-            String sourcePathSeperator = (baseSourceFile instanceof SRBFile)?SRBFile.PATH_SEPARATOR:File.separator;
-            String targetPathSeperator = (targetDir instanceof SRBFile)?SRBFile.PATH_SEPARATOR:File.pathSeparator;
-            String targetFileName = sourceFileName.substring(baseSourceFileName.length() + sourcePathSeperator.length());
-            if(!sourcePathSeperator.equals(targetPathSeperator)){
-                targetFileName = SRBUtility.replacePathSeparator(targetFileName, sourcePathSeperator, targetPathSeperator);
-            }
-            return FileFactory.newFile(targetDir, targetFileName);
-        }
-        return null;
     }
 
     /**
-     * A helper function to create the target file list based on the given source file list,
-     * the target directory, and the source base directory.
-     * 
-     * @param targetDir       the target directory.
-     * @param baseSourceFile  the source base directory.
-     * @param sourceFiles     the source file list.
-     * @return                the target file list.
+     * A helper function to obtain the parent directory based on the given file name and the path separator string.
+     *
+     * @param   fileName       the file name.
+     * @param   pathSeparator  the path separator string.
+     *
+     * @return  the parent directory string of this file name.
      */
-    public static GeneralFile[] createTargetFiles(GeneralFile targetDir,
-            GeneralFile baseSourceFile, GeneralFile[] sourceFiles) {
-        if(targetDir == null || baseSourceFile == null || sourceFiles == null){
+    public static String getParentDirectory(String fileName, String pathSeparator) {
+
+        if ((fileName == null) || (fileName.length() == 0) || (pathSeparator == null)) {
             return null;
         }
-        GeneralFile[] targetFiles = new GeneralFile[sourceFiles.length];
-        for(int i = 0; i < sourceFiles.length; i++){
-            targetFiles[i] = createTargetFile(targetDir, baseSourceFile, sourceFiles[i]);
+
+        if (fileName.endsWith(pathSeparator) && !fileName.equals(pathSeparator)) {
+            fileName = fileName.substring(0, fileName.length() - pathSeparator.length());
         }
-        return targetFiles;
+
+        if (fileName.indexOf(pathSeparator) >= 0) {
+            int index = fileName.lastIndexOf(pathSeparator);
+
+            if (index == 0) {
+                return fileName.substring(0, pathSeparator.length());
+            } else {
+                return fileName.substring(0, index);
+            }
+        }
+
+        return fileName;
+    }
+
+    /**
+     * Returns the partner file of the specified file. Because some format image file can contains several files,
+     * otherwise it can not be opened.
+     *
+     * @param   sourceFile  the specified file
+     *
+     * @return  the partner file of the specified file.
+     */
+    public static GeneralFile getPartnerFile(GeneralFile sourceFile) {
+
+        if (sourceFile == null) {
+            return null;
+        }
+
+        /**
+         * Gets the extension of the selected file.
+         */
+        String extension = getExtension(sourceFile.getName());
+
+        /**
+         * According to the file type, determines what other files should be added into the file list.
+         */
+        GeneralFile partnerFile = null;
+
+        if (extension.equals("xml")) {
+            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
+                                              sourceFile.getName().replaceFirst("xml", "raw"));
+
+            if (!partnerFile.exists()) {
+                MipavUtil.displayError("The file " + partnerFile.getAbsolutePath() + " doesn't exist!");
+                partnerFile = null;
+            }
+        } else if (extension.equals("XML")) {
+            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
+                                              sourceFile.getName().replaceFirst("XML", "RAW"));
+
+            if (!partnerFile.exists()) {
+                MipavUtil.displayError("The file " + partnerFile.getAbsolutePath() + " doesn't exist!");
+                partnerFile = null;
+            }
+        } else if (extension.equals("img")) {
+            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
+                                              sourceFile.getName().replaceFirst("img", "hdr"));
+
+            if (!partnerFile.exists()) {
+                MipavUtil.displayError("The file " + partnerFile.getAbsolutePath() + " doesn't exist!");
+                partnerFile = null;
+            }
+        } else if (extension.equals("IMG")) {
+            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
+                                              sourceFile.getName().replaceFirst("IMG", "HDR"));
+
+            if (!partnerFile.exists()) {
+                MipavUtil.displayError("The file " + partnerFile.getAbsolutePath() + " doesn't exist!");
+                partnerFile = null;
+            }
+        } else if (extension.equals("head")) {
+            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
+                                              sourceFile.getName().replaceFirst("head", "brik"));
+
+            if (!partnerFile.exists()) {
+                MipavUtil.displayError("The file " + partnerFile.getAbsolutePath() + " doesn't exist!");
+                partnerFile = null;
+            }
+        } else if (extension.equals("HEAD")) {
+            partnerFile = FileFactory.newFile(sourceFile.getParentFile(),
+                                              sourceFile.getName().replaceFirst("HEAD", "BRIK"));
+
+            if (!partnerFile.exists()) {
+                MipavUtil.displayError("The file " + partnerFile.getAbsolutePath() + " doesn't exist!");
+                partnerFile = null;
+            }
+        }
+
+        return partnerFile;
+    }
+
+    /**
+     * A helper function to obtain the path separator based on the different file system.
+     *
+     * @param   fs  the file system
+     *
+     * @return  the path separator used by the file system.
+     */
+    public static String getPathSeparator(GeneralFileSystem fs) {
+
+        if (fs == null) {
+            return null;
+        }
+
+        if (fs instanceof LocalFileSystem) {
+            return File.separator;
+        } else {
+            return SRBFile.PATH_SEPARATOR;
+        }
+    }
+
+    /**
+     * Returns the primary file which was recognized by the mipav.
+     *
+     * @param   sourceFiles  the file list which contains the whole file list of some format image.
+     *
+     * @return  the primary file list.
+     */
+    public static GeneralFile[] getPrimaryFiles(GeneralFile[] sourceFiles) {
+
+        if (sourceFiles == null) {
+            return null;
+        }
+
+        Vector primaryFileList = new Vector();
+        boolean dicomAdded = false;
+
+        for (int i = 0; i < sourceFiles.length; i++) {
+            String extension = getExtension(sourceFiles[i].getName());
+
+            if (extension.equalsIgnoreCase("xml") || extension.equalsIgnoreCase("img") ||
+                    extension.equalsIgnoreCase("head") || extension.equalsIgnoreCase("mnc")) {
+                primaryFileList.add(sourceFiles[i]);
+            } else if (extension.equals("dcm") && !dicomAdded) {
+                primaryFileList.add(sourceFiles[i]);
+                dicomAdded = true;
+            }
+        }
+
+        GeneralFile[] primaryFiles = new GeneralFile[primaryFileList.size()];
+
+        for (int i = 0; i < primaryFiles.length; i++) {
+            primaryFiles[i] = (GeneralFile) primaryFileList.get(i);
+        }
+
+        return primaryFiles;
     }
 
     /**
      * A helper function to convert the GeneralFile list ot the GeneralFile array.
-     * @param fileList  the GeneralFile list
-     * @return          the GeneralFile array.
+     *
+     * @param   fileList  the GeneralFile list
+     *
+     * @return  the GeneralFile array.
      */
-    public static GeneralFile[] list2Array(List fileList){
-        if(fileList == null){
+    public static GeneralFile[] list2Array(List fileList) {
+
+        if (fileList == null) {
             return null;
         }
-        
+
         GeneralFile[] files = new GeneralFile[fileList.size()];
-        for(int i = 0; i < fileList.size(); i++){
-            files[i] = (GeneralFile)fileList.get(i);
+
+        for (int i = 0; i < fileList.size(); i++) {
+            files[i] = (GeneralFile) fileList.get(i);
         }
+
         return files;
     }
-    
+
     /**
-     * Saves the memory image to the local temporary files and returns the LocalFile object list.
-     * 
-     * @param image         the memory image.
-     * @param localTempDir  the local directory that the memory image will saved to
-     * @return              the saved LocalFile object list of this memory image.
-     */
-    public static GeneralFile[] getFileList(ModelImage image, String tempDir){
-        if (image == null) {
-            return null;
-        }
-
-        if(tempDir == null || tempDir.length() == 0){
-            return null;
-        }
-        LocalFile localTempDir = createLocalFile(tempDir);
-        if(localTempDir == null){
-            return null;
-        }
-        
-        /**
-         * Gets the file informations for the current opened images.
-         */
-        FileInfoBase[] currentFileInfoList = image.getFileInfo();
-
-        if (currentFileInfoList == null) {
-            return null;
-        }
-
-        /**
-         * Saves the current directory for recovery at the end of function.
-         *
-         * The idea is try to use the save function save the files to different directory.
-         */
-        String savedDir = currentFileInfoList[0].getFileDirectory();
-
-        /**
-         * Sets the new directory which we want the files saved to.
-         */
-        for (int i = 0; i < currentFileInfoList.length; i++) {
-            currentFileInfoList[i].setFileDirectory(localTempDir.getPath() + File.separator);
-        }
-
-        /**
-         * Creates the local temporary file list.
-         */
-        List fileNameList = getFileNameList(image);
-        
-        Vector sourceFileList = new Vector();
-        for(int i = 0; i < fileNameList.size(); i++){
-            sourceFileList.add(FileFactory.newFile(localTempDir, (String)fileNameList.get(i)));
-        }
-
-        /**
-         * Constructs the FileWriteOptions to prepare the file name for save.
-         */
-        FileWriteOptions opts = new FileWriteOptions(((LocalFile) sourceFileList.get(0)).getName(),
-                                                     localTempDir.getPath() + "//", false);
-
-
-        if (image.getNDims() == 3) {
-            opts.setBeginSlice(0);
-            opts.setEndSlice(image.getExtents()[2] - 1);
-        }
-
-        opts.setOptionsSet(true);
-
-        /**
-         * Saves the opened images to the local temporary directory.
-         */
-        image.getParentFrame().saveSRB(opts, -1);
-
-        /**
-         * Recovers the original directory which these files belong to.
-         */
-        for (int i = 0; i < currentFileInfoList.length; i++) {
-            currentFileInfoList[i].setFileDirectory(savedDir);
-        }
-        
-        GeneralFile[] sourceFiles = new GeneralFile[sourceFileList.size()];
-        for(int i = 0; i < sourceFiles.length; i++){
-            sourceFiles[i] = (GeneralFile)sourceFileList.get(i);
-        }
-        return sourceFiles;
-    }
-    
-    /**
-     * A helper function to create a LocalFile object based on the file name.
-     * @param fileName  a file name
-     * @return          a LocalFile object.
-     */
-    public static LocalFile createLocalFile(String fileName){
-        if(fileName == null || fileName.length() == 0){
-            return null;
-        }
-        File file = new File(fileName);
-        if(!file.exists()){
-            file.mkdirs();
-        }
-        return new LocalFile(file);
-    }
-    
-    /**
-     * Parses the string to extract the file informations.
+     * Deletes the file or directory denoted by this abstract pathname recurively.
      *
-     * @param   fileSystem  the file system that the file reside.
-     * @param   fileName    the file names string separated by comma.
-     *
-     * @return  the GeneralFile object array.
+     * @param  file  the file or directory denoted by this abstract pathname.
      */
-    public static GeneralFile[] converToFiles(GeneralFileSystem fileSystem, String fileName) {
-        GeneralFile[] selectedFiles = null;
+    public static void recursivelyDeleteDir(GeneralFile file) {
 
-        if (fileName.indexOf(",") >= 0) {
-            String[] fileNames = fileName.split(",");
-
-            if ((fileNames == null) || (fileNames.length == 0)) {
-                return null;
-            }
-
-            selectedFiles = new GeneralFile[fileNames.length];
-
-            for (int i = 0; i < fileNames.length; i++) {
-                GeneralFile newFile = FileFactory.newFile(fileSystem, fileNames[i]);
-
-                if (newFile == null) {
-                    return null;
-                }
-
-                selectedFiles[i] = newFile;
-            }
-        } else {
-            selectedFiles = new GeneralFile[1];
-
-            GeneralFile newFile = FileFactory.newFile(fileSystem, fileName);
-
-            if (newFile == null) {
-                return null;
-            }
-
-            selectedFiles[0] = newFile;
-        }
-
-        return selectedFiles;
-    }
-    
-    /**
-     * A helper function which is used to create GeneralFile array based
-     * on the file system and file name list.
-     * 
-     * @param fileSystem      the file system
-     * @param fileNameList    the file name list.
-     * @return                an array of the GeneralFile.
-     */
-    public static GeneralFile[] createFiles(GeneralFileSystem fileSystem, Vector fileNameList){
-        if(fileSystem == null || fileNameList == null){
-            return null;
-        }
-        int n = fileNameList.size();
-        GeneralFile[] newFiles = new GeneralFile[n];
-        for(int i = 0; i < n; i++){
-            newFiles[i] = FileFactory.newFile(fileSystem, (String)fileNameList.get(i));
-        }
-        
-        return newFiles;
-    }
-    
-    /**
-     * A helper function to retrieve all files contained in this directory and subdirectory
-     * recursively and put into the <code>fileList</code>.
-     * 
-     * @param file      the given file or directory.
-     * @param fileList  the file list which stores all files included in the
-     *                  <code>file</code> and its subdirectory.
-     */
-    public static void retrieveFileList(GeneralFile file, List fileList){
-        if(file == null || fileList == null){
+        if (file == null) {
             return;
         }
-        
-        if(file.isFile()){
+
+        if (!file.delete()) {
+            GeneralFile[] children = file.listFiles();
+
+            if (children == null) {
+                return;
+            }
+
+            for (int i = 0; i < children.length; i++) {
+                recursivelyDeleteDir(children[i]);
+            }
+
+            file.delete();
+        }
+    }
+
+    /**
+     * A helper function to create directory recursively instead of using mkdirs(). Notes: The function makeDirs() of
+     * File works fine, but SRBFile's doesn't work very well, that's why i write this functions.
+     *
+     * @param  newDir  the new directory need to be created.
+     */
+    public static void recursivelyMakeDir(GeneralFile newDir) {
+
+        if (newDir == null) {
+            return;
+        }
+
+        if (!newDir.exists()) {
+            GeneralFile parentDir = newDir.getParentFile();
+
+            if (!parentDir.exists()) {
+                recursivelyMakeDir(parentDir);
+            }
+
+            newDir.mkdir();
+        }
+    }
+
+    /**
+     * Converts the source path seperator to the target path seperator. If the first character is path separator, then
+     * just remove this path separator.
+     *
+     * @param   s                the string which includes source path seperator need to be replaced.
+     * @param   sourceSeparator  the source path seperator.
+     * @param   targetSeparator  the target path seperator.
+     *
+     * @return  the new path.
+     */
+    public static String replacePathSeparator(String s, String sourceSeparator, String targetSeparator) {
+
+        if ((s == null) || (s.length() == 0) || (sourceSeparator == null) || (targetSeparator == null)) {
+            return s;
+        }
+
+        if (sourceSeparator.equals(targetSeparator)) {
+            return s;
+        }
+
+        int index = s.indexOf(sourceSeparator);
+
+        while (index >= 0) {
+
+            if (index == 0) {
+                s = s.substring(index + sourceSeparator.length());
+            } else {
+                s = s.substring(0, index) + targetSeparator + s.substring(index + sourceSeparator.length());
+            }
+
+            index = s.indexOf(sourceSeparator);
+        }
+
+        return s;
+    }
+
+    /**
+     * A helper function to retrieve all files contained in this directory and subdirectory recursively and put into the
+     * <code>fileList</code>.
+     *
+     * @param  file      the given file or directory.
+     * @param  fileList  the file list which stores all files included in the <code>file</code> and its subdirectory.
+     */
+    public static void retrieveFileList(GeneralFile file, List fileList) {
+
+        if ((file == null) || (fileList == null)) {
+            return;
+        }
+
+        if (file.isFile()) {
             fileList.add(file);
+
             return;
         }
+
         GeneralFile[] children = file.listFiles();
-        if(children == null){
+
+        if (children == null) {
             return;
         }
-        
-        for(int i = 0; i < children.length; i++){
+
+        for (int i = 0; i < children.length; i++) {
             retrieveFileList(children[i], fileList);
         }
     }
