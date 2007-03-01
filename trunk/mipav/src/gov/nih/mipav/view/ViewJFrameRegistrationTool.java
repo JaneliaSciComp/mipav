@@ -88,10 +88,10 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     /** The 3 types of markers - rotation center, reference slice, and adjusted slice. */
     public static final int ROTATIONCENTER = 0;
 
-    /** DOCUMENT ME! */
+    /** reference marker type */
     public static final int REFMARK = 1;
 
-    /** DOCUMENT ME! */
+    /** adjusted marker type */
     public static final int ADJMARK = 2;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
@@ -112,11 +112,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JButton adjMarkMinusButton; // delete selected adj markers
-
-    /** DOCUMENT ME! */
-    private boolean algorithmPerformed = false; // tells the tabbedpane to update once selected after algorithm has
-                                                // been performed
-
+    
     /** DOCUMENT ME! */
     private JSlider alphaSlider; // slider to adjust alpha blending
 
@@ -247,21 +243,13 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
     /** DOCUMENT ME! */
     private JButton leftButton; // transform left
 
-    /** DOCUMENT ME! */
-    private String linkedXMLName; // name of linked RF XML image
 
     /** DOCUMENT ME! */
     private boolean logMagDisplay;
 
     /** DOCUMENT ME! */
     private boolean lsPerformed = false;
-
-    /** DOCUMENT ME! */
-    private int[] markerType;
-
-    /** DOCUMENT ME! */
-    private int minimumToolBarWidth;
-
+    
     /** DOCUMENT ME! */
     private int mode;
 
@@ -279,10 +267,7 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private JMenuBar openingMenuBar; // menu bar to hold file options
-
-    /** DOCUMENT ME! */
-    private int[] paintBuffer;
-
+    
     /** DOCUMENT ME! */
     private int[] pixBuffer;
 
@@ -309,9 +294,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private double[][] pointSetBT;
-
-    /** DOCUMENT ME! */
-    private Border pressedBorder = BorderFactory.createLoweredBevelBorder();
 
     /** DOCUMENT ME! */
     private int refMark;
@@ -432,10 +414,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
 
     /** DOCUMENT ME! */
     private float zoom = 1; // zoom factor
-    
-    private JPanel innerPanel;
-    private JPanel innerPanelA;
-    private JPanel innerPanelB;
 
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
@@ -707,7 +685,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             componentImage.setAdjMark(false);
             componentImage.setRefMark(false);
             componentImage.setCenter(false);
-            algorithmPerformed = true;
         } else if (command.equals("up")) {
 
             if (mode == ViewJComponentBase.TRANSLATE) {
@@ -730,8 +707,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             } else if (mode == ViewJComponentBase.DEFAULT) {
                 componentImage.moveVOIPosition(0, Math.round(-pixelIncrement * yRes));
             }
-
-            algorithmPerformed = true;
         } else if (command.equals("down")) {
 
             if (mode == ViewJComponentBase.TRANSLATE) {
@@ -755,7 +730,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 componentImage.moveVOIPosition(0, Math.round(pixelIncrement * yRes));
             }
 
-            algorithmPerformed = true;
         } else if (command.equals("right")) {
 
             if (mode == ViewJComponentBase.TRANSLATE) {
@@ -778,8 +752,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             } else if (mode == ViewJComponentBase.DEFAULT) {
                 componentImage.moveVOIPosition(Math.round(pixelIncrement * xRes), 0);
             }
-
-            algorithmPerformed = true;
         } else if (command.equals("left")) {
 
             if (mode == ViewJComponentBase.TRANSLATE) {
@@ -802,8 +774,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             } else if (mode == ViewJComponentBase.DEFAULT) {
                 componentImage.moveVOIPosition(Math.round(-pixelIncrement * xRes), 0);
             }
-
-            algorithmPerformed = true;
         } else if (command.equals("refMark")) {
             cwButton.setEnabled(false);
             ccwButton.setEnabled(false);
@@ -869,7 +839,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             componentImage.setCenter(true);
 
             // componentImageB.setRegCenterPtCreated(true);
-            algorithmPerformed = true;
         } else if (command.equals("cw")) {
             upButton.setEnabled(false);
             downButton.setEnabled(false);
@@ -899,7 +868,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 transformC();
             }
 
-            algorithmPerformed = true;
         } else if (command.equals("ccw")) {
             upButton.setEnabled(false);
             downButton.setEnabled(false);
@@ -928,18 +896,14 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             } else {
                 transformC();
             }
-
-            algorithmPerformed = true;
         } else if (command.equals("leastSquares")) {
 
             if (leastSquares()) {
-                algorithmPerformed = true;
                 calculateResiduals();
                 updateImages(true);
             }
         } else if (command.equals("tpSpline")) {
             tpSpline();
-            algorithmPerformed = true;
             // if (this.itemIntensityTPSpline.isSelected()) {
             // intensityTPSpline();
             // }
@@ -967,7 +931,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
             componentImageB.setMode(ViewJComponentBase.DEFAULT);
             componentImage.setMode(ViewJComponentBase.DEFAULT);
             updateImages(true);
-            algorithmPerformed = true;
         } else if (command.equals("commitSlice")) {
 
             try {
@@ -1001,7 +964,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
                 }
 
                 secondImage.notifyImageDisplayListeners(null, true);
-                algorithmPerformed = true;
             } catch (IOException error) {
                 MipavUtil.displayError("ViewJFrameRegistrationTool: IOException Error on exportData - importData sequence");
             }
@@ -1148,14 +1110,12 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
         yOrg = null;
         xCoords = null;
         yCoords = null;
-        markerType = null;
         pointSetA = null;
         pointSetB = null;
         pointSetBT = null;
         xfrmBA = null;
 
         pixBuffer = null;
-        paintBuffer = null;
         scrollPane = null;
         toolBar = null;
         toolBarSep = null;
@@ -1367,15 +1327,6 @@ public class ViewJFrameRegistrationTool extends ViewJFrameBase
      * @param  _imageB  Image to set the frame to
      */
     public void setImageB(ModelImage _imageB) { }
-
-    /**
-     * Sets the linked XML name of the RF (previously saved in JDialogOpenImageSet.
-     *
-     * @param  fileName  DOCUMENT ME!
-     */
-    public void setLinkedXML(String fileName) {
-        this.linkedXMLName = fileName;
-    }
 
     /**
      * Sets the model LUT for the imageA.
@@ -2212,7 +2163,6 @@ JPanel innerPanel, innerPanelA, innerPanelB;
 
             pixBuffer = new int[extents[0] * extents[1]];
             pixBufferB = new int[extents[0] * extents[1]];
-            paintBuffer = new int[extents[0] * extents[1]];
 
             pixBufferCompA = new int[extents[0] * extents[1]];
             pixBufferCompB = new int[extents[0] * extents[1]];
@@ -2518,22 +2468,7 @@ JPanel innerPanel, innerPanelA, innerPanelB;
     }
 
     /**
-     * Helper method to create a label with the proper font and font color.
-     *
-     * @param   title  Text of the label.
-     *
-     * @return  New label.
-     */
-    private JLabel createLabel(String title) {
-        JLabel label = new JLabel(title);
-        label.setFont(serif12);
-        label.setForeground(Color.black);
-
-        return label;
-    }
-
-    /**
-     * DOCUMENT ME!
+     * Creates the GUI
      */
     private void init() {
 
@@ -2637,7 +2572,6 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         addTopPanel(controlPanel, gbc, 0, 0, 1, 1);
         addTopPanel(toolBar, gbc, 0, 1, 1, 1);
         addTopPanel(toolBar2, gbc, 0, 2, 1, 1);
-        minimumToolBarWidth = 450;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -2645,9 +2579,6 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         bothPanel.add(topPanel, gbc);
 
         toolBarSep = buildRegistrationToolBar(this, false);
-        //this.setPreferredSize(new Dimension(toolBarSep.getWidth(), 0));
-       // this.setMinimumSize(new Dimension(toolBarSep.getWidth(), 0));
-        
         toolBar.setMinimumSize(toolBarSep.getPreferredSize());
         
         gbc.gridwidth = 2;
@@ -2667,7 +2598,6 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         xCoords = new int[40];
         yCoords = new int[40];
 
-        markerType = new int[40];
         xfrmA = new float[3][3];
 
         // builds image panel and puts it into a scrollpane
@@ -3133,7 +3063,6 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         // Move Adjustable Markers to line up with Reference Markers
         componentImageB.resetAdjustableVOIs(pointSetA, pointSetB);
 
-        algorithmPerformed = true;
         updateImages(true);
     }
 
@@ -3154,7 +3083,7 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         float j1, j2;
         int nVOI;
         int n;
-        float frm00, frm01, frm02, frm10, frm11, frm12, frm20, frm21, frm22;
+        float frm00, frm01, frm02, frm10, frm11, frm12;
 
         xfrmD = (xfrm.inverse()).getArray();
 
@@ -3164,9 +3093,6 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         frm10 = (float) xfrmD[1][0];
         frm11 = (float) xfrmD[1][1];
         frm12 = (float) xfrmD[1][2];
-        frm20 = (float) xfrmD[2][0];
-        frm21 = (float) xfrmD[2][1];
-        frm22 = (float) xfrmD[2][2];
 
         int position;
         float dx, dy, dx1, dy1;
@@ -3236,6 +3162,7 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         // point coordinates from the old point coordinates
         nVOI = componentImage.getnVOI();
 
+        int [] markerType = null;
         if (nVOI > 0) {
             xOrg = componentImage.getxOrg();
             yOrg = componentImage.getyOrg();
@@ -3292,7 +3219,7 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         int index;
         int nVOI;
         int n;
-        float frm00, frm01, frm02, frm10, frm11, frm12, frm20, frm21, frm22;
+        float frm00, frm01, frm02, frm10, frm11, frm12;
 
         xfrmD = (xfrm.inverse()).getArray();
         frm00 = (float) xfrmD[0][0];
@@ -3301,9 +3228,6 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         frm10 = (float) xfrmD[1][0];
         frm11 = (float) xfrmD[1][1];
         frm12 = (float) xfrmD[1][2];
-        frm20 = (float) xfrmD[2][0];
-        frm21 = (float) xfrmD[2][1];
-        frm22 = (float) xfrmD[2][2];
 
         int iXdim1 = xDim - 1;
         int iYdim1 = yDim - 1;
@@ -3382,6 +3306,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         // point coordinates from the old point coordinates
         nVOI = componentImage.getnVOI();
 
+        int [] markerType = null;
+        
         if (nVOI > 0) {
             xOrg = componentImage.getxOrg();
             yOrg = componentImage.getyOrg();
