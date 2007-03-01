@@ -1615,12 +1615,14 @@ public class ViewJFrameDICOMParser extends ViewImageDirectory implements WindowL
             if (source.equals(studyTable)) {
             	//we dont want to clear out the image panelthumbnail and reload series table 
             	//if user clicks on the same one...so...
-            	String seriesTableStudyNo = (String)seriesTableModel.getValueAt(0, 7);
             	String studyNo = (String)studyTableModel.getValueAt(studyTable.getSelectedRow(), 2);
-            	if(seriesTableStudyNo != null) {
-            		if(seriesTableStudyNo.equals(studyNo)) {
-            			return;
-            		}
+            	if(seriesTableModel.getRowCount() > 0) {
+	            	String seriesTableStudyNo = (String)seriesTableModel.getValueAt(0, 7);
+	            	if(seriesTableStudyNo != null) {
+	            		if(seriesTableStudyNo.equals(studyNo)) {
+	            			return;
+	            		}
+	            	}
             	}
             	imageTableModel.removeAllRows();
             	imagePanel.removeAll();
