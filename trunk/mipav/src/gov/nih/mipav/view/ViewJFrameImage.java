@@ -148,6 +148,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
     /** Reference to the magnification tool. */
     private JDialogZoom zoomDialog = null;
 
+    /** Only want one gridoptions dialog per jframeimage */
+    private JDialogGridOptions gridOptions = null;
+    
     //~ Constructors ---------------------------------------------------------------------------------------------------
 
     /**
@@ -304,7 +307,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         if (img.isColorImage()) {
             float[] x = new float[4];
             float[] y = new float[4];
-            float[] z = new float[4];
             Dimension dim = new Dimension(256, 256);
 
             // Set ModelRGB min max values;
@@ -1237,8 +1239,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             ScriptRecorder.getReference().addLine(new ActionPaintToMask(getActiveImage(), maskImage,
                                                                         ActionPaintToMask.MASK_SHORT));
         } else if (command.equals("Open labels")) { 
-        	boolean success = openVOI(false, true);
-        	
+        	openVOI(false, true);
         } else if (command.equals("Open VOI")) {
             boolean success = openVOI(false, false);
 
@@ -1441,11 +1442,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             rBlankWithAvg.callAlgorithm();
 
         } else if (command.equals("ImageFlipY")) {
-            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE);
+            new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.IMAGE);
         } else if (command.equals("ImageFlipX")) {
-            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
+            new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.IMAGE);
         } else if (command.equals("ImageFlipZ")) {
-            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
+            new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
         } else if (command.equals("VOIFlipY")) {
             JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI);
 
@@ -1810,7 +1811,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (isMultipleImages() == true) {
 
                 if (getActiveImage().getNDims() == 3) {
-                    JDialogRegistrationOAR3D reg3D = new JDialogRegistrationOAR3D(this, getActiveImage());
+                    new JDialogRegistrationOAR3D(this, getActiveImage());
 
                     /*
                      * if ( this.userInterface.getActiveImageMonitor() != null ) {
@@ -1827,7 +1828,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             if (isMultipleImages() == true) {
 
                 if (getActiveImage().getNDims() == 3) {
-                    JDialogConstrainedOAR3D reg3D = new JDialogConstrainedOAR3D(this, getActiveImage());
+                    new JDialogConstrainedOAR3D(this, getActiveImage());
 
                 } else if (getActiveImage().getNDims() == 2) {
                     new JDialogRegistrationOAR2D(this, getActiveImage());
@@ -1925,7 +1926,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         if (algoRef.newReferenceCreated()) {
                             refImage = algoRef.getNewReferenceImage();
 
-                            ViewJFrameImage newRefFrame = new ViewJFrameImage(refImage, null, new Dimension(0, 0));
+                            new ViewJFrameImage(refImage, null, new Dimension(0, 0));
                         } else {
                             refImage = getActiveImage();
                         }
@@ -1933,14 +1934,13 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                         if (algoRef.newAdjustedCreated()) {
                             adjImage = algoRef.getNewAdjustedImage();
 
-                            ViewJFrameImage newAdjFrame = new ViewJFrameImage(adjImage, null, new Dimension(0, 0));
+                            new ViewJFrameImage(adjImage, null, new Dimension(0, 0));
                         } else {
                             adjImage = image2load;
                             adjLUT = dialog.getModelLUT();
 
                             if (!dialog.isFromFrame()) {
-                                ViewJFrameImage adjFrame = new ViewJFrameImage(image2load, dialog.getModelLUT(),
-                                                                               new Dimension(0, 0));
+                            	new ViewJFrameImage(image2load, dialog.getModelLUT(), new Dimension(0, 0));
                             }
                         }
 
@@ -1956,14 +1956,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 } else { // nDims == 3
 
                     try {
-                        ModelLUT lut;
-
-                        if (displayMode == IMAGE_A) {
-                            lut = componentImage.getLUTa();
-                        } else {
-                            lut = componentImage.getLUTb();
-                        }
-
                         ViewJFrameRegistration registrationFrame = new ViewJFrameRegistration(getActiveImage(), null);
 
                         registrationFrame.componentResized(null);
@@ -2323,8 +2315,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             componentImage.paintComponent(componentImage.getGraphics());
 
         } else if (command.equals("GridOptions")) {
-
-            JDialogGridOptions gridOptions = new JDialogGridOptions(this, componentImage);
+        	if (gridOptions != null) {
+        		gridOptions.setVisible(true);
+        	} else {
+        		gridOptions = new JDialogGridOptions(this, componentImage);
+        	}
         } else if (command.equals("ShowOverlay")) {
 
             componentImage.getVOIHandler().setOverlay(((JCheckBoxMenuItem) event.getSource()).isSelected());
@@ -2506,8 +2501,6 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             }
 
         } else if (command.equals("Light box")) {
-            ViewJFrameLightBox lightBoxFrame;
-
             if (componentImage.getImageA().getLightBoxFrame() == null) {
 
                 // 3 space representation makes no sense on a 2d image!
@@ -2518,11 +2511,10 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                 }
 
                 try {
-                    lightBoxFrame = new ViewJFrameLightBox(this, "LightBox", imageA, componentImage.getLUTa(), imageB,
+                    new ViewJFrameLightBox(this, "LightBox", imageA, componentImage.getLUTa(), imageB,
                                                            componentImage.getLUTb(), componentImage.getResolutionX(),
                                                            componentImage.getResolutionY(), new Dimension(50, 200),
                                                            controls);
-                    // imageA.registerLightBoxFrame(lightBoxFrame);
                 } catch (OutOfMemoryError error) {
                     MipavUtil.displayError("Out of memory: unable to open Lightbox.");
                 }
@@ -2811,11 +2803,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
 
                         // examine every pixel and convert to paint if masked intensity is equal to the toolbar's
                         // selected intensity
-
-
-                        Color activeColor = getControls().getTools().getPaintColor();
-                        // int activeRed = activeColor.getRed(); int activeGreen = activeColor.getGreen(); int
-                        // activeBlue = activeColor.getBlue();
+                        
 
                         if (imageB.isColorImage()) {
 
