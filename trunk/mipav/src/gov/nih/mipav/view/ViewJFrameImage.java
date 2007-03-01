@@ -1193,10 +1193,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("MaskToPaint")) {
 
             // TODO: only runs with an imageB mask, not if imageA is a mask itself.
-            handleMaskToPaint(true);
+            boolean success = handleMaskToPaint(true);
 
-            // TODO: the script action is recorded regardless of the conversion success
-            ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
+            if (success) {
+            	ScriptRecorder.getReference().addLine(new ActionMaskToPaint(getActiveImage()));
+            }
         } else if (command.equals("CollapseAllToSinglePaint")) {
             collapseAlltoSinglePaint(false);
         } else if (command.equals("PaintToVOI")) {
@@ -3337,8 +3338,9 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
      *
      * @param  showProgressBar  DOCUMENT ME!
      */
-    public void handleMaskToPaint(boolean showProgressBar) {
+    public boolean handleMaskToPaint(boolean showProgressBar) {
 
+    	boolean success = false;
         if (componentImage != null) {
 
             if (imageB != null) {
@@ -3418,6 +3420,7 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
                     }
 
                     updateImages(true);
+                    success = true;
                 } catch (Exception ex) {
 
                     // do nothing. the error will be displayed when this if block exits
@@ -3439,6 +3442,8 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             // should never get to this point. big trouble.
             MipavUtil.displayError("Cannot complete the operation due to an internal error.");
         }
+        
+        return success;
     }
 
 
