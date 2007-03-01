@@ -3425,7 +3425,7 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
         else if (mode == ViewJComponentEditImage.PROTRACTOR) { }
         else if (mode == ViewJComponentEditImage.NEW_POINT) { // impossible for LINE
 
-            if (((mouseEvent.isShiftDown() == true) || Preferences.is(Preferences.PREF_CONTINUOUS_VOI_CONTOUR))) {
+            if (((mouseEvent.isShiftDown() == true))) {
                 nVOI = VOIs.size();
 
                 for (i = 0; i < nVOI; i++) {
@@ -3434,7 +3434,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                         break;
                     }
                 }
-
                 if (i == nVOI) {
                     return;
                 }
@@ -3678,7 +3677,6 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 }
             }
         } else if (mode == ViewJComponentEditImage.DELETE_POINT) { // impossible for LINE
-            System.err.println("mode is DELETE_POINT in mouse released");
             nVOI = VOIs.size();
 
             for (i = 0; i < nVOI; i++) {
