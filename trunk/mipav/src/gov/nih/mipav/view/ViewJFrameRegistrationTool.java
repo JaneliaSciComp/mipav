@@ -2645,7 +2645,8 @@ JPanel innerPanel, innerPanelA, innerPanelB;
         bothPanel.add(topPanel, gbc);
 
         toolBarSep = buildRegistrationToolBar(this, false);
-        this.setMinimumSize(new Dimension(toolBarSep.getWidth(), 0));
+        //this.setPreferredSize(new Dimension(toolBarSep.getWidth(), 0));
+       // this.setMinimumSize(new Dimension(toolBarSep.getWidth(), 0));
         
         toolBar.setMinimumSize(toolBarSep.getPreferredSize());
         
