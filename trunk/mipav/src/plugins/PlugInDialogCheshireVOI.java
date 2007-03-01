@@ -11,6 +11,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.util.Vector;
 import javax.swing.*;
+import javax.swing.filechooser.FileFilter;
 
 
 
@@ -30,8 +31,8 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements Al
     
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
-    /** DOCUMENT ME! */
-    private Vector files = new Vector();
+    /** All cheshire overlay files to be processed */
+    private Vector cheshireFiles = new Vector();
     
     /** Result image. */
     private ModelImage resultImage = null;
@@ -39,10 +40,10 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements Al
     /** Source image */
     private ModelImage image; // source image
     
-    /** Text field for file name of chesire overlay file. */
+    /** Text field for directory of chesire overlay files. */
     private JTextField textName;
     
-    /** Button to browse for cheshire overlay file. */
+    /** Button to browse for directory of cheshire overlay files. */
     private JButton browseButton;
 
     /** The implemented plugin algorithm */
@@ -85,36 +86,40 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements Al
         if (command.equals(BROWSE)) {
 
             try {
-                //Define .oly filter
                 String[] extensions = new String[1];
                 extensions[0] = "oly";
                 ViewImageFileFilter oly = new ViewImageFileFilter(extensions);
                 
                 
                 JFileChooser chooser = new JFileChooser();
-                chooser.setDialogTitle("Select Cheshire File(s)");
-                chooser.addChoosableFileFilter(oly); // shows overlay files only
-                chooser.setCurrentDirectory(new File(image.getImageDirectory()));
-                chooser.setMultiSelectionEnabled(true);
+                chooser.setDialogTitle("Select Directory with Cheshire Overlay(s)");
+                chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY); // shows directories only
+                chooser.setCurrentDirectory(new File(System.getProperty("user.dir")));
+                chooser.setMultiSelectionEnabled(false);
                 
 
                 int returnValue = chooser.showOpenDialog(this);
 
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
-                    files.removeAllElements();
-                    textName.setText("");
+                    textName.setText(chooser.getCurrentDirectory().getName());
                     textName.setToolTipText(null);
 
-                    File[] fileArray = chooser.getSelectedFiles();
+                    File fileDir = chooser.getSelectedFile();
                     String fileNames = new String();
-
-                    for (int i = 0; i < fileArray.length; i++) {
-                        files.add(fileArray[i]);
-                        fileNames += fileArray[i].getName() + " ";
+                    if(fileDir.isDirectory()) {
+                        File[] fileArray = fileDir.listFiles();
+                        for(int i=0, j=0; i<fileArray.length; i++) {
+                            if(oly.accept(fileArray[i])) {
+                                cheshireFiles.add(fileArray[i]);
+                            }
+                        }
+                    }
+                    
+                    for (int i = 0; i < cheshireFiles.size(); i++) {
+                        fileNames += ((File)cheshireFiles.get(i)).getName() + " ";
                     }
 
-                    if (files.size() > 0) {
-                        textName.setText(fileNames);
+                    if (cheshireFiles.size() > 0) {
 
                         if (fileNames.length() > 100) {
                             textName.setToolTipText(fileNames.substring(0, 99) + "...");
@@ -214,7 +219,7 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements Al
             String name = makeImageName(image.getImageName(), "_toVoi");
             resultImage = (ModelImage) image.clone();
             resultImage.setImageName(name);
-            cheshireVoiAlgo = new PlugInAlgorithmCheshireVOI(resultImage, image, files);
+            cheshireVoiAlgo = new PlugInAlgorithmCheshireVOI(resultImage, image, cheshireFiles);
 
             // This is very important. Adding this object as a listener allows
             // the algorithm to
@@ -296,14 +301,14 @@ public class PlugInDialogCheshireVOI extends JDialogScriptableBase implements Al
 
         JPanel mainPanel = new JPanel(new GridBagLayout());
         mainPanel.setForeground(Color.black);
-        mainPanel.setBorder(buildTitledBorder("Select Cheshire overlay file(s)"));
+        mainPanel.setBorder(buildTitledBorder("Select Directory with Cheshire Overlay(s)"));
 
         JLabel labelType = new JLabel("Cheshire Overlay Files");
         labelType.setForeground(Color.black);
         labelType.setFont(serif12);
 
         textName = new JTextField(30);
-        textName.setText("Cheshire overlay file");
+        textName.setText("Cheshire overlay directory");
         textName.setFont(serif12);
         textName.setEnabled(false);
 
