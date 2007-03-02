@@ -821,6 +821,8 @@ public class SRBUtility {
             } else if (extension.equals("dcm") && !dicomAdded) {
                 primaryFileList.add(sourceFiles[i]);
                 dicomAdded = true;
+            }else{
+                primaryFileList.add(sourceFiles[i]);
             }
         }
 
