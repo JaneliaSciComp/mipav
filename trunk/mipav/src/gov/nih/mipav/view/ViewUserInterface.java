@@ -495,10 +495,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             }
         } else if (command.equalsIgnoreCase("anonymizeDirectory")) {
             buildAnonDirectoryDialog();
-        } else if (command.equals("PlugInFileRead")) {
+        } else if (command.startsWith("PlugInFileRead")) {
 
             Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            String plugInName = "PlugIn" + command.substring(14);
+            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -521,10 +522,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-        } else if (command.equals("PlugInFileWrite")) {
+        } else if (command.startsWith("PlugInFileWrite")) {
 
             Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            String plugInName = "PlugIn" + command.substring(15);
+            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -547,9 +549,10 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-        } else if (command.equals("PlugInFileTransfer")) {
+        } else if (command.startsWith("PlugInFileTransfer")) {
             Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            String plugInName = "PlugIn" + command.substring(18);
+            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -567,9 +570,11 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-        } else if (command.equals("PlugInGeneric")) {
+        } else if (command.startsWith("PlugInGeneric")) {
             Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+           
+            String plugInName = "PlugIn" + command.substring(13);
+          //  String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -807,7 +812,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                         // System.err.println("adding " + name + " as PlugInAlgorithm");
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
-                                                                                name.length()), "PlugInAlgorithm", 0,
+                                                                                name.length()), "PlugInAlgorithm" +
+                                                                                name.substring(name.indexOf("PlugIn") + 6,
+                                                                                        name.length()), 0,
                                                                  al, null, false);
                         algorithmMenu.add(menuItem);
                         menuItem.setName(name);
@@ -816,7 +823,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                         if (((PlugInFile) plugIn).canReadImages()) {
                             menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
                                                                                     name.length()) + " - read image",
-                                                                     "PlugInFileRead", 0, al, null, false);
+                                                                     "PlugInFileRead" +
+                                                                     name.substring(name.indexOf("PlugIn") + 6,
+                                                                             name.length()), 0, al, null, false);
                             fileMenu.add(menuItem);
                             menuItem.setName(name);
                         }
@@ -827,7 +836,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                             // some sort of image has been loaded and could be writen out by a plugin
                             menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
                                                                                     name.length()) + " - write image",
-                                                                     "PlugInFileWrite", 0, al, null, false);
+                                                                     "PlugInFileWrite" +
+                                                                     name.substring(name.indexOf("PlugIn") + 6,
+                                                                             name.length()), 0, al, null, false);
                             fileMenu.add(menuItem);
                             menuItem.setName(name);
                         }
@@ -835,12 +846,16 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
                     } else if (plugIn instanceof PlugInFileTransfer) {
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
                                                                                 name.length()) + " - transfer files",
-                                                                 "PlugInFileTransfer", 0, al, null, false);
+                                                                 "PlugInFileTransfer" +
+                                                                 name.substring(name.indexOf("PlugIn") + 6,
+                                                                         name.length()), 0, al, null, false);
                         fileTransferMenu.add(menuItem);
                         menuItem.setName(name);
                     } else if (plugIn instanceof PlugInGeneric) {
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
-                                                                                name.length()), "PlugInGeneric", 0, al,
+                                                                                name.length()), "PlugInGeneric" +
+                                                                                name.substring(name.indexOf("PlugIn") + 6,
+                                                                                        name.length()), 0, al,
                                                                  null, false);
                         genericMenu.add(menuItem);
                         menuItem.setName(name);
@@ -848,7 +863,9 @@ public class ViewUserInterface implements ActionListener, WindowListener, KeyLis
 
                         // System.err.println("adding " + name + " as PlugInView");
                         menuItem = ViewMenuBuilder.buildMenuItem(name.substring(name.indexOf("PlugIn") + 6,
-                                                                                name.length()), "PlugInView", 0, al,
+                                                                                name.length()), "PlugInView" +
+                                                                                name.substring(name.indexOf("PlugIn") + 6,
+                                                                                        name.length()), 0, al,
                                                                  null, false);
 
                         viewMenu.add(menuItem);

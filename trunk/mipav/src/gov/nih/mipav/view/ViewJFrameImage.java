@@ -2543,10 +2543,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             userInterface.options();
         } else if (command.equals("Shortcuts")) {
             userInterface.showShortcutEditor(false);
-        } else if (command.equals("PlugInAlgorithm")) {
-
-            Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+        } else if (command.startsWith("PlugInAlgorithm")) {
+        	Object thePlugIn = null;
+        	String plugInName = "PlugIn" + command.substring(15);
+        	
+          //  String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             Preferences.debug("\nplugInName = " + plugInName + "\n");
 
@@ -2568,10 +2569,12 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (Access)");
             }
-        } else if (command.equals("PlugInFileRead")) {
+        } else if (command.startsWith("PlugInFileRead")) {
 
             Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            
+            String plugInName = "PlugIn" + command.substring(14);
+            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -2594,9 +2597,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-        } else if (command.equals("PlugInFileWrite")) {
+        } else if (command.startsWith("PlugInFileWrite")) {
             Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+
+            String plugInName = "PlugIn" + command.substring(15);
+            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -2619,9 +2624,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-        } else if (command.equals("PlugInFileTransfer")) {
+        } else if (command.startsWith("PlugInFileTransfer")) {
             Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            
+            String plugInName = "PlugIn" + command.substring(18);
+            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -2639,9 +2646,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-        } else if (command.equals("PlugInGeneric")) {
+        } else if (command.startsWith("PlugInGeneric")) {
             Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            
+            String plugInName = "PlugIn" + command.substring(13);
+            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
@@ -2659,9 +2668,11 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
             } catch (IllegalAccessException e) {
                 MipavUtil.displayError("Unable to load plugin (acc)");
             }
-        } else if (command.equals("PluginView")) {
+        } else if (command.startsWith("PluginView")) {
             Object thePlugIn = null;
-            String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
+            
+            String plugInName = "PlugIn" + command.substring(10);
+            //String plugInName = ((JMenuItem) (event.getSource())).getComponent().getName();
 
             try {
                 thePlugIn = Class.forName(plugInName).newInstance();
