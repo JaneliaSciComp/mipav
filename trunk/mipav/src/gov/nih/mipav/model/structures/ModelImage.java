@@ -554,6 +554,7 @@ public class ModelImage extends ModelStorageBase {
      */
     public void copyFileTypeInfoSansBufferType(ModelImage fromImage) {
         FileInfoBase fileInfo;
+
         for (int i = 0; i < fromImage.getFileInfo().length; i++) {
             fileInfo = (FileInfoBase) (fromImage.getFileInfo(i).cloneItself());
             fileInfo.setDataType(getType());
@@ -2050,25 +2051,24 @@ public class ModelImage extends ModelStorageBase {
                     }
                 } /* LUT update of a non-ModelImage data strucuture: */
                 else if ((frameList.elementAt(i) instanceof
-                          gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
+                              gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)) {
                     ModelImage imgA = ((gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
-                                       frameList.elementAt(i)).getImageA();
+                                           frameList.elementAt(i)).getImageA();
                     ModelImage imgB = ((gov.nih.mipav.view.renderer.surfaceview.brainflattenerview.JPanelBrainSurfaceFlattener)
-                                       frameList.elementAt(i)).getImageB();
-                    
+                                           frameList.elementAt(i)).getImageB();
+
                     if (this == imgA) {
                         ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgB) {
                         ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, LUT, forceShow, -1);
                     }
-                }
-                else if ((frameList.elementAt(i) instanceof
-                          gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
+                } else if ((frameList.elementAt(i) instanceof
+                                gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
                     ModelImage imgS = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
-                                       frameList.elementAt(i)).getImageSeparate();
+                                           frameList.elementAt(i)).getImageSeparate();
                     ModelImage imgL = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
-                                       frameList.elementAt(i)).getImageLink();
-                    
+                                           frameList.elementAt(i)).getImageLink();
+
                     if (this == imgS) {
                         ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(LUT, null, forceShow, -1);
                     } else if (this == imgL) {
@@ -2124,14 +2124,13 @@ public class ModelImage extends ModelStorageBase {
                 }
 
                 ((ViewImageUpdateInterface) frameList.elementAt(i)).updateImages(null, null, forceShow, -1);
-            }
-            else if ((frameList.elementAt(i) instanceof
-                      gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
-                ModelImage imgS = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
-                                   frameList.elementAt(i)).getImageSeparate();
-                ModelImage imgL = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)
-                                   frameList.elementAt(i)).getImageLink();
-                
+            } else if ((frameList.elementAt(i) instanceof
+                            gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture)) {
+                ModelImage imgS = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
+                                      .getImageSeparate();
+                ModelImage imgL = ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i))
+                                      .getImageLink();
+
                 if (this == imgS) {
                     ((gov.nih.mipav.view.renderer.surfaceview.JPanelSurfaceTexture) frameList.elementAt(i)).setRGBTA(RGBT);
                 } else if (this == imgL) {
@@ -2545,11 +2544,23 @@ public class ModelImage extends ModelStorageBase {
     }
 
     /**
-     * Accessor that sets the name of the image.
+     * Accessor that sets the name of the image. This method also updates the file name in the fileInfos to match the
+     * new image name.
      *
      * @param  name  the String representing the filename
      */
     public void setImageName(String name) {
+        setImageName(name, true);
+    }
+
+    /**
+     * Accessor that sets the name of the image.
+     *
+     * @param  name            the String representing the filename
+     * @param  updateFileName  whether to update the file name stored in the image's fileInfos to match the new image
+     *                         name
+     */
+    public void setImageName(String name, boolean updateFileName) {
 
         // update the fileInfo names
         FileInfoBase[] fInfos = this.getFileInfo();
@@ -2566,12 +2577,15 @@ public class ModelImage extends ModelStorageBase {
         }
 
         // System.err.println("Full new name: " + name + suffix);
-        for (int i = 0; i < fInfos.length; i++) {
+        if (updateFileName) {
 
-            if (fInfos[i] instanceof FileInfoDicom) {
-                fInfos[i].setFileName(name + (i + 1) + suffix);
-            } else {
-                fInfos[i].setFileName(name + suffix);
+            for (int i = 0; i < fInfos.length; i++) {
+
+                if (fInfos[i] instanceof FileInfoDicom) {
+                    fInfos[i].setFileName(name + (i + 1) + suffix);
+                } else {
+                    fInfos[i].setFileName(name + suffix);
+                }
             }
         }
 
