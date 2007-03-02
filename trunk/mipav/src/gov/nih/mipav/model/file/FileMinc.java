@@ -795,7 +795,9 @@ public class FileMinc extends FileBase {
         }
 
         if ((studyNum != null) && (seriesNum != null)) {
-            image.setImageName(studyNum + "_" + seriesNum);
+
+            // do not change the fileInfo fileName when setting the image name
+            image.setImageName(studyNum + "_" + seriesNum, false);
         }
 
         return image;
@@ -947,7 +949,6 @@ public class FileMinc extends FileBase {
                         raFile.seek(fileInfoMinc.getVarElem(i).begin);
 
                         for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
-                            System.out.println("min type " + fileInfoMinc.getVarElem(i).nc_type);
                             writeNextElem(new Double(mins[j]), fileInfoMinc.getVarElem(i).nc_type,
                                           fileInfoMinc.getEndianess());
                         }
@@ -963,7 +964,6 @@ public class FileMinc extends FileBase {
                         raFile.seek(fileInfoMinc.getVarElem(i).begin);
 
                         for (int j = 0; j < fileInfoMinc.getVarElem(i).values.size(); j++) {
-                            System.out.println("min type " + fileInfoMinc.getVarElem(i).nc_type);
                             writeNextElem(new Double(maxs[j]), fileInfoMinc.getVarElem(i).nc_type,
                                           fileInfoMinc.getEndianess());
                         }
