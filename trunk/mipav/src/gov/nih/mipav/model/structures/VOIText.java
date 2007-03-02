@@ -48,6 +48,7 @@ public class VOIText extends VOIBase {
     /** This must be kept separate (but parallel) to the VOI color. */
     private Color textColor = Color.WHITE;
 
+    /** The color used to draw behind the main text (so that the text will stand out)*/
     private Color backgroundColor = Color.BLACK;
     
     /**
@@ -59,6 +60,7 @@ public class VOIText extends VOIBase {
     /** The String to be displayed. */
     private String textString = new String();
     
+    /** If this is set to true, a draggable arrow will be displayed */
     private boolean useMarker = true;
     
     //~ Constructors ---------------------------------------------------------------------------------------------------
@@ -97,8 +99,7 @@ public class VOIText extends VOIBase {
      */
     public boolean contains(int _x, int _y, float zoomX, float zoomY, float[] resols, Graphics g) {
 
-        int x, y, x2, y2;
-        float xC, yC, dist;
+        int x, y;
 
         x = Math.round(((Point3Df) (elementAt(0))).x);
         y = Math.round(((Point3Df) (elementAt(0))).y);
@@ -119,6 +120,15 @@ public class VOIText extends VOIBase {
         return true;
     }
 
+    /**
+     * Determines if the given point (x,y) is within 3 pixels of the arrow's tip.
+     * @param _x x coordinate
+     * @param _y y coordinate
+     * @param zoomX zoom level of the image
+     * @param resolutionX the x resolution
+     * @param resolutionY the y resolution
+     * @return
+     */
     public boolean nearMarkerPoint(int _x, int _y, float zoomX, float resolutionX, float resolutionY) {
     	int xS, yS;
     	
@@ -126,8 +136,8 @@ public class VOIText extends VOIBase {
     		return false;
     	}
     	
-    	xS = Math.round(((Point3Df) (elementAt(1))).x * zoomX * resolutionX);
-        yS = Math.round(((Point3Df) (elementAt(1))).y * zoomX * resolutionY);
+    	xS = MipavMath.round(((Point3Df) (elementAt(1))).x * zoomX * resolutionX);
+        yS = MipavMath.round(((Point3Df) (elementAt(1))).y * zoomX * resolutionY);
         
     	float dist;       
         dist = (float) MipavMath.distance(xS, _x, yS, _y);
@@ -165,20 +175,15 @@ public class VOIText extends VOIBase {
         int j;
 
         int xS, yS, xS2, yS2;
-        int x, y, x2, y2;
 
-
-        x = Math.round(((Point3Df) (elementAt(0))).x);
-        y = Math.round(((Point3Df) (elementAt(0))).y);
         xS = Math.round(((Point3Df) (elementAt(0))).x * zoomX * resolutionX);
         yS = Math.round(((Point3Df) (elementAt(0))).y * zoomY * resolutionY);
-
-        x2 = Math.round(((Point3Df) (elementAt(1))).x);
-        y2 = Math.round(((Point3Df) (elementAt(1))).y);
+      
         xS2 = Math.round(((Point3Df) (elementAt(1))).x * zoomX * resolutionX);
         yS2 = Math.round(((Point3Df) (elementAt(1))).y * zoomY * resolutionY);
      
         
+        // draw the arrow if useMarker is true
         if (useMarker) {
         // determine the width/height of the TEXT (for marker line location)
         int width = (int) (g.getFontMetrics(textFont).stringWidth(textString));
@@ -222,10 +227,10 @@ public class VOIText extends VOIBase {
             g.drawString(textString, xS + 1, yS);
         } else {
         	g.setColor(backgroundColor);
-        	g.drawString(textString, xS + 1, yS + 1);
-            g.drawString(textString, xS - 1, yS + 1);
-            g.drawString(textString, xS - 1, yS - 1);
-            g.drawString(textString, xS + 1, yS - 1);
+        	g.drawString(textString, xS + 1, yS);
+            g.drawString(textString, xS - 1, yS);
+            g.drawString(textString, xS, yS - 1);
+            g.drawString(textString, xS, yS + 1);
         }
 
         
@@ -554,10 +559,18 @@ public class VOIText extends VOIBase {
         this.fontSize = fontSize;
     }
 
+    /**
+     * Sets the arrow to be on or off
+     * @param mark whether to draw the arrow
+     */
     public void setUseMarker(boolean mark) {
     	this.useMarker = mark;
     }
     
+    /**
+     * gets whether or not the arrow should be drawn
+     * @return
+     */
     public boolean useMarker() {
     	return this.useMarker;
     }
@@ -587,18 +600,83 @@ public class VOIText extends VOIBase {
         }
     }
     
+    /**
+     * Function to draw an arrow between two given points
+     * @param g2d the graphics with which to draw
+     * @param xCenter the xcoord of start value
+     * @param yCenter the ycoord of start value
+     * @param x the arrow tip x value
+     * @param y the arrow tip y value
+     * @param stroke the size of the arrow
+     */
     private void drawArrow(Graphics2D g2d, int xCenter, int yCenter, int x, int y, float stroke) {
         double aDir=Math.atan2(xCenter-x,yCenter-y);
-        g2d.drawLine(x,y,xCenter,yCenter);
-        g2d.setStroke(new BasicStroke(1f));					// make the arrow head solid even if dash pattern has been specified
+        
+        g2d.setColor(backgroundColor);
+        g2d.drawLine(x + 1, y + 1, xCenter + 1, yCenter + 1);
+        g2d.drawLine(x - 1, y - 1, xCenter - 1, yCenter - 1);
+                
+        				// make the arrow head solid even if dash pattern has been specified
         Polygon tmpPoly=new Polygon();
+        Polygon backPoly1 = new Polygon();
+        Polygon backPoly2 = new Polygon();
+        Polygon backPoly3 = new Polygon();
+        Polygon backPoly4 = new Polygon();
+        
+        
         int i1=12+(int)(stroke*2);
         int i2=6+(int)stroke;							// make the arrow head the same size regardless of the length length
         tmpPoly.addPoint(x,y);							// arrow tip
-        tmpPoly.addPoint(x+xCor(i1,aDir+.5),y+yCor(i1,aDir+.5));
-        tmpPoly.addPoint(x+xCor(i2,aDir),y+yCor(i2,aDir));
-        tmpPoly.addPoint(x+xCor(i1,aDir-.5),y+yCor(i1,aDir-.5));
+        backPoly1.addPoint(x + 1, y);
+        backPoly2.addPoint(x - 1, y);
+        backPoly3.addPoint(x, y + 1);
+        backPoly4.addPoint(x, y - 1);
+        
+        int x2 = x+xCor(i1,aDir+.5);
+        int y2 = y+yCor(i1,aDir+.5);
+        tmpPoly.addPoint(x2, y2);
+        backPoly1.addPoint(x2 + 1, y2);
+        backPoly2.addPoint(x2 - 1, y2);
+        backPoly3.addPoint(x2, y2 + 1);
+        backPoly4.addPoint(x2, y2 - 1);
+        
+        
+        int x3 = x+xCor(i2,aDir);
+        int y3 = y+yCor(i2,aDir);
+        tmpPoly.addPoint(x3, y3);
+        backPoly1.addPoint(x3 + 1, y3);
+        backPoly2.addPoint(x3 - 1, y3);
+        backPoly3.addPoint(x3, y3 + 1);
+        backPoly4.addPoint(x3, y3 - 1);
+        
+        int x4 = x+xCor(i1,aDir-.5);
+        int y4 = y+yCor(i1,aDir-.5);
+        tmpPoly.addPoint(x4, y4);
+        backPoly1.addPoint(x4 + 1, y4 + 1);
+        backPoly2.addPoint(x4 - 1, y4 - 1);
+        backPoly1.addPoint(x4, y4 + 1);
+        backPoly2.addPoint(x4, y4 - 1);
+        
         tmpPoly.addPoint(x,y);							// arrow tip
+        backPoly1.addPoint(x + 1, y + 1);
+        backPoly2.addPoint(x - 1, y - 1);
+        backPoly3.addPoint(x, y + 1);
+        backPoly4.addPoint(x, y - 1);        
+        
+        g2d.setStroke(new BasicStroke(1f));	
+        g2d.drawPolygon(backPoly1);
+        //g2d.fillPolygon(backPoly1);
+        g2d.drawPolygon(backPoly2);
+        //g2d.fillPolygon(backPoly2);
+        g2d.drawPolygon(backPoly3);
+        g2d.drawPolygon(backPoly4);
+        
+        
+        g2d.setColor(textColor);
+        
+        g2d.drawLine(x,y,xCenter,yCenter);
+        
+        
         g2d.drawPolygon(tmpPoly);
         g2d.fillPolygon(tmpPoly);						// remove this line to leave arrow head unpainted
      }
