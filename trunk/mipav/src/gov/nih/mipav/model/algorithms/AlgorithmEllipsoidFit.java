@@ -1,13 +1,12 @@
 package gov.nih.mipav.model.algorithms;
 
 
+import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.model.structures.jama.*;
 
 import gov.nih.mipav.view.*;
 
 import java.util.*;
-
-import javax.vecmath.*;
 
 
 /**
@@ -56,7 +55,7 @@ public class AlgorithmEllipsoidFit {
         C[2][1] = 1;
 
         for (i = 0; i < kPoints.size(); i++) {
-            Point3f kPoint = (Point3f) kPoints.get(i);
+            Point3Df kPoint = (Point3Df) kPoints.get(i);
             float fX = kPoint.x;
             float fY = kPoint.y;
             float fZ = kPoint.z;
