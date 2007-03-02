@@ -11,8 +11,6 @@ import java.io.*;
 
 import java.util.*;
 
-import javax.vecmath.*;
-
 
 /**
  * This shows how to extend the AlgorithmBase class.
@@ -123,7 +121,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Measuring ellipsoid diameters ...");
-        
+
 
         fileInfo = srcImage.getFileInfo();
 
@@ -320,7 +318,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         srcImage.getUserInterface().getFrameContainingImage(srcImage).saveAllVOIsTo(fileDirectory + File.separator +
                                                                                     voiName);
 
-        
+
         setCompleted(true);
     }
 
@@ -392,7 +390,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         float scaleMax;
         float invMax;
         Polygon gon;
-        Point3f kVoxel;
+        Point3Df kVoxel;
         AlgorithmQuadraticFit kQFit;
         float[] ellipseLength = new float[3];
 
@@ -411,7 +409,7 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Measuring ellipsoid diameters ...");
-        
+
 
         fileInfo = srcImage.getFileInfo();
 
@@ -814,10 +812,10 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                             for (j = 0; j < gon.npoints; j++) {
 
                                 if (useRes3D) {
-                                    kVoxel = new Point3f(gon.xpoints[j] * xRes * invMax, gon.ypoints[j] * yRes * invMax,
-                                                         z * zRes * invMax);
+                                    kVoxel = new Point3Df(gon.xpoints[j] * xRes * invMax,
+                                                          gon.ypoints[j] * yRes * invMax, z * zRes * invMax);
                                 } else {
-                                    kVoxel = new Point3f(gon.xpoints[j] * invMax, gon.ypoints[j] * invMax, z * invMax);
+                                    kVoxel = new Point3Df(gon.xpoints[j] * invMax, gon.ypoints[j] * invMax, z * invMax);
                                 }
 
                                 volPoints[k].add(kVoxel);
@@ -913,7 +911,6 @@ public class PlugInAlgorithmFibroid extends AlgorithmBase {
                                                                                     voiName);
 
 
-        
         setCompleted(true);
     }
 

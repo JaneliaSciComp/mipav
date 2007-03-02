@@ -14,8 +14,6 @@ import java.text.*;
 
 import java.util.*;
 
-import javax.vecmath.*;
-
 
 /**
  * This shows how to extend the AlgorithmBase class.
@@ -79,49 +77,49 @@ import javax.vecmath.*;
  *
  *           <p>13.) Process each VOI one at a time. a.) For each VOI find the sum of the red intensity values, the sum
  *           of the green intensity values, and the pixel count for each ID object. b.) Look at all the object pixel
- *           counts and assign the ID of the object with the most pixels in the VOI to the VOI's objectID. c.) Find the center of
- *           the VOI. If redCount >= greenCount, find the red center, otherwise find the green center. Both the zero
- *           order geometric centers and the first order centers of mass are found. d.) Expand the nucleus to which the
- *           VOI belongs to include the VOI.</p>
+ *           counts and assign the ID of the object with the most pixels in the VOI to the VOI's objectID. c.) Find the
+ *           center of the VOI. If redCount >= greenCount, find the red center, otherwise find the green center. Both
+ *           the zero order geometric centers and the first order centers of mass are found. d.) Expand the nucleus to
+ *           which the VOI belongs to include the VOI.</p>
  *
  *           <p>14.) Process IDArray objects one at a time. a.) Ellipse fit blue IDArray objects with first and second
- *           moments to calculate the length of the 3 semiaxes.  b.) Find the zero order moments of each blue IDArray
- *           object. c.) Create a byteBuffer with pixels for that ID object equal to 1 and all the other pixels = 0.
- *           d.) Import byteBuffer into grayImage. e.) Run a dilation on grayImage and export the result to dilateArray.
- *           e.) At every point where dilateArray = 1 and byteBuffer = 0, set boundaryArray = to the id of that object.
- *           For every point on the boundary find the square of the distance to the center of the object and if this
- *           square distance is the lowest yet noted, put the value in lowestSquare. If this square distance is the
- *           highest yet noted, put the value in highestSquare. f.) After examining all points in the image, the program
- *           records the Rmin distance from the center to edge as the square root of lowestSquare and the Rmax distance
- *           from the center to the edge as the square root of highestSquare. g.) Put points on the boundary of each blue
- *           ID object into a second ellipsoid fitting program that uses the peripheral points to find the 3 semiaxes.
- *           h.) Nuclei volumes are found from the blue count multiplied by the x, y, and z resolutions.
- *           15.) Determine nucleus-VOI distances a.) Determine the distance from the center of the ID object to
- *           the zero order center of the VOI. Find the distance of the line segment that passes thru these 2 points
- *           and terminates at the cell surface. b.) Find the distance from the center of the ID object to the first
- *           order center of the VOI. Find the distance of the line segment that passes thru these 2 points and
- *           terminates at the cell surface. </p>
+ *           moments to calculate the length of the 3 semiaxes. b.) Find the zero order moments of each blue IDArray
+ *           object. c.) Create a byteBuffer with pixels for that ID object equal to 1 and all the other pixels = 0. d.)
+ *           Import byteBuffer into grayImage. e.) Run a dilation on grayImage and export the result to dilateArray. e.)
+ *           At every point where dilateArray = 1 and byteBuffer = 0, set boundaryArray = to the id of that object. For
+ *           every point on the boundary find the square of the distance to the center of the object and if this square
+ *           distance is the lowest yet noted, put the value in lowestSquare. If this square distance is the highest yet
+ *           noted, put the value in highestSquare. f.) After examining all points in the image, the program records the
+ *           Rmin distance from the center to edge as the square root of lowestSquare and the Rmax distance from the
+ *           center to the edge as the square root of highestSquare. g.) Put points on the boundary of each blue ID
+ *           object into a second ellipsoid fitting program that uses the peripheral points to find the 3 semiaxes. h.)
+ *           Nuclei volumes are found from the blue count multiplied by the x, y, and z resolutions. 15.) Determine
+ *           nucleus-VOI distances a.) Determine the distance from the center of the ID object to the zero order center
+ *           of the VOI. Find the distance of the line segment that passes thru these 2 points and terminates at the
+ *           cell surface. b.) Find the distance from the center of the ID object to the first order center of the VOI.
+ *           Find the distance of the line segment that passes thru these 2 points and terminates at the cell surface.
+ *           </p>
  *
  *           <p>Scheme for automatic VOI generation: 1.) Create a red image. 2.) Median filter the red image. 3.) Obtain
- *           histogram information on the red image. Set the threshold so that the redFraction portion of the
- *           cumulative histogram is at or above threshold for the fuzzy c means. 4.) Perform a 3 level fuzzy c means
- *           segmentation on the red image. 5.) Convert the red max to 1 and the other values to 0. 6.) Remove holes
- *           from red VOIs. 7.) Smooth red with a morphological opening followed by a closing. 8.) ID objects in red
- *           segmented image which have at least redMin pixels. Split redIDArray objects apart into 2 or 3 redIDArray
- *           objects if they go between 2 or 3 cells. 9.) Create a green image. 10.) Median filter the green image. 11.)
- *           Obtain histogram information on the green image. Set the threshold so that the greenFraction portion of the
- *           cumulative histogram is at or above threshold for the fuzzy c means. 12.) Perform a 3 level fuzzy c means
- *           segmentation on the green image. 13.) Convert the green max to 1 and the other values to 0. 15.) Remove
- *           holes from green VOIs. 15.) Smooth green with a morphological opening followed by a closing. 16.) ID
- *           objects in green segmented image which have at least greenMin pixels. Split greenIDArray objects apart into 2
- *           or 3 greenIDArray objects if they go between 2 or 3 cells. 17.) Sort red objects by red intensity count into
- *           a sorted red array. Have a separate sorted array for each nucleus. Put no more than redNumber red objects into the
- *           sorted red array for each nucleus. 18.) Sort green objects by green intensity count into a sorted green
- *           array. Have a separate sorted green array for each nucleus. Put no more than greenNumber green objects
- *           into the sorted green array for each nucleus.  19.) Create byteBuffer with value = 0 if no
- *           sorted object is present at that position and use a separate positive index for each red or green voi.
- *           Create an accompanying color table to set for each nucleus the largest red voi to color yellow, the other
- *           red vois to a color yellow.darker(), the largest green voi to color pink, and the other green vois to color
+ *           histogram information on the red image. Set the threshold so that the redFraction portion of the cumulative
+ *           histogram is at or above threshold for the fuzzy c means. 4.) Perform a 3 level fuzzy c means segmentation
+ *           on the red image. 5.) Convert the red max to 1 and the other values to 0. 6.) Remove holes from red VOIs.
+ *           7.) Smooth red with a morphological opening followed by a closing. 8.) ID objects in red segmented image
+ *           which have at least redMin pixels. Split redIDArray objects apart into 2 or 3 redIDArray objects if they go
+ *           between 2 or 3 cells. 9.) Create a green image. 10.) Median filter the green image. 11.) Obtain histogram
+ *           information on the green image. Set the threshold so that the greenFraction portion of the cumulative
+ *           histogram is at or above threshold for the fuzzy c means. 12.) Perform a 3 level fuzzy c means segmentation
+ *           on the green image. 13.) Convert the green max to 1 and the other values to 0. 15.) Remove holes from green
+ *           VOIs. 15.) Smooth green with a morphological opening followed by a closing. 16.) ID objects in green
+ *           segmented image which have at least greenMin pixels. Split greenIDArray objects apart into 2 or 3
+ *           greenIDArray objects if they go between 2 or 3 cells. 17.) Sort red objects by red intensity count into a
+ *           sorted red array. Have a separate sorted array for each nucleus. Put no more than redNumber red objects
+ *           into the sorted red array for each nucleus. 18.) Sort green objects by green intensity count into a sorted
+ *           green array. Have a separate sorted green array for each nucleus. Put no more than greenNumber green
+ *           objects into the sorted green array for each nucleus. 19.) Create byteBuffer with value = 0 if no sorted
+ *           object is present at that position and use a separate positive index for each red or green voi. Create an
+ *           accompanying color table to set for each nucleus the largest red voi to color yellow, the other red vois to
+ *           a color yellow.darker(), the largest green voi to color pink, and the other green vois to color
  *           pink.darker(). Create an accompanying name table to set the name for each voi. The largest red voi in the
  *           fifth nucleus has name 5R1. The second largest red voi in the fifth nucleus has the name 5R2. The third
  *           largest green voi in the fourth nucleus has the name 4G3. 20.) Extract VOIs from the red_green image. 21.)
@@ -308,8 +306,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float distSqr;
         float lowestSqr;
         float highestSqr;
-        //int xEdge = -1;
-        //int yEdge = -1;
+
+        // int xEdge = -1;
+        // int yEdge = -1;
         int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
         int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
         FileInfoBase fileInfo;
@@ -354,12 +353,14 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[] blueCountTotal = null;
         AlgorithmMorphology2D fillHolesAlgo2D;
         int[] voiCount;
-        //int j1;
+
+        // int j1;
         int redFound;
         int greenFound;
         char voiType;
         float nuclearArea;
-        //float equivalentRadius;
+
+        // float equivalentRadius;
         float voiArea;
         NumberFormat nf;
         float initialdx;
@@ -394,7 +395,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         int totalCount;
         int countsToRetain;
         int countsFound;
-        boolean  adaptiveSize = false;
+        boolean adaptiveSize = false;
         int maximumSize = 0;
 
 
@@ -437,7 +438,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Processing image ...");
-        
+
 
         fireProgressStateChanged("Creating blue image");
         grayImage = new ModelImage(ModelStorageBase.FLOAT, srcImage.getExtents(), srcImage.getImageName() + "_gray",
@@ -510,7 +511,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         thresholds[1] = max;
         fillValue = 0.0f;
         binaryFlag = true;
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
+        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE,
+                                                   wholeImage, true);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -711,7 +713,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         if (numObjects == 0) {
             MipavUtil.displayError(edgeObjects + " blue objects touched edges");
             MipavUtil.displayError("No blue objects that do not touch edges");
-            
+
             setCompleted(false);
 
             return;
@@ -764,8 +766,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 kernelShape = AlgorithmMedian.SQUARE_KERNEL;
                 stdDev = 0.0f;
                 wholeImage = true;
-                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, 
-                                                 adaptiveSize, maximumSize, wholeImage);
+                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
+                                                 maximumSize, wholeImage);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -855,8 +857,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[1] = max;
                 fillValue = 0.0f;
                 binaryFlag = true;
-                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
-                                                           true);
+                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
+                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -1055,8 +1057,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 kernelShape = AlgorithmMedian.SQUARE_KERNEL;
                 stdDev = 0.0f;
                 wholeImage = true;
-                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, 
-                                                 adaptiveSize, maximumSize, wholeImage);
+                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
+                                                 maximumSize, wholeImage);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -1144,8 +1146,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[1] = max;
                 fillValue = 0.0f;
                 binaryFlag = true;
-                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
-                                                           true);
+                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
+                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -1915,10 +1917,9 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                     voiArea = xRes * yRes * voiCount[j];
                     UI.setDataText("\t" + nf.format(voiArea));
 
-                    geoToCenter = (float) Math.sqrt(((xPosGeo[j] - xCenter[i]) * (xPosGeo[j] - xCenter[i]) * xRes *
-                                                         xRes) +
-                                                    ((yPosGeo[j] - yCenter[i]) * (yPosGeo[j] - yCenter[i]) * yRes *
-                                                         yRes));
+                    geoToCenter = (float)
+                                      Math.sqrt(((xPosGeo[j] - xCenter[i]) * (xPosGeo[j] - xCenter[i]) * xRes * xRes) +
+                                                ((yPosGeo[j] - yCenter[i]) * (yPosGeo[j] - yCenter[i]) * yRes * yRes));
 
                     initialdx = xPosGeo[j] - xCenter[i];
                     initialdy = yPosGeo[j] - yCenter[i];
@@ -1975,22 +1976,25 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                         }
                     } // while (true)
 
-                    centerToGeoToEdge = (float) Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) * xRes *
-                                                               xRes) +
-                                                          ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
-                                                               yRes));
+                    centerToGeoToEdge = (float)
+                                            Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) * xRes *
+                                                           xRes) +
+                                                      ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
+                                                           yRes));
                     UI.setDataText("\t" + nf.format(centerToGeoToEdge));
                     geoToCenter = 100.0f * geoToCenter / centerToGeoToEdge;
                     UI.setDataText("\t" + nf.format(geoToCenter));
-                    geoToEdge = (float) Math.sqrt(((lastEdgeX - xPosGeo[j]) * (lastEdgeX - xPosGeo[j]) * xRes * xRes) +
-                                                  ((lastEdgeY - yPosGeo[j]) * (lastEdgeY - yPosGeo[j]) * yRes * yRes));
+                    geoToEdge = (float)
+                                    Math.sqrt(((lastEdgeX - xPosGeo[j]) * (lastEdgeX - xPosGeo[j]) * xRes * xRes) +
+                                              ((lastEdgeY - yPosGeo[j]) * (lastEdgeY - yPosGeo[j]) * yRes * yRes));
                     UI.setDataText("\t" + nf.format(geoToEdge));
 
 
-                    gravToCenter = (float) Math.sqrt(((xPosGrav[j] - xCenter[i]) * (xPosGrav[j] - xCenter[i]) * xRes *
-                                                          xRes) +
-                                                     ((yPosGrav[j] - yCenter[i]) * (yPosGrav[j] - yCenter[i]) * yRes *
-                                                          yRes));
+                    gravToCenter = (float)
+                                       Math.sqrt(((xPosGrav[j] - xCenter[i]) * (xPosGrav[j] - xCenter[i]) * xRes *
+                                                      xRes) +
+                                                 ((yPosGrav[j] - yCenter[i]) * (yPosGrav[j] - yCenter[i]) * yRes *
+                                                      yRes));
 
                     initialdx = xPosGrav[j] - xCenter[i];
                     initialdy = yPosGrav[j] - yCenter[i];
@@ -2047,36 +2051,36 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                         }
                     } // while (true)
 
-                    centerToGravToEdge = (float) Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) *
-                                                                xRes * xRes) +
-                                                           ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) *
-                                                                yRes * yRes));
+                    centerToGravToEdge = (float)
+                                             Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) * xRes *
+                                                            xRes) +
+                                                       ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
+                                                            yRes));
                     UI.setDataText("\t" + nf.format(centerToGravToEdge));
                     gravToCenter = 100.0f * gravToCenter / centerToGravToEdge;
                     UI.setDataText("\t" + nf.format(gravToCenter));
-                    gravToEdge = (float) Math.sqrt(((lastEdgeX - xPosGrav[j]) * (lastEdgeX - xPosGrav[j]) * xRes *
-                                                        xRes) +
-                                                   ((lastEdgeY - yPosGrav[j]) * (lastEdgeY - yPosGrav[j]) * yRes *
-                                                        yRes));
+                    gravToEdge = (float)
+                                     Math.sqrt(((lastEdgeX - xPosGrav[j]) * (lastEdgeX - xPosGrav[j]) * xRes * xRes) +
+                                               ((lastEdgeY - yPosGrav[j]) * (lastEdgeY - yPosGrav[j]) * yRes * yRes));
                     UI.setDataText("\t" + nf.format(gravToEdge));
 
 
                     /*lowestSqr = Float.MAX_VALUE;
                      * for (j1 = 0, y = 0; y < yDim; y++, j1 += xDim) { for (x = 0; x < xDim; x++) {     index = x + j1;
-                     *     if (boundaryArray[index] == objectID[j]) {         distSqr = (xPosGeo[j] - x) * (xPosGeo[j] -
+                     *    if (boundaryArray[index] == objectID[j]) {         distSqr = (xPosGeo[j] - x) * (xPosGeo[j] -
                      * x) *                   xRes * xRes +                   (yPosGeo[j] - y) * (yPosGeo[j] - y) *
-                     *              yRes * yRes;         if (distSqr < lowestSqr) {             lowestSqr = distSqr;
-                     *         xEdge = x;             yEdge = y;         }     } } } geoToEdge = (float)
-                     * Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(geoToEdge)); geoToEdge *= 100.0f
-                     * /centerToFarEdge[i]; UI.setDataText("\t" + nf.format(geoToEdge));
+                     *        yRes * yRes;         if (distSqr < lowestSqr) {             lowestSqr = distSqr;
+                     * xEdge = x;             yEdge = y;         }     } } } geoToEdge = (float) Math.sqrt(lowestSqr);
+                     * UI.setDataText("\t\t" + nf.format(geoToEdge)); geoToEdge *= 100.0f /centerToFarEdge[i];
+                     * UI.setDataText("\t" + nf.format(geoToEdge));
                      *
                      * lowestSqr = Float.MAX_VALUE; for (j1 = 0, y = 0; y < yDim; y++, j1 += xDim) { for (x = 0; x < xDim;
                      * x++) {     index = x + j1;     if (boundaryArray[index] == objectID[j]) {         distSqr =
-                     * (xPosGrav[j] - x) * (xPosGrav[j] - x) *                   xRes * xRes +
-                     * (yPosGrav[j] - y) * (yPosGrav[j] - y) *                   yRes * yRes;         if (distSqr <
-                     * lowestSqr) {             lowestSqr = distSqr;             xEdge = x;             yEdge = y;
-                     *   }     } } } gravToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" +
-                     * nf.format(gravToEdge)); gravToEdge *= 100.0f /centerToFarEdge[i];UI.setDataText("\t" +
+                     * (xPosGrav[j] - x) * (xPosGrav[j] - x) *                   xRes * xRes + (yPosGrav[j] - y) *
+                     * (yPosGrav[j] - y) *                   yRes * yRes;         if (distSqr < lowestSqr) {
+                     * lowestSqr = distSqr;             xEdge = x;             yEdge = y;  }     } } } gravToEdge =
+                     * (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(gravToEdge)); gravToEdge *=
+                     * 100.0f /centerToFarEdge[i];UI.setDataText("\t" +
                      * nf.format(gravToEdge));*/
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)
@@ -2090,7 +2094,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 
@@ -2182,9 +2185,10 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float distSqr;
         float lowestSqr;
         float highestSqr;
-        //int xEdge = -1;
-        //int yEdge = -1;
-        //int zEdge = -1;
+
+        // int xEdge = -1;
+        // int yEdge = -1;
+        // int zEdge = -1;
         int xUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[0];
         int yUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[1];
         int zUnits = srcImage.getFileInfo(0).getUnitsOfMeasure()[2];
@@ -2238,13 +2242,15 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         AlgorithmMorphology2D fillHolesAlgo2D;
         AlgorithmMorphology3D fillHolesAlgo3D;
         int[] voiCount;
-        //int j1;
-        //int k1;
+
+        // int j1;
+        // int k1;
         int redFound;
         int greenFound;
         char voiType;
         float nuclearVolume;
-        //float equivalentRadius;
+
+        // float equivalentRadius;
         NumberFormat nf;
         float voiVolume;
         float initialdx;
@@ -2286,7 +2292,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         int offset;
         int idm1;
         int[] volume;
-        boolean  adaptiveSize = false;
+        boolean adaptiveSize = false;
         int maximumSize = 0;
 
         // centroids
@@ -2317,7 +2323,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         float[][] sAxisCen;
         float scaleMax;
         float invMax;
-        Point3f kVoxel;
+        Point3Df kVoxel;
         AlgorithmEllipsoidFit kF;
         Vector[] volPoints;
         double[] axes;
@@ -2345,7 +2351,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         }
 
         fireProgressStateChanged("Processing image ...");
-        
+
 
         try {
             sliceLength = xDim * yDim;
@@ -2443,7 +2449,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         // ViewJFrameImage testFrame = new ViewJFrameImage(grayImage, null,
         // new Dimension(600, 300), srcImage.getUserInterface());
 
-        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
+        thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE,
+                                                   wholeImage, true);
         thresholdAlgo.run();
         thresholdAlgo.finalize();
         thresholdAlgo = null;
@@ -2730,7 +2737,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
         if (numObjects == 0) {
             MipavUtil.displayError(edgeObjects + " blue objects touched edges");
             MipavUtil.displayError("No blue objects that do not touch edges");
-            
+
             setCompleted(false);
 
             return;
@@ -2783,8 +2790,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 stdDev = 0.0f;
                 sliceBySlice = false;
                 wholeImage = true;
-                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, 
-                                                 adaptiveSize, maximumSize, sliceBySlice, wholeImage);
+                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
+                                                 maximumSize, sliceBySlice, wholeImage);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -2878,8 +2885,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[1] = max;
                 fillValue = 0.0f;
                 binaryFlag = true;
-                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
-                                                           true);
+                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
+                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -3081,8 +3088,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 stdDev = 0.0f;
                 sliceBySlice = false;
                 wholeImage = true;
-                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, 
-                                                 adaptiveSize, maximumSize, sliceBySlice, wholeImage);
+                algoMedian = new AlgorithmMedian(grayImage, medianIters, kernelSize, kernelShape, stdDev, adaptiveSize,
+                                                 maximumSize, sliceBySlice, wholeImage);
                 algoMedian.run();
                 algoMedian.finalize();
                 algoMedian = null;
@@ -3174,8 +3181,8 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                 thresholds[1] = max;
                 fillValue = 0.0f;
                 binaryFlag = true;
-                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue, AlgorithmThresholdDual.BINARY_TYPE, wholeImage,
-                                                           true);
+                thresholdAlgo = new AlgorithmThresholdDual(grayImage, thresholds, fillValue,
+                                                           AlgorithmThresholdDual.BINARY_TYPE, wholeImage, true);
                 thresholdAlgo.run();
                 thresholdAlgo.finalize();
                 thresholdAlgo = null;
@@ -3467,7 +3474,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                 for (j = 1; j <= numGreenObjects; j++) {
                     fireProgressStateChanged("Sorting green object " + j + " of " + numGreenObjects +
-                                           " by intensity count");
+                                             " by intensity count");
                     fireProgressStateChanged(62 + (10 * j / numGreenObjects));
 
                     for (x = 0, y = 0, z = 0, i = 0; i < totLength; i++) {
@@ -3779,6 +3786,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                                     zPosGrav[i] += buffer[index] * z;
                                     colorCount += buffer[index];
                                     voiCount[i]++;
+
                                     // Expand blue nuclei to include VOI
                                     IDArray[index] = (byte) objectID[i];
                                 }
@@ -3812,6 +3820,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                                     zPosGrav[i] += greenBuffer[index] * z;
                                     colorCount += greenBuffer[index];
                                     voiCount[i]++;
+
                                     // Expand blue nuclei to include VOI
                                     IDArray[index] = (byte) objectID[i];
                                 }
@@ -4059,7 +4068,7 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                         if ((dilateArray[i] == (byte) 1) && (byteBuffer[i] == (byte) 0)) {
                             boundaryArray[i] = (byte) id;
-                            kVoxel = new Point3f(x * xRes * invMax, y * yRes * invMax, z * zRes * invMax);
+                            kVoxel = new Point3Df(x * xRes * invMax, y * yRes * invMax, z * zRes * invMax);
                             volPoints[id - 1].add(kVoxel);
                             distSqr = ((xCenter[id - 1] - x) * (xCenter[id - 1] - x) * xRes * xRes) +
                                       ((yCenter[id - 1] - y) * (yCenter[id - 1] - y) * yRes * yRes) +
@@ -4232,12 +4241,10 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
 
                     voiVolume = xRes * yRes * zRes * voiCount[j];
                     UI.setDataText("\t" + nf.format(voiVolume));
-                    geoToCenter = (float) Math.sqrt(((xPosGeo[j] - xCenter[i]) * (xPosGeo[j] - xCenter[i]) * xRes *
-                                                         xRes) +
-                                                    ((yPosGeo[j] - yCenter[i]) * (yPosGeo[j] - yCenter[i]) * yRes *
-                                                         yRes) +
-                                                    ((zPosGeo[j] - zCenter[i]) * (zPosGeo[j] - zCenter[i]) * zRes *
-                                                         zRes));
+                    geoToCenter = (float)
+                                      Math.sqrt(((xPosGeo[j] - xCenter[i]) * (xPosGeo[j] - xCenter[i]) * xRes * xRes) +
+                                                ((yPosGeo[j] - yCenter[i]) * (yPosGeo[j] - yCenter[i]) * yRes * yRes) +
+                                                ((zPosGeo[j] - zCenter[i]) * (zPosGeo[j] - zCenter[i]) * zRes * zRes));
 
                     initialdx = xPosGeo[j] - xCenter[i];
                     initialdy = yPosGeo[j] - yCenter[i];
@@ -4316,26 +4323,29 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                         }
                     } // while (true)
 
-                    centerToGeoToEdge = (float) Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) * xRes *
-                                                               xRes) +
-                                                          ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
-                                                               yRes) +
-                                                          ((lastEdgeZ - zCenter[i]) * (lastEdgeZ - zCenter[i]) * zRes *
-                                                               zRes));
+                    centerToGeoToEdge = (float)
+                                            Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) * xRes *
+                                                           xRes) +
+                                                      ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
+                                                           yRes) +
+                                                      ((lastEdgeZ - zCenter[i]) * (lastEdgeZ - zCenter[i]) * zRes *
+                                                           zRes));
                     UI.setDataText("\t" + nf.format(centerToGeoToEdge));
                     geoToCenter = 100.0f * geoToCenter / centerToGeoToEdge;
                     UI.setDataText("\t" + nf.format(geoToCenter));
-                    geoToEdge = (float) Math.sqrt(((lastEdgeX - xPosGeo[j]) * (lastEdgeX - xPosGeo[j]) * xRes * xRes) +
-                                                  ((lastEdgeY - yPosGeo[j]) * (lastEdgeY - yPosGeo[j]) * yRes * yRes) +
-                                                  ((lastEdgeZ - zPosGeo[j]) * (lastEdgeZ - zPosGeo[j]) * zRes * zRes));
+                    geoToEdge = (float)
+                                    Math.sqrt(((lastEdgeX - xPosGeo[j]) * (lastEdgeX - xPosGeo[j]) * xRes * xRes) +
+                                              ((lastEdgeY - yPosGeo[j]) * (lastEdgeY - yPosGeo[j]) * yRes * yRes) +
+                                              ((lastEdgeZ - zPosGeo[j]) * (lastEdgeZ - zPosGeo[j]) * zRes * zRes));
                     UI.setDataText("\t" + nf.format(geoToEdge));
 
-                    gravToCenter = (float) Math.sqrt(((xPosGrav[j] - xCenter[i]) * (xPosGrav[j] - xCenter[i]) * xRes *
-                                                          xRes) +
-                                                     ((yPosGrav[j] - yCenter[i]) * (yPosGrav[j] - yCenter[i]) * yRes *
-                                                          yRes) +
-                                                     ((zPosGrav[j] - zCenter[i]) * (zPosGrav[j] - zCenter[i]) * zRes *
-                                                          zRes));
+                    gravToCenter = (float)
+                                       Math.sqrt(((xPosGrav[j] - xCenter[i]) * (xPosGrav[j] - xCenter[i]) * xRes *
+                                                      xRes) +
+                                                 ((yPosGrav[j] - yCenter[i]) * (yPosGrav[j] - yCenter[i]) * yRes *
+                                                      yRes) +
+                                                 ((zPosGrav[j] - zCenter[i]) * (zPosGrav[j] - zCenter[i]) * zRes *
+                                                      zRes));
 
                     initialdx = xPosGrav[j] - xCenter[i];
                     initialdy = yPosGrav[j] - yCenter[i];
@@ -4414,44 +4424,43 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
                         }
                     } // while (true)
 
-                    centerToGravToEdge = (float) Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) * xRes *
-                                                                xRes) +
-                                                           ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
-                                                                yRes) +
-                                                           ((lastEdgeZ - zCenter[i]) * (lastEdgeZ - zCenter[i]) *
-                                                                zRes * zRes));
+                    centerToGravToEdge = (float)
+                                             Math.sqrt(((lastEdgeX - xCenter[i]) * (lastEdgeX - xCenter[i]) * xRes *
+                                                            xRes) +
+                                                       ((lastEdgeY - yCenter[i]) * (lastEdgeY - yCenter[i]) * yRes *
+                                                            yRes) +
+                                                       ((lastEdgeZ - zCenter[i]) * (lastEdgeZ - zCenter[i]) * zRes *
+                                                            zRes));
                     UI.setDataText("\t" + nf.format(centerToGravToEdge));
                     gravToCenter = 100.0f * gravToCenter / centerToGravToEdge;
                     UI.setDataText("\t" + nf.format(gravToCenter));
-                    gravToEdge = (float) Math.sqrt(((lastEdgeX - xPosGrav[j]) * (lastEdgeX - xPosGrav[j]) * xRes *
-                                                        xRes) +
-                                                   ((lastEdgeY - yPosGrav[j]) * (lastEdgeY - yPosGrav[j]) * yRes *
-                                                        yRes) +
-                                                   ((lastEdgeZ - zPosGrav[j]) * (lastEdgeZ - zPosGrav[j]) * zRes *
-                                                        zRes));
+                    gravToEdge = (float)
+                                     Math.sqrt(((lastEdgeX - xPosGrav[j]) * (lastEdgeX - xPosGrav[j]) * xRes * xRes) +
+                                               ((lastEdgeY - yPosGrav[j]) * (lastEdgeY - yPosGrav[j]) * yRes * yRes) +
+                                               ((lastEdgeZ - zPosGrav[j]) * (lastEdgeZ - zPosGrav[j]) * zRes * zRes));
                     UI.setDataText("\t" + nf.format(gravToEdge));
 
 
                     /*lowestSqr = Float.MAX_VALUE;
                      * for (k1 = 0, z = 0; z < zDim; z++, k1 += sliceLength) { for (j1 = k1, y = 0; y < yDim; y++, j1 +=
                      * xDim) {     for (x = 0; x < xDim; x++) {         index = x + j1;         if (boundaryArray[index]
-                     * == objectID[j]) {             distSqr = (xPosGeo[j] - x) * (xPosGeo[j] - x) *
-                     *   xRes * xRes +                       (yPosGeo[j] - y) * (yPosGeo[j] - y) *
-                     * yRes * yRes +                       (zPosGeo[j] - z) * (zPosGeo[j] - z) *
-                     * zRes * zRes;             if (distSqr < lowestSqr) {                 lowestSqr = distSqr;
-                     *        xEdge = x;                 yEdge = y;                 zEdge = z;             }         }
-                     *   } } } geoToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" + nf.format(geoToEdge));
-                     * geoToEdge *= 100.0f / centerToFarEdge[i]; UI.setDataText("\t" + nf.format(geoToEdge));
+                     * == objectID[j]) {             distSqr = (xPosGeo[j] - x) * (xPosGeo[j] - x) *  xRes * xRes +
+                     *                  (yPosGeo[j] - y) * (yPosGeo[j] - y) * yRes * yRes +
+                     * (zPosGeo[j] - z) * (zPosGeo[j] - z) * zRes * zRes;             if (distSqr < lowestSqr) {
+                     *         lowestSqr = distSqr;       xEdge = x;                 yEdge = y;                 zEdge =
+                     * z;             }         }  } } } geoToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t"
+                     * + nf.format(geoToEdge)); geoToEdge *= 100.0f / centerToFarEdge[i]; UI.setDataText("\t" +
+                     * nf.format(geoToEdge));
                      *
                      * lowestSqr = Float.MAX_VALUE; for (k1 = 0, z = 0; z < zDim; z++, k1 += sliceLength) { for (j1 = k1,
-                     * y = 0; y < yDim; y++, j1 += xDim) {     for (x = 0; x < xDim; x++) {         index = x + j1;
-                     *    if (boundaryArray[index] == objectID[j]) {             distSqr = (xPosGrav[j] - x) *
-                     * (xPosGrav[j] - x) *                       xRes * xRes +                       (yPosGrav[j] - y) *
-                     * (yPosGrav[j] - y) *                       yRes * yRes +                       (zPosGrav[j] - z) *
-                     * (zPosGrav[j] - z) *                       zRes * zRes;             if (distSqr < lowestSqr) {
-                     *             lowestSqr = distSqr;                 xEdge = x;                 yEdge = y;
-                     *      zEdge = z;             }         }     } } } gravToEdge = (float) Math.sqrt(lowestSqr);
-                     * UI.setDataText("\t\t" + nf.format(gravToEdge)); gravToEdge *= 100.0f /
+                     * y = 0; y < yDim; y++, j1 += xDim) {     for (x = 0; x < xDim; x++) {         index = x + j1;   if
+                     * (boundaryArray[index] == objectID[j]) {             distSqr = (xPosGrav[j] - x) * (xPosGrav[j] -
+                     * x) *                       xRes * xRes +                       (yPosGrav[j] - y) * (yPosGrav[j] -
+                     * y) *                       yRes * yRes +                       (zPosGrav[j] - z) * (zPosGrav[j] -
+                     * z) *                       zRes * zRes;             if (distSqr < lowestSqr) {
+                     * lowestSqr = distSqr;                 xEdge = x;                 yEdge = y;     zEdge = z;
+                     *     }         }     } } } gravToEdge = (float) Math.sqrt(lowestSqr); UI.setDataText("\t\t" +
+                     * nf.format(gravToEdge)); gravToEdge *= 100.0f /
                      * centerToFarEdge[i];UI.setDataText("\t" + nf.format(gravToEdge));*/
                 } // if (objectID[j] == (i+1))
             } // for (j = 0; j <= nVOIs - 1; j++)
@@ -4470,7 +4479,6 @@ public class PlugInAlgorithmRegionDistance extends AlgorithmBase {
             return;
         }
 
-        
         setCompleted(true);
     }
 
