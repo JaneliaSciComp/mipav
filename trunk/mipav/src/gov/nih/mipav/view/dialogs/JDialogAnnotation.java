@@ -285,6 +285,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         backgroundColorButton.setSize(24, 24);
         backgroundColorButton.setMaximumSize(new Dimension(24, 24));
         
+        textField.setBackground(vt.getBackgroundColor());
         
         gbc.gridx = 0;
         gbc.gridy = 0;
@@ -343,8 +344,7 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         buttonPanel = this.buildButtons();
 
         textField = new JTextField(30);
-        textField.setBackground(Color.DARK_GRAY);
-
+        
         scrollPane = new JScrollPane(textField, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                                      JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
@@ -468,12 +468,13 @@ public class JDialogAnnotation extends JDialogBase implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             Color color = colorChooser.getColor();
             if (isBackground) {
-            	backgroundColorButton.setBackground(color);
             	backgroundColorButton.setForeground(color);
+            	backgroundColorButton.setBackground(color);
+            	textField.setBackground(color);
             } else {
-            colorButton.setBackground(color);
-            colorButton.setForeground(color);
-            textField.setForeground(color);
+            	colorButton.setForeground(color);
+            	colorButton.setBackground(color);
+            	textField.setForeground(color);
             }
         }
     }
