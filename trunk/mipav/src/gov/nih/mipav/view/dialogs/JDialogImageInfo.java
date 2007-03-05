@@ -4,6 +4,8 @@ package gov.nih.mipav.view.dialogs;
 import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.algorithms.utilities.*;
 import gov.nih.mipav.model.file.*;
+import gov.nih.mipav.model.scripting.ScriptRecorder;
+import gov.nih.mipav.model.scripting.actions.*;
 import gov.nih.mipav.model.structures.*;
 
 import gov.nih.mipav.view.*;
@@ -969,8 +971,8 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
 
             String path = ((FileInfoImageXML) image.getFileInfo(0)).getLinkedImagePath();
 
-            if (path != null) {
-
+            if (path != null  && !path.equals("")) {
+System.err.println("linked image path: " + path);
                 if (new File(path).exists()) {
                     linkedImageField.setText(path);
                 } else {
@@ -2958,6 +2960,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 fileInfo[i].setAxisOrientation(orientAxis);
             }
         }
+        
+        if (tabbedPane.getSelectedIndex() == 2) {
+//        	if script recording, show the change of image orientation/axis orientations
+            ScriptRecorder.getReference().addLine(new ActionChangeOrientations(image));
+        }
     }
 
     /**
@@ -3009,10 +3016,11 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
                 origin[2] = tmp;
             }
         }
-        /*else if (image.getNDims() == 5) {
-         * fileInfo = image.getFileInfo(); for (int i = 0;    i <    image.getExtents()[2] * image.getExtents()[3] *
-         * image.getExtents()[4];    i++) { fileInfo[i].setStartLocations(startLocs); startLocs[4] += resolutions[4]; }
-         * }*/
+              
+        // add to script recorder if we are on the origin tab
+        if (tabbedPane.getSelectedIndex() == 3) {
+        	ScriptRecorder.getReference().addLine(new ActionChangeOrigin(image));
+        }
     }
 
     /**
@@ -3105,7 +3113,12 @@ public class JDialogImageInfo extends JDialogBase implements ActionListener, Alg
             if (!resolutionBox.isSelected()) {
                 fileInfo[resIndex].setResolutions(resolutions);
             }
-        }
+        }      
+        
+        //add the new script action
+        ScriptRecorder.getReference().addLine(new ActionChangeResolutions(image, resolutionBox.isSelected(), resIndex, sliceThickness));
+        
+        ScriptRecorder.getReference().addLine(new ActionChangeUnits(image));
     }
 
     /**
