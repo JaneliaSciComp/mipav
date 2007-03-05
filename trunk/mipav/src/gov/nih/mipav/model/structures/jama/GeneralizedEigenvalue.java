@@ -59,6 +59,29 @@ public class GeneralizedEigenvalue implements java.io.Serializable {
      *
      * On significant change was made in the port of the nonsymmetric driver.  In routine dhgeqz the number of maximum
      * iterations maxit was increased from 30 * (ihi-ilo+1) to 300 * (ihi-ilo+1)
+     *
+     * Copyright (c) 1992-2007 The University of Tennessee.  All rights reserved.
+     *
+     * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
+     * following conditions are met:
+     *
+     * - Redistributions of source code must retain the above copyright notice, this list of conditions and the following
+     * disclaimer.
+     *
+     * - Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the
+     * following disclaimer listed in this license in the documentation and/or other materials provided with the
+     * distribution.
+     *
+     * - Neither the name of the copyright holders nor the names of its contributors may be used to endorse or promote
+     * products derived from this software without specific prior written permission.
+     *
+     * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES,
+     * INCLUDING, BUT NOT  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+     * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+     * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+     * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+     * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT  (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+     * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
      */
 
     //~ Static fields/initializers -------------------------------------------------------------------------------------
@@ -4533,10 +4556,9 @@ loop1:           {
                 // Control parameters:
                 /*         kmagn  kmode        ktype
                  *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential (none)
-                 *   = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
+                 *  = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
                  * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8
-                 *       random symmetric   = 9                      positive definite   = 10 diagonally dominant
-                 * tridiagonal
+                 * random symmetric   = 9                      positive definite   = 10 diagonally dominant tridiagonal
                  */
 
                 if (mtypes <= maxtyp) {
@@ -6537,9 +6559,9 @@ loop1:           {
                 // Control parameters:
                 /*         kmagn  kmode        ktype
                  *    = 1  O(1)   clustered 1  zero   = 2  large  clustered 2  identity   = 3  small  exponential (none)
-                 *   = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
+                 *  = 4         arithmetic   diagonal, (w/ eigenvalues)   = 5         random log   symmetric, w/
                  * eigenvalues   = 6         random       (none)   = 7                      random diagonal   = 8
-                 *       random symmetric   = 9                      band symmetric, w/ eigenvalues
+                 * random symmetric   = 9                      band symmetric, w/ eigenvalues
                  */
 
                 if (mtypes <= maxtyp) {
