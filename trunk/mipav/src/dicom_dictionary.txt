@@ -1491,4 +1491,4 @@
 #(FFFE,E000) VERS="3"	VR="NONE" VM="1"	Keyword="Item"					Name="Item"
 #(FFFE,E00D) VERS="3"	VR="NONE" VM="1"	Keyword="ItemDelimitationItem"			Name="Item Delimitation Item"
 #(FFFE,E0DD) VERS="3"	VR="NONE" VM="1"	Keyword="SequenceDelimitationItem"		Name="Sequence Delimitation Item"
-(0043,1039) VERS="3"    VR="US"   VM="4"    Keyword="BValue"                        Name="BValue"
+
