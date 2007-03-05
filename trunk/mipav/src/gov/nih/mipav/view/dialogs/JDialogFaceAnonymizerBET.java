@@ -60,7 +60,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
     /** Flag indicates BET should approximate initial brain by sphere. */
     private static final String PARAM_BET_DO_SPHERE_ESTIMATION = "bet_do_estimate_with_sphere";
 
-    /** BET based parameter for the depth to calculate in approximating brain maximum and minimum intensities.*/
+    /** BET based parameter for the depth to calculate in approximating brain maximum and minimum intensities. */
     private static final String PARAM_BET_IMG_INFLUENCE = "bet_image_influence";
 
     /** Controls the stiffness of the brain approximation mesh. */
@@ -71,16 +71,19 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
     /** The algorithm corresponding to this dialog box. */
     private AlgorithmFaceAnonymizerBET defaceAlgo;
 
-    /** Flag indicates BET should approximate initial brain by sphere.  Initially set to false.  */
+    /** Flag indicates BET should approximate initial brain by sphere. Initially set to false. */
     private boolean estimateWithSphereBET = false;
 
-    /** Check box corresponding to <code>estimateSphereBET</code> */
+    /** Check box corresponding to <code>estimateSphereBET</code>. */
     private JCheckBox estimateWithSphereCheckbox;
 
     /** Text field corresponding to brain padding parameter. */
     private JTextField extraBrainPaddingField;
 
-    /** FaceAnonymizer parameter.  Guarantees that the extracted brain will be avoided by the specified number of millimeters.  Initially set to 20. */
+    /**
+     * FaceAnonymizer parameter. Guarantees that the extracted brain will be avoided by the specified number of
+     * millimeters. Initially set to 20.
+     */
     private int extraMMsToPad = 20;
 
     /** Indicates face orientation of the image. */
@@ -104,7 +107,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
     /** Button for facing up image. */
     private JRadioButton facingUpRadio;
 
-    /** the depth to calculate in approximating brain maximum and minimum intensities.  Initially set to .1 */
+    /** the depth to calculate in approximating brain maximum and minimum intensities. Initially set to .1 */
     private float imageInfluenceBET = 0.1f;
 
     /** The text field corresponding to <code>imageInfluenceField</code>. */
@@ -127,8 +130,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
     public JDialogFaceAnonymizerBET() { }
 
     /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present.
+     * Creates the face anonymizer dialog.
      *
      * @param  theParentFrame  Parent frame.
      * @param  im              Source image.
@@ -140,19 +142,6 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         faceOrientation = getFaceOrientation(srcImage);
         loadDefaults();
         init();
-    }
-
-    /**
-     * Sets the appropriate variables. Does not actually create a dialog that is visible because no user input is
-     * necessary at present. This constructor is used by the script parser because it doesn't have the parent frame.
-     *
-     * @param  ui  User interface.
-     * @param  im  Source image.
-     */
-    public JDialogFaceAnonymizerBET(ViewUserInterface ui, ModelImage im) {
-        super();
-        parentFrame = im.getParentFrame();
-        srcImage = im;
     }
 
     //~ Methods --------------------------------------------------------------------------------------------------------
@@ -174,7 +163,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         } else if (command.equals("Cancel")) {
             dispose();
         } else if (command.equals("Help")) {
-            MipavUtil.showHelp( "19014" );
+            MipavUtil.showHelp("19014");
         }
     }
 
@@ -215,7 +204,8 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         String str = new String();
         str += faceOrientation + delim;
         str += extraMMsToPad + delim;
-        //str += verticalDeletionLimit + delim;
+
+        // str += verticalDeletionLimit + delim;
         str += estimateWithSphereBET + delim;
         str += imageInfluenceBET + delim;
         str += stiffnessBET;
@@ -297,7 +287,8 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         try {
             System.gc();
             defaceAlgo = new AlgorithmFaceAnonymizerBET(srcImage, faceOrientation, extraMMsToPad);
-                                                        /*verticalDeletionLimit*/
+
+            /*verticalDeletionLimit*/
             defaceAlgo.setBETParameters(estimateWithSphereBET, imageInfluenceBET, stiffnessBET);
             defaceAlgo.addListener(this);
 
@@ -364,7 +355,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
 
         facingRightRadio = new JRadioButton("Right");
         facingRightRadio.setFont(MipavUtil.font12);
-        
+
         if (faceOrientation == JDialogFaceAnonymizerBET.FACING_RIGHT) {
             facingRightRadio.setSelected(true);
         }
@@ -428,7 +419,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
 
         JLabel extraPaddingLabel = new JLabel("Extracted brain is avoided by a buffer of this many mms");
         extraPaddingLabel.setFont(MipavUtil.font12);
-  
+
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
@@ -440,7 +431,7 @@ public class JDialogFaceAnonymizerBET extends JDialogScriptableBase
         gbc.gridx++;
         removalPanel.add(extraBrainPaddingField, gbc);
         gbc.gridx = 0;
-  
+
         JPanel betPanel = new JPanel(new GridBagLayout());
         betPanel.setBorder(MipavUtil.buildTitledBorder("Brain extraction options"));
 
