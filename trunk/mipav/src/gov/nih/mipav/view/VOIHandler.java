@@ -3410,8 +3410,25 @@ public class VOIHandler extends JComponent implements MouseListener, MouseMotion
                 y[0] = yS;
                 z[0] = sliceNum;
 
-                x[1] = xS + 15;
-                y[1] = yS + 15;
+                
+                //decide where to put the second point (arrow tip) so that it is within bounds
+                int [] extents = compImage.getActiveImage().getExtents();
+                
+                if ( (xS + 15) < extents[0]){
+                	x[1] = xS + 15;
+                } else if ((xS - 15) > 0) {
+                	x[1] = xS - 15;
+                } else {
+                	x[1] = xS;
+                }
+                if ( (yS + 15) < extents[1]){
+                	y[1] = yS + 15;
+                } else if ((yS - 15) > 0) {
+                	y[1] = yS - 15;
+                } else {
+                	y[1] = yS;
+                }
+                
                 z[1] = sliceNum;
 
                 newTextVOI.importCurve(x, y, z, sliceNum);

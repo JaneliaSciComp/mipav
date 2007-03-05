@@ -489,10 +489,10 @@ public class VOIText extends VOIBase {
         pt.z = pt.z + zM;
         
         //move the marker point
-        Point3Df pt2 = (Point3Df)elementAt(1);
-        pt2.x = pt2.x + xM;
-        pt2.y = pt2.y + yM;
-        pt2.z = pt2.z + zM;     
+      //  Point3Df pt2 = (Point3Df)elementAt(1);
+      //  pt2.x = pt2.x + xM;
+      //  pt2.y = pt2.y + yM;
+      //  pt2.z = pt2.z + zM;     
     }
     
     /**
