@@ -3192,6 +3192,11 @@ System.err.println("linked image path: " + path);
             }
 
             image.setTalairachTransformInfo(tInfo);
+            
+            if (tabbedPane.getSelectedIndex() == 6) {
+            	ScriptRecorder.getReference().addLine(new ActionChangeTalairachInfo(image));
+            }
+            
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -3227,6 +3232,10 @@ System.err.println("linked image path: " + path);
             for (int i = 0; i < (image.getExtents()[2] * image.getExtents()[3] * image.getExtents()[4]); i++) {
                 fileInfo[i].setTransformID(transformID);
             }
+        }
+        
+        if (tabbedPane.getSelectedIndex() == 4) {
+        	ScriptRecorder.getReference().addLine(new ActionChangeTransformInfo(image));
         }
     }
 
