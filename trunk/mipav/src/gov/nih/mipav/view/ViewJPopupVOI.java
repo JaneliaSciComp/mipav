@@ -283,19 +283,19 @@ public class ViewJPopupVOI extends JPanel implements ActionListener, PopupMenuLi
             } else if (event.getActionCommand().equals("VOIFlipY")) {
                 JDialogFlip flip = new JDialogFlip(voiHandler.getComponentImage().getFrame(),
                                                    voiHandler.getComponentImage().getActiveImage(),
-                                                   AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI);
+                                                   AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI_TYPE);
 
                 flip.callAlgorithm();
             } else if (event.getActionCommand().equals("VOIFlipX")) {
                 JDialogFlip flip = new JDialogFlip(voiHandler.getComponentImage().getFrame(),
                                                    voiHandler.getComponentImage().getActiveImage(),
-                                                   AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI);
+                                                   AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI_TYPE);
 
                 flip.callAlgorithm();
             } else if (event.getActionCommand().equals("VOIFlipZ")) {
                 JDialogFlip flip = new JDialogFlip(voiHandler.getComponentImage().getFrame(),
                                                    voiHandler.getComponentImage().getActiveImage(),
-                                                   AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI);
+                                                   AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI_TYPE);
 
                 flip.callAlgorithm();
             }

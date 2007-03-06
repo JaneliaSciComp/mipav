@@ -234,7 +234,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
         
         if(flipObject == AlgorithmFlip.IMAGE) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("flip_object", "image"));
-        } else if(flipObject == AlgorithmFlip.VOI) {
+        } else if(flipObject == AlgorithmFlip.VOI_TYPE) {
             scriptParameters.getParams().put(ParameterFactory.newParameter("flip_object", "voi"));
         } else if(flipObject == AlgorithmFlip.IMAGE_AND_VOI) {
         	scriptParameters.getParams().put(ParameterFactory.newParameter("flip_object", "image_and_voi"));
@@ -265,7 +265,7 @@ public class JDialogFlip extends JDialogScriptableBase implements AlgorithmInter
             flipObject = AlgorithmFlip.IMAGE;
         }
         if(axisn.equals("voi")) {
-            flipObject = AlgorithmFlip.VOI;
+            flipObject = AlgorithmFlip.VOI_TYPE;
         }
         if(axisn.equals("image_and_voi")) {
         	flipObject = AlgorithmFlip.IMAGE_AND_VOI;

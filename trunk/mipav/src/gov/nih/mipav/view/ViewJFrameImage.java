@@ -1449,15 +1449,15 @@ public class ViewJFrameImage extends ViewJFrameBase implements KeyListener, Mous
         } else if (command.equals("ImageFlipZ")) {
             new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.IMAGE);
         } else if (command.equals("VOIFlipY")) {
-            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI);
+            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Y_AXIS, AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
         } else if (command.equals("VOIFlipX")) {
-            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI);
+            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.X_AXIS, AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
         } else if (command.equals("VOIFlipZ")) {
-            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI);
+            JDialogFlip flip = new JDialogFlip(this, getActiveImage(), AlgorithmFlip.Z_AXIS, AlgorithmFlip.VOI_TYPE);
 
             flip.callAlgorithm();
         } else if (command.equals("RotateX180")) {
