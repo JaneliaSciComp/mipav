@@ -5,12 +5,16 @@ import gov.nih.mipav.model.algorithms.*;
 import gov.nih.mipav.model.file.*;
 import gov.nih.mipav.model.structures.*;
 import gov.nih.mipav.view.MipavUtil;
+import gov.nih.mipav.view.RubberbandLevelSet;
+import gov.nih.mipav.view.ViewJComponentEditImage;
+import gov.nih.mipav.view.ViewVOIVector;
 
 import java.awt.Polygon;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.TreeMap;
+import java.util.Vector;
 
 
 /**
@@ -42,7 +46,7 @@ public class AlgorithmFlip extends AlgorithmBase {
     public static final int IMAGE = 0;
     
     /** Denotes selected VOI should be flipped */
-    public static final int VOI = 1;
+    public static final int VOI_TYPE = 1;
 
     //~ Instance fields ------------------------------------------------------------------------------------------------
 
@@ -296,33 +300,58 @@ public class AlgorithmFlip extends AlgorithmBase {
                 }
                 if(flipAxis == Z_AXIS && srcImage.getNDims() > 2)
                 {
-                    while(vecIter.hasNext()) {              
+                    Polygon[] gons = null;
+                    Point3Df[] points = null;
+                    boolean isPoint = false;
+                    ViewJComponentEditImage compImage = srcImage.getParentFrame().getComponentImage();
+                    int z = compImage.getSlice(), direction = z>zDim/2 ? -1 : 1;
+                    int distance = Math.abs(z - zDim/2), scope = 2*distance;
+                    while(vecIter.hasNext()) { 
                         VOI nextVoi = (VOI)vecIter.next();
-                        ArrayList[] polyArray = new ArrayList[zDim];
-                        for(int i=0; i<zDim; i++)
-                            polyArray[i] = new ArrayList();
-                        for(int i=0; i<zDim; i++) {
-                            Polygon[] polyList = nextVoi.exportPolygons(i);
-                            nextVoi.removeCurves(i);
-                            for(int j=0; j<polyList.length; j++) {
-                                Polygon poly = polyList[j];  
-                                polyArray[-i + zDim].add(poly);   
-                            }    
-                        }
-                        for(int i=0; i<zDim; i++) {
-                            ArrayList tempArray = polyArray[i];
-                            for(int j=0; j<tempArray.size(); j++) {
-                                nextVoi.importPolygon((Polygon)tempArray.get(j), i);
+                        
+                        //if(nextVoi.isActive()) {
+                        for(int voiSlice=0; voiSlice<zDim; voiSlice++) {    
+                            gons = null;
+                            if(nextVoi.getCurveType() == VOI.CONTOUR ||
+                                 nextVoi.getCurveType() == VOI.POLYLINE) {
+                                
+                                gons = nextVoi.exportPolygons(voiSlice);
+                                
                             }
-                        }
+                            else {
+                                points = nextVoi.exportPoints(voiSlice);
+                                isPoint = true; 
+                            }
+                            if(gons.length > 0) {
+                                if(!isPoint) {
+                                    nextVoi.removeCurves(voiSlice);
+                                    for(int k=0; k<gons.length; k++) {
+                                        Polygon polyTemp = gons[k];
+                                        nextVoi.importPolygon(polyTemp, voiSlice + scope*direction);
+                                        nextVoi.setActive(true);
+                                    }   
+                                }
+                                if(isPoint) {
+                                    nextVoi.importPoints(points, voiSlice + scope*direction);
+                                    nextVoi.setActive(true);
+                                }
+                                
+                                compImage.show(compImage.getTimeSlice(), voiSlice + scope*direction, 
+                                                 null, null, true, compImage.getInterpMode());
+                                compImage.getVOIHandler().fireVOISelectionChange(nextVoi, null);
+                                compImage.getActiveImage().getParentFrame().setSlice(compImage.getSlice());
+                                compImage.getActiveImage().getParentFrame().updateImages(true);
+                            }
+                       }
+                        
                     }
                 }
             }
         }
-        else if(flipObject == AlgorithmFlip.VOI)
+        else if(flipObject == AlgorithmFlip.VOI_TYPE)
         {
             boolean activeVoi = false;
-            VOIVector vec = srcImage.getVOIs();
+            ViewVOIVector vec = srcImage.getVOIs();
             Iterator vecIter = vec.iterator();
             if(flipAxis == X_AXIS) {
                 while(vecIter.hasNext()) {              
@@ -368,28 +397,53 @@ public class AlgorithmFlip extends AlgorithmBase {
             }
             if(flipAxis == Z_AXIS && srcImage.getNDims() > 2)
             {
-                while(vecIter.hasNext()) {              
+                
+                Polygon[] gons = null;
+                Point3Df[] points = null;
+                boolean isPoint = false;
+                int voiSlice = -1;
+                ViewJComponentEditImage compImage = srcImage.getParentFrame().getComponentImage();
+                int z = compImage.getSlice(), direction = z>zDim/2 ? -1 : 1;
+                int distance = Math.abs(z - zDim/2), scope = 2*distance;
+                while(vecIter.hasNext()) { 
                     VOI nextVoi = (VOI)vecIter.next();
-                    if(nextVoi.isActive())
-                    {
-                        activeVoi = true;
-                        for(int i=0; i<zDim; i++) {
-                            VOIBase base = nextVoi.getActiveContour(i);
-                            if(base != null)
-                            {
-                                Iterator itr = base.iterator();
-                                while(itr.hasNext())
-                                {
-                                    Point3Df point = (Point3Df)itr.next();
-                                    point.z = -point.z + zDim;
-                                }
-                            }
+                    
+                    if(nextVoi.isActive()) {
+                        if(voiSlice == -1)
+                            voiSlice = compImage.getSlice();
+                        if(nextVoi.getCurveType() == VOI.CONTOUR ||
+                             nextVoi.getCurveType() == VOI.POLYLINE) {
+                            
+                            gons = nextVoi.exportPolygons(voiSlice);
+                            nextVoi.removeCurves(voiSlice);
                         }
+                        else {
+                            points = nextVoi.exportPoints(voiSlice);
+                            isPoint = true; 
+                        }
+                        if(!isPoint && gons != null) {
+                            for(int k=0; k<gons.length; k++) {
+                                Polygon polyTemp = gons[k];
+                                nextVoi.importPolygon(polyTemp, voiSlice + scope*direction);
+                                nextVoi.setActive(true);
+                            }   
+                        }
+                        if(isPoint) {
+                            nextVoi.importPoints(points, voiSlice + scope*direction);
+                            nextVoi.setActive(true);
+                        }
+                        
+                        compImage.show(compImage.getTimeSlice(), voiSlice + scope*direction, 
+                                         null, null, true, compImage.getInterpMode());
+                        compImage.getVOIHandler().fireVOISelectionChange(nextVoi, null);
+                        compImage.getActiveImage().getParentFrame().setSlice(compImage.getSlice());
+                        compImage.getActiveImage().getParentFrame().updateImages(true);
                     }
+                    
                 }
-            }
-            if(!activeVoi) {
-                MipavUtil.displayError("Select a VOI to flip.");
+                
+                
+                
             }
         }
         setCompleted(true);
@@ -410,11 +464,12 @@ public class AlgorithmFlip extends AlgorithmBase {
         }
         if(flipObject == IMAGE) {
         	historyString = historyString+"Object(IMAGE)\n";
-       	} else if(flipObject == VOI) {
+       	} else if(flipObject == VOI_TYPE) {
        		historyString = historyString+"Object(VOI)\n";			
        	} else {
        		historyString = historyString+"Object(IMAGE_AND_VOI)\n";
        	}
     }
+    
 
 }
