@@ -87,6 +87,9 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		fileInfoVector = new Vector();
 	}
 
+	
+	
+	
 	/**
 	 * run algorithm
 	 */
@@ -184,6 +187,11 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		
 		finalize();
 	}
+	
+	
+	
+	
+	
 	/**
 	 * this method parses the study dir and populates the fileInfoVector
 	 * @param file
@@ -249,6 +257,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	}
 	
 	
+	
+	
 	/**
 	 * this method created the proc dir in which the list file, path file, and b-matrix file go
 	 * @return boolean success
@@ -281,6 +291,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	}
 
 	
+	
+	
 	/**
 	 * This method creates the path file
 	 * @return boolean success
@@ -299,10 +311,7 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				Iterator iter2 = seriesFITS.iterator();
 				// lets get the first element and remember its imageSlice
 				String imageSlice = ((String) (((FileInfoDicom) seriesFITS.first()).getValue("0020,1041"))).trim();
-				String seriesNumber = ((String) (((FileInfoDicom) seriesFITS.first()).getValue("0020,0011"))).trim();
-				
-				System.out.println("series number is " + seriesNumber);
-				
+
 				// now we need to figure out how many slices are in each
 				// vol...do this by
 				// finding at what value the counter is when it is equal to the
@@ -362,8 +371,6 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 				Float bValue;
 				int poundIndex = -1;
 				for(int k = 0; k < numVols; k++) {
-					System.out.println("k is " + k);
-					
 					bValueLongString_pubTag = (String)(((FileInfoDicom)fidArr[numSlicesPerVolume * k]).getValue("0018,0024"));
 					int length = 0;
 					int index = -1;
@@ -425,6 +432,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		return true;
 	}
 
+	
+	
 	
 	/**
 	 * This method creates the list file
@@ -537,8 +546,6 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 	
 	
 	
-	
-	
 	/**
 	 * This method reads in the gradient file
 	 * @return boolean success
@@ -628,6 +635,8 @@ public class PlugInAlgorithmDTISortingProcess extends AlgorithmBase {
 		return true;
 	}
 
+	
+	
 	
 	/**
 	 * this method cleans up the proc dir if success is false
