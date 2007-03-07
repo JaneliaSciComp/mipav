@@ -1067,6 +1067,8 @@ public class JDialogRegistrationOAR2D extends JDialogScriptableBase implements A
         // Start the thread as a low priority because we wish to still have user interface work fast.
         reg2.addListener(this);
 
+        createProgressBar(matchImage.getImageName(), reg2);
+        
         if (isRunInSeparateThread()) {
 
             // Start the thread as a low priority because we wish to still have user interface work fast.
