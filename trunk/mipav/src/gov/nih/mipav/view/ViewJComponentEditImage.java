@@ -4857,47 +4857,103 @@ public class ViewJComponentEditImage extends ViewJComponentBase
         int xC = MipavMath.round(xS * zoomX);
         int yC = MipavMath.round(yS * zoomY);
         
-        
+        Color textColor = null;
+        Color backgroundColor = null;
 
         //set color of label text
         if(Preferences.getProperty("IntensityLabelColor") != null) {
-        	Color color = null;
         	String prefColor = Preferences.getProperty("IntensityLabelColor");
-            color = MipavUtil.extractColor(prefColor);
-        	graphics2d.setColor(color);
+        	textColor = MipavUtil.extractColor(prefColor);
         }
         else {
-        	graphics2d.setColor(Color.yellow);
+        	textColor = Color.yellow;
         }
 
+        if(Preferences.getProperty("IntensityLabelBackgroundColor") != null) {
+        	String prefColor = Preferences.getProperty("IntensityLabelColor");
+        	backgroundColor = MipavUtil.extractColor(prefColor);
+        }
+        else {
+        	backgroundColor = Color.black;
+        }
+        
         //we will only display up to 3 decimal places
         DecimalFormat df = new DecimalFormat("0.0##");
+        
+        graphics2d.setColor(backgroundColor);
         
         if (imageActive.isColorImage()) {
         	String red = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 1]).doubleValue());
         	String green = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 2]).doubleValue());
         	String blue = df.format(new Float(imageBufferActive[(4 * ((yS * imageActive.getExtents()[0]) + xS)) + 3]).doubleValue());
         	
-        	
         	 if((wC - xC > 170) && (hC - yC > 40)) {
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x + 1, y);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 1, y);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y - 1);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y + 1);
+        		 
+        		 graphics2d.setColor(textColor);
         		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y);
         	 } else if((wC - xC <= 170) && (hC - yC > 40)){
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 159, y);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 161, y);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y - 1);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y + 1);
+        		 
+        		 graphics2d.setColor(textColor);
         		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y);
         	 }else if((wC - xC <= 170) && (hC - yC <= 40)) {
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 159, y - 40);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 161, y - 40);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y - 41);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y - 39);
+        		 
+        		 graphics2d.setColor(textColor);
         		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 160, y - 40);
         	 }else if((wC - xC > 170) && (hC - yC <= 40)) {
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x + 1, y - 40);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x - 1, y - 40);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y - 41);
+        		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y - 39);
+        		 
+        		 graphics2d.setColor(textColor);
         		 graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + red + "," + green + "," + blue, x, y - 40);
         	 }
         }
         else {
         	String intensity = df.format(new Float(imageBufferActive[(yS * imageActive.getExtents()[0]) + xS]).doubleValue());
         	if((wC - xC > 100) && (hC - yC > 50)) {
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x + 1, y);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 1, y);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 1);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y + 1);
+        		
+        		graphics2d.setColor(textColor);
         		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y);
         	} else if((wC - xC <= 100) && (hC - yC > 50)){
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 79, y);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 81, y);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y - 1);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y + 1);
+        		
+        		graphics2d.setColor(textColor);
         		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y);
         	}else if((wC - xC <= 100) && (hC - yC <= 50)) {
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 79, y - 40);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 81, y - 40);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y - 41);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y - 39);
+        		
+        		graphics2d.setColor(textColor);
         		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x - 80, y - 40);
         	}else if((wC - xC > 100) && (hC - yC <= 50)) {
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 40);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 40);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 41);
+        		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 39);
+        		
+        		graphics2d.setColor(textColor);
         		graphics2d.drawString(String.valueOf(xS+1) + "," + String.valueOf(yS+1) + ":  " + intensity, x, y - 40);
         	}
         }
